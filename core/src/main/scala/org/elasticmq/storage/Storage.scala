@@ -20,5 +20,5 @@ trait MessageStorage {
   def removeMessage(message: Message)
 
   def lookupMessage(id: String): Option[Message]
-  def lookupUndeliveredMessage(queue: Queue): Option[Message]
+  def lookupPendingMessage(queue: Queue, deliveredBefore: Long): Option[Message]
 }

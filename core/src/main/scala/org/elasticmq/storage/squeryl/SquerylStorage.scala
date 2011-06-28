@@ -90,9 +90,12 @@ class SquerylMessageStorage extends MessageStorage {
     }
   }
 
-  def lookupUndeliveredMessage(queue: Queue) = {
+  def lookupPendingMessage(queue: Queue, deliveredBefore: Long) = {
     transaction {
-      from(messages, queues)((m, q) => where(m.queueName === queue.name and queuesToMessagesCond(m, q)) select(m, q))
+      from(messages, queues)((m, q) =>
+        where(m.queueName === queue.name and
+                queuesToMessagesCond(m, q) and
+                (m.lastDelivered lt deliveredBefore)) select(m, q))
               .page(0, 1).headOption.map { case (m, q) => m.toMessage(q) }
     }
   }

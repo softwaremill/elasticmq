@@ -18,8 +18,11 @@ trait StorageTestSuite extends FunSuite with MustMatchers with OneInstancePerTes
       super.test(testName+" using "+setup.storageName, testTags: _*) {
         _storage = setup.storage
         setup.initialize()
-        testFun
-        setup.shutdown()
+        try {
+          testFun
+        } finally {
+          setup.shutdown()
+        }
       }
     }
   }
@@ -124,7 +127,7 @@ class MessageStorageTestSuite extends StorageTestSuite {
     storage.messageStorage.persistMessage(Message(q1, "xyz", "123", 10L, 500L))
 
     // When
-    val lookupResult = storage.messageStorage.lookupUndeliveredMessage(q2)
+    val lookupResult = storage.messageStorage.lookupPendingMessage(q2, 1000L)
 
     // Then
     lookupResult must be (None)
@@ -138,13 +141,43 @@ class MessageStorageTestSuite extends StorageTestSuite {
     storage.queueStorage.persistQueue(q1)
     storage.queueStorage.persistQueue(q2)
 
-    storage.messageStorage.persistMessage(Message(q1, "xyz", "123", 10L, 500L))
+    storage.messageStorage.persistMessage(Message(q1, "xyz", "123", 10L, 0L))
 
     // When
-    val lookupResult = storage.messageStorage.lookupUndeliveredMessage(q1)
+    val lookupResult = storage.messageStorage.lookupPendingMessage(q1, 100L)
 
     // Then
-    lookupResult must be (Some(Message(q1, "xyz", "123", 10L, 500L)))
+    lookupResult must be (Some(Message(q1, "xyz", "123", 10L, 0)))
+  }
+
+  test("delivered message should be found in a non-empty queue when delivered before is lower than message delivery") {
+    // Given
+    val q1: Queue = Queue("q1", 1L)
+
+    storage.queueStorage.persistQueue(q1)
+
+    storage.messageStorage.persistMessage(Message(q1, "xyz", "123", 10L, 1234L))
+
+    // When
+    val lookupResult = storage.messageStorage.lookupPendingMessage(q1, 5678L)
+
+    // Then
+    lookupResult must be (Some(Message(q1, "xyz", "123", 10L, 1234L)))
+  }
+
+  test("delivered message should not be found in a non-empty queue when delivered before is higher than message delivery") {
+    // Given
+    val q1: Queue = Queue("q1", 1L)
+
+    storage.queueStorage.persistQueue(q1)
+
+    storage.messageStorage.persistMessage(Message(q1, "xyz", "123", 10L, 9999L))
+
+    // When
+    val lookupResult = storage.messageStorage.lookupPendingMessage(q1, 5678L)
+
+    // Then
+    lookupResult must be (None)
   }
 
   test("updating a message") {
