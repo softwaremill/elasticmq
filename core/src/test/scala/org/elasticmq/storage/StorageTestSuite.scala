@@ -69,7 +69,7 @@ class QueueStorageTestSuite extends StorageTestSuite {
     // Given
     val q1: Queue = Queue("q1", 1L)
     storage.queueStorage.persistQueue(q1)
-    storage.messageStorage.persistMessage(Message(q1, "xyz", "123", 10L))
+    storage.messageStorage.persistMessage(Message(q1, "xyz", "123", 10L, 500L))
 
     // When
     storage.queueStorage.removeQueue(q1)
@@ -104,13 +104,13 @@ class MessageStorageTestSuite extends StorageTestSuite {
     // Given
     val q1: Queue = Queue("q1", 1L)
     storage.queueStorage.persistQueue(q1)
-    storage.messageStorage.persistMessage(Message(q1, "xyz", "123", 10L))
+    storage.messageStorage.persistMessage(Message(q1, "xyz", "123", 10L, 500L))
 
     // When
     val lookupResult = storage.messageStorage.lookupMessage("xyz")
 
     // Then
-    lookupResult must be (Some(Message(q1, "xyz", "123", 10L)))
+    lookupResult must be (Some(Message(q1, "xyz", "123", 10L, 500L)))
   }
 
   test("no undelivered message should not be found in an empty queue") {
@@ -121,7 +121,7 @@ class MessageStorageTestSuite extends StorageTestSuite {
     storage.queueStorage.persistQueue(q1)
     storage.queueStorage.persistQueue(q2)
 
-    storage.messageStorage.persistMessage(Message(q1, "xyz", "123", 10L))
+    storage.messageStorage.persistMessage(Message(q1, "xyz", "123", 10L, 500L))
 
     // When
     val lookupResult = storage.messageStorage.lookupUndeliveredMessage(q2)
@@ -138,25 +138,25 @@ class MessageStorageTestSuite extends StorageTestSuite {
     storage.queueStorage.persistQueue(q1)
     storage.queueStorage.persistQueue(q2)
 
-    storage.messageStorage.persistMessage(Message(q1, "xyz", "123", 10L))
+    storage.messageStorage.persistMessage(Message(q1, "xyz", "123", 10L, 500L))
 
     // When
     val lookupResult = storage.messageStorage.lookupUndeliveredMessage(q1)
 
     // Then
-    lookupResult must be (Some(Message(q1, "xyz", "123", 10L)))
+    lookupResult must be (Some(Message(q1, "xyz", "123", 10L, 500L)))
   }
 
   test("updating a message") {
     // Given
     val q1 = Queue("q1", 1L)
     storage.queueStorage.persistQueue(q1)
-    storage.messageStorage.persistMessage(Message(q1, "xyz", "123", 10L))
+    storage.messageStorage.persistMessage(Message(q1, "xyz", "123", 10L, 500L))
 
     // When
-    storage.messageStorage.updateMessage(Message(q1, "xyz", "1234", 11L))
+    storage.messageStorage.updateMessage(Message(q1, "xyz", "1234", 11L, 501L))
 
     // Then
-    storage.messageStorage.lookupMessage("xyz") must be (Some(Message(q1, "xyz", "1234", 11L)))
+    storage.messageStorage.lookupMessage("xyz") must be (Some(Message(q1, "xyz", "1234", 11L, 501L)))
   }
 }

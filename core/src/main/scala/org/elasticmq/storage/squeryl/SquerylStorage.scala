@@ -117,10 +117,11 @@ private[squeryl] object SquerylQueue {
 }
 
 private[squeryl] class SquerylMessage(val id: String, val queueName: String, val content: String,
-                                      val visibilityTimeout: Long) extends KeyedEntity[String] {
-  def toMessage(q: SquerylQueue) = Message(q.toQueue, id, content, visibilityTimeout)
+                                      val visibilityTimeout: Long, val lastDelivered: Long) extends KeyedEntity[String] {
+  def toMessage(q: SquerylQueue) = Message(q.toQueue, id, content, visibilityTimeout, lastDelivered)
 }
 
 private[squeryl] object SquerylMessage {
-  def from(message: Message) = new SquerylMessage(message.id, message.queue.name, message.content, message.visibilityTimeout)
+  def from(message: Message) = new SquerylMessage(message.id, message.queue.name, message.content,
+    message.visibilityTimeout, message.lastDelivered)
 }
