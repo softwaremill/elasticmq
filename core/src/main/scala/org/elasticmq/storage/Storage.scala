@@ -17,6 +17,14 @@ trait QueueStorage {
 trait MessageStorage {
   def persistMessage(message: Message)
   def updateMessage(message: Message)
+
+  /**
+   * Tries to update the given message with a new last delivered value. Will return the updated message if
+   * the update succeedes, {@code None} otherwise. For the update to succeed, a message with the same id
+   * and last delivered value must be found as in {@code message}; hence, last delivered is in fact an
+   * optimistic lock.
+   */
+  def updateLastDelivered(message: Message, lastDelivered: Long): Option[Message]
   def removeMessage(message: Message)
 
   def lookupMessage(id: String): Option[Message]

@@ -192,4 +192,38 @@ class MessageStorageTestSuite extends StorageTestSuite {
     // Then
     storage.messageStorage.lookupMessage("xyz") must be (Some(Message(q1, "xyz", "1234", 11L, 501L)))
   }
+
+  test("updating last delivered should succeed for unchanged message") {
+    // Given
+    val q1 = Queue("q1", 1L)
+    val m1 = Message(q1, "xyz", "123", 10L, 500L)
+
+    storage.queueStorage.persistQueue(q1)
+    storage.messageStorage.persistMessage(m1)
+
+    // When
+    val updatedMessage = storage.messageStorage.updateLastDelivered(m1, 600L)
+
+    // Then
+    val m2 = Message(q1, "xyz", "123", 10L, 600L)
+
+    storage.messageStorage.lookupMessage("xyz") must be (Some(m2))
+    updatedMessage must be (Some(m2))
+  }
+
+  test("updating last delivered should fail for changed message") {
+    // Given
+    val q1 = Queue("q1", 1L)
+    val m1 = Message(q1, "xyz", "123", 10L, 500L)
+
+    storage.queueStorage.persistQueue(q1)
+    storage.messageStorage.persistMessage(m1)
+
+    // When
+    val updatedMessage = storage.messageStorage.updateLastDelivered(Message(q1, "xyz", "123", 10L, 550L), 600L)
+
+    // Then
+    storage.messageStorage.lookupMessage("xyz") must be (Some(m1))
+    updatedMessage must be (None)
+  }
 }

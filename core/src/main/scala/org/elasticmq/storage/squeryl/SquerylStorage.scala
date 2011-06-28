@@ -77,6 +77,16 @@ class SquerylMessageStorage extends MessageStorage {
     }
   }
 
+  def updateLastDelivered(message: Message, lastDelivered: Long) = {
+    transaction {
+      val updatedCount = update(messages)(m =>
+        where(m.id === message.id and m.lastDelivered === message.lastDelivered)
+                set(m.lastDelivered := lastDelivered))
+
+      if (updatedCount == 0) None else Some(message.copy(lastDelivered = lastDelivered))
+    }
+  }
+
   def removeMessage(message: Message) {
     transaction {
       messages.delete(message.id)
@@ -86,7 +96,7 @@ class SquerylMessageStorage extends MessageStorage {
   def lookupMessage(id: String) = {
     transaction {
       from(messages, queues)((m, q) => where(m.id === id and queuesToMessagesCond(m, q)) select(m, q))
-        .headOption.map { case (m, q) => m.toMessage(q) }
+              .headOption.map { case (m, q) => m.toMessage(q) }
     }
   }
 
