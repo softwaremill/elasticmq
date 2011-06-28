@@ -78,6 +78,17 @@ class QueueStorageTestSuite extends StorageTestSuite {
     storage.queueStorage.lookupQueue("q1") must be (None)
     storage.messageStorage.lookupMessage("xyz") must be (None)
   }
+
+  test("updating a queue") {
+    // Given
+    storage.queueStorage.persistQueue(Queue("q1", 1L));
+
+    // When
+    storage.queueStorage.updateQueue(Queue("q1", 100L))
+
+    // Then
+    storage.queueStorage.lookupQueue("q1") must be (Some(Queue("q1", 100L)))
+  }
 }
 
 class MessageStorageTestSuite extends StorageTestSuite {
@@ -134,5 +145,18 @@ class MessageStorageTestSuite extends StorageTestSuite {
 
     // Then
     lookupResult must be (Some(Message(q1, "xyz", "123", 10L)))
+  }
+
+  test("updating a message") {
+    // Given
+    val q1 = Queue("q1", 1L)
+    storage.queueStorage.persistQueue(q1)
+    storage.messageStorage.persistMessage(Message(q1, "xyz", "123", 10L))
+
+    // When
+    storage.messageStorage.updateMessage(Message(q1, "xyz", "1234", 11L))
+
+    // Then
+    storage.messageStorage.lookupMessage("xyz") must be (Some(Message(q1, "xyz", "1234", 11L)))
   }
 }

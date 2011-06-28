@@ -39,11 +39,15 @@ class SquerylQueueStorage extends QueueStorage {
 
   def persistQueue(queue: Queue) {
     transaction {
-      queues.insert(new SquerylQueue(queue.name, queue.defaultVisibilityTimeout))
+      queues.insert(SquerylQueue.from(queue))
     }
   }
 
-  def updateQueue(queue: Queue) = null
+  def updateQueue(queue: Queue) {
+    transaction {
+      queues.update(SquerylQueue.from(queue))
+    }
+  }
 
   def removeQueue(queue: Queue) {
     transaction {
@@ -63,11 +67,15 @@ class SquerylMessageStorage extends MessageStorage {
 
   def persistMessage(message: Message) {
     transaction {
-      messages.insert(new SquerylMessage(message.id, message.queue.name, message.content, message.visibilityTimeout))
+      messages.insert(SquerylMessage.from(message))
     }
   }
 
-  def updateMessage(message: Message) = null
+  def updateMessage(message: Message) {
+    transaction {
+      messages.update(SquerylMessage.from(message))
+    }
+  }
 
   def removeMessage(message: Message) {
     transaction {
@@ -104,7 +112,15 @@ private[squeryl] class SquerylQueue(val id: String, val defaultVisibilityTimeout
   def toQueue = Queue(id, defaultVisibilityTimeout)
 }
 
+private[squeryl] object SquerylQueue {
+  def from(queue: Queue) = new SquerylQueue(queue.name, queue.defaultVisibilityTimeout)
+}
+
 private[squeryl] class SquerylMessage(val id: String, val queueName: String, val content: String,
                                       val visibilityTimeout: Long) extends KeyedEntity[String] {
   def toMessage(q: SquerylQueue) = Message(q.toQueue, id, content, visibilityTimeout)
+}
+
+private[squeryl] object SquerylMessage {
+  def from(message: Message) = new SquerylMessage(message.id, message.queue.name, message.content, message.visibilityTimeout)
 }
