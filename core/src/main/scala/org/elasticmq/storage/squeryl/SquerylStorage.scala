@@ -12,14 +12,14 @@ class SquerylStorage extends Storage {
 }
 
 object SquerylStorage {
-  def initialize() {
+  def initialize(databaseName: String) {
     import org.squeryl.SessionFactory
 
     Thread.currentThread().getContextClassLoader.loadClass("org.h2.Driver");
 
     SessionFactory.concreteFactory = Some(()=>
       Session.create(
-        java.sql.DriverManager.getConnection("jdbc:h2:mem:db1;DB_CLOSE_DELAY=-1"),
+        java.sql.DriverManager.getConnection("jdbc:h2:mem:"+databaseName+";DB_CLOSE_DELAY=-1"),
         new H2Adapter))
 
     transaction {
@@ -39,7 +39,7 @@ class SquerylQueueStorage extends QueueStorage {
 
   def persistQueue(queue: Queue) {
     transaction {
-      queues.insert(new SquerylQueue(queue.name))
+      queues.insert(new SquerylQueue(queue.name, queue.defaultVisibilityTimeout))
     }
   }
 
@@ -63,7 +63,7 @@ class SquerylMessageStorage extends MessageStorage {
 
   def persistMessage(message: Message) {
     transaction {
-      messages.insert(new SquerylMessage(message.id, message.queue.name, message.content))
+      messages.insert(new SquerylMessage(message.id, message.queue.name, message.content, message.visibilityTimeout))
     }
   }
 
@@ -77,29 +77,34 @@ class SquerylMessageStorage extends MessageStorage {
 
   def lookupMessage(id: String) = {
     transaction {
-      messages.lookup(id).map(_.toMessage)
+      from(messages, queues)((m, q) => where(m.id === id and queuesToMessagesCond(m, q)) select(m, q))
+        .headOption.map { case (m, q) => m.toMessage(q) }
     }
   }
 
   def lookupUndeliveredMessage(queue: Queue) = {
     transaction {
-      from(messages)(m => where(m.queueName === queue.name) select(m)).page(0, 1).headOption.map(_.toMessage)
+      from(messages, queues)((m, q) => where(m.queueName === queue.name and queuesToMessagesCond(m, q)) select(m, q))
+              .page(0, 1).headOption.map { case (m, q) => m.toMessage(q) }
     }
   }
 }
 
 private [squeryl] object MQSchema extends Schema {
+  def queuesToMessagesCond(m: SquerylMessage, q: SquerylQueue) = q.id === m.queueName
+
   val queues = table[SquerylQueue]
   val messages = table[SquerylMessage]
 
-  val queuesToMessages = oneToManyRelation(queues, messages).via((q, m) => q.id === m.queueName)
+  val queuesToMessages = oneToManyRelation(queues, messages).via((q, m) => queuesToMessagesCond(m, q))
   queuesToMessages.foreignKeyDeclaration.constrainReference(onDelete cascade)
 }
 
-private[squeryl] class SquerylQueue(val id: String) extends KeyedEntity[String] {
-  def toQueue = Queue(id)
+private[squeryl] class SquerylQueue(val id: String, val defaultVisibilityTimeout: Long) extends KeyedEntity[String] {
+  def toQueue = Queue(id, defaultVisibilityTimeout)
 }
 
-private[squeryl] class SquerylMessage(val id: String, val queueName: String, val content: String) extends KeyedEntity[String] {
-  def toMessage = Message(Queue(queueName), id, content)
+private[squeryl] class SquerylMessage(val id: String, val queueName: String, val content: String,
+                                      val visibilityTimeout: Long) extends KeyedEntity[String] {
+  def toMessage(q: SquerylQueue) = Message(q.toQueue, id, content, visibilityTimeout)
 }

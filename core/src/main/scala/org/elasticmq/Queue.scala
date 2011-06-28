@@ -1,3 +1,3 @@
 package org.elasticmq
 
-case class Queue(name: String)
+case class Queue(name: String, defaultVisibilityTimeout: Long)

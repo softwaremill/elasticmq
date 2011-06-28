@@ -5,11 +5,11 @@ import org.scalatest._
 import org.elasticmq.{Message, Queue}
 import squeryl.SquerylStorage
 
-trait StorageTestSuite extends FunSuite with MustMatchers {
+trait StorageTestSuite extends FunSuite with MustMatchers with OneInstancePerTest {
   private case class StorageTestSetup(storageName: String, storage: Storage, initialize: () => Unit, shutdown: () => Unit)
 
   private val setups: List[StorageTestSetup] =
-    StorageTestSetup("Squeryl", new SquerylStorage, SquerylStorage.initialize _, SquerylStorage.shutdown _) :: Nil
+    StorageTestSetup("Squeryl", new SquerylStorage, () => SquerylStorage.initialize(this.getClass.getName), SquerylStorage.shutdown _) :: Nil
 
   private var _storage: Storage = null
 
@@ -30,7 +30,7 @@ trait StorageTestSuite extends FunSuite with MustMatchers {
 class QueueStorageTestSuite extends StorageTestSuite {
   test("non-existent queue should not be found") {
     // Given
-    storage.queueStorage.persistQueue(Queue("q1"))
+    storage.queueStorage.persistQueue(Queue("q1", 10L))
 
     // When
     val lookupResult = storage.queueStorage.lookupQueue("q2")
@@ -41,35 +41,35 @@ class QueueStorageTestSuite extends StorageTestSuite {
 
   test("after persisting a queue it should be found") {
     // Given
-    storage.queueStorage.persistQueue(Queue("q1"))
-    storage.queueStorage.persistQueue(Queue("q2"))
-    storage.queueStorage.persistQueue(Queue("q3"))
+    storage.queueStorage.persistQueue(Queue("q1", 1L))
+    storage.queueStorage.persistQueue(Queue("q2", 2L))
+    storage.queueStorage.persistQueue(Queue("q3", 3L))
 
     // When
     val lookupResult = storage.queueStorage.lookupQueue("q2")
 
     // Then
-    lookupResult must be (Some(Queue("q2")))
+    lookupResult must be (Some(Queue("q2", 2L)))
   }
 
   test("queues should be removed") {
     // Given
-    storage.queueStorage.persistQueue(Queue("q1"))
-    storage.queueStorage.persistQueue(Queue("q2"))
+    storage.queueStorage.persistQueue(Queue("q1", 1L))
+    storage.queueStorage.persistQueue(Queue("q2", 2L))
 
     // When
-    storage.queueStorage.removeQueue(Queue("q1"))
+    storage.queueStorage.removeQueue(Queue("q1", 1L))
 
     // Then
     storage.queueStorage.lookupQueue("q1") must be (None)
-    storage.queueStorage.lookupQueue("q2") must be (Some(Queue("q2")))
+    storage.queueStorage.lookupQueue("q2") must be (Some(Queue("q2", 2L)))
   }
 
   test("removing a queue should remove all messages") {
     // Given
-    val q1: Queue = Queue("q1")
+    val q1: Queue = Queue("q1", 1L)
     storage.queueStorage.persistQueue(q1)
-    storage.messageStorage.persistMessage(Message(q1, "xyz", "123"))
+    storage.messageStorage.persistMessage(Message(q1, "xyz", "123", 10L))
 
     // When
     storage.queueStorage.removeQueue(q1)
@@ -91,26 +91,26 @@ class MessageStorageTestSuite extends StorageTestSuite {
 
   test("after persisting a message it should be found") {
     // Given
-    val q1: Queue = Queue("q1")
+    val q1: Queue = Queue("q1", 1L)
     storage.queueStorage.persistQueue(q1)
-    storage.messageStorage.persistMessage(Message(q1, "xyz", "123"))
+    storage.messageStorage.persistMessage(Message(q1, "xyz", "123", 10L))
 
     // When
     val lookupResult = storage.messageStorage.lookupMessage("xyz")
 
     // Then
-    lookupResult must be (Some(Message(q1, "xyz", "123")))
+    lookupResult must be (Some(Message(q1, "xyz", "123", 10L)))
   }
 
   test("no undelivered message should not be found in an empty queue") {
     // Given
-    val q1: Queue = Queue("q1")
-    val q2: Queue = Queue("q2")
+    val q1: Queue = Queue("q1", 1L)
+    val q2: Queue = Queue("q2", 2L)
 
     storage.queueStorage.persistQueue(q1)
     storage.queueStorage.persistQueue(q2)
 
-    storage.messageStorage.persistMessage(Message(q1, "xyz", "123"))
+    storage.messageStorage.persistMessage(Message(q1, "xyz", "123", 10L))
 
     // When
     val lookupResult = storage.messageStorage.lookupUndeliveredMessage(q2)
@@ -121,18 +121,18 @@ class MessageStorageTestSuite extends StorageTestSuite {
 
   test("undelivered message should be found in a non-empty queue") {
     // Given
-    val q1: Queue = Queue("q1")
-    val q2: Queue = Queue("q2")
+    val q1: Queue = Queue("q1", 1L)
+    val q2: Queue = Queue("q2", 2L)
 
     storage.queueStorage.persistQueue(q1)
     storage.queueStorage.persistQueue(q2)
 
-    storage.messageStorage.persistMessage(Message(q1, "xyz", "123"))
+    storage.messageStorage.persistMessage(Message(q1, "xyz", "123", 10L))
 
     // When
     val lookupResult = storage.messageStorage.lookupUndeliveredMessage(q1)
 
     // Then
-    lookupResult must be (Some(Message(q1, "xyz", "123")))
+    lookupResult must be (Some(Message(q1, "xyz", "123", 10L)))
   }
 }
