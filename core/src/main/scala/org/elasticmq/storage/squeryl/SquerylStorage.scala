@@ -49,7 +49,7 @@ class SquerylQueueStorage extends QueueStorage {
     }
   }
 
-  def removeQueue(queue: Queue) {
+  def deleteQueue(queue: Queue) {
     transaction {
       queues.delete(queue.name)
     }
@@ -87,7 +87,7 @@ class SquerylMessageStorage extends MessageStorage {
     }
   }
 
-  def removeMessage(message: Message) {
+  def deleteMessage(message: Message) {
     transaction {
       messages.delete(message.id)
     }

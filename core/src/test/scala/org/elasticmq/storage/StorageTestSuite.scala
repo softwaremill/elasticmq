@@ -61,21 +61,21 @@ class QueueStorageTestSuite extends StorageTestSuite {
     storage.queueStorage.persistQueue(Queue("q2", 2L))
 
     // When
-    storage.queueStorage.removeQueue(Queue("q1", 1L))
+    storage.queueStorage.deleteQueue(Queue("q1", 1L))
 
     // Then
     storage.queueStorage.lookupQueue("q1") must be (None)
     storage.queueStorage.lookupQueue("q2") must be (Some(Queue("q2", 2L)))
   }
 
-  test("removing a queue should remove all messages") {
+  test("deleting a queue should remove all messages") {
     // Given
     val q1: Queue = Queue("q1", 1L)
     storage.queueStorage.persistQueue(q1)
     storage.messageStorage.persistMessage(Message(q1, "xyz", "123", 10L, 500L))
 
     // When
-    storage.queueStorage.removeQueue(q1)
+    storage.queueStorage.deleteQueue(q1)
 
     // Then
     storage.queueStorage.lookupQueue("q1") must be (None)

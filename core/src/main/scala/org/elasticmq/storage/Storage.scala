@@ -10,7 +10,7 @@ trait Storage {
 trait QueueStorage {
   def persistQueue(queue: Queue)
   def updateQueue(queue: Queue)
-  def removeQueue(queue: Queue)
+  def deleteQueue(queue: Queue)
   def lookupQueue(name: String): Option[Queue]
 }
 
@@ -25,7 +25,7 @@ trait MessageStorage {
    * optimistic lock.
    */
   def updateLastDelivered(message: Message, lastDelivered: Long): Option[Message]
-  def removeMessage(message: Message)
+  def deleteMessage(message: Message)
 
   def lookupMessage(id: String): Option[Message]
   def lookupPendingMessage(queue: Queue, deliveredBefore: Long): Option[Message]
