@@ -2,9 +2,10 @@ package org.elasticmq.storage.squeryl
 
 import org.squeryl.adapters.H2Adapter
 import org.squeryl._
-import org.elasticmq.{Message, Queue}
 import PrimitiveTypeMode._
 import org.elasticmq.storage.{MessageStorage, QueueStorage, Storage}
+import org.elasticmq._
+import java.lang.IllegalArgumentException
 
 class SquerylStorage extends Storage {
   def messageStorage = new SquerylMessageStorage
@@ -122,19 +123,26 @@ private [squeryl] object MQSchema extends Schema {
 }
 
 private[squeryl] class SquerylQueue(val id: String, val defaultVisibilityTimeout: Long) extends KeyedEntity[String] {
-  def toQueue = Queue(id, defaultVisibilityTimeout)
+  def toQueue = Queue(id, MillisVisibilityTimeout(defaultVisibilityTimeout))
 }
 
 private[squeryl] object SquerylQueue {
-  def from(queue: Queue) = new SquerylQueue(queue.name, queue.defaultVisibilityTimeout)
+  def from(queue: Queue) = new SquerylQueue(queue.name, queue.defaultVisibilityTimeout.millis)
 }
 
 private[squeryl] class SquerylMessage(val id: String, val queueName: String, val content: String,
                                       val visibilityTimeout: Long, val lastDelivered: Long) extends KeyedEntity[String] {
-  def toMessage(q: SquerylQueue) = Message(q.toQueue, id, content, visibilityTimeout, lastDelivered)
+  def toMessage(q: SquerylQueue) = Message(q.toQueue, id, content,
+    MillisVisibilityTimeout(visibilityTimeout), lastDelivered)
 }
 
 private[squeryl] object SquerylMessage {
-  def from(message: Message) = new SquerylMessage(message.id, message.queue.name, message.content,
-    message.visibilityTimeout, message.lastDelivered)
+  def from(message: Message) = {
+    new SquerylMessage(message.id, message.queue.name, message.content,
+    message.visibilityTimeout match {
+      case DefaultVisibilityTimeout => throw new IllegalArgumentException("Persisted messages must have a non-default visibility timeout")
+      case MillisVisibilityTimeout(millis) => millis
+    },
+    message.lastDelivered)
+  }
 }

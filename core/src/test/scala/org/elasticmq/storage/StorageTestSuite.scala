@@ -2,7 +2,7 @@ package org.elasticmq.storage
 
 import org.scalatest.matchers.MustMatchers
 import org.scalatest._
-import org.elasticmq.{Message, Queue}
+import org.elasticmq._
 import squeryl.SquerylStorage
 
 trait StorageTestSuite extends FunSuite with MustMatchers with OneInstancePerTest {
@@ -33,7 +33,7 @@ trait StorageTestSuite extends FunSuite with MustMatchers with OneInstancePerTes
 class QueueStorageTestSuite extends StorageTestSuite {
   test("non-existent queue should not be found") {
     // Given
-    storage.queueStorage.persistQueue(Queue("q1", 10L))
+    storage.queueStorage.persistQueue(Queue("q1", MillisVisibilityTimeout(10L)))
 
     // When
     val lookupResult = storage.queueStorage.lookupQueue("q2")
@@ -44,35 +44,35 @@ class QueueStorageTestSuite extends StorageTestSuite {
 
   test("after persisting a queue it should be found") {
     // Given
-    storage.queueStorage.persistQueue(Queue("q1", 1L))
-    storage.queueStorage.persistQueue(Queue("q2", 2L))
-    storage.queueStorage.persistQueue(Queue("q3", 3L))
+    storage.queueStorage.persistQueue(Queue("q1", MillisVisibilityTimeout(1L)))
+    storage.queueStorage.persistQueue(Queue("q2", MillisVisibilityTimeout(2L)))
+    storage.queueStorage.persistQueue(Queue("q3", MillisVisibilityTimeout(3L)))
 
     // When
     val lookupResult = storage.queueStorage.lookupQueue("q2")
 
     // Then
-    lookupResult must be (Some(Queue("q2", 2L)))
+    lookupResult must be (Some(Queue("q2", MillisVisibilityTimeout(2L))))
   }
 
   test("queues should be deleted") {
     // Given
-    storage.queueStorage.persistQueue(Queue("q1", 1L))
-    storage.queueStorage.persistQueue(Queue("q2", 2L))
+    storage.queueStorage.persistQueue(Queue("q1", MillisVisibilityTimeout(1L)))
+    storage.queueStorage.persistQueue(Queue("q2", MillisVisibilityTimeout(2L)))
 
     // When
-    storage.queueStorage.deleteQueue(Queue("q1", 1L))
+    storage.queueStorage.deleteQueue(Queue("q1", MillisVisibilityTimeout(1L)))
 
     // Then
     storage.queueStorage.lookupQueue("q1") must be (None)
-    storage.queueStorage.lookupQueue("q2") must be (Some(Queue("q2", 2L)))
+    storage.queueStorage.lookupQueue("q2") must be (Some(Queue("q2", MillisVisibilityTimeout(2L))))
   }
 
   test("deleting a queue should remove all messages") {
     // Given
-    val q1: Queue = Queue("q1", 1L)
+    val q1: Queue = Queue("q1", MillisVisibilityTimeout(1L))
     storage.queueStorage.persistQueue(q1)
-    storage.messageStorage.persistMessage(Message(q1, "xyz", "123", 10L, 500L))
+    storage.messageStorage.persistMessage(Message(q1, "xyz", "123", MillisVisibilityTimeout(10L), 500L))
 
     // When
     storage.queueStorage.deleteQueue(q1)
@@ -84,13 +84,13 @@ class QueueStorageTestSuite extends StorageTestSuite {
 
   test("updating a queue") {
     // Given
-    storage.queueStorage.persistQueue(Queue("q1", 1L));
+    storage.queueStorage.persistQueue(Queue("q1", MillisVisibilityTimeout(1L)));
 
     // When
-    storage.queueStorage.updateQueue(Queue("q1", 100L))
+    storage.queueStorage.updateQueue(Queue("q1", MillisVisibilityTimeout(100L)))
 
     // Then
-    storage.queueStorage.lookupQueue("q1") must be (Some(Queue("q1", 100L)))
+    storage.queueStorage.lookupQueue("q1") must be (Some(Queue("q1", MillisVisibilityTimeout(100L))))
   }
 }
 
@@ -105,26 +105,26 @@ class MessageStorageTestSuite extends StorageTestSuite {
 
   test("after persisting a message it should be found") {
     // Given
-    val q1: Queue = Queue("q1", 1L)
+    val q1: Queue = Queue("q1", MillisVisibilityTimeout(1L))
     storage.queueStorage.persistQueue(q1)
-    storage.messageStorage.persistMessage(Message(q1, "xyz", "123", 10L, 500L))
+    storage.messageStorage.persistMessage(Message(q1, "xyz", "123", MillisVisibilityTimeout(10L), 500L))
 
     // When
     val lookupResult = storage.messageStorage.lookupMessage("xyz")
 
     // Then
-    lookupResult must be (Some(Message(q1, "xyz", "123", 10L, 500L)))
+    lookupResult must be (Some(Message(q1, "xyz", "123", MillisVisibilityTimeout(10L), 500L)))
   }
 
   test("no undelivered message should not be found in an empty queue") {
     // Given
-    val q1: Queue = Queue("q1", 1L)
-    val q2: Queue = Queue("q2", 2L)
+    val q1: Queue = Queue("q1", MillisVisibilityTimeout(1L))
+    val q2: Queue = Queue("q2", MillisVisibilityTimeout(2L))
 
     storage.queueStorage.persistQueue(q1)
     storage.queueStorage.persistQueue(q2)
 
-    storage.messageStorage.persistMessage(Message(q1, "xyz", "123", 10L, 500L))
+    storage.messageStorage.persistMessage(Message(q1, "xyz", "123", MillisVisibilityTimeout(10L), 500L))
 
     // When
     val lookupResult = storage.messageStorage.lookupPendingMessage(q2, 1000L)
@@ -135,43 +135,43 @@ class MessageStorageTestSuite extends StorageTestSuite {
 
   test("undelivered message should be found in a non-empty queue") {
     // Given
-    val q1: Queue = Queue("q1", 1L)
-    val q2: Queue = Queue("q2", 2L)
+    val q1: Queue = Queue("q1", MillisVisibilityTimeout(1L))
+    val q2: Queue = Queue("q2", MillisVisibilityTimeout(2L))
 
     storage.queueStorage.persistQueue(q1)
     storage.queueStorage.persistQueue(q2)
 
-    storage.messageStorage.persistMessage(Message(q1, "xyz", "123", 10L, 40L))
+    storage.messageStorage.persistMessage(Message(q1, "xyz", "123", MillisVisibilityTimeout(10L), 40L))
 
     // When
     val lookupResult = storage.messageStorage.lookupPendingMessage(q1, 100L)
 
     // Then
-    lookupResult must be (Some(Message(q1, "xyz", "123", 10L, 40L)))
+    lookupResult must be (Some(Message(q1, "xyz", "123", MillisVisibilityTimeout(10L), 40L)))
   }
 
   test("delivered message should be found in a non-empty queue when it is visible") {
     // Given
-    val q1: Queue = Queue("q1", 1L)
+    val q1: Queue = Queue("q1", MillisVisibilityTimeout(1L))
 
     storage.queueStorage.persistQueue(q1)
 
-    storage.messageStorage.persistMessage(Message(q1, "xyz", "123", 10L, 1234L))
+    storage.messageStorage.persistMessage(Message(q1, "xyz", "123", MillisVisibilityTimeout(10L), 1234L))
 
     // When
     val lookupResult = storage.messageStorage.lookupPendingMessage(q1, 5678L)
 
     // Then
-    lookupResult must be (Some(Message(q1, "xyz", "123", 10L, 1234L)))
+    lookupResult must be (Some(Message(q1, "xyz", "123", MillisVisibilityTimeout(10L), 1234L)))
   }
 
   test("delivered message should not be found in a non-empty queue when it is not visible") {
     // Given
-    val q1: Queue = Queue("q1", 1L)
+    val q1: Queue = Queue("q1", MillisVisibilityTimeout(1L))
 
     storage.queueStorage.persistQueue(q1)
 
-    storage.messageStorage.persistMessage(Message(q1, "xyz", "123", 10L, 5669L))
+    storage.messageStorage.persistMessage(Message(q1, "xyz", "123", MillisVisibilityTimeout(10L), 5669L))
 
     // When
     val lookupResult = storage.messageStorage.lookupPendingMessage(q1, 5678L)
@@ -182,21 +182,21 @@ class MessageStorageTestSuite extends StorageTestSuite {
 
   test("updating a message") {
     // Given
-    val q1 = Queue("q1", 1L)
+    val q1 = Queue("q1", MillisVisibilityTimeout(1L))
     storage.queueStorage.persistQueue(q1)
-    storage.messageStorage.persistMessage(Message(q1, "xyz", "123", 10L, 500L))
+    storage.messageStorage.persistMessage(Message(q1, "xyz", "123", MillisVisibilityTimeout(10L), 500L))
 
     // When
-    storage.messageStorage.updateMessage(Message(q1, "xyz", "1234", 11L, 501L))
+    storage.messageStorage.updateMessage(Message(q1, "xyz", "1234", MillisVisibilityTimeout(11L), 501L))
 
     // Then
-    storage.messageStorage.lookupMessage("xyz") must be (Some(Message(q1, "xyz", "1234", 11L, 501L)))
+    storage.messageStorage.lookupMessage("xyz") must be (Some(Message(q1, "xyz", "1234", MillisVisibilityTimeout(11L), 501L)))
   }
 
   test("updating last delivered should succeed for unchanged message") {
     // Given
-    val q1 = Queue("q1", 1L)
-    val m1 = Message(q1, "xyz", "123", 10L, 500L)
+    val q1 = Queue("q1", MillisVisibilityTimeout(1L))
+    val m1 = Message(q1, "xyz", "123", MillisVisibilityTimeout(10L), 500L)
 
     storage.queueStorage.persistQueue(q1)
     storage.messageStorage.persistMessage(m1)
@@ -205,7 +205,7 @@ class MessageStorageTestSuite extends StorageTestSuite {
     val updatedMessage = storage.messageStorage.updateLastDelivered(m1, 600L)
 
     // Then
-    val m2 = Message(q1, "xyz", "123", 10L, 600L)
+    val m2 = Message(q1, "xyz", "123", MillisVisibilityTimeout(10L), 600L)
 
     storage.messageStorage.lookupMessage("xyz") must be (Some(m2))
     updatedMessage must be (Some(m2))
@@ -213,14 +213,14 @@ class MessageStorageTestSuite extends StorageTestSuite {
 
   test("updating last delivered should fail for changed message") {
     // Given
-    val q1 = Queue("q1", 1L)
-    val m1 = Message(q1, "xyz", "123", 10L, 500L)
+    val q1 = Queue("q1", MillisVisibilityTimeout(1L))
+    val m1 = Message(q1, "xyz", "123", MillisVisibilityTimeout(10L), 500L)
 
     storage.queueStorage.persistQueue(q1)
     storage.messageStorage.persistMessage(m1)
 
     // When
-    val updatedMessage = storage.messageStorage.updateLastDelivered(Message(q1, "xyz", "123", 10L, 550L), 600L)
+    val updatedMessage = storage.messageStorage.updateLastDelivered(Message(q1, "xyz", "123", MillisVisibilityTimeout(10L), 550L), 600L)
 
     // Then
     storage.messageStorage.lookupMessage("xyz") must be (Some(m1))
@@ -229,8 +229,8 @@ class MessageStorageTestSuite extends StorageTestSuite {
 
   test("message should be deleted") {
     // Given
-    val q1 = Queue("q1", 1L)
-    val m1 = Message(q1, "xyz", "123", 10L, 500L)
+    val q1 = Queue("q1", MillisVisibilityTimeout(1L))
+    val m1 = Message(q1, "xyz", "123", MillisVisibilityTimeout(10L), 500L)
 
     storage.queueStorage.persistQueue(q1)
     storage.messageStorage.persistMessage(m1)

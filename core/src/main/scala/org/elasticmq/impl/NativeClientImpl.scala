@@ -18,7 +18,7 @@ class NativeQueueClientImpl(storage: Storage) extends QueueClient {
 
   def lookupQueue(name: String) = storage.queueStorage.lookupQueue(name)
 
-  def updateDefaultVisibilityTimeout(queue: Queue, newDefaultVisibilityTimeout: Long) = {
+  def updateDefaultVisibilityTimeout(queue: Queue, newDefaultVisibilityTimeout: MillisVisibilityTimeout) = {
     val newQueue = queue.copy(defaultVisibilityTimeout = newDefaultVisibilityTimeout)
     storage.queueStorage.updateQueue(newQueue)
     newQueue
@@ -33,7 +33,7 @@ class NativeMessageClientImpl(storage: Storage) extends MessageClient {
   def sendMessage(message: Message) = {
     var toSend = message
     if (toSend.id == null) toSend = toSend.copy(id = generateId())
-    if (toSend.visibilityTimeout == 0) toSend = toSend.copy(visibilityTimeout = message.queue.defaultVisibilityTimeout)
+    if (toSend.visibilityTimeout == DefaultVisibilityTimeout) toSend = toSend.copy(visibilityTimeout = message.queue.defaultVisibilityTimeout)
     storage.messageStorage.persistMessage(toSend)
     toSend
   }
@@ -48,7 +48,7 @@ class NativeMessageClientImpl(storage: Storage) extends MessageClient {
                 .orElse(receiveMessage(queue)))
   }
 
-  def updateVisibilityTimeout(message: Message, newVisibilityTimeout: Long) = {
+  def updateVisibilityTimeout(message: Message, newVisibilityTimeout: MillisVisibilityTimeout) = {
     val newMessage = message.copy(visibilityTimeout = newVisibilityTimeout)
     storage.messageStorage.updateMessage(newMessage)
     newMessage
