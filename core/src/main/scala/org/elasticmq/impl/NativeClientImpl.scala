@@ -29,7 +29,7 @@ class NativeQueueClientImpl(storage: Storage) extends QueueClient {
 }
 
 class NativeMessageClientImpl(storage: Storage) extends MessageClient {
-  def sendMessage(message: Message) {
+  def sendMessage(message: Message) = {
     var toSend = message
     if (toSend.id == null) toSend = toSend.copy(id = generateId())
     if (toSend.visibilityTimeout == null) toSend = toSend.copy(visibilityTimeout = message.queue.defaultVisibilityTimeout)

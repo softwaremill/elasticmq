@@ -55,7 +55,7 @@ class QueueStorageTestSuite extends StorageTestSuite {
     lookupResult must be (Some(Queue("q2", 2L)))
   }
 
-  test("queues should be removed") {
+  test("queues should be deleted") {
     // Given
     storage.queueStorage.persistQueue(Queue("q1", 1L))
     storage.queueStorage.persistQueue(Queue("q2", 2L))
@@ -141,16 +141,16 @@ class MessageStorageTestSuite extends StorageTestSuite {
     storage.queueStorage.persistQueue(q1)
     storage.queueStorage.persistQueue(q2)
 
-    storage.messageStorage.persistMessage(Message(q1, "xyz", "123", 10L, 0L))
+    storage.messageStorage.persistMessage(Message(q1, "xyz", "123", 10L, 40L))
 
     // When
     val lookupResult = storage.messageStorage.lookupPendingMessage(q1, 100L)
 
     // Then
-    lookupResult must be (Some(Message(q1, "xyz", "123", 10L, 0)))
+    lookupResult must be (Some(Message(q1, "xyz", "123", 10L, 40L)))
   }
 
-  test("delivered message should be found in a non-empty queue when delivered before is lower than message delivery") {
+  test("delivered message should be found in a non-empty queue when it is visible") {
     // Given
     val q1: Queue = Queue("q1", 1L)
 
@@ -165,13 +165,13 @@ class MessageStorageTestSuite extends StorageTestSuite {
     lookupResult must be (Some(Message(q1, "xyz", "123", 10L, 1234L)))
   }
 
-  test("delivered message should not be found in a non-empty queue when delivered before is higher than message delivery") {
+  test("delivered message should not be found in a non-empty queue when it is not visible") {
     // Given
     val q1: Queue = Queue("q1", 1L)
 
     storage.queueStorage.persistQueue(q1)
 
-    storage.messageStorage.persistMessage(Message(q1, "xyz", "123", 10L, 9999L))
+    storage.messageStorage.persistMessage(Message(q1, "xyz", "123", 10L, 5669L))
 
     // When
     val lookupResult = storage.messageStorage.lookupPendingMessage(q1, 5678L)
@@ -225,5 +225,20 @@ class MessageStorageTestSuite extends StorageTestSuite {
     // Then
     storage.messageStorage.lookupMessage("xyz") must be (Some(m1))
     updatedMessage must be (None)
+  }
+
+  test("message should be deleted") {
+    // Given
+    val q1 = Queue("q1", 1L)
+    val m1 = Message(q1, "xyz", "123", 10L, 500L)
+
+    storage.queueStorage.persistQueue(q1)
+    storage.messageStorage.persistMessage(m1)
+
+    // When
+    storage.messageStorage.deleteMessage(m1)
+
+    // Then
+    storage.messageStorage.lookupMessage("xyz") must be (None)
   }
 }
