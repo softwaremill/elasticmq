@@ -3,7 +3,7 @@ package org.elasticmq.impl
 import org.elasticmq.storage.Storage
 import java.util.UUID
 import org.elasticmq._
-import org.scala_tools.time.Imports._
+import org.joda.time.DateTime
 
 class NativeClientImpl(storage: Storage) extends Client {
   def queueClient = new NativeQueueClientImpl(storage)
@@ -39,7 +39,7 @@ class NativeMessageClientImpl(storage: Storage) extends MessageClient {
   }
 
   def receiveMessage(queue: Queue): Option[Message] = {
-    val now = DateTime.now.millis
+    val now = (new DateTime).getMillis
 
     storage.messageStorage.lookupPendingMessage(queue, now)
       .flatMap(message =>
