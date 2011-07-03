@@ -24,6 +24,8 @@ object Dependencies {
   val scalatest = "org.scalatest" % "scalatest_2.9.0" % "1.6.1" % "test"
   val mockito = "org.mockito" % "mockito-core" % "1.7" % "test"
 
+  val testing = Seq(scalatest, mockito)
+
   //val squerylSrc = srcFor(squeryl)
 
   //def srcFor(artifact: ModuleID) = artifact % "sources" classifier "sources"
@@ -33,7 +35,13 @@ object ElasticMQBuild extends Build {
   import Dependencies._
   import BuildSettings._
 
-  lazy val root: Project = Project("root", file("."), settings = buildSettings) aggregate(core)
+  lazy val root: Project = Project("root", file("."), settings = buildSettings) aggregate(api, core, rest)
+  lazy val api: Project = Project("api", file("api"), settings = buildSettings)
   lazy val core: Project = Project("core", file("core"), settings = buildSettings ++ Seq(
-    libraryDependencies := Seq(squeryl, h2, jodaTime, scalatest, mockito)))
+    libraryDependencies := Seq(squeryl, h2, jodaTime) ++ testing))
+  lazy val rest: Project = Project("rest", file("rest"), settings = buildSettings) aggregate(restCore, restSqs)
+  lazy val restCore: Project = Project("rest-core", file("rest/rest-core"), settings = buildSettings ++ Seq(
+    libraryDependencies := Seq() ++ testing))
+  lazy val restSqs: Project = Project("rest-sqs", file("rest/rest-sqs"), settings = buildSettings ++ Seq(
+    libraryDependencies := Seq() ++ testing))
 }
