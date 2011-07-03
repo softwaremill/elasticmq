@@ -20,6 +20,7 @@ object Dependencies {
   val squeryl = "org.squeryl" %% "squeryl" % "0.9.4"
   val h2 = "com.h2database" % "h2" % "1.3.156"
   val jodaTime = "joda-time" % "joda-time" % "1.6.2" // when available use https://github.com/jorgeortiz85/scala-time
+  val netty = "org.jboss.netty" % "netty" % "3.2.4.Final"
 
   val scalatest = "org.scalatest" % "scalatest_2.9.0" % "1.6.1" % "test"
   val mockito = "org.mockito" % "mockito-core" % "1.7" % "test"
@@ -41,7 +42,7 @@ object ElasticMQBuild extends Build {
     libraryDependencies := Seq(squeryl, h2, jodaTime) ++ testing))
   lazy val rest: Project = Project("rest", file("rest"), settings = buildSettings) aggregate(restCore, restSqs)
   lazy val restCore: Project = Project("rest-core", file("rest/rest-core"), settings = buildSettings ++ Seq(
-    libraryDependencies := Seq() ++ testing))
+    libraryDependencies := Seq(netty) ++ testing))
   lazy val restSqs: Project = Project("rest-sqs", file("rest/rest-sqs"), settings = buildSettings ++ Seq(
     libraryDependencies := Seq() ++ testing))
 }
