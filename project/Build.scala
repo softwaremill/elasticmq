@@ -27,9 +27,7 @@ object Dependencies {
 
   val testing = Seq(scalatest, mockito)
 
-  //val squerylSrc = srcFor(squeryl)
-
-  //def srcFor(artifact: ModuleID) = artifact % "sources" classifier "sources"
+  // To get the source run the <update-classifiers> task.
 }
 
 object ElasticMQBuild extends Build {
