@@ -36,13 +36,39 @@ object ElasticMQBuild extends Build {
   import Dependencies._
   import BuildSettings._
 
-  lazy val root: Project = Project("root", file("."), settings = buildSettings) aggregate(api, core, rest)
-  lazy val api: Project = Project("api", file("api"), settings = buildSettings)
-  lazy val core: Project = Project("core", file("core"), settings = buildSettings ++ Seq(
-    libraryDependencies := Seq(squeryl, h2, jodaTime) ++ testing))
-  lazy val rest: Project = Project("rest", file("rest"), settings = buildSettings) aggregate(restCore, restSqs)
-  lazy val restCore: Project = Project("rest-core", file("rest/rest-core"), settings = buildSettings ++ Seq(
-    libraryDependencies := Seq(netty) ++ testing))
-  lazy val restSqs: Project = Project("rest-sqs", file("rest/rest-sqs"), settings = buildSettings ++ Seq(
-    libraryDependencies := Seq() ++ testing))
+  lazy val root: Project = Project(
+    "root",
+    file("."),
+    settings = buildSettings
+  ) aggregate(api, core, rest)
+
+  lazy val api: Project = Project(
+    "api",
+    file("api"),
+    settings = buildSettings
+  )
+
+  lazy val core: Project = Project(
+    "core",
+    file("core"),
+    settings = buildSettings ++ Seq(libraryDependencies := Seq(squeryl, h2, jodaTime) ++ testing)
+  ) dependsOn(api)
+
+  lazy val rest: Project = Project(
+    "rest",
+    file("rest"),
+    settings = buildSettings
+  ) aggregate(restCore, restSqs)
+
+  lazy val restCore: Project = Project(
+    "rest-core",
+    file("rest/rest-core"),
+    settings = buildSettings ++ Seq(libraryDependencies := Seq(netty) ++ testing)
+  ) dependsOn(api)
+
+  lazy val restSqs: Project = Project(
+    "rest-sqs",
+    file("rest/rest-sqs"),
+    settings = buildSettings ++ Seq(libraryDependencies := Seq() ++ testing)
+  ) dependsOn(restCore)
 }
