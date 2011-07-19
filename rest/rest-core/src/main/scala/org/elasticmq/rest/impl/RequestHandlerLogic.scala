@@ -22,7 +22,7 @@ trait CanHandleRequestChecker {
 }
 
 trait CheckingRequestHandlerWrapper extends CanHandleRequestChecker {
-  def handler: RequestHandlerLogic
+  def clientHandler: RequestHandlerLogic
 }
 
 /**
@@ -82,7 +82,7 @@ object RequestHandlerBuilder {
   }
 
   class RunningSpecifier(checkers: Seq[CanHandleRequestChecker]) {
-    def running(clientHandler: RequestHandlerLogic) = new CheckingRequestHandlerWrapper {
+    def running(theClientHandler: RequestHandlerLogic) = new CheckingRequestHandlerWrapper {
       def canHandle(request: HttpRequest, queryStringDecoder: QueryStringDecoder) = {
         def doCanHandle(checkersLeft: Seq[CanHandleRequestChecker], acc: Map[String, String]): CheckerResult = {
           if (checkersLeft.isEmpty) {
@@ -98,7 +98,7 @@ object RequestHandlerBuilder {
         doCanHandle(checkers, Map())
       }
 
-      val handler = clientHandler
+      val clientHandler = theClientHandler
     }
   }
 }
