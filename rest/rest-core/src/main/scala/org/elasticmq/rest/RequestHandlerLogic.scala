@@ -1,4 +1,4 @@
-package org.elasticmq.rest.impl
+package org.elasticmq.rest
 
 import org.jboss.netty.channel.Channel
 import org.jboss.netty.handler.codec.http.{QueryStringDecoder, HttpMethod, HttpRequest}

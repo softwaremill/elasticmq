@@ -1,4 +1,4 @@
-package org.elasticmq.rest.impl
+package org.elasticmq.rest
 
 import org.jboss.netty.handler.codec.http.HttpResponseStatus._
 import org.jboss.netty.handler.codec.http.HttpVersion._

@@ -1,4 +1,4 @@
-package org.elasticmq.rest.impl
+package org.elasticmq.rest
 
 import org.scalatest.matchers.MustMatchers
 import org.scalatest.{mock, FunSuite}

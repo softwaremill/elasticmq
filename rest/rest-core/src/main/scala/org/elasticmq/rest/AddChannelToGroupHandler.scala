@@ -1,4 +1,4 @@
-package org.elasticmq.rest.impl
+package org.elasticmq.rest
 
 import org.jboss.netty.channel.{ChannelStateEvent, ChannelHandlerContext, SimpleChannelUpstreamHandler}
 import org.jboss.netty.channel.group.ChannelGroup
