@@ -1,6 +1,5 @@
 package org.elasticmq.rest
 
-import impl._
 import org.elasticmq.Client
 import java.util.concurrent.Executors
 import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory
@@ -11,14 +10,7 @@ import org.apache.log4j.{Logger, BasicConfigurator}
 import org.jboss.netty.channel.group.{ChannelGroup, DefaultChannelGroup}
 import org.jboss.netty.channel._
 import org.jboss.netty.handler.codec.http._
-import org.jboss.netty.handler.codec.http.HttpVersion._
-import org.jboss.netty.handler.codec.http.HttpResponseStatus._
-import org.jboss.netty.handler.codec.http.HttpHeaders._
-import org.jboss.netty.handler.ssl.SslHandler
-import org.jboss.netty.handler.stream.{ChunkedFile, ChunkedWriteHandler}
-import org.jboss.netty.buffer.ChannelBuffers
-import org.jboss.netty.util.CharsetUtil
-import org.jboss.netty.handler.codec.http.HttpHeaders.Names._
+import org.jboss.netty.handler.stream.ChunkedWriteHandler
 
 class RestServer(client: Client, doStop: () => Unit) {
   def stop() {
