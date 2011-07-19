@@ -1,25 +1,30 @@
 package org.elasticmq.rest.impl
 
 import org.scalatest.matchers.MustMatchers
-import org.jboss.netty.handler.codec.http.{HttpMethod, HttpRequest}
 import org.scalatest.{mock, FunSuite}
 import mock.MockitoSugar
 import org.mockito.Mockito.{when}
-import java.net.URI
+import org.jboss.netty.handler.codec.http.{QueryStringDecoder, HttpMethod, HttpRequest}
 
 class RequestHandlerBuilderTestSuite extends FunSuite with MustMatchers with MockitoSugar {
   import RequestHandlerBuilder.createHandler
   import HttpMethod._
 
-  val handler = (createHandler
+  val handler1 = (createHandler
           forMethod GET
           forPath "/messages/a/send"
-          requiringQueryParameters List("a", "b", "c")
+          requiringQueryParameters List()
+          running null)
+
+  val handler2 = (createHandler
+          forMethod POST
+          forPath "/x/y"
+          requiringQueryParameters List("a", "b")
           running null)
 
   test("should not handle other methods") {
     // When
-    val ret = handler.canHandle(createMockRequest(POST), new URI("/messages/a/send"))
+    val ret = handler1.canHandle(createMockRequest(POST), new QueryStringDecoder("/messages/a/send"))
 
     // Then
     ret must be (None)
@@ -27,7 +32,7 @@ class RequestHandlerBuilderTestSuite extends FunSuite with MustMatchers with Moc
 
   test("should not handle other paths") {
     // When
-    val ret = handler.canHandle(createMockRequest(GET), new URI("/somethingelse/a/send"))
+    val ret = handler1.canHandle(createMockRequest(GET), new QueryStringDecoder("/somethingelse/a/send"))
 
     // Then
     ret must be (None)
@@ -35,10 +40,26 @@ class RequestHandlerBuilderTestSuite extends FunSuite with MustMatchers with Moc
 
   test("should handle specified methods and paths") {
     // When
-    val ret = handler.canHandle(createMockRequest(GET), new URI("/messages/a/send"))
+    val ret = handler1.canHandle(createMockRequest(GET), new QueryStringDecoder("/messages/a/send"))
 
     // Then
     ret must be (Some(Map()))
+  }
+
+  test("should check for required parameters") {
+    // When
+    val ret = handler2.canHandle(createMockRequest(POST), new QueryStringDecoder("/x/y?a=10&c=20"))
+
+    // Then
+    ret must be (None)
+  }
+
+  test("should return found parameters") {
+    // When
+    val ret = handler2.canHandle(createMockRequest(POST), new QueryStringDecoder("/x/y?a=10&b=20"))
+
+    // Then
+    ret must be (Some(Map("a" -> "10", "b" -> "20")))
   }
 
   def createMockRequest(method: HttpMethod) = {
