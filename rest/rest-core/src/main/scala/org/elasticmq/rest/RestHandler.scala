@@ -7,8 +7,20 @@ import org.jboss.netty.handler.codec.http.HttpHeaders.Names._
 import org.jboss.netty.buffer.ChannelBuffers
 import org.jboss.netty.util.CharsetUtil
 import org.jboss.netty.handler.codec.http._
+import org.jboss.netty.handler.codec.http.HttpHeaders._
 
 class RestHandler(handlers: List[CheckingRequestHandlerWrapper]) extends SimpleChannelUpstreamHandler {
+  private def respondWith(stringResponse: StringResponse, channel: Channel) {
+    val httpResponse: HttpResponse = new DefaultHttpResponse(HTTP_1_1, OK)
+    httpResponse.setContent(ChannelBuffers.copiedBuffer(stringResponse.content, CharsetUtil.UTF_8))
+    httpResponse.setHeader(CONTENT_TYPE, stringResponse.contentType+"; charset=UTF-8")
+    setContentLength(httpResponse, httpResponse.getContent.readableBytes())
+
+    // Write the initial line and the header.
+    val writeFuture = channel.write(httpResponse)
+    writeFuture.addListener(ChannelFutureListener.CLOSE)
+  }
+
   override def messageReceived(ctx: ChannelHandlerContext, e: MessageEvent) {
     val request = e.getMessage.asInstanceOf[HttpRequest]
 
@@ -16,7 +28,7 @@ class RestHandler(handlers: List[CheckingRequestHandlerWrapper]) extends SimpleC
     for (handler <- handlers) {
       val canHandleResult = handler.canHandle(request, queryStringDecoder)
       if (canHandleResult.isDefined) {
-        handler.clientHandler.handle(request, canHandleResult.get, e.getChannel)
+        respondWith(handler.clientHandler.handle(request, canHandleResult.get), e.getChannel)
         return
       }
     }

@@ -4,8 +4,10 @@ import org.jboss.netty.channel.Channel
 import org.jboss.netty.handler.codec.http.{QueryStringDecoder, HttpMethod, HttpRequest}
 
 trait RequestHandlerLogic {
-  def handle(request: HttpRequest, parameters: Map[String, String], channel: Channel)
+  def handle(request: HttpRequest, parameters: Map[String, String]): StringResponse
 }
+
+case class StringResponse(content: String, contentType: String)
 
 object CanHandleRequestChecker {
   type CheckerResult = Option[Map[String, String]]

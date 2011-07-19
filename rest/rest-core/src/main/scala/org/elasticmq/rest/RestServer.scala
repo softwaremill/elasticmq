@@ -79,19 +79,7 @@ object Testing {
             forPath "/test/me"
             requiringQueryParameters List("param1")
             running (new RequestHandlerLogic() {
-      def handle(request: HttpRequest, parameters: Map[String, String], channel: Channel) = {
-        val buf = new StringBuilder
-        buf.append("OK!")
-
-        val response: HttpResponse = new DefaultHttpResponse(HTTP_1_1, OK)
-        response.setContent(ChannelBuffers.copiedBuffer(buf, CharsetUtil.UTF_8))
-        response.setHeader(CONTENT_TYPE, "text/plain; charset=UTF-8")
-        setContentLength(response, response.getContent.readableBytes())
-
-        // Write the initial line and the header.
-        val writeFuture = channel.write(response)
-        writeFuture.addListener(ChannelFutureListener.CLOSE)
-      }
+      def handle(request: HttpRequest, parameters: Map[String, String]) = StringResponse("OK!", "text/plain")
     }))
   }
 
