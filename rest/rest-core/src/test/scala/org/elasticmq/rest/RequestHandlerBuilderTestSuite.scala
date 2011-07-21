@@ -17,12 +17,6 @@ class RequestHandlerBuilderTestSuite extends FunSuite with MustMatchers with Moc
           requiringQueryParameters List()
           running null)
 
-  val handler2 = (createHandler
-          forMethod POST
-          forPath (root / "x" / "y")
-          requiringQueryParameters List("a", "b")
-          running null)
-
   test("should not handle other methods") {
     // When
     val ret = handler1.canHandle(createMockRequest(POST), new QueryStringDecoder("/messages/a/send"))
@@ -47,6 +41,12 @@ class RequestHandlerBuilderTestSuite extends FunSuite with MustMatchers with Moc
     ret must be (Some(Map()))
   }
 
+  val handler2 = (createHandler
+          forMethod POST
+          forPath (root / "x" / "y")
+          requiringQueryParameters List("a", "b")
+          running null)
+
   test("should check for required parameters") {
     // When
     val ret = handler2.canHandle(createMockRequest(POST), new QueryStringDecoder("/x/y?a=10&c=20"))
@@ -61,6 +61,20 @@ class RequestHandlerBuilderTestSuite extends FunSuite with MustMatchers with Moc
 
     // Then
     ret must be (Some(Map("a" -> "10", "b" -> "20")))
+  }
+
+  val handler3 = (createHandler
+          forMethod POST
+          forPath (root / "x" / %("b") / "y")
+          requiringQueryParameters List("a")
+          running null)
+
+  test("should include path parameters") {
+    // When
+    val ret = handler3.canHandle(createMockRequest(POST), new QueryStringDecoder("/x/34/y?a=10"))
+
+    // Then
+    ret must be (Some(Map("a" -> "10", "b" -> "34")))
   }
 
   def createMockRequest(method: HttpMethod) = {
