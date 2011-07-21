@@ -25,7 +25,7 @@ abstract class RestPath {
   def copy(newNext: Option[RestPath]): RestPath
 
   def singleToString: String
-  override def toString = "/"+singleToString+(next match { case Some(rp) => rp.toString case None => "" })
+  override def toString = singleToString+(next match { case Some(rp) => "/"+rp.toString case None => "" })
 }
 
 case class StringRestPath(part: String, next: Option[RestPath]) extends RestPath {
@@ -76,7 +76,7 @@ class RestPathCreator(val previous: List[RestPath]) {
   def build(): RestPath = build(previous, None) match {
     // Special case: root path
     case None => StringRestPath("", None)
-    case Some(rp) => rp
+    case Some(rp) => StringRestPath("", Some(rp))
   }
 }
 
