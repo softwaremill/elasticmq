@@ -8,17 +8,18 @@ import org.jboss.netty.handler.codec.http.{QueryStringDecoder, HttpMethod, HttpR
 
 class RequestHandlerBuilderTestSuite extends FunSuite with MustMatchers with MockitoSugar {
   import RequestHandlerBuilder.createHandler
+  import RestPath._
   import HttpMethod._
 
   val handler1 = (createHandler
           forMethod GET
-          forPath "/messages/a/send"
+          forPath (root / "messages" / "a" / "send")
           requiringQueryParameters List()
           running null)
 
   val handler2 = (createHandler
           forMethod POST
-          forPath "/x/y"
+          forPath (root / "x" / "y")
           requiringQueryParameters List("a", "b")
           running null)
 

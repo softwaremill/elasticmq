@@ -32,7 +32,7 @@ trait CheckingRequestHandlerWrapper extends CanHandleRequestChecker {
  * import RequestHandlerBuilder.createHandler
  * val handler = (createHandler
  *  forMethod GET
- *  forPath /"abc"/:abc/"def"
+ *  forPath (root / "abc" / %("abc") / "def")
  *  requiringQueryParameters "a", "b", "c"
  *  running myRequestHandler)
  */
@@ -51,10 +51,10 @@ object RequestHandlerBuilder {
   }
 
   class PathSpecifier(checkers: Seq[CanHandleRequestChecker]) {
-    def forPath(path: String) = {
+    def forPath(restPath: RestPath) = {
       object PathChecker extends CanHandleRequestChecker {
         def canHandle(request: HttpRequest, queryStringDecoder: QueryStringDecoder) =
-          if (queryStringDecoder.getPath == path) Some(Map()) else None
+          restPath.matchAndExtract(queryStringDecoder.getPath)
       }
 
       new RequiredParametersSpecifier(checkers ++ Seq(PathChecker))

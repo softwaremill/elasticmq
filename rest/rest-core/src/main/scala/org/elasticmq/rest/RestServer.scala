@@ -65,10 +65,11 @@ object RestServer {
 object Testing {
   def createTestHandler = {
     import RequestHandlerBuilder._
+    import RestPath._
 
     (createHandler
             forMethod HttpMethod.GET
-            forPath "/test/me"
+            forPath (root / "test" / "me")
             requiringQueryParameters List("param1")
             running (new RequestHandlerLogic() {
       def handle(request: HttpRequest, parameters: Map[String, String]) = StringResponse("OK!", "text/plain")
