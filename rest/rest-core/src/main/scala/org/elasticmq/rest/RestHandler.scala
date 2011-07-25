@@ -16,7 +16,6 @@ class RestHandler(handlers: List[CheckingRequestHandlerWrapper]) extends SimpleC
     httpResponse.setHeader(CONTENT_TYPE, stringResponse.contentType+"; charset=UTF-8")
     setContentLength(httpResponse, httpResponse.getContent.readableBytes())
 
-    // Write the initial line and the header.
     val writeFuture = channel.write(httpResponse)
     writeFuture.addListener(ChannelFutureListener.CLOSE)
   }
