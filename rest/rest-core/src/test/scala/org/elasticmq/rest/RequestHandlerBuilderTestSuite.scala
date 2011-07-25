@@ -63,6 +63,14 @@ class RequestHandlerBuilderTestSuite extends FunSuite with MustMatchers with Moc
     ret must be (Some(Map("a" -> "10", "b" -> "20")))
   }
 
+  test("should include optional parameters") {
+    // When
+    val ret = handler2.canHandle(createMockRequest(POST), new QueryStringDecoder("/x/y?a=10&b=20&c=30"))
+
+    // Then
+    ret must be (Some(Map("a" -> "10", "b" -> "20", "c" -> "30")))
+  }
+
   val handler3 = (createHandler
           forMethod POST
           forPath (root / "x" / %("b") / "y")
