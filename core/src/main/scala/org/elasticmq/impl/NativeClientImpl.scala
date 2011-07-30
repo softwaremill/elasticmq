@@ -6,7 +6,6 @@ import org.elasticmq._
 import org.joda.time.DateTime
 
 class NativeClientImpl(storage: Storage) extends Client {
-  // TODO: why are type annotations needed
   def queueClient: QueueClient = new NativeQueueClientImpl(storage)
   def messageClient: MessageClient = new NativeMessageClientImpl(storage)
 }

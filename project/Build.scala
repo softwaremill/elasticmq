@@ -65,11 +65,11 @@ object ElasticMQBuild extends Build {
     "rest-core",
     file("rest/rest-core"),
     settings = buildSettings ++ Seq(libraryDependencies := Seq(netty) ++ common ++ testing)
-  ) dependsOn(api)
+  )
 
   lazy val restSqs: Project = Project(
     "rest-sqs",
     file("rest/rest-sqs"),
     settings = buildSettings ++ Seq(libraryDependencies := Seq() ++ common ++ testing)
-  ) dependsOn(restCore)
+  ) dependsOn(api, restCore, core % "test->compile")
 }

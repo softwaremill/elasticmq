@@ -1,6 +1,5 @@
 package org.elasticmq.rest
 
-import org.elasticmq.Client
 import java.util.concurrent.Executors
 import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory
 import java.net.InetSocketAddress
@@ -12,7 +11,7 @@ import org.jboss.netty.channel._
 import org.jboss.netty.handler.codec.http._
 import org.jboss.netty.handler.stream.ChunkedWriteHandler
 
-class RestServer(client: Client, doStop: () => Unit) {
+class RestServer(doStop: () => Unit) {
   def stop() {
     doStop()
   }
@@ -37,7 +36,7 @@ class RestPipelineFactory(handlers: List[CheckingRequestHandlerWrapper],
 }
 
 object RestServer {
-  def create(handlers: List[CheckingRequestHandlerWrapper], client: Client, port: Int) = {
+  def start(handlers: List[CheckingRequestHandlerWrapper], port: Int): RestServer = {
     val factory: ChannelFactory =
       new NioServerSocketChannelFactory(
         Executors.newCachedThreadPool(),
@@ -55,7 +54,7 @@ object RestServer {
     val serverChannel = bootstrap.bind(new InetSocketAddress(port));
     allChannels.add(serverChannel)
 
-    new RestServer(client, () => {
+    new RestServer(() => {
       allChannels.close().awaitUninterruptibly()
       bootstrap.releaseExternalResources()
     })
@@ -80,7 +79,7 @@ object Testing {
     BasicConfigurator.configure();
     InternalLoggerFactory.setDefaultFactory(new Log4JLoggerFactory())
 
-    val server = RestServer.create(List(createTestHandler), null, 8888)
+    val server = RestServer.start(List(createTestHandler), 8888)
     println("Started")
     val logger: Logger = Logger.getLogger(classOf[RestServer].getName)
     logger.info("info")
