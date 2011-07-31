@@ -27,8 +27,11 @@ object Dependencies {
   val scalatest = "org.scalatest" % "scalatest_2.9.0" % "1.6.1" % "test"
   val mockito = "org.mockito" % "mockito-core" % "1.7" % "test"
 
+  val apacheHttp = "org.apache.httpcomponents" % "httpclient" % "4.1.1"
+
   val common = Seq(log4j)
   val testing = Seq(scalatest, mockito)
+  val httpTesting = Seq(apacheHttp % "test")
 
   // To get the source run the <update-classifiers> task.
 }
@@ -64,12 +67,12 @@ object ElasticMQBuild extends Build {
   lazy val restCore: Project = Project(
     "rest-core",
     file("rest/rest-core"),
-    settings = buildSettings ++ Seq(libraryDependencies := Seq(netty) ++ common ++ testing)
+    settings = buildSettings ++ Seq(libraryDependencies := Seq(netty) ++ common ++ testing ++ httpTesting)
   )
 
   lazy val restSqs: Project = Project(
     "rest-sqs",
     file("rest/rest-sqs"),
-    settings = buildSettings ++ Seq(libraryDependencies := Seq() ++ common ++ testing)
+    settings = buildSettings ++ Seq(libraryDependencies := Seq() ++ common ++ testing ++ httpTesting)
   ) dependsOn(api, restCore, core % "test->compile")
 }

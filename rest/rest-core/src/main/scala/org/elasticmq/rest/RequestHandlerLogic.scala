@@ -8,6 +8,10 @@ trait RequestHandlerLogic {
 
 case class StringResponse(content: String, contentType: String)
 
+object StringResponse {
+  def apply(content: String): StringResponse = StringResponse(content, "text/plain")
+}
+
 object CanHandleRequestChecker {
   type CheckerResult = Option[Map[String, String]]
 }
