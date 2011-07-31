@@ -10,6 +10,7 @@ import org.jboss.netty.channel.group.{ChannelGroup, DefaultChannelGroup}
 import org.jboss.netty.channel._
 import org.jboss.netty.handler.codec.http._
 import org.jboss.netty.handler.stream.ChunkedWriteHandler
+import org.jboss.netty.handler.execution.{ExecutionHandler, OrderedMemoryAwareThreadPoolExecutor}
 
 class RestServer(doStop: () => Unit) {
   def stop() {
@@ -29,6 +30,8 @@ class RestPipelineFactory(handlers: List[CheckingRequestHandlerWrapper],
     pipeline.addLast("encoder", new HttpResponseEncoder)
     pipeline.addLast("chunkedWriter", new ChunkedWriteHandler)
 
+    // The REST handler can take some time (invoking business logic), so running it in a separate thread pool
+    pipeline.addLast("executionHandler", new ExecutionHandler(new OrderedMemoryAwareThreadPoolExecutor(16, 1048576, 1048576)))
     pipeline.addLast("rest", new RestHandler(handlers))
 
     pipeline
