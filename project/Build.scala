@@ -2,7 +2,9 @@ import sbt._
 import Keys._
 
 object Resolvers {
-  val elasticmqResolvers = Seq(ScalaToolsSnapshots)
+  val elasticmqResolvers = Seq(
+    ScalaToolsSnapshots,
+    "SotwareMill Public Releases" at "http://tools.softwaremill.pl/nexus/content/repositories/releases/")
 }
 
 object BuildSettings {
@@ -28,6 +30,8 @@ object Dependencies {
   val mockito = "org.mockito" % "mockito-core" % "1.7" % "test"
 
   val apacheHttp = "org.apache.httpcomponents" % "httpclient" % "4.1.1"
+
+  val typica = "com.google.code.typica" % "typica" % "1.7-softwaremill-4"
 
   val common = Seq(log4j)
   val testing = Seq(scalatest, mockito)
@@ -75,4 +79,10 @@ object ElasticMQBuild extends Build {
     file("rest/rest-sqs"),
     settings = buildSettings ++ Seq(libraryDependencies := Seq() ++ common ++ testing ++ httpTesting)
   ) dependsOn(api, restCore, core % "test->compile")
+
+  lazy val restSqsTestingTypica: Project = Project(
+    "rest-sqs-testing-typica",
+    file("rest/rest-sqs-testing-typica"),
+    settings = buildSettings ++ Seq(libraryDependencies := Seq(typica) ++ common ++ testing)
+  ) dependsOn(restSqs)
 }
