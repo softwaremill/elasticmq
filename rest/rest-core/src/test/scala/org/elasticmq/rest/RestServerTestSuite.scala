@@ -23,11 +23,19 @@ class RestServerTestSuite extends FunSuite with MustMatchers with BeforeAndAfter
     }
   })
 
+  val exceptionThrowingHandler = (createHandler
+          forMethod GET
+          forPath (root / "exception")
+          requiringQueryParameters List()
+          running new RequestHandlerLogic() {
+    def handle(request: HttpRequest, parameters: Map[String, String]) = {
+      throw new Exception("BUM");
+    }
+  })
+
   val httpClient: HttpClient = new DefaultHttpClient()
 
-  test("should echo parameters") {
-    val server = RestServer.start(echoParamsHandler :: Nil, 8888)
-
+  testWithServer(echoParamsHandler :: Nil, "should echo parameters")((server: RestServer) => {
     val action = new HttpGet("http://localhost:8888/echo/params?param1=z&param2=x")
     val response = httpClient.execute(action)
 
@@ -35,8 +43,34 @@ class RestServerTestSuite extends FunSuite with MustMatchers with BeforeAndAfter
 
     responseString must include ("param1 -> z")
     responseString must include ("param2 -> x")
+  })
 
-    server.stop()
+  testWithServer(echoParamsHandler :: Nil, "should return 404")((server: RestServer) => {
+    val action = new HttpGet("http://localhost:8888/nohandler")
+    val response = httpClient.execute(action)
+    EntityUtils.toString(response.getEntity)
+
+    response.getStatusLine.getStatusCode must be (404)
+  })
+
+  testWithServer(exceptionThrowingHandler :: Nil, "should handle exceptions")((server: RestServer) => {
+    val action = new HttpGet("http://localhost:8888/exception")
+    val response = httpClient.execute(action)
+    EntityUtils.toString(response.getEntity)
+
+    response.getStatusLine.getStatusCode must be (500)
+  })
+
+  def testWithServer(handlers: List[CheckingRequestHandlerWrapper], name: String)(block: RestServer => Unit) {
+    test(name) {
+      val server = RestServer.start(handlers, 8888)
+
+      try {
+        block(server)
+      } finally {
+        server.stop()
+      }
+    }
   }
 
   override protected def afterAll() {
