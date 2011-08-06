@@ -2,11 +2,11 @@ package org.elasticmq.rest
 
 import org.scalatest.matchers.MustMatchers
 import org.jboss.netty.handler.codec.http.{HttpRequest, HttpMethod}
-import org.apache.http.client.methods.HttpGet
 import org.apache.http.impl.client.DefaultHttpClient
 import org.apache.http.client.HttpClient
 import org.apache.http.util.EntityUtils
 import org.scalatest.{BeforeAndAfterAll, FunSuite}
+import org.apache.http.client.methods.{HttpPost, HttpGet}
 
 class RestServerTestSuite extends FunSuite with MustMatchers with BeforeAndAfterAll {
   import RequestHandlerBuilder.createHandler
@@ -20,6 +20,16 @@ class RestServerTestSuite extends FunSuite with MustMatchers with BeforeAndAfter
           running new RequestHandlerLogic() {
     def handle(request: HttpRequest, parameters: Map[String, String]) = {
       StringResponse("OK " + parameters)
+    }
+  })
+
+  val echo2ParamsHandler = (createHandler
+          forMethod POST
+          forPath (root / "echo2" / "params2")
+          requiringQueryParameters List("a", "b")
+          running new RequestHandlerLogic() {
+    def handle(request: HttpRequest, parameters: Map[String, String]) = {
+      StringResponse("KO " + parameters)
     }
   })
 
@@ -59,6 +69,24 @@ class RestServerTestSuite extends FunSuite with MustMatchers with BeforeAndAfter
     EntityUtils.toString(response.getEntity)
 
     response.getStatusLine.getStatusCode must be (500)
+  })
+
+  testWithServer(echoParamsHandler :: echo2ParamsHandler :: Nil, "should run appropriate handler")((server: RestServer) => {
+    val action1 = new HttpGet("http://localhost:8888/echo/params?param1=z&param2=x")
+    val response1 = httpClient.execute(action1)
+    val responseString1 = EntityUtils.toString(response1.getEntity)
+
+    val action2 = new HttpPost("http://localhost:8888/echo2/params2?a=190&b=222")
+    val response2 = httpClient.execute(action2)
+    val responseString2 = EntityUtils.toString(response2.getEntity)
+
+    responseString1 must include ("OK")
+    responseString1 must include ("param1 -> z")
+    responseString1 must include ("param2 -> x")
+
+    responseString2 must include ("KO")
+    responseString2 must include ("a -> 190")
+    responseString2 must include ("b -> 222")
   })
 
   def testWithServer(handlers: List[CheckingRequestHandlerWrapper], name: String)(block: RestServer => Unit) {
