@@ -74,7 +74,7 @@ object Testing {
             forPath (root / "test" / "me")
             requiringParameters List("param1")
             running (new RequestHandlerLogic() {
-      def handle(request: HttpRequest, parameters: Map[String, String]) = StringResponse("OK!", "text/plain")
+      def handle(request: HttpRequest, parameters: Map[String, String]) = StringResponse("OK!")
     }))
   }
 

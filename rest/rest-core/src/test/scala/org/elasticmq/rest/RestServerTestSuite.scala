@@ -54,6 +54,15 @@ class RestServerTestSuite extends FunSuite with MustMatchers with BeforeAndAfter
     }
   })
 
+  val statusParamsHandler = (createHandler
+          forMethod GET
+          forPath (root / "echo" / "params")
+          running new RequestHandlerLogic() {
+    def handle(request: HttpRequest, parameters: Map[String, String]) = {
+      StringResponse("OK " + parameters, 401)
+    }
+  })
+
   val httpClient: HttpClient = new DefaultHttpClient()
 
   testWithServer(echoParamsHandler :: Nil, "should echo parameters")((server: RestServer) => {
@@ -110,6 +119,15 @@ class RestServerTestSuite extends FunSuite with MustMatchers with BeforeAndAfter
 
     responseString must include ("param1 -> aa")
     responseString must include ("param2 -> bb")
+  })
+
+  testWithServer(statusParamsHandler :: Nil, "should return specified status code")((server: RestServer) => {
+    val action = new HttpGet("http://localhost:8888/echo/params")
+    val response = httpClient.execute(action)
+
+    EntityUtils.toString(response.getEntity)
+
+    response.getStatusLine.getStatusCode must be (401)
   })
 
   def testWithServer(handlers: List[CheckingRequestHandlerWrapper], name: String)(block: RestServer => Unit) {

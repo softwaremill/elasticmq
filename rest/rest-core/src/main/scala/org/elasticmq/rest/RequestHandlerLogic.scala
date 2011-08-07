@@ -7,10 +7,11 @@ trait RequestHandlerLogic {
   def handle(request: HttpRequest, parameters: Map[String, String]): StringResponse
 }
 
-case class StringResponse(content: String, contentType: String)
+case class StringResponse(content: String, contentType: String, statusCode: Int)
 
 object StringResponse {
-  def apply(content: String): StringResponse = StringResponse(content, "text/plain")
+  def apply(content: String): StringResponse = StringResponse(content, 200)
+  def apply(content: String, statusCode: Int): StringResponse = StringResponse(content, "text/plain", statusCode)
 }
 
 object CanHandleRequestChecker {
