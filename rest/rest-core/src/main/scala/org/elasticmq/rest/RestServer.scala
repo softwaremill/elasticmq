@@ -72,7 +72,7 @@ object Testing {
     (createHandler
             forMethod HttpMethod.GET
             forPath (root / "test" / "me")
-            requiringQueryParameters List("param1")
+            requiringParameters List("param1")
             running (new RequestHandlerLogic() {
       def handle(request: HttpRequest, parameters: Map[String, String]) = StringResponse("OK!", "text/plain")
     }))

@@ -26,9 +26,8 @@ class RestHandler(handlers: List[CheckingRequestHandlerWrapper]) extends SimpleC
   override def messageReceived(ctx: ChannelHandlerContext, e: MessageEvent) {
     val request = e.getMessage.asInstanceOf[HttpRequest]
 
-    val queryStringDecoder = new QueryStringDecoder(request.getUri)
     for (handler <- handlers) {
-      val canHandleResult = handler.canHandle(request, queryStringDecoder)
+      val canHandleResult = handler.canHandle(request, Map())
       if (canHandleResult.isDefined) {
         respondWith(handler.clientHandler.handle(request, canHandleResult.get), e.getChannel)
         return

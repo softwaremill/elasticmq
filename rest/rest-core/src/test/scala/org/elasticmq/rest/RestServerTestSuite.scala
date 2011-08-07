@@ -16,7 +16,7 @@ class RestServerTestSuite extends FunSuite with MustMatchers with BeforeAndAfter
   val echoParamsHandler = (createHandler
           forMethod GET
           forPath (root / "echo" / "params")
-          requiringQueryParameters List()
+          requiringParameters List()
           running new RequestHandlerLogic() {
     def handle(request: HttpRequest, parameters: Map[String, String]) = {
       StringResponse("OK " + parameters)
@@ -26,7 +26,7 @@ class RestServerTestSuite extends FunSuite with MustMatchers with BeforeAndAfter
   val echo2ParamsHandler = (createHandler
           forMethod POST
           forPath (root / "echo2" / "params2")
-          requiringQueryParameters List("a", "b")
+          requiringParameters List("a", "b")
           running new RequestHandlerLogic() {
     def handle(request: HttpRequest, parameters: Map[String, String]) = {
       StringResponse("KO " + parameters)
@@ -36,7 +36,7 @@ class RestServerTestSuite extends FunSuite with MustMatchers with BeforeAndAfter
   val exceptionThrowingHandler = (createHandler
           forMethod GET
           forPath (root / "exception")
-          requiringQueryParameters List()
+          requiringParameters List()
           running new RequestHandlerLogic() {
     def handle(request: HttpRequest, parameters: Map[String, String]) = {
       throw new Exception("BUM");
