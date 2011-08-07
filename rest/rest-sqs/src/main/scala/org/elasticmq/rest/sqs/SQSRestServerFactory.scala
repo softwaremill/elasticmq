@@ -26,7 +26,7 @@ class SQSRestServerFactory(client: Client) {
     val queueName = parameters(queueNameParameter)
     val queueOption = client.queueClient.lookupQueue(queueName)
 
-    val visibilityTimeout = getLongParameter(defaultVisibilityTimeoutParameter, parameters)
+    val visibilityTimeout = parameters.parseOptionalLong(defaultVisibilityTimeoutParameter)
             .getOrElse(defaultVisibilityTimeout)
 
     val queue = queueOption.getOrElse(client.queueClient.createQueue(
@@ -45,7 +45,7 @@ class SQSRestServerFactory(client: Client) {
       </CreateQueueResult>
       <ResponseMetadata>
         <RequestId>
-          7a62c49f-347e-4fc4-9331-6e8e7a96aa73
+          {emptyRequestId}
         </RequestId>
       </ResponseMetadata>
     </CreateQueueResponse>
@@ -78,14 +78,18 @@ object SQSConstants {
 }
 
 object SQSUtil {
-  def getLongParameter(name: String, parameters: Map[String, String]) = {
-    val param = parameters.get(name)
-    try {
-      param.map(_.toLong)
-    } catch {
-      case e: NumberFormatException => throw new SQSException("InvalidParameterValue")
+  class ParametersParser(parameters: Map[String, String]) {
+    def parseOptionalLong(name: String) = {
+      val param = parameters.get(name)
+      try {
+        param.map(_.toLong)
+      } catch {
+        case e: NumberFormatException => throw new SQSException("InvalidParameterValue")
+      }
     }
   }
+
+  implicit def mapToParametersParser(parameters: Map[String, String]): ParametersParser = new ParametersParser(parameters)
 
   implicit def elemToStringResponse(e: Elem): StringResponse = StringResponse(e.toString())
 }
