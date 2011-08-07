@@ -7,6 +7,7 @@ import org.apache.http.client.HttpClient
 import org.apache.http.util.EntityUtils
 import org.scalatest.{BeforeAndAfterAll, FunSuite}
 import org.apache.http.client.methods.{HttpPost, HttpGet}
+import org.apache.http.entity.StringEntity
 
 class RestServerTestSuite extends FunSuite with MustMatchers with BeforeAndAfterAll {
   import RequestHandlerBuilder.createHandler
@@ -40,6 +41,16 @@ class RestServerTestSuite extends FunSuite with MustMatchers with BeforeAndAfter
           running new RequestHandlerLogic() {
     def handle(request: HttpRequest, parameters: Map[String, String]) = {
       throw new Exception("BUM");
+    }
+  })
+
+  val bodyParametersEchoHandler = (createHandler
+          forMethod POST
+          forPath (root / "body")
+          includingParametersFromBody ()
+          running new RequestHandlerLogic() {
+    def handle(request: HttpRequest, parameters: Map[String, String]) = {
+      StringResponse("OK " + parameters)
     }
   })
 
@@ -87,6 +98,18 @@ class RestServerTestSuite extends FunSuite with MustMatchers with BeforeAndAfter
     responseString2 must include ("KO")
     responseString2 must include ("a -> 190")
     responseString2 must include ("b -> 222")
+  })
+
+  testWithServer(bodyParametersEchoHandler :: Nil, "should include body parameters")((server: RestServer) => {
+    val action = new HttpPost("http://localhost:8888/body")
+    action.setEntity(new StringEntity("param1=aa&param2=bb"))
+
+    val response = httpClient.execute(action)
+
+    val responseString = EntityUtils.toString(response.getEntity)
+
+    responseString must include ("param1 -> aa")
+    responseString must include ("param2 -> bb")
   })
 
   def testWithServer(handlers: List[CheckingRequestHandlerWrapper], name: String)(block: RestServer => Unit) {
