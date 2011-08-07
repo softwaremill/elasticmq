@@ -83,6 +83,6 @@ object ElasticMQBuild extends Build {
   lazy val restSqsTestingTypica: Project = Project(
     "rest-sqs-testing-typica",
     file("rest/rest-sqs-testing-typica"),
-    settings = buildSettings ++ Seq(libraryDependencies := Seq(typica) ++ common ++ testing)
-  ) dependsOn(restSqs)
+    settings = buildSettings ++ Seq(libraryDependencies := Seq(typica, apacheHttp) ++ common ++ testing)
+  ) dependsOn(restSqs, core % "test->compile")
 }
