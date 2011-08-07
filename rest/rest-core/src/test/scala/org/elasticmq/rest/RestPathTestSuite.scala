@@ -9,6 +9,7 @@ class RestPathTestSuite extends FunSuite with MustMatchers with TableDrivenPrope
 
   val paths = Table[RestPath, String, Option[Map[String, String]]](
     ("rest path", "input path", "expected result"),
+    (root, "/", Some(Map())),
     (root / "a" / "b", "/a/b", Some(Map())),
     (root / "a" / "b", "/a/c", None),
     (root / "a" / "b", "/a", None),

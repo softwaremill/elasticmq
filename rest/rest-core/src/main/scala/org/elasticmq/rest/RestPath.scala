@@ -17,7 +17,7 @@ abstract class RestPath {
   def nextComponent(path: String) = {
     val splitResult = path.split("/", 2)
     val component = splitResult(0)
-    val rest = if (splitResult.length > 1) Some(splitResult(1)) else None
+    val rest = if (splitResult.length > 1 && splitResult(1).length > 0) Some(splitResult(1)) else None
 
     (component, rest)
   }
