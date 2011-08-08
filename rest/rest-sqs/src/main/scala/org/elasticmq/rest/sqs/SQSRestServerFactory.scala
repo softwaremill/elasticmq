@@ -20,11 +20,14 @@ class SQSRestServerFactory(client: Client, port: Int, baseAddress: String) {
 
   val actionParameter = "Action"
   val defaultVisibilityTimeoutParameter = "DefaultVisibilityTimeout"
+  val attributeNameParameter = "Attribute.Name"
+  val attributeValueParameter = "Attribute.Value"
 
   val createQueueAction = actionParameter -> "CreateQueue"
   val deleteQueueAction = actionParameter -> "DeleteQueue"
   val listQueuesAction = actionParameter -> "ListQueues"
   val getQueueAttributesAction = actionParameter -> "GetQueueAttributes"
+  val setQueueAttributesAction = actionParameter -> "SetQueueAttributes"
 
   val createQueueLogic = logic((queueName, request, parameters) => {
     val queueOption = client.queueClient.lookupQueue(queueName)
@@ -80,12 +83,12 @@ class SQSRestServerFactory(client: Client, port: Int, baseAddress: String) {
     </ListQueuesResponse>
   })
 
-  val getQueueAttributesLogic = logic((queueName, request, parameters) => {
-    // So far we support only one attribute ..
-    object QueueAttributeNames {
-      val VisibilityTimeout = "VisibilityTimeout"
-    }
+  // So far we support only one attribute ..
+  object QueueWriteableAttributeNames {
+    val VisibilityTimeout = "VisibilityTimeout"
+  }
 
+  val getQueueAttributesLogic = logic((queueName, request, parameters) => {
     val queue = getQueue(queueName)
 
     def collectAttributeNames(suffix: Int, acc: List[String]): List[String] = {
@@ -97,11 +100,11 @@ class SQSRestServerFactory(client: Client, port: Int, baseAddress: String) {
 
     var attributeNames = collectAttributeNames(1, parameters.get("AttributeName").toList)
     if (attributeNames.contains("All")) {
-      attributeNames = QueueAttributeNames.VisibilityTimeout :: Nil
+      attributeNames = QueueWriteableAttributeNames.VisibilityTimeout :: Nil
     }
 
     val attributes = attributeNames.flatMap {
-      import QueueAttributeNames._
+      import QueueWriteableAttributeNames._
 
       _ match {
         case VisibilityTimeout => Some((VisibilityTimeout, queue.defaultVisibilityTimeout.millis.toString))
@@ -121,6 +124,24 @@ class SQSRestServerFactory(client: Client, port: Int, baseAddress: String) {
         <RequestId>{emptyRequestId}</RequestId>
       </ResponseMetadata>
     </GetQueueAttributesResponse>
+  })
+
+  val setQueueAttributesLogic = logic((queueName, request, parameters) => {
+    val queue = getQueue(queueName)
+    val attributeName = parameters(attributeNameParameter)
+    val attributeValue = parameters.parseOptionalLong(attributeValueParameter).get
+
+    if (attributeName != QueueWriteableAttributeNames.VisibilityTimeout) {
+      throw new SQSException("InvalidAttributeName")
+    }
+
+    client.queueClient.updateDefaultVisibilityTimeout(queue, MillisVisibilityTimeout(attributeValue))
+
+    <SetQueueAttributesResponse>
+      <ResponseMetadata>
+        <RequestId>{emptyRequestId}</RequestId>
+      </ResponseMetadata>
+    </SetQueueAttributesResponse>
   })
 
   def getQueue(queueName: String) = {
@@ -168,12 +189,21 @@ class SQSRestServerFactory(client: Client, port: Int, baseAddress: String) {
             forPath (queuePath)
             requiringParameterValues Map(getQueueAttributesAction)
             running getQueueAttributesLogic)
+
+  val setQueueAttributesGetHandler = (createHandler
+            forMethod GET
+            forPath (queuePath)
+            requiringParameters List(attributeNameParameter, attributeValueParameter)
+            requiringParameterValues Map(setQueueAttributesAction)
+            running setQueueAttributesLogic)
+
   def start(): RestServer = {
     RestServer.start(
       createQueueGetHandler :: createQueuePostHandler ::
               deleteQueueGetHandler ::
               listQueuesGetHandler ::
               getQueueAttributesGetHandler ::
+              setQueueAttributesGetHandler ::
               Nil, port)
   }
 }

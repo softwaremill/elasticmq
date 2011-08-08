@@ -83,5 +83,18 @@ class TypicaTestSuite extends FunSuite with MustMatchers with BeforeAndAfter {
     vt must be (30000)
   }
 
+  test("should set queue visibility timeout") {
+    // Given
+    val queueService = newQueueService
+    val queue = queueService.getOrCreateMessageQueue("testQueue1")
+
+    // When
+    queue.setVisibilityTimeout(10000)
+
+    // Then
+    val vt = queue.getVisibilityTimeout
+    vt must be (10000)
+  }
+
   def newQueueService = new QueueService("n/a", "n/a", false, "localhost", 8888)
 }
