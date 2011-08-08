@@ -12,9 +12,18 @@ object BuildSettings {
 
   val buildSettings = Defaults.defaultSettings ++ Seq (
     organization  := "org.elasticmq",
-    version       := "1.0",
+    version       := "0.1-SNAPSHOT",
     scalaVersion  := "2.9.0-1",
-    resolvers     := elasticmqResolvers
+    resolvers     := elasticmqResolvers,
+    publishTo     <<= (version) { version: String =>
+      val nexus = "http://tools.softwaremill.pl/nexus/content/repositories/"
+      if (version.trim.endsWith("SNAPSHOT"))  Some("softwaremill-public-snapshots" at nexus + "snapshots/")
+      else                                    Some("softwaremill-public-releases"  at nexus + "releases/")
+    },
+    credentials   += Credentials(Path.userHome / ".ivy2" / ".credentials"),
+    publishMavenStyle := true,
+    // generating javadocs causes a weird error in Node:4 - type Client not found
+    publishArtifact in (Compile, packageDoc) := false
   )
 }
 
