@@ -7,23 +7,24 @@ import org.elasticmq.rest.{StringResponse, RestServer}
 import org.elasticmq.{MillisVisibilityTimeout, Queue, Client}
 
 import HttpMethod._
-import ExceptionHandlingLogic._
+import SQSLogic._
 import xml.Elem
 
-class SQSRestServerFactory(client: Client) {
+class SQSRestServerFactory(client: Client, port: Int, baseAddress: String) {
   import SQSUtil._
   import SQSConstants._
 
   val defaultVisibilityTimeout = 30 * 1000L;
 
-  val queueNameParameter = "QueueName"
+  val queueURLPath = "queue"
+
   val actionParameter = "Action"
   val defaultVisibilityTimeoutParameter = "DefaultVisibilityTimeout"
 
   val createQueueAction = actionParameter -> "CreateQueue"
+  val deleteQueueAction = actionParameter -> "DeleteQueue"
 
-  val createQueueLogic = logic((request, parameters) => {
-    val queueName = parameters(queueNameParameter)
+  val createQueueLogic = logic((queueName, request, parameters) => {
     val queueOption = client.queueClient.lookupQueue(queueName)
 
     val visibilityTimeout = parameters.parseOptionalLong(defaultVisibilityTimeoutParameter)
@@ -39,17 +40,33 @@ class SQSRestServerFactory(client: Client) {
 
     <CreateQueueResponse xmlns="http://queue.amazonaws.com/doc/2009-02-01/">
       <CreateQueueResult>
-        <QueueUrl>
-          http://sqs.us-east-1.amazonaws.com/123456789012/testQueue
-        </QueueUrl>
+        <QueueUrl>{baseAddress}/{queueURLPath}/{queueName}</QueueUrl>
       </CreateQueueResult>
       <ResponseMetadata>
-        <RequestId>
-          {emptyRequestId}
-        </RequestId>
+        <RequestId>{emptyRequestId}</RequestId>
       </ResponseMetadata>
     </CreateQueueResponse>
   })
+
+  val deleteQueueLogic = logic((queueName, request, parameters) => {
+    val queue = getQueue(queueName)
+    client.queueClient.deleteQueue(queue)
+
+    <DeleteQueueResponse xmlns="http://queue.amazonaws.com/doc/2009-02-01/">
+      <ResponseMetadata>
+        <RequestId>{emptyRequestId}</RequestId>
+      </ResponseMetadata>
+    </DeleteQueueResponse>
+  })
+
+  def getQueue(queueName: String) = {
+    val queueOption = client.queueClient.lookupQueue(queueName)
+
+    queueOption match {
+      case Some(q) => q
+      case None => throw new SQSException("AWS.SimpleQueueService.NonExistentQueue")
+    }
+  }
 
   val createQueueGetHandler = (createHandler
             forMethod GET
@@ -66,15 +83,24 @@ class SQSRestServerFactory(client: Client) {
             requiringParameterValues Map(createQueueAction)
             running createQueueLogic)
 
-  def start(port: Int): RestServer = {
+  val deleteQueueGetHandler = (createHandler
+            forMethod GET
+            forPath (root / queueURLPath / %("QueueName"))
+            requiringParameterValues Map(deleteQueueAction)
+            running deleteQueueLogic)
+
+  def start(): RestServer = {
     RestServer.start(
       createQueueGetHandler :: createQueuePostHandler ::
+              deleteQueueGetHandler ::
               Nil, port)
   }
 }
 
 object SQSConstants {
   val emptyRequestId = "00000000-0000-0000-0000-000000000000"
+
+  val queueNameParameter = "QueueName"
 }
 
 object SQSUtil {

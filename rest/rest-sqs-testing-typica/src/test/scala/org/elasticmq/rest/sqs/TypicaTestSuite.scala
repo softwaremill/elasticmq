@@ -17,7 +17,7 @@ class TypicaTestSuite extends FunSuite with MustMatchers with BeforeAndAfter {
 
   before {
     node = NodeBuilder.createNode
-    server = new SQSRestServerFactory(node.nativeClient).start(8888)
+    server = new SQSRestServerFactory(node.nativeClient, 8888, "http://localhost:8888").start()
   }
 
   after {
@@ -26,7 +26,16 @@ class TypicaTestSuite extends FunSuite with MustMatchers with BeforeAndAfter {
   }
 
   test("should create a queue") {
-    val queueService = new QueueService("n/a", "n/a", false, "localhost", 8888)
+    val queueService = newQueueService
     queueService.getOrCreateMessageQueue("testQueue1")
   }
+
+  test("should create and delete a queue") {
+    val queueService = newQueueService
+    val queue = queueService.getOrCreateMessageQueue("testQueue1")
+
+    queue.deleteQueue()
+  }
+
+  def newQueueService = new QueueService("n/a", "n/a", false, "localhost", 8888)
 }
