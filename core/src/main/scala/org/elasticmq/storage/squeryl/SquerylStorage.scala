@@ -61,6 +61,12 @@ class SquerylQueueStorage extends QueueStorage {
       queues.lookup(name).map(_.toQueue)
     }
   }
+
+  def listQueues: Seq[Queue] = {
+    transaction {
+      from(queues)(q => select(q)).map(_.toQueue).toSeq
+    }
+  }
 }
 
 class SquerylMessageStorage extends MessageStorage {

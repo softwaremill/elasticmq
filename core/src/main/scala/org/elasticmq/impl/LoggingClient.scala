@@ -30,6 +30,11 @@ class QueueClientLoggingWrapper(delegate: QueueClient) extends QueueClient {
     log.debug("Deleting queue: " + queue)
     delegate.deleteQueue(queue);
   }
+
+  def listQueues = {
+    log.debug("Listing queues")
+    delegate.listQueues
+  }
 }
 
 class MessageClientLogginWrapper(delegate: MessageClient) extends MessageClient {

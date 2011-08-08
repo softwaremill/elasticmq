@@ -92,6 +92,20 @@ class QueueStorageTestSuite extends StorageTestSuite {
     // Then
     storage.queueStorage.lookupQueue("q1") must be (Some(Queue("q1", MillisVisibilityTimeout(100L))))
   }
+
+  test("listing queues") {
+    // Given
+    storage.queueStorage.persistQueue(Queue("q1", MillisVisibilityTimeout(1L)));
+    storage.queueStorage.persistQueue(Queue("q2", MillisVisibilityTimeout(2L)));
+
+    // When
+    val queues = storage.queueStorage.listQueues
+
+    // Then
+    queues.size must be (2)
+    queues(0) must be (Queue("q1", MillisVisibilityTimeout(1L)))
+    queues(1) must be (Queue("q2", MillisVisibilityTimeout(2L)))
+  }
 }
 
 class MessageStorageTestSuite extends StorageTestSuite {

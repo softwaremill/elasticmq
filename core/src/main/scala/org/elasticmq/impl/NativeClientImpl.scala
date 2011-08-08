@@ -27,6 +27,8 @@ class NativeQueueClientImpl(storage: Storage) extends QueueClient {
   def deleteQueue(queue: Queue) {
     storage.queueStorage.deleteQueue(queue)
   }
+
+  def listQueues = storage.queueStorage.listQueues
 }
 
 class NativeMessageClientImpl(storage: Storage) extends MessageClient {

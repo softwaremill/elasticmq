@@ -10,6 +10,7 @@ trait QueueClient {
   def lookupQueue(name: String): Option[Queue]
   def updateDefaultVisibilityTimeout(queue: Queue, newDefaultVisibilityTimeout: MillisVisibilityTimeout): Queue
   def deleteQueue(queue: Queue)
+  def listQueues: Seq[Queue]
 }
 
 trait MessageClient {

@@ -12,6 +12,7 @@ trait QueueStorage {
   def updateQueue(queue: Queue)
   def deleteQueue(queue: Queue)
   def lookupQueue(name: String): Option[Queue]
+  def listQueues: Seq[Queue]
 }
 
 trait MessageStorage {
