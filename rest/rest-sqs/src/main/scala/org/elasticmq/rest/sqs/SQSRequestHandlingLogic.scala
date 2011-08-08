@@ -4,6 +4,7 @@ import org.jboss.netty.handler.codec.http.HttpRequest
 import org.elasticmq.rest.{StringResponse, RequestHandlerLogic}
 
 import SQSConstants._
+import xml.Elem
 
 trait SQSRequestHandlingLogic extends RequestHandlerLogic {
   abstract override def handle(request: HttpRequest, parameters: Map[String, String]) = {
@@ -16,24 +17,26 @@ trait SQSRequestHandlingLogic extends RequestHandlerLogic {
 }
 
 object SQSRequestHandlingLogic {
-  def logic(body: (String, HttpRequest, Map[String, String]) => StringResponse): RequestHandlerLogic = {
+  def logic(body: (String, HttpRequest, Map[String, String]) => Elem): RequestHandlerLogic = {
     class TheLogic extends RequestHandlerLogic {
       def handle(request: HttpRequest, parameters: Map[String, String]) = {
         val queueName = parameters(queueNameParameter)
-        body(queueName, request, parameters)
+        body(queueName, request, parameters) % sqsNamespace
       }
     }
 
     new TheLogic with SQSRequestHandlingLogic
   }
 
-  def logic(body: (HttpRequest, Map[String, String]) => StringResponse): RequestHandlerLogic = {
+  def logic(body: (HttpRequest, Map[String, String]) => Elem): RequestHandlerLogic = {
     class TheLogic extends RequestHandlerLogic {
       def handle(request: HttpRequest, parameters: Map[String, String]) = {
-        body(request, parameters)
+        body(request, parameters) % sqsNamespace
       }
     }
 
     new TheLogic with SQSRequestHandlingLogic
   }
+
+  implicit def elemToStringResponse(e: Elem): StringResponse = StringResponse(e.toString())
 }

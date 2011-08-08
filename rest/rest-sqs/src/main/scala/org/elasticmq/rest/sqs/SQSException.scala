@@ -1,8 +1,10 @@
 package org.elasticmq.rest.sqs
 
+import SQSConstants._
+
 class SQSException(message: String, httpStatusCode: Int = 400, errorType: String = "Sender") extends Exception {
   def toXml(requestId: String) =
-    <ErrorResponse xmlns="http://queue.amazonaws.com/doc/2009-02-01/">
+    <ErrorResponse>
       <Error>
         <Type>{errorType}</Type>
         <Code>{message}</Code>
@@ -10,6 +12,6 @@ class SQSException(message: String, httpStatusCode: Int = 400, errorType: String
         <Detail/>
       </Error>
       <RequestId>{requestId}</RequestId>
-    </ErrorResponse>
+    </ErrorResponse> % sqsNamespace
 }
 

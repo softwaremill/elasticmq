@@ -3,12 +3,12 @@ package org.elasticmq.rest.sqs
 import org.elasticmq.rest.RequestHandlerBuilder._
 import org.elasticmq.rest.RestPath._
 import org.jboss.netty.handler.codec.http.HttpMethod
-import org.elasticmq.rest.{StringResponse, RestServer}
+import org.elasticmq.rest.RestServer
 import org.elasticmq.{MillisVisibilityTimeout, Queue, Client}
 
 import HttpMethod._
 import SQSRequestHandlingLogic._
-import xml.Elem
+import xml.{Null, UnprefixedAttribute}
 
 class SQSRestServerFactory(client: Client, port: Int, baseAddress: String) {
   import SQSUtil._
@@ -39,7 +39,7 @@ class SQSRestServerFactory(client: Client, port: Int, baseAddress: String) {
       throw new SQSException("AWS.SimpleQueueService.QueueNameExists")
     }
 
-    <CreateQueueResponse xmlns="http://queue.amazonaws.com/doc/2009-02-01/">
+    <CreateQueueResponse>
       <CreateQueueResult>
         <QueueUrl>{getQueueURL(queue)}</QueueUrl>
       </CreateQueueResult>
@@ -53,7 +53,7 @@ class SQSRestServerFactory(client: Client, port: Int, baseAddress: String) {
     val queue = getQueue(queueName)
     client.queueClient.deleteQueue(queue)
 
-    <DeleteQueueResponse xmlns="http://queue.amazonaws.com/doc/2009-02-01/">
+    <DeleteQueueResponse>
       <ResponseMetadata>
         <RequestId>{emptyRequestId}</RequestId>
       </ResponseMetadata>
@@ -69,7 +69,7 @@ class SQSRestServerFactory(client: Client, port: Int, baseAddress: String) {
       case None => allQueues
     }
 
-    <ListQueuesResponse xmlns="http://queue.amazonaws.com/doc/2009-02-01/">
+    <ListQueuesResponse>
       <ListQueuesResult>
         {queues.map(q => <QueueUrl>{getQueueURL(q)}</QueueUrl>)}
       </ListQueuesResult>
@@ -129,6 +129,8 @@ class SQSRestServerFactory(client: Client, port: Int, baseAddress: String) {
 object SQSConstants {
   val emptyRequestId = "00000000-0000-0000-0000-000000000000"
 
+  val sqsNamespace = new UnprefixedAttribute("xmlns", "http://queue.amazonaws.com/doc/2009-02-01/", Null)
+
   val queueNameParameter = "QueueName"
 }
 
@@ -145,6 +147,4 @@ object SQSUtil {
   }
 
   implicit def mapToParametersParser(parameters: Map[String, String]): ParametersParser = new ParametersParser(parameters)
-
-  implicit def elemToStringResponse(e: Elem): StringResponse = StringResponse(e.toString())
 }
