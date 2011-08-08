@@ -30,11 +30,45 @@ class TypicaTestSuite extends FunSuite with MustMatchers with BeforeAndAfter {
     queueService.getOrCreateMessageQueue("testQueue1")
   }
 
+  test("should list created queues") {
+    // Given
+    val queueService = newQueueService
+    queueService.getOrCreateMessageQueue("testQueue1")
+    queueService.getOrCreateMessageQueue("testQueue2")
+
+    // When
+    val queues = queueService.listMessageQueues(null)
+
+    // Then
+    queues.size() must be (2)
+    queues.get(0).getUrl.toString must include ("testQueue1")
+    queues.get(1).getUrl.toString must include ("testQueue2")
+  }
+
+  test("should list queues with the specified prefix") {
+    // Given
+    val queueService = newQueueService
+    queueService.getOrCreateMessageQueue("aaaQueue")
+    queueService.getOrCreateMessageQueue("bbbQueue")
+
+    // When
+    val queues = queueService.listMessageQueues("aaa")
+
+    // Then
+    queues.size() must be (1)
+    queues.get(0).getUrl.toString must include ("aaaQueue")
+  }
+
   test("should create and delete a queue") {
+    // Given
     val queueService = newQueueService
     val queue = queueService.getOrCreateMessageQueue("testQueue1")
 
+    // When
     queue.deleteQueue()
+
+    // Then
+    newQueueService.listMessageQueues(null).size() must be (0)
   }
 
   def newQueueService = new QueueService("n/a", "n/a", false, "localhost", 8888)

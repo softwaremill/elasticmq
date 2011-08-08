@@ -5,7 +5,7 @@ import org.elasticmq.rest.{StringResponse, RequestHandlerLogic}
 
 import SQSConstants._
 
-trait SQSLogic extends RequestHandlerLogic {
+trait SQSRequestHandlingLogic extends RequestHandlerLogic {
   abstract override def handle(request: HttpRequest, parameters: Map[String, String]) = {
     try {
       super.handle(request, parameters)
@@ -15,7 +15,7 @@ trait SQSLogic extends RequestHandlerLogic {
   }
 }
 
-object SQSLogic {
+object SQSRequestHandlingLogic {
   def logic(body: (String, HttpRequest, Map[String, String]) => StringResponse): RequestHandlerLogic = {
     class TheLogic extends RequestHandlerLogic {
       def handle(request: HttpRequest, parameters: Map[String, String]) = {
@@ -24,6 +24,16 @@ object SQSLogic {
       }
     }
 
-    new TheLogic with SQSLogic
+    new TheLogic with SQSRequestHandlingLogic
+  }
+
+  def logic(body: (HttpRequest, Map[String, String]) => StringResponse): RequestHandlerLogic = {
+    class TheLogic extends RequestHandlerLogic {
+      def handle(request: HttpRequest, parameters: Map[String, String]) = {
+        body(request, parameters)
+      }
+    }
+
+    new TheLogic with SQSRequestHandlingLogic
   }
 }

@@ -7,7 +7,7 @@ import org.elasticmq.rest.{StringResponse, RestServer}
 import org.elasticmq.{MillisVisibilityTimeout, Queue, Client}
 
 import HttpMethod._
-import SQSLogic._
+import SQSRequestHandlingLogic._
 import xml.Elem
 
 class SQSRestServerFactory(client: Client, port: Int, baseAddress: String) {
@@ -23,6 +23,7 @@ class SQSRestServerFactory(client: Client, port: Int, baseAddress: String) {
 
   val createQueueAction = actionParameter -> "CreateQueue"
   val deleteQueueAction = actionParameter -> "DeleteQueue"
+  val listQueuesAction = actionParameter -> "ListQueues"
 
   val createQueueLogic = logic((queueName, request, parameters) => {
     val queueOption = client.queueClient.lookupQueue(queueName)
@@ -40,7 +41,7 @@ class SQSRestServerFactory(client: Client, port: Int, baseAddress: String) {
 
     <CreateQueueResponse xmlns="http://queue.amazonaws.com/doc/2009-02-01/">
       <CreateQueueResult>
-        <QueueUrl>{baseAddress}/{queueURLPath}/{queueName}</QueueUrl>
+        <QueueUrl>{getQueueURL(queue)}</QueueUrl>
       </CreateQueueResult>
       <ResponseMetadata>
         <RequestId>{emptyRequestId}</RequestId>
@@ -59,6 +60,25 @@ class SQSRestServerFactory(client: Client, port: Int, baseAddress: String) {
     </DeleteQueueResponse>
   })
 
+  val listQueuesLogic = logic((request, parameters) => {
+    val prefixOption = parameters.get("QueueNamePrefix")
+    val allQueues = client.queueClient.listQueues
+
+    val queues = prefixOption match {
+      case Some(prefix) => allQueues.filter(_.name.startsWith(prefix))
+      case None => allQueues
+    }
+
+    <ListQueuesResponse xmlns="http://queue.amazonaws.com/doc/2009-02-01/">
+      <ListQueuesResult>
+        {queues.map(q => <QueueUrl>{getQueueURL(q)}</QueueUrl>)}
+      </ListQueuesResult>
+      <ResponseMetadata>
+        <RequestId>{emptyRequestId}</RequestId>
+      </ResponseMetadata>
+    </ListQueuesResponse>
+  })
+
   def getQueue(queueName: String) = {
     val queueOption = client.queueClient.lookupQueue(queueName)
 
@@ -67,6 +87,8 @@ class SQSRestServerFactory(client: Client, port: Int, baseAddress: String) {
       case None => throw new SQSException("AWS.SimpleQueueService.NonExistentQueue")
     }
   }
+
+  def getQueueURL(queue: Queue) = baseAddress+"/"+queueURLPath+"/"+queue.name
 
   val createQueueGetHandler = (createHandler
             forMethod GET
@@ -89,10 +111,17 @@ class SQSRestServerFactory(client: Client, port: Int, baseAddress: String) {
             requiringParameterValues Map(deleteQueueAction)
             running deleteQueueLogic)
 
+  val listQueuesGetHandler = (createHandler
+            forMethod GET
+            forPath (root)
+            requiringParameterValues Map(listQueuesAction)
+            running listQueuesLogic)
+
   def start(): RestServer = {
     RestServer.start(
       createQueueGetHandler :: createQueuePostHandler ::
               deleteQueueGetHandler ::
+              listQueuesGetHandler ::
               Nil, port)
   }
 }
