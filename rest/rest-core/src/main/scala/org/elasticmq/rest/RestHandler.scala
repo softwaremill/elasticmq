@@ -27,17 +27,23 @@ class RestHandler(handlers: List[CheckingRequestHandlerWrapper]) extends SimpleC
   override def messageReceived(ctx: ChannelHandlerContext, e: MessageEvent) {
     val request = e.getMessage.asInstanceOf[HttpRequest]
 
-    for (handler <- handlers) {
-      val canHandleResult = handler.canHandle(request, Map())
-      if (canHandleResult.isDefined) {
-        respondWith(handler.clientHandler.handle(request, canHandleResult.get), e.getChannel)
-        return
+    def tryHandlers(toTry: List[CheckingRequestHandlerWrapper]) {
+      toTry match {
+        case Nil => {
+          // No handler
+          log.debug("No handler found for "+request.getUri)
+          sendError(ctx, NOT_FOUND)
+        }
+        case handler :: tail => {
+          handler.canHandle(request, Map()) match {
+            case None => tryHandlers(tail)
+            case Some(parameters) => respondWith(handler.clientHandler.handle(request, parameters), e.getChannel)
+          }
+        }
       }
     }
 
-    // No handler
-    log.debug("No handler found for "+request.getUri)
-    sendError(ctx, NOT_FOUND)
+    tryHandlers(handlers)
   }
 
   override def exceptionCaught(ctx: ChannelHandlerContext, e: ExceptionEvent) {
