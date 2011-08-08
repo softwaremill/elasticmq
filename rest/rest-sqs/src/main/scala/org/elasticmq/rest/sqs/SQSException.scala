@@ -7,7 +7,7 @@ import SQSConstants._
 
 class SQSException(message: String, httpStatusCode: Int = 400, errorType: String = "Sender") extends Exception {
   def toXml(requestId: String) =
-    <ErrorResponse>
+    <ErrorResponse xmlns="http://queue.amazonaws.com/doc/2009-02-01/">
       <Error>
         <Type>
           {errorType}
