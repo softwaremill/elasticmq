@@ -24,6 +24,7 @@ class SQSRestServerFactory(client: Client, port: Int, baseAddress: String) {
   val createQueueAction = actionParameter -> "CreateQueue"
   val deleteQueueAction = actionParameter -> "DeleteQueue"
   val listQueuesAction = actionParameter -> "ListQueues"
+  val getQueueAttributesAction = actionParameter -> "GetQueueAttributes"
 
   val createQueueLogic = logic((queueName, request, parameters) => {
     val queueOption = client.queueClient.lookupQueue(queueName)
@@ -79,6 +80,49 @@ class SQSRestServerFactory(client: Client, port: Int, baseAddress: String) {
     </ListQueuesResponse>
   })
 
+  val getQueueAttributesLogic = logic((queueName, request, parameters) => {
+    // So far we support only one attribute ..
+    object QueueAttributeNames {
+      val VisibilityTimeout = "VisibilityTimeout"
+    }
+
+    val queue = getQueue(queueName)
+
+    def collectAttributeNames(suffix: Int, acc: List[String]): List[String] = {
+      parameters.get("AttributeName." + suffix) match {
+        case None => acc
+        case Some(an) => collectAttributeNames(suffix+1, an :: acc)
+      }
+    }
+
+    var attributeNames = collectAttributeNames(1, parameters.get("AttributeName").toList)
+    if (attributeNames.contains("All")) {
+      attributeNames = QueueAttributeNames.VisibilityTimeout :: Nil
+    }
+
+    val attributes = attributeNames.flatMap {
+      import QueueAttributeNames._
+
+      _ match {
+        case VisibilityTimeout => Some((VisibilityTimeout, queue.defaultVisibilityTimeout.millis.toString))
+        case _ => None
+      }
+    }
+
+    <GetQueueAttributesResponse>
+      <GetQueueAttributesResult>
+        {attributes.map(a =>
+        <Attribute>
+          <Name>{a._1}</Name>
+          <Value>{a._2}</Value>
+        </Attribute>)}
+      </GetQueueAttributesResult>
+      <ResponseMetadata>
+        <RequestId>{emptyRequestId}</RequestId>
+      </ResponseMetadata>
+    </GetQueueAttributesResponse>
+  })
+
   def getQueue(queueName: String) = {
     val queueOption = client.queueClient.lookupQueue(queueName)
 
@@ -89,6 +133,8 @@ class SQSRestServerFactory(client: Client, port: Int, baseAddress: String) {
   }
 
   def getQueueURL(queue: Queue) = baseAddress+"/"+queueURLPath+"/"+queue.name
+
+  val queuePath = root / queueURLPath / %("QueueName")
 
   val createQueueGetHandler = (createHandler
             forMethod GET
@@ -107,7 +153,7 @@ class SQSRestServerFactory(client: Client, port: Int, baseAddress: String) {
 
   val deleteQueueGetHandler = (createHandler
             forMethod GET
-            forPath (root / queueURLPath / %("QueueName"))
+            forPath (queuePath)
             requiringParameterValues Map(deleteQueueAction)
             running deleteQueueLogic)
 
@@ -117,11 +163,17 @@ class SQSRestServerFactory(client: Client, port: Int, baseAddress: String) {
             requiringParameterValues Map(listQueuesAction)
             running listQueuesLogic)
 
+  val getQueueAttributesGetHandler = (createHandler
+            forMethod GET
+            forPath (queuePath)
+            requiringParameterValues Map(getQueueAttributesAction)
+            running getQueueAttributesLogic)
   def start(): RestServer = {
     RestServer.start(
       createQueueGetHandler :: createQueuePostHandler ::
               deleteQueueGetHandler ::
               listQueuesGetHandler ::
+              getQueueAttributesGetHandler ::
               Nil, port)
   }
 }
