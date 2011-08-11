@@ -6,8 +6,11 @@ import org.elasticmq.{Queue, Client}
 
 import xml.{Null, UnprefixedAttribute}
 
-class SQSRestServerFactory(client: Client, port: Int, baseAddress: String) { factory =>
-  def start(): RestServer = {
+object SQSRestServerFactory {
+  def start(client: Client, port: Int, baseAddress: String): RestServer = {
+    val theClient = client
+    val theBaseAddress = baseAddress
+
     val env = new ClientModule
       with QueueURLModule
       with RequestHandlerLogicModule
@@ -15,8 +18,8 @@ class SQSRestServerFactory(client: Client, port: Int, baseAddress: String) { fac
       with DeleteQueueHandlerModule
       with QueueAttributesHandlersModule
       with ListQueuesHandlerModule {
-      val client = factory.client
-      val baseAddress = factory.baseAddress
+      val client = theClient
+      val baseAddress = theBaseAddress
     }
 
     import env._

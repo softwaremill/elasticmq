@@ -17,7 +17,7 @@ class TypicaTestSuite extends FunSuite with MustMatchers with BeforeAndAfter {
 
   before {
     node = NodeBuilder.createNode
-    server = new SQSRestServerFactory(node.nativeClient, 8888, "http://localhost:8888").start()
+    server = SQSRestServerFactory.start(node.nativeClient, 8888, "http://localhost:8888")
   }
 
   after {

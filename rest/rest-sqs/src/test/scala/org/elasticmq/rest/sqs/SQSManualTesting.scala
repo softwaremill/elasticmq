@@ -12,7 +12,7 @@ object SQSManualTesting {
     val node = NodeBuilder.createNode
     val client = node.nativeClient
 
-    val server = new SQSRestServerFactory(client, 8888, "http://localhost:8888").start()
+    val server = SQSRestServerFactory.start(client, 8888, "http://localhost:8888")
     println("Started")
     readLine()
     server.stop()
