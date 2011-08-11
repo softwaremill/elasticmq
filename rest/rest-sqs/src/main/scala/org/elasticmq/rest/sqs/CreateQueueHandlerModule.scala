@@ -39,17 +39,17 @@ trait CreateQueueHandlerModule { this: ClientModule with QueueURLModule with Req
     </CreateQueueResponse>
   })
 
-  val createQueuePostHandler = (createHandler
-            forMethod POST
+  val createQueueGetHandler = (createHandler
+            forMethod GET
             forPath (root)
-            includingParametersFromBody ()
             requiringParameters List(QUEUE_NAME_PARAMETER)
             requiringParameterValues Map(CREATE_QUEUE_ACTION)
             running createQueueLogic)
 
-  val createQueueGetHandler = (createHandler
-            forMethod GET
+  val createQueuePostHandler = (createHandler
+            forMethod POST
             forPath (root)
+            includingParametersFromBody()
             requiringParameters List(QUEUE_NAME_PARAMETER)
             requiringParameterValues Map(CREATE_QUEUE_ACTION)
             running createQueueLogic)

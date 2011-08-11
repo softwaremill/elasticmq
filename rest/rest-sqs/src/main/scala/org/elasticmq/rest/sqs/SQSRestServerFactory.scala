@@ -29,13 +29,13 @@ object SQSRestServerFactory {
     import env._
     RestServer.start(
       createQueueGetHandler :: createQueuePostHandler ::
-              deleteQueueGetHandler ::
-              listQueuesGetHandler ::
-              getQueueAttributesGetHandler ::
-              setQueueAttributesGetHandler ::
+              deleteQueueGetHandler :: deleteQueuePostHandler ::
+              listQueuesGetHandler :: listQueuesPostHandler ::
+              getQueueAttributesGetHandler :: getQueueAttributesPostHandler ::
+              setQueueAttributesGetHandler :: setQueueAttributesPostHandler ::
               sendMessageGetHandler :: sendMessagePostHandler ::
-              receiveMessageGetHandler ::
-              deleteMessageGetHandler ::
+              receiveMessageGetHandler :: receiveMessagePostHandler ::
+              deleteMessageGetHandler :: deleteMessagePostHandler ::
               Nil, port)
   }
 }

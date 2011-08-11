@@ -28,6 +28,14 @@ trait DeleteMessageHandlerModule { this: ClientModule with RequestHandlerLogicMo
             requiringParameters List(RECEIPT_HANDLE_PARAMETER)
             requiringParameterValues Map(DELETE_MESSAGE_ACTION)
             running deleteMessageLogic)
+
+  val deleteMessagePostHandler = (createHandler
+            forMethod POST
+            forPath (QUEUE_PATH)
+            includingParametersFromBody()
+            requiringParameters List(RECEIPT_HANDLE_PARAMETER)
+            requiringParameterValues Map(DELETE_MESSAGE_ACTION)
+            running deleteMessageLogic)
 }
 
 object DeleteMessageHandlerModule {

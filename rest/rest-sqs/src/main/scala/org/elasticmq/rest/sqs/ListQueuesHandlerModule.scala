@@ -30,10 +30,16 @@ trait ListQueuesHandlerModule { this: ClientModule with QueueURLModule with Requ
     </ListQueuesResponse>
   })
 
-
   val listQueuesGetHandler = (createHandler
             forMethod GET
             forPath (root)
+            requiringParameterValues Map(LIST_QUEUES_ACTION)
+            running listQueuesLogic)
+
+  val listQueuesPostHandler = (createHandler
+            forMethod POST
+            forPath (root)
+            includingParametersFromBody()
             requiringParameterValues Map(LIST_QUEUES_ACTION)
             running listQueuesLogic)
 }

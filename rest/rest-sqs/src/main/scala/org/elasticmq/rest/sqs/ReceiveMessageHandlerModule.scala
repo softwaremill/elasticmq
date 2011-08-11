@@ -34,6 +34,13 @@ trait ReceiveMessageHandlerModule { this: ClientModule with RequestHandlerLogicM
             forPath (QUEUE_PATH)
             requiringParameterValues Map(RECEIVE_MESSAGE_ACTION)
             running receiveMessageLogic)
+
+  val receiveMessagePostHandler = (createHandler
+            forMethod POST
+            forPath (QUEUE_PATH)
+            includingParametersFromBody()
+            requiringParameterValues Map(RECEIVE_MESSAGE_ACTION)
+            running receiveMessageLogic)
 }
 
 object ReceiveMessageHandlerModule {

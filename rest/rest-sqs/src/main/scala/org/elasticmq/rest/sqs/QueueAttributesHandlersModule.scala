@@ -76,9 +76,24 @@ trait QueueAttributesHandlersModule { this: ClientModule with RequestHandlerLogi
             requiringParameterValues Map(GET_QUEUE_ATTRIBUTES_ACTION)
             running getQueueAttributesLogic)
 
+  val getQueueAttributesPostHandler = (createHandler
+            forMethod POST
+            forPath (QUEUE_PATH)
+            includingParametersFromBody()
+            requiringParameterValues Map(GET_QUEUE_ATTRIBUTES_ACTION)
+            running getQueueAttributesLogic)
+
   val setQueueAttributesGetHandler = (createHandler
             forMethod GET
             forPath (QUEUE_PATH)
+            requiringParameters List(ATTRIBUTE_NAME_PARAMETER, ATTRIBUTE_VALUE_PARAMETER)
+            requiringParameterValues Map(SET_QUEUE_ATTRIBUTES_ACTION)
+            running setQueueAttributesLogic)
+
+  val setQueueAttributesPostHandler = (createHandler
+            forMethod POST
+            forPath (QUEUE_PATH)
+            includingParametersFromBody()
             requiringParameters List(ATTRIBUTE_NAME_PARAMETER, ATTRIBUTE_VALUE_PARAMETER)
             requiringParameterValues Map(SET_QUEUE_ATTRIBUTES_ACTION)
             running setQueueAttributesLogic)

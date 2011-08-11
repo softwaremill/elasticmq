@@ -25,6 +25,13 @@ trait DeleteQueueHandlerModule { this: ClientModule with RequestHandlerLogicModu
           forPath (QUEUE_PATH)
           requiringParameterValues Map(DELETE_QUEUE_ACTION)
           running deleteQueueLogic)
+
+  val deleteQueuePostHandler = (createHandler
+          forMethod POST
+          forPath (QUEUE_PATH)
+          includingParametersFromBody()
+          requiringParameterValues Map(DELETE_QUEUE_ACTION)
+          running deleteQueueLogic)
 }
 
 object DeleteQueueHandlerModule {
