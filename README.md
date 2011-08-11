@@ -1,14 +1,14 @@
 ElasticMQ
 =========
 
-ElasticMQ is a simple message queue system, written entirely in [Scala][http://scala-lang.org].
+ElasticMQ is a simple message queue system, written entirely in [Scala](http://scala-lang.org).
 
-Currently messages are persisted in a database (by default an in-memory H2 instance) using [Squeryl][http://squeryl.org/].
+Currently messages are persisted in a database (by default an in-memory H2 instance) using [Squeryl](http://squeryl.org/).
 
-ElasticMQ implements a subset of the [SQS][http://aws.amazon.com/sqs/] REST interface,
+ElasticMQ implements a subset of the [SQS](http://aws.amazon.com/sqs/) REST interface,
 providing an SQS alternative e.g. for testing purposes.
 
-The SQS interface has been tested using the [Typica][http://code.google.com/p/typica/] library;
+The SQS interface has been tested using the [Typica](http://code.google.com/p/typica/) library;
 see the `rest-sqs-testing-typica` module for the testsuite.
 
 In the future... ElasticMQ may provide many more exciting features :).
