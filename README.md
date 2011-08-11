@@ -31,7 +31,7 @@ ElasticMQ dependencies in SBT
     val elasticmqCore = "org.elasticmq" %% "core" % "0.1-SNAPSHOT"
     val elasticmqSqs  = "org.elasticmq" %% "rest-sqs" % "0.1-SNAPSHOT"
 
-    val smlResolver = "SotwareMill Public Releases" at "http://tools.softwaremill.pl/nexus/content/repositories/releases/"
+    val smlResolver = "SotwareMill Public Releases" at "http://tools.softwaremill.pl/nexus/content/repositories/snapshots/"
 
 ElasticMQ dependencies in Maven
 -------------------------------
@@ -54,5 +54,5 @@ And our repository:
     <repository>
         <id>SotwareMillPublicReleases</id>
         <name>SotwareMill Public Releases</name>
-        <url>http://tools.softwaremill.pl/nexus/content/repositories/releases/</url>
+        <url>http://tools.softwaremill.pl/nexus/content/repositories/snapshots/</url>
     </repository>
