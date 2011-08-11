@@ -18,5 +18,6 @@ trait MessageClient {
   def receiveMessage(queue: Queue): Option[Message]
   def updateVisibilityTimeout(message: Message, newVisibilityTimeout: MillisVisibilityTimeout): Message
   def deleteMessage(message: Message)
+  def lookupMessage(id: String): Option[Message]
 }
 

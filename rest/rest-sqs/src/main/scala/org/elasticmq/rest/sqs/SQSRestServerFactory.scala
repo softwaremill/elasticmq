@@ -20,7 +20,8 @@ object SQSRestServerFactory {
       with QueueAttributesHandlersModule
       with ListQueuesHandlerModule
       with SendMessageHandlerModule
-      with ReceiveMessageHandlerModule {
+      with ReceiveMessageHandlerModule
+      with DeleteMessageHandlerModule {
       val client = theClient
       val baseAddress = theBaseAddress
     }
@@ -34,6 +35,7 @@ object SQSRestServerFactory {
               setQueueAttributesGetHandler ::
               sendMessageGetHandler :: sendMessagePostHandler ::
               receiveMessageGetHandler ::
+              deleteMessageGetHandler ::
               Nil, port)
   }
 }
@@ -44,6 +46,7 @@ object Constants {
   val QUEUE_URL_PATH = "queue"
   val QUEUE_PATH = root / QUEUE_URL_PATH / %("QueueName")
   val QUEUE_NAME_PARAMETER = "QueueName"
+  val RECEIPT_HANDLE_PARAMETER = "ReceiptHandle"
 }
 
 object ActionUtil {

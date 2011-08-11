@@ -60,5 +60,9 @@ class NativeMessageClientImpl(storage: Storage) extends MessageClient {
     storage.messageStorage.deleteMessage(message)
   }
 
+  def lookupMessage(id: String) = {
+    storage.messageStorage.lookupMessage(id)
+  }
+
   private def generateId(): String = UUID.randomUUID().toString
 }

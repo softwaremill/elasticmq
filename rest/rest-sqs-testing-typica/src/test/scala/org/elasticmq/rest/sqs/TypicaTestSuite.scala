@@ -127,5 +127,22 @@ class TypicaTestSuite extends FunSuite with MustMatchers with BeforeAndAfter {
     m3.getMessageBody must be ("Message 1")
   }
 
+  test("should delete a message") {
+    // Given
+    val queueService = newQueueService
+    val queue = queueService.getOrCreateMessageQueue("testQueue1", 500)
+
+    // When
+    queue.sendMessage("Message 1")
+    val m1 = queue.receiveMessage()
+    queue.deleteMessage(m1)
+    Thread.sleep(600)
+    val m2 = queue.receiveMessage()
+
+    // Then
+    m1.getMessageBody must be ("Message 1")
+    m2 must be (null)
+  }
+
   def newQueueService = new QueueService("n/a", "n/a", false, "localhost", 8888)
 }
