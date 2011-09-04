@@ -13,7 +13,9 @@ class SquerylStorage extends Storage {
 }
 
 object SquerylStorage {
-  def initialize(dbAdapter: DatabaseAdapter, jdbcURL: String, credentials: Option[(String, String)] = None) {
+  def initialize(dbAdapter: DatabaseAdapter, jdbcURL: String,
+                 credentials: Option[(String, String)] = None,
+                 create: Boolean = true) {
     import org.squeryl.SessionFactory
 
     SessionFactory.concreteFactory = Some(()=>
@@ -24,14 +26,18 @@ object SquerylStorage {
         },
         dbAdapter))
 
-    transaction {
-      MQSchema.create
+    if (create) {
+      transaction {
+        MQSchema.create
+      }
     }
   }
 
-  def shutdown() {
-    transaction {
-      MQSchema.drop
+  def shutdown(drop: Boolean) {
+    if (drop) {
+      transaction {
+        MQSchema.drop
+      }
     }
   }
 }

@@ -14,7 +14,7 @@ trait StorageTestSuite extends FunSuite with MustMatchers with OneInstancePerTes
   private val setups: List[StorageTestSetup] =
     StorageTestSetup("Squeryl", new SquerylStorage,
       () => SquerylStorage.initialize(new H2Adapter, "jdbc:h2:mem:"+this.getClass.getName+";DB_CLOSE_DELAY=-1"),
-      SquerylStorage.shutdown _) :: Nil
+      () => SquerylStorage.shutdown(true)) :: Nil
 
   private var _storage: Storage = null
 
