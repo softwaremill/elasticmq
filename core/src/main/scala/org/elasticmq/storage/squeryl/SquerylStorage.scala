@@ -13,12 +13,15 @@ class SquerylStorage extends Storage {
 }
 
 object SquerylStorage {
-  def initialize(dbAdapter: DatabaseAdapter, jdbcURL: String) {
+  def initialize(dbAdapter: DatabaseAdapter, jdbcURL: String, credentials: Option[(String, String)] = None) {
     import org.squeryl.SessionFactory
 
     SessionFactory.concreteFactory = Some(()=>
       Session.create(
-        java.sql.DriverManager.getConnection(jdbcURL),
+        credentials match {
+          case None => java.sql.DriverManager.getConnection(jdbcURL)
+          case Some((username, password)) => java.sql.DriverManager.getConnection(jdbcURL, username, password)
+        },
         dbAdapter))
 
     transaction {
