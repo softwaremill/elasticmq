@@ -9,7 +9,7 @@ object SQSManualTesting {
     BasicConfigurator.configure();
     InternalLoggerFactory.setDefaultFactory(new Log4JLoggerFactory())
 
-    val node = NodeBuilder.createNode
+    val node = NodeBuilder.withInMemoryStorage().build()
     val client = node.nativeClient
 
     val server = SQSRestServerFactory.start(client, 8888, "http://localhost:8888")

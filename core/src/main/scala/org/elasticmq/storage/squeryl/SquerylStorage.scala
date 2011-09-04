@@ -1,7 +1,7 @@
 package org.elasticmq.storage.squeryl
 
-import org.squeryl.adapters.H2Adapter
 import org.squeryl._
+import internals.DatabaseAdapter
 import PrimitiveTypeMode._
 import org.elasticmq.storage.{MessageStorage, QueueStorage, Storage}
 import org.elasticmq._
@@ -13,15 +13,13 @@ class SquerylStorage extends Storage {
 }
 
 object SquerylStorage {
-  def initialize(databaseName: String) {
+  def initialize(dbAdapter: DatabaseAdapter, jdbcURL: String) {
     import org.squeryl.SessionFactory
-
-    Thread.currentThread().getContextClassLoader.loadClass("org.h2.Driver");
 
     SessionFactory.concreteFactory = Some(()=>
       Session.create(
-        java.sql.DriverManager.getConnection("jdbc:h2:mem:"+databaseName+";DB_CLOSE_DELAY=-1"),
-        new H2Adapter))
+        java.sql.DriverManager.getConnection(jdbcURL),
+        dbAdapter))
 
     transaction {
       MQSchema.create

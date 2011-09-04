@@ -4,7 +4,7 @@ import org.scalatest.matchers.MustMatchers
 import org.scalatest.{BeforeAndAfter, FunSuite}
 import org.elasticmq.rest.RestServer
 import org.elasticmq.{Node, NodeBuilder}
-import com.xerox.amazonws.sqs2.{QueueService, SQSUtils}
+import com.xerox.amazonws.sqs2.QueueService
 import org.apache.log4j.BasicConfigurator
 import org.jboss.netty.logging.{Log4JLoggerFactory, InternalLoggerFactory}
 
@@ -16,7 +16,7 @@ class TypicaTestSuite extends FunSuite with MustMatchers with BeforeAndAfter {
   InternalLoggerFactory.setDefaultFactory(new Log4JLoggerFactory())
 
   before {
-    node = NodeBuilder.createNode
+    node = NodeBuilder.withInMemoryStorage().build()
     server = SQSRestServerFactory.start(node.nativeClient, 8888, "http://localhost:8888")
   }
 
