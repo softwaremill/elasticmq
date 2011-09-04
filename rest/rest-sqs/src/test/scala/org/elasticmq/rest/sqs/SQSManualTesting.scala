@@ -9,6 +9,19 @@ object SQSManualTesting {
     BasicConfigurator.configure();
     InternalLoggerFactory.setDefaultFactory(new Log4JLoggerFactory())
 
+    mysql()
+  }
+
+  def mysql() {
+    val node = NodeBuilder.withMysqlStorage("elasticmq", "root", "").build()
+    val client = node.nativeClient
+
+    readLine()
+
+    node.shutdown()
+  }
+
+  def simple() {
     val node = NodeBuilder.withInMemoryStorage().build()
     val client = node.nativeClient
 
