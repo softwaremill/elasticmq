@@ -26,9 +26,15 @@ object SquerylStorage {
         },
         dbAdapter))
 
+    // TODO: do in a nicer way
     if (create) {
       transaction {
-        MQSchema.create
+        try {
+          MQSchema.create
+        } catch {
+          case e: Exception if e.getMessage.contains("already exists") => // do nothing
+          case e => throw e
+        }
       }
     }
   }
