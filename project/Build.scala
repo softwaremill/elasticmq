@@ -42,6 +42,8 @@ object Dependencies {
 
   val typica = "com.google.code.typica" % "typica" % "1.7-softwaremill-4"
 
+  val mysqlConnector = "mysql" % "mysql-connector-java" % "5.1.12" % "test"
+
   val common = Seq(log4j)
   val testing = Seq(scalatest, mockito)
   val httpTesting = Seq(apacheHttp % "test")
@@ -86,7 +88,7 @@ object ElasticMQBuild extends Build {
   lazy val restSqs: Project = Project(
     "rest-sqs",
     file("rest/rest-sqs"),
-    settings = buildSettings ++ Seq(libraryDependencies := Seq() ++ common ++ testing ++ httpTesting)
+    settings = buildSettings ++ Seq(libraryDependencies := Seq(mysqlConnector) ++ common ++ testing ++ httpTesting)
   ) dependsOn(api, restCore, core % "test->compile")
 
   lazy val restSqsTestingTypica: Project = Project(
