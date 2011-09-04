@@ -21,13 +21,17 @@ Starting an ElasticMQ server
 ----------------------------
 
     // First we need to create a Node
-    val node = NodeBuilder.createNode
+    val node = NodeBuilder.withInMemoryStorage().build()
     // Then we can expose the native client using the SQS REST interface
     val server = SQSRestServerFactory.start(node.nativeClient, 8888, "http://localhost:8888")
     // ... use ...
     // Finally we need to stop the server and the node
     server.stop()
     node.shutdown()
+
+Alternatively, you can use MySQL to store the datea:
+
+    val node = NodeBuilder.withMysqlStorage("elasticmq", "root", "").build()
 
 ElasticMQ dependencies in SBT
 -----------------------------
