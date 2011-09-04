@@ -13,7 +13,7 @@ object SQSManualTesting {
   }
 
   def mysql() {
-    val node = NodeBuilder.withMysqlStorage("elasticmq", "root", "").build()
+    val node = NodeBuilder.withMySQLStorage("elasticmq", "root", "").build()
     val client = node.nativeClient
 
     readLine()

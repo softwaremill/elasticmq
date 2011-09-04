@@ -31,7 +31,7 @@ Starting an ElasticMQ server
 
 Alternatively, you can use MySQL to store the datea:
 
-    val node = NodeBuilder.withMysqlStorage("elasticmq", "root", "").build()
+    val node = NodeBuilder.withMySQLStorage("elasticmq", "root", "").build()
 
 ElasticMQ dependencies in SBT
 -----------------------------

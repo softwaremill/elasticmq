@@ -9,7 +9,7 @@ import org.squeryl.adapters.{MySQLAdapter, H2Adapter}
 object NodeBuilder {
   private val squerylShutdown = () => SquerylStorage.shutdown()
 
-  def withMysqlStorage(dbName: String, username: String, password: String,
+  def withMySQLStorage(dbName: String, username: String, password: String,
                        host: String = "localhost", port: Int = 3306) = {
     withDatabaseStorage(new MySQLAdapter,
       "jdbc:mysql://"+host+":"+port+"/"+dbName+"?useUnicode=true&amp;characterEncoding=UTF-8",
