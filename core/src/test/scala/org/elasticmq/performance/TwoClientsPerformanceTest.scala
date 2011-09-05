@@ -52,9 +52,8 @@ object TwoClientsPerformanceTest {
   }
 
   object Sender {
-    def run() {
+    def run(iterations: Int) {
       timeWithOpsPerSecond("Send", _ => {
-        val iterations = 1000
         for (i <- 1 to iterations) {
           client.messageClient.sendMessage(Message(testQueue, "message"+i))
         }
@@ -77,13 +76,20 @@ object TwoClientsPerformanceTestReceiver {
 
 object TwoClientsPerformanceTestSender {
   def main(args: Array[String]) {
-    TwoClientsPerformanceTest.Sender.run()
+    TwoClientsPerformanceTest.Sender.run(1000)
   }
 }
 
 object TwoClientsPerformanceTestSendAndReceive {
   def main(args: Array[String]) {
-    TwoClientsPerformanceTest.Sender.run()
+    TwoClientsPerformanceTest.Sender.run(1000)
+    TwoClientsPerformanceTest.Receiver.run()
+
+    println()
+    println("---")
+    println()
+
+    TwoClientsPerformanceTest.Sender.run(10000)
     TwoClientsPerformanceTest.Receiver.run()
   }
 }

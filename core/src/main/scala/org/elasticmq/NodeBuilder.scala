@@ -14,7 +14,7 @@ object NodeBuilder {
                        create: Boolean = true,
                        drop: Boolean = false) = {
     withDatabaseStorage(new MySQLAdapter,
-      "jdbc:mysql://"+host+":"+port+"/"+dbName+"?useUnicode=true&amp;characterEncoding=UTF-8",
+      "jdbc:mysql://"+host+":"+port+"/"+dbName+"?useUnicode=true&amp;characterEncoding=UTF-8&amp;cacheServerConfiguration=true",
       "com.mysql.jdbc.Driver",
       Some(username, password),
       create, drop)
