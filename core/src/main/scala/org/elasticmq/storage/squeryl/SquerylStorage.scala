@@ -6,6 +6,7 @@ import PrimitiveTypeMode._
 import org.elasticmq.storage.{MessageStorage, QueueStorage, Storage}
 import org.elasticmq._
 import java.lang.IllegalArgumentException
+import com.mchange.v2.c3p0.ComboPooledDataSource
 
 class SquerylStorage extends Storage {
   def messageStorage = new SquerylMessageStorage
@@ -13,18 +14,24 @@ class SquerylStorage extends Storage {
 }
 
 object SquerylStorage {
-  def initialize(dbAdapter: DatabaseAdapter, jdbcURL: String,
+  def initialize(dbAdapter: DatabaseAdapter, jdbcURL: String, driverClass: String,
                  credentials: Option[(String, String)] = None,
                  create: Boolean = true) {
     import org.squeryl.SessionFactory
 
-    SessionFactory.concreteFactory = Some(()=>
-      Session.create(
-        credentials match {
-          case None => java.sql.DriverManager.getConnection(jdbcURL)
-          case Some((username, password)) => java.sql.DriverManager.getConnection(jdbcURL, username, password)
-        },
-        dbAdapter))
+    val cpds = new ComboPooledDataSource
+    cpds.setDriverClass(driverClass)
+    cpds.setJdbcUrl(jdbcURL)
+
+    credentials match {
+      case Some((username, password)) => {
+        cpds.setUser(username)
+        cpds.setPassword(password)
+      }
+      case _ =>
+    }
+
+    SessionFactory.concreteFactory = Some(() => Session.create(cpds.getConnection, dbAdapter))
 
     // TODO: do in a nicer way
     if (create) {

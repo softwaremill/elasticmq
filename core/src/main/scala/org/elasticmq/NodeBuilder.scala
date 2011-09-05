@@ -27,12 +27,11 @@ object NodeBuilder {
       None, true, true)
   }
 
-  def withDatabaseStorage(dbAdapter: DatabaseAdapter, jdbcURL: String, dbDriverName: String,
+  def withDatabaseStorage(dbAdapter: DatabaseAdapter, jdbcURL: String, driverClass: String,
                           credentials: Option[(String, String)],
                           create: Boolean, drop: Boolean) = {
     new NodeBuilderWithStorageLifecycle(new SquerylStorage(), () => {
-      Thread.currentThread().getContextClassLoader.loadClass(dbDriverName);
-      SquerylStorage.initialize(dbAdapter, jdbcURL, credentials, create)
+      SquerylStorage.initialize(dbAdapter, jdbcURL, driverClass, credentials, create)
     }, squerylShutdown(drop))
   }
 

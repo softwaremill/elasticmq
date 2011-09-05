@@ -30,6 +30,7 @@ object BuildSettings {
 object Dependencies {
   val squeryl = "org.squeryl" %% "squeryl" % "0.9.4"
   val h2 = "com.h2database" % "h2" % "1.3.156"
+  val c3p0 = "c3p0" % "c3p0" % "0.9.1.2"
   val jodaTime = "joda-time" % "joda-time" % "1.6.2" // when available use https://github.com/jorgeortiz85/scala-time
   val netty = "org.jboss.netty" % "netty" % "3.2.4.Final"
 
@@ -42,7 +43,7 @@ object Dependencies {
 
   val typica = "com.google.code.typica" % "typica" % "1.7-softwaremill-4"
 
-  val mysqlConnector = "mysql" % "mysql-connector-java" % "5.1.12" % "test"
+  val mysqlConnector = "mysql" % "mysql-connector-java" % "5.1.12"
 
   val common = Seq(log4j)
   val testing = Seq(scalatest, mockito)
@@ -70,7 +71,7 @@ object ElasticMQBuild extends Build {
   lazy val core: Project = Project(
     "core",
     file("core"),
-    settings = buildSettings ++ Seq(libraryDependencies := Seq(squeryl, h2, jodaTime, mysqlConnector) ++ common ++ testing)
+    settings = buildSettings ++ Seq(libraryDependencies := Seq(squeryl, h2, c3p0, jodaTime, mysqlConnector % "test") ++ common ++ testing)
   ) dependsOn(api)
 
   lazy val rest: Project = Project(
@@ -88,7 +89,7 @@ object ElasticMQBuild extends Build {
   lazy val restSqs: Project = Project(
     "rest-sqs",
     file("rest/rest-sqs"),
-    settings = buildSettings ++ Seq(libraryDependencies := Seq(mysqlConnector) ++ common ++ testing ++ httpTesting)
+    settings = buildSettings ++ Seq(libraryDependencies := Seq(mysqlConnector % "test") ++ common ++ testing ++ httpTesting)
   ) dependsOn(api, restCore, core % "test->compile")
 
   lazy val restSqsTestingTypica: Project = Project(

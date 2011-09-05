@@ -21,6 +21,18 @@ object TwoClientsPerformanceTest {
     node.shutdown()
   }
 
+  def timeWithOpsPerSecond(name: String, block: Int => Int) {
+    val start = System.currentTimeMillis()
+    val ops = block(0)
+    val end = System.currentTimeMillis()
+
+    val seconds = (end - start) / 1000
+
+    println(name+" took: "+seconds)
+    println(name+" ops/second: "+(ops/seconds))
+    println(name+" ops: "+ops)
+  }
+
   object Receiver {
     def run() {
       def receiveLoop(count: Int): Int = {
@@ -33,15 +45,7 @@ object TwoClientsPerformanceTest {
         }
       }
 
-      val start = System.currentTimeMillis()
-      val received = receiveLoop(0)
-      val end = System.currentTimeMillis()
-
-      val seconds = (end - start) / 1000
-
-      println("Took: "+seconds)
-      println("Msgs/second: "+(received/seconds))
-      println("Received messages: "+received)
+      timeWithOpsPerSecond("Receive", receiveLoop _)
 
       shutdown()
     }
@@ -49,9 +53,14 @@ object TwoClientsPerformanceTest {
 
   object Sender {
     def run() {
-      for (i <- 1 to 1000) {
-        client.messageClient.sendMessage(Message(testQueue, "message"+i))
-      }
+      timeWithOpsPerSecond("Send", _ => {
+        val iterations = 1000
+        for (i <- 1 to iterations) {
+          client.messageClient.sendMessage(Message(testQueue, "message"+i))
+        }
+
+        iterations
+      })
 
       shutdown()
     }

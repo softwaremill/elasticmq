@@ -7,13 +7,11 @@ import squeryl.SquerylStorage
 import org.squeryl.adapters.H2Adapter
 
 trait StorageTestSuite extends FunSuite with MustMatchers with OneInstancePerTest {
-  Thread.currentThread().getContextClassLoader.loadClass("org.h2.Driver");
-
   private case class StorageTestSetup(storageName: String, storage: Storage, initialize: () => Unit, shutdown: () => Unit)
 
   private val setups: List[StorageTestSetup] =
     StorageTestSetup("Squeryl", new SquerylStorage,
-      () => SquerylStorage.initialize(new H2Adapter, "jdbc:h2:mem:"+this.getClass.getName+";DB_CLOSE_DELAY=-1"),
+      () => SquerylStorage.initialize(new H2Adapter, "jdbc:h2:mem:"+this.getClass.getName+";DB_CLOSE_DELAY=-1", "org.h2.Driver"),
       () => SquerylStorage.shutdown(true)) :: Nil
 
   private var _storage: Storage = null
