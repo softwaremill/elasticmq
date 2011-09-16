@@ -2,8 +2,8 @@ package org.elasticmq
 
 import org.squeryl.internals.DatabaseAdapter
 import org.squeryl.adapters.{MySQLAdapter, H2Adapter}
-import org.elasticmq.impl.{NativeClientModule, NodeImpl}
 import org.elasticmq.storage.squeryl.{SquerylInitializerModule, SquerylQueueStorageModule, SquerylMessageStorageModule, SquerylSchemaModule}
+import org.elasticmq.impl.{NowModule, NativeClientModule, NodeImpl}
 
 object NodeBuilder {
   def withMySQLStorage(dbName: String, username: String, password: String,
@@ -35,6 +35,7 @@ object NodeBuilder {
               with SquerylMessageStorageModule
               with SquerylQueueStorageModule
               with SquerylInitializerModule
+              with NowModule
 
       env.initializeSqueryl(dbConfiguration)
       new NodeImpl(env.nativeClient, () => env.shutdownSqueryl(dbConfiguration.drop))
