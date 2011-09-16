@@ -17,23 +17,25 @@ trait SquerylSchemaModule {
     val queuesToMessages = oneToManyRelation(queues, messages).via((q, m) => queuesToMessagesCond(m, q))
     queuesToMessages.foreignKeyDeclaration.constrainReference(onDelete cascade)
   }
+}
 
-  class SquerylQueue(val id: String, val defaultVisibilityTimeout: Long) extends KeyedEntity[String] {
-    def toQueue = Queue(id, VisibilityTimeout(defaultVisibilityTimeout))
-  }
+// These must be top-level classes, because of Squeryl requirements
 
-  object SquerylQueue {
-    def from(queue: Queue) = new SquerylQueue(queue.name, queue.defaultVisibilityTimeout.millis)
-  }
+class SquerylQueue(val id: String, val defaultVisibilityTimeout: Long) extends KeyedEntity[String] {
+  def toQueue = Queue(id, VisibilityTimeout(defaultVisibilityTimeout))
+}
 
-  class SquerylMessage(val id: String, val queueName: String, val content: String,
-                                        val nextDelivery: Long) extends KeyedEntity[String] {
-    def toMessage(q: SquerylQueue): SpecifiedMessage = Message(q.toQueue, id, content, MillisNextDelivery(nextDelivery))
-  }
+object SquerylQueue {
+  def from(queue: Queue) = new SquerylQueue(queue.name, queue.defaultVisibilityTimeout.millis)
+}
 
-  object SquerylMessage {
-    def from(message: SpecifiedMessage) = {
-      new SquerylMessage(message.id, message.queue.name, message.content, message.nextDelivery.millis)
-    }
+class SquerylMessage(val id: String, val queueName: String, val content: String,
+                     val nextDelivery: Long) extends KeyedEntity[String] {
+  def toMessage(q: SquerylQueue): SpecifiedMessage = Message(q.toQueue, id, content, MillisNextDelivery(nextDelivery))
+}
+
+object SquerylMessage {
+  def from(message: SpecifiedMessage) = {
+    new SquerylMessage(message.id, message.queue.name, message.content, message.nextDelivery.millis)
   }
 }
