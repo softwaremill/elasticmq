@@ -43,7 +43,7 @@ trait NativeClientModule {
       }
 
       val messageWithDelivery = messageWithId.nextDelivery match {
-        case ImmediateNextDelivery => messageWithId.copy(nextDelivery = nextDelivery(messageWithId))
+        case ImmediateNextDelivery => messageWithId.copy(nextDelivery = MillisNextDelivery(now))
         case m: MillisNextDelivery => messageWithId.copy(nextDelivery = m)
       }
 
