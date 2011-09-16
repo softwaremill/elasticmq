@@ -21,7 +21,7 @@ class QueueClientLoggingWrapper(delegate: QueueClient) extends QueueClient {
     delegate.lookupQueue(name)
   }
 
-  def updateDefaultVisibilityTimeout(queue: Queue, newDefaultVisibilityTimeout: MillisVisibilityTimeout) = {
+  def updateDefaultVisibilityTimeout(queue: Queue, newDefaultVisibilityTimeout: VisibilityTimeout) = {
     log.debug("Updating default visibility timeout: "+queue+" with: "+newDefaultVisibilityTimeout);
     delegate.updateDefaultVisibilityTimeout(queue, newDefaultVisibilityTimeout)
   }
@@ -40,7 +40,7 @@ class QueueClientLoggingWrapper(delegate: QueueClient) extends QueueClient {
 class MessageClientLogginWrapper(delegate: MessageClient) extends MessageClient {
   val log = Logger.getLogger(this.getClass)
 
-  def sendMessage(message: Message) = {
+  def sendMessage(message: AnyMessage) = {
     log.debug("Sending message: "+message)
     delegate.sendMessage(message)
   }
@@ -50,12 +50,12 @@ class MessageClientLogginWrapper(delegate: MessageClient) extends MessageClient 
     delegate.receiveMessage(queue)
   }
 
-  def updateVisibilityTimeout(message: Message, newVisibilityTimeout: MillisVisibilityTimeout) = {
+  def updateVisibilityTimeout(message: AnyMessage, newVisibilityTimeout: VisibilityTimeout) = {
     log.debug("Updating visibility timeout for: "+message+" with: "+newVisibilityTimeout)
     delegate.updateVisibilityTimeout(message, newVisibilityTimeout)
   }
 
-  def deleteMessage(message: Message) {
+  def deleteMessage(message: AnyMessage) {
     log.debug("Deleting message: "+message)
     delegate.deleteMessage(message)
   }

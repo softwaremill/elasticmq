@@ -5,7 +5,6 @@ import internals.DatabaseAdapter
 import PrimitiveTypeMode._
 import org.elasticmq.storage.{MessageStorage, QueueStorage, Storage}
 import org.elasticmq._
-import java.lang.IllegalArgumentException
 import com.mchange.v2.c3p0.ComboPooledDataSource
 
 class SquerylStorage extends Storage {
@@ -92,29 +91,29 @@ class SquerylQueueStorage extends QueueStorage {
 class SquerylMessageStorage extends MessageStorage {
   import MQSchema._
 
-  def persistMessage(message: Message) {
+  def persistMessage(message: SpecifiedMessage) {
     transaction {
       messages.insert(SquerylMessage.from(message))
     }
   }
 
-  def updateMessage(message: Message) {
+  def updateMessage(message: SpecifiedMessage) {
     transaction {
       messages.update(SquerylMessage.from(message))
     }
   }
 
-  def updateLastDelivered(message: Message, lastDelivered: Long) = {
+  def updateNextDelivery(message: SpecifiedMessage, nextDelivery: MillisNextDelivery) = {
     transaction {
       val updatedCount = update(messages)(m =>
-        where(m.id === message.id and m.lastDelivered === message.lastDelivered)
-                set(m.lastDelivered := lastDelivered))
+        where(m.id === message.id and m.nextDelivery === message.nextDelivery.millis)
+                set(m.nextDelivery := nextDelivery.millis))
 
-      if (updatedCount == 0) None else Some(message.copy(lastDelivered = lastDelivered))
+      if (updatedCount == 0) None else Some(message.copy(nextDelivery = nextDelivery))
     }
   }
 
-  def deleteMessage(message: Message) {
+  def deleteMessage(message: AnyMessage) {
     transaction {
       messages.delete(message.id)
     }
@@ -132,7 +131,7 @@ class SquerylMessageStorage extends MessageStorage {
       from(messages, queues)((m, q) =>
         where(m.queueName === queue.name and
                 queuesToMessagesCond(m, q) and
-                ((m.lastDelivered plus m.visibilityTimeout) lte deliveryTime)) select(m, q))
+                (m.nextDelivery lte deliveryTime)) select(m, q))
               .page(0, 1).headOption.map { case (m, q) => m.toMessage(q) }
     }
   }
@@ -149,7 +148,7 @@ private [squeryl] object MQSchema extends Schema {
 }
 
 private[squeryl] class SquerylQueue(val id: String, val defaultVisibilityTimeout: Long) extends KeyedEntity[String] {
-  def toQueue = Queue(id, MillisVisibilityTimeout(defaultVisibilityTimeout))
+  def toQueue = Queue(id, VisibilityTimeout(defaultVisibilityTimeout))
 }
 
 private[squeryl] object SquerylQueue {
@@ -157,18 +156,12 @@ private[squeryl] object SquerylQueue {
 }
 
 private[squeryl] class SquerylMessage(val id: String, val queueName: String, val content: String,
-                                      val visibilityTimeout: Long, val lastDelivered: Long) extends KeyedEntity[String] {
-  def toMessage(q: SquerylQueue) = Message(q.toQueue, id, content,
-    MillisVisibilityTimeout(visibilityTimeout), lastDelivered)
+                                      val nextDelivery: Long) extends KeyedEntity[String] {
+  def toMessage(q: SquerylQueue): SpecifiedMessage = Message(q.toQueue, id, content, MillisNextDelivery(nextDelivery))
 }
 
 private[squeryl] object SquerylMessage {
-  def from(message: Message) = {
-    new SquerylMessage(message.id, message.queue.name, message.content,
-    message.visibilityTimeout match {
-      case DefaultVisibilityTimeout => throw new IllegalArgumentException("Persisted messages must have a non-default visibility timeout")
-      case MillisVisibilityTimeout(millis) => millis
-    },
-    message.lastDelivered)
+  def from(message: SpecifiedMessage) = {
+    new SquerylMessage(message.id, message.queue.name, message.content, message.nextDelivery.millis)
   }
 }

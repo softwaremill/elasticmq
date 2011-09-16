@@ -15,22 +15,22 @@ class NativeMessageClientImplTestSuite extends FunSuite with MustMatchers with M
   test("sending a message should generate an id and properly set the visibility timeout") {
     // Given
     val mockStorage = createMockStorage
-    val q1 = Queue("q1", MillisVisibilityTimeout(123L))
+    val q1 = Queue("q1", VisibilityTimeout(123L))
 
     // When
     val msg = new NativeMessageClientImpl(mockStorage).sendMessage(Message(q1, "abc"))
 
     // Then
-    verify(mockStorage.messageStorage).persistMessage(argThat(new ArgumentMatcher[Message]{
-      def matches(msgRef: AnyRef) = msgRef.asInstanceOf[Message].visibilityTimeout == q1.defaultVisibilityTimeout
+    verify(mockStorage.messageStorage).persistMessage(argThat(new ArgumentMatcher[SpecifiedMessage]{
+      def matches(msgRef: AnyRef) = msgRef.asInstanceOf[AnyMessage].nextDelivery == q1.defaultVisibilityTimeout
     }))
-    msg.visibilityTimeout must be (q1.defaultVisibilityTimeout)
+    msg.nextDelivery must be (q1.defaultVisibilityTimeout)
   }
 
   test("receiving a message should return None if there are no pending messages") {
     // Given
     val mockStorage = createMockStorage
-    val q1 = Queue("q1", MillisVisibilityTimeout(123L))
+    val q1 = Queue("q1", VisibilityTimeout(123L))
 
     when(mockStorage.messageStorage.lookupPendingMessage(musteq(q1), anyLong())).thenReturn(None)
 
@@ -44,11 +44,11 @@ class NativeMessageClientImplTestSuite extends FunSuite with MustMatchers with M
   test("receiving a message should return a message if there is a pending message") {
     // Given
     val mockStorage = createMockStorage
-    val q1 = Queue("q1", MillisVisibilityTimeout(123L))
-    val m1 = Message(q1, "id1", "abc", MillisVisibilityTimeout(10L), 50L)
+    val q1 = Queue("q1", VisibilityTimeout(123L))
+    val m1 = Message(q1, "id1", "abc", MillisNextDelivery(123L))
 
     when(mockStorage.messageStorage.lookupPendingMessage(musteq(q1), anyLong())).thenReturn(Some(m1))
-    when(mockStorage.messageStorage.updateLastDelivered(musteq(m1), anyLong())).thenReturn(Some(m1))
+    when(mockStorage.messageStorage.updateNextDelivery(musteq(m1), any(classOf[MillisNextDelivery]))).thenReturn(Some(m1))
 
     // When
     val result = new NativeMessageClientImpl(mockStorage).receiveMessage(q1)
@@ -60,15 +60,15 @@ class NativeMessageClientImplTestSuite extends FunSuite with MustMatchers with M
   test("receiving a message should retry if message is delivered by another thread") {
     // Given
     val mockStorage = createMockStorage
-    val q1 = Queue("q1", MillisVisibilityTimeout(123L))
-    val m1 = Message(q1, "id1", "abc", MillisVisibilityTimeout(10L), 50L)
-    val m2 = Message(q1, "id2", "xyz", MillisVisibilityTimeout(11L), 51L)
+    val q1 = Queue("q1", VisibilityTimeout(123L))
+    val m1 = Message(q1, "id1", "abc", MillisNextDelivery(123L))
+    val m2 = Message(q1, "id2", "xyz", MillisNextDelivery(123L))
 
     when(mockStorage.messageStorage.lookupPendingMessage(musteq(q1), anyLong()))
             .thenReturn(Some(m1))
             .thenReturn(Some(m2))
 
-    when(mockStorage.messageStorage.updateLastDelivered(any(classOf[Message]), anyLong()))
+    when(mockStorage.messageStorage.updateNextDelivery(any(classOf[SpecifiedMessage]), any(classOf[MillisNextDelivery])))
             .thenReturn(None) // m1 already delivered
             .thenReturn(Some(m2))
 

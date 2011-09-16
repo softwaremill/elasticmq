@@ -3,7 +3,7 @@ package org.elasticmq.rest.sqs
 import org.elasticmq.rest.RequestHandlerBuilder._
 import org.jboss.netty.handler.codec.http.HttpMethod._
 
-import org.elasticmq.MillisVisibilityTimeout
+import org.elasticmq.VisibilityTimeout
 
 import Constants._
 import ActionUtil._
@@ -14,7 +14,7 @@ trait QueueAttributesHandlersModule { this: ClientModule with RequestHandlerLogi
 
   // So far we support only one attribute ..
   object QueueWriteableAttributeNames {
-    val VisibilityTimeout = "VisibilityTimeout"
+    val VisibilityTimeoutAttribute = "VisibilityTimeout"
   }
 
   val getQueueAttributesLogic = logicWithQueue((queue, request, parameters) => {
@@ -27,14 +27,14 @@ trait QueueAttributesHandlersModule { this: ClientModule with RequestHandlerLogi
 
     var attributeNames = collectAttributeNames(1, parameters.get("AttributeName").toList)
     if (attributeNames.contains("All")) {
-      attributeNames = QueueWriteableAttributeNames.VisibilityTimeout :: Nil
+      attributeNames = QueueWriteableAttributeNames.VisibilityTimeoutAttribute :: Nil
     }
 
     val attributes = attributeNames.flatMap {
       import QueueWriteableAttributeNames._
 
       _ match {
-        case VisibilityTimeout => Some((VisibilityTimeout, queue.defaultVisibilityTimeout.millis.toString))
+        case VisibilityTimeoutAttribute => Some((VisibilityTimeoutAttribute, queue.defaultVisibilityTimeout.millis.toString))
         case _ => None
       }
     }
@@ -57,11 +57,11 @@ trait QueueAttributesHandlersModule { this: ClientModule with RequestHandlerLogi
     val attributeName = parameters(ATTRIBUTE_NAME_PARAMETER)
     val attributeValue = parameters.parseOptionalLong(ATTRIBUTE_VALUE_PARAMETER).get
 
-    if (attributeName != QueueWriteableAttributeNames.VisibilityTimeout) {
+    if (attributeName != QueueWriteableAttributeNames.VisibilityTimeoutAttribute) {
       throw new SQSException("InvalidAttributeName")
     }
 
-    client.queueClient.updateDefaultVisibilityTimeout(queue, MillisVisibilityTimeout(attributeValue))
+    client.queueClient.updateDefaultVisibilityTimeout(queue, VisibilityTimeout(attributeValue))
 
     <SetQueueAttributesResponse>
       <ResponseMetadata>

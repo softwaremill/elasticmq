@@ -1,6 +1,6 @@
 package org.elasticmq.storage
 
-import org.elasticmq.{Queue, Message}
+import org.elasticmq._
 
 trait Storage {
   def queueStorage: QueueStorage
@@ -16,18 +16,18 @@ trait QueueStorage {
 }
 
 trait MessageStorage {
-  def persistMessage(message: Message)
-  def updateMessage(message: Message)
+  def persistMessage(message: SpecifiedMessage)
+  def updateMessage(message: SpecifiedMessage)
 
   /**
-   * Tries to update the given message with a new last delivered value. Will return the updated message if
+   * Tries to update the given message with a new next delivery value. Will return the updated message if
    * the update succeedes, {@code None} otherwise. For the update to succeed, a message with the same id
-   * and last delivered value must be found as in {@code message}; hence, last delivered is in fact an
+   * and next delivery value must be found as in {@code message}; hence, next delivery is in fact an
    * optimistic lock.
    */
-  def updateLastDelivered(message: Message, lastDelivered: Long): Option[Message]
-  def deleteMessage(message: Message)
+  def updateNextDelivery(message: SpecifiedMessage, nextDelivery: MillisNextDelivery): Option[SpecifiedMessage]
+  def deleteMessage(message: AnyMessage)
 
-  def lookupMessage(id: String): Option[Message]
-  def lookupPendingMessage(queue: Queue, deliveryTime: Long): Option[Message]
+  def lookupMessage(id: String): Option[SpecifiedMessage]
+  def lookupPendingMessage(queue: Queue, deliveryTime: Long): Option[SpecifiedMessage]
 }

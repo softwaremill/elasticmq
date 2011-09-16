@@ -18,7 +18,7 @@ class NativeQueueClientImpl(storage: Storage) extends QueueClient {
 
   def lookupQueue(name: String) = storage.queueStorage.lookupQueue(name)
 
-  def updateDefaultVisibilityTimeout(queue: Queue, newDefaultVisibilityTimeout: MillisVisibilityTimeout) = {
+  def updateDefaultVisibilityTimeout(queue: Queue, newDefaultVisibilityTimeout: VisibilityTimeout) = {
     val newQueue = queue.copy(defaultVisibilityTimeout = newDefaultVisibilityTimeout)
     storage.queueStorage.updateQueue(newQueue)
     newQueue
@@ -32,31 +32,35 @@ class NativeQueueClientImpl(storage: Storage) extends QueueClient {
 }
 
 class NativeMessageClientImpl(storage: Storage) extends MessageClient {
-  def sendMessage(message: Message) = {
+  def sendMessage(message: AnyMessage) = {
     var toSend = message
     if (toSend.id == null) toSend = toSend.copy(id = generateId())
-    if (toSend.visibilityTimeout == DefaultVisibilityTimeout) toSend = toSend.copy(visibilityTimeout = message.queue.defaultVisibilityTimeout)
-    storage.messageStorage.persistMessage(toSend)
-    toSend
+    val toSendWithDelivery = toSend.nextDelivery match {
+      case ImmediateNextDelivery => toSend.copy(nextDelivery = nextDelivery(toSend))
+      case m: MillisNextDelivery => toSend.copy(nextDelivery = m)
+    }
+
+    storage.messageStorage.persistMessage(toSendWithDelivery)
+    toSendWithDelivery
   }
 
-  def receiveMessage(queue: Queue): Option[Message] = {
+  def receiveMessage(queue: Queue): Option[SpecifiedMessage] = {
     val now = (new DateTime).getMillis
 
     storage.messageStorage.lookupPendingMessage(queue, now)
       .flatMap(message =>
         storage.messageStorage
-                .updateLastDelivered(message, now)
+                .updateNextDelivery(message, nextDelivery(message))
                 .orElse(receiveMessage(queue)))
   }
 
-  def updateVisibilityTimeout(message: Message, newVisibilityTimeout: MillisVisibilityTimeout) = {
-    val newMessage = message.copy(visibilityTimeout = newVisibilityTimeout)
+  def updateVisibilityTimeout(message: AnyMessage, newVisibilityTimeout: VisibilityTimeout) = {
+    val newMessage = message.copy(nextDelivery = nextDelivery(message, newVisibilityTimeout.millis))
     storage.messageStorage.updateMessage(newMessage)
     newMessage
   }
 
-  def deleteMessage(message: Message) {
+  def deleteMessage(message: AnyMessage) {
     storage.messageStorage.deleteMessage(message)
   }
 
@@ -65,4 +69,13 @@ class NativeMessageClientImpl(storage: Storage) extends MessageClient {
   }
 
   private def generateId(): String = UUID.randomUUID().toString
+
+  private def nextDelivery(m: AnyMessage): MillisNextDelivery = {
+    nextDelivery(m, m.queue.defaultVisibilityTimeout.millis)
+  }
+
+  private def nextDelivery(m: AnyMessage, delta: Long): MillisNextDelivery = {
+    val now = (new DateTime).getMillis
+    MillisNextDelivery(now + delta)
+  }
 }

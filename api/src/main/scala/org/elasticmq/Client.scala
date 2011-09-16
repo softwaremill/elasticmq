@@ -8,16 +8,16 @@ trait Client {
 trait QueueClient {
   def createQueue(queue: Queue): Queue
   def lookupQueue(name: String): Option[Queue]
-  def updateDefaultVisibilityTimeout(queue: Queue, newDefaultVisibilityTimeout: MillisVisibilityTimeout): Queue
+  def updateDefaultVisibilityTimeout(queue: Queue, newDefaultVisibilityTimeout: VisibilityTimeout): Queue
   def deleteQueue(queue: Queue)
   def listQueues: Seq[Queue]
 }
 
 trait MessageClient {
-  def sendMessage(message: Message): Message
-  def receiveMessage(queue: Queue): Option[Message]
-  def updateVisibilityTimeout(message: Message, newVisibilityTimeout: MillisVisibilityTimeout): Message
-  def deleteMessage(message: Message)
-  def lookupMessage(id: String): Option[Message]
+  def sendMessage(message: AnyMessage): SpecifiedMessage
+  def receiveMessage(queue: Queue): Option[SpecifiedMessage]
+  def updateVisibilityTimeout(message: AnyMessage, newVisibilityTimeout: VisibilityTimeout): SpecifiedMessage
+  def deleteMessage(message: AnyMessage)
+  def lookupMessage(id: String): Option[SpecifiedMessage]
 }
 
