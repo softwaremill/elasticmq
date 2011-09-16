@@ -6,7 +6,7 @@ import org.joda.time.DateTime
 import org.elasticmq.storage.{QueueStorageModule, MessageStorageModule}
 
 trait NativeClientModule {
-  this: MessageStorageModule with QueueStorageModule =>
+  this: MessageStorageModule with QueueStorageModule with NowModule =>
 
   def nativeClient: Client = nativeClientImpl
 
@@ -80,7 +80,6 @@ trait NativeClientModule {
     }
 
     private def nextDelivery(m: AnyMessage, delta: Long): MillisNextDelivery = {
-      val now = (new DateTime).getMillis
       MillisNextDelivery(now + delta)
     }
   }
