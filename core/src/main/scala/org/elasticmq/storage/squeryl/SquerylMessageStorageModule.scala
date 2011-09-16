@@ -23,16 +23,16 @@ trait SquerylMessageStorageModule extends MessageStorageModule {
     def updateNextDelivery(message: SpecifiedMessage, nextDelivery: MillisNextDelivery) = {
       transaction {
         val updatedCount = update(messages)(m =>
-          where(m.id === message.id and m.nextDelivery === message.nextDelivery.millis)
+          where(m.id === message.id.get and m.nextDelivery === message.nextDelivery.millis)
                   set(m.nextDelivery := nextDelivery.millis))
 
         if (updatedCount == 0) None else Some(message.copy(nextDelivery = nextDelivery))
       }
     }
 
-    def deleteMessage(message: AnyMessage) {
+    def deleteMessage(message: IdentifiableMessage) {
       transaction {
-        messages.delete(message.id)
+        messages.delete(message.id.get)
       }
     }
 

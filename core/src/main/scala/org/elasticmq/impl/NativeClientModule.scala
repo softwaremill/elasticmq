@@ -2,7 +2,6 @@ package org.elasticmq.impl
 
 import java.util.UUID
 import org.elasticmq._
-import org.joda.time.DateTime
 import org.elasticmq.storage.{QueueStorageModule, MessageStorageModule}
 
 trait NativeClientModule {
@@ -38,15 +37,18 @@ trait NativeClientModule {
 
   object nativeMessageClientImpl extends MessageClient {
     def sendMessage(message: AnyMessage) = {
-      var toSend = message
-      if (toSend.id == null) toSend = toSend.copy(id = generateId())
-      val toSendWithDelivery = toSend.nextDelivery match {
-        case ImmediateNextDelivery => toSend.copy(nextDelivery = nextDelivery(toSend))
-        case m: MillisNextDelivery => toSend.copy(nextDelivery = m)
+      val messageWithId = message.id match {
+        case None => message.copy(id = Some(generateId()))
+        case id: Some[String] => message.copy(id = id)
       }
 
-      messageStorage.persistMessage(toSendWithDelivery)
-      toSendWithDelivery
+      val messageWithDelivery = messageWithId.nextDelivery match {
+        case ImmediateNextDelivery => messageWithId.copy(nextDelivery = nextDelivery(messageWithId))
+        case m: MillisNextDelivery => messageWithId.copy(nextDelivery = m)
+      }
+
+      messageStorage.persistMessage(messageWithDelivery)
+      messageWithDelivery
     }
 
     def receiveMessage(queue: Queue): Option[SpecifiedMessage] = {
@@ -57,13 +59,13 @@ trait NativeClientModule {
                 .orElse(receiveMessage(queue)))
     }
 
-    def updateVisibilityTimeout(message: AnyMessage, newVisibilityTimeout: VisibilityTimeout) = {
+    def updateVisibilityTimeout(message: IdentifiableMessage, newVisibilityTimeout: VisibilityTimeout) = {
       val newMessage = message.copy(nextDelivery = nextDelivery(message, newVisibilityTimeout.millis))
       messageStorage.updateMessage(newMessage)
       newMessage
     }
 
-    def deleteMessage(message: AnyMessage) {
+    def deleteMessage(message: IdentifiableMessage) {
       messageStorage.deleteMessage(message)
     }
 

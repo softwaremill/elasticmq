@@ -50,12 +50,12 @@ class MessageClientLogginWrapper(delegate: MessageClient) extends MessageClient 
     delegate.receiveMessage(queue)
   }
 
-  def updateVisibilityTimeout(message: AnyMessage, newVisibilityTimeout: VisibilityTimeout) = {
+  def updateVisibilityTimeout(message: IdentifiableMessage, newVisibilityTimeout: VisibilityTimeout) = {
     log.debug("Updating visibility timeout for: "+message+" with: "+newVisibilityTimeout)
     delegate.updateVisibilityTimeout(message, newVisibilityTimeout)
   }
 
-  def deleteMessage(message: AnyMessage) {
+  def deleteMessage(message: IdentifiableMessage) {
     log.debug("Deleting message: "+message)
     delegate.deleteMessage(message)
   }

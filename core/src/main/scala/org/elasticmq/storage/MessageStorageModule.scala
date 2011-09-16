@@ -14,7 +14,7 @@ trait MessageStorageModule {
      * optimistic lock.
      */
     def updateNextDelivery(message: SpecifiedMessage, nextDelivery: MillisNextDelivery): Option[SpecifiedMessage]
-    def deleteMessage(message: AnyMessage)
+    def deleteMessage(message: IdentifiableMessage)
 
     def lookupMessage(id: String): Option[SpecifiedMessage]
     def lookupPendingMessage(queue: Queue, deliveryTime: Long): Option[SpecifiedMessage]
