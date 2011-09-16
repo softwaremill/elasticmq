@@ -3,9 +3,9 @@ package org.elasticmq.impl
 import org.apache.log4j.Logger
 import org.elasticmq._
 
-trait LoggingClient extends Client {
-  abstract override def queueClient = new QueueClientLoggingWrapper(super.queueClient)
-  abstract override def messageClient = new MessageClientLogginWrapper(super.messageClient)
+class LoggingClient(delegate: Client) extends Client {
+  def queueClient = new QueueClientLoggingWrapper(delegate.queueClient)
+  def messageClient = new MessageClientLogginWrapper(delegate.messageClient)
 }
 
 class QueueClientLoggingWrapper(delegate: QueueClient) extends QueueClient {

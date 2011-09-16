@@ -1,10 +1,9 @@
 package org.elasticmq.impl
 
-import org.elasticmq.Node
-import org.elasticmq.storage.Storage
+import org.elasticmq.{Client, Node}
 
-class NodeImpl(storage: Storage, storageShutdown: () => Unit) extends Node {
-  def nativeClient = new NativeClientImpl(storage) with LoggingClient
+class NodeImpl(client: Client, storageShutdown: () => Unit) extends Node {
+  def nativeClient = new LoggingClient(client)
 
   def shutdown() {
     storageShutdown();
