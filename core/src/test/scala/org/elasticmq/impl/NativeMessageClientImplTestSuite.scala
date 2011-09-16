@@ -25,7 +25,7 @@ class NativeMessageClientImplTestSuite extends FunSuite with MustMatchers with M
     // Then
     val expectedNextDelivery = NOW + q1.defaultVisibilityTimeout.millis
     verify(mockStorage).persistMessage(argThat(new ArgumentMatcher[SpecifiedMessage]{
-      def matches(msgRef: AnyRef) = msgRef.asInstanceOf[AnyMessage].nextDelivery == expectedNextDelivery
+      def matches(msgRef: AnyRef) = msgRef.asInstanceOf[SpecifiedMessage].nextDelivery.millis == expectedNextDelivery
     }))
     msg.nextDelivery must be (MillisNextDelivery(expectedNextDelivery))
   }
