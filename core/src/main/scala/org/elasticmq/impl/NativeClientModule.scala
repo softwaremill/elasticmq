@@ -50,8 +50,6 @@ trait NativeClientModule {
     }
 
     def receiveMessage(queue: Queue): Option[SpecifiedMessage] = {
-      val now = (new DateTime).getMillis
-
       messageStorage.lookupPendingMessage(queue, now)
               .flatMap(message =>
         messageStorage
