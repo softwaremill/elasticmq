@@ -17,8 +17,8 @@ trait ReceiveMessageHandlerModule { this: ClientModule with RequestHandlerLogicM
       <ReceiveMessageResult>
         {message.map(m =>
         <Message>
-          <MessageId>{m.id}</MessageId>
-          <ReceiptHandle>{m.id}</ReceiptHandle>
+          <MessageId>{m.id.get}</MessageId>
+          <ReceiptHandle>{m.id.get}</ReceiptHandle>
           <MD5OfBody>{md5Digest(m.content)}</MD5OfBody>
           <Body>{m.content}</Body>
         </Message>).toList}
