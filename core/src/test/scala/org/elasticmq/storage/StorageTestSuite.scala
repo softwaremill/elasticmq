@@ -151,6 +151,21 @@ class MessageStorageTestSuite extends StorageTestSuite {
     lookupResult must be (Some(Message(q1, "xyz", "123", MillisNextDelivery(123L))))
   }
 
+  test("sending message with maximum size should succeed") {
+    // Given
+    val maxMessageContent = "x" * 65536
+
+    val q1: Queue = Queue("q1", VisibilityTimeout(1L))
+    queueStorage.persistQueue(q1)
+    messageStorage.persistMessage(Message(q1, "xyz", maxMessageContent, MillisNextDelivery(123L)))
+
+    // When
+    val lookupResult = messageStorage.lookupMessage("xyz")
+
+    // Then
+    lookupResult must be (Some(Message(q1, "xyz", maxMessageContent, MillisNextDelivery(123L))))
+  }
+
   test("no undelivered message should not be found in an empty queue") {
     // Given
     val q1: Queue = Queue("q1", VisibilityTimeout(1L))
