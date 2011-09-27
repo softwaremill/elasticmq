@@ -21,7 +21,7 @@ trait SendMessageHandlerModule { this: ClientModule with RequestHandlerLogicModu
     <SendMessageResponse>
       <SendMessageResult>
         <MD5OfMessageBody>{digest}</MD5OfMessageBody>
-        <MessageId>{message.id}</MessageId>
+        <MessageId>{message.id.get}</MessageId>
       </SendMessageResult>
       <ResponseMetadata>
         <RequestId>{EMPTY_REQUEST_ID}</RequestId>
