@@ -153,7 +153,7 @@ class MessageStorageTestSuite extends StorageTestSuite {
 
   test("sending message with maximum size should succeed") {
     // Given
-    val maxMessageContent = "x" * 65536
+    val maxMessageContent = "x" * 65535
 
     val q1: Queue = Queue("q1", VisibilityTimeout(1L))
     queueStorage.persistQueue(q1)
