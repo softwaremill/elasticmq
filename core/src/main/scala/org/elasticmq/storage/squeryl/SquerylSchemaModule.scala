@@ -3,7 +3,6 @@ package org.elasticmq.storage.squeryl
 import org.squeryl._
 import PrimitiveTypeMode._
 import org.elasticmq._
-import org.squeryl.annotations.Column
 
 trait SquerylSchemaModule {
   def queues = MQSchema.queues
@@ -17,6 +16,10 @@ trait SquerylSchemaModule {
 
     val queuesToMessages = oneToManyRelation(queues, messages).via((q, m) => queuesToMessagesCond(m, q))
     queuesToMessages.foreignKeyDeclaration.constrainReference(onDelete cascade)
+
+    on(messages)(m => declare(
+      m.content is(dbType("text"))
+    ))
   }
 }
 
@@ -30,7 +33,7 @@ object SquerylQueue {
   def from(queue: Queue) = new SquerylQueue(queue.name, queue.defaultVisibilityTimeout.millis)
 }
 
-class SquerylMessage(val id: String, val queueName: String, @Column(length = 65535) val content: String,
+class SquerylMessage(val id: String, val queueName: String, val content: String,
                      val nextDelivery: Long) extends KeyedEntity[String] {
   def toMessage(q: SquerylQueue): SpecifiedMessage = Message(q.toQueue, Some(id), content, MillisNextDelivery(nextDelivery))
 }
