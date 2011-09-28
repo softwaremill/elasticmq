@@ -34,7 +34,7 @@ trait QueueAttributesHandlersModule { this: ClientModule with RequestHandlerLogi
       import QueueWriteableAttributeNames._
 
       _ match {
-        case VisibilityTimeoutAttribute => Some((VisibilityTimeoutAttribute, (queue.defaultVisibilityTimeout.millis / 1000).toString))
+        case VisibilityTimeoutAttribute => Some((VisibilityTimeoutAttribute, queue.defaultVisibilityTimeout.seconds.toString))
         case _ => None
       }
     }

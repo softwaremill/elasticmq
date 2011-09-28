@@ -19,8 +19,8 @@ trait CreateQueueHandlerModule { this: ClientModule with QueueURLModule with Req
     val queueOption = client.queueClient.lookupQueue(queueName)
 
     val visibilityTimeout =
-      parameters.parseOptionalLong("DefaultVisibilityTimeout")
-              .getOrElse(DEFAULT_VISIBILITY_TIMEOUT) * 1000L;
+      (parameters.parseOptionalLong("DefaultVisibilityTimeout")
+              .getOrElse(DEFAULT_VISIBILITY_TIMEOUT)) * 1000L;
 
     val queue = queueOption.getOrElse(client.queueClient.createQueue(
       Queue(queueName, VisibilityTimeout(visibilityTimeout))))
@@ -57,6 +57,6 @@ trait CreateQueueHandlerModule { this: ClientModule with QueueURLModule with Req
 }
 
 object CreateQueueHandlerModule {
-  val DEFAULT_VISIBILITY_TIMEOUT = 30;
+  val DEFAULT_VISIBILITY_TIMEOUT = 30L;
   val CREATE_QUEUE_ACTION = createAction("CreateQueue")
 }
