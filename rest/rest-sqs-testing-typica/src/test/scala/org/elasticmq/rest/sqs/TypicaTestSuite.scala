@@ -30,6 +30,19 @@ class TypicaTestSuite extends FunSuite with MustMatchers with BeforeAndAfter {
     queueService.getOrCreateMessageQueue("testQueue1")
   }
 
+  test("should create a queue with the specified visibilty timeout") {
+    // Given
+    val queueService = newQueueService
+
+    // When
+    queueService.getOrCreateMessageQueue("testQueue1", 14)
+
+    // Then
+    val queues = queueService.listMessageQueues(null)
+    queues.size() must be (1)
+    queues.get(0).getVisibilityTimeout must be (14)
+  }
+
   test("should list created queues") {
     // Given
     val queueService = newQueueService
@@ -80,7 +93,7 @@ class TypicaTestSuite extends FunSuite with MustMatchers with BeforeAndAfter {
     val vt = queue.getVisibilityTimeout
 
     // Then
-    vt must be (30000)
+    vt must be (30)
   }
 
   test("should set queue visibility timeout") {
@@ -89,11 +102,11 @@ class TypicaTestSuite extends FunSuite with MustMatchers with BeforeAndAfter {
     val queue = queueService.getOrCreateMessageQueue("testQueue1")
 
     // When
-    queue.setVisibilityTimeout(10000)
+    queue.setVisibilityTimeout(10)
 
     // Then
     val vt = queue.getVisibilityTimeout
-    vt must be (10000)
+    vt must be (10)
   }
 
   test("should send and receive a message") {
@@ -112,7 +125,7 @@ class TypicaTestSuite extends FunSuite with MustMatchers with BeforeAndAfter {
   test("should block message for the visibility timeout duration") {
     // Given
     val queueService = newQueueService
-    val queue = queueService.getOrCreateMessageQueue("testQueue1", 1000)
+    val queue = queueService.getOrCreateMessageQueue("testQueue1", 1)
 
     // When
     queue.sendMessage("Message 1")
@@ -130,13 +143,13 @@ class TypicaTestSuite extends FunSuite with MustMatchers with BeforeAndAfter {
   test("should delete a message") {
     // Given
     val queueService = newQueueService
-    val queue = queueService.getOrCreateMessageQueue("testQueue1", 500)
+    val queue = queueService.getOrCreateMessageQueue("testQueue1", 1)
 
     // When
     queue.sendMessage("Message 1")
     val m1 = queue.receiveMessage()
     queue.deleteMessage(m1)
-    Thread.sleep(600)
+    Thread.sleep(1100)
     val m2 = queue.receiveMessage()
 
     // Then
@@ -147,13 +160,13 @@ class TypicaTestSuite extends FunSuite with MustMatchers with BeforeAndAfter {
   test("should delete a message using the receipt handle") {
     // Given
     val queueService = newQueueService
-    val queue = queueService.getOrCreateMessageQueue("testQueue1", 500)
+    val queue = queueService.getOrCreateMessageQueue("testQueue1", 1)
 
     // When
     queue.sendMessage("Message 1")
     val m1 = queue.receiveMessage()
     queue.deleteMessage(m1.getReceiptHandle)
-    Thread.sleep(600)
+    Thread.sleep(1100)
     val m2 = queue.receiveMessage()
 
     // Then
