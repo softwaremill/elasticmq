@@ -18,14 +18,14 @@ trait CreateQueueHandlerModule { this: ClientModule with QueueURLModule with Req
   val createQueueLogic = logicWithQueueName((queueName, request, parameters) => {
     val queueOption = client.queueClient.lookupQueue(queueName)
 
-    val visibilityTimeout =
+    val secondsVisibilityTimeout =
       (parameters.parseOptionalLong("DefaultVisibilityTimeout")
-              .getOrElse(DEFAULT_VISIBILITY_TIMEOUT)) * 1000L;
+              .getOrElse(DEFAULT_VISIBILITY_TIMEOUT));
 
     val queue = queueOption.getOrElse(client.queueClient.createQueue(
-      Queue(queueName, VisibilityTimeout(visibilityTimeout))))
+      Queue(queueName, VisibilityTimeout.fromSeconds(secondsVisibilityTimeout))))
 
-    if (queue.defaultVisibilityTimeout.millis != visibilityTimeout) {
+    if (queue.defaultVisibilityTimeout.seconds != secondsVisibilityTimeout) {
       // Special case: the queue existed, but has a different visibility timeout
       throw new SQSException("AWS.SimpleQueueService.QueueNameExists")
     }

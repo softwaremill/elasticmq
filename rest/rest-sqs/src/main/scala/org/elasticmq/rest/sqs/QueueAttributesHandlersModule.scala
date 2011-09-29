@@ -61,7 +61,7 @@ trait QueueAttributesHandlersModule { this: ClientModule with RequestHandlerLogi
       throw new SQSException("InvalidAttributeName")
     }
 
-    client.queueClient.updateDefaultVisibilityTimeout(queue, VisibilityTimeout(attributeValue))
+    client.queueClient.updateDefaultVisibilityTimeout(queue, VisibilityTimeout.fromSeconds(attributeValue))
 
     <SetQueueAttributesResponse>
       <ResponseMetadata>
