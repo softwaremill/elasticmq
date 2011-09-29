@@ -20,6 +20,8 @@ class RestServer(doStop: () => Unit) {
 
 class RestPipelineFactory(handlers: List[CheckingRequestHandlerWrapper],
                           allChannels: ChannelGroup) extends ChannelPipelineFactory {
+  val executionHandler = new ExecutionHandler(new OrderedMemoryAwareThreadPoolExecutor(16, 1048576, 1048576))
+
   def getPipeline = {
     val pipeline: ChannelPipeline = Channels.pipeline()
 
@@ -31,7 +33,7 @@ class RestPipelineFactory(handlers: List[CheckingRequestHandlerWrapper],
     pipeline.addLast("chunkedWriter", new ChunkedWriteHandler)
 
     // The REST handler can take some time (invoking business logic), so running it in a separate thread pool
-    pipeline.addLast("executionHandler", new ExecutionHandler(new OrderedMemoryAwareThreadPoolExecutor(16, 1048576, 1048576)))
+    pipeline.addLast("executionHandler", executionHandler)
     pipeline.addLast("rest", new RestHandler(handlers))
 
     pipeline
