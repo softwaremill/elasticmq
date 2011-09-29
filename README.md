@@ -48,12 +48,12 @@ Dependencies:
 
     <dependency>
         <groupId>org.elasticmq</groupId>
-        <artifactId>core_2.9.0-1</artifactId>
+        <artifactId>core_2.9.1</artifactId>
         <version>0.1-SNAPSHOT</version>
     </dependency>
     <dependency>
         <groupId>org.elasticmq</groupId>
-        <artifactId>rest-sqs_2.9.0-1</artifactId>
+        <artifactId>rest-sqs_2.9.1</artifactId>
         <version>0.1-SNAPSHOT</version>
     </dependency>
 
