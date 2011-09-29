@@ -13,7 +13,7 @@ object BuildSettings {
   val buildSettings = Defaults.defaultSettings ++ Seq (
     organization  := "org.elasticmq",
     version       := "0.1-SNAPSHOT",
-    scalaVersion  := "2.9.0-1",
+    scalaVersion  := "2.9.1",
     resolvers     := elasticmqResolvers,
     publishTo     <<= (version) { version: String =>
       val nexus = "http://tools.softwaremill.pl/nexus/content/repositories/"
