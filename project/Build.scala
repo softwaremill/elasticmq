@@ -23,7 +23,8 @@ object BuildSettings {
     credentials   += Credentials(Path.userHome / ".ivy2" / ".credentials"),
     publishMavenStyle := true,
     // generating javadocs causes a weird error in Node:4 - type Client not found
-    publishArtifact in (Compile, packageDoc) := false
+    publishArtifact in (Compile, packageDoc) := false,
+    parallelExecution in Test := false
   )
 }
 
