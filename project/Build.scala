@@ -61,7 +61,7 @@ object ElasticMQBuild extends Build {
     "root",
     file("."),
     settings = buildSettings
-  ) aggregate(api, core, rest)
+  ) aggregate(api, core, rest, restSqsTestingTypica)
 
   lazy val api: Project = Project(
     "api",
