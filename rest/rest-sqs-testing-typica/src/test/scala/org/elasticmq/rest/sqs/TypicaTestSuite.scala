@@ -4,9 +4,9 @@ import org.scalatest.matchers.MustMatchers
 import org.scalatest.{BeforeAndAfter, FunSuite}
 import org.elasticmq.rest.RestServer
 import org.elasticmq.{Node, NodeBuilder}
-import com.xerox.amazonws.sqs2.QueueService
 import org.apache.log4j.BasicConfigurator
 import org.jboss.netty.logging.{Log4JLoggerFactory, InternalLoggerFactory}
+import com.xerox.amazonws.sqs2.{QueueAttribute, QueueService}
 
 class TypicaTestSuite extends FunSuite with MustMatchers with BeforeAndAfter {
   var node: Node = _
@@ -195,6 +195,38 @@ class TypicaTestSuite extends FunSuite with MustMatchers with BeforeAndAfter {
     m1 must be (null)
     m2 must be (null)
     m3.getMessageBody must be ("Message 1")
+  }
+
+  test("should read all queue attributes") {
+    // Given
+    val queueService = newQueueService
+    val queue = queueService.getOrCreateMessageQueue("testQueue1", 1)
+    queue.sendMessage("Message 1")
+    queue.sendMessage("Message 2")
+    queue.sendMessage("Message 3")
+    queue.receiveMessage() // two should remain visible, the received one - invisible
+
+    // When
+    val attributes = queue.getQueueAttributes(QueueAttribute.ALL)
+
+    // Then
+    attributes.get("ApproximateNumberOfMessages") must be ("2")
+    attributes.get("ApproximateNumberOfMessagesNotVisible") must be ("1")
+    attributes must contain key ("CreatedTimestamp")
+    attributes must contain key ("LastModifiedTimestamp")
+  }
+
+  test("should read single queue attribute") {
+    // Given
+    val queueService = newQueueService
+    val queue = queueService.getOrCreateMessageQueue("testQueue1", 1)
+    queue.sendMessage("Message 1")
+
+    // When
+    val approximateNumberOfMessages = queue.getApproximateNumberOfMessages
+
+    // Then
+    approximateNumberOfMessages must be (1)
   }
 
   def newQueueService = new QueueService("n/a", "n/a", false, "localhost", 8888)

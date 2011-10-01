@@ -12,7 +12,13 @@ import ParametersParserUtil._
 trait QueueAttributesHandlersModule { this: ClientModule with RequestHandlerLogicModule =>
   import QueueAttributesHandlersModule._
 
-  // So far we support only one attribute ..
+  object QueueReadableAttributeNames {
+    val ApproximateNumberOfMessagesAttribute = "ApproximateNumberOfMessages"
+    val ApproximateNumberOfMessagesNotVisibleAttribute = "ApproximateNumberOfMessagesNotVisible"
+    val CreatedTimestampAttribute = "CreatedTimestamp"
+    val LastModifiedTimestampAttribute = "LastModifiedTimestamp"
+  }
+
   object QueueWriteableAttributeNames {
     val VisibilityTimeoutAttribute = "VisibilityTimeout"
   }
@@ -25,16 +31,37 @@ trait QueueAttributesHandlersModule { this: ClientModule with RequestHandlerLogi
       }
     }
 
+    import QueueWriteableAttributeNames._
+    import QueueReadableAttributeNames._
+
     var attributeNames = collectAttributeNames(1, parameters.get("AttributeName").toList)
     if (attributeNames.contains("All")) {
-      attributeNames = QueueWriteableAttributeNames.VisibilityTimeoutAttribute :: Nil
+      attributeNames = VisibilityTimeoutAttribute ::
+              ApproximateNumberOfMessagesAttribute ::
+              ApproximateNumberOfMessagesNotVisibleAttribute ::
+              CreatedTimestampAttribute ::
+              LastModifiedTimestampAttribute :: Nil
     }
 
-    val attributes = attributeNames.flatMap {
-      import QueueWriteableAttributeNames._
+    lazy val stats = client.queueClient.queueStatistics(queue)
 
+    val attributes = attributeNames.flatMap {
       _ match {
-        case VisibilityTimeoutAttribute => Some((VisibilityTimeoutAttribute, queue.defaultVisibilityTimeout.seconds.toString))
+        case VisibilityTimeoutAttribute =>
+          Some((VisibilityTimeoutAttribute, queue.defaultVisibilityTimeout.seconds.toString))
+
+        case ApproximateNumberOfMessagesAttribute =>
+          Some((ApproximateNumberOfMessagesAttribute, stats.approximateNumberOfVisibleMessages.toString))
+
+        case ApproximateNumberOfMessagesNotVisibleAttribute =>
+          Some((ApproximateNumberOfMessagesNotVisibleAttribute, stats.approximateNumberOfInvisibleMessages.toString))
+
+        case CreatedTimestampAttribute =>
+          Some((CreatedTimestampAttribute, (queue.created.getMillis/1000L).toString))
+
+        case LastModifiedTimestampAttribute =>
+          Some((LastModifiedTimestampAttribute, (queue.lastModified.getMillis/1000L).toString))
+
         case _ => None
       }
     }
