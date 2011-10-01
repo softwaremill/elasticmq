@@ -21,7 +21,8 @@ object SQSRestServerFactory {
       with ListQueuesHandlerModule
       with SendMessageHandlerModule
       with ReceiveMessageHandlerModule
-      with DeleteMessageHandlerModule {
+      with DeleteMessageHandlerModule
+      with ChangeMessageVisibilityHandlerModule {
       val client = theClient
       val baseAddress = theBaseAddress
     }
@@ -36,6 +37,7 @@ object SQSRestServerFactory {
               sendMessageGetHandler :: sendMessagePostHandler ::
               receiveMessageGetHandler :: receiveMessagePostHandler ::
               deleteMessageGetHandler :: deleteMessagePostHandler ::
+              changeMessageVisibilityGetHandler :: changeMessageVisibilityPostHandler ::
               Nil, port)
   }
 }
@@ -60,7 +62,7 @@ object ParametersParserUtil {
       try {
         param.map(_.toLong)
       } catch {
-        case e: NumberFormatException => throw new SQSException("InvalidParameterValue")
+        case e: NumberFormatException => throw SQSException.invalidParameterValue
       }
     }
   }

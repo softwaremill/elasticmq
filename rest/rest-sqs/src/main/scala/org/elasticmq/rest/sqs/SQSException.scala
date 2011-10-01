@@ -15,3 +15,7 @@ class SQSException(message: String, httpStatusCode: Int = 400, errorType: String
     </ErrorResponse> % SQS_NAMESPACE
 }
 
+object SQSException {
+  def invalidParameterValue = new SQSException("InvalidParameterValue")
+}
+
