@@ -5,6 +5,7 @@ import org.scalatest._
 import org.elasticmq._
 import org.squeryl.adapters.H2Adapter
 import org.elasticmq.storage.squeryl.{SquerylSchemaModule, SquerylQueueStorageModule, SquerylMessageStorageModule, SquerylInitializerModule}
+import org.joda.time.DateTime
 
 trait StorageTestSuite extends FunSuite with MustMatchers with OneInstancePerTest {
   private case class StorageTestSetup(storageName: String,
@@ -74,6 +75,19 @@ class QueueStorageTestSuite extends StorageTestSuite {
 
     // Then
     lookupResult must be (Some(Queue("q2", VisibilityTimeout(2L))))
+  }
+
+  test("queue modified and created dates should be stored") {
+    // Given
+    val created = new DateTime(1216168602L)
+    val lastModified = new DateTime(1316168602L)
+    queueStorage.persistQueue(Queue("q1", VisibilityTimeout(1L), created, lastModified))
+
+    // When
+    val lookupResult = queueStorage.lookupQueue("q1")
+
+    // Then
+    lookupResult must be (Some(Queue("q1", VisibilityTimeout(1L), created, lastModified)))
   }
 
   test("queues should be deleted") {

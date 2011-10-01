@@ -16,15 +16,17 @@ trait NativeClientModule {
 
   object nativeQueueClientImpl extends QueueClient {
     def createQueue(queue: Queue) = {
-      queueStorage.persistQueue(queue)
-      queue
+      val queueWithDates = updateQueueLastModified(queue.copy(created = nowAsDateTime))
+      queueStorage.persistQueue(queueWithDates)
+      queueWithDates
     }
 
     def lookupQueue(name: String) = queueStorage.lookupQueue(name)
 
     def updateDefaultVisibilityTimeout(queue: Queue, newDefaultVisibilityTimeout: VisibilityTimeout) = {
       val newQueue = queue.copy(defaultVisibilityTimeout = newDefaultVisibilityTimeout)
-      queueStorage.updateQueue(newQueue)
+      val newQueueLastModified = updateQueueLastModified(newQueue)
+      queueStorage.updateQueue(newQueueLastModified)
       newQueue
     }
 
@@ -33,6 +35,8 @@ trait NativeClientModule {
     }
 
     def listQueues = queueStorage.listQueues
+
+    private def updateQueueLastModified(queue: Queue) = queue.copy(lastModified = nowAsDateTime)
   }
 
   object nativeMessageClientImpl extends MessageClient {

@@ -3,6 +3,7 @@ package org.elasticmq.storage.squeryl
 import org.squeryl._
 import PrimitiveTypeMode._
 import org.elasticmq._
+import org.joda.time.DateTime
 
 trait SquerylSchemaModule {
   def queues = MQSchema.queues
@@ -25,12 +26,21 @@ trait SquerylSchemaModule {
 
 // These must be top-level classes, because of Squeryl requirements
 
-class SquerylQueue(val id: String, val defaultVisibilityTimeout: Long) extends KeyedEntity[String] {
-  def toQueue = Queue(id, VisibilityTimeout(defaultVisibilityTimeout))
+class SquerylQueue(val id: String,
+                   val defaultVisibilityTimeout: Long,
+                   val createdTimestamp: Long,
+                   val lastModifiedTimestamp: Long) extends KeyedEntity[String] {
+  def toQueue = Queue(id,
+    VisibilityTimeout(defaultVisibilityTimeout),
+    new DateTime(createdTimestamp),
+    new DateTime(lastModifiedTimestamp))
 }
 
 object SquerylQueue {
-  def from(queue: Queue) = new SquerylQueue(queue.name, queue.defaultVisibilityTimeout.millis)
+  def from(queue: Queue) = new SquerylQueue(queue.name,
+    queue.defaultVisibilityTimeout.millis,
+    queue.created.getMillis,
+    queue.lastModified.getMillis)
 }
 
 class SquerylMessage(val id: String, val queueName: String, val content: String,

@@ -3,5 +3,6 @@ package org.elasticmq.impl
 import org.joda.time.DateTime
 
 trait NowModule {
-  def now = (new DateTime).getMillis
+  def nowAsDateTime = new DateTime
+  def now = nowAsDateTime.getMillis
 }

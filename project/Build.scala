@@ -66,13 +66,13 @@ object ElasticMQBuild extends Build {
   lazy val api: Project = Project(
     "api",
     file("api"),
-    settings = buildSettings
+    settings = buildSettings ++ Seq(libraryDependencies := Seq(jodaTime))
   )
 
   lazy val core: Project = Project(
     "core",
     file("core"),
-    settings = buildSettings ++ Seq(libraryDependencies := Seq(squeryl, h2, c3p0, jodaTime, mysqlConnector % "test") ++ common ++ testing)
+    settings = buildSettings ++ Seq(libraryDependencies := Seq(squeryl, h2, c3p0, mysqlConnector % "test") ++ common ++ testing)
   ) dependsOn(api)
 
   lazy val rest: Project = Project(
