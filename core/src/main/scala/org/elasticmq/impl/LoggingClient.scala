@@ -35,6 +35,11 @@ class QueueClientLoggingWrapper(delegate: QueueClient) extends QueueClient {
     log.debug("Listing queues")
     delegate.listQueues
   }
+
+  def queueStatistics(queue: Queue) = {
+    log.debug("Computing statistics for: " + queue)
+    delegate.queueStatistics(queue)
+  }
 }
 
 class MessageClientLogginWrapper(delegate: MessageClient) extends MessageClient {

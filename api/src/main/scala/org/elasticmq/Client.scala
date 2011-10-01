@@ -11,6 +11,7 @@ trait QueueClient {
   def updateDefaultVisibilityTimeout(queue: Queue, newDefaultVisibilityTimeout: VisibilityTimeout): Queue
   def deleteQueue(queue: Queue)
   def listQueues: Seq[Queue]
+  def queueStatistics(queue: Queue): QueueStatistics
 }
 
 trait MessageClient {

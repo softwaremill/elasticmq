@@ -141,6 +141,35 @@ class QueueStorageTestSuite extends StorageTestSuite {
     queues(0) must be (Queue("q1", VisibilityTimeout(1L)))
     queues(1) must be (Queue("q2", VisibilityTimeout(2L)))
   }
+
+  test("queue statistics without messages") {
+    // Given
+    val queue = Queue("q1", VisibilityTimeout(1L))
+    queueStorage.persistQueue(queue);
+
+    // When
+    val stats = queueStorage.queueStatistics(queue, 123L)
+
+    // Then
+    stats must be (QueueStatistics(queue, 0L, 0L))
+  }
+
+  test("queue statistics with messages") {
+    // Given
+    val queue = Queue("q1", VisibilityTimeout(1L))
+    queueStorage.persistQueue(queue);
+    messageStorage.persistMessage(Message(queue, "m1", "123", MillisNextDelivery(122L)))
+    messageStorage.persistMessage(Message(queue, "m2", "123", MillisNextDelivery(123L)))
+    messageStorage.persistMessage(Message(queue, "m3", "123", MillisNextDelivery(124L)))
+    messageStorage.persistMessage(Message(queue, "m4", "123", MillisNextDelivery(125L)))
+    messageStorage.persistMessage(Message(queue, "m5", "123", MillisNextDelivery(126L)))
+
+    // When
+    val stats = queueStorage.queueStatistics(queue, 123L)
+
+    // Then
+    stats must be (QueueStatistics(queue, 2L, 3L))
+  }
 }
 
 class MessageStorageTestSuite extends StorageTestSuite {

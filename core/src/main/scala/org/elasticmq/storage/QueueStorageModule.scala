@@ -1,6 +1,6 @@
 package org.elasticmq.storage
 
-import org.elasticmq.Queue
+import org.elasticmq.{QueueStatistics, Queue}
 
 trait QueueStorageModule {
   trait QueueStorage {
@@ -9,6 +9,7 @@ trait QueueStorageModule {
     def deleteQueue(queue: Queue)
     def lookupQueue(name: String): Option[Queue]
     def listQueues: Seq[Queue]
+    def queueStatistics(queue: Queue, deliveryTime: Long): QueueStatistics
   }
 
   def queueStorage: QueueStorage

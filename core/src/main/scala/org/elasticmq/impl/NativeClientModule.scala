@@ -36,6 +36,8 @@ trait NativeClientModule {
 
     def listQueues = queueStorage.listQueues
 
+    def queueStatistics(queue: Queue) = queueStorage.queueStatistics(queue, now)
+
     private def updateQueueLastModified(queue: Queue) = queue.copy(lastModified = nowAsDateTime)
   }
 
