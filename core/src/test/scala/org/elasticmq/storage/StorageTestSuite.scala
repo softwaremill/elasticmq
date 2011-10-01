@@ -177,7 +177,7 @@ class MessageStorageTestSuite extends StorageTestSuite {
     messageStorage.persistMessage(Message(q1, "xyz", "123", MillisNextDelivery(123L)))
 
     // When
-    val lookupResult = messageStorage.lookupPendingMessage(q2, 1000L)
+    val lookupResult = messageStorage.receiveMessage(q2, 1000L, MillisNextDelivery(234L))
 
     // Then
     lookupResult must be (None)
@@ -194,10 +194,26 @@ class MessageStorageTestSuite extends StorageTestSuite {
     messageStorage.persistMessage(Message(q1, "xyz", "123", MillisNextDelivery(123L)))
 
     // When
-    val lookupResult = messageStorage.lookupPendingMessage(q1, 200L)
+    val lookupResult = messageStorage.receiveMessage(q1, 200L, MillisNextDelivery(234L))
 
     // Then
-    lookupResult must be (Some(Message(q1, "xyz", "123", MillisNextDelivery(123L))))
+    lookupResult must be (Some(Message(q1, "xyz", "123", MillisNextDelivery(234L))))
+  }
+
+  test("next delivery should be updated after receiving") {
+    // Given
+    val q1: Queue = Queue("q1", VisibilityTimeout(1L))
+
+    queueStorage.persistQueue(q1)
+
+    messageStorage.persistMessage(Message(q1, "xyz", "123", MillisNextDelivery(123L)))
+
+    // When
+    messageStorage.receiveMessage(q1, 200L, MillisNextDelivery(567L))
+    val lookupResult = messageStorage.lookupMessage("xyz")
+
+    // Then
+    lookupResult must be (Some(Message(q1, "xyz", "123", MillisNextDelivery(567L))))
   }
 
   test("delivered message should not be found in a non-empty queue when it is not visible") {
@@ -209,7 +225,7 @@ class MessageStorageTestSuite extends StorageTestSuite {
     messageStorage.persistMessage(Message(q1, "xyz", "123", MillisNextDelivery(123L)))
 
     // When
-    val lookupResult = messageStorage.lookupPendingMessage(q1, 100L)
+    val lookupResult = messageStorage.receiveMessage(q1, 100L, MillisNextDelivery(234L))
 
     // Then
     lookupResult must be (None)
@@ -226,42 +242,6 @@ class MessageStorageTestSuite extends StorageTestSuite {
 
     // Then
     messageStorage.lookupMessage("xyz") must be (Some(Message(q1, "xyz", "1234", MillisNextDelivery(345L))))
-  }
-
-  test("updating next delivery should succeed for unchanged message") {
-    // Given
-    val q1 = Queue("q1", VisibilityTimeout(1L))
-    val m1 = Message(q1, "xyz", "123", MillisNextDelivery(123L))
-
-    queueStorage.persistQueue(q1)
-    messageStorage.persistMessage(m1)
-
-    // When
-    val updatedMessage = messageStorage.updateNextDelivery(m1, MillisNextDelivery(600L))
-
-    // Then
-    val m2 = Message(q1, "xyz", "123", MillisNextDelivery(600L))
-
-    messageStorage.lookupMessage("xyz") must be (Some(m2))
-    updatedMessage must be (Some(m2))
-  }
-
-  test("updating last delivered should fail for changed message") {
-    // Given
-    val q1 = Queue("q1", VisibilityTimeout(1L))
-    val m1 = Message(q1, "xyz", "123", MillisNextDelivery(123L))
-
-    queueStorage.persistQueue(q1)
-    messageStorage.persistMessage(m1)
-
-    // When
-    val updatedMessage = messageStorage.updateNextDelivery(
-      Message(q1, "xyz", "123", MillisNextDelivery(345L)),
-      MillisNextDelivery(600L))
-
-    // Then
-    messageStorage.lookupMessage("xyz") must be (Some(m1))
-    updatedMessage must be (None)
   }
 
   test("message should be deleted") {

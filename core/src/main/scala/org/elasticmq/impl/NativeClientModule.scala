@@ -52,15 +52,11 @@ trait NativeClientModule {
     }
 
     def receiveMessage(queue: Queue): Option[SpecifiedMessage] = {
-      messageStorage.lookupPendingMessage(queue, now)
-              .flatMap(message =>
-        messageStorage
-                .updateNextDelivery(message, nextDelivery(message))
-                .orElse(receiveMessage(queue)))
+      messageStorage.receiveMessage(queue, now, nextDelivery(queue))
     }
 
     def updateVisibilityTimeout(message: IdentifiableMessage, newVisibilityTimeout: VisibilityTimeout) = {
-      val newMessage = message.copy(nextDelivery = nextDelivery(message, newVisibilityTimeout.millis))
+      val newMessage = message.copy(nextDelivery = nextDelivery(newVisibilityTimeout.millis))
       messageStorage.updateMessage(newMessage)
       newMessage
     }
@@ -75,11 +71,11 @@ trait NativeClientModule {
 
     private def generateId(): String = UUID.randomUUID().toString
 
-    private def nextDelivery(m: AnyMessage): MillisNextDelivery = {
-      nextDelivery(m, m.queue.defaultVisibilityTimeout.millis)
+    private def nextDelivery(queue: Queue): MillisNextDelivery = {
+      nextDelivery(queue.defaultVisibilityTimeout.millis)
     }
 
-    private def nextDelivery(m: AnyMessage, delta: Long): MillisNextDelivery = {
+    private def nextDelivery(delta: Long): MillisNextDelivery = {
       MillisNextDelivery(now + delta)
     }
   }
