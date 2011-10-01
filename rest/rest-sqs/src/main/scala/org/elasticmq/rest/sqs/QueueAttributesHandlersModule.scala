@@ -24,6 +24,9 @@ trait QueueAttributesHandlersModule { this: ClientModule with RequestHandlerLogi
   }
 
   val getQueueAttributesLogic = logicWithQueue((queue, request, parameters) => {
+    import QueueWriteableAttributeNames._
+    import QueueReadableAttributeNames._
+
     def collectAttributeNames(suffix: Int, acc: List[String]): List[String] = {
       parameters.get("AttributeName." + suffix) match {
         case None => acc
@@ -31,53 +34,62 @@ trait QueueAttributesHandlersModule { this: ClientModule with RequestHandlerLogi
       }
     }
 
-    import QueueWriteableAttributeNames._
-    import QueueReadableAttributeNames._
-
-    var attributeNames = collectAttributeNames(1, parameters.get("AttributeName").toList)
-    if (attributeNames.contains("All")) {
-      attributeNames = VisibilityTimeoutAttribute ::
-              ApproximateNumberOfMessagesAttribute ::
-              ApproximateNumberOfMessagesNotVisibleAttribute ::
-              CreatedTimestampAttribute ::
-              LastModifiedTimestampAttribute :: Nil
-    }
-
-    lazy val stats = client.queueClient.queueStatistics(queue)
-
-    val attributes = attributeNames.flatMap {
-      _ match {
-        case VisibilityTimeoutAttribute =>
-          Some((VisibilityTimeoutAttribute, queue.defaultVisibilityTimeout.seconds.toString))
-
-        case ApproximateNumberOfMessagesAttribute =>
-          Some((ApproximateNumberOfMessagesAttribute, stats.approximateNumberOfVisibleMessages.toString))
-
-        case ApproximateNumberOfMessagesNotVisibleAttribute =>
-          Some((ApproximateNumberOfMessagesNotVisibleAttribute, stats.approximateNumberOfInvisibleMessages.toString))
-
-        case CreatedTimestampAttribute =>
-          Some((CreatedTimestampAttribute, (queue.created.getMillis/1000L).toString))
-
-        case LastModifiedTimestampAttribute =>
-          Some((LastModifiedTimestampAttribute, (queue.lastModified.getMillis/1000L).toString))
-
-        case _ => None
+    def unfoldAllAttributeIfRequested(attributeNames: List[String]): List[String] = {
+      if (attributeNames.contains("All")) {
+        VisibilityTimeoutAttribute ::
+                ApproximateNumberOfMessagesAttribute ::
+                ApproximateNumberOfMessagesNotVisibleAttribute ::
+                CreatedTimestampAttribute ::
+                LastModifiedTimestampAttribute :: Nil
+      } else {
+        attributeNames
       }
     }
 
-    <GetQueueAttributesResponse>
-      <GetQueueAttributesResult>
-        {attributes.map(a =>
-        <Attribute>
-          <Name>{a._1}</Name>
-          <Value>{a._2}</Value>
-        </Attribute>)}
-      </GetQueueAttributesResult>
-      <ResponseMetadata>
-        <RequestId>{EMPTY_REQUEST_ID}</RequestId>
-      </ResponseMetadata>
-    </GetQueueAttributesResponse>
+    def computeAttributeValues(attributeNames: List[String]) = {
+      lazy val stats = client.queueClient.queueStatistics(queue)
+
+      attributeNames.flatMap {
+        _ match {
+          case VisibilityTimeoutAttribute =>
+            Some((VisibilityTimeoutAttribute, queue.defaultVisibilityTimeout.seconds.toString))
+
+          case ApproximateNumberOfMessagesAttribute =>
+            Some((ApproximateNumberOfMessagesAttribute, stats.approximateNumberOfVisibleMessages.toString))
+
+          case ApproximateNumberOfMessagesNotVisibleAttribute =>
+            Some((ApproximateNumberOfMessagesNotVisibleAttribute, stats.approximateNumberOfInvisibleMessages.toString))
+
+          case CreatedTimestampAttribute =>
+            Some((CreatedTimestampAttribute, (queue.created.getMillis/1000L).toString))
+
+          case LastModifiedTimestampAttribute =>
+            Some((LastModifiedTimestampAttribute, (queue.lastModified.getMillis/1000L).toString))
+
+          case _ => None
+        }
+      }
+    }
+
+    def responseXml(attributes: List[(String, String)]) = {
+      <GetQueueAttributesResponse>
+        <GetQueueAttributesResult>
+          {attributes.map(a =>
+          <Attribute>
+            <Name>{a._1}</Name>
+            <Value>{a._2}</Value>
+          </Attribute>)}
+        </GetQueueAttributesResult>
+        <ResponseMetadata>
+          <RequestId>{EMPTY_REQUEST_ID}</RequestId>
+        </ResponseMetadata>
+      </GetQueueAttributesResponse>
+    }
+
+    val rawAttributeNames = collectAttributeNames(1, parameters.get("AttributeName").toList)
+    val attributeNames = unfoldAllAttributeIfRequested(rawAttributeNames)
+    val attributes = computeAttributeValues(attributeNames)
+    responseXml(attributes)
   })
 
   val setQueueAttributesLogic = logicWithQueue((queue, request, parameters) => {
