@@ -44,12 +44,14 @@ object SquerylQueue {
 }
 
 class SquerylMessage(val id: String, val queueName: String, val content: String,
-                     val nextDelivery: Long) extends KeyedEntity[String] {
-  def toMessage(q: SquerylQueue): SpecifiedMessage = Message(q.toQueue, Some(id), content, MillisNextDelivery(nextDelivery))
+                     val nextDelivery: Long, val createdTimestamp: Long) extends KeyedEntity[String] {
+  def toMessage(q: SquerylQueue): SpecifiedMessage = Message(q.toQueue, Some(id), content,
+    MillisNextDelivery(nextDelivery), new DateTime(createdTimestamp))
 }
 
 object SquerylMessage {
   def from(message: SpecifiedMessage) = {
-    new SquerylMessage(message.id.get, message.queue.name, message.content, message.nextDelivery.millis)
+    new SquerylMessage(message.id.get, message.queue.name, message.content, message.nextDelivery.millis,
+      message.created.getMillis)
   }
 }

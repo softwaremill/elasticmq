@@ -53,8 +53,10 @@ trait NativeClientModule {
         case m: MillisNextDelivery => messageWithId.copy(nextDelivery = m)
       }
 
-      messageStorage.persistMessage(messageWithDelivery)
-      messageWithDelivery
+      val messageWithCreatedDate = messageWithDelivery.copy(created = nowAsDateTime)
+
+      messageStorage.persistMessage(messageWithCreatedDate)
+      messageWithCreatedDate
     }
 
     def receiveMessage(queue: Queue): Option[SpecifiedMessage] = {

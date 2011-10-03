@@ -183,15 +183,17 @@ class MessageStorageTestSuite extends StorageTestSuite {
 
   test("after persisting a message it should be found") {
     // Given
+    val created = new DateTime(1216168602L)
     val q1: Queue = Queue("q1", VisibilityTimeout(1L))
+    val message = Message(q1, "xyz", "123", MillisNextDelivery(123L)).copy(created = created)
     queueStorage.persistQueue(q1)
-    messageStorage.persistMessage(Message(q1, "xyz", "123", MillisNextDelivery(123L)))
+    messageStorage.persistMessage(message)
 
     // When
     val lookupResult = messageStorage.lookupMessage("xyz")
 
     // Then
-    lookupResult must be (Some(Message(q1, "xyz", "123", MillisNextDelivery(123L))))
+    lookupResult must be (Some(message))
   }
 
   test("sending message with maximum size should succeed") {

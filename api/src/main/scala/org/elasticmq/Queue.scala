@@ -8,7 +8,6 @@ case class Queue(name: String,
                  lastModified: DateTime)
 
 object Queue {
-  val UnspecifiedDate = new DateTime(0)
   def apply(name: String, defaultVisibilityTimeout: VisibilityTimeout): Queue = {
     Queue(name, defaultVisibilityTimeout, UnspecifiedDate, UnspecifiedDate)
   }
