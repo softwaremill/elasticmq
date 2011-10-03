@@ -12,8 +12,8 @@ trait SquerylSchemaModule {
   def queuesToMessagesCond(m: SquerylMessage, q: SquerylQueue) = q.id === m.queueName
 
   object MQSchema extends Schema {
-    val queues = table[SquerylQueue]
-    val messages = table[SquerylMessage]
+    val queues = table[SquerylQueue]("emq_queue")
+    val messages = table[SquerylMessage]("emq_message")
 
     val queuesToMessages = oneToManyRelation(queues, messages).via((q, m) => queuesToMessagesCond(m, q))
     queuesToMessages.foreignKeyDeclaration.constrainReference(onDelete cascade)
