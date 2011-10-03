@@ -18,8 +18,8 @@ trait BackgroundTaskSchedulerModule {
 
     Executor.start()
 
-    def schedule(block: () => Unit) {
-      Executor ! block
+    def schedule(block: => Unit) {
+      Executor ! (() => block)
     }
   }
 }
