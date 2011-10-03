@@ -69,4 +69,9 @@ class MessageClientLogginWrapper(delegate: MessageClient) extends MessageClient 
     log.debug("Looking up message: "+id)
     delegate.lookupMessage(id)
   }
+
+  def messageStatistics(message: IdentifiableMessage) = {
+    log.debug("Computing statistics for: " + message)
+    delegate.messageStatistics(message)
+  }
 }

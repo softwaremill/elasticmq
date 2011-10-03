@@ -20,5 +20,6 @@ trait MessageClient {
   def updateVisibilityTimeout(message: IdentifiableMessage, newVisibilityTimeout: VisibilityTimeout): SpecifiedMessage
   def deleteMessage(message: IdentifiableMessage)
   def lookupMessage(id: String): Option[SpecifiedMessage]
+  def messageStatistics(message: IdentifiableMessage): MessageStatistics
 }
 

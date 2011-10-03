@@ -6,10 +6,10 @@ import org.scalatest._
 import mock.MockitoSugar
 import org.mockito.Mockito.verify
 import org.elasticmq._
-import org.elasticmq.storage.{MessageStorageModule, QueueStorageModule}
 import org.joda.time.DateTime
 import org.mockito.ArgumentMatcher
 import org.mockito.Matchers._
+import org.elasticmq.storage.{MessageStatisticsStorageModule, MessageStorageModule, QueueStorageModule}
 
 class NativeQueueClientImplTestSuite extends FunSuite with MustMatchers with MockitoSugar {
   val NOW = new DateTime(1316168602L)
@@ -38,12 +38,14 @@ class NativeQueueClientImplTestSuite extends FunSuite with MustMatchers with Moc
     val env = new NativeClientModule
       with MessageStorageModule
       with QueueStorageModule
+      with MessageStatisticsStorageModule
       with NowModule {
 
       val mockQueueStorage = mock[QueueStorage]
 
       def messageStorage = null
       def queueStorage = mockQueueStorage
+      def messageStatisticsStorage = null
 
       override def nowAsDateTime = NOW
     }

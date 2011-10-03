@@ -2,10 +2,10 @@ package org.elasticmq.impl
 
 import java.util.UUID
 import org.elasticmq._
-import org.elasticmq.storage.{QueueStorageModule, MessageStorageModule}
+import org.elasticmq.storage.{MessageStatisticsStorageModule, QueueStorageModule, MessageStorageModule}
 
 trait NativeClientModule {
-  this: MessageStorageModule with QueueStorageModule with NowModule =>
+  this: MessageStorageModule with QueueStorageModule with MessageStatisticsStorageModule with NowModule =>
 
   def nativeClient: Client = nativeClientImpl
 
@@ -60,7 +60,9 @@ trait NativeClientModule {
     }
 
     def receiveMessage(queue: Queue): Option[SpecifiedMessage] = {
-      messageStorage.receiveMessage(queue, now, nextDelivery(queue))
+      val message = messageStorage.receiveMessage(queue, now, nextDelivery(queue))
+      message.map(messageStatisticsStorage.messageReceived(_, now))
+      message
     }
 
     def updateVisibilityTimeout(message: IdentifiableMessage, newVisibilityTimeout: VisibilityTimeout) = {
@@ -76,6 +78,8 @@ trait NativeClientModule {
     def lookupMessage(id: String) = {
       messageStorage.lookupMessage(id)
     }
+
+    def messageStatistics(message: IdentifiableMessage) = messageStatisticsStorage.messageStatistics(message)
 
     private def generateId(): String = UUID.randomUUID().toString
 
