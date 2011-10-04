@@ -320,6 +320,8 @@ class MessageStatisticsStorageTestSuite extends StorageTestSuite {
   val q1 = Queue("q1", VisibilityTimeout(1L))
   val m1 = Message(q1, "xyz", "123", MillisNextDelivery(123L))
 
+  val someTimestamp = 123456789L;
+
   before {
     queueStorage.persistQueue(q1)
     messageStorage.persistMessage(m1)
@@ -332,6 +334,33 @@ class MessageStatisticsStorageTestSuite extends StorageTestSuite {
     // Then
     stats.approximateFirstReceive must be (NeverReceived)
     stats.approximateReceiveCount must be (0)
+    stats.message must be (m1)
+  }
+
+  test("statistics should be correct after receiving a message once") {
+    // Given
+    messageStatisticsStorage.messageReceived(m1, someTimestamp)
+
+    // When
+    val stats = messageStatisticsStorage.readMessageStatistics(m1)
+
+    // Then
+    stats.approximateFirstReceive must be (OnDateTimeReceived(new DateTime(someTimestamp)))
+    stats.approximateReceiveCount must be (1)
+    stats.message must be (m1)
+  }
+
+  test("statistics should be correct after receiving a message twice") {
+    // Given
+    messageStatisticsStorage.messageReceived(m1, someTimestamp)
+    messageStatisticsStorage.messageReceived(m1, someTimestamp + 100000L)
+
+    // When
+    val stats = messageStatisticsStorage.readMessageStatistics(m1)
+
+    // Then
+    stats.approximateFirstReceive must be (OnDateTimeReceived(new DateTime(someTimestamp)))
+    stats.approximateReceiveCount must be (2)
     stats.message must be (m1)
   }
 }

@@ -9,19 +9,26 @@ trait SquerylMessageStatisticsStorageModule extends MessageStatisticsStorageModu
 
   object squerylMessageStatisticsStorage extends MessageStatisticsStorage {
     def messageReceived(message: IdentifiableMessage, when: Long) {
-
+      transaction {
+        val current = lookupStatistics(message)
+        current match {
+          case None => messageStatistics.insert(new SquerylMessageStatistics(message.id.get, when, 1))
+          case Some(stats) => messageStatistics.update(new SquerylMessageStatistics(
+            stats.id, stats.approximateFirstReceive, stats.approximateReceiveCount+1
+          ))
+        }
+      }
     }
 
     def readMessageStatistics(message: IdentifiableMessage) = {
-      readMessageStatisticsOption(message)
+      lookupStatistics(message)
+              .map(_.toMessageStatistics(message))
               .getOrElse(MessageStatistics(message, NeverReceived, 0))
     }
 
-    private def readMessageStatisticsOption(message: IdentifiableMessage): Option[MessageStatistics] = {
+    private def lookupStatistics(message: IdentifiableMessage): Option[SquerylMessageStatistics] = {
       inTransaction {
-        messageStatistics
-                .lookup(message.id.get)
-                .map(_.toMessageStatistics(message))
+        messageStatistics.lookup(message.id.get)
       }
     }
   }
