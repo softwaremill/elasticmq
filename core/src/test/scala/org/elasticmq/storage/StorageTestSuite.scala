@@ -4,18 +4,19 @@ import org.scalatest.matchers.MustMatchers
 import org.scalatest._
 import org.elasticmq._
 import org.squeryl.adapters.H2Adapter
-import org.elasticmq.storage.squeryl.{SquerylSchemaModule, SquerylQueueStorageModule, SquerylMessageStorageModule, SquerylInitializerModule}
+import org.elasticmq.storage.squeryl._
 import org.joda.time.DateTime
 
 trait StorageTestSuite extends FunSuite with MustMatchers with OneInstancePerTest {
   private case class StorageTestSetup(storageName: String,
-                                      initialize: () => MessageStorageModule with QueueStorageModule,
+                                      initialize: () => MessageStorageModule with QueueStorageModule with MessageStatisticsStorageModule,
                                       shutdown: () => Unit)
 
   val squerylEnv =
     new SquerylInitializerModule
       with SquerylMessageStorageModule
       with SquerylQueueStorageModule
+      with SquerylMessageStatisticsStorageModule
       with SquerylSchemaModule
 
   val squerylDBConfiguration = DBConfiguration(new H2Adapter,
@@ -32,6 +33,13 @@ trait StorageTestSuite extends FunSuite with MustMatchers with OneInstancePerTes
 
   private var _queueStorage: QueueStorageModule#QueueStorage = null
   private var _messageStorage: MessageStorageModule#MessageStorage = null
+  private var _messageStatisticsStorage: MessageStatisticsStorageModule#MessageStatisticsStorage = null
+
+  private var _befores: List[() => Unit] = Nil
+
+  def before(block: => Unit) {
+    _befores = (() => block) :: _befores
+  }
 
   abstract override protected def test(testName: String, testTags: Tag*)(testFun: => Unit) {
     for (setup <- setups) {
@@ -39,7 +47,9 @@ trait StorageTestSuite extends FunSuite with MustMatchers with OneInstancePerTes
         val storages = setup.initialize()
         _queueStorage = storages.queueStorage
         _messageStorage = storages.messageStorage
+        _messageStatisticsStorage = storages.messageStatisticsStorage
         try {
+          _befores.foreach(_())
           testFun
         } finally {
           setup.shutdown()
@@ -50,6 +60,7 @@ trait StorageTestSuite extends FunSuite with MustMatchers with OneInstancePerTes
 
   def queueStorage = _queueStorage
   def messageStorage = _messageStorage
+  def messageStatisticsStorage = _messageStatisticsStorage
 }
 
 class QueueStorageTestSuite extends StorageTestSuite {
@@ -302,5 +313,25 @@ class MessageStorageTestSuite extends StorageTestSuite {
 
     // Then
     messageStorage.lookupMessage("xyz") must be (None)
+  }
+}
+
+class MessageStatisticsStorageTestSuite extends StorageTestSuite {
+  val q1 = Queue("q1", VisibilityTimeout(1L))
+  val m1 = Message(q1, "xyz", "123", MillisNextDelivery(123L))
+
+  before {
+    queueStorage.persistQueue(q1)
+    messageStorage.persistMessage(m1)
+  }
+
+  test("empty statistics should be returned for a non-delivered message") {
+    // When
+    val stats = messageStatisticsStorage.readMessageStatistics(m1)
+
+    // Then
+    stats.approximateFirstReceive must be (NeverReceived)
+    stats.approximateReceiveCount must be (0)
+    stats.message must be (m1)
   }
 }

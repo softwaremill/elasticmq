@@ -81,7 +81,7 @@ trait NativeClientModule {
       messageStorage.lookupMessage(id)
     }
 
-    def messageStatistics(message: IdentifiableMessage) = messageStatisticsStorage.messageStatistics(message)
+    def messageStatistics(message: IdentifiableMessage) = messageStatisticsStorage.readMessageStatistics(message)
 
     private def generateId(): String = UUID.randomUUID().toString
 

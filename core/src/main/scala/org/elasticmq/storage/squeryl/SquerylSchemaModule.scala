@@ -8,15 +8,20 @@ import org.joda.time.DateTime
 trait SquerylSchemaModule {
   def queues = MQSchema.queues
   def messages = MQSchema.messages
+  def messageStatistics = MQSchema.messageStatistics
 
   def queuesToMessagesCond(m: SquerylMessage, q: SquerylQueue) = q.id === m.queueName
 
   object MQSchema extends Schema {
     val queues = table[SquerylQueue]("emq_queue")
     val messages = table[SquerylMessage]("emq_message")
+    val messageStatistics = table[SquerylMessageStatistics]("emq_msg_stats")
 
     val queuesToMessages = oneToManyRelation(queues, messages).via((q, m) => queuesToMessagesCond(m, q))
     queuesToMessages.foreignKeyDeclaration.constrainReference(onDelete cascade)
+
+    val messagesToMessageStatistics = oneToManyRelation(messages, messageStatistics).via((m, ms) => m.id === ms.id)
+    messagesToMessageStatistics.foreignKeyDeclaration.constrainReference(onDelete cascade)
 
     on(messages)(m => declare(
       m.content is(dbType("text"))
@@ -54,4 +59,12 @@ object SquerylMessage {
     new SquerylMessage(message.id.get, message.queue.name, message.content, message.nextDelivery.millis,
       message.created.getMillis)
   }
+}
+
+class SquerylMessageStatistics(val id: String,
+                               val approximateFirstReceive: Long,
+                               val approximateReceiveCount: Int) extends KeyedEntity[String] {
+  def toMessageStatistics(m: IdentifiableMessage) = MessageStatistics(m,
+    if (approximateFirstReceive == 0) NeverReceived else OnDateTimeReceived(new DateTime(approximateFirstReceive)),
+    approximateReceiveCount)
 }
