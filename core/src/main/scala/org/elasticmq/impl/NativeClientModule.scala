@@ -3,9 +3,11 @@ package org.elasticmq.impl
 import java.util.UUID
 import org.elasticmq._
 import org.elasticmq.storage.{MessageStatisticsStorageModule, QueueStorageModule, MessageStorageModule}
+import org.elasticmq.impl.scheduler.VolatileTaskSchedulerModule
 
 trait NativeClientModule {
-  this: MessageStorageModule with QueueStorageModule with MessageStatisticsStorageModule with NowModule =>
+  this: MessageStorageModule with QueueStorageModule with MessageStatisticsStorageModule
+          with VolatileTaskSchedulerModule with NowModule =>
 
   def nativeClient: Client = nativeClientImpl
 
@@ -61,7 +63,7 @@ trait NativeClientModule {
 
     def receiveMessage(queue: Queue): Option[SpecifiedMessage] = {
       val message = messageStorage.receiveMessage(queue, now, nextDelivery(queue))
-      message.map(messageStatisticsStorage.messageReceived(_, now))
+      message.foreach(m => volatileTaskScheduler.schedule { messageStatisticsStorage.messageReceived(m, now) })
       message
     }
 

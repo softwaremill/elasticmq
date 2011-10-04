@@ -3,7 +3,8 @@ package org.elasticmq
 import org.squeryl.internals.DatabaseAdapter
 import org.squeryl.adapters.{MySQLAdapter, H2Adapter}
 import org.elasticmq.storage.squeryl.{SquerylMessageStatisticsStorageModule, SquerylInitializerModule, SquerylQueueStorageModule, SquerylMessageStorageModule, SquerylSchemaModule}
-import org.elasticmq.impl.{BackgroundTaskSchedulerModule, NowModule, NativeClientModule, NodeImpl}
+import org.elasticmq.impl.{NowModule, NativeClientModule, NodeImpl}
+import org.elasticmq.impl.scheduler.BackgroundVolatileTaskSchedulerModule
 
 object NodeBuilder {
   def withMySQLStorage(dbName: String, username: String, password: String,
@@ -37,7 +38,7 @@ object NodeBuilder {
               with SquerylQueueStorageModule
               with SquerylInitializerModule
               with NowModule
-              with BackgroundTaskSchedulerModule
+              with BackgroundVolatileTaskSchedulerModule
 
       env.initializeSqueryl(dbConfiguration)
       new NodeImpl(env.nativeClient, () => env.shutdownSqueryl(dbConfiguration.drop))

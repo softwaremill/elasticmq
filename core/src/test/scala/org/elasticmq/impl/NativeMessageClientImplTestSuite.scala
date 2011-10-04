@@ -56,7 +56,8 @@ class NativeMessageClientImplTestSuite extends FunSuite with MustMatchers with M
       with MessageStorageModule
       with QueueStorageModule
       with MessageStatisticsStorageModule
-      with NowModule {
+      with NowModule
+      with ImmediateVolatileTaskSchedulerModule {
 
       val mockMessageStorage = mock[MessageStorage]
       val mockMessageStatisticsStorage = mock[MessageStatisticsStorage]
