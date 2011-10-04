@@ -1,4 +1,4 @@
-package org.elasticmq.impl
+package org.elasticmq.impl.scheduler
 
 import org.scalatest.FunSuite
 import org.scalatest.matchers.MustMatchers
@@ -12,10 +12,10 @@ class BackgroundTaskSchedulerTestSuite extends FunSuite with MustMatchers {
     val thisThreadId = Thread.currentThread().getId
     val threadIdBox = new AtomicLong(thisThreadId)
 
-    val scheduler = new BackgroundTaskSchedulerModule {}
+    val scheduler = new BackgroundVolatileTaskSchedulerModule {}
 
     // When
-    scheduler.backgroundTaskScheduler.schedule { box.set(10); threadIdBox.set(Thread.currentThread().getId) }
+    scheduler.volatileTaskScheduler.schedule { box.set(10); threadIdBox.set(Thread.currentThread().getId) }
 
     // Then
     Thread.sleep(250)

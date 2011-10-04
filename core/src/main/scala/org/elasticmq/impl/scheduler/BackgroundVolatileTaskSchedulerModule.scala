@@ -1,11 +1,11 @@
-package org.elasticmq.impl
+package org.elasticmq.impl.scheduler
 
 import scala.actors.Actor
 
-trait BackgroundTaskSchedulerModule {
-  val backgroundTaskScheduler = new BackgroundTaskScheduler
+trait BackgroundVolatileTaskSchedulerModule extends VolatileTaskSchedulerModule {
+  val volatileTaskScheduler = new BackgroundTaskScheduler
 
-  class BackgroundTaskScheduler {
+  class BackgroundTaskScheduler extends VolatileTaskScheduler {
     object Executor extends Actor {
       def act() {
         loop {
