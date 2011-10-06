@@ -9,7 +9,7 @@ import Constants._
 import ActionUtil._
 import ParametersParserUtil._
 
-trait QueueAttributesHandlersModule { this: ClientModule with RequestHandlerLogicModule =>
+trait QueueAttributesHandlersModule { this: ClientModule with RequestHandlerLogicModule with AttributeNamesReaderModule =>
   import QueueAttributesHandlersModule._
 
   object QueueReadableAttributeNames {
@@ -27,24 +27,11 @@ trait QueueAttributesHandlersModule { this: ClientModule with RequestHandlerLogi
     import QueueWriteableAttributeNames._
     import QueueReadableAttributeNames._
 
-    def collectAttributeNames(suffix: Int, acc: List[String]): List[String] = {
-      parameters.get("AttributeName." + suffix) match {
-        case None => acc
-        case Some(an) => collectAttributeNames(suffix+1, an :: acc)
-      }
-    }
-
-    def unfoldAllAttributeIfRequested(attributeNames: List[String]): List[String] = {
-      if (attributeNames.contains("All")) {
-        VisibilityTimeoutAttribute ::
-                ApproximateNumberOfMessagesAttribute ::
-                ApproximateNumberOfMessagesNotVisibleAttribute ::
-                CreatedTimestampAttribute ::
-                LastModifiedTimestampAttribute :: Nil
-      } else {
-        attributeNames
-      }
-    }
+    val allAttributeNames = VisibilityTimeoutAttribute ::
+            ApproximateNumberOfMessagesAttribute ::
+            ApproximateNumberOfMessagesNotVisibleAttribute ::
+            CreatedTimestampAttribute ::
+            LastModifiedTimestampAttribute :: Nil
 
     def computeAttributeValues(attributeNames: List[String]) = {
       lazy val stats = client.queueClient.queueStatistics(queue)
@@ -86,8 +73,7 @@ trait QueueAttributesHandlersModule { this: ClientModule with RequestHandlerLogi
       </GetQueueAttributesResponse>
     }
 
-    val rawAttributeNames = collectAttributeNames(1, parameters.get("AttributeName").toList)
-    val attributeNames = unfoldAllAttributeIfRequested(rawAttributeNames)
+    val attributeNames = attributeNamesReader.read(parameters, allAttributeNames)
     val attributes = computeAttributeValues(attributeNames)
     responseXml(attributes)
   })

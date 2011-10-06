@@ -22,7 +22,8 @@ object SQSRestServerFactory {
       with SendMessageHandlerModule
       with ReceiveMessageHandlerModule
       with DeleteMessageHandlerModule
-      with ChangeMessageVisibilityHandlerModule {
+      with ChangeMessageVisibilityHandlerModule
+      with AttributeNamesReaderModule {
       val client = theClient
       val baseAddress = theBaseAddress
     }
