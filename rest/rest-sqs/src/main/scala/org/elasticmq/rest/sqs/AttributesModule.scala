@@ -1,7 +1,8 @@
 package org.elasticmq.rest.sqs
 
-trait AttributeNamesReaderModule {
+trait AttributesModule {
   val attributeNamesReader = new AttributeNamesReader
+  val attributesToXmlConverter = new AttributesToXmlConverter
 
   class AttributeNamesReader {
     def read(parameters: Map[String, String], allAttributeNames: List[String]) = {
@@ -24,6 +25,16 @@ trait AttributeNamesReaderModule {
       val attributeNames = unfoldAllAttributeIfRequested(rawAttributeNames)
 
       attributeNames
+    }
+  }
+
+  class AttributesToXmlConverter {
+    def convert(attributes: List[(String, String)]) = {
+      attributes.map(a =>
+        <Attribute>
+          <Name>{a._1}</Name>
+          <Value>{a._2}</Value>
+        </Attribute>)
     }
   }
 }

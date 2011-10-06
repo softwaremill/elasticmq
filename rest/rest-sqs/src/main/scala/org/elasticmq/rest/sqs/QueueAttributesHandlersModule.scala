@@ -9,7 +9,7 @@ import Constants._
 import ActionUtil._
 import ParametersParserUtil._
 
-trait QueueAttributesHandlersModule { this: ClientModule with RequestHandlerLogicModule with AttributeNamesReaderModule =>
+trait QueueAttributesHandlersModule { this: ClientModule with RequestHandlerLogicModule with AttributesModule =>
   import QueueAttributesHandlersModule._
 
   object QueueReadableAttributeNames {
@@ -61,11 +61,7 @@ trait QueueAttributesHandlersModule { this: ClientModule with RequestHandlerLogi
     def responseXml(attributes: List[(String, String)]) = {
       <GetQueueAttributesResponse>
         <GetQueueAttributesResult>
-          {attributes.map(a =>
-          <Attribute>
-            <Name>{a._1}</Name>
-            <Value>{a._2}</Value>
-          </Attribute>)}
+          {attributesToXmlConverter.convert(attributes)}
         </GetQueueAttributesResult>
         <ResponseMetadata>
           <RequestId>{EMPTY_REQUEST_ID}</RequestId>
