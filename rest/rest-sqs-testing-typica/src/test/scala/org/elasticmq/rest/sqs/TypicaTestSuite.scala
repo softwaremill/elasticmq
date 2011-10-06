@@ -6,7 +6,8 @@ import org.elasticmq.rest.RestServer
 import org.elasticmq.{Node, NodeBuilder}
 import org.apache.log4j.BasicConfigurator
 import org.jboss.netty.logging.{Log4JLoggerFactory, InternalLoggerFactory}
-import com.xerox.amazonws.sqs2.{QueueAttribute, QueueService}
+import java.math.BigInteger
+import com.xerox.amazonws.sqs2.{Message, QueueAttribute, QueueService}
 
 class TypicaTestSuite extends FunSuite with MustMatchers with BeforeAndAfter {
   var node: Node = _
@@ -227,6 +228,40 @@ class TypicaTestSuite extends FunSuite with MustMatchers with BeforeAndAfter {
 
     // Then
     approximateNumberOfMessages must be (1)
+  }
+
+  test("should receive message with statistics") {
+    // Given
+    val start = System.currentTimeMillis()
+    val queueService = newQueueService
+    val queue = queueService.getOrCreateMessageQueue("testQueue1", 1)
+    queue.sendMessage("Message 1")
+
+    def receiveMessages(): Array[Message] = {
+      queue.receiveMessages(BigInteger.valueOf(1),
+        null.asInstanceOf[BigInteger],
+        java.util.Arrays.asList("SentTimestamp", "ApproximateReceiveCount", "ApproximateFirstReceiveTimestamp"))
+    }
+
+    // When
+    val messageArray1 = receiveMessages()
+    Thread.sleep(1100)
+    val messageArray2 = receiveMessages()
+
+    // Then
+    messageArray1.length must be (1)
+    val sent1 = messageArray1(0).getAttribute("SentTimestamp").toLong
+    sent1 must be >= (start)
+    messageArray1(0).getAttribute("ApproximateReceiveCount").toInt must be (0)
+    messageArray1(0).getAttribute("ApproximateFirstReceiveTimestamp").toLong must be (0)
+
+    messageArray2.length must be (1)
+    val sent2 = messageArray2(0).getAttribute("SentTimestamp").toLong
+    sent2 must be >= (start)
+    messageArray2(0).getAttribute("ApproximateReceiveCount").toInt must be (1)
+    messageArray2(0).getAttribute("ApproximateFirstReceiveTimestamp").toLong must be >= (start)
+
+    sent1 must be (sent2)
   }
 
   def newQueueService = new QueueService("n/a", "n/a", false, "localhost", 8888)
