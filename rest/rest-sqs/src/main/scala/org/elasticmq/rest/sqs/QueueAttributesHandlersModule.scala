@@ -10,26 +10,26 @@ import ActionUtil._
 import ParametersParserUtil._
 
 trait QueueAttributesHandlersModule { this: ClientModule with RequestHandlerLogicModule with AttributesModule =>
+  object QueueWriteableAttributeNames {
+    val VisibilityTimeoutAttribute = "VisibilityTimeout"
+  }
+
   object QueueReadableAttributeNames {
     val ApproximateNumberOfMessagesAttribute = "ApproximateNumberOfMessages"
     val ApproximateNumberOfMessagesNotVisibleAttribute = "ApproximateNumberOfMessagesNotVisible"
     val CreatedTimestampAttribute = "CreatedTimestamp"
     val LastModifiedTimestampAttribute = "LastModifiedTimestamp"
-  }
 
-  object QueueWriteableAttributeNames {
-    val VisibilityTimeoutAttribute = "VisibilityTimeout"
+    val AllAttributeNames = QueueWriteableAttributeNames.VisibilityTimeoutAttribute ::
+            ApproximateNumberOfMessagesAttribute ::
+            ApproximateNumberOfMessagesNotVisibleAttribute ::
+            CreatedTimestampAttribute ::
+            LastModifiedTimestampAttribute :: Nil
   }
 
   val getQueueAttributesLogic = logicWithQueue((queue, request, parameters) => {
     import QueueWriteableAttributeNames._
     import QueueReadableAttributeNames._
-
-    val allAttributeNames = VisibilityTimeoutAttribute ::
-            ApproximateNumberOfMessagesAttribute ::
-            ApproximateNumberOfMessagesNotVisibleAttribute ::
-            CreatedTimestampAttribute ::
-            LastModifiedTimestampAttribute :: Nil
 
     def computeAttributeValues(attributeNames: List[String]) = {
       lazy val stats = client.queueClient.queueStatistics(queue)
@@ -67,7 +67,7 @@ trait QueueAttributesHandlersModule { this: ClientModule with RequestHandlerLogi
       </GetQueueAttributesResponse>
     }
 
-    val attributeNames = attributeNamesReader.read(parameters, allAttributeNames)
+    val attributeNames = attributeNamesReader.read(parameters, AllAttributeNames)
     val attributes = computeAttributeValues(attributeNames)
     responseXml(attributes)
   })
