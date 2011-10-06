@@ -10,10 +10,8 @@ import ActionUtil._
 import MD5Util._
 
 trait SendMessageHandlerModule { this: ClientModule with RequestHandlerLogicModule =>
-  import SendMessageHandlerModule._
-
   val sendMessageLogic = logicWithQueue((queue, request, parameters) => {
-    val body = parameters(MESSAGE_BODY_PARAMETER)
+    val body = parameters(MessageBodyParameter)
     val message = client.messageClient.sendMessage(Message(queue, body))
 
     val digest = md5Digest(body)
@@ -24,28 +22,26 @@ trait SendMessageHandlerModule { this: ClientModule with RequestHandlerLogicModu
         <MessageId>{message.id.get}</MessageId>
       </SendMessageResult>
       <ResponseMetadata>
-        <RequestId>{EMPTY_REQUEST_ID}</RequestId>
+        <RequestId>{EmptyRequestId}</RequestId>
       </ResponseMetadata>
     </SendMessageResponse>
   })
 
+  val SendMessageAction = createAction("SendMessage")
+  val MessageBodyParameter = "MessageBody"
+
   val sendMessageGetHandler = (createHandler
             forMethod GET
-            forPath (QUEUE_PATH)
-            requiringParameters List(MESSAGE_BODY_PARAMETER)
-            requiringParameterValues Map(SEND_MESSAGE_ACTION)
+            forPath (QueuePath)
+            requiringParameters List(MessageBodyParameter)
+            requiringParameterValues Map(SendMessageAction)
             running sendMessageLogic)
 
   val sendMessagePostHandler = (createHandler
             forMethod POST
-            forPath (QUEUE_PATH)
+            forPath (QueuePath)
             includingParametersFromBody ()
-            requiringParameters List(MESSAGE_BODY_PARAMETER)
-            requiringParameterValues Map(SEND_MESSAGE_ACTION)
+            requiringParameters List(MessageBodyParameter)
+            requiringParameterValues Map(SendMessageAction)
             running sendMessageLogic)
-}
-
-object SendMessageHandlerModule {
-  val SEND_MESSAGE_ACTION = createAction("SendMessage")
-  val MESSAGE_BODY_PARAMETER = "MessageBody"
 }

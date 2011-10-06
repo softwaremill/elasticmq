@@ -12,7 +12,7 @@ class SQSException(message: String, httpStatusCode: Int = 400, errorType: String
         <Detail/>
       </Error>
       <RequestId>{requestId}</RequestId>
-    </ErrorResponse> % SQS_NAMESPACE
+    </ErrorResponse> % SqsNamespace
 }
 
 object SQSException {

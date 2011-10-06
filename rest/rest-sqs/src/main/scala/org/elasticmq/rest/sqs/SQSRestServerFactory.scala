@@ -44,12 +44,12 @@ object SQSRestServerFactory {
 }
 
 object Constants {
-  val EMPTY_REQUEST_ID = "00000000-0000-0000-0000-000000000000"
-  val SQS_NAMESPACE = new UnprefixedAttribute("xmlns", "http://queue.amazonaws.com/doc/2009-02-01/", Null)
-  val QUEUE_URL_PATH = "queue"
-  val QUEUE_PATH = root / QUEUE_URL_PATH / %("QueueName")
-  val QUEUE_NAME_PARAMETER = "QueueName"
-  val RECEIPT_HANDLE_PARAMETER = "ReceiptHandle"
+  val EmptyRequestId = "00000000-0000-0000-0000-000000000000"
+  val SqsNamespace = new UnprefixedAttribute("xmlns", "http://queue.amazonaws.com/doc/2009-02-01/", Null)
+  val QueueUrlPath = "queue"
+  val QueuePath = root / QueueUrlPath / %("QueueName")
+  val QueueNameParameter = "QueueName"
+  val ReceiptHandlerParameter = "ReceiptHandle"
 }
 
 object ActionUtil {
@@ -87,7 +87,7 @@ trait ClientModule {
 trait QueueURLModule {
   val baseAddress: String
 
-  def queueURL(queue: Queue) = baseAddress+"/"+Constants.QUEUE_URL_PATH+"/"+queue.name
+  def queueURL(queue: Queue) = baseAddress+"/"+Constants.QueueUrlPath+"/"+queue.name
 }
 
 

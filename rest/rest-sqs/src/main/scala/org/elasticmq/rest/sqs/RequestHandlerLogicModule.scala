@@ -12,9 +12,9 @@ trait RequestHandlerLogicModule { this: ClientModule =>
   def logicWithQueue(body: (Queue, HttpRequest, Map[String, String]) => Elem): RequestHandlerLogic = {
     class TheLogic extends RequestHandlerLogic {
       def handle(request: HttpRequest, parameters: Map[String, String]) = {
-        val queueName = parameters(QUEUE_NAME_PARAMETER)
+        val queueName = parameters(QueueNameParameter)
         val queue = queueFor(queueName)
-        body(queue, request, parameters) % SQS_NAMESPACE
+        body(queue, request, parameters) % SqsNamespace
       }
     }
 
@@ -24,8 +24,8 @@ trait RequestHandlerLogicModule { this: ClientModule =>
   def logicWithQueueName(body: (String, HttpRequest, Map[String, String]) => Elem): RequestHandlerLogic = {
     class TheLogic extends RequestHandlerLogic {
       def handle(request: HttpRequest, parameters: Map[String, String]) = {
-        val queueName = parameters(QUEUE_NAME_PARAMETER)
-        body(queueName, request, parameters) % SQS_NAMESPACE
+        val queueName = parameters(QueueNameParameter)
+        body(queueName, request, parameters) % SqsNamespace
       }
     }
 
@@ -35,7 +35,7 @@ trait RequestHandlerLogicModule { this: ClientModule =>
   def logic(body: (HttpRequest, Map[String, String]) => Elem): RequestHandlerLogic = {
     class TheLogic extends RequestHandlerLogic {
       def handle(request: HttpRequest, parameters: Map[String, String]) = {
-        body(request, parameters) % SQS_NAMESPACE
+        body(request, parameters) % SqsNamespace
       }
     }
 
@@ -58,7 +58,7 @@ trait RequestHandlerLogicModule { this: ClientModule =>
       try {
         super.handle(request, parameters)
       } catch {
-        case e: SQSException => StringResponse(e.toXml(EMPTY_REQUEST_ID).toString())
+        case e: SQSException => StringResponse(e.toXml(EmptyRequestId).toString())
       }
     }
   }

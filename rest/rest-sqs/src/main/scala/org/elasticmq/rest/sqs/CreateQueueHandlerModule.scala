@@ -13,14 +13,15 @@ import ActionUtil._
 import ParametersParserUtil._
 
 trait CreateQueueHandlerModule { this: ClientModule with QueueURLModule with RequestHandlerLogicModule =>
-  import CreateQueueHandlerModule._
+  val DefaultVisibilityTimeout = 30L;
+  val CreateQueueAction = createAction("CreateQueue")
 
   val createQueueLogic = logicWithQueueName((queueName, request, parameters) => {
     val queueOption = client.queueClient.lookupQueue(queueName)
 
     val secondsVisibilityTimeout =
       (parameters.parseOptionalLong("DefaultVisibilityTimeout")
-              .getOrElse(DEFAULT_VISIBILITY_TIMEOUT));
+              .getOrElse(DefaultVisibilityTimeout));
 
     val queue = queueOption.getOrElse(client.queueClient.createQueue(
       Queue(queueName, VisibilityTimeout.fromSeconds(secondsVisibilityTimeout))))
@@ -35,7 +36,7 @@ trait CreateQueueHandlerModule { this: ClientModule with QueueURLModule with Req
         <QueueUrl>{queueURL(queue)}</QueueUrl>
       </CreateQueueResult>
       <ResponseMetadata>
-        <RequestId>{EMPTY_REQUEST_ID}</RequestId>
+        <RequestId>{EmptyRequestId}</RequestId>
       </ResponseMetadata>
     </CreateQueueResponse>
   })
@@ -43,20 +44,15 @@ trait CreateQueueHandlerModule { this: ClientModule with QueueURLModule with Req
   val createQueueGetHandler = (createHandler
             forMethod GET
             forPath (root)
-            requiringParameters List(QUEUE_NAME_PARAMETER)
-            requiringParameterValues Map(CREATE_QUEUE_ACTION)
+            requiringParameters List(QueueNameParameter)
+            requiringParameterValues Map(CreateQueueAction)
             running createQueueLogic)
 
   val createQueuePostHandler = (createHandler
             forMethod POST
             forPath (root)
             includingParametersFromBody()
-            requiringParameters List(QUEUE_NAME_PARAMETER)
-            requiringParameterValues Map(CREATE_QUEUE_ACTION)
+            requiringParameters List(QueueNameParameter)
+            requiringParameterValues Map(CreateQueueAction)
             running createQueueLogic)
-}
-
-object CreateQueueHandlerModule {
-  val DEFAULT_VISIBILITY_TIMEOUT = 30L;
-  val CREATE_QUEUE_ACTION = createAction("CreateQueue")
 }

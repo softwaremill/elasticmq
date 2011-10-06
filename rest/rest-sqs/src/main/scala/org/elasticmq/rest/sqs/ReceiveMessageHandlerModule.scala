@@ -9,8 +9,6 @@ import org.elasticmq.rest.sqs.ActionUtil._
 import org.elasticmq.rest.sqs.MD5Util._
 
 trait ReceiveMessageHandlerModule { this: ClientModule with RequestHandlerLogicModule with AttributesModule =>
-  import ReceiveMessageHandlerModule._
-
   object MessageReadeableAttributeNames {
     val SentTimestampAttribute = "SentTimestamp"
     val ApproximateReceiveCountAttribute = "ApproximateReceiveCount"
@@ -62,25 +60,23 @@ trait ReceiveMessageHandlerModule { this: ClientModule with RequestHandlerLogicM
         </Message>).toList}
       </ReceiveMessageResult>
       <ResponseMetadata>
-        <RequestId>{EMPTY_REQUEST_ID}</RequestId>
+        <RequestId>{EmptyRequestId}</RequestId>
       </ResponseMetadata>
     </ReceiveMessageResponse>
   })
 
+  val ReceiveMessageAction = createAction("ReceiveMessage")
+
   val receiveMessageGetHandler = (createHandler
             forMethod GET
-            forPath (QUEUE_PATH)
-            requiringParameterValues Map(RECEIVE_MESSAGE_ACTION)
+            forPath (QueuePath)
+            requiringParameterValues Map(ReceiveMessageAction)
             running receiveMessageLogic)
 
   val receiveMessagePostHandler = (createHandler
             forMethod POST
-            forPath (QUEUE_PATH)
+            forPath (QueuePath)
             includingParametersFromBody()
-            requiringParameterValues Map(RECEIVE_MESSAGE_ACTION)
+            requiringParameterValues Map(ReceiveMessageAction)
             running receiveMessageLogic)
-}
-
-object ReceiveMessageHandlerModule {
-  val RECEIVE_MESSAGE_ACTION = createAction("ReceiveMessage")
 }

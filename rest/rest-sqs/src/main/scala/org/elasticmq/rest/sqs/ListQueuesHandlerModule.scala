@@ -9,8 +9,6 @@ import Constants._
 import ActionUtil._
 
 trait ListQueuesHandlerModule { this: ClientModule with QueueURLModule with RequestHandlerLogicModule =>
-  import ListQueuesHandlerModule._
-
   val listQueuesLogic = logic((request, parameters) => {
     val prefixOption = parameters.get("QueueNamePrefix")
     val allQueues = client.queueClient.listQueues
@@ -25,25 +23,23 @@ trait ListQueuesHandlerModule { this: ClientModule with QueueURLModule with Requ
         {queues.map(q => <QueueUrl>{queueURL(q)}</QueueUrl>)}
       </ListQueuesResult>
       <ResponseMetadata>
-        <RequestId>{EMPTY_REQUEST_ID}</RequestId>
+        <RequestId>{EmptyRequestId}</RequestId>
       </ResponseMetadata>
     </ListQueuesResponse>
   })
 
+  val ListQueuesAction = createAction("ListQueues")
+
   val listQueuesGetHandler = (createHandler
             forMethod GET
             forPath (root)
-            requiringParameterValues Map(LIST_QUEUES_ACTION)
+            requiringParameterValues Map(ListQueuesAction)
             running listQueuesLogic)
 
   val listQueuesPostHandler = (createHandler
             forMethod POST
             forPath (root)
             includingParametersFromBody()
-            requiringParameterValues Map(LIST_QUEUES_ACTION)
+            requiringParameterValues Map(ListQueuesAction)
             running listQueuesLogic)
-}
-
-object ListQueuesHandlerModule {
-  val LIST_QUEUES_ACTION = createAction("ListQueues")
 }

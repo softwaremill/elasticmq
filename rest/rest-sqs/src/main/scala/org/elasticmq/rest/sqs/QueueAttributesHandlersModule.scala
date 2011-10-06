@@ -10,8 +10,6 @@ import ActionUtil._
 import ParametersParserUtil._
 
 trait QueueAttributesHandlersModule { this: ClientModule with RequestHandlerLogicModule with AttributesModule =>
-  import QueueAttributesHandlersModule._
-
   object QueueReadableAttributeNames {
     val ApproximateNumberOfMessagesAttribute = "ApproximateNumberOfMessages"
     val ApproximateNumberOfMessagesNotVisibleAttribute = "ApproximateNumberOfMessagesNotVisible"
@@ -64,7 +62,7 @@ trait QueueAttributesHandlersModule { this: ClientModule with RequestHandlerLogi
           {attributesToXmlConverter.convert(attributes)}
         </GetQueueAttributesResult>
         <ResponseMetadata>
-          <RequestId>{EMPTY_REQUEST_ID}</RequestId>
+          <RequestId>{EmptyRequestId}</RequestId>
         </ResponseMetadata>
       </GetQueueAttributesResponse>
     }
@@ -75,8 +73,8 @@ trait QueueAttributesHandlersModule { this: ClientModule with RequestHandlerLogi
   })
 
   val setQueueAttributesLogic = logicWithQueue((queue, request, parameters) => {
-    val attributeName = parameters(ATTRIBUTE_NAME_PARAMETER)
-    val attributeValue = parameters.parseOptionalLong(ATTRIBUTE_VALUE_PARAMETER).get
+    val attributeName = parameters(AttributeNameParameter)
+    val attributeValue = parameters.parseOptionalLong(AttributeValueParameter).get
 
     if (attributeName != QueueWriteableAttributeNames.VisibilityTimeoutAttribute) {
       throw new SQSException("InvalidAttributeName")
@@ -86,44 +84,42 @@ trait QueueAttributesHandlersModule { this: ClientModule with RequestHandlerLogi
 
     <SetQueueAttributesResponse>
       <ResponseMetadata>
-        <RequestId>{EMPTY_REQUEST_ID}</RequestId>
+        <RequestId>{EmptyRequestId}</RequestId>
       </ResponseMetadata>
     </SetQueueAttributesResponse>
   })
 
+  val AttributeNameParameter = "Attribute.Name"
+  val AttributeValueParameter = "Attribute.Value"
+
+  val GetQueueAttributesAction = createAction("GetQueueAttributes")
+  val SetQueueAttribtuesAction = createAction("SetQueueAttributes")
+
   val getQueueAttributesGetHandler = (createHandler
             forMethod GET
-            forPath (QUEUE_PATH)
-            requiringParameterValues Map(GET_QUEUE_ATTRIBUTES_ACTION)
+            forPath (QueuePath)
+            requiringParameterValues Map(GetQueueAttributesAction)
             running getQueueAttributesLogic)
 
   val getQueueAttributesPostHandler = (createHandler
             forMethod POST
-            forPath (QUEUE_PATH)
+            forPath (QueuePath)
             includingParametersFromBody()
-            requiringParameterValues Map(GET_QUEUE_ATTRIBUTES_ACTION)
+            requiringParameterValues Map(GetQueueAttributesAction)
             running getQueueAttributesLogic)
 
   val setQueueAttributesGetHandler = (createHandler
             forMethod GET
-            forPath (QUEUE_PATH)
-            requiringParameters List(ATTRIBUTE_NAME_PARAMETER, ATTRIBUTE_VALUE_PARAMETER)
-            requiringParameterValues Map(SET_QUEUE_ATTRIBUTES_ACTION)
+            forPath (QueuePath)
+            requiringParameters List(AttributeNameParameter, AttributeValueParameter)
+            requiringParameterValues Map(SetQueueAttribtuesAction)
             running setQueueAttributesLogic)
 
   val setQueueAttributesPostHandler = (createHandler
             forMethod POST
-            forPath (QUEUE_PATH)
+            forPath (QueuePath)
             includingParametersFromBody()
-            requiringParameters List(ATTRIBUTE_NAME_PARAMETER, ATTRIBUTE_VALUE_PARAMETER)
-            requiringParameterValues Map(SET_QUEUE_ATTRIBUTES_ACTION)
+            requiringParameters List(AttributeNameParameter, AttributeValueParameter)
+            requiringParameterValues Map(SetQueueAttribtuesAction)
             running setQueueAttributesLogic)
-}
-
-object QueueAttributesHandlersModule {
-  val ATTRIBUTE_NAME_PARAMETER = "Attribute.Name"
-  val ATTRIBUTE_VALUE_PARAMETER = "Attribute.Value"
-
-  val GET_QUEUE_ATTRIBUTES_ACTION = createAction("GetQueueAttributes")
-  val SET_QUEUE_ATTRIBUTES_ACTION = createAction("SetQueueAttributes")
 }

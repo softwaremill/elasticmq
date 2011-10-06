@@ -7,37 +7,33 @@ import Constants._
 import org.elasticmq.rest.sqs.ActionUtil._
 
 trait DeleteMessageHandlerModule { this: ClientModule with RequestHandlerLogicModule =>
-  import DeleteMessageHandlerModule._
-
   val deleteMessageLogic = logicWithQueue((queue, request, parameters) => {
-    val id = parameters(RECEIPT_HANDLE_PARAMETER)
+    val id = parameters(ReceiptHandlerParameter)
     val messageOption = client.messageClient.lookupMessage(id)
     // No failure even if the message doesn't exist
     messageOption.foreach(client.messageClient.deleteMessage(_))
 
     <DeleteMessageResponse>
       <ResponseMetadata>
-        <RequestId>{EMPTY_REQUEST_ID}</RequestId>
+        <RequestId>{EmptyRequestId}</RequestId>
       </ResponseMetadata>
     </DeleteMessageResponse>
   })
 
+  val DeleteMessageAction = createAction("DeleteMessage")
+
   val deleteMessageGetHandler = (createHandler
             forMethod GET
-            forPath (QUEUE_PATH)
-            requiringParameters List(RECEIPT_HANDLE_PARAMETER)
-            requiringParameterValues Map(DELETE_MESSAGE_ACTION)
+            forPath (QueuePath)
+            requiringParameters List(ReceiptHandlerParameter)
+            requiringParameterValues Map(DeleteMessageAction)
             running deleteMessageLogic)
 
   val deleteMessagePostHandler = (createHandler
             forMethod POST
-            forPath (QUEUE_PATH)
+            forPath (QueuePath)
             includingParametersFromBody()
-            requiringParameters List(RECEIPT_HANDLE_PARAMETER)
-            requiringParameterValues Map(DELETE_MESSAGE_ACTION)
+            requiringParameters List(ReceiptHandlerParameter)
+            requiringParameterValues Map(DeleteMessageAction)
             running deleteMessageLogic)
-}
-
-object DeleteMessageHandlerModule {
-  val DELETE_MESSAGE_ACTION = createAction("DeleteMessage")
 }

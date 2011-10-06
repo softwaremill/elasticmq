@@ -8,32 +8,28 @@ import Constants._
 import ActionUtil._
 
 trait DeleteQueueHandlerModule { this: ClientModule with RequestHandlerLogicModule =>
-  import DeleteQueueHandlerModule._
-
   val deleteQueueLogic = logicWithQueue((queue, request, parameters) => {
     client.queueClient.deleteQueue(queue)
 
     <DeleteQueueResponse>
       <ResponseMetadata>
-        <RequestId>{EMPTY_REQUEST_ID}</RequestId>
+        <RequestId>{EmptyRequestId}</RequestId>
       </ResponseMetadata>
     </DeleteQueueResponse>
   })
 
+  val DeleteQueueAction = createAction("DeleteQueue")
+
   val deleteQueueGetHandler = (createHandler
           forMethod GET
-          forPath (QUEUE_PATH)
-          requiringParameterValues Map(DELETE_QUEUE_ACTION)
+          forPath (QueuePath)
+          requiringParameterValues Map(DeleteQueueAction)
           running deleteQueueLogic)
 
   val deleteQueuePostHandler = (createHandler
           forMethod POST
-          forPath (QUEUE_PATH)
+          forPath (QueuePath)
           includingParametersFromBody()
-          requiringParameterValues Map(DELETE_QUEUE_ACTION)
+          requiringParameterValues Map(DeleteQueueAction)
           running deleteQueueLogic)
-}
-
-object DeleteQueueHandlerModule {
-  val DELETE_QUEUE_ACTION = createAction("DeleteQueue")
 }
