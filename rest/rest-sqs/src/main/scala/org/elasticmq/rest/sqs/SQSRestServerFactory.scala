@@ -81,11 +81,11 @@ object MD5Util {
 }
 
 trait ClientModule {
-  val client: Client
+  def client: Client
 }
 
 trait QueueURLModule {
-  val baseAddress: String
+  def baseAddress: String
 
   def queueURL(queue: Queue) = baseAddress+"/"+Constants.QueueUrlPath+"/"+queue.name
 }
