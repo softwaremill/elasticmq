@@ -86,6 +86,10 @@ trait NativeClientModule {
       messageStorage.lookupMessage(id)
     }
 
+    def messageStatistics(message: SpecifiedMessage) = {
+      messageStatisticsStorage.readMessageStatistics(message)
+    }
+
     def bumpMessageStatistics(currentMessageStatistics: MessageStatistics) = {
       val message = currentMessageStatistics.message
       currentMessageStatistics.approximateFirstReceive match {
