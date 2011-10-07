@@ -18,12 +18,6 @@ trait SquerylSchemaModule {
     val messages = table[SquerylMessage]("emq_message")
     val messageStatistics = table[SquerylMessageStatistics]("emq_msg_stats")
 
-    val queuesToMessages = oneToManyRelation(queues, messages).via((q, m) => queuesToMessagesCond(m, q))
-    queuesToMessages.foreignKeyDeclaration.constrainReference(onDelete cascade)
-
-    val messagesToMessageStatistics = oneToManyRelation(messages, messageStatistics).via((m, ms) => m.id === ms.id)
-    messagesToMessageStatistics.foreignKeyDeclaration.constrainReference(onDelete cascade)
-
     on(messages)(m => declare(
       m.content is(dbType("text"))
     ))
