@@ -375,4 +375,16 @@ class MessageStatisticsStorageTestSuite extends StorageTestSuite {
     // Then
     stats.approximateReceiveCount must be (0)
   }
+
+  test("statistics shouldn't be written if the message is already deleted") {
+    // Given
+    messageStorage.deleteMessage(m1)
+    messageStatisticsStorage.writeMessageStatistics(MessageStatistics(m1, OnDateTimeReceived(new DateTime(someTimestamp)), 1))
+
+    // When
+    val stats = messageStatisticsStorage.readMessageStatistics(m1)
+
+    // Then
+    stats.approximateReceiveCount must be (0)
+  }
 }
