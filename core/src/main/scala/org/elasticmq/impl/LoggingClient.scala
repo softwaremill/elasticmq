@@ -50,8 +50,13 @@ class MessageClientLogginWrapper(delegate: MessageClient) extends MessageClient 
     delegate.sendMessage(message)
   }
 
-  def receiveMessageWithStatistics(queue: Queue) = {
+  def receiveMessage(queue: Queue) = {
     log.debug("Receiving message: "+queue)
+    delegate.receiveMessage(queue)
+  }
+
+  def receiveMessageWithStatistics(queue: Queue) = {
+    log.debug("Receiving message w/ stats: "+queue)
     delegate.receiveMessageWithStatistics(queue)
   }
 
