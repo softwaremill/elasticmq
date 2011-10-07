@@ -5,15 +5,15 @@ import org.scalatest._
 
 import mock.MockitoSugar
 import org.mockito.Mockito._
-import org.mockito.Matchers
 import org.mockito.Matchers._
 import org.elasticmq._
-import org.joda.time.DateTime
 import org.elasticmq.storage.{MessageStatisticsStorageModule, MessageStorageModule, QueueStorageModule}
 import org.mockito.{Matchers, ArgumentMatcher}
+import org.joda.time.DateTime
 
 class NativeMessageClientImplTestSuite extends FunSuite with MustMatchers with MockitoSugar {
-  val NOW = 1316168602L
+  val Now = 1316168602L
+  val NowAsDateTime = new DateTime(1316168602L)
 
   test("sending a message should generate an id, properly set the next delivery and the created date") {
     // Given
@@ -24,30 +24,54 @@ class NativeMessageClientImplTestSuite extends FunSuite with MustMatchers with M
     val msg = messageClient.sendMessage(Message(q1, "abc"))
 
     // Then
-    val expectedNextDelivery = NOW
+    val expectedNextDelivery = Now
     verify(mockStorage).persistMessage(argThat(new ArgumentMatcher[SpecifiedMessage]{
       def matches(msgRef: AnyRef) = msgRef.asInstanceOf[SpecifiedMessage].nextDelivery.millis == expectedNextDelivery
     }))
     msg.nextDelivery must be (MillisNextDelivery(expectedNextDelivery))
-    msg.created.getMillis must be (NOW)
+    msg.created.getMillis must be (Now)
   }
 
-  test("receiving a message should notify statistics") {
+  test("should correctly bump a never received message statistics") {
     // Given
     val (messageClient, mockStorage, mockStatisticsStorage) = createMessageClientWithMockStorage
+
     val q1 = Queue("q1", VisibilityTimeout(123L))
     val m = Message(q1, Some("1"), "z", MillisNextDelivery(123L))
+    val stats = MessageStatistics(m, NeverReceived, 0)
+
     when(mockStorage.receiveMessage(Matchers.eq(q1), anyLong(), any(classOf[MillisNextDelivery])))
             .thenReturn(Some(m))
+    when(mockStatisticsStorage.readMessageStatistics(m)).thenReturn(stats)
 
     // When
-    val result = messageClient.receiveMessage(q1)
+    messageClient.receiveMessage(q1)
 
     // Then
-    verify(mockStatisticsStorage).messageReceived(argThat(new ArgumentMatcher[IdentifiableMessage]{
-      def matches(msgRef: AnyRef) = msgRef.asInstanceOf[IdentifiableMessage] == m
-    }), Matchers.eq(NOW))
-    result must be (Some(m))
+    verify(mockStatisticsStorage).writeMessageStatistics(argThat(new ArgumentMatcher[MessageStatistics]{
+      def matches(statsRef: AnyRef) = statsRef == MessageStatistics(m, OnDateTimeReceived(NowAsDateTime), 1)
+    }))
+  }
+
+  test("should correctly bump an already received message statistics") {
+    // Given
+    val (messageClient, mockStorage, mockStatisticsStorage) = createMessageClientWithMockStorage
+
+    val q1 = Queue("q1", VisibilityTimeout(123L))
+    val m = Message(q1, Some("1"), "z", MillisNextDelivery(123L))
+    val stats = MessageStatistics(m, OnDateTimeReceived(new DateTime(Now - 100000L)), 7)
+
+    when(mockStorage.receiveMessage(Matchers.eq(q1), anyLong(), any(classOf[MillisNextDelivery])))
+            .thenReturn(Some(m))
+    when(mockStatisticsStorage.readMessageStatistics(m)).thenReturn(stats)
+
+    // When
+    messageClient.receiveMessage(q1)
+
+    // Then
+    verify(mockStatisticsStorage).writeMessageStatistics(argThat(new ArgumentMatcher[MessageStatistics]{
+      def matches(statsRef: AnyRef) = statsRef == MessageStatistics(m, stats.approximateFirstReceive, 8)
+    }))
   }
 
   def createMessageClientWithMockStorage: (MessageClient, MessageStorageModule#MessageStorage,
@@ -66,7 +90,7 @@ class NativeMessageClientImplTestSuite extends FunSuite with MustMatchers with M
       def queueStorage = null
       def messageStatisticsStorage = mockMessageStatisticsStorage
 
-      override def nowAsDateTime = new DateTime(NOW)
+      override def nowAsDateTime = NowAsDateTime
     }
 
     (env.nativeMessageClientImpl, env.mockMessageStorage, env.mockMessageStatisticsStorage)

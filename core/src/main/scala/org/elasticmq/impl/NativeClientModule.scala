@@ -4,6 +4,7 @@ import java.util.UUID
 import org.elasticmq._
 import org.elasticmq.storage.{MessageStatisticsStorageModule, QueueStorageModule, MessageStorageModule}
 import org.elasticmq.impl.scheduler.VolatileTaskSchedulerModule
+import org.joda.time.DateTime
 
 trait NativeClientModule {
   this: MessageStorageModule with QueueStorageModule with MessageStatisticsStorageModule
@@ -63,7 +64,11 @@ trait NativeClientModule {
 
     def receiveMessage(queue: Queue): Option[SpecifiedMessage] = {
       val message = messageStorage.receiveMessage(queue, now, nextDelivery(queue))
-      message.foreach(m => volatileTaskScheduler.schedule { messageStatisticsStorage.messageReceived(m, now) })
+      message.foreach(m => volatileTaskScheduler.schedule {
+        val stats = messageStatisticsStorage.readMessageStatistics(m)
+        val bumpedStats = bumpMessageStatistics(stats)
+        messageStatisticsStorage.writeMessageStatistics(bumpedStats)
+      })
       message
     }
 
@@ -82,6 +87,15 @@ trait NativeClientModule {
     }
 
     def messageStatistics(message: IdentifiableMessage) = messageStatisticsStorage.readMessageStatistics(message)
+
+    def bumpMessageStatistics(currentMessageStatistics: MessageStatistics) = {
+      val message = currentMessageStatistics.message
+      currentMessageStatistics.approximateFirstReceive match {
+        case NeverReceived => MessageStatistics(message, OnDateTimeReceived(nowAsDateTime), 1)
+        case received => MessageStatistics(message, currentMessageStatistics.approximateFirstReceive,
+          currentMessageStatistics.approximateReceiveCount + 1)
+      }
+    }
 
     private def generateId(): String = UUID.randomUUID().toString
 

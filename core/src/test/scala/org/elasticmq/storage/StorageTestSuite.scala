@@ -339,28 +339,28 @@ class MessageStatisticsStorageTestSuite extends StorageTestSuite {
 
   test("statistics should be correct after receiving a message once") {
     // Given
-    messageStatisticsStorage.messageReceived(m1, someTimestamp)
+    messageStatisticsStorage.writeMessageStatistics(MessageStatistics(m1, OnDateTimeReceived(new DateTime(someTimestamp)), 1))
 
     // When
-    val stats = messageStatisticsStorage.readMessageStatistics(m1)
+    val readStats = messageStatisticsStorage.readMessageStatistics(m1)
 
     // Then
-    stats.approximateFirstReceive must be (OnDateTimeReceived(new DateTime(someTimestamp)))
-    stats.approximateReceiveCount must be (1)
-    stats.message must be (m1)
+    readStats.approximateFirstReceive must be (OnDateTimeReceived(new DateTime(someTimestamp)))
+    readStats.approximateReceiveCount must be (1)
+    readStats.message must be (m1)
   }
 
   test("statistics should be correct after receiving a message twice") {
     // Given
-    messageStatisticsStorage.messageReceived(m1, someTimestamp)
-    messageStatisticsStorage.messageReceived(m1, someTimestamp + 100000L)
+    messageStatisticsStorage.writeMessageStatistics(MessageStatistics(m1, OnDateTimeReceived(new DateTime(someTimestamp)), 1))
+    messageStatisticsStorage.writeMessageStatistics(MessageStatistics(m1, OnDateTimeReceived(new DateTime(someTimestamp)), 2))
 
     // When
-    val stats = messageStatisticsStorage.readMessageStatistics(m1)
+    val readStats = messageStatisticsStorage.readMessageStatistics(m1)
 
     // Then
-    stats.approximateFirstReceive must be (OnDateTimeReceived(new DateTime(someTimestamp)))
-    stats.approximateReceiveCount must be (2)
-    stats.message must be (m1)
+    readStats.approximateFirstReceive must be (OnDateTimeReceived(new DateTime(someTimestamp)))
+    readStats.approximateReceiveCount must be (2)
+    readStats.message must be (m1)
   }
 }

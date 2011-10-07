@@ -68,3 +68,16 @@ class SquerylMessageStatistics(val id: String,
     if (approximateFirstReceive == 0) NeverReceived else OnDateTimeReceived(new DateTime(approximateFirstReceive)),
     approximateReceiveCount)
 }
+
+object SquerylMessageStatistics {
+  def from(statistics: MessageStatistics) = {
+    val receivedTimestamp = statistics.approximateFirstReceive match {
+      case NeverReceived => 0
+      case OnDateTimeReceived(dt) => dt.getMillis
+    }
+
+    new SquerylMessageStatistics(statistics.message.id.get,
+      receivedTimestamp,
+      statistics.approximateReceiveCount)
+  }
+}

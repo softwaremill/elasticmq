@@ -26,6 +26,18 @@ trait SquerylMessageStatisticsStorageModule extends MessageStatisticsStorageModu
               .getOrElse(MessageStatistics(message, NeverReceived, 0))
     }
 
+
+    def writeMessageStatistics(statistics: MessageStatistics) {
+      transaction {
+        val squerylStatistics = SquerylMessageStatistics.from(statistics)
+        if (statistics.approximateReceiveCount == 1) {
+          messageStatistics.insert(squerylStatistics)
+        } else {
+          messageStatistics.update(squerylStatistics)
+        }
+      }
+    }
+
     private def lookupStatistics(message: IdentifiableMessage): Option[SquerylMessageStatistics] = {
       inTransaction {
         messageStatistics.lookup(message.id.get)
