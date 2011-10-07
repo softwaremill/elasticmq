@@ -22,7 +22,9 @@ trait SquerylMessageStorageModule extends MessageStorageModule {
 
     def deleteMessage(message: IdentifiableMessage) {
       transaction {
-        messages.delete(message.id.get)
+        val messageId = message.id.get
+        messages.delete(messageId)
+        messageStatistics.delete(messageId)
       }
     }
 
