@@ -25,27 +25,19 @@ trait ReceiveMessageHandlerModule { this: ClientModule with RequestHandlerLogicM
     val messages = messagesStatistics.map(_.message)
     lazy val attributeNames = attributeNamesReader.read(parameters, AllAttributeNames)
 
-    def computeAttributeValues(stats: MessageStatistics): List[(String, String)] = {
-      attributeNames.flatMap {
-        _ match {
-          case SentTimestampAttribute =>
-            Some((SentTimestampAttribute, stats.message.created.getMillis.toString))
-
-          case ApproximateReceiveCountAttribute =>
-            Some((ApproximateReceiveCountAttribute, stats.approximateReceiveCount.toString))
-
-          case ApproximateFirstReceiveTimestampAttribute =>
-            Some((ApproximateFirstReceiveTimestampAttribute,
-                    (stats.approximateFirstReceive match {
-                      case NeverReceived => 0
-                      case OnDateTimeReceived(when) => when.getMillis
-                    }).toString))
-        }
-      }
+    def calculateAttributeValues(stats: MessageStatistics): List[(String, String)] = {
+      attributeValuesCalculator.calculate(attributeNames,
+        (SentTimestampAttribute, ()=>stats.message.created.getMillis.toString),
+        (ApproximateReceiveCountAttribute, ()=>stats.approximateReceiveCount.toString),
+        (ApproximateFirstReceiveTimestampAttribute,
+          ()=>(stats.approximateFirstReceive match {
+            case NeverReceived => 0
+            case OnDateTimeReceived(when) => when.getMillis
+          }).toString))
     }
 
     val messagesAttributes: Map[SpecifiedMessage, List[(String, String)]] =
-      Map() ++ messagesStatistics.map(s => { s.message -> computeAttributeValues(s) }).toList
+      Map() ++ messagesStatistics.map(s => { s.message -> calculateAttributeValues(s) }).toList
 
     <ReceiveMessageResponse>
       <ReceiveMessageResult>

@@ -3,6 +3,7 @@ package org.elasticmq.rest.sqs
 trait AttributesModule {
   val attributeNamesReader = new AttributeNamesReader
   val attributesToXmlConverter = new AttributesToXmlConverter
+  val attributeValuesCalculator = new AttributeValuesCalculator
 
   class AttributeNamesReader {
     def read(parameters: Map[String, String], allAttributeNames: List[String]) = {
@@ -35,6 +36,14 @@ trait AttributesModule {
           <Name>{a._1}</Name>
           <Value>{a._2}</Value>
         </Attribute>)
+    }
+  }
+
+  class AttributeValuesCalculator {
+    def calculate(attributeNames: List[String], rules: (String, ()=>String)*): List[(String, String)] = {
+      attributeNames.flatMap(attribute => {
+        rules.find(rule => rule._1 == attribute).map(rule => (rule._1, rule._2()))
+      })
     }
   }
 }

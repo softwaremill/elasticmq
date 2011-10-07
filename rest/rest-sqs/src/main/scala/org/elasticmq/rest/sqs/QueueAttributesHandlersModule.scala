@@ -31,29 +31,15 @@ trait QueueAttributesHandlersModule { this: ClientModule with RequestHandlerLogi
     import QueueWriteableAttributeNames._
     import QueueReadableAttributeNames._
 
-    def computeAttributeValues(attributeNames: List[String]) = {
+    def calculateAttributeValues(attributeNames: List[String]) = {
       lazy val stats = client.queueClient.queueStatistics(queue)
 
-      attributeNames.flatMap {
-        _ match {
-          case VisibilityTimeoutAttribute =>
-            Some((VisibilityTimeoutAttribute, queue.defaultVisibilityTimeout.seconds.toString))
-
-          case ApproximateNumberOfMessagesAttribute =>
-            Some((ApproximateNumberOfMessagesAttribute, stats.approximateNumberOfVisibleMessages.toString))
-
-          case ApproximateNumberOfMessagesNotVisibleAttribute =>
-            Some((ApproximateNumberOfMessagesNotVisibleAttribute, stats.approximateNumberOfInvisibleMessages.toString))
-
-          case CreatedTimestampAttribute =>
-            Some((CreatedTimestampAttribute, (queue.created.getMillis/1000L).toString))
-
-          case LastModifiedTimestampAttribute =>
-            Some((LastModifiedTimestampAttribute, (queue.lastModified.getMillis/1000L).toString))
-
-          case _ => None
-        }
-      }
+      attributeValuesCalculator.calculate(attributeNames,
+        (VisibilityTimeoutAttribute, ()=>queue.defaultVisibilityTimeout.seconds.toString),
+        (ApproximateNumberOfMessagesAttribute, ()=>stats.approximateNumberOfVisibleMessages.toString),
+        (ApproximateNumberOfMessagesNotVisibleAttribute, ()=>stats.approximateNumberOfInvisibleMessages.toString),
+        (CreatedTimestampAttribute, ()=>(queue.created.getMillis/1000L).toString),
+        (LastModifiedTimestampAttribute, ()=>(queue.lastModified.getMillis/1000L).toString))
     }
 
     def responseXml(attributes: List[(String, String)]) = {
@@ -68,7 +54,7 @@ trait QueueAttributesHandlersModule { this: ClientModule with RequestHandlerLogi
     }
 
     val attributeNames = attributeNamesReader.read(parameters, AllAttributeNames)
-    val attributes = computeAttributeValues(attributeNames)
+    val attributes = calculateAttributeValues(attributeNames)
     responseXml(attributes)
   })
 
