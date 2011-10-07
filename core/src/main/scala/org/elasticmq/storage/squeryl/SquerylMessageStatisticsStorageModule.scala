@@ -20,11 +20,15 @@ trait SquerylMessageStatisticsStorageModule extends MessageStatisticsStorageModu
 
     def writeMessageStatistics(statistics: MessageStatistics) {
       transaction {
-        val squerylStatistics = SquerylMessageStatistics.from(statistics)
-        if (statistics.approximateReceiveCount == 1) {
-          messageStatistics.insert(squerylStatistics)
-        } else {
-          messageStatistics.update(squerylStatistics)
+        val messageInDb = messages.lookup(statistics.message.id.get)
+
+        if (messageInDb.isDefined) {
+          val squerylStatistics = SquerylMessageStatistics.from(statistics)
+          if (statistics.approximateReceiveCount == 1) {
+            messageStatistics.insert(squerylStatistics)
+          } else {
+            messageStatistics.update(squerylStatistics)
+          }
         }
       }
     }
