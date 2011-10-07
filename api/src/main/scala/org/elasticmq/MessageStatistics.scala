@@ -2,7 +2,7 @@ package org.elasticmq
 
 import org.joda.time.DateTime
 
-case class MessageStatistics(message: IdentifiableMessage,
+case class MessageStatistics(message: SpecifiedMessage,
                              approximateFirstReceive: Received,
                              approximateReceiveCount: Int)
 

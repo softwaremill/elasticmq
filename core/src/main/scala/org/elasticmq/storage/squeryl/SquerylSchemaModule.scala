@@ -64,7 +64,7 @@ object SquerylMessage {
 class SquerylMessageStatistics(val id: String,
                                val approximateFirstReceive: Long,
                                val approximateReceiveCount: Int) extends KeyedEntity[String] {
-  def toMessageStatistics(m: IdentifiableMessage) = MessageStatistics(m,
+  def toMessageStatistics(m: SpecifiedMessage) = MessageStatistics(m,
     if (approximateFirstReceive == 0) NeverReceived else OnDateTimeReceived(new DateTime(approximateFirstReceive)),
     approximateReceiveCount)
 }

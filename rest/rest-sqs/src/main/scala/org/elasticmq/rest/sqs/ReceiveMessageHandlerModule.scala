@@ -21,16 +21,15 @@ trait ReceiveMessageHandlerModule { this: ClientModule with RequestHandlerLogicM
   val receiveMessageLogic = logicWithQueue((queue, request, parameters) => {
     import MessageReadeableAttributeNames._
 
-    val messages = client.messageClient.receiveMessage(queue)
+    val messagesStatistics = client.messageClient.receiveMessageWithStatistics(queue)
+    val messages = messagesStatistics.map(_.message)
     lazy val attributeNames = attributeNamesReader.read(parameters, AllAttributeNames)
 
-    def computeAttributeValues(message: SpecifiedMessage): List[(String, String)] = {
-      lazy val stats = client.messageClient.messageStatistics(message)
-
+    def computeAttributeValues(stats: MessageStatistics): List[(String, String)] = {
       attributeNames.flatMap {
         _ match {
           case SentTimestampAttribute =>
-            Some((SentTimestampAttribute, message.created.getMillis.toString))
+            Some((SentTimestampAttribute, stats.message.created.getMillis.toString))
 
           case ApproximateReceiveCountAttribute =>
             Some((ApproximateReceiveCountAttribute, stats.approximateReceiveCount.toString))
@@ -46,7 +45,7 @@ trait ReceiveMessageHandlerModule { this: ClientModule with RequestHandlerLogicM
     }
 
     val messagesAttributes: Map[SpecifiedMessage, List[(String, String)]] =
-      Map() ++ messages.map(m => { m -> computeAttributeValues(m) }).toList
+      Map() ++ messagesStatistics.map(s => { s.message -> computeAttributeValues(s) }).toList
 
     <ReceiveMessageResponse>
       <ReceiveMessageResult>

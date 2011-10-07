@@ -50,9 +50,9 @@ class MessageClientLogginWrapper(delegate: MessageClient) extends MessageClient 
     delegate.sendMessage(message)
   }
 
-  def receiveMessage(queue: Queue) = {
+  def receiveMessageWithStatistics(queue: Queue) = {
     log.debug("Receiving message: "+queue)
-    delegate.receiveMessage(queue)
+    delegate.receiveMessageWithStatistics(queue)
   }
 
   def updateVisibilityTimeout(message: IdentifiableMessage, newVisibilityTimeout: VisibilityTimeout) = {
@@ -68,10 +68,5 @@ class MessageClientLogginWrapper(delegate: MessageClient) extends MessageClient 
   def lookupMessage(id: String) = {
     log.debug("Looking up message: "+id)
     delegate.lookupMessage(id)
-  }
-
-  def messageStatistics(message: IdentifiableMessage) = {
-    log.debug("Computing statistics for: " + message)
-    delegate.messageStatistics(message)
   }
 }

@@ -36,9 +36,9 @@ object TwoClientsPerformanceTest {
   object Receiver {
     def run() {
       def receiveLoop(count: Int): Int = {
-        client.messageClient.receiveMessage(testQueue) match {
-          case Some(message) => {
-            client.messageClient.deleteMessage(message)
+        client.messageClient.receiveMessageWithStatistics(testQueue) match {
+          case Some(stats) => {
+            client.messageClient.deleteMessage(stats.message)
             receiveLoop(count+1)
           }
           case None => count
