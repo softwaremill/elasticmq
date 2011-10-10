@@ -141,6 +141,27 @@ class TypicaTestSuite extends FunSuite with MustMatchers with BeforeAndAfter {
     m3.getMessageBody must be ("Message 1")
   }
 
+  test("should block message for the specified non-default visibility timeout duration") {
+    // Given
+    val queueService = newQueueService
+    val queue = queueService.getOrCreateMessageQueue("testQueue1", 1)
+
+    // When
+    queue.sendMessage("Message 1")
+    val m1 = queue.receiveMessage(2)
+    val m2 = queue.receiveMessage()
+    Thread.sleep(1100)
+    val m3 = queue.receiveMessage()
+    Thread.sleep(1100)
+    val m4 = queue.receiveMessage()
+
+    // Then
+    m1.getMessageBody must be ("Message 1")
+    m2 must be (null)
+    m3 must be (null)
+    m4.getMessageBody must be ("Message 1")
+  }
+
   test("should delete a message") {
     // Given
     val queueService = newQueueService
