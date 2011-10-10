@@ -64,3 +64,9 @@ And our repository:
         <name>SotwareMill Public Releases</name>
         <url>http://tools.softwaremill.pl/nexus/content/repositories/snapshots/</url>
     </repository>
+
+DB Schema
+---------
+
+The MySQL Schema can be found in `core/src/main/resource/schema-mysql.sql` file. It should be easily adaptable to
+other databases.
