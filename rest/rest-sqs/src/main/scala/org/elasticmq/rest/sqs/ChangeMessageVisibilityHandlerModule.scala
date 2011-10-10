@@ -9,7 +9,6 @@ import ActionUtil._
 
 trait ChangeMessageVisibilityHandlerModule { this: ClientModule with RequestHandlerLogicModule =>
   val ChangeMessageVisibilityAction = createAction("ChangeMessageVisibility")
-  val VisibilityTimeoutParameter = "VisibilityTimeout"
 
   val changeMessageVisibilityLogic = logicWithQueue((queue, request, parameters) => {
     val visibilityTimeout = MillisVisibilityTimeout.fromSeconds(parameters(VisibilityTimeoutParameter).toLong)

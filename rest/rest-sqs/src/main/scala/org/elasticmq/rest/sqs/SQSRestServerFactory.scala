@@ -50,6 +50,7 @@ object Constants {
   val QueuePath = root / QueueUrlPath / %("QueueName")
   val QueueNameParameter = "QueueName"
   val ReceiptHandlerParameter = "ReceiptHandle"
+  val VisibilityTimeoutParameter = "VisibilityTimeout"
 }
 
 object ActionUtil {

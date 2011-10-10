@@ -21,7 +21,14 @@ trait ReceiveMessageHandlerModule { this: ClientModule with RequestHandlerLogicM
   val receiveMessageLogic = logicWithQueue((queue, request, parameters) => {
     import MessageReadeableAttributeNames._
 
-    val messagesStatistics = client.messageClient.receiveMessageWithStatistics(queue, DefaultVisibilityTimeout)
+    def calculateVisibilityTimeout() = {
+      parameters.get(VisibilityTimeoutParameter) match {
+        case Some(vt) => MillisVisibilityTimeout.fromSeconds(vt.toInt)
+        case None => DefaultVisibilityTimeout
+      }
+    }
+
+    val messagesStatistics = client.messageClient.receiveMessageWithStatistics(queue, calculateVisibilityTimeout())
     val messages = messagesStatistics.map(_.message)
     lazy val attributeNames = attributeNamesReader.read(parameters, AllAttributeNames)
 
