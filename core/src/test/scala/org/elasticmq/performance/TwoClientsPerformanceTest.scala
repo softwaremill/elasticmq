@@ -13,7 +13,7 @@ object TwoClientsPerformanceTest {
   val testQueue = {
     client.queueClient.lookupQueue(testQueueName) match {
       case Some(queue) => queue
-      case None => client.queueClient.createQueue(Queue(testQueueName, VisibilityTimeout(10000)))
+      case None => client.queueClient.createQueue(Queue(testQueueName, MillisVisibilityTimeout(10000)))
     }
   }
 

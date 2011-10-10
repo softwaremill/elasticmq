@@ -18,7 +18,7 @@ class NativeMessageClientImplTestSuite extends FunSuite with MustMatchers with M
   test("sending a message should generate an id, properly set the next delivery and the created date") {
     // Given
     val (messageClient, mockStorage, _) = createMessageClientWithMockStorage
-    val q1 = Queue("q1", VisibilityTimeout(123L))
+    val q1 = Queue("q1", MillisVisibilityTimeout(123L))
 
     // When
     val msg = messageClient.sendMessage(Message(q1, "abc"))
@@ -36,7 +36,7 @@ class NativeMessageClientImplTestSuite extends FunSuite with MustMatchers with M
     // Given
     val (messageClient, mockStorage, mockStatisticsStorage) = createMessageClientWithMockStorage
 
-    val q1 = Queue("q1", VisibilityTimeout(123L))
+    val q1 = Queue("q1", MillisVisibilityTimeout(123L))
     val m = Message(q1, Some("1"), "z", MillisNextDelivery(123L))
     val stats = MessageStatistics(m, NeverReceived, 0)
 
@@ -57,7 +57,7 @@ class NativeMessageClientImplTestSuite extends FunSuite with MustMatchers with M
     // Given
     val (messageClient, mockStorage, mockStatisticsStorage) = createMessageClientWithMockStorage
 
-    val q1 = Queue("q1", VisibilityTimeout(123L))
+    val q1 = Queue("q1", MillisVisibilityTimeout(123L))
     val m = Message(q1, Some("1"), "z", MillisNextDelivery(123L))
     val stats = MessageStatistics(m, OnDateTimeReceived(new DateTime(Now - 100000L)), 7)
 

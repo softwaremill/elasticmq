@@ -17,7 +17,7 @@ class NativeQueueClientImplTestSuite extends FunSuite with MustMatchers with Moc
   test("creating a queue should properly set the created and modified dates") {
     // Given
     val (queueClient, mockStorage) = createQueueClient
-    val q1 = Queue("q1", VisibilityTimeout(123L))
+    val q1 = Queue("q1", MillisVisibilityTimeout(123L))
 
     // When
     val q1created = queueClient.createQueue(q1)

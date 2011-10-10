@@ -26,7 +26,7 @@ trait NativeClientModule {
 
     def lookupQueue(name: String) = queueStorage.lookupQueue(name)
 
-    def updateDefaultVisibilityTimeout(queue: Queue, newDefaultVisibilityTimeout: VisibilityTimeout) = {
+    def updateDefaultVisibilityTimeout(queue: Queue, newDefaultVisibilityTimeout: MillisVisibilityTimeout) = {
       val newQueue = queue.copy(defaultVisibilityTimeout = newDefaultVisibilityTimeout)
       val newQueueLastModified = updateQueueLastModified(newQueue)
       queueStorage.updateQueue(newQueueLastModified)
@@ -86,7 +86,7 @@ trait NativeClientModule {
       messageStatisticsStorage.writeMessageStatistics(bumpedStats)
     }
 
-    def updateVisibilityTimeout(message: IdentifiableMessage, newVisibilityTimeout: VisibilityTimeout) = {
+    def updateVisibilityTimeout(message: IdentifiableMessage, newVisibilityTimeout: MillisVisibilityTimeout) = {
       val newMessage = message.copy(nextDelivery = nextDelivery(newVisibilityTimeout.millis))
       messageStorage.updateMessage(newMessage)
       newMessage

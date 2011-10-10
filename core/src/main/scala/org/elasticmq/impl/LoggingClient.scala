@@ -21,7 +21,7 @@ class QueueClientLoggingWrapper(delegate: QueueClient) extends QueueClient {
     delegate.lookupQueue(name)
   }
 
-  def updateDefaultVisibilityTimeout(queue: Queue, newDefaultVisibilityTimeout: VisibilityTimeout) = {
+  def updateDefaultVisibilityTimeout(queue: Queue, newDefaultVisibilityTimeout: MillisVisibilityTimeout) = {
     log.debug("Updating default visibility timeout: "+queue+" with: "+newDefaultVisibilityTimeout);
     delegate.updateDefaultVisibilityTimeout(queue, newDefaultVisibilityTimeout)
   }
@@ -60,7 +60,7 @@ class MessageClientLogginWrapper(delegate: MessageClient) extends MessageClient 
     delegate.receiveMessageWithStatistics(queue)
   }
 
-  def updateVisibilityTimeout(message: IdentifiableMessage, newVisibilityTimeout: VisibilityTimeout) = {
+  def updateVisibilityTimeout(message: IdentifiableMessage, newVisibilityTimeout: MillisVisibilityTimeout) = {
     log.debug("Updating visibility timeout for: "+message+" with: "+newVisibilityTimeout)
     delegate.updateVisibilityTimeout(message, newVisibilityTimeout)
   }

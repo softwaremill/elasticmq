@@ -3,7 +3,7 @@ package org.elasticmq.rest.sqs
 import org.elasticmq.rest.RequestHandlerBuilder._
 import org.jboss.netty.handler.codec.http.HttpMethod._
 
-import org.elasticmq.VisibilityTimeout
+import org.elasticmq.MillisVisibilityTimeout
 
 import Constants._
 import ActionUtil._
@@ -66,7 +66,7 @@ trait QueueAttributesHandlersModule { this: ClientModule with RequestHandlerLogi
       throw new SQSException("InvalidAttributeName")
     }
 
-    client.queueClient.updateDefaultVisibilityTimeout(queue, VisibilityTimeout.fromSeconds(attributeValue))
+    client.queueClient.updateDefaultVisibilityTimeout(queue, MillisVisibilityTimeout.fromSeconds(attributeValue))
 
     <SetQueueAttributesResponse>
       <ResponseMetadata>

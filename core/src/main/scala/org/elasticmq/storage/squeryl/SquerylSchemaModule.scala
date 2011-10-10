@@ -31,7 +31,7 @@ class SquerylQueue(val id: String,
                    @Column("created_timestamp") val createdTimestamp: Long,
                    @Column("last_modified_timestamp") val lastModifiedTimestamp: Long) extends KeyedEntity[String] {
   def toQueue = Queue(id,
-    VisibilityTimeout(defaultVisibilityTimeout),
+    MillisVisibilityTimeout(defaultVisibilityTimeout),
     new DateTime(createdTimestamp),
     new DateTime(lastModifiedTimestamp))
 }
