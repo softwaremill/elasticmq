@@ -1,10 +1,9 @@
 package org.elasticmq.impl
 
 import java.util.UUID
-import org.elasticmq._
 import org.elasticmq.storage.{MessageStatisticsStorageModule, QueueStorageModule, MessageStorageModule}
 import org.elasticmq.impl.scheduler.VolatileTaskSchedulerModule
-import org.joda.time.DateTime
+import org.elasticmq._
 
 trait NativeClientModule {
   this: MessageStorageModule with QueueStorageModule with MessageStatisticsStorageModule
@@ -63,7 +62,7 @@ trait NativeClientModule {
     }
 
     def receiveMessage(queue: Queue, visibilityTimeout: VisibilityTimeout) = {
-      val messageOption = doReceiveMessage(queue)
+      val messageOption = doReceiveMessage(queue, visibilityTimeout)
       messageOption.foreach(message => volatileTaskScheduler.schedule {
         val stats = messageStatisticsStorage.readMessageStatistics(message)
         doBumpStatistics(stats)
@@ -72,7 +71,7 @@ trait NativeClientModule {
     }
 
     def receiveMessageWithStatistics(queue: Queue, visibilityTimeout: VisibilityTimeout) = {
-      val message = doReceiveMessage(queue)
+      val message = doReceiveMessage(queue, visibilityTimeout)
       val stats = message.map(messageStatisticsStorage.readMessageStatistics(_))
       stats.foreach(s => volatileTaskScheduler.schedule {
         doBumpStatistics(s)
@@ -80,8 +79,16 @@ trait NativeClientModule {
       stats
     }
 
-    private def doReceiveMessage(queue: Queue) = messageStorage.receiveMessage(queue, now, nextDelivery(queue))
-    private def doBumpStatistics(stats: MessageStatistics) = {
+    private def doReceiveMessage(queue: Queue, visibilityTimeout: VisibilityTimeout) = {
+      val newNextDelivery = visibilityTimeout match {
+        case DefaultVisibilityTimeout => nextDelivery(queue)
+        case MillisVisibilityTimeout(millis) => nextDelivery(millis)
+      }
+
+      messageStorage.receiveMessage(queue, now, newNextDelivery)
+    }
+
+    private def doBumpStatistics(stats: MessageStatistics) {
       val bumpedStats = bumpMessageStatistics(stats)
       messageStatisticsStorage.writeMessageStatistics(bumpedStats)
     }
