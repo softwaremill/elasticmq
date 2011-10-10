@@ -74,6 +74,46 @@ class NativeMessageClientImplTestSuite extends FunSuite with MustMatchers with M
     }))
   }
 
+  test("should correctly set next delivery if receiving a message with default visibility timeout") {
+    // Given
+    val (messageClient, mockStorage, mockStatisticsStorage) = createMessageClientWithMockStorage
+
+    val q = Queue("q1", MillisVisibilityTimeout(123L))
+    val m = Message(q, Some("1"), "z", MillisNextDelivery(123L))
+
+    when(mockStatisticsStorage.readMessageStatistics(m)).thenReturn(MessageStatistics(m, OnDateTimeReceived(NowAsDateTime), 0))
+
+    when(mockStorage.receiveMessage(any(classOf[Queue]), anyLong(), any(classOf[MillisNextDelivery]))).thenReturn(Some(m))
+
+    // When
+    messageClient.receiveMessage(q, DefaultVisibilityTimeout)
+
+    // Then
+    verify(mockStorage).receiveMessage(any(classOf[Queue]), anyLong(), argThat(new ArgumentMatcher[MillisNextDelivery]{
+      def matches(ndRef: AnyRef) = ndRef == MillisNextDelivery(Now + 123L)
+    }))
+  }
+
+  test("should correctly set next delivery if receiving a message with a specific visibility timeout") {
+    // Given
+    val (messageClient, mockStorage, mockStatisticsStorage) = createMessageClientWithMockStorage
+
+    val q = Queue("q1", MillisVisibilityTimeout(123L))
+    val m = Message(q, Some("1"), "z", MillisNextDelivery(123L))
+
+    when(mockStatisticsStorage.readMessageStatistics(m)).thenReturn(MessageStatistics(m, OnDateTimeReceived(NowAsDateTime), 0))
+
+    when(mockStorage.receiveMessage(any(classOf[Queue]), anyLong(), any(classOf[MillisNextDelivery]))).thenReturn(Some(m))
+
+    // When
+    messageClient.receiveMessage(q, MillisVisibilityTimeout(1000L))
+
+    // Then
+    verify(mockStorage).receiveMessage(any(classOf[Queue]), anyLong(), argThat(new ArgumentMatcher[MillisNextDelivery]{
+      def matches(ndRef: AnyRef) = ndRef == MillisNextDelivery(Now + 1000L)
+    }))
+  }
+
   def createMessageClientWithMockStorage: (MessageClient, MessageStorageModule#MessageStorage,
           MessageStatisticsStorageModule#MessageStatisticsStorage) = {
     val env = new NativeClientModule
