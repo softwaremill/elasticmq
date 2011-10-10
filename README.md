@@ -65,6 +65,12 @@ And our repository:
         <url>http://tools.softwaremill.pl/nexus/content/repositories/snapshots/</url>
     </repository>
 
+Current versions
+--------
+
+*Stable*: 0.1
+*Development*: 0.2-SNAPSHOT
+
 DB Schema
 ---------
 
