@@ -69,6 +69,7 @@ Current versions
 --------
 
 *Stable*: 0.1
+
 *Development*: 0.2-SNAPSHOT
 
 DB Schema
