@@ -62,7 +62,7 @@ trait NativeClientModule {
       messageWithCreatedDate
     }
 
-    def receiveMessage(queue: Queue) = {
+    def receiveMessage(queue: Queue, visibilityTimeout: VisibilityTimeout) = {
       val messageOption = doReceiveMessage(queue)
       messageOption.foreach(message => volatileTaskScheduler.schedule {
         val stats = messageStatisticsStorage.readMessageStatistics(message)
@@ -71,7 +71,7 @@ trait NativeClientModule {
       messageOption
     }
 
-    def receiveMessageWithStatistics(queue: Queue) = {
+    def receiveMessageWithStatistics(queue: Queue, visibilityTimeout: VisibilityTimeout) = {
       val message = doReceiveMessage(queue)
       val stats = message.map(messageStatisticsStorage.readMessageStatistics(_))
       stats.foreach(s => volatileTaskScheduler.schedule {

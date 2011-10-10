@@ -45,7 +45,7 @@ class NativeMessageClientImplTestSuite extends FunSuite with MustMatchers with M
     when(mockStatisticsStorage.readMessageStatistics(m)).thenReturn(stats)
 
     // When
-    messageClient.receiveMessageWithStatistics(q1)
+    messageClient.receiveMessageWithStatistics(q1, DefaultVisibilityTimeout)
 
     // Then
     verify(mockStatisticsStorage).writeMessageStatistics(argThat(new ArgumentMatcher[MessageStatistics]{
@@ -66,7 +66,7 @@ class NativeMessageClientImplTestSuite extends FunSuite with MustMatchers with M
     when(mockStatisticsStorage.readMessageStatistics(m)).thenReturn(stats)
 
     // When
-    messageClient.receiveMessageWithStatistics(q1)
+    messageClient.receiveMessageWithStatistics(q1, DefaultVisibilityTimeout)
 
     // Then
     verify(mockStatisticsStorage).writeMessageStatistics(argThat(new ArgumentMatcher[MessageStatistics]{

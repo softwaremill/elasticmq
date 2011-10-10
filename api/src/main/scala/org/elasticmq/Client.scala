@@ -16,8 +16,8 @@ trait QueueClient {
 
 trait MessageClient {
   def sendMessage(message: AnyMessage): SpecifiedMessage
-  def receiveMessage(queue: Queue): Option[SpecifiedMessage]
-  def receiveMessageWithStatistics(queue: Queue): Option[MessageStatistics]
+  def receiveMessage(queue: Queue, visibilityTimeout: VisibilityTimeout): Option[SpecifiedMessage]
+  def receiveMessageWithStatistics(queue: Queue, visibilityTimeout: VisibilityTimeout): Option[MessageStatistics]
   def updateVisibilityTimeout(message: IdentifiableMessage, newVisibilityTimeout: MillisVisibilityTimeout): SpecifiedMessage
   def deleteMessage(message: IdentifiableMessage)
   def lookupMessage(id: String): Option[SpecifiedMessage]

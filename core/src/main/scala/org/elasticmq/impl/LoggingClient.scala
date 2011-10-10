@@ -50,14 +50,14 @@ class MessageClientLogginWrapper(delegate: MessageClient) extends MessageClient 
     delegate.sendMessage(message)
   }
 
-  def receiveMessage(queue: Queue) = {
+  def receiveMessage(queue: Queue, visibilityTimeout: VisibilityTimeout) = {
     log.debug("Receiving message: "+queue)
-    delegate.receiveMessage(queue)
+    delegate.receiveMessage(queue, visibilityTimeout)
   }
 
-  def receiveMessageWithStatistics(queue: Queue) = {
+  def receiveMessageWithStatistics(queue: Queue, visibilityTimeout: VisibilityTimeout) = {
     log.debug("Receiving message w/ stats: "+queue)
-    delegate.receiveMessageWithStatistics(queue)
+    delegate.receiveMessageWithStatistics(queue, visibilityTimeout)
   }
 
   def updateVisibilityTimeout(message: IdentifiableMessage, newVisibilityTimeout: MillisVisibilityTimeout) = {
