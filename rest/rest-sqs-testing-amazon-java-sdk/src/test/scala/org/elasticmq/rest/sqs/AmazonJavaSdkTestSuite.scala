@@ -10,8 +10,11 @@ import com.amazonaws.auth.BasicAWSCredentials
 import com.amazonaws.services.sqs.{AmazonSQS, AmazonSQSClient}
 import com.amazonaws.services.sqs.model._
 
+import scala.collection.JavaConversions._
+
 class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAfter {
   val visibilityTimeoutAttribute = "VisibilityTimeout"
+  val defaultVisibilityTimeoutAttribute = "VisibilityTimeout"
 
   var node: Node = _
   var server: RestServer = _
@@ -39,7 +42,8 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
 
   test("should create a queue with the specified visibilty timeout") {
     // When
-    client.createQueue(new CreateQueueRequest("testQueue1").withDefaultVisibilityTimeout(14))
+    client.createQueue(new CreateQueueRequest("testQueue1")
+      .withAttributes(Map(defaultVisibilityTimeoutAttribute -> "14")))
 
     // Then
     val queues = client.listQueues().getQueueUrls
@@ -50,8 +54,6 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
   }
 
   test("should list created queues") {
-    import scala.collection.JavaConversions._
-
     // Given
     client.createQueue(new CreateQueueRequest("testQueue1"))
     client.createQueue(new CreateQueueRequest("testQueue2"))
@@ -100,8 +102,6 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
   }
 
   test("should set queue visibility timeout") {
-    import scala.collection.JavaConversions._
-
     // Given
     val queueUrl = client.createQueue(new CreateQueueRequest("testQueue1")).getQueueUrl
 
@@ -126,7 +126,8 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
 
   test("should block message for the visibility timeout duration") {
     // Given
-    val queueUrl = client.createQueue(new CreateQueueRequest("testQueue1").withDefaultVisibilityTimeout(1)).getQueueUrl
+    val queueUrl = client.createQueue(new CreateQueueRequest("testQueue1")
+      .withAttributes(Map(defaultVisibilityTimeoutAttribute -> "1"))).getQueueUrl
 
     // When
     client.sendMessage(new SendMessageRequest(queueUrl, "Message 1"))
@@ -163,7 +164,8 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
 
   test("should delete a message") {
     // Given
-    val queueUrl = client.createQueue(new CreateQueueRequest("testQueue1").withDefaultVisibilityTimeout(1)).getQueueUrl
+    val queueUrl = client.createQueue(new CreateQueueRequest("testQueue1")
+      .withAttributes(Map(defaultVisibilityTimeoutAttribute -> "1"))).getQueueUrl
 
     // When
     client.sendMessage(new SendMessageRequest(queueUrl, "Message 1"))
@@ -179,7 +181,8 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
 
   test("should update message visibility timeout") {
     // Given
-    val queueUrl = client.createQueue(new CreateQueueRequest("testQueue1").withDefaultVisibilityTimeout(1)).getQueueUrl
+    val queueUrl = client.createQueue(new CreateQueueRequest("testQueue1")
+      .withAttributes(Map(defaultVisibilityTimeoutAttribute -> "1"))).getQueueUrl
 
     // When
     val msgId = client.sendMessage(new SendMessageRequest(queueUrl, "Message 1")).getMessageId
@@ -238,7 +241,8 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
   test("should receive message with statistics") {
     // Given
     val start = System.currentTimeMillis()
-    val queueUrl = client.createQueue(new CreateQueueRequest("testQueue1").withDefaultVisibilityTimeout(1)).getQueueUrl
+    val queueUrl = client.createQueue(new CreateQueueRequest("testQueue1")
+      .withAttributes(Map(defaultVisibilityTimeoutAttribute -> "1"))).getQueueUrl
     client.sendMessage(new SendMessageRequest(queueUrl, "Message 1"))
 
     val sentTimestampAttribute = "SentTimestamp"
