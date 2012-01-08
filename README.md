@@ -12,8 +12,8 @@ providing an SQS alternative e.g. for testing purposes.
 The REST server is implemented using [Netty](http://www.jboss.org/netty), a high-performance,
 asynchronous, event-driven server Java framework.
 
-The SQS interface has been tested using the [Typica](http://code.google.com/p/typica/) library;
-see the `rest-sqs-testing-typica` module for the testsuite.
+The SQS interface has been tested using the [Amazon Java SDK](http://aws.amazon.com/sdkforjava/) library;
+see the `rest-sqs-testing-amazon-java-sdk` module for the testsuite.
 
 In the future... ElasticMQ may provide many more exciting features :).
 

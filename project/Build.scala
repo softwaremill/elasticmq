@@ -42,7 +42,6 @@ object Dependencies {
 
   val apacheHttp    = "org.apache.httpcomponents" % "httpclient"            % "4.1.1"
 
-  val typica        = "com.google.code.typica"    % "typica"                % "1.7-softwaremill-4"
   val amazonJavaSdk = "com.amazonaws"             % "aws-java-sdk"          % "1.2.15"
 
   val mysqlConnector = "mysql"                    % "mysql-connector-java"  % "5.1.12"
@@ -80,7 +79,7 @@ object ElasticMQBuild extends Build {
     "rest",
     file("rest"),
     settings = buildSettings
-  ) aggregate(restCore, restSqs, restSqsTestingTypica, restSqsTestingAmazonJavaSdk)
+  ) aggregate(restCore, restSqs, restSqsTestingAmazonJavaSdk)
 
   lazy val restCore: Project = Project(
     "rest-core",
@@ -93,12 +92,6 @@ object ElasticMQBuild extends Build {
     file("rest/rest-sqs"),
     settings = buildSettings ++ Seq(libraryDependencies := Seq(mysqlConnector % "test") ++ common ++ testing ++ httpTesting)
   ) dependsOn(api, restCore, core % "test")
-
-  lazy val restSqsTestingTypica: Project = Project(
-    "rest-sqs-testing-typica",
-    file("rest/rest-sqs-testing-typica"),
-    settings = buildSettings ++ Seq(libraryDependencies := Seq(typica, apacheHttp) ++ common ++ testing)
-  ) dependsOn(restSqs % "test->test")
 
   lazy val restSqsTestingAmazonJavaSdk: Project = Project(
     "rest-sqs-testing-amazon-java-sdk",
