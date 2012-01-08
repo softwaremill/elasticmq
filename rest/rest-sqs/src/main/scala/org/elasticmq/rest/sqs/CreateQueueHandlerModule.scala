@@ -12,15 +12,19 @@ import Constants._
 import ActionUtil._
 import ParametersParserUtil._
 
-trait CreateQueueHandlerModule { this: ClientModule with QueueURLModule with RequestHandlerLogicModule =>
+trait CreateQueueHandlerModule { this: ClientModule with QueueURLModule with RequestHandlerLogicModule
+  with AttributesModule =>
+
   val DefaultVisibilityTimeout = 30L;
   val CreateQueueAction = createAction("CreateQueue")
 
   val createQueueLogic = logicWithQueueName((queueName, request, parameters) => {
     val queueOption = client.queueClient.lookupQueue(queueName)
 
+    val attributes = attributeNameAndValuesReader.read(parameters)
+
     val secondsVisibilityTimeout =
-      (parameters.parseOptionalLong("DefaultVisibilityTimeout")
+      (attributes.parseOptionalLong(VisibilityTimeoutParameter)
               .getOrElse(DefaultVisibilityTimeout));
 
     val queue = queueOption.getOrElse(client.queueClient.createQueue(

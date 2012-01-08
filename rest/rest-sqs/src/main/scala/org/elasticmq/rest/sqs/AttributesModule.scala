@@ -4,6 +4,7 @@ trait AttributesModule {
   val attributeNamesReader = new AttributeNamesReader
   val attributesToXmlConverter = new AttributesToXmlConverter
   val attributeValuesCalculator = new AttributeValuesCalculator
+  val attributeNameAndValuesReader = new AttributeNameAndValuesReader
 
   class AttributeNamesReader {
     def read(parameters: Map[String, String], allAttributeNames: List[String]) = {
@@ -44,6 +45,19 @@ trait AttributesModule {
       attributeNames.flatMap(attribute => {
         rules.find(rule => rule._1 == attribute).map(rule => (rule._1, rule._2()))
       })
+    }
+  }
+  
+  class AttributeNameAndValuesReader {
+    def read(parameters: Map[String, String]): Map[String, String] = {
+      def collect(suffix: Int, acc: Map[String, String]): Map[String, String] = {
+        parameters.get("Attribute."+suffix+".Name") match {
+          case None => acc
+          case Some(an) => collect(suffix+1, acc + (an -> parameters("Attribute."+suffix+".Value")))
+        }
+      }
+      
+      collect(1, Map())
     }
   }
 }
