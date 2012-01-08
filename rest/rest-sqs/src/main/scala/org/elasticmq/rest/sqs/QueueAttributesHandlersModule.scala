@@ -7,7 +7,6 @@ import org.elasticmq.MillisVisibilityTimeout
 
 import Constants._
 import ActionUtil._
-import ParametersParserUtil._
 
 trait QueueAttributesHandlersModule { this: ClientModule with RequestHandlerLogicModule with AttributesModule =>
   object QueueWriteableAttributeNames {
@@ -59,14 +58,15 @@ trait QueueAttributesHandlersModule { this: ClientModule with RequestHandlerLogi
   })
 
   val setQueueAttributesLogic = logicWithQueue((queue, request, parameters) => {
-    val attributeName = parameters.getOrElse(AttributeNameParameter, parameters(Attribute1NameParameter))
-    val attributeValue = parameters.getOrElse(AttributeValueParameter, parameters(Attribute1ValueParameter)).toLong
-
-    if (attributeName != QueueWriteableAttributeNames.VisibilityTimeoutAttribute) {
+    val attributes = attributeNameAndValuesReader.read(parameters)
+    val firstAttribute = attributes.iterator.next()
+    
+    if (attributes.size != 1 || firstAttribute._1 != QueueWriteableAttributeNames.VisibilityTimeoutAttribute) {
       throw new SQSException("InvalidAttributeName")
     }
 
-    client.queueClient.updateDefaultVisibilityTimeout(queue, MillisVisibilityTimeout.fromSeconds(attributeValue))
+    client.queueClient.updateDefaultVisibilityTimeout(queue,
+      MillisVisibilityTimeout.fromSeconds(firstAttribute._2.toLong))
 
     <SetQueueAttributesResponse>
       <ResponseMetadata>
@@ -74,12 +74,6 @@ trait QueueAttributesHandlersModule { this: ClientModule with RequestHandlerLogi
       </ResponseMetadata>
     </SetQueueAttributesResponse>
   })
-
-  val AttributeNameParameter = "Attribute.Name"
-  val Attribute1NameParameter = "Attribute.1.Name"
-
-  val AttributeValueParameter = "Attribute.Value"
-  val Attribute1ValueParameter = "Attribute.1.Value"
 
   val GetQueueAttributesAction = createAction("GetQueueAttributes")
   val SetQueueAttribtuesAction = createAction("SetQueueAttributes")
