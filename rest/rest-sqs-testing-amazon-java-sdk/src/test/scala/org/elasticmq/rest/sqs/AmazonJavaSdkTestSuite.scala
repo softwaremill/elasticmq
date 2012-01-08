@@ -32,6 +32,8 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
   }
 
   after {
+    client.shutdown()
+
     server.stop()
     node.shutdown()
   }
@@ -46,11 +48,11 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
       .withAttributes(Map(defaultVisibilityTimeoutAttribute -> "14")))
 
     // Then
-    val queues = client.listQueues().getQueueUrls
+    val queueUrls = client.listQueues().getQueueUrls
 
-    queues.size() must be (1)
+    queueUrls.size() must be (1)
 
-    queueVisibilityTimeout(queues.get(0)) must be (14)
+    queueVisibilityTimeout(queueUrls.get(0)) must be (14)
   }
 
   test("should list created queues") {
@@ -59,12 +61,12 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
     client.createQueue(new CreateQueueRequest("testQueue2"))
 
     // When
-    val queues = client.listQueues().getQueueUrls
+    val queueUrls = client.listQueues().getQueueUrls
 
     // Then
-    queues.size() must be (2)
+    queueUrls.size() must be (2)
 
-    val setOfQueueUrls = Set() ++ queues
+    val setOfQueueUrls = Set() ++ queueUrls
     setOfQueueUrls.find(_.contains("testQueue1")) must be ('defined)
     setOfQueueUrls.find(_.contains("testQueue2")) must be ('defined)
   }
@@ -75,11 +77,11 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
     client.createQueue(new CreateQueueRequest("bbbQueue"))
 
     // When
-    val queues = client.listQueues(new ListQueuesRequest().withQueueNamePrefix("aaa")).getQueueUrls
+    val queueUrls = client.listQueues(new ListQueuesRequest().withQueueNamePrefix("aaa")).getQueueUrls
 
     // Then
-    queues.size() must be (1)
-    queues.get(0) must include ("aaaQueue")
+    queueUrls.size() must be (1)
+    queueUrls.get(0) must include ("aaaQueue")
   }
 
   test("should create and delete a queue") {

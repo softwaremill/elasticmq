@@ -62,7 +62,7 @@ object ElasticMQBuild extends Build {
     "root",
     file("."),
     settings = buildSettings
-  ) aggregate(api, core, rest, restSqsTestingTypica)
+  ) aggregate(api, core, rest)
 
   lazy val api: Project = Project(
     "api",
@@ -80,7 +80,7 @@ object ElasticMQBuild extends Build {
     "rest",
     file("rest"),
     settings = buildSettings
-  ) aggregate(restCore, restSqs)
+  ) aggregate(restCore, restSqs, restSqsTestingTypica, restSqsTestingAmazonJavaSdk)
 
   lazy val restCore: Project = Project(
     "rest-core",
@@ -92,17 +92,17 @@ object ElasticMQBuild extends Build {
     "rest-sqs",
     file("rest/rest-sqs"),
     settings = buildSettings ++ Seq(libraryDependencies := Seq(mysqlConnector % "test") ++ common ++ testing ++ httpTesting)
-  ) dependsOn(api, restCore, core % "test->compile")
+  ) dependsOn(api, restCore, core % "test")
 
   lazy val restSqsTestingTypica: Project = Project(
     "rest-sqs-testing-typica",
     file("rest/rest-sqs-testing-typica"),
     settings = buildSettings ++ Seq(libraryDependencies := Seq(typica, apacheHttp) ++ common ++ testing)
-  ) dependsOn(restSqs, core % "test->compile")
+  ) dependsOn(restSqs % "test->test")
 
   lazy val restSqsTestingAmazonJavaSdk: Project = Project(
     "rest-sqs-testing-amazon-java-sdk",
     file("rest/rest-sqs-testing-amazon-java-sdk"),
     settings = buildSettings ++ Seq(libraryDependencies := Seq(amazonJavaSdk) ++ common ++ testing)
-  ) dependsOn(restSqs, core % "test->compile")
+  ) dependsOn(restSqs % "test->test")
 }
