@@ -59,8 +59,8 @@ trait QueueAttributesHandlersModule { this: ClientModule with RequestHandlerLogi
   })
 
   val setQueueAttributesLogic = logicWithQueue((queue, request, parameters) => {
-    val attributeName = parameters(AttributeNameParameter)
-    val attributeValue = parameters.parseOptionalLong(AttributeValueParameter).get
+    val attributeName = parameters.getOrElse(AttributeNameParameter, parameters(Attribute1NameParameter))
+    val attributeValue = parameters.getOrElse(AttributeValueParameter, parameters(Attribute1ValueParameter)).toLong
 
     if (attributeName != QueueWriteableAttributeNames.VisibilityTimeoutAttribute) {
       throw new SQSException("InvalidAttributeName")
@@ -76,7 +76,10 @@ trait QueueAttributesHandlersModule { this: ClientModule with RequestHandlerLogi
   })
 
   val AttributeNameParameter = "Attribute.Name"
+  val Attribute1NameParameter = "Attribute.1.Name"
+
   val AttributeValueParameter = "Attribute.Value"
+  val Attribute1ValueParameter = "Attribute.1.Value"
 
   val GetQueueAttributesAction = createAction("GetQueueAttributes")
   val SetQueueAttribtuesAction = createAction("SetQueueAttributes")
@@ -97,7 +100,6 @@ trait QueueAttributesHandlersModule { this: ClientModule with RequestHandlerLogi
   val setQueueAttributesGetHandler = (createHandler
             forMethod GET
             forPath (QueuePath)
-            requiringParameters List(AttributeNameParameter, AttributeValueParameter)
             requiringParameterValues Map(SetQueueAttribtuesAction)
             running setQueueAttributesLogic)
 
@@ -105,7 +107,6 @@ trait QueueAttributesHandlersModule { this: ClientModule with RequestHandlerLogi
             forMethod POST
             forPath (QueuePath)
             includingParametersFromBody()
-            requiringParameters List(AttributeNameParameter, AttributeValueParameter)
             requiringParameterValues Map(SetQueueAttribtuesAction)
             running setQueueAttributesLogic)
 }
