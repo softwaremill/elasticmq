@@ -29,22 +29,23 @@ object BuildSettings {
 }
 
 object Dependencies {
-  val squeryl = "org.squeryl" %% "squeryl" % "0.9.4"
-  val h2 = "com.h2database" % "h2" % "1.3.156"
-  val c3p0 = "c3p0" % "c3p0" % "0.9.1.2"
-  val jodaTime = "joda-time" % "joda-time" % "1.6.2" // when available use https://github.com/jorgeortiz85/scala-time
-  val netty = "org.jboss.netty" % "netty" % "3.2.4.Final"
+  val squeryl       = "org.squeryl"               %% "squeryl"              % "0.9.4"
+  val h2            = "com.h2database"            % "h2"                    % "1.3.156"
+  val c3p0          = "c3p0"                      % "c3p0"                  % "0.9.1.2"
+  val jodaTime      = "joda-time"                 % "joda-time"             % "1.6.2" // when available use https://github.com/jorgeortiz85/scala-time
+  val netty         = "org.jboss.netty"           % "netty"                 % "3.2.4.Final"
 
-  val log4j = "log4j" % "log4j" % "1.2.16"
+  val log4j         = "log4j"                     % "log4j"                 % "1.2.16"
 
-  val scalatest = "org.scalatest" % "scalatest_2.9.0" % "1.6.1" % "test"
-  val mockito = "org.mockito" % "mockito-core" % "1.7" % "test"
+  val scalatest     = "org.scalatest"             %% "scalatest"            % "1.6.1"         % "test"
+  val mockito       = "org.mockito"               % "mockito-core"          % "1.7"           % "test"
 
-  val apacheHttp = "org.apache.httpcomponents" % "httpclient" % "4.1.1"
+  val apacheHttp    = "org.apache.httpcomponents" % "httpclient"            % "4.1.1"
 
-  val typica = "com.google.code.typica" % "typica" % "1.7-softwaremill-4"
+  val typica        = "com.google.code.typica"    % "typica"                % "1.7-softwaremill-4"
+  val amazonJavaSdk = "com.amazonaws"             % "aws-java-sdk"          % "1.2.15"
 
-  val mysqlConnector = "mysql" % "mysql-connector-java" % "5.1.12"
+  val mysqlConnector = "mysql"                    % "mysql-connector-java"  % "5.1.12"
 
   val common = Seq(log4j)
   val testing = Seq(scalatest, mockito)
@@ -97,5 +98,11 @@ object ElasticMQBuild extends Build {
     "rest-sqs-testing-typica",
     file("rest/rest-sqs-testing-typica"),
     settings = buildSettings ++ Seq(libraryDependencies := Seq(typica, apacheHttp) ++ common ++ testing)
+  ) dependsOn(restSqs, core % "test->compile")
+
+  lazy val restSqsTestingAmazonJavaSdk: Project = Project(
+    "rest-sqs-testing-amazon-java-sdk",
+    file("rest/rest-sqs-testing-amazon-java-sdk"),
+    settings = buildSettings ++ Seq(libraryDependencies := Seq(amazonJavaSdk) ++ common ++ testing)
   ) dependsOn(restSqs, core % "test->compile")
 }
