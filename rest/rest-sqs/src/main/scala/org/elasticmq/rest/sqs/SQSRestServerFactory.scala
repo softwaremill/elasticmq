@@ -23,6 +23,7 @@ object SQSRestServerFactory {
       with ReceiveMessageHandlerModule
       with DeleteMessageHandlerModule
       with ChangeMessageVisibilityHandlerModule
+      with GetQueueUrlHandlerModule
       with AttributesModule {
       val client = theClient
       val baseAddress = theBaseAddress
@@ -39,6 +40,7 @@ object SQSRestServerFactory {
               receiveMessageGetHandler :: receiveMessagePostHandler ::
               deleteMessageGetHandler :: deleteMessagePostHandler ::
               changeMessageVisibilityGetHandler :: changeMessageVisibilityPostHandler ::
+              getQueueUrlGetHandler :: getQueueUrlPostHandler ::
               Nil, port)
   }
 }
