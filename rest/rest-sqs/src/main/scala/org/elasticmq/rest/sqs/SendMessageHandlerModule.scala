@@ -3,16 +3,18 @@ package org.elasticmq.rest.sqs
 import org.elasticmq.rest.RequestHandlerBuilder._
 import org.jboss.netty.handler.codec.http.HttpMethod._
 
-import org.elasticmq.Message
-
 import Constants._
 import ActionUtil._
 import MD5Util._
+import ParametersParserUtil._
+import org.elasticmq.{AfterMillisNextDelivery, Queue, Message}
 
 trait SendMessageHandlerModule { this: ClientModule with RequestHandlerLogicModule =>
   val sendMessageLogic = logicWithQueue((queue, request, parameters) => {
     val body = parameters(MessageBodyParameter)
-    val message = client.messageClient.sendMessage(Message(queue, body))
+    val delaySecondsOption = parameters.parseOptionalLong(DelaySecondsParameter)
+    val messageToSend = createMessage(queue, body, delaySecondsOption)
+    val message = client.messageClient.sendMessage(messageToSend)
 
     val digest = md5Digest(body)
 
@@ -26,9 +28,17 @@ trait SendMessageHandlerModule { this: ClientModule with RequestHandlerLogicModu
       </ResponseMetadata>
     </SendMessageResponse>
   })
+  
+  def createMessage(queue: Queue, body: String, delaySecondsOption: Option[Long]) = {
+    delaySecondsOption match {
+      case None => Message(queue, body)
+      case Some(delaySeconds) => Message(queue, None, body, AfterMillisNextDelivery(delaySeconds*1000))
+    }    
+  }  
 
   val SendMessageAction = createAction("SendMessage")
   val MessageBodyParameter = "MessageBody"
+  val DelaySecondsParameter = "DelaySeconds"
 
   val sendMessageGetHandler = (createHandler
             forMethod GET
