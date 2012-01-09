@@ -15,6 +15,7 @@ import com.amazonaws.services.sqs.model._
 class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAfter {
   val visibilityTimeoutAttribute = "VisibilityTimeout"
   val defaultVisibilityTimeoutAttribute = "VisibilityTimeout"
+  val delaySecondsAttribute = "DelaySeconds"
 
   var node: Node = _
   var server: RestServer = _
@@ -231,6 +232,8 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
     attributes.get("ApproximateNumberOfMessagesNotVisible") must be ("1")
     attributes must contain key ("CreatedTimestamp")
     attributes must contain key ("LastModifiedTimestamp")
+    attributes must contain key (visibilityTimeoutAttribute)
+    attributes must contain key (delaySecondsAttribute)
   }
 
   test("should read single queue attribute") {
@@ -289,7 +292,7 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
     sent1 must be (sent2)
   }
 
-  test("should sent delayed message") {
+  test("should send delayed message") {
     // Given
     val queueUrl = client.createQueue(new CreateQueueRequest("testQueue1")).getQueueUrl
 
@@ -307,10 +310,52 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
     m3 must be (None)
   }
 
-  def queueVisibilityTimeout(queueUrl: String) = {
+  test("should create delayed queue") {
+    // Given
+    val queueUrl = client.createQueue(new CreateQueueRequest("testQueue1").withAttributes(Map(delaySecondsAttribute -> "1")))
+      .getQueueUrl
+
+    // When
+    client.sendMessage(new SendMessageRequest(queueUrl, "Message 1")).getMessageId
+
+    val m1 = receiveSingleMessage(queueUrl)
+    Thread.sleep(1100)
+    val m2 = receiveSingleMessage(queueUrl)
+    val m3 = receiveSingleMessage(queueUrl)
+
+    // Then
+    m1 must be (None)
+    m2 must be (Some("Message 1"))
+    m3 must be (None)
+  }
+
+  test("should get queue delay") {
+    // When
+    val queueUrl = client.createQueue(new CreateQueueRequest("testQueue1")).getQueueUrl
+
+    // Then
+    queueDelay(queueUrl) must be (0)
+  }
+
+  test("should set queue delay") {
+    // Given
+    val queueUrl = client.createQueue(new CreateQueueRequest("testQueue1")).getQueueUrl
+
+    // When
+    client.setQueueAttributes(new SetQueueAttributesRequest(queueUrl, Map(delaySecondsAttribute -> "10")))
+
+    // Then
+    queueDelay(queueUrl) must be (10)
+  }
+
+  def queueVisibilityTimeout(queueUrl: String) = getQueueLongAttribute(queueUrl, visibilityTimeoutAttribute)
+
+  def queueDelay(queueUrl: String) = getQueueLongAttribute(queueUrl, delaySecondsAttribute)
+
+  def getQueueLongAttribute(queueUrl: String, attributeName: String) = {
     client
-      .getQueueAttributes(new GetQueueAttributesRequest(queueUrl).withAttributeNames(visibilityTimeoutAttribute))
-      .getAttributes.get(visibilityTimeoutAttribute)
+      .getQueueAttributes(new GetQueueAttributesRequest(queueUrl).withAttributeNames(attributeName))
+      .getAttributes.get(attributeName)
       .toLong
   }
   
