@@ -8,9 +8,9 @@ import org.apache.log4j.BasicConfigurator
 import org.jboss.netty.logging.{Log4JLoggerFactory, InternalLoggerFactory}
 import com.amazonaws.auth.BasicAWSCredentials
 import com.amazonaws.services.sqs.{AmazonSQS, AmazonSQSClient}
-import com.amazonaws.services.sqs.model._
 
 import scala.collection.JavaConversions._
+import com.amazonaws.services.sqs.model._
 
 class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAfter {
   val visibilityTimeoutAttribute = "VisibilityTimeout"
@@ -40,6 +40,17 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
 
   test("should create a queue") {
     client.createQueue(new CreateQueueRequest("testQueue1"))
+  }
+
+  test("should get queue url") {
+    // Given
+    client.createQueue(new CreateQueueRequest("testQueue1"))
+
+    // When
+    val queueUrl = client.getQueueUrl(new GetQueueUrlRequest("testQueue1")).getQueueUrl
+
+    // Then
+    queueUrl must include ("testQueue1")
   }
 
   test("should create a queue with the specified visibilty timeout") {
