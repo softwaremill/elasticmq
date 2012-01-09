@@ -1,6 +1,7 @@
 CREATE TABLE `emq_queue` (
   `id` varchar(128) NOT NULL,
   `last_modified_timestamp` bigint(20) NOT NULL,
+  `delay` bigint(20) NOT NULL,
   `created_timestamp` bigint(20) NOT NULL,
   `default_visibility_timeout` bigint(20) NOT NULL,
   PRIMARY KEY (`id`)

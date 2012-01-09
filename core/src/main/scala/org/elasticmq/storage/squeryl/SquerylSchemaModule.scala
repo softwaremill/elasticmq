@@ -3,8 +3,8 @@ package org.elasticmq.storage.squeryl
 import org.squeryl._
 import PrimitiveTypeMode._
 import org.elasticmq._
-import org.joda.time.DateTime
 import org.squeryl.annotations.Column
+import org.joda.time.{Duration, DateTime}
 
 trait SquerylSchemaModule {
   def queues = MQSchema.queues
@@ -28,10 +28,12 @@ trait SquerylSchemaModule {
 
 class SquerylQueue(val id: String,
                    @Column("default_visibility_timeout") val defaultVisibilityTimeout: Long,
+                   @Column("delay") val delay: Long,
                    @Column("created_timestamp") val createdTimestamp: Long,
                    @Column("last_modified_timestamp") val lastModifiedTimestamp: Long) extends KeyedEntity[String] {
   def toQueue = Queue(id,
     MillisVisibilityTimeout(defaultVisibilityTimeout),
+    new Duration(delay),
     new DateTime(createdTimestamp),
     new DateTime(lastModifiedTimestamp))
 }
@@ -39,6 +41,7 @@ class SquerylQueue(val id: String,
 object SquerylQueue {
   def from(queue: Queue) = new SquerylQueue(queue.name,
     queue.defaultVisibilityTimeout.millis,
+    queue.delay.getMillis,
     queue.created.getMillis,
     queue.lastModified.getMillis)
 }
