@@ -6,6 +6,10 @@ import org.elasticmq.storage.QueueStorageModule
 import org.squeryl.dsl.ast.BinaryOperatorNodeLogicalBoolean
 import org.squeryl.dsl.NumericalExpression
 
+import org.squeryl._
+import dsl.ast.BinaryOperatorNodeLogicalBoolean
+import dsl.{EnumExpression, StringExpression, Measures, GroupWithMeasures}
+
 trait SquerylQueueStorageModule extends QueueStorageModule {
   this: SquerylSchemaModule =>
 
@@ -42,17 +46,37 @@ trait SquerylQueueStorageModule extends QueueStorageModule {
 
     def queueStatistics(queue: Queue, deliveryTime: Long): QueueStatistics = {
       transaction {
-        def countMessagesRespectiveToDeliveryTime(compare: (NumericalExpression[Long], NumericalExpression[Long]) => BinaryOperatorNodeLogicalBoolean) = {
+        def countVisibleMessages() = {
           from(messages)(m =>
             where(m.queueName === queue.name and
-                    compare(m.nextDelivery, deliveryTime))
+                    (m.nextDelivery lte deliveryTime))
                     compute(count(m.id))).single.measures.toLong
         }
 
+        def countInvisibileMessages(): Long = {
+          join(messages, messageStatistics.leftOuter)((m, ms) =>
+            where(m.queueName === queue.name and
+              not (ms.map(_.id) === None) and
+              (m.nextDelivery gt deliveryTime))
+              compute(count(m.id))
+              on(Some(m.id) === ms.map(_.id))
+          )
+        }
+
+        def countDelayedMessages(): Long = {
+          join(messages, messageStatistics.leftOuter)((m, ms) =>
+            where(m.queueName === queue.name and
+              (ms.map(_.id) === None) and
+              (m.nextDelivery gt deliveryTime))
+            compute(count(m.id))
+            on(Some(m.id) === ms.map(_.id))
+          )
+        }
+
         QueueStatistics(queue,
-          countMessagesRespectiveToDeliveryTime((_: NumericalExpression[Long]).lte(_)),
-          countMessagesRespectiveToDeliveryTime((_: NumericalExpression[Long]).gt(_)),
-          0L)
+          countVisibleMessages(),
+          countInvisibileMessages(),
+          countDelayedMessages())
       }
     }
   }
