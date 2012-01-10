@@ -169,17 +169,38 @@ class QueueStorageTestSuite extends StorageTestSuite {
     // Given
     val queue = Queue("q1", MillisVisibilityTimeout(1L))
     queueStorage.persistQueue(queue);
+
+    // Visible messages
     messageStorage.persistMessage(Message(queue, "m1", "123", MillisNextDelivery(122L)))
     messageStorage.persistMessage(Message(queue, "m2", "123", MillisNextDelivery(123L)))
-    messageStorage.persistMessage(Message(queue, "m3", "123", MillisNextDelivery(124L)))
-    messageStorage.persistMessage(Message(queue, "m4", "123", MillisNextDelivery(125L)))
-    messageStorage.persistMessage(Message(queue, "m5", "123", MillisNextDelivery(126L)))
+
+    // Invisible messages - already received
+    val m3 = Message(queue, "m3", "123", MillisNextDelivery(124L)); messageStorage.persistMessage(m3)
+    val m4 = Message(queue, "m4", "123", MillisNextDelivery(125L)); messageStorage.persistMessage(m4)
+    val m5 = Message(queue, "m5", "123", MillisNextDelivery(126L)); messageStorage.persistMessage(m5)
+    val m6 = Message(queue, "m6", "123", MillisNextDelivery(126L)); messageStorage.persistMessage(m6)
+
+    messageStatisticsStorage.writeMessageStatistics(MessageStatistics(m3, OnDateTimeReceived(new DateTime(100L)), 1))
+
+    // Stats are inserted if the counter is 1, updated if it's more than 1. So we first have to insert a row with 1.
+    messageStatisticsStorage.writeMessageStatistics(MessageStatistics(m4, OnDateTimeReceived(new DateTime(101L)), 1))
+    messageStatisticsStorage.writeMessageStatistics(MessageStatistics(m4, OnDateTimeReceived(new DateTime(102L)), 2))
+
+    messageStatisticsStorage.writeMessageStatistics(MessageStatistics(m5, OnDateTimeReceived(new DateTime(102L)), 1))
+    messageStatisticsStorage.writeMessageStatistics(MessageStatistics(m5, OnDateTimeReceived(new DateTime(104L)), 3))
+
+    messageStatisticsStorage.writeMessageStatistics(MessageStatistics(m6, OnDateTimeReceived(new DateTime(103L)), 1))
+
+    // Delayed messages - never yet received
+    val m7 = Message(queue, "m7", "123", MillisNextDelivery(127L)); messageStorage.persistMessage(m7)
+    val m8 = Message(queue, "m8", "123", MillisNextDelivery(128L)); messageStorage.persistMessage(m8)
+    val m9 = Message(queue, "m9", "123", MillisNextDelivery(129L)); messageStorage.persistMessage(m9)
 
     // When
     val stats = queueStorage.queueStatistics(queue, 123L)
 
     // Then
-    stats must be (QueueStatistics(queue, 2L, 3L, 0L))
+    stats must be (QueueStatistics(queue, 2L, 4L, 3L))
   }
 }
 
