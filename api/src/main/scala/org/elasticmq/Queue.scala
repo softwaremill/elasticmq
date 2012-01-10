@@ -10,6 +10,10 @@ case class Queue(name: String,
 
 object Queue {
   def apply(name: String, defaultVisibilityTimeout: MillisVisibilityTimeout): Queue = {
-    Queue(name, defaultVisibilityTimeout, Duration.ZERO, UnspecifiedDate, UnspecifiedDate)
+    Queue(name, defaultVisibilityTimeout, Duration.ZERO)
+  }
+
+  def apply(name: String, defaultVisibilityTimeout: MillisVisibilityTimeout, delay: Duration): Queue = {
+    Queue(name, defaultVisibilityTimeout, delay, UnspecifiedDate, UnspecifiedDate)
   }
 }

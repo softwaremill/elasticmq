@@ -36,7 +36,7 @@ class NativeMessageClientImplTestSuite extends FunSuite with MustMatchers with M
     // Given
     val (messageClient, mockStorage, _) = createMessageClientWithMockStorage
     val delayedSeconds = 12
-    val q1 = Queue("q1", MillisVisibilityTimeout(123L), Duration.standardSeconds(delayedSeconds), null, null)
+    val q1 = Queue("q1", MillisVisibilityTimeout(123L), Duration.standardSeconds(delayedSeconds))
 
     // When
     val msg = messageClient.sendMessage(Message(q1, "abc"))

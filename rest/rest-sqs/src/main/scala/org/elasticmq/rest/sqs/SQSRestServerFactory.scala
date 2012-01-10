@@ -53,6 +53,7 @@ object Constants {
   val QueueNameParameter = "QueueName"
   val ReceiptHandlerParameter = "ReceiptHandle"
   val VisibilityTimeoutParameter = "VisibilityTimeout"
+  val DelayParameter = "DelaySeconds"
 }
 
 object ActionUtil {

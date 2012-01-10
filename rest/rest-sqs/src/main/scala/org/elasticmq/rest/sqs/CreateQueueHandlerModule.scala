@@ -11,11 +11,14 @@ import org.jboss.netty.handler.codec.http.HttpMethod._
 import Constants._
 import ActionUtil._
 import ParametersParserUtil._
+import org.joda.time.Duration
 
 trait CreateQueueHandlerModule { this: ClientModule with QueueURLModule with RequestHandlerLogicModule
   with AttributesModule =>
 
   val DefaultVisibilityTimeout = 30L;
+  val DefaultDelay = 0L;
+
   val CreateQueueAction = createAction("CreateQueue")
 
   val createQueueLogic = logicWithQueueName((queueName, request, parameters) => {
@@ -27,8 +30,13 @@ trait CreateQueueHandlerModule { this: ClientModule with QueueURLModule with Req
       (attributes.parseOptionalLong(VisibilityTimeoutParameter)
               .getOrElse(DefaultVisibilityTimeout));
 
+    val secondsDelay =
+      (attributes.parseOptionalLong(DelayParameter)
+        .getOrElse(DefaultDelay));
+
     val queue = queueOption.getOrElse(client.queueClient.createQueue(
-      Queue(queueName, MillisVisibilityTimeout.fromSeconds(secondsVisibilityTimeout))))
+      Queue(queueName, MillisVisibilityTimeout.fromSeconds(secondsVisibilityTimeout),
+        Duration.standardSeconds(secondsDelay))))
 
     if (queue.defaultVisibilityTimeout.seconds != secondsVisibilityTimeout) {
       // Special case: the queue existed, but has a different visibility timeout
