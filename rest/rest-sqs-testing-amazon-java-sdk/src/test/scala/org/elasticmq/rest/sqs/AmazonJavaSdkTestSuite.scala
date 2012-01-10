@@ -280,14 +280,16 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
     messageArray1.size() must be (1)
     val sent1 = messageArray1.get(0).getAttributes.get(sentTimestampAttribute).toLong
     sent1 must be >= (start)
-    messageArray1.get(0).getAttributes.get(approximateReceiveCountAttribute).toInt must be (0)
-    messageArray1.get(0).getAttributes.get(approximateFirstReceiveTimestampAttribute).toLong must be (0)
+    messageArray1.get(0).getAttributes.get(approximateReceiveCountAttribute).toInt must be (1)
+
+    val approxReceive1 = messageArray1.get(0).getAttributes.get(approximateFirstReceiveTimestampAttribute).toLong
+    approxReceive1 must be >= (start)
 
     messageArray2.size() must be (1)
     val sent2 = messageArray2.get(0).getAttributes.get(sentTimestampAttribute).toLong
     sent2 must be >= (start)
-    messageArray2.get(0).getAttributes.get(approximateReceiveCountAttribute).toInt must be (1)
-    messageArray2.get(0).getAttributes.get(approximateFirstReceiveTimestampAttribute).toLong must be >= (start)
+    messageArray2.get(0).getAttributes.get(approximateReceiveCountAttribute).toInt must be (2)
+    messageArray2.get(0).getAttributes.get(approximateFirstReceiveTimestampAttribute).toLong must be >= (approxReceive1)
 
     sent1 must be (sent2)
   }

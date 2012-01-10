@@ -62,12 +62,16 @@ class NativeMessageClientImplTestSuite extends FunSuite with MustMatchers with M
     when(mockStatisticsStorage.readMessageStatistics(m)).thenReturn(stats)
 
     // When
-    messageClient.receiveMessageWithStatistics(q1, DefaultVisibilityTimeout)
+    val messageStatsOption = messageClient.receiveMessageWithStatistics(q1, DefaultVisibilityTimeout)
 
     // Then
+    val expectedMessageStats = MessageStatistics(m, OnDateTimeReceived(NowAsDateTime), 1)
+
     verify(mockStatisticsStorage).writeMessageStatistics(argThat(new ArgumentMatcher[MessageStatistics]{
-      def matches(statsRef: AnyRef) = statsRef == MessageStatistics(m, OnDateTimeReceived(NowAsDateTime), 1)
+      def matches(statsRef: AnyRef) = statsRef == expectedMessageStats
     }))
+
+    messageStatsOption must be (Some(expectedMessageStats))
   }
 
   test("should correctly bump an already received message statistics") {
@@ -83,12 +87,16 @@ class NativeMessageClientImplTestSuite extends FunSuite with MustMatchers with M
     when(mockStatisticsStorage.readMessageStatistics(m)).thenReturn(stats)
 
     // When
-    messageClient.receiveMessageWithStatistics(q1, DefaultVisibilityTimeout)
+    val messageStatsOption = messageClient.receiveMessageWithStatistics(q1, DefaultVisibilityTimeout)
 
     // Then
+    val expectedMessageStats = MessageStatistics(m, stats.approximateFirstReceive, 8)
+
     verify(mockStatisticsStorage).writeMessageStatistics(argThat(new ArgumentMatcher[MessageStatistics]{
-      def matches(statsRef: AnyRef) = statsRef == MessageStatistics(m, stats.approximateFirstReceive, 8)
+      def matches(statsRef: AnyRef) = statsRef == expectedMessageStats
     }))
+
+    messageStatsOption must be (Some(expectedMessageStats))
   }
 
   test("should correctly set next delivery if receiving a message with default visibility timeout") {

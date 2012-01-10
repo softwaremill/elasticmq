@@ -74,7 +74,8 @@ trait NativeClientModule {
       val messageOption = doReceiveMessage(queue, visibilityTimeout)
       messageOption.foreach(message => volatileTaskScheduler.schedule {
         val stats = messageStatisticsStorage.readMessageStatistics(message)
-        doBumpStatistics(stats)
+        val bumpedStats = bumpMessageStatistics(stats)
+        messageStatisticsStorage.writeMessageStatistics(bumpedStats)
       })
       messageOption
     }
@@ -82,10 +83,11 @@ trait NativeClientModule {
     def receiveMessageWithStatistics(queue: Queue, visibilityTimeout: VisibilityTimeout) = {
       val message = doReceiveMessage(queue, visibilityTimeout)
       val stats = message.map(messageStatisticsStorage.readMessageStatistics(_))
-      stats.foreach(s => volatileTaskScheduler.schedule {
-        doBumpStatistics(s)
+      val bumpedStats = stats.map(bumpMessageStatistics(_))
+      bumpedStats.foreach(s => volatileTaskScheduler.schedule {
+        messageStatisticsStorage.writeMessageStatistics(s)
       })
-      stats
+      bumpedStats
     }
 
     private def doReceiveMessage(queue: Queue, visibilityTimeout: VisibilityTimeout) = {
@@ -95,11 +97,6 @@ trait NativeClientModule {
       }
 
       messageStorage.receiveMessage(queue, now, newNextDelivery)
-    }
-
-    private def doBumpStatistics(stats: MessageStatistics) {
-      val bumpedStats = bumpMessageStatistics(stats)
-      messageStatisticsStorage.writeMessageStatistics(bumpedStats)
     }
 
     def updateVisibilityTimeout(message: IdentifiableMessage, newVisibilityTimeout: MillisVisibilityTimeout) = {
