@@ -4,6 +4,7 @@ import java.util.UUID
 import org.elasticmq.storage.{MessageStatisticsStorageModule, QueueStorageModule, MessageStorageModule}
 import org.elasticmq.impl.scheduler.VolatileTaskSchedulerModule
 import org.elasticmq._
+import org.joda.time.Duration
 
 trait NativeClientModule {
   this: MessageStorageModule with QueueStorageModule with MessageStatisticsStorageModule
@@ -27,6 +28,13 @@ trait NativeClientModule {
 
     def updateDefaultVisibilityTimeout(queue: Queue, newDefaultVisibilityTimeout: MillisVisibilityTimeout) = {
       val newQueue = queue.copy(defaultVisibilityTimeout = newDefaultVisibilityTimeout)
+      val newQueueLastModified = updateQueueLastModified(newQueue)
+      queueStorage.updateQueue(newQueueLastModified)
+      newQueue
+    }
+
+    def updateDelay(queue: Queue, newDelay: Duration) = {
+      val newQueue = queue.copy(delay = newDelay)
       val newQueueLastModified = updateQueueLastModified(newQueue)
       queueStorage.updateQueue(newQueueLastModified)
       newQueue

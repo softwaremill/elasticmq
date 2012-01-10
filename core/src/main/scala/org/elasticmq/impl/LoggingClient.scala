@@ -2,6 +2,7 @@ package org.elasticmq.impl
 
 import org.apache.log4j.Logger
 import org.elasticmq._
+import org.joda.time.Duration
 
 class LoggingClient(delegate: Client) extends Client {
   def queueClient = new QueueClientLoggingWrapper(delegate.queueClient)
@@ -24,6 +25,11 @@ class QueueClientLoggingWrapper(delegate: QueueClient) extends QueueClient {
   def updateDefaultVisibilityTimeout(queue: Queue, newDefaultVisibilityTimeout: MillisVisibilityTimeout) = {
     log.debug("Updating default visibility timeout: "+queue+" with: "+newDefaultVisibilityTimeout);
     delegate.updateDefaultVisibilityTimeout(queue, newDefaultVisibilityTimeout)
+  }
+
+  def updateDelay(queue: Queue, newDelay: Duration) = {
+    log.debug("Updating delay for: "+queue+" with: "+newDelay);
+    delegate.updateDelay(queue, newDelay)
   }
 
   def deleteQueue(queue: Queue) {

@@ -7,10 +7,14 @@ import org.elasticmq.MillisVisibilityTimeout
 
 import Constants._
 import ActionUtil._
+import org.joda.time.Duration
 
 trait QueueAttributesHandlersModule { this: ClientModule with RequestHandlerLogicModule with AttributesModule =>
   object QueueWriteableAttributeNames {
     val VisibilityTimeoutAttribute = "VisibilityTimeout"
+    val DelaySecondsAttribute = "DelaySeconds"
+    
+    val AllWriteableAttributeNames = VisibilityTimeoutAttribute :: DelaySecondsAttribute :: Nil
   }
 
   object QueueReadableAttributeNames {
@@ -19,11 +23,11 @@ trait QueueAttributesHandlersModule { this: ClientModule with RequestHandlerLogi
     val CreatedTimestampAttribute = "CreatedTimestamp"
     val LastModifiedTimestampAttribute = "LastModifiedTimestamp"
 
-    val AllAttributeNames = QueueWriteableAttributeNames.VisibilityTimeoutAttribute ::
-            ApproximateNumberOfMessagesAttribute ::
+    val AllAttributeNames = QueueWriteableAttributeNames.AllWriteableAttributeNames ++
+            (ApproximateNumberOfMessagesAttribute ::
             ApproximateNumberOfMessagesNotVisibleAttribute ::
             CreatedTimestampAttribute ::
-            LastModifiedTimestampAttribute :: Nil
+            LastModifiedTimestampAttribute :: Nil)
   }
 
   val getQueueAttributesLogic = logicWithQueue((queue, request, parameters) => {
@@ -35,6 +39,7 @@ trait QueueAttributesHandlersModule { this: ClientModule with RequestHandlerLogi
 
       attributeValuesCalculator.calculate(attributeNames,
         (VisibilityTimeoutAttribute, ()=>queue.defaultVisibilityTimeout.seconds.toString),
+        (DelaySecondsAttribute, ()=>queue.delay.getStandardSeconds.toString),
         (ApproximateNumberOfMessagesAttribute, ()=>stats.approximateNumberOfVisibleMessages.toString),
         (ApproximateNumberOfMessagesNotVisibleAttribute, ()=>stats.approximateNumberOfInvisibleMessages.toString),
         (CreatedTimestampAttribute, ()=>(queue.created.getMillis/1000L).toString),
@@ -59,14 +64,19 @@ trait QueueAttributesHandlersModule { this: ClientModule with RequestHandlerLogi
 
   val setQueueAttributesLogic = logicWithQueue((queue, request, parameters) => {
     val attributes = attributeNameAndValuesReader.read(parameters)
-    val firstAttribute = attributes.iterator.next()
-    
-    if (attributes.size != 1 || firstAttribute._1 != QueueWriteableAttributeNames.VisibilityTimeoutAttribute) {
-      throw new SQSException("InvalidAttributeName")
-    }
 
-    client.queueClient.updateDefaultVisibilityTimeout(queue,
-      MillisVisibilityTimeout.fromSeconds(firstAttribute._2.toLong))
+    attributes.foreach({ case (attributeName, attributeValue) =>
+      attributeName match {
+        case QueueWriteableAttributeNames.VisibilityTimeoutAttribute => {
+          client.queueClient.updateDefaultVisibilityTimeout(queue,
+            MillisVisibilityTimeout.fromSeconds(attributeValue.toLong))
+        }
+        case QueueWriteableAttributeNames.DelaySecondsAttribute => {
+          client.queueClient.updateDelay(queue, Duration.standardSeconds(attributeValue.toLong))
+        }
+        case _ => throw new SQSException("InvalidAttributeName")
+      }
+    })
 
     <SetQueueAttributesResponse>
       <ResponseMetadata>
