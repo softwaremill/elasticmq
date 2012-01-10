@@ -9,7 +9,7 @@ import org.mockito.Matchers._
 import org.elasticmq._
 import org.elasticmq.storage.{MessageStatisticsStorageModule, MessageStorageModule, QueueStorageModule}
 import org.mockito.{Matchers, ArgumentMatcher}
-import org.joda.time.DateTime
+import org.joda.time.{Duration, DateTime}
 
 class NativeMessageClientImplTestSuite extends FunSuite with MustMatchers with MockitoSugar {
   val Now = 1316168602L
@@ -30,6 +30,23 @@ class NativeMessageClientImplTestSuite extends FunSuite with MustMatchers with M
     }))
     msg.nextDelivery must be (MillisNextDelivery(expectedNextDelivery))
     msg.created.getMillis must be (Now)
+  }
+
+  test("sending an immediate message to a delayed queue should properly set the next delivery") {
+    // Given
+    val (messageClient, mockStorage, _) = createMessageClientWithMockStorage
+    val delayedSeconds = 12
+    val q1 = Queue("q1", MillisVisibilityTimeout(123L), Duration.standardSeconds(delayedSeconds), null, null)
+
+    // When
+    val msg = messageClient.sendMessage(Message(q1, "abc"))
+
+    // Then
+    val expectedNextDelivery = Now + delayedSeconds*1000
+    verify(mockStorage).persistMessage(argThat(new ArgumentMatcher[SpecifiedMessage]{
+      def matches(msgRef: AnyRef) = msgRef.asInstanceOf[SpecifiedMessage].nextDelivery.millis == expectedNextDelivery
+    }))
+    msg.nextDelivery must be (MillisNextDelivery(expectedNextDelivery))
   }
 
   test("should correctly bump a never received message statistics") {

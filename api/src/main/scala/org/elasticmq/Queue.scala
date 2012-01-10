@@ -2,7 +2,6 @@ package org.elasticmq
 
 import org.joda.time.{Duration, DateTime}
 
-
 case class Queue(name: String,
                  defaultVisibilityTimeout: MillisVisibilityTimeout,
                  delay: Duration,
