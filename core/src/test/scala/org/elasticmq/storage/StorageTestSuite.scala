@@ -162,7 +162,7 @@ class QueueStorageTestSuite extends StorageTestSuite {
     val stats = queueStorage.queueStatistics(queue, 123L)
 
     // Then
-    stats must be (QueueStatistics(queue, 0L, 0L))
+    stats must be (QueueStatistics(queue, 0L, 0L, 0L))
   }
 
   test("queue statistics with messages") {
@@ -179,7 +179,7 @@ class QueueStorageTestSuite extends StorageTestSuite {
     val stats = queueStorage.queueStatistics(queue, 123L)
 
     // Then
-    stats must be (QueueStatistics(queue, 2L, 3L))
+    stats must be (QueueStatistics(queue, 2L, 3L, 0L))
   }
 }
 

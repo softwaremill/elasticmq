@@ -51,7 +51,8 @@ trait SquerylQueueStorageModule extends QueueStorageModule {
 
         QueueStatistics(queue,
           countMessagesRespectiveToDeliveryTime((_: NumericalExpression[Long]).lte(_)),
-          countMessagesRespectiveToDeliveryTime((_: NumericalExpression[Long]).gt(_)))
+          countMessagesRespectiveToDeliveryTime((_: NumericalExpression[Long]).gt(_)),
+          0L)
       }
     }
   }
