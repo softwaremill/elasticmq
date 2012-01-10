@@ -29,7 +29,7 @@ object BuildSettings {
 }
 
 object Dependencies {
-  val squeryl       = "org.squeryl"               %% "squeryl"              % "0.9.4"
+  val squeryl       = "org.squeryl"               %% "squeryl"              % "0.9.5-RC1"
   val h2            = "com.h2database"            % "h2"                    % "1.3.156"
   val c3p0          = "c3p0"                      % "c3p0"                  % "0.9.1.2"
   val jodaTime      = "joda-time"                 % "joda-time"             % "1.6.2" // when available use https://github.com/jorgeortiz85/scala-time
