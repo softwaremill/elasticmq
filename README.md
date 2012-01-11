@@ -36,8 +36,8 @@ Alternatively, you can use MySQL to store the datea:
 ElasticMQ dependencies in SBT
 -----------------------------
 
-    val elasticmqCore = "org.elasticmq" %% "core" % "0.1"
-    val elasticmqSqs  = "org.elasticmq" %% "rest-sqs" % "0.1"
+    val elasticmqCore = "org.elasticmq" %% "core" % "0.2"
+    val elasticmqSqs  = "org.elasticmq" %% "rest-sqs" % "0.2"
 
     val smlResolver = "SotwareMill Public Releases" at "http://tools.softwaremill.pl/nexus/content/repositories/snapshots/"
 
@@ -49,12 +49,12 @@ Dependencies:
     <dependency>
         <groupId>org.elasticmq</groupId>
         <artifactId>core_2.9.1</artifactId>
-        <version>0.1</version>
+        <version>0.2</version>
     </dependency>
     <dependency>
         <groupId>org.elasticmq</groupId>
         <artifactId>rest-sqs_2.9.1</artifactId>
-        <version>0.1</version>
+        <version>0.2</version>
     </dependency>
 
 And our repository:
@@ -68,9 +68,9 @@ And our repository:
 Current versions
 --------
 
-*Stable*: 0.1
+*Stable*: 0.2
 
-*Development*: 0.2-SNAPSHOT
+*Development*: 0.3-SNAPSHOT
 
 DB Schema
 ---------
