@@ -222,6 +222,9 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
     client.sendMessage(new SendMessageRequest(queueUrl, "Message 1"))
     client.sendMessage(new SendMessageRequest(queueUrl, "Message 2"))
     client.sendMessage(new SendMessageRequest(queueUrl, "Message 3"))
+    client.sendMessage(new SendMessageRequest(queueUrl, "Message 4").withDelaySeconds(2))
+    client.sendMessage(new SendMessageRequest(queueUrl, "Message 5").withDelaySeconds(2))
+    client.sendMessage(new SendMessageRequest(queueUrl, "Message 6").withDelaySeconds(2))
     receiveSingleMessage(queueUrl) // two should remain visible, the received one - invisible
 
     // When
@@ -230,6 +233,7 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
     // Then
     attributes.get("ApproximateNumberOfMessages") must be ("2")
     attributes.get("ApproximateNumberOfMessagesNotVisible") must be ("1")
+    attributes.get("ApproximateNumberOfMessagesDelayed") must be ("3")
     attributes must contain key ("CreatedTimestamp")
     attributes must contain key ("LastModifiedTimestamp")
     attributes must contain key (visibilityTimeoutAttribute)

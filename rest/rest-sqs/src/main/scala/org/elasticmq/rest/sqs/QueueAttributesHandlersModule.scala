@@ -20,12 +20,14 @@ trait QueueAttributesHandlersModule { this: ClientModule with RequestHandlerLogi
   object QueueReadableAttributeNames {
     val ApproximateNumberOfMessagesAttribute = "ApproximateNumberOfMessages"
     val ApproximateNumberOfMessagesNotVisibleAttribute = "ApproximateNumberOfMessagesNotVisible"
+    val ApproximateNumberOfMessagesDelayedAttribute = "ApproximateNumberOfMessagesDelayed"
     val CreatedTimestampAttribute = "CreatedTimestamp"
     val LastModifiedTimestampAttribute = "LastModifiedTimestamp"
 
     val AllAttributeNames = QueueWriteableAttributeNames.AllWriteableAttributeNames ++
             (ApproximateNumberOfMessagesAttribute ::
             ApproximateNumberOfMessagesNotVisibleAttribute ::
+            ApproximateNumberOfMessagesDelayedAttribute ::
             CreatedTimestampAttribute ::
             LastModifiedTimestampAttribute :: Nil)
   }
@@ -42,6 +44,7 @@ trait QueueAttributesHandlersModule { this: ClientModule with RequestHandlerLogi
         (DelaySecondsAttribute, ()=>queue.delay.getStandardSeconds.toString),
         (ApproximateNumberOfMessagesAttribute, ()=>stats.approximateNumberOfVisibleMessages.toString),
         (ApproximateNumberOfMessagesNotVisibleAttribute, ()=>stats.approximateNumberOfInvisibleMessages.toString),
+        (ApproximateNumberOfMessagesDelayedAttribute, ()=>stats.approximateNumberOfMessagesDelayed.toString),
         (CreatedTimestampAttribute, ()=>(queue.created.getMillis/1000L).toString),
         (LastModifiedTimestampAttribute, ()=>(queue.lastModified.getMillis/1000L).toString))
     }
