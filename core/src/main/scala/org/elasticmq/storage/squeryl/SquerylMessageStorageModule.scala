@@ -14,10 +14,20 @@ trait SquerylMessageStorageModule extends MessageStorageModule {
       }
     }
 
-    def updateMessage(message: SpecifiedMessage) {
+    def updateVisibilityTimeout(message: SpecifiedMessage, newNextDelivery: MillisNextDelivery) = {
+      val originalSquerylMessage = SquerylMessage.from(message)
+      val modifiedSquerylMessage = new SquerylMessage(
+        originalSquerylMessage.id,
+        originalSquerylMessage.queueName,
+        originalSquerylMessage.content,
+        newNextDelivery.millis,
+        originalSquerylMessage.createdTimestamp)
+
       transaction {
-        messages.update(SquerylMessage.from(message))
+        messages.update(modifiedSquerylMessage)
       }
+
+      modifiedSquerylMessage.toMessage(SquerylQueue.from(message.queue))
     }
 
     def deleteMessage(message: IdentifiableMessage) {

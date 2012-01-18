@@ -5,7 +5,7 @@ import org.elasticmq._
 trait MessageStorageModule {
   trait MessageStorage {
     def persistMessage(message: SpecifiedMessage)
-    def updateMessage(message: SpecifiedMessage)
+    def updateVisibilityTimeout(message: SpecifiedMessage, newNextDelivery: MillisNextDelivery): SpecifiedMessage
 
     def receiveMessage(queue: Queue, deliveryTime: Long, newNextDelivery: MillisNextDelivery): Option[SpecifiedMessage]
     def deleteMessage(message: IdentifiableMessage)

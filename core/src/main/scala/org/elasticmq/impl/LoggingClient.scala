@@ -66,7 +66,7 @@ class MessageClientLogginWrapper(delegate: MessageClient) extends MessageClient 
     delegate.receiveMessageWithStatistics(queue, visibilityTimeout)
   }
 
-  def updateVisibilityTimeout(message: IdentifiableMessage, newVisibilityTimeout: MillisVisibilityTimeout) = {
+  def updateVisibilityTimeout(message: SpecifiedMessage, newVisibilityTimeout: MillisVisibilityTimeout) = {
     log.debug("Updating visibility timeout for: "+message+" with: "+newVisibilityTimeout)
     delegate.updateVisibilityTimeout(message, newVisibilityTimeout)
   }

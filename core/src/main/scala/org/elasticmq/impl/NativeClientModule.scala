@@ -99,10 +99,8 @@ trait NativeClientModule {
       messageStorage.receiveMessage(queue, now, newNextDelivery)
     }
 
-    def updateVisibilityTimeout(message: IdentifiableMessage, newVisibilityTimeout: MillisVisibilityTimeout) = {
-      val newMessage = message.copy(nextDelivery = nextDelivery(newVisibilityTimeout.millis))
-      messageStorage.updateMessage(newMessage)
-      newMessage
+    def updateVisibilityTimeout(message: SpecifiedMessage, newVisibilityTimeout: MillisVisibilityTimeout) = {
+      messageStorage.updateVisibilityTimeout(message, nextDelivery(newVisibilityTimeout.millis))
     }
 
     def deleteMessage(message: IdentifiableMessage) {

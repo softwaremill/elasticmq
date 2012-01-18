@@ -312,10 +312,12 @@ class MessageStorageTestSuite extends StorageTestSuite {
     // Given
     val q1 = Queue("q1", MillisVisibilityTimeout(1L))
     queueStorage.persistQueue(q1)
-    messageStorage.persistMessage(Message(q1, "xyz", "123", MillisNextDelivery(123L)))
+    
+    val m = Message(q1, "xyz", "1234", MillisNextDelivery(123L))
+    messageStorage.persistMessage(m)
 
     // When
-    messageStorage.updateMessage(Message(q1, "xyz", "1234", MillisNextDelivery(345L)))
+    messageStorage.updateVisibilityTimeout(m, MillisNextDelivery(345L))
 
     // Then
     messageStorage.lookupMessage("xyz") must be (Some(Message(q1, "xyz", "1234", MillisNextDelivery(345L))))
