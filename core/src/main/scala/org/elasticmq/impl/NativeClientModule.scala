@@ -107,8 +107,8 @@ trait NativeClientModule {
       messageStorage.deleteMessage(message)
     }
 
-    def lookupMessage(id: String) = {
-      messageStorage.lookupMessage(id)
+    def lookupMessage(queue: Queue, id: String) = {
+      messageStorage.lookupMessage(queue, id)
     }
 
     def messageStatistics(message: SpecifiedMessage) = {

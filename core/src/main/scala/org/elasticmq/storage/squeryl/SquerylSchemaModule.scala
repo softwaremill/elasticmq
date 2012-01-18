@@ -21,6 +21,9 @@ trait SquerylSchemaModule {
     on(messages)(m => declare(
       m.content is(dbType("text"))
     ))
+
+    val queuesToMessages = oneToManyRelation(queues, messages).via((q, m) => q.id === m.queueName)
+    queuesToMessages.foreignKeyDeclaration.constrainReference(onDelete cascade)
   }
 }
 
@@ -51,7 +54,8 @@ class SquerylMessage(val id: String,
                      val content: String,
                      @Column("next_delivery") val nextDelivery: Long,
                      @Column("created_timestamp") val createdTimestamp: Long) extends KeyedEntity[String] {
-  def toMessage(q: SquerylQueue): SpecifiedMessage = Message(q.toQueue, Some(id), content,
+  def toMessage(q: SquerylQueue): SpecifiedMessage = toMessage(q.toQueue)
+  def toMessage(q: Queue): SpecifiedMessage = Message(q, Some(id), content,
     MillisNextDelivery(nextDelivery), new DateTime(createdTimestamp))
 }
 

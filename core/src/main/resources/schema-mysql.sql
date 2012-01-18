@@ -22,3 +22,5 @@ CREATE TABLE `emq_msg_stats` (
   `approximate_receive_count` int(11) NOT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=UTF8;
+
+ALTER TABLE emq_message ADD CONSTRAINT emq_message_to_emq_queue FOREIGN KEY (queue_name) REFERENCES emq_queue(id) ON DELETE CASCADE;

@@ -23,7 +23,7 @@ trait MessageClient {
   def receiveMessageWithStatistics(queue: Queue, visibilityTimeout: VisibilityTimeout): Option[MessageStatistics]
   def updateVisibilityTimeout(message: SpecifiedMessage, newVisibilityTimeout: MillisVisibilityTimeout): SpecifiedMessage
   def deleteMessage(message: IdentifiableMessage)
-  def lookupMessage(id: String): Option[SpecifiedMessage]
+  def lookupMessage(queue: Queue, id: String): Option[SpecifiedMessage]
   def messageStatistics(message: SpecifiedMessage): MessageStatistics
 }
 

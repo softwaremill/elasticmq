@@ -27,7 +27,7 @@ trait SquerylMessageStorageModule extends MessageStorageModule {
         messages.update(modifiedSquerylMessage)
       }
 
-      modifiedSquerylMessage.toMessage(SquerylQueue.from(message.queue))
+      modifiedSquerylMessage.toMessage(message.queue)
     }
 
     def deleteMessage(message: IdentifiableMessage) {
@@ -38,10 +38,9 @@ trait SquerylMessageStorageModule extends MessageStorageModule {
       }
     }
 
-    def lookupMessage(id: String) = {
+    def lookupMessage(queue: Queue, id: String) = {
       transaction {
-        from(messages, queues)((m, q) => where(m.id === id and queuesToMessagesCond(m, q)) select(m, q))
-                .headOption.map { case (m, q) => m.toMessage(q) }
+        from(messages)(m => where(m.id === id) select(m)).headOption.map(_.toMessage(queue))
       }
     }
 

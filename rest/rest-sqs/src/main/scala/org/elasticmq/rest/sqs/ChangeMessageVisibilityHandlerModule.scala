@@ -12,7 +12,7 @@ trait ChangeMessageVisibilityHandlerModule { this: ClientModule with RequestHand
 
   val changeMessageVisibilityLogic = logicWithQueue((queue, request, parameters) => {
     val visibilityTimeout = MillisVisibilityTimeout.fromSeconds(parameters(VisibilityTimeoutParameter).toLong)
-    val message = client.messageClient.lookupMessage(parameters(ReceiptHandlerParameter))
+    val message = client.messageClient.lookupMessage(queue, parameters(ReceiptHandlerParameter))
       .getOrElse(throw SQSException.invalidParameterValue)
     client.messageClient.updateVisibilityTimeout(message, visibilityTimeout)
 

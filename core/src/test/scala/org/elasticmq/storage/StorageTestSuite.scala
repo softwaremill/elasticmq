@@ -125,7 +125,7 @@ class QueueStorageTestSuite extends StorageTestSuite {
 
     // Then
     queueStorage.lookupQueue("q1") must be (None)
-    messageStorage.lookupMessage("xyz") must be (None)
+    messageStorage.lookupMessage(q1, "xyz") must be (None)
   }
 
   test("updating a queue") {
@@ -206,8 +206,12 @@ class QueueStorageTestSuite extends StorageTestSuite {
 
 class MessageStorageTestSuite extends StorageTestSuite {
   test("non-existent message should not be found") {
+    // Given
+    val q1 = Queue("q1", MillisVisibilityTimeout(1L))
+    queueStorage.persistQueue(q1)
+
     // When
-    val lookupResult = messageStorage.lookupMessage("xyz")
+    val lookupResult = messageStorage.lookupMessage(q1, "xyz")
 
     // Then
     lookupResult must be (None)
@@ -222,7 +226,7 @@ class MessageStorageTestSuite extends StorageTestSuite {
     messageStorage.persistMessage(message)
 
     // When
-    val lookupResult = messageStorage.lookupMessage("xyz")
+    val lookupResult = messageStorage.lookupMessage(q1, "xyz")
 
     // Then
     lookupResult must be (Some(message))
@@ -237,7 +241,7 @@ class MessageStorageTestSuite extends StorageTestSuite {
     messageStorage.persistMessage(Message(q1, "xyz", maxMessageContent, MillisNextDelivery(123L)))
 
     // When
-    val lookupResult = messageStorage.lookupMessage("xyz")
+    val lookupResult = messageStorage.lookupMessage(q1, "xyz")
 
     // Then
     lookupResult must be (Some(Message(q1, "xyz", maxMessageContent, MillisNextDelivery(123L))))
@@ -287,7 +291,7 @@ class MessageStorageTestSuite extends StorageTestSuite {
 
     // When
     messageStorage.receiveMessage(q1, 200L, MillisNextDelivery(567L))
-    val lookupResult = messageStorage.lookupMessage("xyz")
+    val lookupResult = messageStorage.lookupMessage(q1, "xyz")
 
     // Then
     lookupResult must be (Some(Message(q1, "xyz", "123", MillisNextDelivery(567L))))
@@ -320,7 +324,7 @@ class MessageStorageTestSuite extends StorageTestSuite {
     messageStorage.updateVisibilityTimeout(m, MillisNextDelivery(345L))
 
     // Then
-    messageStorage.lookupMessage("xyz") must be (Some(Message(q1, "xyz", "1234", MillisNextDelivery(345L))))
+    messageStorage.lookupMessage(q1, "xyz") must be (Some(Message(q1, "xyz", "1234", MillisNextDelivery(345L))))
   }
 
   test("message should be deleted") {
@@ -335,7 +339,7 @@ class MessageStorageTestSuite extends StorageTestSuite {
     messageStorage.deleteMessage(m1)
 
     // Then
-    messageStorage.lookupMessage("xyz") must be (None)
+    messageStorage.lookupMessage(q1, "xyz") must be (None)
   }
 }
 

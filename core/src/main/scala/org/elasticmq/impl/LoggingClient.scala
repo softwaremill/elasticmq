@@ -76,9 +76,9 @@ class MessageClientLogginWrapper(delegate: MessageClient) extends MessageClient 
     delegate.deleteMessage(message)
   }
 
-  def lookupMessage(id: String) = {
+  def lookupMessage(queue: Queue, id: String) = {
     log.debug("Looking up message: "+id)
-    delegate.lookupMessage(id)
+    delegate.lookupMessage(queue, id)
   }
 
   def messageStatistics(message: SpecifiedMessage) = {

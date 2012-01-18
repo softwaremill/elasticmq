@@ -10,7 +10,7 @@ trait MessageStorageModule {
     def receiveMessage(queue: Queue, deliveryTime: Long, newNextDelivery: MillisNextDelivery): Option[SpecifiedMessage]
     def deleteMessage(message: IdentifiableMessage)
 
-    def lookupMessage(id: String): Option[SpecifiedMessage]
+    def lookupMessage(queue: Queue, id: String): Option[SpecifiedMessage]
   }
 
   def messageStorage: MessageStorage

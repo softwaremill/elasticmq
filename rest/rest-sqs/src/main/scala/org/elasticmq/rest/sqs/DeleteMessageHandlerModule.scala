@@ -9,7 +9,7 @@ import org.elasticmq.rest.sqs.ActionUtil._
 trait DeleteMessageHandlerModule { this: ClientModule with RequestHandlerLogicModule =>
   val deleteMessageLogic = logicWithQueue((queue, request, parameters) => {
     val id = parameters(ReceiptHandlerParameter)
-    val messageOption = client.messageClient.lookupMessage(id)
+    val messageOption = client.messageClient.lookupMessage(queue, id)
     // No failure even if the message doesn't exist
     messageOption.foreach(client.messageClient.deleteMessage(_))
 
