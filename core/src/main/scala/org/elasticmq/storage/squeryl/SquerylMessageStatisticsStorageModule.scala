@@ -13,7 +13,7 @@ trait SquerylMessageStatisticsStorageModule extends MessageStatisticsStorageModu
         messageStatistics
           .lookup(message.id.get)
           .map(_.toMessageStatistics(message))
-          .getOrElse(MessageStatistics(message, NeverReceived, 0))
+          .getOrElse(MessageStatistics.emptyFor(message))
       }
     }
 
