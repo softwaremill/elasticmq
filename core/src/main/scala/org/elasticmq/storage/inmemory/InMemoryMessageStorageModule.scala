@@ -7,7 +7,7 @@ import java.util.concurrent.{PriorityBlockingQueue, ConcurrentHashMap}
 import java.lang.IllegalStateException
 
 trait InMemoryMessageStorageModule extends MessageStorageModule {
-  this: InMemoryStorageModel with InMemoryMessageStatisticsStorageModule =>
+  this: InMemoryStorageModelModule with InMemoryMessageStatisticsStorageModule =>
 
   class InMemoryMessageStorage extends MessageStorage {
     private val messageStores = JavaConversions.asScalaConcurrentMap(

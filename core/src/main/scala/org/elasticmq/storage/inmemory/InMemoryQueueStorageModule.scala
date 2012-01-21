@@ -6,7 +6,7 @@ import org.elasticmq.{QueueStatistics, Queue}
 import org.elasticmq.storage.{MessageStatisticsStorageModule, QueueStorageModule}
 
 trait InMemoryQueueStorageModule extends QueueStorageModule {
-  this: InMemoryStorageModel with InMemoryMessageStorageModule with MessageStatisticsStorageModule =>
+  this: InMemoryStorageModelModule with InMemoryMessageStorageModule with MessageStatisticsStorageModule =>
 
   class InMemoryQueueStorage extends QueueStorage {
     val queuesByName = JavaConversions.asScalaConcurrentMap(new ConcurrentHashMap[String, Queue])

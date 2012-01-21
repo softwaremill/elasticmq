@@ -4,7 +4,7 @@ import org.joda.time.DateTime
 import org.elasticmq._
 import java.util.concurrent.atomic.{AtomicReference, AtomicLong}
 
-trait InMemoryStorageModel {
+trait InMemoryStorageModelModule {
   case class InMemoryMessage(queue: String, id: String, nextDelivery: AtomicLong, content: String, created: DateTime,
                              nextDeliveryState: AtomicReference[MessageNextDeliveryState])
     extends Comparable[InMemoryMessage] {

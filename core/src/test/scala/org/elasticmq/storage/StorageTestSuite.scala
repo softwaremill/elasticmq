@@ -1,6 +1,6 @@
 package org.elasticmq.storage
 
-import inmemory.{InMemoryStorageModel, InMemoryMessageStatisticsStorageModule, InMemoryMessageStorageModule, InMemoryQueueStorageModule}
+import inmemory.{InMemoryStorageModelModule, InMemoryMessageStatisticsStorageModule, InMemoryMessageStorageModule, InMemoryQueueStorageModule}
 import org.scalatest.matchers.MustMatchers
 import org.scalatest._
 import org.elasticmq._
@@ -36,7 +36,7 @@ trait StorageTestSuite extends FunSuite with MustMatchers with OneInstancePerTes
         new InMemoryQueueStorageModule with
           InMemoryMessageStorageModule with
           InMemoryMessageStatisticsStorageModule with
-          InMemoryStorageModel
+          InMemoryStorageModelModule
       },
       () => ()) :: Nil
 
