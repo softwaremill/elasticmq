@@ -1,6 +1,6 @@
 package org.elasticmq.storage
 
-import inmemory.{InMemoryStorageModelModule, InMemoryMessageStatisticsStorageModule, InMemoryMessageStorageModule, InMemoryQueueStorageModule}
+import inmemory._
 import org.scalatest.matchers.MustMatchers
 import org.scalatest._
 import org.elasticmq._
@@ -10,15 +10,10 @@ import org.joda.time.{Duration, DateTime}
 
 trait StorageTestSuite extends FunSuite with MustMatchers with OneInstancePerTest {
   private case class StorageTestSetup(storageName: String,
-                                      initialize: () => MessageStorageModule with QueueStorageModule with MessageStatisticsStorageModule,
+                                      initialize: () => StorageModule,
                                       shutdown: () => Unit)
 
-  val squerylEnv =
-    new SquerylInitializerModule
-      with SquerylMessageStorageModule
-      with SquerylQueueStorageModule
-      with SquerylMessageStatisticsStorageModule
-      with SquerylSchemaModule
+  val squerylEnv = new SquerylStorageModule {}
 
   val squerylDBConfiguration = DBConfiguration(new H2Adapter,
     "jdbc:h2:mem:"+this.getClass.getName+";DB_CLOSE_DELAY=-1",
@@ -32,12 +27,7 @@ trait StorageTestSuite extends FunSuite with MustMatchers with OneInstancePerTes
       },
       () => squerylEnv.shutdownSqueryl(squerylDBConfiguration.drop)) ::
     StorageTestSetup("In memory",
-      () => {
-        new InMemoryQueueStorageModule with
-          InMemoryMessageStorageModule with
-          InMemoryMessageStatisticsStorageModule with
-          InMemoryStorageModelModule
-      },
+      () => new InMemoryStorageModule {},
       () => ()) :: Nil
 
   private var _queueStorage: QueueStorageModule#QueueStorage = null
