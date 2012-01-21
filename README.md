@@ -3,7 +3,7 @@ ElasticMQ
 
 ElasticMQ is a simple message queue system, written entirely in [Scala](http://scala-lang.org).
 
-Currently messages are persisted in a database (by default an in-memory H2 instance)
+Currently messages are stored either in-memory, or persisted in a database (MySQL, Postgres, H2, ...)
 using [Squeryl](http://squeryl.org/).
 
 ElasticMQ implements a subset of the [SQS](http://aws.amazon.com/sqs/) REST interface,

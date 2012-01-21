@@ -4,7 +4,9 @@ import org.squeryl.internals.DatabaseAdapter
 import org.squeryl.adapters.{MySQLAdapter, H2Adapter}
 import org.elasticmq.impl.{NowModule, NativeClientModule, NodeImpl}
 import org.elasticmq.impl.scheduler.BackgroundVolatileTaskSchedulerModule
+import storage.inmemory.InMemoryStorageModule
 import storage.squeryl._
+import storage.StorageModule
 
 object NodeBuilder {
   def withMySQLStorage(dbName: String, username: String, password: String,
@@ -18,23 +20,38 @@ object NodeBuilder {
       create, drop))
   }
 
-  def withInMemoryStorage(inMemoryDatabaseName: String = "elasticmq") = {
+  def withH2InMemoryStorage(inMemoryDatabaseName: String = "elasticmq") = {
     withDatabaseStorage(DBConfiguration(new H2Adapter,
       "jdbc:h2:mem:"+inMemoryDatabaseName+";DB_CLOSE_DELAY=-1",
       "org.h2.Driver",
       None, true, true))
   }
 
+  def withInMemoryStorage() = {
+    new InMemoryNodeBuilder()
+  }
+
   def withDatabaseStorage(dbConfiguration: DBConfiguration) = {
     new NodeBuilderWithStorageLifecycle(dbConfiguration)
   }
 
+  trait NodeLogicModules extends NativeClientModule
+    with NowModule
+    with BackgroundVolatileTaskSchedulerModule {
+    this: StorageModule =>
+  }
+
+  class InMemoryNodeBuilder() {
+    def build() = {
+      val env = new NodeLogicModules with InMemoryStorageModule
+
+      new NodeImpl(env.nativeClient, () => ())
+    }
+  }
+
   class NodeBuilderWithStorageLifecycle(dbConfiguration: DBConfiguration) {
     def build() = {
-      val env = new NativeClientModule
-              with SquerylStorageModule
-              with NowModule
-              with BackgroundVolatileTaskSchedulerModule
+      val env = new NodeLogicModules with SquerylStorageModule
 
       env.initializeSqueryl(dbConfiguration)
       new NodeImpl(env.nativeClient, () => env.shutdownSqueryl(dbConfiguration.drop))
