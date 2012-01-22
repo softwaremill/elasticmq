@@ -1,19 +1,20 @@
 package org.elasticmq
 
-import org.joda.time.{Duration, DateTime}
+import org.joda.time.{DateTime, Duration}
 
-case class Queue(name: String,
-                 defaultVisibilityTimeout: MillisVisibilityTimeout,
-                 delay: Duration,
-                 created: DateTime,
-                 lastModified: DateTime)
+trait Queue extends QueueOperations {
+  def name: String
+  def defaultVisibilityTimeout: MillisVisibilityTimeout
+  def delay: Duration
+  def created: DateTime
+  def lastModified: DateTime
+}
 
-object Queue {
-  def apply(name: String, defaultVisibilityTimeout: MillisVisibilityTimeout): Queue = {
-    Queue(name, defaultVisibilityTimeout, Duration.ZERO)
-  }
+case class QueueBuilder private (name: String, defaultVisibilityTimeout: VisibilityTimeout, delay: Duration) {
+  def withDefaultVisibilityTimeout(defaultVisibilityTimeout: VisibilityTimeout) = this.copy(defaultVisibilityTimeout = defaultVisibilityTimeout)
+  def withDelay(duration: Duration) = this.copy(delay = delay)
+}
 
-  def apply(name: String, defaultVisibilityTimeout: MillisVisibilityTimeout, delay: Duration): Queue = {
-    Queue(name, defaultVisibilityTimeout, delay, UnspecifiedDate, UnspecifiedDate)
-  }
+object QueueBuilder {
+  def apply(name: String): QueueBuilder = QueueBuilder(name, DefaultVisibilityTimeout, Duration.ZERO)
 }

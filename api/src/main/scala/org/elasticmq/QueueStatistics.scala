@@ -1,6 +1,5 @@
 package org.elasticmq
 
-case class QueueStatistics(queue: Queue,
-                           approximateNumberOfVisibleMessages: Long,
+case class QueueStatistics(approximateNumberOfVisibleMessages: Long,
                            approximateNumberOfInvisibleMessages: Long,
                            approximateNumberOfMessagesDelayed: Long)

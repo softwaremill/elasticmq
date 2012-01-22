@@ -2,21 +2,22 @@ package org.elasticmq
 
 import org.joda.time.DateTime
 
-case class Message[+ID <: Option[String], +NEXT_DELIVERY <: NextDelivery](queue: Queue,
-                                                                          id: ID,
-                                                                          content: String,
-                                                                          nextDelivery: NEXT_DELIVERY,
-                                                                          created: DateTime)
+trait Message extends MessageOperations {
+  def content: String
+  def id: MessageId
+  def nextDelivery: MillisNextDelivery
+  def created: DateTime
+}
 
-object Message {
-  def apply[ID <: Option[String], NEXT_DELIVERY <: NextDelivery](queue: Queue, id: ID, content: String,
-                                           nextDelivery: NEXT_DELIVERY): Message[ID, NEXT_DELIVERY] =
-    Message(queue, id, content, nextDelivery, UnspecifiedDate)
+sealed case class MessageId(id: String) {
+  override def toString = id
+}
 
-  def apply[NEXT_DELIVERY <: NextDelivery](queue: Queue, id: String, content: String,
-                                           nextDelivery: NEXT_DELIVERY): Message[Some[String], NEXT_DELIVERY] =
-    Message(queue, Some(id), content, nextDelivery)
+case class MessageBuilder private (content: String, id: Option[MessageId], nextDelivery: NextDelivery) {
+  def withId(id: String) = this.copy(id = Some(MessageId(id)))
+  def withNextDelivery(nextDelivery: NextDelivery) = this.copy(nextDelivery = nextDelivery)
+}
 
-  def apply(queue: Queue, content: String): Message[Option[String], NextDelivery] =
-    Message[Option[String], NextDelivery](queue, None, content, ImmediateNextDelivery)
+object MessageBuilder {
+  def apply(content: String): MessageBuilder = MessageBuilder(content, None, ImmediateNextDelivery)
 }
