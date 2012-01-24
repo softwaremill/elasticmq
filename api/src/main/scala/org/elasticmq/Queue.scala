@@ -10,11 +10,18 @@ trait Queue extends QueueOperations {
   def lastModified: DateTime
 }
 
-case class QueueBuilder private (name: String, defaultVisibilityTimeout: VisibilityTimeout, delay: Duration) {
-  def withDefaultVisibilityTimeout(defaultVisibilityTimeout: VisibilityTimeout) = this.copy(defaultVisibilityTimeout = defaultVisibilityTimeout)
+case class QueueBuilder private (name: String, defaultVisibilityTimeout: MillisVisibilityTimeout, delay: Duration) {
+  def withDefaultVisibilityTimeout(defaultVisibilityTimeout: MillisVisibilityTimeout) =
+    this.copy(defaultVisibilityTimeout = defaultVisibilityTimeout)
+
   def withDelay(duration: Duration) = this.copy(delay = delay)
 }
 
 object QueueBuilder {
-  def apply(name: String): QueueBuilder = QueueBuilder(name, DefaultVisibilityTimeout, Duration.ZERO)
+  val DefaultVisibilityTimeout = 10000L
+
+  def apply(name: String): QueueBuilder = QueueBuilder(
+    name,
+    MillisVisibilityTimeout(DefaultVisibilityTimeout),
+    Duration.ZERO)
 }
