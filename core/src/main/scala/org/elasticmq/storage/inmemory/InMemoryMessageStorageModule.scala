@@ -10,7 +10,7 @@ trait InMemoryMessageStorageModule extends MessageStorageModule {
   this: InMemoryStorageModelModule with InMemoryMessageStatisticsStorageModule with InMemoryMessageStorageRegistryModule =>
 
   class OneQueueInMemoryMessageStorage(queueName: String) extends MessageStorage {
-    val messagesById = JavaConversions.asScalaConcurrentMap(new ConcurrentHashMap[String, InMemoryMessage])
+    val messagesById = JavaConversions.asScalaConcurrentMap(new ConcurrentHashMap[MessageId, InMemoryMessage])
     val messageQueue = new PriorityBlockingQueue[InMemoryMessage]()
 
     def persistMessage(message: MessageData) {
@@ -18,13 +18,13 @@ trait InMemoryMessageStorageModule extends MessageStorageModule {
 
       // First putting in the map so that the message is not considered deleted if it's received immediately after
       // putting in the queue.
-      messagesById.put(inMemoryMessage.id, inMemoryMessage)
+      messagesById.put(MessageId(inMemoryMessage.id), inMemoryMessage)
       messageQueue.add(inMemoryMessage)
     }
 
     def updateVisibilityTimeout(messageId: MessageId, newNextDelivery: MillisNextDelivery) {
       val inMemoryMessage = messagesById
-        .get(messageId.id)
+        .get(messageId)
         .getOrElse(throw new MessageDoesNotExistException(queueName, messageId))
 
       // TODO: in fact we only support *increasing* the next delivery
@@ -58,7 +58,7 @@ trait InMemoryMessageStorageModule extends MessageStorageModule {
                 // Putting the message back. That's the youngest message, so there is no message that can be received.
                 messageQueue.add(message)
                 None
-              } else if (messagesById.contains(message.id)) {
+              } else if (messagesById.contains(MessageId(message.id))) {
                 // Putting the message again into the queue, with a new next delivery
                 message.nextDelivery.set(newNextDelivery.millis)
                 messageQueue.add(message)
@@ -76,13 +76,13 @@ trait InMemoryMessageStorageModule extends MessageStorageModule {
 
     def deleteMessage(messageId: MessageId) {
       // Just removing the message from the map. The message will be removed from the queue when trying to receive it.
-      messagesById.remove(messageId.id)
+      messagesById.remove(messageId)
 
       messageStatisticsStorage(queueName).removeMessageStatistics(messageId)
     }
 
     def lookupMessage(messageId: MessageId) = {
-      messagesById.get(messageId.id).map(_.toMessageData)
+      messagesById.get(messageId).map(_.toMessageData)
     }
   }
 
