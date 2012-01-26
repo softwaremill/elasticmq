@@ -23,7 +23,7 @@ trait NativeHelpersModule {
 
     def data_=(theData: T) { currentData.set(theData) }
 
-    def clearData() { currentData.set(null) }
+    def clearData() { currentData.set(null.asInstanceOf[T]) }
   }
 
   def computeNextDelivery(delta: Long): MillisNextDelivery = {

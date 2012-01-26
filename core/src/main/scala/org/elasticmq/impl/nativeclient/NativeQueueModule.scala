@@ -11,7 +11,7 @@ trait NativeQueueModule {
   this: StorageModule with NativeMessageModule with NativeHelpersModule
     with NowModule with VolatileTaskSchedulerModule =>
 
-  class NativeQueue(name: String) extends Queue with WithLazyAtomicData[QueueData] {
+  class NativeQueue(val name: String) extends Queue with WithLazyAtomicData[QueueData] {
     def this(queueData: QueueData) = {
       this(queueData.name)
       data = queueData
