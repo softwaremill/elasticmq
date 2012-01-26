@@ -1,5 +1,7 @@
 package org.elasticmq
 
+import org.joda.time.Duration
+
 trait QueueOperations {
   def sendMessage(content: String): Message = sendMessage(MessageBuilder(content))
   def sendMessage(messageBuilder: MessageBuilder): Message
@@ -9,6 +11,9 @@ trait QueueOperations {
   def receiveMessageWithStatistics(visibilityTimeout: VisibilityTimeout): Option[Pair[Message, MessageStatistics]]
 
   def lookupMessage(id: MessageId): Option[Message]
+
+  def updateDefaultVisibilityTimeout(defaultVisibilityTimeout: MillisVisibilityTimeout): Queue
+  def updateDelay(delay: Duration): Queue
 
   def fetchStatistics(): QueueStatistics
   def delete()
