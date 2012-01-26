@@ -10,12 +10,8 @@ object TwoClientsPerformanceTest {
   val client = node.nativeClient
 
   val testQueueName = "twoClientsPerformanceTest"
-  val testQueue = {
-    client.queueClient.lookupQueue(testQueueName) match {
-      case Some(queue) => queue
-      case None => client.queueClient.createQueue(Queue(testQueueName, MillisVisibilityTimeout(10000)))
-    }
-  }
+  val testQueue = client.lookupOrCreateQueue(QueueBuilder(testQueueName)
+    .withDefaultVisibilityTimeout(MillisVisibilityTimeout(10000L)))
 
   def shutdown() {
     node.shutdown()
@@ -36,9 +32,9 @@ object TwoClientsPerformanceTest {
   object Receiver {
     def run() {
       def receiveLoop(count: Int): Int = {
-        client.messageClient.receiveMessage(testQueue, DefaultVisibilityTimeout) match {
+        testQueue.receiveMessage(DefaultVisibilityTimeout) match {
           case Some(message) => {
-            client.messageClient.deleteMessage(message)
+            message.delete()
             receiveLoop(count+1)
           }
           case None => count
@@ -55,7 +51,7 @@ object TwoClientsPerformanceTest {
     def run(iterations: Int) {
       timeWithOpsPerSecond("Send", _ => {
         for (i <- 1 to iterations) {
-          client.messageClient.sendMessage(Message(testQueue, "message"+i))
+          testQueue.sendMessage("message"+i)
         }
 
         iterations
