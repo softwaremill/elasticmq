@@ -5,6 +5,7 @@ import org.elasticmq._
 import storage.MessageStorageModule
 import java.util.concurrent.{PriorityBlockingQueue, ConcurrentHashMap}
 import org.elasticmq.impl.MessageData
+import scala.annotation.tailrec
 
 trait InMemoryMessageStorageModule extends MessageStorageModule {
   this: InMemoryStorageModelModule with InMemoryMessageStatisticsStorageModule with InMemoryMessageStorageRegistryModule =>
@@ -37,8 +38,8 @@ trait InMemoryMessageStorageModule extends MessageStorageModule {
       inMemoryMessage.nextDeliveryState.set(NextDeliveryUpdated)
     }
 
-    // TODO: tailrec
-    def receiveMessage(deliveryTime: Long, newNextDelivery: MillisNextDelivery): Option[MessageData] = {
+    @tailrec
+    final def receiveMessage(deliveryTime: Long, newNextDelivery: MillisNextDelivery): Option[MessageData] = {
       messageQueue.poll() match {
         case null => None
         case message => {
