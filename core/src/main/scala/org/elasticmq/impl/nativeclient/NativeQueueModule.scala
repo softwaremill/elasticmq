@@ -11,14 +11,14 @@ trait NativeQueueModule {
   this: StorageModule with NativeMessageModule with NativeHelpersModule
     with NowModule with VolatileTaskSchedulerModule =>
 
-  class NativeQueue(val name: String) extends Queue with WithLazyAtomicData[QueueData] {
+  class NativeQueue(queueName: String) extends Queue with WithLazyAtomicData[QueueData] {
     def this(queueData: QueueData) = {
       this(queueData.name)
       data = queueData
     }
 
-    def initData = queueStorage.lookupQueue(name)
-      .getOrElse(throw new QueueDoesNotExistException(name))
+    def initData = queueStorage.lookupQueue(queueName)
+      .getOrElse(throw new QueueDoesNotExistException(queueName))
 
     // Operations
 
@@ -36,35 +36,35 @@ trait NativeQueueModule {
 
       val message = MessageData(messageId, messageBuilder.content, nextDelivery, nowAsDateTime)
 
-      messageStorage(name).persistMessage(message)
-      new NativeMessage(name, message)
+      messageStorage(queueName).persistMessage(message)
+      new NativeMessage(queueName, message)
     }
 
     def receiveMessage(visibilityTimeout: VisibilityTimeout) = {
       val messageOption = doReceiveMessage(visibilityTimeout)
 
       messageOption.foreach(message => volatileTaskScheduler.schedule {
-        val statsStorage = messageStatisticsStorage(name)
+        val statsStorage = messageStatisticsStorage(queueName)
         val stats = statsStorage.readMessageStatistics(message.id)
         val bumpedStats = bumpMessageStatistics(stats)
         statsStorage.writeMessageStatistics(message.id, bumpedStats)
       })
 
-      messageOption.map(new NativeMessage(name, _))
+      messageOption.map(new NativeMessage(queueName, _))
     }
 
     def receiveMessageWithStatistics(visibilityTimeout: VisibilityTimeout) = {
       val messageOption = doReceiveMessage(visibilityTimeout)
 
       messageOption.map(message => {
-        val statsStorage = messageStatisticsStorage(name)
+        val statsStorage = messageStatisticsStorage(queueName)
         val stats = statsStorage.readMessageStatistics(message.id)
         val bumpedStats = bumpMessageStatistics(stats)
         volatileTaskScheduler.schedule {
           statsStorage.writeMessageStatistics(message.id, bumpedStats)
         }
 
-        (new NativeMessage(name, message), bumpedStats)
+        (new NativeMessage(queueName, message), bumpedStats)
       })
     }
 
@@ -74,11 +74,11 @@ trait NativeQueueModule {
         case MillisVisibilityTimeout(millis) => computeNextDelivery(millis)
       }
 
-      messageStorage(name).receiveMessage(now, newNextDelivery)
+      messageStorage(queueName).receiveMessage(now, newNextDelivery)
     }
 
     def lookupMessage(messageId: MessageId) = {
-      messageStorage(name).lookupMessage(messageId).map(new NativeMessage(name, _))
+      messageStorage(queueName).lookupMessage(messageId).map(new NativeMessage(queueName, _))
     }
 
     def updateDefaultVisibilityTimeout(defaultVisibilityTimeout: MillisVisibilityTimeout): Queue = {
@@ -91,10 +91,10 @@ trait NativeQueueModule {
       fetchQueue()
     }
 
-    def fetchStatistics() = queueStorage.queueStatistics(name, now)
+    def fetchStatistics() = queueStorage.queueStatistics(queueName, now)
 
     def delete() {
-      queueStorage.deleteQueue(name)
+      queueStorage.deleteQueue(queueName)
     }
 
     def fetchQueue() = {
@@ -102,9 +102,11 @@ trait NativeQueueModule {
       this
     }
 
-    def messageOperations(id: MessageId) = new NativeMessage(name, id)
+    def messageOperations(id: MessageId) = new NativeMessage(queueName, id)
 
     // Queue
+
+    def name = queueName
 
     def defaultVisibilityTimeout = data.defaultVisibilityTimeout
 
