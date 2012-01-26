@@ -1,29 +1,26 @@
 package org.elasticmq.storage.inmemory
 
 import org.elasticmq.storage.MessageStatisticsStorageModule
-import collection.JavaConversions
-import java.util.concurrent.ConcurrentHashMap
 import org.elasticmq._
 
 trait InMemoryMessageStatisticsStorageModule extends MessageStatisticsStorageModule {
-  this: InMemoryMessageStorageModule => // TODO: remove the circular dependency
+  this: InMemoryMessageStorageRegistryModule =>
   
-  class InMemoryMessageStatisticsStorage extends MessageStatisticsStorage {
-    val messageStats = JavaConversions.asScalaConcurrentMap(new ConcurrentHashMap[String, MessageStatistics])
+  class InMemoryMessageStatisticsStorage(queueName: String) extends MessageStatisticsStorage {
+    // TODO: make nicer
 
-    def readMessageStatistics(message: SpecifiedMessage) = messageStats.get(message.id.get)
-      .getOrElse(MessageStatistics(message, NeverReceived, 0))
+    def readMessageStatistics(messageId: MessageId) = storageRegistry.messageStats.get(messageId.id)
+      .getOrElse(MessageStatistics(NeverReceived, 0))
 
-    def writeMessageStatistics(messageStatistics: MessageStatistics) {
+    def writeMessageStatistics(messageId: MessageId, messageStatistics: MessageStatistics) {
       // TODO: checking if the message isn't deleted.
-      if (messageStorage.getStoreForQueue(messageStatistics.message.queue.name).messagesById
-        .get(messageStatistics.message.id.get) != None) {
-        messageStats.put(messageStatistics.message.id.get, messageStatistics)
+      if (storageRegistry.getStoreForQueue(queueName).messagesById.get(messageId.id) != None) {
+        storageRegistry.messageStats.put(messageId.id, messageStatistics)
       }
     }
     
-    def removeMessageStatistics(message: IdentifiableMessage) = messageStats.remove(message.id.get)
+    def removeMessageStatistics(messageId: MessageId) = storageRegistry.messageStats.remove(messageId.id)
   }
 
-  val messageStatisticsStorage = new InMemoryMessageStatisticsStorage
+  def messageStatisticsStorage(queueName: String) = new InMemoryMessageStatisticsStorage(queueName)
 }

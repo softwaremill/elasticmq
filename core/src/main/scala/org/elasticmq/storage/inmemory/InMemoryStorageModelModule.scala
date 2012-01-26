@@ -3,21 +3,21 @@ package org.elasticmq.storage.inmemory
 import org.joda.time.DateTime
 import org.elasticmq._
 import java.util.concurrent.atomic.{AtomicReference, AtomicLong}
+import org.elasticmq.impl.MessageData
 
 trait InMemoryStorageModelModule {
-  case class InMemoryMessage(queue: String, id: String, nextDelivery: AtomicLong, content: String, created: DateTime,
+  case class InMemoryMessage(id: String, nextDelivery: AtomicLong, content: String, created: DateTime,
                              nextDeliveryState: AtomicReference[MessageNextDeliveryState])
     extends Comparable[InMemoryMessage] {
 
     def compareTo(other: InMemoryMessage) = nextDelivery.get().compareTo(other.nextDelivery.get())
 
-    def toMessage(queue: Queue) = Message(queue, Some(id), content, MillisNextDelivery(nextDelivery.get()), created)
+    def toMessageData = MessageData(MessageId(id), content, MillisNextDelivery(nextDelivery.get()), created)
   }
   
   object InMemoryMessage {
-    def from(message: SpecifiedMessage) = InMemoryMessage(
-      message.queue.name,
-      message.id.get,
+    def from(message: MessageData) = InMemoryMessage(
+      message.id.id,
       new AtomicLong(message.nextDelivery.millis),
       message.content,
       message.created,

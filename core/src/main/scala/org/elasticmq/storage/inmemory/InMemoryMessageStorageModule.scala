@@ -4,47 +4,16 @@ import collection.JavaConversions
 import org.elasticmq._
 import storage.MessageStorageModule
 import java.util.concurrent.{PriorityBlockingQueue, ConcurrentHashMap}
-import java.lang.IllegalStateException
+import org.elasticmq.impl.MessageData
 
 trait InMemoryMessageStorageModule extends MessageStorageModule {
-  this: InMemoryStorageModelModule with InMemoryMessageStatisticsStorageModule =>
+  this: InMemoryStorageModelModule with InMemoryMessageStatisticsStorageModule with InMemoryMessageStorageRegistryModule =>
 
-  class InMemoryMessageStorage extends MessageStorage {
-    private val messageStores = JavaConversions.asScalaConcurrentMap(
-      new ConcurrentHashMap[String, OneQueueInMemoryMessageStorage])
-
-    def persistMessage(message: SpecifiedMessage) { getStoreForQueue(message.queue.name).persistMessage(message) }
-
-    def updateVisibilityTimeout(message: SpecifiedMessage, newNextDelivery: MillisNextDelivery) =
-      getStoreForQueue(message.queue.name).updateVisibilityTimeout(message, newNextDelivery)
-
-    def receiveMessage(queue: Queue, deliveryTime: Long, newNextDelivery: MillisNextDelivery) =
-      getStoreForQueue(queue.name).receiveMessage(queue, deliveryTime, newNextDelivery)
-
-    def deleteMessage(message: IdentifiableMessage) {
-      getStoreForQueue(message.queue.name).deleteMessage(message)
-    }
-
-    def lookupMessage(queue: Queue, id: String) = getStoreForQueue(queue.name).lookupMessage(queue, id)
-
-    def createStorForQueue(queue: String) {
-      messageStores.put(queue, new OneQueueInMemoryMessageStorage())
-    }
-
-    def deleteStoreForQueue(queue: String) {
-      messageStores.remove(queue)
-    }
-
-    def getStoreForQueue(queue: String): OneQueueInMemoryMessageStorage = {
-      messageStores.get(queue).getOrElse(throw new IllegalStateException("Unknown queue: "+queue))
-    }
-  }
-  
-  class OneQueueInMemoryMessageStorage() extends MessageStorage {
+  class OneQueueInMemoryMessageStorage(queueName: String) extends MessageStorage {
     val messagesById = JavaConversions.asScalaConcurrentMap(new ConcurrentHashMap[String, InMemoryMessage])
     val messageQueue = new PriorityBlockingQueue[InMemoryMessage]()
 
-    def persistMessage(message: SpecifiedMessage) {
+    def persistMessage(message: MessageData) {
       val inMemoryMessage = InMemoryMessage.from(message)
 
       // First putting in the map so that the message is not considered deleted if it's received immediately after
@@ -53,10 +22,10 @@ trait InMemoryMessageStorageModule extends MessageStorageModule {
       messageQueue.add(inMemoryMessage)
     }
 
-    def updateVisibilityTimeout(message: SpecifiedMessage, newNextDelivery: MillisNextDelivery) = {
+    def updateVisibilityTimeout(messageId: MessageId, newNextDelivery: MillisNextDelivery) {
       val inMemoryMessage = messagesById
-        .get(message.id.get)
-        .getOrElse(throw new IllegalStateException("Unknown message: "+message))
+        .get(messageId.id)
+        .getOrElse(throw new MessageDoesNotExistException(messageId, queueName))
 
       // TODO: in fact we only support *increasing* the next delivery
 
@@ -66,12 +35,10 @@ trait InMemoryMessageStorageModule extends MessageStorageModule {
       inMemoryMessage.nextDelivery.set(newNextDelivery.millis)
       // Releasing lock
       inMemoryMessage.nextDeliveryState.set(NextDeliveryUpdated)
-
-      inMemoryMessage.toMessage(message.queue)
     }
 
     // TODO: tailrec
-    def receiveMessage(queue: Queue, deliveryTime: Long, newNextDelivery: MillisNextDelivery): Option[SpecifiedMessage] = {
+    def receiveMessage(deliveryTime: Long, newNextDelivery: MillisNextDelivery): Option[MessageData] = {
       messageQueue.poll() match {
         case null => None
         case message => {
@@ -79,12 +46,12 @@ trait InMemoryMessageStorageModule extends MessageStorageModule {
             case NextDeliveryIsBeingUpdated => {
               // Putting the message back and letting the thread that updates the next delviery finish
               messageQueue.add(message)
-              receiveMessage(queue, deliveryTime, newNextDelivery)
+              receiveMessage(deliveryTime, newNextDelivery)
             }
             case NextDeliveryUpdated => {
               message.nextDeliveryState.set(NextDeliveryUnchanged)
               messageQueue.add(message)
-              receiveMessage(queue, deliveryTime, newNextDelivery)
+              receiveMessage(deliveryTime, newNextDelivery)
             }
             case NextDeliveryUnchanged => {
               if (message.nextDelivery.get() > deliveryTime) {
@@ -96,10 +63,10 @@ trait InMemoryMessageStorageModule extends MessageStorageModule {
                 message.nextDelivery.set(newNextDelivery.millis)
                 messageQueue.add(message)
 
-                Some(message.toMessage(queue))
+                Some(message.toMessageData)
               } else {
                 // Deleted message - trying again
-                receiveMessage(queue, deliveryTime, newNextDelivery)
+                receiveMessage(deliveryTime, newNextDelivery)
               }
             }
           }
@@ -107,17 +74,17 @@ trait InMemoryMessageStorageModule extends MessageStorageModule {
       }
     }
 
-    def deleteMessage(message: IdentifiableMessage) {
+    def deleteMessage(messageId: MessageId) {
       // Just removing the message from the map. The message will be removed from the queue when trying to receive it.
-      messagesById.remove(message.id.get)
+      messagesById.remove(messageId.id)
 
-      messageStatisticsStorage.removeMessageStatistics(message)
+      messageStatisticsStorage(queueName).removeMessageStatistics(messageId)
     }
 
-    def lookupMessage(queue: Queue, id: String) = {
-      messagesById.get(id).map(_.toMessage(queue))
+    def lookupMessage(messageId: MessageId) = {
+      messagesById.get(messageId.id).map(_.toMessageData)
     }
   }
 
-  val messageStorage = new InMemoryMessageStorage
+  def messageStorage(queueName: String) = storageRegistry.getStoreForQueue(queueName)
 }
