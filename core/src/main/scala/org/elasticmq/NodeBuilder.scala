@@ -1,8 +1,9 @@
 package org.elasticmq
 
+import impl.nativeclient.{NativeHelpersModule, NativeMessageModule, NativeQueueModule, NativeClientModule}
 import org.squeryl.internals.DatabaseAdapter
 import org.squeryl.adapters.{MySQLAdapter, H2Adapter}
-import org.elasticmq.impl.{NowModule, NativeClientModule, NodeImpl}
+import org.elasticmq.impl.{NowModule, NodeImpl}
 import org.elasticmq.impl.scheduler.BackgroundVolatileTaskSchedulerModule
 import storage.inmemory.InMemoryStorageModule
 import storage.squeryl._
@@ -36,6 +37,9 @@ object NodeBuilder {
   }
 
   trait NodeLogicModules extends NativeClientModule
+    with NativeQueueModule
+    with NativeMessageModule
+    with NativeHelpersModule
     with NowModule
     with BackgroundVolatileTaskSchedulerModule {
     this: StorageModule =>
