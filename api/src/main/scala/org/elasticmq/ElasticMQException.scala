@@ -6,5 +6,5 @@ class ElasticMQException(message: String, cause: Throwable)
 class QueueDoesNotExistException(queueName: String)
   extends ElasticMQException("Queue does not exist: "+queueName, null)
 
-class MessageDoesNotExistException(messageId: MessageId, queueName: String)
+class MessageDoesNotExistException(queueName: String, messageId: MessageId)
   extends ElasticMQException("Message does not exist: "+messageId+" in queue: "+queueName, null)

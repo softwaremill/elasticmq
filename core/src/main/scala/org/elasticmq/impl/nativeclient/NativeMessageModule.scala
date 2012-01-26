@@ -15,7 +15,7 @@ trait NativeMessageModule {
     }
 
     def initData = messageStorage(queueName).lookupMessage(messageId)
-      .getOrElse(throw new MessageDoesNotExistException(messageId, queueName))
+      .getOrElse(throw new MessageDoesNotExistException(queueName, messageId))
 
     // Operations
 

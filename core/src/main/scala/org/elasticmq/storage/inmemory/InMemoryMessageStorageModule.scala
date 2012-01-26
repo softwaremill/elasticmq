@@ -25,7 +25,7 @@ trait InMemoryMessageStorageModule extends MessageStorageModule {
     def updateVisibilityTimeout(messageId: MessageId, newNextDelivery: MillisNextDelivery) {
       val inMemoryMessage = messagesById
         .get(messageId.id)
-        .getOrElse(throw new MessageDoesNotExistException(messageId, queueName))
+        .getOrElse(throw new MessageDoesNotExistException(queueName, messageId))
 
       // TODO: in fact we only support *increasing* the next delivery
 
