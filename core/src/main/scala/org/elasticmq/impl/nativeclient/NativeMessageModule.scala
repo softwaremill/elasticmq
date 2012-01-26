@@ -24,7 +24,7 @@ trait NativeMessageModule {
       fetchMessage()
     }
 
-    def fetchStatistics() = messageStatisticsStorage.readMessageStatistics(id)
+    def fetchStatistics() = messageStatisticsStorage(queueName).readMessageStatistics(id)
 
     def delete() {
       messageStorage(queueName).deleteMessage(id)

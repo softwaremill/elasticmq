@@ -8,5 +8,5 @@ trait MessageStatisticsStorageModule {
     def readMessageStatistics(messageId: MessageId): MessageStatistics
   }
 
-  def messageStatisticsStorage: MessageStatisticsStorage
+  def messageStatisticsStorage(queueName: String): MessageStatisticsStorage
 }

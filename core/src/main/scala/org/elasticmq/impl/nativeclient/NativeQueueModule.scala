@@ -44,9 +44,10 @@ trait NativeQueueModule {
       val messageOption = doReceiveMessage(visibilityTimeout)
 
       messageOption.foreach(message => volatileTaskScheduler.schedule {
-        val stats = messageStatisticsStorage.readMessageStatistics(message.id)
+        val statsStorage = messageStatisticsStorage(name)
+        val stats = statsStorage.readMessageStatistics(message.id)
         val bumpedStats = bumpMessageStatistics(stats)
-        messageStatisticsStorage.writeMessageStatistics(message.id, bumpedStats)
+        statsStorage.writeMessageStatistics(message.id, bumpedStats)
       })
 
       messageOption.map(new NativeMessage(name, _))
@@ -56,10 +57,11 @@ trait NativeQueueModule {
       val messageOption = doReceiveMessage(visibilityTimeout)
 
       messageOption.map(message => {
-        val stats = messageStatisticsStorage.readMessageStatistics(message.id)
+        val statsStorage = messageStatisticsStorage(name)
+        val stats = statsStorage.readMessageStatistics(message.id)
         val bumpedStats = bumpMessageStatistics(stats)
         volatileTaskScheduler.schedule {
-          messageStatisticsStorage.writeMessageStatistics(message.id, bumpedStats)
+          statsStorage.writeMessageStatistics(message.id, bumpedStats)
         }
 
         (new NativeMessage(name, message), bumpedStats)

@@ -34,5 +34,5 @@ trait SquerylMessageStatisticsStorageModule extends MessageStatisticsStorageModu
     }
   }
 
-  def messageStatisticsStorage = squerylMessageStatisticsStorage
+  def messageStatisticsStorage(queueName: String) = squerylMessageStatisticsStorage
 }
