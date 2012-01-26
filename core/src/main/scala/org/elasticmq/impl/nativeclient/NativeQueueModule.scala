@@ -36,7 +36,7 @@ trait NativeQueueModule {
 
       val message = MessageData(messageId, messageBuilder.content, nextDelivery, nowAsDateTime)
 
-      messageStorage.persistMessage(message)
+      messageStorage(name).persistMessage(message)
       new NativeMessage(name, message)
     }
 
@@ -72,11 +72,11 @@ trait NativeQueueModule {
         case MillisVisibilityTimeout(millis) => computeNextDelivery(millis)
       }
 
-      messageStorage.receiveMessage(name, now, newNextDelivery)
+      messageStorage(name).receiveMessage(now, newNextDelivery)
     }
 
-    def lookupMessage(id: MessageId) = {
-      messageStorage.lookupMessage(name, id).map(new NativeMessage(name, _))
+    def lookupMessage(messageId: MessageId) = {
+      messageStorage(name).lookupMessage(messageId).map(new NativeMessage(name, _))
     }
 
     def updateDefaultVisibilityTimeout(defaultVisibilityTimeout: MillisVisibilityTimeout): Queue = {

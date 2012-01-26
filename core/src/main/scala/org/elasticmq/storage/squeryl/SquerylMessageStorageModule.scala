@@ -3,68 +3,61 @@ package org.elasticmq.storage.squeryl
 import org.squeryl.PrimitiveTypeMode._
 import org.elasticmq._
 import org.elasticmq.storage.MessageStorageModule
+import org.elasticmq.impl.MessageData
 
 trait SquerylMessageStorageModule extends MessageStorageModule {
   this: SquerylSchemaModule =>
 
-  object squerylMessageStorage extends MessageStorage {
-    def persistMessage(message: SpecifiedMessage) {
+  class SquerylMessageStorage(queueName: String) extends MessageStorage {
+    def persistMessage(message: MessageData) {
       transaction {
-        messages.insert(SquerylMessage.from(message))
+        messages.insert(SquerylMessage.from(queueName, message))
       }
     }
 
-    def updateVisibilityTimeout(message: SpecifiedMessage, newNextDelivery: MillisNextDelivery) = {
-      val originalSquerylMessage = SquerylMessage.from(message)
-      val modifiedSquerylMessage = new SquerylMessage(
-        originalSquerylMessage.id,
-        originalSquerylMessage.queueName,
-        originalSquerylMessage.content,
-        newNextDelivery.millis,
-        originalSquerylMessage.createdTimestamp)
-
+    def updateVisibilityTimeout(messageId: MessageId, newNextDelivery: MillisNextDelivery) {
       transaction {
-        messages.update(modifiedSquerylMessage)
+        update(messages)(m =>
+          where(m.id === messageId.id)
+            set(m.nextDelivery := newNextDelivery.millis))
       }
-
-      modifiedSquerylMessage.toMessage(message.queue)
     }
 
-    def deleteMessage(message: IdentifiableMessage) {
+    def deleteMessage(id: MessageId) {
       transaction {
-        val messageId = message.id.get
+        val messageId = id.id
         messages.delete(messageId)
         messageStatistics.delete(messageId)
       }
     }
 
-    def lookupMessage(queue: Queue, id: String) = {
+    def lookupMessage(id: MessageId) = {
       transaction {
-        from(messages)(m => where(m.id === id) select(m)).headOption.map(_.toMessage(queue))
+        from(messages)(m => where(m.id === id.id) select(m)).headOption.map(_.toMessage)
       }
     }
 
-    def receiveMessage(queue: Queue, deliveryTime: Long, newNextDelivery: MillisNextDelivery): Option[SpecifiedMessage] = {
+    def receiveMessage(deliveryTime: Long, newNextDelivery: MillisNextDelivery): Option[MessageData] = {
       transaction {
-        val message = lookupPendingMessage(queue, deliveryTime)
+        val message = lookupPendingMessage(deliveryTime)
         message.flatMap(updateNextDelivery(_, newNextDelivery))
       }
     }
 
-    private def lookupPendingMessage(queue: Queue, deliveryTime: Long) = {
+    private def lookupPendingMessage(deliveryTime: Long) = {
       inTransaction {
         from(messages, queues)((m, q) =>
-          where(m.queueName === queue.name and
+          where(m.queueName === queueName and
                   queuesToMessagesCond(m, q) and
                   (m.nextDelivery lte deliveryTime)) select(m, q))
-                .page(0, 1).headOption.map { case (m, q) => m.toMessage(q) }
+                .page(0, 1).headOption.map { case (m, q) => m.toMessage }
       }
     }
 
-    private def updateNextDelivery(message: SpecifiedMessage, nextDelivery: MillisNextDelivery) = {
+    private def updateNextDelivery(message: MessageData, nextDelivery: MillisNextDelivery) = {
       inTransaction {
         val updatedCount = update(messages)(m =>
-          where(m.id === message.id.get and m.nextDelivery === message.nextDelivery.millis)
+          where(m.id === message.id.id and m.nextDelivery === message.nextDelivery.millis)
                   set(m.nextDelivery := nextDelivery.millis))
 
         if (updatedCount == 0) None else Some(message.copy(nextDelivery = nextDelivery))
@@ -72,5 +65,5 @@ trait SquerylMessageStorageModule extends MessageStorageModule {
     }
   }
 
-  def messageStorage = squerylMessageStorage
+  def messageStorage(queueName: String) = new SquerylMessageStorage(queueName)
 }

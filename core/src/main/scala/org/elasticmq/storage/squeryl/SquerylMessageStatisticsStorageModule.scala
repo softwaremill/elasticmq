@@ -2,28 +2,28 @@ package org.elasticmq.storage.squeryl
 
 import org.squeryl.PrimitiveTypeMode._
 import org.elasticmq.storage.MessageStatisticsStorageModule
-import org.elasticmq.{NeverReceived, MessageStatistics, SpecifiedMessage}
+import org.elasticmq.{MessageId, MessageStatistics}
 
 trait SquerylMessageStatisticsStorageModule extends MessageStatisticsStorageModule {
   this: SquerylSchemaModule =>
 
   object squerylMessageStatisticsStorage extends MessageStatisticsStorage {
-    def readMessageStatistics(message: SpecifiedMessage) = {
+    def readMessageStatistics(messageId: MessageId) = {
       inTransaction {
         messageStatistics
-          .lookup(message.id.get)
-          .map(_.toMessageStatistics(message))
-          .getOrElse(MessageStatistics.emptyFor(message))
+          .lookup(messageId.id)
+          .map(_.toMessageStatistics)
+          .getOrElse(MessageStatistics.empty)
       }
     }
 
 
-    def writeMessageStatistics(statistics: MessageStatistics) {
+    def writeMessageStatistics(messageId: MessageId, statistics: MessageStatistics) {
       transaction {
-        val messageInDb = messages.lookup(statistics.message.id.get)
+        val messageInDb = messages.lookup(messageId.id)
 
         if (messageInDb.isDefined) {
-          val squerylStatistics = SquerylMessageStatistics.from(statistics)
+          val squerylStatistics = SquerylMessageStatistics.from(messageId, statistics)
           if (statistics.approximateReceiveCount == 1) {
             messageStatistics.insert(squerylStatistics)
           } else {

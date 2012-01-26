@@ -1,17 +1,18 @@
 package org.elasticmq.storage
 
 import org.elasticmq._
+import impl.MessageData
 
 trait MessageStorageModule {
   trait MessageStorage {
-    def persistMessage(message: SpecifiedMessage)
-    def updateVisibilityTimeout(message: SpecifiedMessage, newNextDelivery: MillisNextDelivery): SpecifiedMessage
+    def persistMessage(message: MessageData)
+    def updateVisibilityTimeout(messageId: MessageId, newNextDelivery: MillisNextDelivery)
 
-    def receiveMessage(queue: Queue, deliveryTime: Long, newNextDelivery: MillisNextDelivery): Option[SpecifiedMessage]
-    def deleteMessage(message: IdentifiableMessage)
+    def receiveMessage(deliveryTime: Long, newNextDelivery: MillisNextDelivery): Option[MessageData]
+    def deleteMessage(messageId: MessageId)
 
-    def lookupMessage(queue: Queue, id: String): Option[SpecifiedMessage]
+    def lookupMessage(messageId: MessageId): Option[MessageData]
   }
 
-  def messageStorage: MessageStorage
+  def messageStorage(queueName: String): MessageStorage
 }

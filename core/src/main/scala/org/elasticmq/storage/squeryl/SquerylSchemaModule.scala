@@ -3,6 +3,7 @@ package org.elasticmq.storage.squeryl
 import org.squeryl._
 import PrimitiveTypeMode._
 import org.elasticmq._
+import org.elasticmq.impl.{MessageData, QueueData}
 import org.squeryl.annotations.Column
 import org.joda.time.{Duration, DateTime}
 
@@ -34,7 +35,7 @@ class SquerylQueue(val id: String,
                    @Column("delay") val delay: Long,
                    @Column("created_timestamp") val createdTimestamp: Long,
                    @Column("last_modified_timestamp") val lastModifiedTimestamp: Long) extends KeyedEntity[String] {
-  def toQueue = Queue(id,
+  def toQueue = QueueData(id,
     MillisVisibilityTimeout(defaultVisibilityTimeout),
     new Duration(delay),
     new DateTime(createdTimestamp),
@@ -42,7 +43,7 @@ class SquerylQueue(val id: String,
 }
 
 object SquerylQueue {
-  def from(queue: Queue) = new SquerylQueue(queue.name,
+  def from(queue: QueueData) = new SquerylQueue(queue.name,
     queue.defaultVisibilityTimeout.millis,
     queue.delay.getMillis,
     queue.created.getMillis,
@@ -54,14 +55,13 @@ class SquerylMessage(val id: String,
                      val content: String,
                      @Column("next_delivery") val nextDelivery: Long,
                      @Column("created_timestamp") val createdTimestamp: Long) extends KeyedEntity[String] {
-  def toMessage(q: SquerylQueue): SpecifiedMessage = toMessage(q.toQueue)
-  def toMessage(q: Queue): SpecifiedMessage = Message(q, Some(id), content,
+  def toMessage: MessageData = MessageData(MessageId(id), content,
     MillisNextDelivery(nextDelivery), new DateTime(createdTimestamp))
 }
 
 object SquerylMessage {
-  def from(message: SpecifiedMessage) = {
-    new SquerylMessage(message.id.get, message.queue.name, message.content, message.nextDelivery.millis,
+  def from(queueName: String, message: MessageData) = {
+    new SquerylMessage(message.id.id, queueName, message.content, message.nextDelivery.millis,
       message.created.getMillis)
   }
 }
@@ -69,19 +69,19 @@ object SquerylMessage {
 class SquerylMessageStatistics(val id: String,
                                @Column("approximate_first_receive") val approximateFirstReceive: Long,
                                @Column("approximate_receive_count") val approximateReceiveCount: Int) extends KeyedEntity[String] {
-  def toMessageStatistics(m: SpecifiedMessage) = MessageStatistics(m,
+  def toMessageStatistics = MessageStatistics(
     if (approximateFirstReceive == 0) NeverReceived else OnDateTimeReceived(new DateTime(approximateFirstReceive)),
     approximateReceiveCount)
 }
 
 object SquerylMessageStatistics {
-  def from(statistics: MessageStatistics) = {
+  def from(messageId: MessageId, statistics: MessageStatistics) = {
     val receivedTimestamp = statistics.approximateFirstReceive match {
       case NeverReceived => 0
       case OnDateTimeReceived(dt) => dt.getMillis
     }
 
-    new SquerylMessageStatistics(statistics.message.id.get,
+    new SquerylMessageStatistics(messageId.id,
       receivedTimestamp,
       statistics.approximateReceiveCount)
   }

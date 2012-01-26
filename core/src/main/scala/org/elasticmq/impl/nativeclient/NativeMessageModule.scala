@@ -14,20 +14,20 @@ trait NativeMessageModule {
       data = messageData
     }
 
-    def initData = messageStorage.lookupMessage(queueName, messageId)
+    def initData = messageStorage(queueName).lookupMessage(messageId)
       .getOrElse(throw new MessageDoesNotExistException(messageId, queueName))
 
     // Operations
 
     def updateVisibilityTimeout(newVisibilityTimeout: MillisVisibilityTimeout) = {
-      messageStorage.updateVisibilityTimeout(id, computeNextDelivery(newVisibilityTimeout.millis))
-      this
+      messageStorage(queueName).updateVisibilityTimeout(id, computeNextDelivery(newVisibilityTimeout.millis))
+      fetchMessage()
     }
 
     def fetchStatistics() = messageStatisticsStorage.readMessageStatistics(id)
 
     def delete() {
-      messageStorage.deleteMessage(id)
+      messageStorage(queueName).deleteMessage(id)
     }
 
     def fetchMessage() = {

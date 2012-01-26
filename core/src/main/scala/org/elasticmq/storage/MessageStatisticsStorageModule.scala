@@ -4,8 +4,8 @@ import org.elasticmq._
 
 trait MessageStatisticsStorageModule {
   trait MessageStatisticsStorage {
-    def writeMessageStatistics(messageStatistics: MessageStatistics)
-    def readMessageStatistics(message: SpecifiedMessage): MessageStatistics
+    def writeMessageStatistics(messageId: MessageId, messageStatistics: MessageStatistics)
+    def readMessageStatistics(messageId: MessageId): MessageStatistics
   }
 
   def messageStatisticsStorage: MessageStatisticsStorage
