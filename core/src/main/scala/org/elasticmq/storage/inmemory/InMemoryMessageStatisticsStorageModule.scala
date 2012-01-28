@@ -14,7 +14,7 @@ trait InMemoryMessageStatisticsStorageModule extends MessageStatisticsStorageMod
 
     def writeMessageStatistics(messageId: MessageId, messageStatistics: MessageStatistics) {
       // TODO: checking if the message isn't deleted.
-      if (storageRegistry.getStoreForQueue(queueName).messagesById.get(messageId.id) != None) {
+      if (storageRegistry.getStoreForQueue(queueName).messagesById.get(messageId) != None) {
         storageRegistry.messageStats.put(messageId.id, messageStatistics)
       }
     }
