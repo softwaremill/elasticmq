@@ -19,7 +19,7 @@ trait NativeClientModule {
 
       queueStorage.persistQueue(queueData)
 
-      new NativeQueue(queueBuilder.name)
+      new NativeQueue(queueData)
     }
 
     def lookupQueue(name: String) = queueStorage.lookupQueue(name).map(new NativeQueue(_))
