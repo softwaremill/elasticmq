@@ -11,7 +11,7 @@ import org.mockito.ArgumentMatcher
 import org.joda.time.{Duration, DateTime}
 import org.elasticmq.test.DataCreationHelpers
 import org.elasticmq.storage.{StorageModule, MessageStatisticsStorageModule, MessageStorageModule}
-import org.elasticmq.impl.nativeclient.{NativeQueueModule, NativeHelpersModule, NativeMessageModule, NativeClientModule}
+import org.elasticmq.impl.nativeclient.NativeModule
 
 class NativeMessageClientImplTestSuite extends FunSuite with MustMatchers with MockitoSugar with DataCreationHelpers {
   val Now = 1316168602L
@@ -148,10 +148,7 @@ class NativeMessageClientImplTestSuite extends FunSuite with MustMatchers with M
 
   def createQueueOperationsWithMockStorage(queueData: QueueData): (QueueOperations, MessageStorageModule#MessageStorage,
     MessageStatisticsStorageModule#MessageStatisticsStorage) = {
-    val env = new NativeClientModule
-      with NativeQueueModule
-      with NativeHelpersModule
-      with NativeMessageModule
+    val env = new NativeModule
       with StorageModule
       with NowModule
       with ImmediateVolatileTaskSchedulerModule {

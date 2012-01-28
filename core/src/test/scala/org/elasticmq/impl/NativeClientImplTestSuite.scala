@@ -9,8 +9,8 @@ import org.elasticmq._
 import org.joda.time.DateTime
 import org.mockito.ArgumentMatcher
 import org.mockito.Matchers._
-import org.elasticmq.impl.nativeclient.{NativeMessageModule, NativeHelpersModule, NativeQueueModule, NativeClientModule}
 import org.elasticmq.storage.{StorageModule, QueueStorageModule}
+import org.elasticmq.impl.nativeclient.NativeModule
 
 class NativeClientImplTestSuite extends FunSuite with MustMatchers with MockitoSugar {
   val NOW = new DateTime(1316168602L)
@@ -37,10 +37,7 @@ class NativeClientImplTestSuite extends FunSuite with MustMatchers with MockitoS
   }
 
   def createClient: (Client, QueueStorageModule#QueueStorage) = {
-    val env = new NativeClientModule
-      with NativeQueueModule
-      with NativeHelpersModule
-      with NativeMessageModule
+    val env = new NativeModule
       with StorageModule
       with NowModule
       with ImmediateVolatileTaskSchedulerModule {

@@ -1,6 +1,5 @@
 package org.elasticmq
 
-import impl.nativeclient.{NativeHelpersModule, NativeMessageModule, NativeQueueModule, NativeClientModule}
 import org.squeryl.internals.DatabaseAdapter
 import org.squeryl.adapters.{MySQLAdapter, H2Adapter}
 import org.elasticmq.impl.{NowModule, NodeImpl}
@@ -8,6 +7,7 @@ import org.elasticmq.impl.scheduler.BackgroundVolatileTaskSchedulerModule
 import storage.inmemory.InMemoryStorageModule
 import storage.squeryl._
 import storage.StorageModule
+import org.elasticmq.impl.nativeclient.NativeModule
 
 object NodeBuilder {
   def withMySQLStorage(dbName: String, username: String, password: String,
@@ -36,10 +36,7 @@ object NodeBuilder {
     new NodeBuilderWithStorageLifecycle(dbConfiguration)
   }
 
-  trait NodeLogicModules extends NativeClientModule
-    with NativeQueueModule
-    with NativeMessageModule
-    with NativeHelpersModule
+  trait NodeLogicModules extends NativeModule
     with NowModule
     with BackgroundVolatileTaskSchedulerModule {
     this: StorageModule =>
