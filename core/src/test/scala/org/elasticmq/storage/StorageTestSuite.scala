@@ -8,8 +8,9 @@ import org.squeryl.adapters.H2Adapter
 import org.elasticmq.storage.squeryl._
 import org.joda.time.{Duration, DateTime}
 import org.elasticmq.impl.{MessageData, QueueData}
+import org.elasticmq.test.DataCreationHelpers
 
-trait StorageTestSuite extends FunSuite with MustMatchers with OneInstancePerTest {
+trait StorageTestSuite extends FunSuite with MustMatchers with OneInstancePerTest with DataCreationHelpers {
   private case class StorageTestSetup(storageName: String,
                                       initialize: () => StorageModule,
                                       shutdown: () => Unit)
@@ -56,12 +57,6 @@ trait StorageTestSuite extends FunSuite with MustMatchers with OneInstancePerTes
   def queueStorage = storageModule.queueStorage
   def messageStorage(queueName: String) = storageModule.messageStorage(queueName)
   def messageStatisticsStorage(queueName: String) = storageModule.messageStatisticsStorage(queueName)
-  
-  def createQueueData(name: String, defaultVisibilityTimeout: MillisVisibilityTimeout) =
-    QueueData(name, defaultVisibilityTimeout, Duration.ZERO, new DateTime(0), new DateTime(0))
-
-  def createMessageData(id: String, content: String, nextDelivery: MillisNextDelivery) =
-    MessageData(MessageId(id), content, nextDelivery, new DateTime(0))
 }
 
 class QueueStorageTestSuite extends StorageTestSuite {
