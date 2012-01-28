@@ -36,9 +36,9 @@ class NativeMessageClientImplTestSuite extends FunSuite with MustMatchers with M
 
   test("sending an immediate message to a delayed queue should properly set the next delivery") {
     // Given
+    val delayedSeconds = 12
     val q1 = createQueueData("q1", MillisVisibilityTimeout(123L)).copy(delay = Duration.standardSeconds(delayedSeconds))
     val (queueOperations, mockStorage, _) = createQueueOperationsWithMockStorage(q1)
-    val delayedSeconds = 12
 
     // When
     val msg = queueOperations.sendMessage("abc")
@@ -156,10 +156,13 @@ class NativeMessageClientImplTestSuite extends FunSuite with MustMatchers with M
       with NowModule
       with ImmediateVolatileTaskSchedulerModule {
 
+      val mockQueueStorage = mock[QueueStorage]
       val mockMessageStorage = mock[MessageStorage]
       val mockMessageStatisticsStorage = mock[MessageStatisticsStorage]
 
-      def queueStorage = null
+      when(mockQueueStorage.lookupQueue(queueData.name)).thenReturn(Some(queueData))
+
+      def queueStorage = mockQueueStorage
       def messageStorage(queueName: String) = mockMessageStorage
       def messageStatisticsStorage(queueName: String) = mockMessageStatisticsStorage
 
