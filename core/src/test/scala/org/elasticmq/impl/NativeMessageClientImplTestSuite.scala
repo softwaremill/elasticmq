@@ -63,7 +63,7 @@ class NativeMessageClientImplTestSuite extends FunSuite with MustMatchers with M
     when(mockStatisticsStorage.readMessageStatistics(m.id)).thenReturn(stats)
 
     // When
-    val messageStatsOption = queueOperations.receiveMessageWithStatistics(DefaultVisibilityTimeout)
+    val messageStatsOption = queueOperations.receiveMessageWithStatistics(DefaultVisibilityTimeout).map(_._2)
 
     // Then
     val expectedMessageStats = MessageStatistics(OnDateTimeReceived(NowAsDateTime), 1)
@@ -89,7 +89,7 @@ class NativeMessageClientImplTestSuite extends FunSuite with MustMatchers with M
     when(mockStatisticsStorage.readMessageStatistics(m.id)).thenReturn(stats)
 
     // When
-    val messageStatsOption = queueOperations.receiveMessageWithStatistics(DefaultVisibilityTimeout)
+    val messageStatsOption = queueOperations.receiveMessageWithStatistics(DefaultVisibilityTimeout).map(_._2)
 
     // Then
     val expectedMessageStats = MessageStatistics(stats.approximateFirstReceive, 8)
