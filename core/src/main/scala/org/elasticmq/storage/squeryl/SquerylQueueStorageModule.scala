@@ -12,8 +12,18 @@ trait SquerylQueueStorageModule extends QueueStorageModule {
 
   object squerylQueueStorage extends QueueStorage {
     def persistQueue(queue: QueueData) {
+      def isUniqueIndexException(e: Exception) = {
+        val msg = e.getMessage.toLowerCase
+        msg.contains("unique index") || msg.contains("unique key") || msg.contains("primary key")
+      }
+
       transaction {
-        queues.insert(SquerylQueue.from(queue))
+        try {
+          queues.insert(SquerylQueue.from(queue))
+        } catch {
+          case e: RuntimeException if isUniqueIndexException(e) =>
+            throw new QueueAlreadyExistsException(queue.name)
+        }
       }
     }
 

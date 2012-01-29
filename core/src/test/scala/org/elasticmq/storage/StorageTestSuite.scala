@@ -136,6 +136,15 @@ class QueueStorageTestSuite extends StorageTestSuite {
     }
   }
 
+  test("trying to create an existing queue should throw an exception") {
+    // Given
+    val q1 = createQueueData("q1", MillisVisibilityTimeout(1L))
+    queueStorage.persistQueue(q1)
+
+    // When & then
+    evaluating { queueStorage.persistQueue(q1) } must produce [QueueAlreadyExistsException]
+  }
+
   test("updating a queue") {
     // Given
     val q1 = createQueueData("q1", MillisVisibilityTimeout(1L))
