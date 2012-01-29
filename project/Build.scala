@@ -25,7 +25,7 @@ object BuildSettings {
     // generating javadocs causes a weird error in Node:4 - type Client not found
     publishArtifact in (Compile, packageDoc) := false,
     parallelExecution in Test := false
-  )
+  ) ++ net.virtualvoid.sbt.graph.Plugin.graphSettings
 }
 
 object Dependencies {
@@ -37,17 +37,18 @@ object Dependencies {
 
   val slf4s         = "com.weiglewilczek.slf4s"   %% "slf4s"                % "1.0.7"
   val logback       = "ch.qos.logback"            % "logback-classic"       % "1.0.0"
+  val jclOverSlf4j  = "org.slf4j"                 % "jcl-over-slf4j"        % "1.6.1"
 
   val scalatest     = "org.scalatest"             %% "scalatest"            % "1.6.1"         % "test"
   val mockito       = "org.mockito"               % "mockito-core"          % "1.7"           % "test"
 
-  val apacheHttp    = "org.apache.httpcomponents" % "httpclient"            % "4.1.1"
+  val apacheHttp    = "org.apache.httpcomponents" % "httpclient"            % "4.1.1" exclude ("commons-logging", "commons-logging")
 
-  val amazonJavaSdk = "com.amazonaws"             % "aws-java-sdk"          % "1.2.15"
+  val amazonJavaSdk = "com.amazonaws"             % "aws-java-sdk"          % "1.2.15" exclude ("commons-logging", "commons-logging")
 
   val mysqlConnector = "mysql"                    % "mysql-connector-java"  % "5.1.12"
 
-  val common = Seq(slf4s)
+  val common = Seq(slf4s, jclOverSlf4j)
   val testing = Seq(scalatest, mockito, logback % "test")
   val httpTesting = Seq(apacheHttp % "test")
 

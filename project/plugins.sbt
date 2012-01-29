@@ -1,0 +1,1 @@
+addSbtPlugin("net.virtualvoid" % "sbt-dependency-graph" % "0.5.1")
