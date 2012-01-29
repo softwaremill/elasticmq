@@ -8,6 +8,13 @@ trait Queue extends QueueOperations {
   def delay: Duration
   def created: DateTime
   def lastModified: DateTime
+
+  // Java-style
+  def getName = name
+  def getDefaultVisibilityTimeout = defaultVisibilityTimeout
+  def getDelay = delay
+  def getCreated = created
+  def getLastModified = lastModified
 }
 
 case class QueueBuilder private (name: String, defaultVisibilityTimeout: MillisVisibilityTimeout, delay: Duration) {
