@@ -128,7 +128,8 @@ class QueueStorageTestSuite extends StorageTestSuite {
 
     // Then
     queueStorage.lookupQueue(q1.name) must be (None)
-    // TODO: clarify storage contract
+
+    // Either result is ok
     try {
       messageStorage(q1.name).lookupMessage(m1.id) must be (None)
     } catch {
