@@ -77,3 +77,9 @@ DB Schema
 
 The MySQL Schema can be found in `core/src/main/resource/schema-mysql.sql` file. It should be easily adaptable to
 other databases.
+
+Logging
+-------
+
+ElasticMQ uses [Slf4j](http://www.slf4j.org/) for logging. By default no logger backend is included as a dependency,
+however I recommend [Logback](http://logback.qos.ch/)

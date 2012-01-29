@@ -36,6 +36,7 @@ object Dependencies {
   val netty         = "org.jboss.netty"           % "netty"                 % "3.2.4.Final"
 
   val slf4s         = "com.weiglewilczek.slf4s"   %% "slf4s"                % "1.0.7"
+  val logback       = "ch.qos.logback"            % "logback-classic"       % "1.0.0"
 
   val scalatest     = "org.scalatest"             %% "scalatest"            % "1.6.1"         % "test"
   val mockito       = "org.mockito"               % "mockito-core"          % "1.7"           % "test"
@@ -47,7 +48,7 @@ object Dependencies {
   val mysqlConnector = "mysql"                    % "mysql-connector-java"  % "5.1.12"
 
   val common = Seq(slf4s)
-  val testing = Seq(scalatest, mockito)
+  val testing = Seq(scalatest, mockito, logback % "test")
   val httpTesting = Seq(apacheHttp % "test")
 
   // To get the source run the <update-classifiers> task.
