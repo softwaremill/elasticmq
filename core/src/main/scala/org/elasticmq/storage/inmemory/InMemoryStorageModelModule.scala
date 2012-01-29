@@ -5,22 +5,20 @@ import org.elasticmq._
 import java.util.concurrent.atomic.{AtomicReference, AtomicLong}
 import org.elasticmq.impl.{QueueData, MessageData}
 import scala.collection.mutable.ConcurrentMap
-import java.util.concurrent.ConcurrentHashMap
-import scala.collection.JavaConversions
 
 trait InMemoryStorageModelModule {
-  this: InMemoryMessageStorageModule =>
+  this: InMemoryMessageStorageModule with InMemoryMessageStatisticsStorageModule =>
 
   type StatisticsStorage = ConcurrentMap[MessageId, MessageStatistics]
 
   case class InMemoryQueue(queueData: QueueData,
-                           messageStorage: OneQueueInMemoryMessageStorage,
-                           statisticStorage: StatisticsStorage)
+                           messageStorage: InMemoryMessageStorage,
+                           statisticStorage: InMemoryMessageStatisticsStorage)
   
   object InMemoryQueue {
     def apply(queueData: QueueData) = new InMemoryQueue(queueData,
-      new OneQueueInMemoryMessageStorage(queueData.name),
-      JavaConversions.asScalaConcurrentMap(new ConcurrentHashMap[MessageId, MessageStatistics]))
+      new InMemoryMessageStorage(queueData.name),
+      new InMemoryMessageStatisticsStorage(queueData.name))
   }
   
   case class InMemoryMessage(id: String, nextDelivery: AtomicLong, content: String, created: DateTime,

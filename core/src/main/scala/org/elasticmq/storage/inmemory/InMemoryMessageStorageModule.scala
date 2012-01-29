@@ -10,7 +10,7 @@ import scala.annotation.tailrec
 trait InMemoryMessageStorageModule extends MessageStorageModule {
   this: InMemoryStorageModelModule with InMemoryMessageStatisticsStorageModule with InMemoryStorageRegistryModule =>
 
-  class OneQueueInMemoryMessageStorage(queueName: String) extends MessageStorage {
+  class InMemoryMessageStorage(queueName: String) extends MessageStorage {
     val messagesById = JavaConversions.asScalaConcurrentMap(new ConcurrentHashMap[MessageId, InMemoryMessage])
     val messageQueue = new PriorityBlockingQueue[InMemoryMessage]()
 
