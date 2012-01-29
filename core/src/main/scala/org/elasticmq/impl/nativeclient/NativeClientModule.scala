@@ -3,11 +3,12 @@ package org.elasticmq.impl.nativeclient
 import org.elasticmq._
 import org.elasticmq.impl.{QueueData, NowModule}
 import org.elasticmq.storage.QueueStorageModule
+import com.weiglewilczek.slf4s.Logging
 
 trait NativeClientModule {
   this: QueueStorageModule with NowModule with NativeQueueModule =>
 
-  class NativeClient extends Client {
+  class NativeClient extends Client with Logging {
     def createQueue(queueBuilder: QueueBuilder) = {
       val queueData = QueueData(
         queueBuilder.name,
@@ -18,6 +19,8 @@ trait NativeClientModule {
       )
 
       queueStorage.persistQueue(queueData)
+
+      logger.debug("Created queue: %s".format(queueBuilder.name))
 
       new NativeQueue(queueData)
     }

@@ -3,12 +3,14 @@ package org.elasticmq.impl.nativeclient
 import org.elasticmq.impl.MessageData
 import org.elasticmq.{MillisVisibilityTimeout, MessageDoesNotExistException, Message, MessageId}
 import org.elasticmq.storage.{MessageStatisticsStorageModule, MessageStorageModule}
+import com.weiglewilczek.slf4s.Logging
 
 
 trait NativeMessageModule {
   this: MessageStorageModule with MessageStatisticsStorageModule with NativeHelpersModule =>
 
-  class NativeMessage(queueName: String, messageId: MessageId) extends Message with WithLazyAtomicData[MessageData] {
+  class NativeMessage(queueName: String, messageId: MessageId) extends Message 
+    with WithLazyAtomicData[MessageData] with Logging {
     def this(queueName: String, messageData: MessageData) = {
       this(queueName, messageData.id)
       data = messageData
@@ -21,6 +23,8 @@ trait NativeMessageModule {
 
     def updateVisibilityTimeout(newVisibilityTimeout: MillisVisibilityTimeout) = {
       messageStorage(queueName).updateVisibilityTimeout(id, computeNextDelivery(newVisibilityTimeout.millis))
+      logger.debug("Updated visibility timeout of message: %s in queue: %s to: %s"
+        .format(messageId, queueName, newVisibilityTimeout))
       fetchMessage()
     }
 
@@ -28,6 +32,7 @@ trait NativeMessageModule {
 
     def delete() {
       messageStorage(queueName).deleteMessage(id)
+      logger.debug("Deleted message: %s".format(id))
     }
 
     def fetchMessage() = {

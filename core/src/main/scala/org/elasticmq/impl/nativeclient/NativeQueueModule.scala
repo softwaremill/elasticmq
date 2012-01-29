@@ -6,12 +6,13 @@ import org.elasticmq.impl.{MessageData, QueueData, NowModule}
 import org.elasticmq.storage.StorageModule
 import org.joda.time.Duration
 import java.util.UUID
+import com.weiglewilczek.slf4s.Logging
 
 trait NativeQueueModule {
   this: StorageModule with NativeMessageModule with NativeHelpersModule
     with NowModule with VolatileTaskSchedulerModule =>
 
-  class NativeQueue(queueName: String) extends Queue with WithLazyAtomicData[QueueData] {
+  class NativeQueue(queueName: String) extends Queue with WithLazyAtomicData[QueueData] with Logging {
     def this(queueData: QueueData) = {
       this(queueData.name)
       data = queueData
@@ -37,6 +38,9 @@ trait NativeQueueModule {
       val message = MessageData(messageId, messageBuilder.content, nextDelivery, nowAsDateTime)
 
       messageStorage(queueName).persistMessage(message)
+      
+      logger.debug("Sent message: %s to %s".format(message.id, queueName))
+      
       new NativeMessage(queueName, message)
     }
 
@@ -53,6 +57,8 @@ trait NativeQueueModule {
           // This may happen if the message is deleted before the stats are bumped.
           case _: MessageDoesNotExistException => // ignore
         }
+        
+        logger.debug("Received message: %s with visibility timeout: %s".format(message.id, visibilityTimeout))
       })
 
       messageOption.map(new NativeMessage(queueName, _))
@@ -69,6 +75,9 @@ trait NativeQueueModule {
           statsStorage.writeMessageStatistics(message.id, bumpedStats)
         }
 
+        logger.debug("Received message: %s with statistics and visibility timeout: %s"
+          .format(message.id, visibilityTimeout))
+        
         (new NativeMessage(queueName, message), bumpedStats)
       })
     }
@@ -88,11 +97,13 @@ trait NativeQueueModule {
 
     def updateDefaultVisibilityTimeout(defaultVisibilityTimeout: MillisVisibilityTimeout): Queue = {
       queueStorage.updateQueue(data.copy(defaultVisibilityTimeout = defaultVisibilityTimeout))
+      logger.debug("Updated visibility timeout of queue: %s to: %s".format(queueName, defaultVisibilityTimeout))
       fetchQueue()
     }
 
     def updateDelay(delay: Duration): Queue = {
       queueStorage.updateQueue(data.copy(delay = delay))
+      logger.debug("Updated delay of queue: %s to: %s".format(queueName, delay))
       fetchQueue()
     }
 
@@ -100,6 +111,7 @@ trait NativeQueueModule {
 
     def delete() {
       queueStorage.deleteQueue(queueName)
+      logger.debug("Deleted queue: %s".format(queueName))
     }
 
     def fetchQueue() = {
