@@ -5,6 +5,8 @@ package org.elasticmq
   * Were appropriate, methods may throw [[org.elasticmq.QueueDoesNotExistException]] or
   * [[org.elasticmq.MessageDoesNotExistException]] if an operation on a non-existent queue or message is
   * requested. However, under correct API usage these exceptions should not occur.
+  *
+  * <strong>All ElasticMQ client classes are thread-safe.</strong>
   */
 trait Client {
   def createQueue(name: String): Queue = createQueue(QueueBuilder(name))
