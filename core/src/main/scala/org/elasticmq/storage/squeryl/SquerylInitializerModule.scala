@@ -25,7 +25,6 @@ trait SquerylInitializerModule {
 
     SessionFactory.concreteFactory = Some(() => Session.create(cpds.getConnection, dbConfiguration.dbAdapter))
 
-    // TODO: do in a nicer way
     if (dbConfiguration.create) {
       transaction {
         try {
