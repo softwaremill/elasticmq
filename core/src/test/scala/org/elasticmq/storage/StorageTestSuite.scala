@@ -338,7 +338,7 @@ class MessageStorageTestSuite extends StorageTestSuite {
     lookupResult must be (None)
   }
 
-  test("updating a message") {
+  test("increasing visibility timeout of a message") {
     // Given
     val q1 = createQueueData("q1", MillisVisibilityTimeout(1L))
     queueStorage.persistQueue(q1)
@@ -351,6 +351,26 @@ class MessageStorageTestSuite extends StorageTestSuite {
 
     // Then
     messageStorage(q1.name).lookupMessage(MessageId("xyz")) must be (Some(createMessageData("xyz", "1234", MillisNextDelivery(345L))))
+  }
+
+  test("decreasing visibility timeout of a message") {
+    // Given
+    val q1 = createQueueData("q1", MillisVisibilityTimeout(1L))
+    queueStorage.persistQueue(q1)
+
+    // Initially m2 should be delivered after m1
+    val m1 = createMessageData("xyz1", "1234", MillisNextDelivery(100L))
+    val m2 = createMessageData("xyz2", "1234", MillisNextDelivery(200L))
+    
+    messageStorage(q1.name).persistMessage(m1)
+    messageStorage(q1.name).persistMessage(m2)
+
+    // When
+    messageStorage(q1.name).updateVisibilityTimeout(m2.id, MillisNextDelivery(50L))
+
+    // Then
+    // This should find the first message, as it has the visibility timeout decreased.
+    messageStorage(q1.name).receiveMessage(75L, MillisNextDelivery(100L)).map(_.id) must be (Some(m2.id))
   }
 
   test("message should be deleted") {

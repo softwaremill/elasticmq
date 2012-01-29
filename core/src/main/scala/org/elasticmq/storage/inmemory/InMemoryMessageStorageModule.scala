@@ -32,12 +32,22 @@ trait InMemoryMessageStorageModule extends MessageStorageModule {
         .get(messageId)
         .getOrElse(throw new MessageDoesNotExistException(queueName, messageId))
 
-      // TODO: in fact we only support *increasing* the next delivery
-
       // Locking
       inMemoryMessage.nextDeliveryState.set(NextDeliveryIsBeingUpdated)
+            
       // Updating
-      inMemoryMessage.nextDelivery.set(newNextDelivery.millis)
+      val oldNextDelivery = inMemoryMessage.nextDelivery.getAndSet(newNextDelivery.millis)
+      if (newNextDelivery.millis < oldNextDelivery) {
+        // We have to re-insert the message, as another message with a bigger next delivery may be now before it,
+        // so the message wouldn't be correctly received. 
+        // (!) This may be slow (!)
+        messageQueue.remove(inMemoryMessage)
+        messageQueue.add(inMemoryMessage)
+      }
+      // Else:
+      // Just increasing the next delivery. Common case. It is enough to increase the value in the object. No need to
+      // re-insert the message into the queue, as it will be reinserted if needed during receiving.
+
       // Releasing lock
       inMemoryMessage.nextDeliveryState.set(NextDeliveryUpdated)
     }
