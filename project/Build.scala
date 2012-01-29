@@ -35,7 +35,7 @@ object Dependencies {
   val jodaTime      = "joda-time"                 % "joda-time"             % "1.6.2" // when available use https://github.com/jorgeortiz85/scala-time
   val netty         = "org.jboss.netty"           % "netty"                 % "3.2.4.Final"
 
-  val log4j         = "log4j"                     % "log4j"                 % "1.2.16"
+  val slf4s         = "com.weiglewilczek.slf4s"   %% "slf4s"                % "1.0.7"
 
   val scalatest     = "org.scalatest"             %% "scalatest"            % "1.6.1"         % "test"
   val mockito       = "org.mockito"               % "mockito-core"          % "1.7"           % "test"
@@ -46,7 +46,7 @@ object Dependencies {
 
   val mysqlConnector = "mysql"                    % "mysql-connector-java"  % "5.1.12"
 
-  val common = Seq(log4j)
+  val common = Seq(slf4s)
   val testing = Seq(scalatest, mockito)
   val httpTesting = Seq(apacheHttp % "test")
 

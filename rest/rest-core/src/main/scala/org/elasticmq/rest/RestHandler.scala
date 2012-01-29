@@ -8,11 +8,9 @@ import org.jboss.netty.buffer.ChannelBuffers
 import org.jboss.netty.util.CharsetUtil
 import org.jboss.netty.handler.codec.http._
 import org.jboss.netty.handler.codec.http.HttpHeaders._
-import org.apache.log4j.Logger
+import com.weiglewilczek.slf4s.Logging
 
-class RestHandler(handlers: List[CheckingRequestHandlerWrapper]) extends SimpleChannelUpstreamHandler {
-  val log = Logger.getLogger(this.getClass)
-
+class RestHandler(handlers: List[CheckingRequestHandlerWrapper]) extends SimpleChannelUpstreamHandler with Logging {
   private def respondWith(stringResponse: StringResponse, channel: Channel) {
     val httpResponse: HttpResponse = new DefaultHttpResponse(HTTP_1_1, OK)
     httpResponse.setContent(ChannelBuffers.copiedBuffer(stringResponse.content, CharsetUtil.UTF_8))
@@ -31,7 +29,7 @@ class RestHandler(handlers: List[CheckingRequestHandlerWrapper]) extends SimpleC
       toTry match {
         case Nil => {
           // No handler
-          log.debug("No handler found for "+request.getUri)
+          logger.debug("No handler found for "+request.getUri)
           sendError(ctx, NOT_FOUND)
         }
         case handler :: tail => {
@@ -49,7 +47,7 @@ class RestHandler(handlers: List[CheckingRequestHandlerWrapper]) extends SimpleC
   override def exceptionCaught(ctx: ChannelHandlerContext, e: ExceptionEvent) {
     val channel = e.getChannel
 
-    log.debug("Exception during request processing", e.getCause)
+    logger.debug("Exception during request processing", e.getCause)
 
     if (channel.isConnected) {
       sendError(ctx, INTERNAL_SERVER_ERROR)

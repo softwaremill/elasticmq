@@ -4,8 +4,6 @@ import org.scalatest.matchers.MustMatchers
 import org.scalatest.{BeforeAndAfter, FunSuite}
 import org.elasticmq.rest.RestServer
 import org.elasticmq.{Node, NodeBuilder}
-import org.apache.log4j.BasicConfigurator
-import org.jboss.netty.logging.{Log4JLoggerFactory, InternalLoggerFactory}
 import com.amazonaws.auth.BasicAWSCredentials
 import com.amazonaws.services.sqs.{AmazonSQS, AmazonSQSClient}
 
@@ -20,9 +18,6 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
   var node: Node = _
   var server: RestServer = _
   var client: AmazonSQS = _
-
-  BasicConfigurator.configure();
-  InternalLoggerFactory.setDefaultFactory(new Log4JLoggerFactory())
 
   before {
     node = NodeBuilder.withInMemoryStorage().build()

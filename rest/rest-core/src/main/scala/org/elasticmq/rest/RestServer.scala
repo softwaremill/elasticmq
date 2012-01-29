@@ -4,13 +4,13 @@ import java.util.concurrent.Executors
 import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory
 import java.net.InetSocketAddress
 import org.jboss.netty.bootstrap.ServerBootstrap
-import org.jboss.netty.logging.{InternalLoggerFactory, Log4JLoggerFactory}
-import org.apache.log4j.{Logger, BasicConfigurator}
 import org.jboss.netty.channel.group.{ChannelGroup, DefaultChannelGroup}
 import org.jboss.netty.channel._
 import org.jboss.netty.handler.codec.http._
 import org.jboss.netty.handler.stream.ChunkedWriteHandler
 import org.jboss.netty.handler.execution.{ExecutionHandler, OrderedMemoryAwareThreadPoolExecutor}
+import com.weiglewilczek.slf4s.Logging
+import org.jboss.netty.logging.{Slf4JLoggerFactory, InternalLoggerFactory}
 
 class RestServer(doStop: () => Unit) {
   def stop() {
@@ -19,7 +19,7 @@ class RestServer(doStop: () => Unit) {
 }
 
 class RestPipelineFactory(handlers: List[CheckingRequestHandlerWrapper],
-                          allChannels: ChannelGroup) extends ChannelPipelineFactory {
+                          allChannels: ChannelGroup) extends ChannelPipelineFactory with Logging {
   val executionHandler = new ExecutionHandler(new OrderedMemoryAwareThreadPoolExecutor(16, 1048576, 1048576))
 
   def getPipeline = {
@@ -42,6 +42,8 @@ class RestPipelineFactory(handlers: List[CheckingRequestHandlerWrapper],
 
 object RestServer {
   def start(handlers: List[CheckingRequestHandlerWrapper], port: Int): RestServer = {
+    InternalLoggerFactory.setDefaultFactory(new Slf4JLoggerFactory())
+
     val factory: ChannelFactory =
       new NioServerSocketChannelFactory(
         Executors.newCachedThreadPool(),
@@ -81,15 +83,8 @@ object Testing {
   }
 
   def main(args: Array[String]) {
-    BasicConfigurator.configure();
-    InternalLoggerFactory.setDefaultFactory(new Log4JLoggerFactory())
-
     val server = RestServer.start(List(createTestHandler), 8888)
     println("Started")
-    val logger: Logger = Logger.getLogger(classOf[RestServer].getName)
-    logger.info("info")
-    logger.debug("debug")
-
     readLine()
     server.stop()
     println("Stopped")
