@@ -6,7 +6,8 @@ object TwoClientsPerformanceTest {
   // Slows down, useful for debugging:
   // org.apache.log4j.BasicConfigurator.configure();
 
-  val node = NodeBuilder.withMySQLStorage("elasticmq", "root", "").build()
+  val node = NodeBuilder.withInMemoryStorage().build()
+  //val node = NodeBuilder.withMySQLStorage("elasticmq", "root", "").build()
   val client = node.nativeClient
 
   val testQueueName = "twoClientsPerformanceTest"
@@ -25,7 +26,7 @@ object TwoClientsPerformanceTest {
     val seconds = (end - start) / 1000
 
     println(name+" took: "+seconds)
-    println(name+" ops/second: "+(ops/seconds))
+    if (seconds != 0) println(name+" ops/second: "+(ops/seconds))
     println(name+" ops: "+ops)
   }
 
@@ -78,14 +79,14 @@ object TwoClientsPerformanceTestSender {
 
 object TwoClientsPerformanceTestSendAndReceive {
   def main(args: Array[String]) {
-    TwoClientsPerformanceTest.Sender.run(1000)
+    TwoClientsPerformanceTest.Sender.run(100000)
     TwoClientsPerformanceTest.Receiver.run()
 
     println()
     println("---")
     println()
 
-    TwoClientsPerformanceTest.Sender.run(10000)
+    TwoClientsPerformanceTest.Sender.run(100000)
     TwoClientsPerformanceTest.Receiver.run()
   }
 }
