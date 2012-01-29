@@ -419,11 +419,8 @@ class MessageStatisticsStorageTestSuite extends StorageTestSuite {
     messageStatisticsStorage(q1.name).writeMessageStatistics(m1.id, MessageStatistics(OnDateTimeReceived(new DateTime(someTimestamp)), 1))
     messageStorage(q1.name).deleteMessage(m1.id)
 
-    // When
-    val stats = messageStatisticsStorage(q1.name).readMessageStatistics(m1.id)
-
-    // Then
-    stats.approximateReceiveCount must be (0)
+    // When & then
+    evaluating { messageStatisticsStorage(q1.name).readMessageStatistics(m1.id) } must produce [MessageDoesNotExistException]
   }
 
   test("statistics shouldn't be written if the message is already deleted") {
@@ -431,10 +428,7 @@ class MessageStatisticsStorageTestSuite extends StorageTestSuite {
     messageStorage(q1.name).deleteMessage(m1.id)
     messageStatisticsStorage(q1.name).writeMessageStatistics(m1.id, MessageStatistics(OnDateTimeReceived(new DateTime(someTimestamp)), 1))
 
-    // When
-    val stats = messageStatisticsStorage(q1.name).readMessageStatistics(m1.id)
-
-    // Then
-    stats.approximateReceiveCount must be (0)
+    // When & then
+    evaluating { messageStatisticsStorage(q1.name).readMessageStatistics(m1.id) } must produce [MessageDoesNotExistException]
   }
 }

@@ -6,12 +6,13 @@ import org.elasticmq.storage.MessageStorageModule
 import org.elasticmq.impl.MessageData
 
 trait SquerylMessageStorageModule extends MessageStorageModule {
-  this: SquerylSchemaModule =>
+  this: SquerylSchemaModule with SquerylMessageStatisticsStorageModule =>
 
   class SquerylMessageStorage(queueName: String) extends MessageStorage {
     def persistMessage(message: MessageData) {
       transaction {
         messages.insert(SquerylMessage.from(queueName, message))
+        messageStatisticsStorage(queueName).writeMessageStatistics(message.id, MessageStatistics.empty, false)
       }
     }
 

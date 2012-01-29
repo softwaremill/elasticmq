@@ -2,29 +2,35 @@ package org.elasticmq.storage.squeryl
 
 import org.squeryl.PrimitiveTypeMode._
 import org.elasticmq.storage.MessageStatisticsStorageModule
-import org.elasticmq.{MessageId, MessageStatistics}
+import org.elasticmq.{MessageDoesNotExistException, MessageId, MessageStatistics}
 
 trait SquerylMessageStatisticsStorageModule extends MessageStatisticsStorageModule {
   this: SquerylSchemaModule =>
 
-  object squerylMessageStatisticsStorage extends MessageStatisticsStorage {
+  class SquerylMessageStatisticsStorage(queueName: String) extends MessageStatisticsStorage {
     def readMessageStatistics(messageId: MessageId) = {
       inTransaction {
         messageStatistics
           .lookup(messageId.id)
           .map(_.toMessageStatistics)
-          .getOrElse(MessageStatistics.empty)
+          .getOrElse(throw new MessageDoesNotExistException(queueName, messageId))
       }
     }
 
-
     def writeMessageStatistics(messageId: MessageId, statistics: MessageStatistics) {
-      transaction {
-        val messageInDb = messages.lookup(messageId.id)
+      writeMessageStatistics(messageId, statistics, true)
+    }
 
-        if (messageInDb.isDefined) {
+    /** @param checkIfMessageExists: Should a check if the message exists be done before writing stats. This should be
+     *  {@code false} when we are certain that the message is in the DB.
+      */
+    def writeMessageStatistics(messageId: MessageId, statistics: MessageStatistics, checkIfMessageExists: Boolean) {
+      inTransaction {
+        lazy val messageInDb = messages.lookup(messageId.id)
+
+        if (!checkIfMessageExists || messageInDb.isDefined) {
           val squerylStatistics = SquerylMessageStatistics.from(messageId, statistics)
-          if (statistics.approximateReceiveCount == 1) {
+          if (statistics.approximateReceiveCount == 0) {
             messageStatistics.insert(squerylStatistics)
           } else {
             messageStatistics.update(squerylStatistics)
@@ -34,5 +40,5 @@ trait SquerylMessageStatisticsStorageModule extends MessageStatisticsStorageModu
     }
   }
 
-  def messageStatisticsStorage(queueName: String) = squerylMessageStatisticsStorage
+  def messageStatisticsStorage(queueName: String) = new SquerylMessageStatisticsStorage(queueName)
 }

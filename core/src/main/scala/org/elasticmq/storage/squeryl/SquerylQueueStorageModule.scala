@@ -61,22 +61,22 @@ trait SquerylQueueStorageModule extends QueueStorageModule {
         }
 
         def countInvisibileMessages(): Long = {
-          join(messages, messageStatistics.leftOuter)((m, ms) =>
-            where(m.queueName === name and
-              not (ms.map(_.id) === None) and
+          join(messages, messageStatistics)((m, ms) =>
+            where((m.queueName === name) and
+              (ms.approximateReceiveCount gt 0) and
               (m.nextDelivery gt deliveryTime))
               compute(count(m.id))
-              on(Some(m.id) === ms.map(_.id))
+              on(m.id === ms.id)
           )
         }
 
         def countDelayedMessages(): Long = {
-          join(messages, messageStatistics.leftOuter)((m, ms) =>
-            where(m.queueName === name and
-              (ms.map(_.id) === None) and
+          join(messages, messageStatistics)((m, ms) =>
+            where((m.queueName === name) and
+              (ms.approximateReceiveCount === 0) and
               (m.nextDelivery gt deliveryTime))
             compute(count(m.id))
-            on(Some(m.id) === ms.map(_.id))
+            on(m.id === ms.id)
           )
         }
 
