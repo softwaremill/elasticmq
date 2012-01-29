@@ -45,9 +45,14 @@ trait NativeQueueModule {
 
       messageOption.foreach(message => volatileTaskScheduler.schedule {
         val statsStorage = messageStatisticsStorage(queueName)
-        val stats = statsStorage.readMessageStatistics(message.id)
-        val bumpedStats = bumpMessageStatistics(stats)
-        statsStorage.writeMessageStatistics(message.id, bumpedStats)
+        try {
+          val stats = statsStorage.readMessageStatistics(message.id)
+          val bumpedStats = bumpMessageStatistics(stats)
+          statsStorage.writeMessageStatistics(message.id, bumpedStats)
+        } catch {
+          // This may happen if the message is deleted before the stats are bumped.
+          case _: MessageDoesNotExistException => // ignore
+        }
       })
 
       messageOption.map(new NativeMessage(queueName, _))
