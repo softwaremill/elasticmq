@@ -8,7 +8,7 @@ import org.elasticmq.impl.MessageData
 import scala.annotation.tailrec
 
 trait InMemoryMessageStorageModule extends MessageStorageModule {
-  this: InMemoryStorageModelModule with InMemoryMessageStatisticsStorageModule with InMemoryMessageStorageRegistryModule =>
+  this: InMemoryStorageModelModule with InMemoryMessageStatisticsStorageModule with InMemoryStorageRegistryModule =>
 
   class OneQueueInMemoryMessageStorage(queueName: String) extends MessageStorage {
     val messagesById = JavaConversions.asScalaConcurrentMap(new ConcurrentHashMap[MessageId, InMemoryMessage])
@@ -16,6 +16,10 @@ trait InMemoryMessageStorageModule extends MessageStorageModule {
 
     def persistMessage(message: MessageData) {
       val inMemoryMessage = InMemoryMessage.from(message)
+
+      // First writing empty stats. This must be done before putting the message in the queue, as if we did it after,
+      // the message may get received and the stats updated.
+      messageStatisticsStorage(queueName).writeMessageStatistics(message.id, MessageStatistics(NeverReceived, 0))
 
       // First putting in the map so that the message is not considered deleted if it's received immediately after
       // putting in the queue.
@@ -87,5 +91,5 @@ trait InMemoryMessageStorageModule extends MessageStorageModule {
     }
   }
 
-  def messageStorage(queueName: String) = storageRegistry.getStoreForQueue(queueName)
+  def messageStorage(queueName: String) = storageRegistry.getStoreForQueue(queueName).messageStorage
 }

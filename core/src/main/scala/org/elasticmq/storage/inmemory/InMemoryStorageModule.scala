@@ -5,6 +5,6 @@ import org.elasticmq.storage.StorageModule
 trait InMemoryStorageModule extends StorageModule
   with InMemoryMessageStatisticsStorageModule
   with InMemoryMessageStorageModule
-  with InMemoryMessageStorageRegistryModule
+  with InMemoryStorageRegistryModule
   with InMemoryQueueStorageModule
   with InMemoryStorageModelModule

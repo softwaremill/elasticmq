@@ -3,9 +3,26 @@ package org.elasticmq.storage.inmemory
 import org.joda.time.DateTime
 import org.elasticmq._
 import java.util.concurrent.atomic.{AtomicReference, AtomicLong}
-import org.elasticmq.impl.MessageData
+import org.elasticmq.impl.{QueueData, MessageData}
+import scala.collection.mutable.ConcurrentMap
+import java.util.concurrent.ConcurrentHashMap
+import scala.collection.JavaConversions
 
 trait InMemoryStorageModelModule {
+  this: InMemoryMessageStorageModule =>
+
+  type StatisticsStorage = ConcurrentMap[MessageId, MessageStatistics]
+
+  case class InMemoryQueue(queueData: QueueData,
+                           messageStorage: OneQueueInMemoryMessageStorage,
+                           statisticStorage: StatisticsStorage)
+  
+  object InMemoryQueue {
+    def apply(queueData: QueueData) = new InMemoryQueue(queueData,
+      new OneQueueInMemoryMessageStorage(queueData.name),
+      JavaConversions.asScalaConcurrentMap(new ConcurrentHashMap[MessageId, MessageStatistics]))
+  }
+  
   case class InMemoryMessage(id: String, nextDelivery: AtomicLong, content: String, created: DateTime,
                              nextDeliveryState: AtomicReference[MessageNextDeliveryState])
     extends Comparable[InMemoryMessage] {

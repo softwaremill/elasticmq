@@ -1,36 +1,31 @@
 package org.elasticmq.storage.inmemory
 
-import collection.JavaConversions
-import java.util.concurrent.ConcurrentHashMap
 import org.elasticmq.storage.{MessageStatisticsStorageModule, QueueStorageModule}
 import org.elasticmq.impl.QueueData
 import org.elasticmq.{MessageId, QueueStatistics}
 
 trait InMemoryQueueStorageModule extends QueueStorageModule {
-  this: InMemoryStorageModelModule with InMemoryMessageStorageRegistryModule with MessageStatisticsStorageModule =>
+  this: InMemoryStorageModelModule with InMemoryStorageRegistryModule with MessageStatisticsStorageModule =>
 
   class InMemoryQueueStorage extends QueueStorage {
-    val queuesByName = JavaConversions.asScalaConcurrentMap(new ConcurrentHashMap[String, QueueData])
-
     def persistQueue(queue: QueueData) {
-      // First creating the storage, so that when the queue is findable (present in queuesByName), the storage exists.
-      storageRegistry.createStoreForQueue(queue.name)
-      updateQueue(queue)
+      storageRegistry.createStoreForQueue(queue)
     }
 
-    def updateQueue(queue: QueueData) { queuesByName.put(queue.name, queue) }
+    def updateQueue(queueData: QueueData) {
+      storageRegistry.updateQueueData(queueData)
+    }
 
     def deleteQueue(queueName: String) {
-      queuesByName.remove(queueName)
       storageRegistry.deleteStoreForQueue(queueName)
     }
 
-    def lookupQueue(queueName: String) = queuesByName.get(queueName)
+    def lookupQueue(queueName: String) = storageRegistry.storages.get(queueName).map(_.queueData)
 
-    def listQueues = queuesByName.values.toSeq
+    def listQueues = storageRegistry.storages.values.map(_.queueData).toSeq
 
     def queueStatistics(queueName: String, deliveryTime: Long) = {
-      val queueMessageStorage = storageRegistry.getStoreForQueue(queueName)
+      val queueMessageStorage = storageRegistry.getStoreForQueue(queueName).messageStorage
       val (visible, invisible) = queueMessageStorage.messagesById.values.partition(
         message => (message.nextDelivery.get() <= deliveryTime))
 

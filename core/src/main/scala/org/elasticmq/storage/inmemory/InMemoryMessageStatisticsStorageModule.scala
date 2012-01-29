@@ -4,23 +4,27 @@ import org.elasticmq.storage.MessageStatisticsStorageModule
 import org.elasticmq._
 
 trait InMemoryMessageStatisticsStorageModule extends MessageStatisticsStorageModule {
-  this: InMemoryMessageStorageRegistryModule =>
+  this: InMemoryStorageRegistryModule with InMemoryStorageModelModule =>
   
-  class InMemoryMessageStatisticsStorage(queueName: String) extends MessageStatisticsStorage {
-    // TODO: make nicer
-
-    def readMessageStatistics(messageId: MessageId) = storageRegistry.messageStats.get(messageId.id)
-      .getOrElse(MessageStatistics(NeverReceived, 0))
+  class InMemoryMessageStatisticsStorage(queueName: String, storage: StatisticsStorage) extends MessageStatisticsStorage {
+    def readMessageStatistics(messageId: MessageId) =
+      storage.get(messageId).getOrElse(throw new MessageDoesNotExistException(queueName, messageId))
 
     def writeMessageStatistics(messageId: MessageId, messageStatistics: MessageStatistics) {
-      // TODO: checking if the message isn't deleted.
-      if (storageRegistry.getStoreForQueue(queueName).messagesById.get(messageId) != None) {
-        storageRegistry.messageStats.put(messageId.id, messageStatistics)
+      val previousOption = storage.put(messageId, messageStatistics)
+      
+      if (messageStatistics.approximateReceiveCount != 0) {
+        // Not an initial write, previous value should be defined. If not, the message got deleted, cleaning up.
+        if (!previousOption.isDefined) {
+          removeMessageStatistics(messageId);
+        }
       }
     }
     
-    def removeMessageStatistics(messageId: MessageId) = storageRegistry.messageStats.remove(messageId.id)
+    def removeMessageStatistics(messageId: MessageId) = storage.remove(messageId)
   }
 
-  def messageStatisticsStorage(queueName: String) = new InMemoryMessageStatisticsStorage(queueName)
+  def messageStatisticsStorage(queueName: String) =
+    new InMemoryMessageStatisticsStorage(queueName,
+      storageRegistry.getStoreForQueue(queueName).statisticStorage)
 }
