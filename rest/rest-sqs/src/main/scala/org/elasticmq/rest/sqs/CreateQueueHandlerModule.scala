@@ -1,7 +1,5 @@
 package org.elasticmq.rest.sqs
 
-import org.elasticmq.Queue
-import org.elasticmq.MillisVisibilityTimeout
 
 import org.elasticmq.rest.RequestHandlerBuilder._
 import org.elasticmq.rest.RestPath._
@@ -12,6 +10,7 @@ import Constants._
 import ActionUtil._
 import ParametersParserUtil._
 import org.joda.time.Duration
+import org.elasticmq.{QueueBuilder, MillisVisibilityTimeout}
 
 trait CreateQueueHandlerModule { this: ClientModule with QueueURLModule with RequestHandlerLogicModule
   with AttributesModule =>
@@ -22,7 +21,7 @@ trait CreateQueueHandlerModule { this: ClientModule with QueueURLModule with Req
   val CreateQueueAction = createAction("CreateQueue")
 
   val createQueueLogic = logicWithQueueName((queueName, request, parameters) => {
-    val queueOption = client.queueClient.lookupQueue(queueName)
+    val queueOption = client.lookupQueue(queueName)
 
     val attributes = attributeNameAndValuesReader.read(parameters)
 
@@ -34,9 +33,10 @@ trait CreateQueueHandlerModule { this: ClientModule with QueueURLModule with Req
       (attributes.parseOptionalLong(DelayParameter)
         .getOrElse(DefaultDelay));
 
-    val queue = queueOption.getOrElse(client.queueClient.createQueue(
-      Queue(queueName, MillisVisibilityTimeout.fromSeconds(secondsVisibilityTimeout),
-        Duration.standardSeconds(secondsDelay))))
+    val queue = queueOption.getOrElse(client.createQueue(
+      QueueBuilder(queueName)
+        .withDefaultVisibilityTimeout(MillisVisibilityTimeout.fromSeconds(secondsVisibilityTimeout))
+        .withDelay(Duration.standardSeconds(secondsDelay))))
 
     if (queue.defaultVisibilityTimeout.seconds != secondsVisibilityTimeout) {
       // Special case: the queue existed, but has a different visibility timeout

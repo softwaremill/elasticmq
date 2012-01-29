@@ -37,7 +37,7 @@ trait QueueAttributesHandlersModule { this: ClientModule with RequestHandlerLogi
     import QueueReadableAttributeNames._
 
     def calculateAttributeValues(attributeNames: List[String]) = {
-      lazy val stats = client.queueClient.queueStatistics(queue)
+      lazy val stats = queue.fetchStatistics()
 
       attributeValuesCalculator.calculate(attributeNames,
         (VisibilityTimeoutAttribute, ()=>queue.defaultVisibilityTimeout.seconds.toString),
@@ -71,11 +71,11 @@ trait QueueAttributesHandlersModule { this: ClientModule with RequestHandlerLogi
     attributes.foreach({ case (attributeName, attributeValue) =>
       attributeName match {
         case QueueWriteableAttributeNames.VisibilityTimeoutAttribute => {
-          client.queueClient.updateDefaultVisibilityTimeout(queue,
+          queue.updateDefaultVisibilityTimeout(
             MillisVisibilityTimeout.fromSeconds(attributeValue.toLong))
         }
         case QueueWriteableAttributeNames.DelaySecondsAttribute => {
-          client.queueClient.updateDelay(queue, Duration.standardSeconds(attributeValue.toLong))
+          queue.updateDelay(Duration.standardSeconds(attributeValue.toLong))
         }
         case _ => throw new SQSException("InvalidAttributeName")
       }

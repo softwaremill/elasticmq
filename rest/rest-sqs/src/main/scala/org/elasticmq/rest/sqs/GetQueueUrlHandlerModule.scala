@@ -12,7 +12,7 @@ trait GetQueueUrlHandlerModule { this: ClientModule with QueueURLModule with Req
   val GetQueueUrlAction = createAction("GetQueueUrl")
 
   val getQueueUrlLogic = logicWithQueueName((queueName, request, parameters) => {
-    val queueOption = client.queueClient.lookupQueue(queueName)
+    val queueOption = client.lookupQueue(queueName)
 
     queueOption match {
       case None => throw new SQSException("AWS.SimpleQueueService.NonExistentQueue")

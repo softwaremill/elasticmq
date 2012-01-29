@@ -28,13 +28,13 @@ trait ReceiveMessageHandlerModule { this: ClientModule with RequestHandlerLogicM
       }
     }
 
-    val messagesStatistics = client.messageClient.receiveMessageWithStatistics(queue, calculateVisibilityTimeout())
-    val messages = messagesStatistics.map(_.message)
+    val msgWithStats = queue.receiveMessageWithStatistics(calculateVisibilityTimeout())
+
     lazy val attributeNames = attributeNamesReader.read(parameters, AllAttributeNames)
 
-    def calculateAttributeValues(stats: MessageStatistics): List[(String, String)] = {
+    def calculateAttributeValues(msg: Message, stats: MessageStatistics): List[(String, String)] = {
       attributeValuesCalculator.calculate(attributeNames,
-        (SentTimestampAttribute, ()=>stats.message.created.getMillis.toString),
+        (SentTimestampAttribute, ()=>msg.created.getMillis.toString),
         (ApproximateReceiveCountAttribute, ()=>stats.approximateReceiveCount.toString),
         (ApproximateFirstReceiveTimestampAttribute,
           ()=>(stats.approximateFirstReceive match {
@@ -43,19 +43,16 @@ trait ReceiveMessageHandlerModule { this: ClientModule with RequestHandlerLogicM
           }).toString))
     }
 
-    val messagesAttributes: Map[SpecifiedMessage, List[(String, String)]] =
-      Map() ++ messagesStatistics.map(s => { s.message -> calculateAttributeValues(s) }).toList
-
     <ReceiveMessageResponse>
       <ReceiveMessageResult>
-        {messages.map(m =>
+        {msgWithStats.map { case (msg, stats) =>
         <Message>
-          <MessageId>{m.id.get}</MessageId>
-          <ReceiptHandle>{m.id.get}</ReceiptHandle>
-          <MD5OfBody>{md5Digest(m.content)}</MD5OfBody>
-          <Body>{m.content}</Body>
-          {attributesToXmlConverter.convert(messagesAttributes(m))}
-        </Message>).toList}
+          <MessageId>{msg.id.id}</MessageId>
+          <ReceiptHandle>{msg.id.id}</ReceiptHandle>
+          <MD5OfBody>{md5Digest(msg.content)}</MD5OfBody>
+          <Body>{msg.content}</Body>
+          {attributesToXmlConverter.convert(calculateAttributeValues(msg, stats))}
+        </Message> }.toList}
       </ReceiveMessageResult>
       <ResponseMetadata>
         <RequestId>{EmptyRequestId}</RequestId>

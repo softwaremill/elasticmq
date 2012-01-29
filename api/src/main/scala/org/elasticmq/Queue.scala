@@ -14,7 +14,7 @@ case class QueueBuilder private (name: String, defaultVisibilityTimeout: MillisV
   def withDefaultVisibilityTimeout(defaultVisibilityTimeout: MillisVisibilityTimeout) =
     this.copy(defaultVisibilityTimeout = defaultVisibilityTimeout)
 
-  def withDelay(duration: Duration) = this.copy(delay = delay)
+  def withDelay(delay: Duration) = this.copy(delay = delay)
 }
 
 object QueueBuilder {

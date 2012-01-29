@@ -45,7 +45,7 @@ trait RequestHandlerLogicModule { this: ClientModule =>
   private implicit def elemToStringResponse(e: Elem): StringResponse = StringResponse(e.toString())
 
   private def queueFor(queueName: String) = {
-    val queueOption = client.queueClient.lookupQueue(queueName)
+    val queueOption = client.lookupQueue(queueName)
 
     queueOption match {
       case Some(q) => q

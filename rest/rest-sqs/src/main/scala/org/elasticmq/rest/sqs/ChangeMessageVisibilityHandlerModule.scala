@@ -1,20 +1,20 @@
 package org.elasticmq.rest.sqs
 
-import org.elasticmq.MillisVisibilityTimeout
 import org.elasticmq.rest.RequestHandlerBuilder._
 import org.jboss.netty.handler.codec.http.HttpMethod._
 
 import Constants._
 import ActionUtil._
+import org.elasticmq.{MessageId, MillisVisibilityTimeout}
 
 trait ChangeMessageVisibilityHandlerModule { this: ClientModule with RequestHandlerLogicModule =>
   val ChangeMessageVisibilityAction = createAction("ChangeMessageVisibility")
 
   val changeMessageVisibilityLogic = logicWithQueue((queue, request, parameters) => {
     val visibilityTimeout = MillisVisibilityTimeout.fromSeconds(parameters(VisibilityTimeoutParameter).toLong)
-    val message = client.messageClient.lookupMessage(queue, parameters(ReceiptHandlerParameter))
+    val message = queue.lookupMessage(MessageId(parameters(ReceiptHandlerParameter)))
       .getOrElse(throw SQSException.invalidParameterValue)
-    client.messageClient.updateVisibilityTimeout(message, visibilityTimeout)
+    message.updateVisibilityTimeout(visibilityTimeout)
 
     <ChangeMessageVisibilityResponse>
       <ResponseMetadata>

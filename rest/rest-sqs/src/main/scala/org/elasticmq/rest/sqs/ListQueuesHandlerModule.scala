@@ -11,7 +11,7 @@ import ActionUtil._
 trait ListQueuesHandlerModule { this: ClientModule with QueueURLModule with RequestHandlerLogicModule =>
   val listQueuesLogic = logic((request, parameters) => {
     val prefixOption = parameters.get("QueueNamePrefix")
-    val allQueues = client.queueClient.listQueues
+    val allQueues = client.listQueues
 
     val queues = prefixOption match {
       case Some(prefix) => allQueues.filter(_.name.startsWith(prefix))

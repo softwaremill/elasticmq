@@ -7,21 +7,21 @@ import Constants._
 import ActionUtil._
 import MD5Util._
 import ParametersParserUtil._
-import org.elasticmq.{AfterMillisNextDelivery, Queue, Message}
+import org.elasticmq.{MessageBuilder, AfterMillisNextDelivery, Queue}
 
 trait SendMessageHandlerModule { this: ClientModule with RequestHandlerLogicModule =>
   val sendMessageLogic = logicWithQueue((queue, request, parameters) => {
     val body = parameters(MessageBodyParameter)
     val delaySecondsOption = parameters.parseOptionalLong(DelaySecondsParameter)
     val messageToSend = createMessage(queue, body, delaySecondsOption)
-    val message = client.messageClient.sendMessage(messageToSend)
+    val message = queue.sendMessage(messageToSend)
 
     val digest = md5Digest(body)
 
     <SendMessageResponse>
       <SendMessageResult>
         <MD5OfMessageBody>{digest}</MD5OfMessageBody>
-        <MessageId>{message.id.get}</MessageId>
+        <MessageId>{message.id.id}</MessageId>
       </SendMessageResult>
       <ResponseMetadata>
         <RequestId>{EmptyRequestId}</RequestId>
@@ -30,9 +30,10 @@ trait SendMessageHandlerModule { this: ClientModule with RequestHandlerLogicModu
   })
   
   def createMessage(queue: Queue, body: String, delaySecondsOption: Option[Long]) = {
+    val base = MessageBuilder(body)
     delaySecondsOption match {
-      case None => Message(queue, body)
-      case Some(delaySeconds) => Message(queue, None, body, AfterMillisNextDelivery(delaySeconds*1000))
+      case None => base
+      case Some(delaySeconds) => base.withNextDelivery(AfterMillisNextDelivery(delaySeconds*1000))
     }    
   }  
 

@@ -9,7 +9,7 @@ import ActionUtil._
 
 trait DeleteQueueHandlerModule { this: ClientModule with RequestHandlerLogicModule =>
   val deleteQueueLogic = logicWithQueue((queue, request, parameters) => {
-    client.queueClient.deleteQueue(queue)
+    queue.delete()
 
     <DeleteQueueResponse>
       <ResponseMetadata>
