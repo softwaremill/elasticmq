@@ -3,10 +3,10 @@ package org.elasticmq.impl.scheduler
 import scala.actors.DaemonActor
 import com.weiglewilczek.slf4s.Logging
 
-trait BackgroundVolatileTaskSchedulerModule extends VolatileTaskSchedulerModule with Logging {
+trait BackgroundVolatileTaskSchedulerModule extends VolatileTaskSchedulerModule {
   val volatileTaskScheduler = new BackgroundTaskScheduler
 
-  class BackgroundTaskScheduler extends VolatileTaskScheduler {
+  class BackgroundTaskScheduler extends VolatileTaskScheduler with Logging {
     object Executor extends DaemonActor {
       def act() {
         loop {
