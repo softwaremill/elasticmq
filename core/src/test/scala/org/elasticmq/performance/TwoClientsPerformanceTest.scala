@@ -6,8 +6,9 @@ object TwoClientsPerformanceTest {
   // Slows down, useful for debugging:
   // org.apache.log4j.BasicConfigurator.configure();
 
-  val node = NodeBuilder.withInMemoryStorage().build()
+  //val node = NodeBuilder.withInMemoryStorage().build()
   //val node = NodeBuilder.withMySQLStorage("elasticmq", "root", "").build()
+  val node = NodeBuilder.withH2InMemoryStorage().build()
   val client = node.nativeClient
 
   val testQueueName = "twoClientsPerformanceTest"
@@ -43,8 +44,6 @@ object TwoClientsPerformanceTest {
       }
 
       timeWithOpsPerSecond("Receive", receiveLoop _)
-
-      shutdown()
     }
   }
 
@@ -57,8 +56,6 @@ object TwoClientsPerformanceTest {
 
         iterations
       })
-
-      shutdown()
     }
   }
 }
@@ -68,25 +65,29 @@ object TwoClientsPerformanceTestReceiver {
     println("Press any key to start ...")
     readLine()
     TwoClientsPerformanceTest.Receiver.run()
+    TwoClientsPerformanceTest.shutdown()
   }
 }
 
 object TwoClientsPerformanceTestSender {
   def main(args: Array[String]) {
     TwoClientsPerformanceTest.Sender.run(1000)
+    TwoClientsPerformanceTest.shutdown()
   }
 }
 
 object TwoClientsPerformanceTestSendAndReceive {
   def main(args: Array[String]) {
-    TwoClientsPerformanceTest.Sender.run(10000)
+    TwoClientsPerformanceTest.Sender.run(1000)
     TwoClientsPerformanceTest.Receiver.run()
 
     println()
     println("---")
     println()
 
-    TwoClientsPerformanceTest.Sender.run(10000)
+    TwoClientsPerformanceTest.Sender.run(1000)
     TwoClientsPerformanceTest.Receiver.run()
+
+    TwoClientsPerformanceTest.shutdown()
   }
 }
