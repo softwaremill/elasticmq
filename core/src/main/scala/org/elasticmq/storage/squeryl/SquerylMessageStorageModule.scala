@@ -39,9 +39,15 @@ trait SquerylMessageStorageModule extends MessageStorageModule {
     }
 
     def receiveMessage(deliveryTime: Long, newNextDelivery: MillisNextDelivery): Option[MessageData] = {
-      transaction {
-        val message = lookupPendingMessage(deliveryTime)
-        message.flatMap(updateNextDelivery(_, newNextDelivery))
+      inTransaction {
+        val messageOption = lookupPendingMessage(deliveryTime)
+        messageOption.flatMap(message => {
+          // The message may already have been received by another thread. In that case, trying again.
+          updateNextDelivery(message, newNextDelivery) match {
+            case None => receiveMessage(deliveryTime, newNextDelivery)
+            case some => some
+          }
+        })
       }
     }
 
