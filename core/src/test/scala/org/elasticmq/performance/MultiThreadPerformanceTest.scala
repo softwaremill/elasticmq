@@ -10,17 +10,17 @@ object MultiThreadPerformanceTest {
     //val node = NodeBuilder.withInMemoryStorage().build()
     //val storageName = "InMemory"
 
-    //val node = NodeBuilder.withMySQLStorage("elasticmq", "root", "").build()
-    //val storageName = "MySQL"
+    val node = NodeBuilder.withMySQLStorage("elasticmq", "root", "").build()
+    val storageName = "MySQL"
 
-    val node = NodeBuilder.withH2InMemoryStorage().build()
-    val storageName = "H2"
+    //val node = NodeBuilder.withH2InMemoryStorage().build()
+    //val storageName = "H2"
     
     val client = node.nativeClient
     val testQueue = client.lookupOrCreateQueue("perfTest")
 
     // warm up
-    run(storageName, testQueue, 1, 1000)
+    //run(storageName, testQueue, 1, 1000)
 
     run(storageName, testQueue, numberOfThreads, messageCount)
 
@@ -28,14 +28,16 @@ object MultiThreadPerformanceTest {
   }
 
   def run(storageName: String, queue: Queue, numberOfThreads: Int, messageCount: Int) {
-    val sendTook = timeRunAndJoinThreads(numberOfThreads, () => new SendMessages(queue, messageCount))
-    val receiveTook = timeRunAndJoinThreads(numberOfThreads, () => new ReceiveMessages(queue, messageCount))
-
+    println("Storage: %s, number of threads: %d, number of messages: %d".format(storageName, numberOfThreads, messageCount))
     val ops = messageCount*numberOfThreads
 
-    println("Storage: %s, number of threads: %d, number of messages: %d".format(storageName, numberOfThreads, messageCount))
+    val sendTook = timeRunAndJoinThreads(numberOfThreads, () => new SendMessages(queue, messageCount))
     printStats("Send", sendTook, ops)
+
+    val receiveTook = timeRunAndJoinThreads(numberOfThreads, () => new ReceiveMessages(queue, messageCount))
     printStats("Receive", receiveTook, ops)
+    assertQueueEmpty(queue)
+
     println()
   }
   
@@ -85,5 +87,12 @@ object MultiThreadPerformanceTest {
         i += 1
       }
     }
+  }
+  
+  def assertQueueEmpty(queue: Queue) {
+    val stats = queue.fetchStatistics()
+    assert(stats.approximateNumberOfVisibleMessages == 0)
+    assert(stats.approximateNumberOfMessagesDelayed == 0)
+    assert(stats.approximateNumberOfInvisibleMessages == 0)
   }
 }
