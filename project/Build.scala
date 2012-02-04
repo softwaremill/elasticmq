@@ -48,9 +48,9 @@ object Dependencies {
 
   val mysqlConnector = "mysql"                    % "mysql-connector-java"  % "5.1.12"
 
-  val common = Seq(slf4s, jclOverSlf4j)
+  val common = Seq(slf4s)
   val testing = Seq(scalatest, mockito, logback % "test")
-  val httpTesting = Seq(apacheHttp % "test")
+  val httpTesting = Seq(apacheHttp % "test", jclOverSlf4j % "test")
 
   // To get the source run the <update-classifiers> task.
 }
