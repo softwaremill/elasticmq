@@ -7,6 +7,7 @@
 
     <logger name="org.apache.http" level="INFO"/>
     <logger name="org.elasticmq" level="INFO"/>
+    <logger name="org.elasticmq.impl.scheduler.BackgroundVolatileTaskSchedulerModule" level="ERROR"/>
     <logger name="com.mchange" level="INFO"/>
 
     <root level="DEBUG">
