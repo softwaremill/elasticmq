@@ -9,6 +9,7 @@ import org.jboss.netty.util.CharsetUtil
 import org.jboss.netty.handler.codec.http._
 import org.jboss.netty.handler.codec.http.HttpHeaders._
 import com.weiglewilczek.slf4s.Logging
+import scala.annotation.tailrec
 
 class RestHandler(handlers: List[CheckingRequestHandlerWrapper]) extends SimpleChannelUpstreamHandler with Logging {
   private def respondWith(stringResponse: StringResponse, channel: Channel) {
@@ -25,6 +26,7 @@ class RestHandler(handlers: List[CheckingRequestHandlerWrapper]) extends SimpleC
   override def messageReceived(ctx: ChannelHandlerContext, e: MessageEvent) {
     val request = e.getMessage.asInstanceOf[HttpRequest]
 
+    @tailrec
     def tryHandlers(toTry: List[CheckingRequestHandlerWrapper]) {
       toTry match {
         case Nil => {
