@@ -22,7 +22,8 @@ object BuildSettings {
     },
     credentials   += Credentials(Path.userHome / ".ivy2" / ".credentials"),
     publishMavenStyle := true,
-    parallelExecution in Test := false
+    parallelExecution in Test := false,
+    scalacOptions += "-unchecked"
   ) ++ net.virtualvoid.sbt.graph.Plugin.graphSettings
 }
 
