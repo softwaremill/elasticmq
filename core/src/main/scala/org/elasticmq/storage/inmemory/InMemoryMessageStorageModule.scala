@@ -41,8 +41,10 @@ trait InMemoryMessageStorageModule extends MessageStorageModule {
         // We have to re-insert the message, as another message with a bigger next delivery may be now before it,
         // so the message wouldn't be correctly received. 
         // (!) This may be slow (!)
-        messageQueue.remove(inMemoryMessage)
-        messageQueue.add(inMemoryMessage)
+        // Only inserting if removal was successfull (the message may have been removed from the queue concurrently).
+        if (messageQueue.remove(inMemoryMessage)) {
+          messageQueue.add(inMemoryMessage)
+        }
       }
       // Else:
       // Just increasing the next delivery. Common case. It is enough to increase the value in the object. No need to
