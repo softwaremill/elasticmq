@@ -2,10 +2,7 @@ package org.elasticmq.performance
 
 import org.elasticmq._
 
-object TwoClientsPerformanceTest {
-  // Slows down, useful for debugging:
-  // org.apache.log4j.BasicConfigurator.configure();
-
+object SingleClientPerformanceTest {
   //val node = NodeBuilder.withInMemoryStorage().build()
   //val node = NodeBuilder.withMySQLStorage("elasticmq", "root", "").build()
   val node = NodeBuilder.withH2InMemoryStorage().build()
@@ -60,34 +57,18 @@ object TwoClientsPerformanceTest {
   }
 }
 
-object TwoClientsPerformanceTestReceiver {
+object SingleClientPerformanceTestSendAndReceive {
   def main(args: Array[String]) {
-    println("Press any key to start ...")
-    readLine()
-    TwoClientsPerformanceTest.Receiver.run()
-    TwoClientsPerformanceTest.shutdown()
-  }
-}
-
-object TwoClientsPerformanceTestSender {
-  def main(args: Array[String]) {
-    TwoClientsPerformanceTest.Sender.run(1000)
-    TwoClientsPerformanceTest.shutdown()
-  }
-}
-
-object TwoClientsPerformanceTestSendAndReceive {
-  def main(args: Array[String]) {
-    TwoClientsPerformanceTest.Sender.run(1000)
-    TwoClientsPerformanceTest.Receiver.run()
+    SingleClientPerformanceTest.Sender.run(1000)
+    SingleClientPerformanceTest.Receiver.run()
 
     println()
     println("---")
     println()
 
-    TwoClientsPerformanceTest.Sender.run(1000)
-    TwoClientsPerformanceTest.Receiver.run()
+    SingleClientPerformanceTest.Sender.run(1000)
+    SingleClientPerformanceTest.Receiver.run()
 
-    TwoClientsPerformanceTest.shutdown()
+    SingleClientPerformanceTest.shutdown()
   }
 }
