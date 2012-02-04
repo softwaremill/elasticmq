@@ -11,7 +11,7 @@ trait BackgroundVolatileTaskSchedulerModule extends VolatileTaskSchedulerModule 
       def act() {
         loop {
           react {
-            case block: (() => Unit) => {
+            case Block(block) => {
               try {
                 block()
               } catch {
@@ -26,7 +26,9 @@ trait BackgroundVolatileTaskSchedulerModule extends VolatileTaskSchedulerModule 
     Executor.start()
 
     def schedule(block: => Unit) {
-      Executor ! (() => block)
+      Executor ! Block(() => block)
     }
   }
+  
+  case class Block(block: () => Unit)
 }
