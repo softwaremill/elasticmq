@@ -14,6 +14,9 @@ class RestServerTestSuite extends FunSuite with MustMatchers with BeforeAndAfter
   import RestPath._
   import HttpMethod._
 
+  val TestPort = 8888
+  val TestHost = "http://localhost:"+TestPort
+  
   val echoParamsHandler = (createHandler
           forMethod GET
           forPath (root / "echo" / "params")
@@ -66,7 +69,7 @@ class RestServerTestSuite extends FunSuite with MustMatchers with BeforeAndAfter
   val httpClient: HttpClient = new DefaultHttpClient()
 
   testWithServer(echoParamsHandler :: Nil, "should echo parameters")((server: RestServer) => {
-    val action = new HttpGet("http://localhost:8888/echo/params?param1=z&param2=x")
+    val action = new HttpGet(TestHost+"/echo/params?param1=z&param2=x")
     val response = httpClient.execute(action)
 
     val responseString = EntityUtils.toString(response.getEntity)
@@ -76,7 +79,7 @@ class RestServerTestSuite extends FunSuite with MustMatchers with BeforeAndAfter
   })
 
   testWithServer(echoParamsHandler :: Nil, "should return 404")((server: RestServer) => {
-    val action = new HttpGet("http://localhost:8888/nohandler")
+    val action = new HttpGet(TestHost+"/nohandler")
     val response = httpClient.execute(action)
     EntityUtils.toString(response.getEntity)
 
@@ -84,7 +87,7 @@ class RestServerTestSuite extends FunSuite with MustMatchers with BeforeAndAfter
   })
 
   testWithServer(exceptionThrowingHandler :: Nil, "should handle exceptions")((server: RestServer) => {
-    val action = new HttpGet("http://localhost:8888/exception")
+    val action = new HttpGet(TestHost+"/exception")
     val response = httpClient.execute(action)
     EntityUtils.toString(response.getEntity)
 
@@ -92,11 +95,11 @@ class RestServerTestSuite extends FunSuite with MustMatchers with BeforeAndAfter
   })
 
   testWithServer(echoParamsHandler :: echo2ParamsHandler :: Nil, "should run appropriate handler")((server: RestServer) => {
-    val action1 = new HttpGet("http://localhost:8888/echo/params?param1=z&param2=x")
+    val action1 = new HttpGet(TestHost+"/echo/params?param1=z&param2=x")
     val response1 = httpClient.execute(action1)
     val responseString1 = EntityUtils.toString(response1.getEntity)
 
-    val action2 = new HttpPost("http://localhost:8888/echo2/params2?a=190&b=222")
+    val action2 = new HttpPost(TestHost+"/echo2/params2?a=190&b=222")
     val response2 = httpClient.execute(action2)
     val responseString2 = EntityUtils.toString(response2.getEntity)
 
@@ -110,7 +113,7 @@ class RestServerTestSuite extends FunSuite with MustMatchers with BeforeAndAfter
   })
 
   testWithServer(bodyParametersEchoHandler :: Nil, "should include body parameters")((server: RestServer) => {
-    val action = new HttpPost("http://localhost:8888/body")
+    val action = new HttpPost(TestHost+"/body")
     action.setEntity(new StringEntity("param1=aa&param2=bb"))
 
     val response = httpClient.execute(action)
@@ -122,7 +125,7 @@ class RestServerTestSuite extends FunSuite with MustMatchers with BeforeAndAfter
   })
 
   testWithServer(statusParamsHandler :: Nil, "should return specified status code")((server: RestServer) => {
-    val action = new HttpGet("http://localhost:8888/echo/params")
+    val action = new HttpGet(TestHost+"/echo/params")
     val response = httpClient.execute(action)
 
     EntityUtils.toString(response.getEntity)
@@ -132,7 +135,7 @@ class RestServerTestSuite extends FunSuite with MustMatchers with BeforeAndAfter
 
   def testWithServer(handlers: List[CheckingRequestHandlerWrapper], name: String)(block: RestServer => Unit) {
     test(name) {
-      val server = RestServer.start(handlers, 8888)
+      val server = RestServer.start(handlers, TestPort)
 
       try {
         block(server)
