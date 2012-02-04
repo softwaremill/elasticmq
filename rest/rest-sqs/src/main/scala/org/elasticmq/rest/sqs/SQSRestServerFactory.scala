@@ -31,17 +31,20 @@ object SQSRestServerFactory {
 
     import env._
     RestServer.start(
-      createQueueGetHandler :: createQueuePostHandler ::
-              deleteQueueGetHandler :: deleteQueuePostHandler ::
-              listQueuesGetHandler :: listQueuesPostHandler ::
-              getQueueAttributesGetHandler :: getQueueAttributesPostHandler ::
-              setQueueAttributesGetHandler :: setQueueAttributesPostHandler ::
-              sendMessageGetHandler :: sendMessagePostHandler ::
-              receiveMessageGetHandler :: receiveMessagePostHandler ::
-              deleteMessageGetHandler :: deleteMessagePostHandler ::
-              changeMessageVisibilityGetHandler :: changeMessageVisibilityPostHandler ::
-              getQueueUrlGetHandler :: getQueueUrlPostHandler ::
-              Nil, port)
+        // 1. Sending, receiving, deleting messages
+        sendMessageGetHandler :: sendMessagePostHandler ::
+        receiveMessageGetHandler :: receiveMessagePostHandler ::
+        deleteMessageGetHandler :: deleteMessagePostHandler ::
+        // 2. Getting, creating queues
+        getQueueUrlGetHandler :: getQueueUrlPostHandler ::
+        createQueueGetHandler :: createQueuePostHandler ::
+        listQueuesGetHandler :: listQueuesPostHandler ::
+        // 3. Other
+        changeMessageVisibilityGetHandler :: changeMessageVisibilityPostHandler ::
+        deleteQueueGetHandler :: deleteQueuePostHandler ::
+        getQueueAttributesGetHandler :: getQueueAttributesPostHandler ::
+        setQueueAttributesGetHandler :: setQueueAttributesPostHandler ::
+        Nil, port)
   }
 }
 
