@@ -25,6 +25,9 @@ trait SquerylSchemaModule {
 
     val queuesToMessages = oneToManyRelation(queues, messages).via((q, m) => q.id === m.queueName)
     queuesToMessages.foreignKeyDeclaration.constrainReference(onDelete cascade)
+
+    val messagesToMessageStatistics = oneToManyRelation(messages, messageStatistics).via((m, ms) => m.id === ms.id)
+    messagesToMessageStatistics.foreignKeyDeclaration.constrainReference(onDelete cascade)
   }
 }
 
