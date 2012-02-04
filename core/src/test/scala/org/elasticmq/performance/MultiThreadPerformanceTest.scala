@@ -13,8 +13,8 @@ object MultiThreadPerformanceTest {
     //val node = NodeBuilder.withMySQLStorage("elasticmq", "root", "").build()
     //val storageName = "MySQL"
 
-    //val node = NodeBuilder.withH2InMemoryStorage().build()
-    //val storageName = "H2"
+    val node = NodeBuilder.withH2InMemoryStorage().build()
+    val storageName = "H2"
     
     val client = node.nativeClient
     val testQueue = client.lookupOrCreateQueue("perfTest")
