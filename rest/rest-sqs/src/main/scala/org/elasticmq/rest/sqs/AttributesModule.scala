@@ -41,11 +41,17 @@ trait AttributesModule {
   }
 
   class AttributeValuesCalculator {
-    def calculate(attributeNames: List[String], rules: (String, ()=>String)*): List[(String, String)] = {
+    import AttributeValuesCalculator.Rule
+
+    def calculate(attributeNames: List[String], rules: Rule*): List[(String, String)] = {
       attributeNames.flatMap(attribute => {
-        rules.find(rule => rule._1 == attribute).map(rule => (rule._1, rule._2()))
+        rules.find(rule => rule.attributeName == attribute).map(rule => (rule.attributeName, rule.calculateValue()))
       })
     }
+  }
+  
+  object AttributeValuesCalculator {
+    case class Rule(attributeName: String, calculateValue: () => String)
   }
   
   class AttributeNameAndValuesReader {

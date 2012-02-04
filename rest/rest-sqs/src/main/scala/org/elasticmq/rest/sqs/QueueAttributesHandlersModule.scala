@@ -39,14 +39,16 @@ trait QueueAttributesHandlersModule { this: ClientModule with RequestHandlerLogi
     def calculateAttributeValues(attributeNames: List[String]) = {
       lazy val stats = queue.fetchStatistics()
 
+      import AttributeValuesCalculator.Rule
+
       attributeValuesCalculator.calculate(attributeNames,
-        (VisibilityTimeoutAttribute, ()=>queue.defaultVisibilityTimeout.seconds.toString),
-        (DelaySecondsAttribute, ()=>queue.delay.getStandardSeconds.toString),
-        (ApproximateNumberOfMessagesAttribute, ()=>stats.approximateNumberOfVisibleMessages.toString),
-        (ApproximateNumberOfMessagesNotVisibleAttribute, ()=>stats.approximateNumberOfInvisibleMessages.toString),
-        (ApproximateNumberOfMessagesDelayedAttribute, ()=>stats.approximateNumberOfMessagesDelayed.toString),
-        (CreatedTimestampAttribute, ()=>(queue.created.getMillis/1000L).toString),
-        (LastModifiedTimestampAttribute, ()=>(queue.lastModified.getMillis/1000L).toString))
+        Rule(VisibilityTimeoutAttribute, ()=>queue.defaultVisibilityTimeout.seconds.toString),
+        Rule(DelaySecondsAttribute, ()=>queue.delay.getStandardSeconds.toString),
+        Rule(ApproximateNumberOfMessagesAttribute, ()=>stats.approximateNumberOfVisibleMessages.toString),
+        Rule(ApproximateNumberOfMessagesNotVisibleAttribute, ()=>stats.approximateNumberOfInvisibleMessages.toString),
+        Rule(ApproximateNumberOfMessagesDelayedAttribute, ()=>stats.approximateNumberOfMessagesDelayed.toString),
+        Rule(CreatedTimestampAttribute, ()=>(queue.created.getMillis/1000L).toString),
+        Rule(LastModifiedTimestampAttribute, ()=>(queue.lastModified.getMillis/1000L).toString))
     }
 
     def responseXml(attributes: List[(String, String)]) = {

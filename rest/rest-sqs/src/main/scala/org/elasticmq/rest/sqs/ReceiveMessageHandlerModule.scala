@@ -33,10 +33,12 @@ trait ReceiveMessageHandlerModule { this: ClientModule with RequestHandlerLogicM
     lazy val attributeNames = attributeNamesReader.read(parameters, AllAttributeNames)
 
     def calculateAttributeValues(msg: Message, stats: MessageStatistics): List[(String, String)] = {
+      import AttributeValuesCalculator.Rule
+
       attributeValuesCalculator.calculate(attributeNames,
-        (SentTimestampAttribute, ()=>msg.created.getMillis.toString),
-        (ApproximateReceiveCountAttribute, ()=>stats.approximateReceiveCount.toString),
-        (ApproximateFirstReceiveTimestampAttribute,
+        Rule(SentTimestampAttribute, ()=>msg.created.getMillis.toString),
+        Rule(ApproximateReceiveCountAttribute, ()=>stats.approximateReceiveCount.toString),
+        Rule(ApproximateFirstReceiveTimestampAttribute,
           ()=>(stats.approximateFirstReceive match {
             case NeverReceived => 0
             case OnDateTimeReceived(when) => when.getMillis
