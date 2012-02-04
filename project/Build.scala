@@ -36,6 +36,7 @@ object Dependencies {
   val slf4s         = "com.weiglewilczek.slf4s"   %% "slf4s"                % "1.0.7"
   val logback       = "ch.qos.logback"            % "logback-classic"       % "1.0.0"
   val jclOverSlf4j  = "org.slf4j"                 % "jcl-over-slf4j"        % "1.6.1"
+  val log4jOverSlf4j = "org.slf4j"                % "log4j-over-slf4j"      % "1.6.1"
 
   val scalatest     = "org.scalatest"             %% "scalatest"            % "1.6.1"         % "test"
   val mockito       = "org.mockito"               % "mockito-core"          % "1.7"           % "test"
@@ -72,7 +73,7 @@ object ElasticMQBuild extends Build {
   lazy val core: Project = Project(
     "core",
     file("core"),
-    settings = buildSettings ++ Seq(libraryDependencies := Seq(squeryl, h2, c3p0, mysqlConnector % "test") ++ common ++ testing)
+    settings = buildSettings ++ Seq(libraryDependencies := Seq(squeryl, h2, c3p0, log4jOverSlf4j, mysqlConnector % "test") ++ common ++ testing)
   ) dependsOn(api)
 
   lazy val rest: Project = Project(
