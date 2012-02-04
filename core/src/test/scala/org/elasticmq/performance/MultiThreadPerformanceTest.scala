@@ -5,7 +5,7 @@ import org.elasticmq.{NodeBuilder, Queue}
 object MultiThreadPerformanceTest {
   def main(args: Array[String]) {
     val numberOfThreads = 5
-    val messageCount = 100
+    val messageCount = 4000
 
     //val node = NodeBuilder.withInMemoryStorage().build()
     //val storageName = "InMemory"
@@ -20,8 +20,10 @@ object MultiThreadPerformanceTest {
     val testQueue = client.lookupOrCreateQueue("perfTest")
 
     // warm up
-    //run(storageName, testQueue, 1, 1000)
+    run(storageName, testQueue, 1, 1000)
 
+    run(storageName, testQueue, numberOfThreads, messageCount)
+    run(storageName, testQueue, numberOfThreads, messageCount)
     run(storageName, testQueue, numberOfThreads, messageCount)
 
     node.shutdown()
