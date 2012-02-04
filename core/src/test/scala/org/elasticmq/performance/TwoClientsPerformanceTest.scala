@@ -79,14 +79,14 @@ object TwoClientsPerformanceTestSender {
 
 object TwoClientsPerformanceTestSendAndReceive {
   def main(args: Array[String]) {
-    TwoClientsPerformanceTest.Sender.run(100000)
+    TwoClientsPerformanceTest.Sender.run(10000)
     TwoClientsPerformanceTest.Receiver.run()
 
     println()
     println("---")
     println()
 
-    TwoClientsPerformanceTest.Sender.run(100000)
+    TwoClientsPerformanceTest.Sender.run(10000)
     TwoClientsPerformanceTest.Receiver.run()
   }
 }
