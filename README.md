@@ -111,17 +111,20 @@ Test class: `org.elasticmq.performance.MultiThreadPerformanceTest`.
 Change log
 ----------
 
-*Version 0.3*
+#### Version 0.3
+
 * in-memory storage
 * new native API
 * bug fixes
 
-*Version 0.2*
+#### Version 0.2
+
 * new SQS functions support
 * testing with Amazon Java SDK
 * bug fixes
 
-*Version 0.1*
+#### Version 0.1
+
 * initial release
 * DB storage
 * SQS interface support
