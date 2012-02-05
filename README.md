@@ -20,7 +20,7 @@ In the future... ElasticMQ may provide many more exciting features :).
 Community
 ---------
 
-Forum (discussions, help): [Google groups](https://groups.google.com/forum/?fromgroups#!forum/elasticmq).
+Forum (discussions, help): [Google group](https://groups.google.com/forum/?fromgroups#!forum/elasticmq).
 
 Starting an ElasticMQ server
 ----------------------------
@@ -112,16 +112,16 @@ Change log
 ----------
 
 *Version 0.3*
-- in-memory storage
-- new native API
-- bug fixes
+* in-memory storage
+* new native API
+* bug fixes
 
 *Version 0.2*
-- new SQS functions support
-- testing with Amazon Java SDK
-- bug fixes
+* new SQS functions support
+* testing with Amazon Java SDK
+* bug fixes
 
 *Version 0.1*
-- initial release
-- DB storage
-- SQS interface support
+* initial release
+* DB storage
+* SQS interface support
