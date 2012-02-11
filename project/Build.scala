@@ -4,7 +4,8 @@ import Keys._
 object Resolvers {
   val elasticmqResolvers = Seq(
     ScalaToolsSnapshots,
-    "SotwareMill Public Releases" at "http://tools.softwaremill.pl/nexus/content/repositories/releases/")
+    "SotwareMill Public Releases" at "http://tools.softwaremill.pl/nexus/content/repositories/releases/",
+    "JBoss Releases" at "https://repository.jboss.org/nexus/content/groups/public")
 }
 
 object BuildSettings {
@@ -38,6 +39,7 @@ object Dependencies {
   val logback       = "ch.qos.logback"            % "logback-classic"       % "1.0.0"
   val jclOverSlf4j  = "org.slf4j"                 % "jcl-over-slf4j"        % "1.6.1"
   val log4jOverSlf4j = "org.slf4j"                % "log4j-over-slf4j"      % "1.6.1"
+  val julToSlf4j    = "org.slf4j"                 % "jul-to-slf4j"          % "1.6.1"
 
   val scalatest     = "org.scalatest"             %% "scalatest"            % "1.6.1"         % "test"
   val mockito       = "org.mockito"               % "mockito-core"          % "1.7"           % "test"
@@ -48,11 +50,11 @@ object Dependencies {
 
   val mysqlConnector = "mysql"                    % "mysql-connector-java"  % "5.1.12"
 
+  val jgroups       = "org.jgroups"               % "jgroups"               % "3.1.0.Alpha2" exclude ("log4j", "log4j")
+
   val common = Seq(slf4s)
   val testing = Seq(scalatest, mockito, logback % "test")
   val httpTesting = Seq(apacheHttp % "test", jclOverSlf4j % "test")
-
-  // To get the source run the <update-classifiers> task.
 }
 
 object ElasticMQBuild extends Build {
@@ -63,7 +65,7 @@ object ElasticMQBuild extends Build {
     "root",
     file("."),
     settings = buildSettings
-  ) aggregate(api, core, rest)
+  ) aggregate(api, core, replication, rest)
 
   lazy val api: Project = Project(
     "api",
@@ -76,6 +78,12 @@ object ElasticMQBuild extends Build {
     file("core"),
     settings = buildSettings ++ Seq(libraryDependencies := Seq(squeryl, h2, c3p0, log4jOverSlf4j, mysqlConnector % "test") ++ common ++ testing)
   ) dependsOn(api)
+
+  lazy val replication: Project = Project(
+    "replication",
+    file("replication"),
+    settings = buildSettings ++ Seq(libraryDependencies := Seq(jgroups, julToSlf4j) ++ common ++ testing)
+  ) dependsOn(api, core % "test")
 
   lazy val rest: Project = Project(
     "rest",
