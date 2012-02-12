@@ -41,9 +41,9 @@ object Dependencies {
   val log4jOverSlf4j = "org.slf4j"                % "log4j-over-slf4j"      % "1.6.1"
   val julToSlf4j    = "org.slf4j"                 % "jul-to-slf4j"          % "1.6.1"
 
-  val scalatest     = "org.scalatest"             %% "scalatest"            % "1.6.1"         % "test"
-  val mockito       = "org.mockito"               % "mockito-core"          % "1.7"           % "test"
-  val awaitility    = "com.jayway.awaitility"     % "awaitility-scala"      % "1.3.3"         % "test"
+  val scalatest     = "org.scalatest"             %% "scalatest"            % "1.6.1"
+  val mockito       = "org.mockito"               % "mockito-core"          % "1.7"
+  val awaitility    = "com.jayway.awaitility"     % "awaitility-scala"      % "1.3.3"
 
   val apacheHttp    = "org.apache.httpcomponents" % "httpclient"            % "4.1.1" exclude ("commons-logging", "commons-logging")
 
@@ -54,7 +54,6 @@ object Dependencies {
   val jgroups       = "org.jgroups"               % "jgroups"               % "3.1.0.Alpha2" exclude ("log4j", "log4j")
 
   val common = Seq(slf4s)
-  val testing = Seq(scalatest, mockito, awaitility, logback % "test")
   val httpTesting = Seq(apacheHttp % "test", jclOverSlf4j % "test")
 }
 
@@ -71,7 +70,7 @@ object ElasticMQBuild extends Build {
   lazy val commonTest: Project = Project(
     "common-test",
     file("common-test"),
-    settings = buildSettings
+    settings = buildSettings ++ Seq(libraryDependencies := Seq(scalatest, mockito, awaitility, logback))
   )
 
   lazy val api: Project = Project(
@@ -83,13 +82,13 @@ object ElasticMQBuild extends Build {
   lazy val core: Project = Project(
     "core",
     file("core"),
-    settings = buildSettings ++ Seq(libraryDependencies := Seq(squeryl, h2, c3p0, log4jOverSlf4j, mysqlConnector % "test") ++ common ++ testing)
+    settings = buildSettings ++ Seq(libraryDependencies := Seq(squeryl, h2, c3p0, log4jOverSlf4j, mysqlConnector % "test") ++ common)
   ) dependsOn(api, commonTest % "test")
 
   lazy val replication: Project = Project(
     "replication",
     file("replication"),
-    settings = buildSettings ++ Seq(libraryDependencies := Seq(jgroups, julToSlf4j) ++ common ++ testing)
+    settings = buildSettings ++ Seq(libraryDependencies := Seq(jgroups, julToSlf4j) ++ common)
   ) dependsOn(api, core % "test", commonTest % "test")
 
   lazy val rest: Project = Project(
@@ -101,18 +100,18 @@ object ElasticMQBuild extends Build {
   lazy val restCore: Project = Project(
     "rest-core",
     file("rest/rest-core"),
-    settings = buildSettings ++ Seq(libraryDependencies := Seq(netty) ++ common ++ testing ++ httpTesting)
+    settings = buildSettings ++ Seq(libraryDependencies := Seq(netty) ++ common ++ httpTesting)
   ) dependsOn(commonTest % "test")
 
   lazy val restSqs: Project = Project(
     "rest-sqs",
     file("rest/rest-sqs"),
-    settings = buildSettings ++ Seq(libraryDependencies := Seq(mysqlConnector % "test") ++ common ++ testing ++ httpTesting)
+    settings = buildSettings ++ Seq(libraryDependencies := Seq(mysqlConnector % "test") ++ common ++ httpTesting)
   ) dependsOn(api, restCore, core % "test", commonTest % "test")
 
   lazy val restSqsTestingAmazonJavaSdk: Project = Project(
     "rest-sqs-testing-amazon-java-sdk",
     file("rest/rest-sqs-testing-amazon-java-sdk"),
-    settings = buildSettings ++ Seq(libraryDependencies := Seq(amazonJavaSdk) ++ common ++ testing)
+    settings = buildSettings ++ Seq(libraryDependencies := Seq(amazonJavaSdk) ++ common)
   ) dependsOn(restSqs % "test->test")
 }
