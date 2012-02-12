@@ -43,6 +43,7 @@ object Dependencies {
 
   val scalatest     = "org.scalatest"             %% "scalatest"            % "1.6.1"         % "test"
   val mockito       = "org.mockito"               % "mockito-core"          % "1.7"           % "test"
+  val awaitility    = "com.jayway.awaitility"     % "awaitility-scala"      % "1.3.3"         % "test"
 
   val apacheHttp    = "org.apache.httpcomponents" % "httpclient"            % "4.1.1" exclude ("commons-logging", "commons-logging")
 
@@ -53,7 +54,7 @@ object Dependencies {
   val jgroups       = "org.jgroups"               % "jgroups"               % "3.1.0.Alpha2" exclude ("log4j", "log4j")
 
   val common = Seq(slf4s)
-  val testing = Seq(scalatest, mockito, logback % "test")
+  val testing = Seq(scalatest, mockito, awaitility, logback % "test")
   val httpTesting = Seq(apacheHttp % "test", jclOverSlf4j % "test")
 }
 
