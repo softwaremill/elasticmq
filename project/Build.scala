@@ -66,7 +66,13 @@ object ElasticMQBuild extends Build {
     "root",
     file("."),
     settings = buildSettings
-  ) aggregate(api, core, replication, rest)
+  ) aggregate(commonTest, api, core, replication, rest)
+
+  lazy val commonTest: Project = Project(
+    "common-test",
+    file("common-test"),
+    settings = buildSettings
+  )
 
   lazy val api: Project = Project(
     "api",
@@ -78,13 +84,13 @@ object ElasticMQBuild extends Build {
     "core",
     file("core"),
     settings = buildSettings ++ Seq(libraryDependencies := Seq(squeryl, h2, c3p0, log4jOverSlf4j, mysqlConnector % "test") ++ common ++ testing)
-  ) dependsOn(api)
+  ) dependsOn(api, commonTest % "test")
 
   lazy val replication: Project = Project(
     "replication",
     file("replication"),
     settings = buildSettings ++ Seq(libraryDependencies := Seq(jgroups, julToSlf4j) ++ common ++ testing)
-  ) dependsOn(api, core % "test")
+  ) dependsOn(api, core % "test", commonTest % "test")
 
   lazy val rest: Project = Project(
     "rest",
@@ -96,13 +102,13 @@ object ElasticMQBuild extends Build {
     "rest-core",
     file("rest/rest-core"),
     settings = buildSettings ++ Seq(libraryDependencies := Seq(netty) ++ common ++ testing ++ httpTesting)
-  )
+  ) dependsOn(commonTest % "test")
 
   lazy val restSqs: Project = Project(
     "rest-sqs",
     file("rest/rest-sqs"),
     settings = buildSettings ++ Seq(libraryDependencies := Seq(mysqlConnector % "test") ++ common ++ testing ++ httpTesting)
-  ) dependsOn(api, restCore, core % "test")
+  ) dependsOn(api, restCore, core % "test", commonTest % "test")
 
   lazy val restSqsTestingAmazonJavaSdk: Project = Project(
     "rest-sqs-testing-amazon-java-sdk",
