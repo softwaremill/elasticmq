@@ -23,6 +23,8 @@ trait NativeQueueModule {
 
     // Operations
 
+    def sendMessage(content: String): Message = sendMessage(MessageBuilder(content))
+
     def sendMessage(messageBuilder: MessageBuilder) = {
       val messageId = messageBuilder.id match {
         case None => generateId()
@@ -43,6 +45,8 @@ trait NativeQueueModule {
       
       new NativeMessage(queueName, message)
     }
+
+    def receiveMessage(): Option[Message] = receiveMessage(DefaultVisibilityTimeout)
 
     def receiveMessage(visibilityTimeout: VisibilityTimeout) = {
       val messageOption = doReceiveMessage(visibilityTimeout)

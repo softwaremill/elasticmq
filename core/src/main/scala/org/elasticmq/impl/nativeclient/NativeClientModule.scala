@@ -9,6 +9,8 @@ trait NativeClientModule {
   this: QueueStorageModule with NowModule with NativeQueueModule =>
 
   class NativeClient extends Client with Logging {
+    def createQueue(name: String): Queue = createQueue(QueueBuilder(name))
+
     def createQueue(queueBuilder: QueueBuilder) = {
       val queueData = QueueData(
         queueBuilder.name,
@@ -26,6 +28,8 @@ trait NativeClientModule {
     }
 
     def lookupQueue(name: String) = queueStorage.lookupQueue(name).map(new NativeQueue(_))
+
+    def lookupOrCreateQueue(name: String): Queue = lookupOrCreateQueue(QueueBuilder(name))
 
     def lookupOrCreateQueue(queueBuilder: QueueBuilder) = lookupQueue(queueBuilder.name) match {
       case None => try {

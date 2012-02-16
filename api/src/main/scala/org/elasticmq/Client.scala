@@ -9,12 +9,12 @@ package org.elasticmq
   * <strong>All ElasticMQ client classes are thread-safe.</strong>
   */
 trait Client {
-  def createQueue(name: String): Queue = createQueue(QueueBuilder(name))
+  def createQueue(name: String): Queue
   def createQueue(queueBuilder: QueueBuilder): Queue
   
   def lookupQueue(name: String): Option[Queue]
 
-  def lookupOrCreateQueue(name: String): Queue = lookupOrCreateQueue(QueueBuilder(name))
+  def lookupOrCreateQueue(name: String): Queue
   def lookupOrCreateQueue(queueBuilder: QueueBuilder): Queue
   
   def listQueues: Seq[Queue]

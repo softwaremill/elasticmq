@@ -3,10 +3,10 @@ package org.elasticmq
 import org.joda.time.Duration
 
 trait QueueOperations {
-  def sendMessage(content: String): Message = sendMessage(MessageBuilder(content))
+  def sendMessage(content: String): Message
   def sendMessage(messageBuilder: MessageBuilder): Message
 
-  def receiveMessage(): Option[Message] = receiveMessage(DefaultVisibilityTimeout)
+  def receiveMessage(): Option[Message]
   def receiveMessage(visibilityTimeout: VisibilityTimeout): Option[Message]
   def receiveMessageWithStatistics(visibilityTimeout: VisibilityTimeout): Option[Pair[Message, MessageStatistics]]
 
