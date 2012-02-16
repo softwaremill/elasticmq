@@ -1,4 +1,4 @@
-package org.elasticmq.impl
+package org.elasticmq.data
 
 import org.joda.time.{Duration, DateTime}
 import org.elasticmq.MillisVisibilityTimeout

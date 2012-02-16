@@ -2,8 +2,8 @@ package org.elasticmq.storage.inmemory
 
 import java.util.concurrent.ConcurrentHashMap
 import scala.collection.JavaConversions
-import org.elasticmq.{QueueAlreadyExistsException, MessageStatistics, QueueDoesNotExistException}
-import org.elasticmq.impl.QueueData
+import org.elasticmq.{QueueAlreadyExistsException, QueueDoesNotExistException}
+import org.elasticmq.data.QueueData
 
 trait InMemoryStorageRegistryModule {
   this: InMemoryStorageModelModule =>

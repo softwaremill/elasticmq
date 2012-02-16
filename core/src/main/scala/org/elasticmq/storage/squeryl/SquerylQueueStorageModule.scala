@@ -2,7 +2,7 @@ package org.elasticmq.storage.squeryl
 
 import org.squeryl.PrimitiveTypeMode._
 import org.elasticmq._
-import org.elasticmq.impl.QueueData
+import org.elasticmq.data.QueueData
 import org.elasticmq.storage.QueueStorageModule
 
 import org.squeryl._

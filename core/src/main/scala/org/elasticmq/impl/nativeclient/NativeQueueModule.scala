@@ -2,7 +2,8 @@ package org.elasticmq.impl.nativeclient
 
 import org.elasticmq._
 import org.elasticmq.impl.scheduler.VolatileTaskSchedulerModule
-import org.elasticmq.impl.{MessageData, QueueData, NowModule}
+import org.elasticmq.data.{MessageData, QueueData}
+import org.elasticmq.impl.NowModule
 import org.elasticmq.storage.StorageModule
 import org.joda.time.Duration
 import java.util.UUID

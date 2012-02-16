@@ -7,7 +7,7 @@ import org.elasticmq._
 import org.squeryl.adapters.H2Adapter
 import org.elasticmq.storage.squeryl._
 import org.joda.time.{Duration, DateTime}
-import org.elasticmq.impl.{MessageData, QueueData}
+import org.elasticmq.data.{MessageData, QueueData}
 import org.elasticmq.test.DataCreationHelpers
 
 trait StorageTestSuite extends FunSuite with MustMatchers with OneInstancePerTest with DataCreationHelpers {

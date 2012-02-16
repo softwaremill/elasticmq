@@ -3,7 +3,7 @@ package org.elasticmq.storage.squeryl
 import org.squeryl._
 import PrimitiveTypeMode._
 import org.elasticmq._
-import org.elasticmq.impl.{MessageData, QueueData}
+import org.elasticmq.data.{MessageData, QueueData}
 import org.squeryl.annotations.Column
 import org.joda.time.{Duration, DateTime}
 

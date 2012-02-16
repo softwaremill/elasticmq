@@ -4,7 +4,7 @@ import collection.JavaConversions
 import org.elasticmq._
 import storage.MessageStorageModule
 import java.util.concurrent.{PriorityBlockingQueue, ConcurrentHashMap}
-import org.elasticmq.impl.MessageData
+import org.elasticmq.data.MessageData
 import scala.annotation.tailrec
 
 trait InMemoryMessageStorageModule extends MessageStorageModule {

@@ -3,7 +3,7 @@ package org.elasticmq.storage.squeryl
 import org.squeryl.PrimitiveTypeMode._
 import org.elasticmq._
 import org.elasticmq.storage.MessageStorageModule
-import org.elasticmq.impl.MessageData
+import org.elasticmq.data.MessageData
 
 trait SquerylMessageStorageModule extends MessageStorageModule {
   this: SquerylSchemaModule with SquerylMessageStatisticsStorageModule =>

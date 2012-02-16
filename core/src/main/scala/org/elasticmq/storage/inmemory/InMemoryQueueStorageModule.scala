@@ -1,7 +1,7 @@
 package org.elasticmq.storage.inmemory
 
 import org.elasticmq.storage.{MessageStatisticsStorageModule, QueueStorageModule}
-import org.elasticmq.impl.QueueData
+import org.elasticmq.data.QueueData
 import org.elasticmq.{MessageId, QueueStatistics}
 
 trait InMemoryQueueStorageModule extends QueueStorageModule {

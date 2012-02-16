@@ -1,7 +1,7 @@
 package org.elasticmq.storage
 
 import org.elasticmq._
-import impl.MessageData
+import org.elasticmq.data.MessageData
 
 trait MessageStorageModule {
   trait MessageStorage {

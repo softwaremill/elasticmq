@@ -1,6 +1,6 @@
 package org.elasticmq.test
 
-import org.elasticmq.impl.{MessageData, QueueData}
+import org.elasticmq.data.{MessageData, QueueData}
 import org.elasticmq.{MessageId, MillisNextDelivery, MillisVisibilityTimeout}
 import org.joda.time.{DateTime, Duration}
 

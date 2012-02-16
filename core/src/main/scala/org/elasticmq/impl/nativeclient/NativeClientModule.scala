@@ -1,7 +1,8 @@
 package org.elasticmq.impl.nativeclient
 
 import org.elasticmq._
-import org.elasticmq.impl.{QueueData, NowModule}
+import org.elasticmq.data.QueueData
+import org.elasticmq.impl.NowModule
 import org.elasticmq.storage.QueueStorageModule
 import com.weiglewilczek.slf4s.Logging
 

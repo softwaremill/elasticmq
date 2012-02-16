@@ -3,7 +3,7 @@ package org.elasticmq.storage.inmemory
 import org.joda.time.DateTime
 import org.elasticmq._
 import java.util.concurrent.atomic.{AtomicReference, AtomicLong}
-import org.elasticmq.impl.{QueueData, MessageData}
+import org.elasticmq.data.{MessageData, QueueData}
 import scala.collection.mutable.ConcurrentMap
 
 trait InMemoryStorageModelModule {

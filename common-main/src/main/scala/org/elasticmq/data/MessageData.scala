@@ -1,4 +1,4 @@
-package org.elasticmq.impl
+package org.elasticmq.data
 
 import org.elasticmq.{MessageId, MillisNextDelivery}
 import org.joda.time.DateTime

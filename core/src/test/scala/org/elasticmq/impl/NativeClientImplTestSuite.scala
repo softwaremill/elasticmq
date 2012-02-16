@@ -11,6 +11,7 @@ import org.mockito.ArgumentMatcher
 import org.mockito.Matchers._
 import org.elasticmq.storage.{StorageModule, QueueStorageModule}
 import org.elasticmq.impl.nativeclient.NativeModule
+import org.elasticmq.data.QueueData
 
 class NativeClientImplTestSuite extends FunSuite with MustMatchers with MockitoSugar {
   val NOW = new DateTime(1316168602L)

@@ -12,6 +12,7 @@ import org.joda.time.{Duration, DateTime}
 import org.elasticmq.test.DataCreationHelpers
 import org.elasticmq.storage.{StorageModule, MessageStatisticsStorageModule, MessageStorageModule}
 import org.elasticmq.impl.nativeclient.NativeModule
+import org.elasticmq.data.{MessageData, QueueData}
 
 class NativeMessageClientImplTestSuite extends FunSuite with MustMatchers with MockitoSugar with DataCreationHelpers {
   val Now = 1316168602L

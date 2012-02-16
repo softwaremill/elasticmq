@@ -1,6 +1,6 @@
 package org.elasticmq.impl.nativeclient
 
-import org.elasticmq.impl.MessageData
+import org.elasticmq.data.MessageData
 import org.elasticmq.{MillisVisibilityTimeout, MessageDoesNotExistException, Message, MessageId}
 import org.elasticmq.storage.{MessageStatisticsStorageModule, MessageStorageModule}
 import com.weiglewilczek.slf4s.Logging

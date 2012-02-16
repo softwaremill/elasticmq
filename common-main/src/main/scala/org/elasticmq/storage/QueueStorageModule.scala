@@ -1,7 +1,7 @@
 package org.elasticmq.storage
 
-import org.elasticmq.{QueueStatistics, Queue}
-import org.elasticmq.impl.QueueData
+import org.elasticmq.QueueStatistics
+import org.elasticmq.data.QueueData
 
 trait QueueStorageModule {
   trait QueueStorage {
