@@ -15,7 +15,7 @@ trait StorageTestSuite extends FunSuite with MustMatchers with OneInstancePerTes
                                       initialize: () => StorageCommandExecutor,
                                       shutdown: () => Unit)
 
-  val squerylEnv = new SquerylStorageModule {}
+  val squerylCommandExecutor = new SquerylStorageModule {}.storageCommandExecutor
 
   val squerylDBConfiguration = DBConfiguration(new H2Adapter,
     "jdbc:h2:mem:"+this.getClass.getName+";DB_CLOSE_DELAY=-1",
@@ -24,12 +24,12 @@ trait StorageTestSuite extends FunSuite with MustMatchers with OneInstancePerTes
   private val setups: List[StorageTestSetup] =
     StorageTestSetup("Squeryl",
       () => {
-        squerylEnv.initializeSqueryl(squerylDBConfiguration);
-        squerylEnv
+        squerylCommandExecutor.modules.initializeSqueryl(squerylDBConfiguration);
+        squerylCommandExecutor
       },
-      () => squerylEnv.shutdownSqueryl(squerylDBConfiguration.drop)) ::
+      () => squerylCommandExecutor.modules.shutdownSqueryl(squerylDBConfiguration.drop)) ::
     StorageTestSetup("In memory",
-      () => new InMemoryStorageModule {},
+      () => new InMemoryStorageModule {}.storageCommandExecutor,
       () => ()) :: Nil
 
   private var storageCommandExecutor: StorageCommandExecutor = null
