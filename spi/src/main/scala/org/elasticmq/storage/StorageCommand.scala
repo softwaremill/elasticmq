@@ -12,11 +12,11 @@ case class LookupQueueCommand(name: String) extends StorageCommand[Option[QueueD
 case class ListQueuesCommand() extends StorageCommand[Seq[QueueData]]
 case class GetQueueStatisticsCommand(name: String, deliveryTime: Long) extends StorageCommand[QueueStatistics]
 
-case class PersistMessageCommand(message: MessageData) extends StorageCommand[Unit]
-case class UpdateVisibilityTimeoutCommand(messageId: MessageId, newNextDelivery: MillisNextDelivery) extends StorageCommand[Unit]
-case class ReceiveMessageCommand(deliveryTime: Long, newNextDelivery: MillisNextDelivery) extends StorageCommand[Option[MessageData]]
-case class DeleteMessageCommand(messageId: MessageId) extends StorageCommand[Unit]
-case class LookupMessageCommand(messageId: MessageId) extends StorageCommand[Option[MessageData]]
+case class PersistMessageCommand(queueName: String, message: MessageData) extends StorageCommand[Unit]
+case class UpdateVisibilityTimeoutCommand(queueName: String, messageId: MessageId, newNextDelivery: MillisNextDelivery) extends StorageCommand[Unit]
+case class ReceiveMessageCommand(queueName: String, deliveryTime: Long, newNextDelivery: MillisNextDelivery) extends StorageCommand[Option[MessageData]]
+case class DeleteMessageCommand(queueName: String, messageId: MessageId) extends StorageCommand[Unit]
+case class LookupMessageCommand(queueName: String, messageId: MessageId) extends StorageCommand[Option[MessageData]]
 
-case class UpdateMessageStatisticsCommand(messageId: MessageId, messageStatistics: MessageStatistics) extends StorageCommand[Unit]
-case class GetMessageStatisticsCommand(messageId: MessageId) extends StorageCommand[MessageStatistics]
+case class UpdateMessageStatisticsCommand(queueName: String, messageId: MessageId, messageStatistics: MessageStatistics) extends StorageCommand[Unit]
+case class GetMessageStatisticsCommand(queueName: String, messageId: MessageId) extends StorageCommand[MessageStatistics]
