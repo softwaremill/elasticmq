@@ -9,7 +9,7 @@ class SquerylStorageCommandExecutor extends InterfacedCommandExecutor {
       with SquerylQueuesStorageModule
       with SquerylMessagesStorageModule
       with SquerylMessageStatisticsStorageModule
-
+      with SquerylStorageConfigurationModule
 
   def queuesStorage = modules.queuesStorage
   def messagesStorage(queueName: String) = modules.messagesStorage(queueName)

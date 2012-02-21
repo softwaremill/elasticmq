@@ -6,7 +6,7 @@ import org.elasticmq.data.MessageData
 import org.elasticmq.storage.interfaced.MessagesStorage
 
 trait SquerylMessagesStorageModule {
-  this: SquerylSchemaModule with SquerylMessageStatisticsStorageModule =>
+  this: SquerylSchemaModule with SquerylMessageStatisticsStorageModule with SquerylStorageConfigurationModule =>
 
   class SquerylMessagesStorage(queueName: String) extends MessagesStorage {
     def sendMessage(message: MessageData) {
@@ -53,11 +53,25 @@ trait SquerylMessagesStorageModule {
 
     private def lookupPendingMessage(deliveryTime: Long) = {
       inTransaction {
-        from(messages, queues)((m, q) =>
+        val msgs = from(messages, queues)((m, q) =>
           where(m.queueName === queueName and
                   queuesToMessagesCond(m, q) and
                   (m.nextDelivery lte deliveryTime)) select(m, q))
-                .page(0, 1).headOption.map { case (m, q) => m.toMessage }
+                .page(0, configuration.maxPendingMessageCandidates).map { case (m, q) => m.toMessage }.toList
+
+        // Picking a random message from the available ones. This way we decrease the chance of conflicts
+        // in case multiple threads try to receive messages.
+        randomMessage(msgs)
+      }
+    }
+
+    private def randomMessage(msgs: List[MessageData]): Option[MessageData] = {
+      msgs match {
+        case Nil => None
+        case l => {
+          val idx = (scala.math.random*l.size).toInt
+          Some(l(idx))
+        }
       }
     }
 
