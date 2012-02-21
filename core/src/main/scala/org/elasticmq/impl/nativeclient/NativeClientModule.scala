@@ -3,11 +3,11 @@ package org.elasticmq.impl.nativeclient
 import org.elasticmq._
 import org.elasticmq.data.QueueData
 import org.elasticmq.impl.NowModule
-import org.elasticmq.storage.QueueStorageModule
 import com.weiglewilczek.slf4s.Logging
+import org.elasticmq.storage.{ListQueuesCommand, CreateQueueCommand, LookupQueueCommand, StorageModule}
 
 trait NativeClientModule {
-  this: QueueStorageModule with NowModule with NativeQueueModule =>
+  this: StorageModule with NowModule with NativeQueueModule =>
 
   class NativeClient extends Client with Logging {
     def createQueue(name: String): Queue = createQueue(QueueBuilder(name))
@@ -21,14 +21,14 @@ trait NativeClientModule {
         nowAsDateTime
       )
 
-      queueStorage.persistQueue(queueData)
+      storageCommandExecutor.execute(new CreateQueueCommand(queueData))
 
       logger.debug("Created queue: %s".format(queueBuilder.name))
 
       new NativeQueue(queueData)
     }
 
-    def lookupQueue(name: String) = queueStorage.lookupQueue(name).map(new NativeQueue(_))
+    def lookupQueue(name: String) = storageCommandExecutor.execute(LookupQueueCommand(name)).map(new NativeQueue(_))
 
     def lookupOrCreateQueue(name: String): Queue = lookupOrCreateQueue(QueueBuilder(name))
 
@@ -42,7 +42,7 @@ trait NativeClientModule {
       case Some(queue) => queue
     }
 
-    def listQueues = queueStorage.listQueues.map(new NativeQueue(_))
+    def listQueues = storageCommandExecutor.execute(new ListQueuesCommand()).map(new NativeQueue(_))
 
     def queueOperations(name: String) = new NativeQueue(name)
   }

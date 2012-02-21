@@ -4,10 +4,10 @@ import org.elasticmq._
 import org.elasticmq.impl.scheduler.VolatileTaskSchedulerModule
 import org.elasticmq.data.{MessageData, QueueData}
 import org.elasticmq.impl.NowModule
-import org.elasticmq.storage.StorageModule
 import org.joda.time.Duration
 import java.util.UUID
 import com.weiglewilczek.slf4s.Logging
+import org.elasticmq.storage._
 
 trait NativeQueueModule {
   this: StorageModule with NativeMessageModule with NativeHelpersModule
@@ -19,7 +19,7 @@ trait NativeQueueModule {
       data = queueData
     }
 
-    def initData = queueStorage.lookupQueue(queueName)
+    def initData = storageCommandExecutor.execute(LookupQueueCommand(queueName))
       .getOrElse(throw new QueueDoesNotExistException(queueName))
 
     // Operations
@@ -40,7 +40,7 @@ trait NativeQueueModule {
 
       val message = MessageData(messageId, messageBuilder.content, nextDelivery, nowAsDateTime)
 
-      messageStorage(queueName).persistMessage(message)
+      storageCommandExecutor.execute(SendMessageCommand(queueName, message))
       
       logger.debug("Sent message: %s to %s".format(message.id, queueName))
       
@@ -53,11 +53,10 @@ trait NativeQueueModule {
       val messageOption = doReceiveMessage(visibilityTimeout)
 
       messageOption.foreach(message => volatileTaskScheduler.schedule {
-        val statsStorage = messageStatisticsStorage(queueName)
         try {
-          val stats = statsStorage.readMessageStatistics(message.id)
+          val stats = storageCommandExecutor.execute(GetMessageStatisticsCommand(queueName, message.id))
           val bumpedStats = bumpMessageStatistics(stats)
-          statsStorage.writeMessageStatistics(message.id, bumpedStats)
+          storageCommandExecutor.execute(UpdateMessageStatisticsCommand(queueName, message.id, bumpedStats))
         } catch {
           // This may happen if the message is deleted before the stats are bumped.
           case _: MessageDoesNotExistException => // ignore
@@ -73,11 +72,10 @@ trait NativeQueueModule {
       val messageOption = doReceiveMessage(visibilityTimeout)
 
       messageOption.map(message => {
-        val statsStorage = messageStatisticsStorage(queueName)
-        val stats = statsStorage.readMessageStatistics(message.id)
+        val stats = storageCommandExecutor.execute(GetMessageStatisticsCommand(queueName, message.id))
         val bumpedStats = bumpMessageStatistics(stats)
         volatileTaskScheduler.schedule {
-          statsStorage.writeMessageStatistics(message.id, bumpedStats)
+          storageCommandExecutor.execute(UpdateMessageStatisticsCommand(queueName, message.id, bumpedStats))
         }
 
         logger.debug("Received message: %s with statistics and visibility timeout: %s"
@@ -93,29 +91,29 @@ trait NativeQueueModule {
         case MillisVisibilityTimeout(millis) => computeNextDelivery(millis)
       }
 
-      messageStorage(queueName).receiveMessage(now, newNextDelivery)
+      storageCommandExecutor.execute(ReceiveMessageCommand(queueName, now, newNextDelivery))
     }
 
     def lookupMessage(messageId: MessageId) = {
-      messageStorage(queueName).lookupMessage(messageId).map(new NativeMessage(queueName, _))
+      storageCommandExecutor.execute(LookupMessageCommand(queueName, messageId)).map(new NativeMessage(queueName, _))
     }
 
     def updateDefaultVisibilityTimeout(defaultVisibilityTimeout: MillisVisibilityTimeout): Queue = {
-      queueStorage.updateQueue(data.copy(defaultVisibilityTimeout = defaultVisibilityTimeout))
+      storageCommandExecutor.execute(UpdateQueueCommand(data.copy(defaultVisibilityTimeout = defaultVisibilityTimeout)))
       logger.debug("Updated visibility timeout of queue: %s to: %s".format(queueName, defaultVisibilityTimeout))
       fetchQueue()
     }
 
     def updateDelay(delay: Duration): Queue = {
-      queueStorage.updateQueue(data.copy(delay = delay))
+      storageCommandExecutor.execute(UpdateQueueCommand(data.copy(delay = delay)))
       logger.debug("Updated delay of queue: %s to: %s".format(queueName, delay))
       fetchQueue()
     }
 
-    def fetchStatistics() = queueStorage.queueStatistics(queueName, now)
+    def fetchStatistics() = storageCommandExecutor.execute(GetQueueStatisticsCommand(queueName, now))
 
     def delete() {
-      queueStorage.deleteQueue(queueName)
+      storageCommandExecutor.execute(DeleteQueueCommand(queueName))
       logger.debug("Deleted queue: %s".format(queueName))
     }
 

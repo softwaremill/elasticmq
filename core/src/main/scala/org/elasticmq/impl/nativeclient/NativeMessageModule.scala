@@ -2,12 +2,11 @@ package org.elasticmq.impl.nativeclient
 
 import org.elasticmq.data.MessageData
 import org.elasticmq.{MillisVisibilityTimeout, MessageDoesNotExistException, Message, MessageId}
-import org.elasticmq.storage.{MessageStatisticsStorageModule, MessageStorageModule}
 import com.weiglewilczek.slf4s.Logging
-
+import org.elasticmq.storage._
 
 trait NativeMessageModule {
-  this: MessageStorageModule with MessageStatisticsStorageModule with NativeHelpersModule =>
+  this: StorageModule with NativeHelpersModule =>
 
   class NativeMessage(queueName: String, messageId: MessageId) extends Message 
     with WithLazyAtomicData[MessageData] with Logging {
@@ -16,22 +15,24 @@ trait NativeMessageModule {
       data = messageData
     }
 
-    def initData = messageStorage(queueName).lookupMessage(messageId)
+    def initData = storageCommandExecutor.execute(new LookupMessageCommand(queueName, messageId))
       .getOrElse(throw new MessageDoesNotExistException(queueName, messageId))
 
     // Operations
 
     def updateVisibilityTimeout(newVisibilityTimeout: MillisVisibilityTimeout) = {
-      messageStorage(queueName).updateVisibilityTimeout(id, computeNextDelivery(newVisibilityTimeout.millis))
+      storageCommandExecutor.execute(
+        UpdateVisibilityTimeoutCommand(queueName, id, computeNextDelivery(newVisibilityTimeout.millis)))
+      
       logger.debug("Updated visibility timeout of message: %s in queue: %s to: %s"
         .format(messageId, queueName, newVisibilityTimeout))
       fetchMessage()
     }
 
-    def fetchStatistics() = messageStatisticsStorage(queueName).readMessageStatistics(id)
+    def fetchStatistics() = storageCommandExecutor.execute(GetMessageStatisticsCommand(queueName, id))
 
     def delete() {
-      messageStorage(queueName).deleteMessage(id)
+      storageCommandExecutor.execute(DeleteMessageCommand(queueName, id))
       logger.debug("Deleted message: %s".format(id))
     }
 
