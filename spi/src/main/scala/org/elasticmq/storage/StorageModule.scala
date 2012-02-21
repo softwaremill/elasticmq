@@ -1,3 +1,5 @@
 package org.elasticmq.storage
 
-trait StorageModule extends MessageStatisticsStorageModule with MessageStorageModule with QueueStorageModule
+trait StorageModule {
+  def storageCommandExecutor: StorageCommandExecutor
+}
