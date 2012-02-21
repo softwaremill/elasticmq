@@ -2,11 +2,12 @@ package org.elasticmq.storage.squeryl
 
 import org.squeryl.PrimitiveTypeMode._
 import org.elasticmq.{MessageDoesNotExistException, MessageId, MessageStatistics}
+import org.elasticmq.storage.interfaced.MessageStatisticsStorage
 
 trait SquerylMessageStatisticsStorageModule {
   this: SquerylSchemaModule =>
 
-  class SquerylMessageStatisticsStorage(queueName: String) {
+  class SquerylMessageStatisticsStorage(queueName: String) extends MessageStatisticsStorage {
     def readMessageStatistics(messageId: MessageId) = {
       inTransaction {
         messageStatistics

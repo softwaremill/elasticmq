@@ -6,8 +6,9 @@ import org.elasticmq.{MessageId, QueueStatistics, QueueAlreadyExistsException, Q
 import java.util.concurrent.ConcurrentHashMap
 
 import scala.collection.JavaConversions
+import org.elasticmq.storage.interfaced.QueuesStorage
 
-class InMemoryQueuesStorage(createInMemoryQueue: QueueData => InMemoryQueue) {
+class InMemoryQueuesStorage(createInMemoryQueue: QueueData => InMemoryQueue) extends QueuesStorage {
   val queues = JavaConversions.asScalaConcurrentMap(new ConcurrentHashMap[String, InMemoryQueue])
 
   def createQueue(queueData: QueueData) {

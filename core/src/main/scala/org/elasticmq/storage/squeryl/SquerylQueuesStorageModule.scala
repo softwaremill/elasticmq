@@ -5,11 +5,12 @@ import org.elasticmq._
 import org.elasticmq.data.QueueData
 
 import org.squeryl._
+import org.elasticmq.storage.interfaced.QueuesStorage
 
-trait SquerylQueueStorageModule {
+trait SquerylQueuesStorageModule {
   this: SquerylSchemaModule =>
 
-  class SquerylQueueStorage {
+  class SquerylQueuesStorage extends QueuesStorage {
     def createQueue(queue: QueueData) {
       def isUniqueIndexException(e: Exception) = {
         val msg = e.getMessage.toLowerCase
@@ -87,5 +88,5 @@ trait SquerylQueueStorageModule {
     }
   }
 
-  val queueStorage = new SquerylQueueStorage
+  val queuesStorage = new SquerylQueuesStorage
 }

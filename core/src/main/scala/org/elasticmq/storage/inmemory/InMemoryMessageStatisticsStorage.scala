@@ -6,8 +6,9 @@ import java.util.concurrent.ConcurrentHashMap
 
 import scala.collection.JavaConversions._
 import scala.collection.mutable.ConcurrentMap
+import org.elasticmq.storage.interfaced.MessageStatisticsStorage
 
-class InMemoryMessageStatisticsStorage(queueName: String) {
+class InMemoryMessageStatisticsStorage(queueName: String) extends MessageStatisticsStorage {
   val statistics: ConcurrentMap[MessageId, MessageStatistics] = new ConcurrentHashMap[MessageId, MessageStatistics]
 
   def readMessageStatistics(messageId: MessageId) =

@@ -3,11 +3,12 @@ package org.elasticmq.storage.squeryl
 import org.squeryl.PrimitiveTypeMode._
 import org.elasticmq._
 import org.elasticmq.data.MessageData
+import org.elasticmq.storage.interfaced.MessagesStorage
 
-trait SquerylMessageStorageModule {
+trait SquerylMessagesStorageModule {
   this: SquerylSchemaModule with SquerylMessageStatisticsStorageModule =>
 
-  class SquerylMessageStorage(queueName: String) {
+  class SquerylMessagesStorage(queueName: String) extends MessagesStorage {
     def sendMessage(message: MessageData) {
       transaction {
         messages.insert(SquerylMessage.from(queueName, message))
@@ -71,5 +72,5 @@ trait SquerylMessageStorageModule {
     }
   }
 
-  def messageStorage(queueName: String) = new SquerylMessageStorage(queueName)
+  def messagesStorage(queueName: String) = new SquerylMessagesStorage(queueName)
 }
