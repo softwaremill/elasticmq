@@ -10,9 +10,9 @@ import org.elasticmq._
 import org.mockito.ArgumentMatcher
 import org.joda.time.{Duration, DateTime}
 import org.elasticmq.test.DataCreationHelpers
-import org.elasticmq.storage.{StorageModule, MessageStatisticsStorageModule, MessageStorageModule}
 import org.elasticmq.impl.nativeclient.NativeModule
-import org.elasticmq.data.{MessageData, QueueData}
+import org.elasticmq.data.QueueData
+import org.elasticmq.storage._
 
 class NativeMessageClientImplTestSuite extends FunSuite with MustMatchers with MockitoSugar with DataCreationHelpers {
   val Now = 1316168602L
@@ -21,15 +21,15 @@ class NativeMessageClientImplTestSuite extends FunSuite with MustMatchers with M
   test("sending a message should generate an id, properly set the next delivery and the created date") {
     // Given
     val q1 = createQueueData("q1", MillisVisibilityTimeout(123L))
-    val (queueOperations, mockStorage, _) = createQueueOperationsWithMockStorage(q1)
+    val (queueOperations, mockExecutor) = createQueueOperationsWithMockStorage(q1)
 
     // When
     val msg = queueOperations.sendMessage("abc")
 
     // Then
     val expectedNextDelivery = Now
-    verify(mockStorage).persistMessage(argThat(new ArgumentMatcher[MessageData]{
-      def matches(msgRef: AnyRef) = msgRef.asInstanceOf[MessageData].nextDelivery.millis == expectedNextDelivery
+    verify(mockExecutor).execute(argThat(new ArgumentMatcher[SendMessageCommand]{
+      def matches(msgRef: AnyRef) = msgRef.asInstanceOf[SendMessageCommand].message.nextDelivery.millis == expectedNextDelivery
     }))
     msg.nextDelivery must be (MillisNextDelivery(expectedNextDelivery))
     msg.created.getMillis must be (Now)
@@ -39,15 +39,15 @@ class NativeMessageClientImplTestSuite extends FunSuite with MustMatchers with M
     // Given
     val delayedSeconds = 12
     val q1 = createQueueData("q1", MillisVisibilityTimeout(123L)).copy(delay = Duration.standardSeconds(delayedSeconds))
-    val (queueOperations, mockStorage, _) = createQueueOperationsWithMockStorage(q1)
+    val (queueOperations, mockExecutor) = createQueueOperationsWithMockStorage(q1)
 
     // When
     val msg = queueOperations.sendMessage("abc")
 
     // Then
     val expectedNextDelivery = Now + delayedSeconds*1000
-    verify(mockStorage).persistMessage(argThat(new ArgumentMatcher[MessageData]{
-      def matches(msgRef: AnyRef) = msgRef.asInstanceOf[MessageData].nextDelivery.millis == expectedNextDelivery
+    verify(mockExecutor).execute(argThat(new ArgumentMatcher[SendMessageCommand]{
+      def matches(cmdRef: AnyRef) = cmdRef.asInstanceOf[SendMessageCommand].message.nextDelivery.millis == expectedNextDelivery
     }))
     msg.nextDelivery must be (MillisNextDelivery(expectedNextDelivery))
   }
@@ -55,13 +55,13 @@ class NativeMessageClientImplTestSuite extends FunSuite with MustMatchers with M
   test("should correctly bump a never received message statistics") {
     // Given
     val q1 = createQueueData("q1", MillisVisibilityTimeout(123L))
-    val (queueOperations, mockStorage, mockStatisticsStorage) = createQueueOperationsWithMockStorage(q1)
+    val (queueOperations, mockExecutor) = createQueueOperationsWithMockStorage(q1)
 
     val m = createMessageData("1", "z", MillisNextDelivery(123L))
     val stats = MessageStatistics(NeverReceived, 0)
 
-    when(mockStorage.receiveMessage(anyLong(), any(classOf[MillisNextDelivery]))).thenReturn(Some(m))
-    when(mockStatisticsStorage.readMessageStatistics(m.id)).thenReturn(stats)
+    when(mockExecutor.execute(ReceiveMessageCommand(anyString(), anyLong(), any(classOf[MillisNextDelivery])))).thenReturn(Some(m))
+    when(mockExecutor.execute(GetMessageStatisticsCommand("q1", m.id))).thenReturn(stats)
 
     // When
     val messageStatsOption = queueOperations.receiveMessageWithStatistics(DefaultVisibilityTimeout).map(_._2)
@@ -69,10 +69,12 @@ class NativeMessageClientImplTestSuite extends FunSuite with MustMatchers with M
     // Then
     val expectedMessageStats = MessageStatistics(OnDateTimeReceived(NowAsDateTime), 1)
 
-    verify(mockStatisticsStorage).writeMessageStatistics(org.mockito.Matchers.eq(m.id),
-      argThat(new ArgumentMatcher[MessageStatistics]{
-        def matches(statsRef: AnyRef) = statsRef == expectedMessageStats
-      }))
+    verify(mockExecutor).execute(argThat(new ArgumentMatcher[UpdateMessageStatisticsCommand]{
+      def matches(cmdRef: AnyRef) = {
+        val cmd = cmdRef.asInstanceOf[UpdateMessageStatisticsCommand]
+        cmd.messageStatistics == expectedMessageStats
+      }
+    }))
 
     messageStatsOption must be (Some(expectedMessageStats))
   }
@@ -81,13 +83,13 @@ class NativeMessageClientImplTestSuite extends FunSuite with MustMatchers with M
     // Given
     val q1 = createQueueData("q1", MillisVisibilityTimeout(123L))
 
-    val (queueOperations, mockStorage, mockStatisticsStorage) = createQueueOperationsWithMockStorage(q1)
+    val (queueOperations, mockExecutor) = createQueueOperationsWithMockStorage(q1)
 
     val m = createMessageData("1", "z", MillisNextDelivery(123L))
     val stats = MessageStatistics(OnDateTimeReceived(new DateTime(Now - 100000L)), 7)
 
-    when(mockStorage.receiveMessage(anyLong(), any(classOf[MillisNextDelivery]))).thenReturn(Some(m))
-    when(mockStatisticsStorage.readMessageStatistics(m.id)).thenReturn(stats)
+    when(mockExecutor.execute(ReceiveMessageCommand(anyString(), anyLong(), any(classOf[MillisNextDelivery])))).thenReturn(Some(m))
+    when(mockExecutor.execute(GetMessageStatisticsCommand("q1", m.id))).thenReturn(stats)
 
     // When
     val messageStatsOption = queueOperations.receiveMessageWithStatistics(DefaultVisibilityTimeout).map(_._2)
@@ -95,10 +97,12 @@ class NativeMessageClientImplTestSuite extends FunSuite with MustMatchers with M
     // Then
     val expectedMessageStats = MessageStatistics(stats.approximateFirstReceive, 8)
 
-    verify(mockStatisticsStorage).writeMessageStatistics(org.mockito.Matchers.eq(m.id),
-      argThat(new ArgumentMatcher[MessageStatistics]{
-        def matches(statsRef: AnyRef) = statsRef == expectedMessageStats
-      }))
+    verify(mockExecutor).execute(argThat(new ArgumentMatcher[UpdateMessageStatisticsCommand]{
+      def matches(cmdRef: AnyRef) = {
+        val cmd = cmdRef.asInstanceOf[UpdateMessageStatisticsCommand]
+        cmd.messageStatistics == expectedMessageStats
+      }
+    }))
 
     messageStatsOption must be (Some(expectedMessageStats))
   }
@@ -107,21 +111,19 @@ class NativeMessageClientImplTestSuite extends FunSuite with MustMatchers with M
     // Given
     val q = createQueueData("q1", MillisVisibilityTimeout(123L))
 
-    val (queueOperations, mockStorage, mockStatisticsStorage) = createQueueOperationsWithMockStorage(q)
+    val (queueOperations, mockExecutor) = createQueueOperationsWithMockStorage(q)
 
     val m = createMessageData("1", "z", MillisNextDelivery(123L))
 
-    when(mockStatisticsStorage.readMessageStatistics(m.id)).thenReturn(
-      MessageStatistics(OnDateTimeReceived(NowAsDateTime), 0))
-
-    when(mockStorage.receiveMessage(anyLong(), any(classOf[MillisNextDelivery]))).thenReturn(Some(m))
+    when(mockExecutor.execute(GetMessageStatisticsCommand("q1", m.id))).thenReturn(MessageStatistics(OnDateTimeReceived(NowAsDateTime), 0))    
+    when(mockExecutor.execute(ReceiveMessageCommand(anyString(), anyLong(), any(classOf[MillisNextDelivery])))).thenReturn(Some(m))
 
     // When
     queueOperations.receiveMessage(DefaultVisibilityTimeout)
 
     // Then
-    verify(mockStorage).receiveMessage(anyLong(), argThat(new ArgumentMatcher[MillisNextDelivery]{
-      def matches(ndRef: AnyRef) = ndRef == MillisNextDelivery(Now + 123L)
+    verify(mockExecutor).execute(argThat(new ArgumentMatcher[ReceiveMessageCommand]{
+      def matches(cmdRef: AnyRef) = cmdRef.asInstanceOf[ReceiveMessageCommand].newNextDelivery == MillisNextDelivery(Now + 123L)
     }))
   }
 
@@ -129,44 +131,37 @@ class NativeMessageClientImplTestSuite extends FunSuite with MustMatchers with M
     // Given
     val q = createQueueData("q1", MillisVisibilityTimeout(123L))
 
-    val (queueOperations, mockStorage, mockStatisticsStorage) = createQueueOperationsWithMockStorage(q)
+    val (queueOperations, mockExecutor) = createQueueOperationsWithMockStorage(q)
 
     val m = createMessageData("1", "z", MillisNextDelivery(123L))
 
-    when(mockStatisticsStorage.readMessageStatistics(m.id)).thenReturn(
-      MessageStatistics(OnDateTimeReceived(NowAsDateTime), 0))
-
-    when(mockStorage.receiveMessage(anyLong(), any(classOf[MillisNextDelivery]))).thenReturn(Some(m))
+    when(mockExecutor.execute(GetMessageStatisticsCommand("q1", m.id))).thenReturn(MessageStatistics(OnDateTimeReceived(NowAsDateTime), 0))
+    when(mockExecutor.execute(ReceiveMessageCommand(anyString(), anyLong(), any(classOf[MillisNextDelivery])))).thenReturn(Some(m))
 
     // When
     queueOperations.receiveMessage(MillisVisibilityTimeout(1000L))
 
     // Then
-    verify(mockStorage).receiveMessage(anyLong(), argThat(new ArgumentMatcher[MillisNextDelivery]{
-      def matches(ndRef: AnyRef) = ndRef == MillisNextDelivery(Now + 1000L)
+    verify(mockExecutor).execute(argThat(new ArgumentMatcher[ReceiveMessageCommand]{
+      def matches(cmdRef: AnyRef) = cmdRef.asInstanceOf[ReceiveMessageCommand].newNextDelivery == MillisNextDelivery(Now + 1000L)
     }))
   }
 
-  def createQueueOperationsWithMockStorage(queueData: QueueData): (QueueOperations, MessageStorageModule#MessageStorage,
-    MessageStatisticsStorageModule#MessageStatisticsStorage) = {
+  def createQueueOperationsWithMockStorage(queueData: QueueData): (QueueOperations, StorageCommandExecutor) = {
     val env = new NativeModule
       with StorageModule
       with NowModule
       with ImmediateVolatileTaskSchedulerModule {
 
-      val mockQueueStorage = mock[QueueStorage]
-      val mockMessageStorage = mock[MessageStorage]
-      val mockMessageStatisticsStorage = mock[MessageStatisticsStorage]
+      val mockStorageCommandExecutor = mock[StorageCommandExecutor]
 
-      when(mockQueueStorage.lookupQueue(queueData.name)).thenReturn(Some(queueData))
+      when(mockStorageCommandExecutor.execute(LookupQueueCommand(queueData.name))).thenReturn(Some(queueData))
 
-      def queueStorage = mockQueueStorage
-      def messageStorage(queueName: String) = mockMessageStorage
-      def messageStatisticsStorage(queueName: String) = mockMessageStatisticsStorage
+      def storageCommandExecutor = mockStorageCommandExecutor
 
       override def nowAsDateTime = NowAsDateTime
     }
 
-    (env.nativeClient.queueOperations(queueData.name), env.mockMessageStorage, env.mockMessageStatisticsStorage)
+    (env.nativeClient.queueOperations(queueData.name), env.mockStorageCommandExecutor)
   }
 }
