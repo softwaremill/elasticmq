@@ -54,8 +54,8 @@ object NodeBuilder {
     def build() = {
       val env = new NodeLogicModules with SquerylStorageModule
 
-      env.initializeSqueryl(dbConfiguration)
-      new NodeImpl(env.nativeClient, () => env.shutdownSqueryl(dbConfiguration.drop))
+      env.storageCommandExecutor.modules.initializeSqueryl(dbConfiguration)
+      new NodeImpl(env.nativeClient, () => env.storageCommandExecutor.modules.shutdownSqueryl(dbConfiguration.drop))
     }
   }
 }
