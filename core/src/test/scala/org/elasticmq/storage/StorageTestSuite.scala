@@ -7,12 +7,12 @@ import org.elasticmq._
 import org.squeryl.adapters.H2Adapter
 import org.elasticmq.storage.squeryl._
 import org.joda.time.{Duration, DateTime}
-import org.elasticmq.data.{MessageData, QueueData}
+import org.elasticmq.data.QueueData
 import org.elasticmq.test.DataCreationHelpers
 
 trait StorageTestSuite extends FunSuite with MustMatchers with OneInstancePerTest with DataCreationHelpers {
   private case class StorageTestSetup(storageName: String,
-                                      initialize: () => StorageModule,
+                                      initialize: () => StorageCommandExecutor,
                                       shutdown: () => Unit)
 
   val squerylEnv = new SquerylStorageModule {}
@@ -32,7 +32,7 @@ trait StorageTestSuite extends FunSuite with MustMatchers with OneInstancePerTes
       () => new InMemoryStorageModule {},
       () => ()) :: Nil
 
-  private var storageModule: StorageModule = null
+  private var storageCommandExecutor: StorageCommandExecutor = null
 
   private var _befores: List[() => Unit] = Nil
 
@@ -43,7 +43,7 @@ trait StorageTestSuite extends FunSuite with MustMatchers with OneInstancePerTes
   abstract override protected def test(testName: String, testTags: Tag*)(testFun: => Unit) {
     for (setup <- setups) {
       super.test(testName+" using "+setup.storageName, testTags: _*) {
-        storageModule = setup.initialize()
+        storageCommandExecutor = setup.initialize()
         try {
           _befores.foreach(_())
           testFun
@@ -53,19 +53,17 @@ trait StorageTestSuite extends FunSuite with MustMatchers with OneInstancePerTes
       }
     }
   }
-
-  def queueStorage = storageModule.queueStorage
-  def messageStorage(queueName: String) = storageModule.messageStorage(queueName)
-  def messageStatisticsStorage(queueName: String) = storageModule.messageStatisticsStorage(queueName)
+  
+  def execute[R](command: StorageCommand[R]): R = storageCommandExecutor.execute(command)
 }
 
-class QueueStorageTestSuite extends StorageTestSuite {
+class QueueCommandsTestSuite extends StorageTestSuite {
   test("non-existent queue should not be found") {
     // Given
-    queueStorage.persistQueue(createQueueData("q1", MillisVisibilityTimeout(10L)))
+    execute(CreateQueueCommand(createQueueData("q1", MillisVisibilityTimeout(10L))))
 
     // When
-    val lookupResult = queueStorage.lookupQueue("q2")
+    val lookupResult = execute(LookupQueueCommand("q2"))
 
     // Then
     lookupResult must be (None)
@@ -75,12 +73,12 @@ class QueueStorageTestSuite extends StorageTestSuite {
     // Given
     val q2 = createQueueData("q2", MillisVisibilityTimeout(2L))
 
-    queueStorage.persistQueue(createQueueData("q1", MillisVisibilityTimeout(1L)))
-    queueStorage.persistQueue(q2)
-    queueStorage.persistQueue(createQueueData("q3", MillisVisibilityTimeout(3L)))
+    execute(CreateQueueCommand(createQueueData("q1", MillisVisibilityTimeout(1L))))
+    execute(CreateQueueCommand(q2))
+    execute(CreateQueueCommand(createQueueData("q3", MillisVisibilityTimeout(3L))))
 
     // When
-    val lookupResult = queueStorage.lookupQueue(q2.name)
+    val lookupResult = execute(LookupQueueCommand(q2.name))
 
     // Then
     lookupResult must be (Some(q2))
@@ -90,10 +88,10 @@ class QueueStorageTestSuite extends StorageTestSuite {
     // Given
     val created = new DateTime(1216168602L)
     val lastModified = new DateTime(1316168602L)
-    queueStorage.persistQueue(QueueData("q1", MillisVisibilityTimeout(1L), Duration.ZERO, created, lastModified))
+    execute(CreateQueueCommand(QueueData("q1", MillisVisibilityTimeout(1L), Duration.ZERO, created, lastModified)))
 
     // When
-    val lookupResult = queueStorage.lookupQueue("q1")
+    val lookupResult = execute(LookupQueueCommand("q1"))
 
     // Then
     lookupResult must be (Some(QueueData("q1", MillisVisibilityTimeout(1L), Duration.ZERO, created, lastModified)))
@@ -104,34 +102,34 @@ class QueueStorageTestSuite extends StorageTestSuite {
     val q1 = createQueueData("q1", MillisVisibilityTimeout(1L))
     val q2 = createQueueData("q2", MillisVisibilityTimeout(2L))
 
-    queueStorage.persistQueue(q1)
-    queueStorage.persistQueue(q2)
+    execute(CreateQueueCommand(q1))
+    execute(CreateQueueCommand(q2))
 
     // When
-    queueStorage.deleteQueue(q1.name)
+    execute(DeleteQueueCommand(q1.name))
 
     // Then
-    queueStorage.lookupQueue(q1.name) must be (None)
-    queueStorage.lookupQueue(q2.name) must be (Some(q2))
+    execute(LookupQueueCommand(q1.name)) must be (None)
+    execute(LookupQueueCommand(q2.name)) must be (Some(q2))
   }
 
   test("deleting a queue should remove all messages") {
     // Given
     val q1 = createQueueData("q1", MillisVisibilityTimeout(1L))
-    queueStorage.persistQueue(q1)
+    execute(CreateQueueCommand(q1))
 
     val m1 = createMessageData("xyz", "123", MillisNextDelivery(123L))
-    messageStorage(q1.name).persistMessage(m1)
+    execute(new SendMessageCommand(q1.name, m1))
 
     // When
-    queueStorage.deleteQueue(q1.name)
+    execute(DeleteQueueCommand(q1.name))
 
     // Then
-    queueStorage.lookupQueue(q1.name) must be (None)
+    execute(LookupQueueCommand(q1.name)) must be (None)
 
     // Either result is ok
     try {
-      messageStorage(q1.name).lookupMessage(m1.id) must be (None)
+      execute(LookupMessageCommand(q1.name, m1.id)) must be (None)
     } catch {
       case _: QueueDoesNotExistException => // ok
     }
@@ -140,23 +138,23 @@ class QueueStorageTestSuite extends StorageTestSuite {
   test("trying to create an existing queue should throw an exception") {
     // Given
     val q1 = createQueueData("q1", MillisVisibilityTimeout(1L))
-    queueStorage.persistQueue(q1)
+    execute(CreateQueueCommand(q1))
 
     // When & then
-    evaluating { queueStorage.persistQueue(q1) } must produce [QueueAlreadyExistsException]
+    evaluating { execute(CreateQueueCommand(q1)) } must produce [QueueAlreadyExistsException]
   }
 
   test("updating a queue") {
     // Given
     val q1 = createQueueData("q1", MillisVisibilityTimeout(1L))
-    queueStorage.persistQueue(q1);
+    execute(CreateQueueCommand(q1))
 
     // When
     val q1Modified = createQueueData(q1.name, MillisVisibilityTimeout(100L))
-    queueStorage.updateQueue(q1Modified)
+    execute(UpdateQueueCommand(q1Modified))
 
     // Then
-    queueStorage.lookupQueue(q1.name) must be (Some(q1Modified))
+    execute(LookupQueueCommand(q1.name)) must be (Some(q1Modified))
   }
 
   test("listing queues") {
@@ -164,11 +162,11 @@ class QueueStorageTestSuite extends StorageTestSuite {
     val q1 = createQueueData("q1", MillisVisibilityTimeout(1L))
     val q2 = createQueueData("q2", MillisVisibilityTimeout(2L))
 
-    queueStorage.persistQueue(q1);
-    queueStorage.persistQueue(q2);
+    execute(CreateQueueCommand(q1))
+    execute(CreateQueueCommand(q2))
 
     // When
-    val queues = queueStorage.listQueues
+    val queues = execute(ListQueuesCommand())
 
     // Then
     queues.size must be (2)
@@ -179,10 +177,10 @@ class QueueStorageTestSuite extends StorageTestSuite {
   test("queue statistics without messages") {
     // Given
     val queue = createQueueData("q1", MillisVisibilityTimeout(1L))
-    queueStorage.persistQueue(queue);
+    execute(CreateQueueCommand(queue))
 
     // When
-    val stats = queueStorage.queueStatistics(queue.name, 123L)
+    val stats = execute(GetQueueStatisticsCommand(queue.name, 123L))
 
     // Then
     stats must be (QueueStatistics(0L, 0L, 0L))
@@ -191,53 +189,50 @@ class QueueStorageTestSuite extends StorageTestSuite {
   test("queue statistics with messages") {
     // Given
     val queue = createQueueData("q1", MillisVisibilityTimeout(1L))
-    queueStorage.persistQueue(queue);
-
-    val msgStorage = messageStorage(queue.name)
-    val statsStorage = messageStatisticsStorage(queue.name)
+    execute(CreateQueueCommand(queue))
 
     // Visible messages
-    messageStorage(queue.name).persistMessage(createMessageData("m1", "123", MillisNextDelivery(122L)))
-    messageStorage(queue.name).persistMessage(createMessageData("m2", "123", MillisNextDelivery(123L)))
+    execute(new SendMessageCommand(queue.name, createMessageData("m1", "123", MillisNextDelivery(122L))))
+    execute(new SendMessageCommand(queue.name, createMessageData("m2", "123", MillisNextDelivery(123L))))
 
     // Invisible messages - already received
-    val m3 = createMessageData("m3", "123", MillisNextDelivery(124L)); msgStorage.persistMessage(m3)
-    val m4 = createMessageData("m4", "123", MillisNextDelivery(125L)); msgStorage.persistMessage(m4)
-    val m5 = createMessageData("m5", "123", MillisNextDelivery(126L)); msgStorage.persistMessage(m5)
-    val m6 = createMessageData("m6", "123", MillisNextDelivery(126L)); msgStorage.persistMessage(m6)
+    val m3 = createMessageData("m3", "123", MillisNextDelivery(124L)); execute(SendMessageCommand(queue.name, m3))
+    val m4 = createMessageData("m4", "123", MillisNextDelivery(125L)); execute(SendMessageCommand(queue.name, m4))
+    val m5 = createMessageData("m5", "123", MillisNextDelivery(126L)); execute(SendMessageCommand(queue.name, m5))
+    val m6 = createMessageData("m6", "123", MillisNextDelivery(126L)); execute(SendMessageCommand(queue.name, m6))
 
-    statsStorage.writeMessageStatistics(m3.id, MessageStatistics(OnDateTimeReceived(new DateTime(100L)), 1))
+    execute(UpdateMessageStatisticsCommand(queue.name, m3.id, MessageStatistics(OnDateTimeReceived(new DateTime(100L)), 1)))
 
     // Stats are inserted if the counter is 1, updated if it's more than 1. So we first have to insert a row with 1.
-    statsStorage.writeMessageStatistics(m4.id, MessageStatistics(OnDateTimeReceived(new DateTime(101L)), 1))
-    statsStorage.writeMessageStatistics(m4.id, MessageStatistics(OnDateTimeReceived(new DateTime(102L)), 2))
+    execute(UpdateMessageStatisticsCommand(queue.name, m4.id, MessageStatistics(OnDateTimeReceived(new DateTime(101L)), 1)))
+    execute(UpdateMessageStatisticsCommand(queue.name, m4.id, MessageStatistics(OnDateTimeReceived(new DateTime(102L)), 2)))
 
-    statsStorage.writeMessageStatistics(m5.id, MessageStatistics(OnDateTimeReceived(new DateTime(102L)), 1))
-    statsStorage.writeMessageStatistics(m5.id, MessageStatistics(OnDateTimeReceived(new DateTime(104L)), 3))
+    execute(UpdateMessageStatisticsCommand(queue.name, m5.id, MessageStatistics(OnDateTimeReceived(new DateTime(102L)), 1)))
+    execute(UpdateMessageStatisticsCommand(queue.name, m5.id, MessageStatistics(OnDateTimeReceived(new DateTime(104L)), 3)))
 
-    statsStorage.writeMessageStatistics(m6.id, MessageStatistics(OnDateTimeReceived(new DateTime(103L)), 1))
+    execute(UpdateMessageStatisticsCommand(queue.name, m6.id, MessageStatistics(OnDateTimeReceived(new DateTime(103L)), 1)))
 
     // Delayed messages - never yet received
-    val m7 = createMessageData("m7", "123", MillisNextDelivery(127L)); msgStorage.persistMessage(m7)
-    val m8 = createMessageData("m8", "123", MillisNextDelivery(128L)); msgStorage.persistMessage(m8)
-    val m9 = createMessageData("m9", "123", MillisNextDelivery(129L)); msgStorage.persistMessage(m9)
+    val m7 = createMessageData("m7", "123", MillisNextDelivery(127L)); execute(SendMessageCommand(queue.name, m7))
+    val m8 = createMessageData("m8", "123", MillisNextDelivery(128L)); execute(SendMessageCommand(queue.name, m8))
+    val m9 = createMessageData("m9", "123", MillisNextDelivery(129L)); execute(SendMessageCommand(queue.name, m9))
 
     // When
-    val stats = queueStorage.queueStatistics(queue.name, 123L)
+    val stats = execute(GetQueueStatisticsCommand(queue.name, 123L))
 
     // Then
     stats must be (QueueStatistics(2L, 4L, 3L))
   }
 }
 
-class MessageStorageTestSuite extends StorageTestSuite {
+class MessageCommandsTestSuite extends StorageTestSuite {
   test("non-existent message should not be found") {
     // Given
     val q1 = createQueueData("q1", MillisVisibilityTimeout(1L))
-    queueStorage.persistQueue(q1)
+    execute(CreateQueueCommand(q1))
 
-    // When
-    val lookupResult = messageStorage(q1.name).lookupMessage(MessageId("xyz"))
+    // When    
+    val lookupResult = execute(LookupMessageCommand(q1.name, MessageId("xyz")))
 
     // Then
     lookupResult must be (None)
@@ -248,11 +243,11 @@ class MessageStorageTestSuite extends StorageTestSuite {
     val created = new DateTime(1216168602L)
     val q1 = createQueueData("q1", MillisVisibilityTimeout(1L))
     val message = createMessageData("xyz", "123", MillisNextDelivery(123L)).copy(created = created)
-    queueStorage.persistQueue(q1)
-    messageStorage(q1.name).persistMessage(message)
+    execute(CreateQueueCommand(q1))
+    execute(new SendMessageCommand(q1.name, message))
 
     // When
-    val lookupResult = messageStorage(q1.name).lookupMessage(MessageId("xyz"))
+    val lookupResult = execute(LookupMessageCommand(q1.name, MessageId("xyz")))
 
     // Then
     lookupResult must be (Some(message))
@@ -263,11 +258,11 @@ class MessageStorageTestSuite extends StorageTestSuite {
     val maxMessageContent = "x" * 65535
 
     val q1 = createQueueData("q1", MillisVisibilityTimeout(1L))
-    queueStorage.persistQueue(q1)
-    messageStorage(q1.name).persistMessage(createMessageData("xyz", maxMessageContent, MillisNextDelivery(123L)))
+    execute(CreateQueueCommand(q1))
+    execute(new SendMessageCommand(q1.name, createMessageData("xyz", maxMessageContent, MillisNextDelivery(123L))))
 
     // When
-    val lookupResult = messageStorage(q1.name).lookupMessage(MessageId("xyz"))
+    val lookupResult = execute(LookupMessageCommand(q1.name, MessageId("xyz")))
 
     // Then
     lookupResult must be (Some(createMessageData("xyz", maxMessageContent, MillisNextDelivery(123L))))
@@ -278,13 +273,13 @@ class MessageStorageTestSuite extends StorageTestSuite {
     val q1 = createQueueData("q1", MillisVisibilityTimeout(1L))
     val q2 = createQueueData("q2", MillisVisibilityTimeout(2L))
 
-    queueStorage.persistQueue(q1)
-    queueStorage.persistQueue(q2)
+    execute(CreateQueueCommand(q1))
+    execute(CreateQueueCommand(q2))
 
-    messageStorage(q1.name).persistMessage(createMessageData("xyz", "123", MillisNextDelivery(123L)))
+    execute(new SendMessageCommand(q1.name, createMessageData("xyz", "123", MillisNextDelivery(123L))))
 
     // When
-    val lookupResult = messageStorage(q2.name).receiveMessage(1000L, MillisNextDelivery(234L))
+    val lookupResult = execute(ReceiveMessageCommand(q2.name, 1000L, MillisNextDelivery(234L)))
 
     // Then
     lookupResult must be (None)
@@ -295,13 +290,13 @@ class MessageStorageTestSuite extends StorageTestSuite {
     val q1 = createQueueData("q1", MillisVisibilityTimeout(1L))
     val q2 = createQueueData("q2", MillisVisibilityTimeout(2L))
 
-    queueStorage.persistQueue(q1)
-    queueStorage.persistQueue(q2)
+    execute(CreateQueueCommand(q1))
+    execute(CreateQueueCommand(q2))
 
-    messageStorage(q1.name).persistMessage(createMessageData("xyz", "123", MillisNextDelivery(123L)))
+    execute(new SendMessageCommand(q1.name, createMessageData("xyz", "123", MillisNextDelivery(123L))))
 
     // When
-    val lookupResult = messageStorage(q1.name).receiveMessage(200L, MillisNextDelivery(234L))
+    val lookupResult = execute(ReceiveMessageCommand(q1.name, 200L, MillisNextDelivery(234L)))
 
     // Then
     lookupResult must be (Some(createMessageData("xyz", "123", MillisNextDelivery(234L))))
@@ -311,13 +306,13 @@ class MessageStorageTestSuite extends StorageTestSuite {
     // Given
     val q1 = createQueueData("q1", MillisVisibilityTimeout(1L))
 
-    queueStorage.persistQueue(q1)
+    execute(CreateQueueCommand(q1))
 
-    messageStorage(q1.name).persistMessage(createMessageData("xyz", "123", MillisNextDelivery(123L)))
+    execute(new SendMessageCommand(q1.name, createMessageData("xyz", "123", MillisNextDelivery(123L))))
 
     // When
-    messageStorage(q1.name).receiveMessage(200L, MillisNextDelivery(567L))
-    val lookupResult = messageStorage(q1.name).lookupMessage(MessageId("xyz"))
+    execute(ReceiveMessageCommand(q1.name, 200L, MillisNextDelivery(567L)))
+    val lookupResult = execute(LookupMessageCommand(q1.name, MessageId("xyz")))
 
     // Then
     lookupResult must be (Some(createMessageData("xyz", "123", MillisNextDelivery(567L))))
@@ -327,12 +322,12 @@ class MessageStorageTestSuite extends StorageTestSuite {
     // Given
     val q1 = createQueueData("q1", MillisVisibilityTimeout(1L))
 
-    queueStorage.persistQueue(q1)
+    execute(CreateQueueCommand(q1))
 
-    messageStorage(q1.name).persistMessage(createMessageData("xyz", "123", MillisNextDelivery(123L)))
+    execute(new SendMessageCommand(q1.name, createMessageData("xyz", "123", MillisNextDelivery(123L))))
 
     // When
-    val lookupResult = messageStorage(q1.name).receiveMessage(100L, MillisNextDelivery(234L))
+    val lookupResult = execute(ReceiveMessageCommand(q1.name, 100L, MillisNextDelivery(234L)))
 
     // Then
     lookupResult must be (None)
@@ -341,36 +336,36 @@ class MessageStorageTestSuite extends StorageTestSuite {
   test("increasing visibility timeout of a message") {
     // Given
     val q1 = createQueueData("q1", MillisVisibilityTimeout(1L))
-    queueStorage.persistQueue(q1)
+    execute(CreateQueueCommand(q1))
     
     val m = createMessageData("xyz", "1234", MillisNextDelivery(123L))
-    messageStorage(q1.name).persistMessage(m)
+    execute(new SendMessageCommand(q1.name, m))
 
     // When
-    messageStorage(q1.name).updateVisibilityTimeout(m.id, MillisNextDelivery(345L))
+    execute(UpdateVisibilityTimeoutCommand(q1.name, m.id, MillisNextDelivery(345L)))
 
     // Then
-    messageStorage(q1.name).lookupMessage(MessageId("xyz")) must be (Some(createMessageData("xyz", "1234", MillisNextDelivery(345L))))
+    execute(LookupMessageCommand(q1.name, MessageId("xyz"))) must be (Some(createMessageData("xyz", "1234", MillisNextDelivery(345L))))
   }
 
   test("decreasing visibility timeout of a message") {
     // Given
     val q1 = createQueueData("q1", MillisVisibilityTimeout(1L))
-    queueStorage.persistQueue(q1)
+    execute(CreateQueueCommand(q1))
 
     // Initially m2 should be delivered after m1
     val m1 = createMessageData("xyz1", "1234", MillisNextDelivery(100L))
     val m2 = createMessageData("xyz2", "1234", MillisNextDelivery(200L))
-    
-    messageStorage(q1.name).persistMessage(m1)
-    messageStorage(q1.name).persistMessage(m2)
+
+    execute(new SendMessageCommand(q1.name, m1))
+    execute(new SendMessageCommand(q1.name, m2))
 
     // When
-    messageStorage(q1.name).updateVisibilityTimeout(m2.id, MillisNextDelivery(50L))
+    execute(UpdateVisibilityTimeoutCommand(q1.name, m2.id, MillisNextDelivery(50L)))
 
     // Then
     // This should find the first message, as it has the visibility timeout decreased.
-    messageStorage(q1.name).receiveMessage(75L, MillisNextDelivery(100L)).map(_.id) must be (Some(m2.id))
+    execute(ReceiveMessageCommand(q1.name, 75L, MillisNextDelivery(100L))).map(_.id) must be (Some(m2.id))
   }
 
   test("message should be deleted") {
@@ -378,31 +373,31 @@ class MessageStorageTestSuite extends StorageTestSuite {
     val q1 = createQueueData("q1", MillisVisibilityTimeout(1L))
     val m1 = createMessageData("xyz", "123", MillisNextDelivery(123L))
 
-    queueStorage.persistQueue(q1)
-    messageStorage(q1.name).persistMessage(m1)
+    execute(CreateQueueCommand(q1))
+    execute(new SendMessageCommand(q1.name, m1))
 
     // When
-    messageStorage(q1.name).deleteMessage(m1.id)
+    execute(DeleteMessageCommand(q1.name, m1.id))
 
     // Then
-    messageStorage(q1.name).lookupMessage(MessageId("xyz")) must be (None)
+    execute(LookupMessageCommand(q1.name, MessageId("xyz"))) must be (None)
   }
 }
 
-class MessageStatisticsStorageTestSuite extends StorageTestSuite {
+class MessageStatisticsCommandsTestSuite extends StorageTestSuite {
   val q1 = createQueueData("q1", MillisVisibilityTimeout(1L))
   val m1 = createMessageData("xyz", "123", MillisNextDelivery(123L))
 
   val someTimestamp = 123456789L;
 
   before {
-    queueStorage.persistQueue(q1)
-    messageStorage(q1.name).persistMessage(m1)
+    execute(CreateQueueCommand(q1))
+    execute(new SendMessageCommand(q1.name, m1))
   }
 
   test("empty statistics should be returned for a non-delivered message") {
     // When
-    val stats = messageStatisticsStorage(q1.name).readMessageStatistics(m1.id)
+    val stats = execute(GetMessageStatisticsCommand(q1.name, m1.id))
 
     // Then
     stats.approximateFirstReceive must be (NeverReceived)
@@ -411,10 +406,10 @@ class MessageStatisticsStorageTestSuite extends StorageTestSuite {
 
   test("statistics should be correct after receiving a message once") {
     // Given
-    messageStatisticsStorage(q1.name).writeMessageStatistics(m1.id, MessageStatistics(OnDateTimeReceived(new DateTime(someTimestamp)), 1))
+    execute(UpdateMessageStatisticsCommand(q1.name, m1.id, MessageStatistics(OnDateTimeReceived(new DateTime(someTimestamp)), 1)))
 
     // When
-    val readStats = messageStatisticsStorage(q1.name).readMessageStatistics(m1.id)
+    val readStats = execute(GetMessageStatisticsCommand(q1.name, m1.id))
 
     // Then
     readStats.approximateFirstReceive must be (OnDateTimeReceived(new DateTime(someTimestamp)))
@@ -423,11 +418,11 @@ class MessageStatisticsStorageTestSuite extends StorageTestSuite {
 
   test("statistics should be correct after receiving a message twice") {
     // Given
-    messageStatisticsStorage(q1.name).writeMessageStatistics(m1.id, MessageStatistics(OnDateTimeReceived(new DateTime(someTimestamp)), 1))
-    messageStatisticsStorage(q1.name).writeMessageStatistics(m1.id, MessageStatistics(OnDateTimeReceived(new DateTime(someTimestamp)), 2))
+    execute(UpdateMessageStatisticsCommand(q1.name, m1.id, MessageStatistics(OnDateTimeReceived(new DateTime(someTimestamp)), 1)))
+    execute(UpdateMessageStatisticsCommand(q1.name, m1.id, MessageStatistics(OnDateTimeReceived(new DateTime(someTimestamp)), 2)))
 
     // When
-    val readStats = messageStatisticsStorage(q1.name).readMessageStatistics(m1.id)
+    val readStats = execute(GetMessageStatisticsCommand(q1.name, m1.id))
 
     // Then
     readStats.approximateFirstReceive must be (OnDateTimeReceived(new DateTime(someTimestamp)))
@@ -436,19 +431,19 @@ class MessageStatisticsStorageTestSuite extends StorageTestSuite {
 
   test("statistics should be removed if the message is removed") {
     // Given
-    messageStatisticsStorage(q1.name).writeMessageStatistics(m1.id, MessageStatistics(OnDateTimeReceived(new DateTime(someTimestamp)), 1))
-    messageStorage(q1.name).deleteMessage(m1.id)
+    execute(UpdateMessageStatisticsCommand(q1.name, m1.id, MessageStatistics(OnDateTimeReceived(new DateTime(someTimestamp)), 1)))
+    execute(DeleteMessageCommand(q1.name, m1.id))
 
     // When & then
-    evaluating { messageStatisticsStorage(q1.name).readMessageStatistics(m1.id) } must produce [MessageDoesNotExistException]
+    evaluating { execute(GetMessageStatisticsCommand(q1.name, m1.id)) } must produce [MessageDoesNotExistException]
   }
 
   test("statistics shouldn't be written if the message is already deleted") {
     // Given
-    messageStorage(q1.name).deleteMessage(m1.id)
-    messageStatisticsStorage(q1.name).writeMessageStatistics(m1.id, MessageStatistics(OnDateTimeReceived(new DateTime(someTimestamp)), 1))
+    execute(DeleteMessageCommand(q1.name, m1.id))
+    execute(UpdateMessageStatisticsCommand(q1.name, m1.id, MessageStatistics(OnDateTimeReceived(new DateTime(someTimestamp)), 1)))
 
     // When & then
-    evaluating { messageStatisticsStorage(q1.name).readMessageStatistics(m1.id) } must produce [MessageDoesNotExistException]
+    evaluating { execute(GetMessageStatisticsCommand(q1.name, m1.id)) } must produce [MessageDoesNotExistException]
   }
 }
