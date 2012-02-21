@@ -3,7 +3,13 @@ package org.elasticmq.storage.inmemory
 import org.elasticmq.storage._
 
 class InMemoryStorageCommandExecutor extends StorageCommandExecutor {
-  val queues = new InMemoryQueuesStorage()
+  val queues = new InMemoryQueuesStorage(queueData => {
+    val statistics = new InMemoryMessageStatisticsStorage(queueData.name)
+    new InMemoryQueue(
+      queueData,
+      new InMemoryMessageStorage(queueData.name, statistics),
+      statistics)
+  })
 
   def execute[R](command: StorageCommand[R]) = command match {
     case CreateQueueCommand(queue) => queues.createQueue(queue)

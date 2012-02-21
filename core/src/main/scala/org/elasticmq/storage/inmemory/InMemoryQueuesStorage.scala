@@ -7,11 +7,11 @@ import java.util.concurrent.ConcurrentHashMap
 
 import scala.collection.JavaConversions
 
-class InMemoryQueuesStorage {
+class InMemoryQueuesStorage(createInMemoryQueue: QueueData => InMemoryQueue) {
   val queues = JavaConversions.asScalaConcurrentMap(new ConcurrentHashMap[String, InMemoryQueue])
 
   def createQueue(queueData: QueueData) {
-    if (queues.putIfAbsent(queueData.name, InMemoryQueue(queueData)) != None) {
+    if (queues.putIfAbsent(queueData.name, createInMemoryQueue(queueData)) != None) {
       throw new QueueAlreadyExistsException(queueData.name)
     }
   }
