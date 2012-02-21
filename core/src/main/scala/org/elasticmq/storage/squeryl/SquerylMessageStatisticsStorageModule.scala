@@ -1,13 +1,12 @@
 package org.elasticmq.storage.squeryl
 
 import org.squeryl.PrimitiveTypeMode._
-import org.elasticmq.storage.MessageStatisticsStorageModule
 import org.elasticmq.{MessageDoesNotExistException, MessageId, MessageStatistics}
 
-trait SquerylMessageStatisticsStorageModule extends MessageStatisticsStorageModule {
+trait SquerylMessageStatisticsStorageModule {
   this: SquerylSchemaModule =>
 
-  class SquerylMessageStatisticsStorage(queueName: String) extends MessageStatisticsStorage {
+  class SquerylMessageStatisticsStorage(queueName: String) {
     def readMessageStatistics(messageId: MessageId) = {
       inTransaction {
         messageStatistics
@@ -17,14 +16,14 @@ trait SquerylMessageStatisticsStorageModule extends MessageStatisticsStorageModu
       }
     }
 
-    def writeMessageStatistics(messageId: MessageId, statistics: MessageStatistics) {
-      writeMessageStatistics(messageId, statistics, true)
+    def updateMessageStatistics(messageId: MessageId, statistics: MessageStatistics) {
+      updateMessageStatistics(messageId, statistics, true)
     }
 
     /** @param checkIfMessageExists: Should a check if the message exists be done before writing stats. This should be
      *  {@code false} when we are certain that the message is in the DB.
       */
-    def writeMessageStatistics(messageId: MessageId, statistics: MessageStatistics, checkIfMessageExists: Boolean) {
+    def updateMessageStatistics(messageId: MessageId, statistics: MessageStatistics, checkIfMessageExists: Boolean) {
       inTransaction {
         lazy val messageInDb = messages.lookup(messageId.id)
 

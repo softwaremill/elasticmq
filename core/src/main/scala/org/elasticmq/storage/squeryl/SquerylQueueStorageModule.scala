@@ -3,15 +3,14 @@ package org.elasticmq.storage.squeryl
 import org.squeryl.PrimitiveTypeMode._
 import org.elasticmq._
 import org.elasticmq.data.QueueData
-import org.elasticmq.storage.QueueStorageModule
 
 import org.squeryl._
 
-trait SquerylQueueStorageModule extends QueueStorageModule {
+trait SquerylQueueStorageModule {
   this: SquerylSchemaModule =>
 
-  object squerylQueueStorage extends QueueStorage {
-    def persistQueue(queue: QueueData) {
+  class SquerylQueueStorage {
+    def createQueue(queue: QueueData) {
       def isUniqueIndexException(e: Exception) = {
         val msg = e.getMessage.toLowerCase
         msg.contains("unique index") || msg.contains("unique key") || msg.contains("primary key")
@@ -88,5 +87,5 @@ trait SquerylQueueStorageModule extends QueueStorageModule {
     }
   }
 
-  def queueStorage = squerylQueueStorage
+  val queueStorage = new SquerylQueueStorage
 }

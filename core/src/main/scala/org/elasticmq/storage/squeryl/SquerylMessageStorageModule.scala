@@ -2,17 +2,16 @@ package org.elasticmq.storage.squeryl
 
 import org.squeryl.PrimitiveTypeMode._
 import org.elasticmq._
-import org.elasticmq.storage.MessageStorageModule
 import org.elasticmq.data.MessageData
 
-trait SquerylMessageStorageModule extends MessageStorageModule {
+trait SquerylMessageStorageModule {
   this: SquerylSchemaModule with SquerylMessageStatisticsStorageModule =>
 
-  class SquerylMessageStorage(queueName: String) extends MessageStorage {
-    def persistMessage(message: MessageData) {
+  class SquerylMessageStorage(queueName: String) {
+    def sendMessage(message: MessageData) {
       transaction {
         messages.insert(SquerylMessage.from(queueName, message))
-        messageStatisticsStorage(queueName).writeMessageStatistics(message.id, MessageStatistics.empty, false)
+        messageStatisticsStorage(queueName).updateMessageStatistics(message.id, MessageStatistics.empty, false)
       }
     }
 
