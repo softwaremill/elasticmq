@@ -3,13 +3,9 @@ package org.elasticmq.storage
 import org.elasticmq.data.{MessageData, QueueData}
 import org.elasticmq.{MessageStatistics, MillisNextDelivery, MessageId, QueueStatistics}
 
-sealed trait StorageCommand[R] {
-  def isMutative = false
-}
+sealed trait StorageCommand[R]
 
-trait MutativeCommand[T] extends StorageCommand[T] {
-  override def isMutative = true
-}
+trait MutativeCommand[R] extends StorageCommand[R]
 
 case class CreateQueueCommand(queue: QueueData) extends StorageCommand[Unit] with MutativeCommand[Unit]
 case class UpdateQueueCommand(queue: QueueData) extends StorageCommand[Unit] with MutativeCommand[Unit]
@@ -35,7 +31,7 @@ case class LookupMessageCommand(queueName: String, messageId: MessageId) extends
 
 
 case class UpdateMessageStatisticsCommand(queueName: String, messageId: MessageId, messageStatistics: MessageStatistics)
-  extends StorageCommand[Unit]
+  extends StorageCommand[Unit] with MutativeCommand[Unit]
 
 case class GetMessageStatisticsCommand(queueName: String, messageId: MessageId)
   extends StorageCommand[MessageStatistics]
