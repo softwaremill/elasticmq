@@ -2,7 +2,7 @@ package org.elasticmq.replication
 
 import org.elasticmq.storage._
 
-class ReplicationStorageCommandExecutor(delegate: StorageCommandExecutor) extends StorageCommandExecutor {
+class ReplicatingStorageCommandExecutor(delegate: StorageCommandExecutor) extends StorageCommandExecutor {
   def execute[R](command: StorageCommand[R]) = {
     val result = delegate.execute(command)
     replicateIfMutated(command, result)
