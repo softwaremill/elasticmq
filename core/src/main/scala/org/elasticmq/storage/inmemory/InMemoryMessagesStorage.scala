@@ -29,7 +29,7 @@ class InMemoryMessagesStorage(queueName: String, statistics: InMemoryMessageStat
     messageQueue.add(inMemoryMessage)
   }
 
-  def updateVisibilityTimeout(messageId: MessageId, newNextDelivery: MillisNextDelivery) {
+  def updateNextDelivery(messageId: MessageId, newNextDelivery: MillisNextDelivery) {
     val inMemoryMessage = messagesById
       .get(messageId)
       .getOrElse(throw new MessageDoesNotExistException(queueName, messageId))

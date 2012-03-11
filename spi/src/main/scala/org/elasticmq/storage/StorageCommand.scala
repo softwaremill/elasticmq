@@ -23,7 +23,7 @@ case class GetQueueStatisticsCommand(name: String, deliveryTime: Long) extends S
 case class SendMessageCommand(queueName: String, message: MessageData)
   extends StorageCommand[Unit] with MutativeCommand[Unit] with IdempotentCommand[Unit]
 
-case class UpdateVisibilityTimeoutCommand(queueName: String, messageId: MessageId, newNextDelivery: MillisNextDelivery)
+case class UpdateNextDeliveryCommand(queueName: String, messageId: MessageId, newNextDelivery: MillisNextDelivery)
   extends StorageCommand[Unit] with MutativeCommand[Unit] with IdempotentCommand[Unit]
 
 case class ReceiveMessageCommand(queueName: String, deliveryTime: Long, newNextDelivery: MillisNextDelivery)

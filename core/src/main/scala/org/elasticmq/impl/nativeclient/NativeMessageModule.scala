@@ -22,7 +22,7 @@ trait NativeMessageModule {
 
     def updateVisibilityTimeout(newVisibilityTimeout: MillisVisibilityTimeout) = {
       storageCommandExecutor.execute(
-        UpdateVisibilityTimeoutCommand(queueName, id, computeNextDelivery(newVisibilityTimeout.millis)))
+        UpdateNextDeliveryCommand(queueName, id, computeNextDelivery(newVisibilityTimeout.millis)))
       
       logger.debug("Updated visibility timeout of message: %s in queue: %s to: %s"
         .format(messageId, queueName, newVisibilityTimeout))

@@ -24,13 +24,13 @@ class ReplicationStorageCommandExecutor(delegate: StorageCommandExecutor) extend
       case c: DeleteQueueCommand => c :: Nil
 
       case c: SendMessageCommand => c :: Nil
-      case c: UpdateVisibilityTimeoutCommand => c :: Nil
+      case c: UpdateNextDeliveryCommand => c :: Nil
       case c: DeleteMessageCommand => c :: Nil
       case c: UpdateMessageStatisticsCommand => c :: Nil
 
       case ReceiveMessageCommand(queueName, deliveryTime, newNextDelivery) => {
         result match {
-          case Some(messageData) => UpdateVisibilityTimeoutCommand(queueName, messageData.id, messageData.nextDelivery) :: Nil
+          case Some(messageData) => UpdateNextDeliveryCommand(queueName, messageData.id, messageData.nextDelivery) :: Nil
           case None => Nil
         }
       }         

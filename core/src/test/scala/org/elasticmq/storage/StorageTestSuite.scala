@@ -333,7 +333,7 @@ class MessageCommandsTestSuite extends StorageTestSuite {
     lookupResult must be (None)
   }
 
-  test("increasing visibility timeout of a message") {
+  test("increasing next delivery of a message") {
     // Given
     val q1 = createQueueData("q1", MillisVisibilityTimeout(1L))
     execute(CreateQueueCommand(q1))
@@ -342,13 +342,13 @@ class MessageCommandsTestSuite extends StorageTestSuite {
     execute(new SendMessageCommand(q1.name, m))
 
     // When
-    execute(UpdateVisibilityTimeoutCommand(q1.name, m.id, MillisNextDelivery(345L)))
+    execute(UpdateNextDeliveryCommand(q1.name, m.id, MillisNextDelivery(345L)))
 
     // Then
     execute(LookupMessageCommand(q1.name, MessageId("xyz"))) must be (Some(createMessageData("xyz", "1234", MillisNextDelivery(345L))))
   }
 
-  test("decreasing visibility timeout of a message") {
+  test("decreasing next delivery of a message") {
     // Given
     val q1 = createQueueData("q1", MillisVisibilityTimeout(1L))
     execute(CreateQueueCommand(q1))
@@ -361,7 +361,7 @@ class MessageCommandsTestSuite extends StorageTestSuite {
     execute(new SendMessageCommand(q1.name, m2))
 
     // When
-    execute(UpdateVisibilityTimeoutCommand(q1.name, m2.id, MillisNextDelivery(50L)))
+    execute(UpdateNextDeliveryCommand(q1.name, m2.id, MillisNextDelivery(50L)))
 
     // Then
     // This should find the first message, as it has the visibility timeout decreased.

@@ -16,7 +16,7 @@ trait SquerylMessagesStorageModule {
       }
     }
 
-    def updateVisibilityTimeout(messageId: MessageId, newNextDelivery: MillisNextDelivery) {
+    def updateNextDelivery(messageId: MessageId, newNextDelivery: MillisNextDelivery) {
       transaction {
         update(messages)(m =>
           where(m.id === messageId.id)

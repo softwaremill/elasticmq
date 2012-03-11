@@ -16,8 +16,8 @@ trait InterfacedCommandExecutor extends StorageCommandExecutor {
     case GetQueueStatisticsCommand(name, deliveryTime) => queuesStorage.queueStatistics(name, deliveryTime)
 
     case SendMessageCommand(queueName, message) => messagesStorage(queueName).sendMessage(message)
-    case UpdateVisibilityTimeoutCommand(queueName, messageId, newNextDelivery) =>
-      messagesStorage(queueName).updateVisibilityTimeout(messageId, newNextDelivery)
+    case UpdateNextDeliveryCommand(queueName, messageId, newNextDelivery) =>
+      messagesStorage(queueName).updateNextDelivery(messageId, newNextDelivery)
     case ReceiveMessageCommand(queueName, deliveryTime, newNextDelivery) =>
       messagesStorage(queueName).receiveMessage(deliveryTime, newNextDelivery)
     case DeleteMessageCommand(queueName, messageId) => messagesStorage(queueName).deleteMessage(messageId)
