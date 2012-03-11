@@ -2,7 +2,6 @@ package org.elasticmq.replication
 
 import org.elasticmq.storage._
 
-
 class ReplicationStorageCommandExecutor(delegate: StorageCommandExecutor) extends StorageCommandExecutor {
   def execute[R](command: StorageCommand[R]) = {
     val result = delegate.execute(command)
@@ -17,7 +16,13 @@ class ReplicationStorageCommandExecutor(delegate: StorageCommandExecutor) extend
     }
   }
 
-  def resultingMutations[R](command: StorageCommand[R], result: R): List[MutativeCommand[_]] = {
+  def resultingMutations[R](command: StorageCommand[R], result: R): List[IdempotentMutativeCommand[_]] = {
+    /*
+    We can only replicate idempotent mutative commands. That is because during state transfer, it is possible that
+    a mutation was applied to the state, which is being transferred, but the command has not yet been replicated
+    (in another thread).
+    So a command may end being re-applied on the new node.
+     */
     command match {
       case c: CreateQueueCommand => c :: Nil
       case c: UpdateQueueCommand => c :: Nil
@@ -39,7 +44,7 @@ class ReplicationStorageCommandExecutor(delegate: StorageCommandExecutor) extend
     }
   }
 
-  def replicate(list: List[MutativeCommand[_]]) {
+  def replicate(list: List[IdempotentMutativeCommand[_]]) {
 
   }
 }
