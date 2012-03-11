@@ -1,13 +1,11 @@
 package org.elasticmq.replication
 
 import org.elasticmq.storage._
+import org.jgroups.{JChannel, Message}
 
-class ReplicatingStorageCommandExecutor(delegate: StorageCommandExecutor) extends StorageCommandExecutor {
-  def execute[R](command: StorageCommand[R]) = {
-    val result = delegate.execute(command)
-    replicateIfMutated(command, result)
-    result
-  }
+class JGroupsCommandResultReplicator(delegateStorage: StorageCommandExecutor,
+                                     commandMarshaller: CommandMarshaller,
+                                     channel: JChannel) {
 
   def replicateIfMutated[R](command: StorageCommand[R], result: R) {
     val mutations = resultingMutations(command, result)
@@ -16,13 +14,13 @@ class ReplicatingStorageCommandExecutor(delegate: StorageCommandExecutor) extend
     }
   }
 
-  def resultingMutations[R](command: StorageCommand[R], result: R): List[IdempotentMutativeCommand[_]] = {
+  private def resultingMutations[R](command: StorageCommand[R], result: R): List[IdempotentMutativeCommand[_]] = {
     /*
-    We can only replicate idempotent mutative commands. That is because during state transfer, it is possible that
-    a mutation was applied to the state, which is being transferred, but the command has not yet been replicated
-    (in another thread).
-    So a command may end being re-applied on the new node.
-     */
+     We can only replicate idempotent mutative commands. That is because during state transfer, it is possible that
+     a mutation was applied to the state, which is being transferred, but the command has not yet been replicated
+     (in another thread).
+     So a command may end being re-applied on the new node.
+    */
     command match {
       case c: CreateQueueCommand => c :: Nil
       case c: UpdateQueueCommand => c :: Nil
@@ -38,13 +36,14 @@ class ReplicatingStorageCommandExecutor(delegate: StorageCommandExecutor) extend
           case Some(messageData) => UpdateNextDeliveryCommand(queueName, messageData.id, messageData.nextDelivery) :: Nil
           case None => Nil
         }
-      }         
-        
+      }
+
       case _ => Nil
     }
   }
 
-  def replicate(list: List[IdempotentMutativeCommand[_]]) {
-
+  private def replicate(list: List[IdempotentMutativeCommand[_]]) {
+    val bytes = commandMarshaller.serialize(list)
+    channel.send(new Message(null, bytes))
   }
 }
