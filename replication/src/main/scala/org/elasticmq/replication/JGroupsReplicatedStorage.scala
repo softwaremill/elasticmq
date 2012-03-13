@@ -9,7 +9,7 @@ class JGroupsReplicatedStorage(isNodeMaster: AtomicBoolean,
                                channel: JChannel,
                                commandResultReplicator: JGroupsCommandResultReplicator) extends ReplicatedStorage with CommandApplier {
   def execute[R](command: StorageCommand[R]) = {
-    if (isNodeMaster.get) {
+    if (isMaster) {
       val result = delegateStorage.execute(command)
       commandResultReplicator.replicateIfMutated(command, result)
       result
@@ -21,6 +21,9 @@ class JGroupsReplicatedStorage(isNodeMaster: AtomicBoolean,
   def apply(command: IdempotentMutativeCommand[_]) = {
     delegateStorage.execute(command)
   }
+
+
+  def isMaster = isNodeMaster.get
 
   def stop() {
     channel.close()
