@@ -37,6 +37,7 @@ class JGroupsReplicatedStorageTest extends FunSuite with MustMatchers {
     // Then
     Thread.sleep(500L)
 
+    cluster.replicatedStorages.count(_.isMaster) must be (1)
     cluster.storages.foreach(_.execute(LookupMessageCommand("q1", MessageId("1"))) must be ('defined))
   }
   
