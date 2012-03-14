@@ -10,12 +10,12 @@ class ReplicatedStorageConfigurator(delegate: StorageCommandExecutor) {
     channel.setDiscardOwnMessages(true)
 
     val commandMarshaller = new JavaSerializationCommandMarshaller
-    val isNodeMaster = new AtomicBoolean(false)
+    val nodeIsMaster = new AtomicBoolean(false)
 
     val commandResultReplicator = new JGroupsCommandResultReplicator(delegate, commandMarshaller, channel)
-    val replicatedStorage = new JGroupsReplicatedStorage(isNodeMaster, delegate, channel, commandResultReplicator)
+    val replicatedStorage = new JGroupsReplicatedStorage(nodeIsMaster, delegate, channel, commandResultReplicator)
 
-    val jgroupsMessageReceiver = new JGroupsMessageReceiver(commandMarshaller, replicatedStorage, channel, isNodeMaster)
+    val jgroupsMessageReceiver = new JGroupsMessageReceiver(commandMarshaller, replicatedStorage, channel, nodeIsMaster)
 
     channel.setReceiver(jgroupsMessageReceiver)
     channel.connect("ElasticMQ")

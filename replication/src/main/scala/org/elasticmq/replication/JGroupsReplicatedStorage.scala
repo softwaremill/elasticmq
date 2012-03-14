@@ -4,7 +4,7 @@ import org.elasticmq.storage._
 import org.jgroups.JChannel
 import java.util.concurrent.atomic.AtomicBoolean
 
-class JGroupsReplicatedStorage(isNodeMaster: AtomicBoolean,
+class JGroupsReplicatedStorage(nodeIsMaster: AtomicBoolean,
                                delegateStorage: StorageCommandExecutor,
                                channel: JChannel,
                                commandResultReplicator: JGroupsCommandResultReplicator) extends ReplicatedStorage with CommandApplier {
@@ -23,7 +23,7 @@ class JGroupsReplicatedStorage(isNodeMaster: AtomicBoolean,
   }
 
 
-  def isMaster = isNodeMaster.get
+  def isMaster = nodeIsMaster.get
 
   def stop() {
     channel.close()
