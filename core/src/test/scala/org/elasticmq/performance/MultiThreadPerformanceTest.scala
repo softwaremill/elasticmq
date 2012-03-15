@@ -1,6 +1,7 @@
 package org.elasticmq.performance
 
 import org.elasticmq.{NodeBuilder, Queue}
+import org.elasticmq.test._
 
 object MultiThreadPerformanceTest {
   def main(args: Array[String]) {
@@ -59,14 +60,6 @@ object MultiThreadPerformanceTest {
 
       threads.foreach(_.join())
     }
-  }
-
-  def timed[T](block: => Unit) = {
-    val start = System.currentTimeMillis()
-    block
-    val end = System.currentTimeMillis()
-
-    end-start
   }
 
   class SendMessages(queue: Queue, count: Int) extends Runnable {
