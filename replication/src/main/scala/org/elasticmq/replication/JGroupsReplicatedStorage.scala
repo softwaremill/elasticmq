@@ -3,7 +3,7 @@ package org.elasticmq.replication
 import org.elasticmq.storage._
 import org.jgroups.JChannel
 import java.util.concurrent.atomic.AtomicReference
-import org.elasticmq.NodeAddress
+import org.elasticmq.{NodeIsNotMasterException, NodeAddress}
 
 class JGroupsReplicatedStorage(masterAddressRef: AtomicReference[Option[NodeAddress]],
                                delegateStorage: StorageCommandExecutor,
@@ -18,7 +18,7 @@ class JGroupsReplicatedStorage(masterAddressRef: AtomicReference[Option[NodeAddr
       commandResultReplicator.replicateIfMutated(command, result)
       result
     } else {
-      throw new RuntimeException("Commands can only be executed on the master.")
+      throw new NodeIsNotMasterException(masterAddress)
     }
   }
 
