@@ -5,13 +5,15 @@ import org.jgroups._
 import org.elasticmq.NodeAddress
 import org.elasticmq.replication.message.{ApplyCommands, SetMaster, ReplicationMessageMarshaller}
 import com.weiglewilczek.slf4s.Logging
+import org.jgroups.blocks.RequestHandler
 
 class JGroupsMessageReceiver(messageMarshaller: ReplicationMessageMarshaller,
                              commandApplier: CommandApplier,
                              channel: JChannel,
                              masterAddressRef: AtomicReference[Option[NodeAddress]],
-                             myAddress: NodeAddress) extends ReceiverAdapter with Logging {
-  override def receive(msg: Message) {
+                             myAddress: NodeAddress,
+                             replicationMessageSender: ReplicationMessageSender) extends MembershipListener with RequestHandler with Logging {
+  def handle(msg: Message) = {
     val message = messageMarshaller.deserialize(msg.getBuffer)
     
     message match {
@@ -21,9 +23,12 @@ class JGroupsMessageReceiver(messageMarshaller: ReplicationMessageMarshaller,
       }
       case ApplyCommands(commands) => commands.foreach(commandApplier.apply(_))
     }
+
+    // We must return something so that the caller knows the message is handled.
+    null
   }
 
-  override def viewAccepted(view: View) {
+  def viewAccepted(view: View) {
     logger.info("Received new view in %s: [%s]".format(channel.getAddress, view))
 
     // The first node is always the master. If we are the master, sending out our address.
@@ -32,7 +37,7 @@ class JGroupsMessageReceiver(messageMarshaller: ReplicationMessageMarshaller,
       new Thread() {
         override def run() {
           logger.info("I am the master, broadcasting my address (%s)".format(myAddress))
-          channel.send(new Message(null, SetMaster(myAddress)))
+          replicationMessageSender.broadcastDoNotWait(SetMaster(myAddress))
         }
       }.start()
 
@@ -40,4 +45,10 @@ class JGroupsMessageReceiver(messageMarshaller: ReplicationMessageMarshaller,
       masterAddressRef.set(Some(myAddress))
     }
   }
+
+  def suspect(suspected_mbr: Address) {}
+
+  def block() {}
+
+  def unblock() {}
 }
