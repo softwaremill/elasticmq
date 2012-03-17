@@ -2,9 +2,10 @@ package org.elasticmq.replication
 
 import org.elasticmq.storage._
 import org.jgroups.{JChannel, Message}
+import org.elasticmq.replication.message.{ApplyCommands, ReplicationMessageMarshaller}
 
 class JGroupsCommandResultReplicator(delegateStorage: StorageCommandExecutor,
-                                     commandMarshaller: CommandMarshaller,
+                                     messageMarshaller: ReplicationMessageMarshaller,
                                      channel: JChannel) {
 
   def replicateIfMutated[R](command: StorageCommand[R], result: R) {
@@ -43,7 +44,7 @@ class JGroupsCommandResultReplicator(delegateStorage: StorageCommandExecutor,
   }
 
   private def replicate(list: List[IdempotentMutativeCommand[_]]) {
-    val bytes = commandMarshaller.serialize(list)
+    val bytes = messageMarshaller.serialize(ApplyCommands(list))
     channel.send(new Message(null, bytes))
   }
 }

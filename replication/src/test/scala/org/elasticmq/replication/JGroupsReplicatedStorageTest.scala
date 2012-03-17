@@ -5,17 +5,28 @@ import org.scalatest.FunSuite
 import org.elasticmq.storage.inmemory.InMemoryStorageCommandExecutor
 import org.joda.time.{Duration, DateTime}
 import org.elasticmq.data.{MessageData, QueueData}
-import org.elasticmq.{MillisNextDelivery, MessageId, MillisVisibilityTimeout}
 import org.elasticmq.storage.{StorageCommandExecutor, LookupMessageCommand, SendMessageCommand, CreateQueueCommand}
+import org.elasticmq.{NodeAddress, MillisNextDelivery, MessageId, MillisVisibilityTimeout}
+import org.elasticmq.test._
 
-class JGroupsReplicatedStorageTest extends FunSuite with MustMatchers {
+import com.jayway.awaitility.Awaitility._
+import com.jayway.awaitility.scala.AwaitilitySupport
+import com.weiglewilczek.slf4s.Logging
+
+class JGroupsReplicatedStorageTest extends FunSuite with MustMatchers with AwaitilitySupport with Logging {
   def testWithStorageCluster(testName: String, clusterNodes: Int)(testFun: StorageCluster => Unit) {
     test(testName) {
-      val storages = (1 to clusterNodes).map(_ => new InMemoryStorageCommandExecutor)
-      val replicatedStorages = storages.map(new ReplicatedStorageConfigurator(_).start())
-      val cluster = StorageCluster(storages, replicatedStorages)
+      var i = 0
+      def newNodeAddress() = { i+=1; NodeAddress("node"+i) }
       
+      val storages = (1 to clusterNodes).map(_ => new InMemoryStorageCommandExecutor)      
+      val replicatedStorages = storages.map(new ReplicatedStorageConfigurator(_, newNodeAddress()).start())
+      val cluster = StorageCluster(storages, replicatedStorages)
+
       try {
+        val clusterFormation = timed { await until replicatedStorages.forall(_.masterAddress.isDefined) }
+        logger.info("cluster formed in " + clusterFormation)
+
         testFun(cluster)
       } finally {
         val result = cluster.replicatedStorages.flatMap(rs => try { rs.stop(); None } catch { case e => Some(e) })
@@ -33,12 +44,17 @@ class JGroupsReplicatedStorageTest extends FunSuite with MustMatchers {
       Duration.ZERO, new DateTime, new DateTime)))
     cluster.master.execute(new SendMessageCommand("q1", MessageData(MessageId("1"), "z",
       MillisNextDelivery(System.currentTimeMillis()), new DateTime)))
-    
-    // Then
-    Thread.sleep(500L)
 
+    // Then
     cluster.replicatedStorages.count(_.isMaster) must be (1)
     cluster.storages.foreach(_.execute(LookupMessageCommand("q1", MessageId("1"))) must be ('defined))
+  }
+
+  testWithStorageCluster("all nodes should point to the same master", 3) { cluster =>
+    val masterAddress = cluster.master.address
+    cluster.replicatedStorages.foreach {
+      _.masterAddress must be (Some(masterAddress))
+    }
   }
   
   case class StorageCluster(storages: Seq[StorageCommandExecutor], replicatedStorages: Seq[ReplicatedStorage]) {

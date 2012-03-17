@@ -2,12 +2,16 @@ package org.elasticmq.replication
 
 import org.elasticmq.storage._
 import org.jgroups.JChannel
-import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicReference
+import org.elasticmq.NodeAddress
 
-class JGroupsReplicatedStorage(nodeIsMaster: AtomicBoolean,
+class JGroupsReplicatedStorage(masterAddressRef: AtomicReference[Option[NodeAddress]],
                                delegateStorage: StorageCommandExecutor,
                                channel: JChannel,
-                               commandResultReplicator: JGroupsCommandResultReplicator) extends ReplicatedStorage with CommandApplier {
+                               commandResultReplicator: JGroupsCommandResultReplicator,
+                               myAdress: NodeAddress)
+  extends ReplicatedStorage with CommandApplier {
+  
   def execute[R](command: StorageCommand[R]) = {
     if (isMaster) {
       val result = delegateStorage.execute(command)
@@ -18,12 +22,15 @@ class JGroupsReplicatedStorage(nodeIsMaster: AtomicBoolean,
     }
   }
 
-  def apply(command: IdempotentMutativeCommand[_]) = {
+  def apply(command: IdempotentMutativeCommand[_]) {
     delegateStorage.execute(command)
   }
 
+  def address = myAdress
 
-  def isMaster = nodeIsMaster.get
+  def masterAddress = masterAddressRef.get()
+  
+  def isMaster = Some(address) == masterAddress
 
   def stop() {
     channel.close()
