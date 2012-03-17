@@ -3,8 +3,8 @@ package org.elasticmq.replication
 import org.elasticmq.storage._
 import org.elasticmq.replication.message.ApplyCommands
 
-class JGroupsCommandResultReplicator(delegateStorage: StorageCommandExecutor,
-                                     replicationMessageSender: ReplicationMessageSender) {
+class CommandResultReplicator(delegateStorage: StorageCommandExecutor,
+                              replicationMessageSender: ReplicationMessageSender) {
 
   def replicateIfMutated[R](command: StorageCommand[R], result: R) {
     val mutations = resultingMutations(command, result)

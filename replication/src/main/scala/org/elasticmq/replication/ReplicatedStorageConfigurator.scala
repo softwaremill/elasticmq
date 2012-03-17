@@ -7,6 +7,7 @@ import org.elasticmq.NodeAddress
 import org.elasticmq.replication.message.JavaSerializationReplicationMessageMarshaller
 import org.jgroups.protocols.pbcast.FLUSH
 import org.jgroups.blocks.MessageDispatcher
+import org.elasticmq.replication.jgroups._
 
 class ReplicatedStorageConfigurator(delegate: StorageCommandExecutor,
                                     myAddress: NodeAddress,
@@ -25,16 +26,16 @@ class ReplicatedStorageConfigurator(delegate: StorageCommandExecutor,
     val replicationMessageSender = new JGroupsReplicationMessageSender(messageMarshaller, commandReplicationMode,
       messageDispatcher)
 
-    val commandResultReplicator = new JGroupsCommandResultReplicator(delegate, replicationMessageSender)
+    val commandResultReplicator = new CommandResultReplicator(delegate, replicationMessageSender)
     val replicatedStorage = new JGroupsReplicatedStorage(masterAddressRef, delegate, channel,
       commandResultReplicator, myAddress)
     
-    val jgroupsMessageReceiver = new JGroupsRequestHandler(messageMarshaller, replicatedStorage,
+    val jgroupsRequestHandler = new JGroupsRequestHandler(messageMarshaller, replicatedStorage,
       masterAddressRef, myAddress)
     val jgroupsMembershipListener = new JGroupsMembershipListener(channel, masterAddressRef, myAddress,
       replicationMessageSender)
 
-    messageDispatcher.setRequestHandler(jgroupsMessageReceiver)
+    messageDispatcher.setRequestHandler(jgroupsRequestHandler)
     messageDispatcher.setMembershipListener(jgroupsMembershipListener)
 
     channel.connect("ElasticMQ")

@@ -1,8 +1,9 @@
-package org.elasticmq.replication
+package org.elasticmq.replication.jgroups
 
 import org.elasticmq.replication.message.{ReplicationMessage, ReplicationMessageMarshaller}
 import org.jgroups.blocks.{MessageDispatcher, ResponseMode, RequestOptions}
 import org.jgroups.Message
+import org.elasticmq.replication._
 
 class JGroupsReplicationMessageSender(messageMarshaller: ReplicationMessageMarshaller,
                                       defaultCommandReplicationMode: CommandReplicationMode,
@@ -19,7 +20,7 @@ class JGroupsReplicationMessageSender(messageMarshaller: ReplicationMessageMarsh
 
   private def broadcast(replicationMessage: ReplicationMessage, commandReplicationMode: CommandReplicationMode) {
     val requestOptions = new RequestOptions(responseModeForReplicationMode(commandReplicationMode), 0)
-    
+
     // The val _ is needed because of type inferencing problems
     val _ = messageDispatcher.castMessage(
       null,

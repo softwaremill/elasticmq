@@ -1,10 +1,11 @@
-package org.elasticmq.replication
+package org.elasticmq.replication.jgroups
 
 import java.util.concurrent.atomic.AtomicReference
 import org.jgroups._
 import org.elasticmq.NodeAddress
 import org.elasticmq.replication.message.SetMaster
 import com.weiglewilczek.slf4s.Logging
+import org.elasticmq.replication.ReplicationMessageSender
 
 class JGroupsMembershipListener(channel: JChannel,
                                 masterAddressRef: AtomicReference[Option[NodeAddress]],

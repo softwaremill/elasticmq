@@ -1,4 +1,4 @@
-package org.elasticmq.replication
+package org.elasticmq.replication.jgroups
 
 import java.util.concurrent.atomic.AtomicReference
 import org.jgroups._
@@ -6,14 +6,15 @@ import org.elasticmq.NodeAddress
 import org.elasticmq.replication.message.{ApplyCommands, SetMaster, ReplicationMessageMarshaller}
 import com.weiglewilczek.slf4s.Logging
 import org.jgroups.blocks.RequestHandler
+import org.elasticmq.replication.CommandApplier
 
 class JGroupsRequestHandler(messageMarshaller: ReplicationMessageMarshaller,
-                             commandApplier: CommandApplier,
-                             masterAddressRef: AtomicReference[Option[NodeAddress]],
-                             myAddress: NodeAddress) extends RequestHandler with Logging {
+                            commandApplier: CommandApplier,
+                            masterAddressRef: AtomicReference[Option[NodeAddress]],
+                            myAddress: NodeAddress) extends RequestHandler with Logging {
   def handle(msg: Message) = {
     val message = messageMarshaller.deserialize(msg.getBuffer)
-    
+
     message match {
       case SetMaster(masterAddress) => {
         logger.info("Setting master in %s to: %s".format(myAddress, masterAddress))

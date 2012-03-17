@@ -1,17 +1,18 @@
-package org.elasticmq.replication
+package org.elasticmq.replication.jgroups
 
 import org.elasticmq.storage._
 import org.jgroups.JChannel
 import java.util.concurrent.atomic.AtomicReference
 import org.elasticmq.{NodeIsNotMasterException, NodeAddress}
+import org.elasticmq.replication.{CommandResultReplicator, CommandApplier, ReplicatedStorage}
 
 class JGroupsReplicatedStorage(masterAddressRef: AtomicReference[Option[NodeAddress]],
                                delegateStorage: StorageCommandExecutor,
                                channel: JChannel,
-                               commandResultReplicator: JGroupsCommandResultReplicator,
+                               commandResultReplicator: CommandResultReplicator,
                                myAdress: NodeAddress)
   extends ReplicatedStorage with CommandApplier {
-  
+
   def execute[R](command: StorageCommand[R]) = {
     if (isMaster) {
       val result = delegateStorage.execute(command)
@@ -29,7 +30,7 @@ class JGroupsReplicatedStorage(masterAddressRef: AtomicReference[Option[NodeAddr
   def address = myAdress
 
   def masterAddress = masterAddressRef.get()
-  
+
   def isMaster = Some(address) == masterAddress
 
   def stop() {
