@@ -29,11 +29,13 @@ class ReplicatedStorageConfigurator(delegate: StorageCommandExecutor,
     val replicatedStorage = new JGroupsReplicatedStorage(masterAddressRef, delegate, channel,
       commandResultReplicator, myAddress)
     
-    val jgroupsMessageReceiver = new JGroupsMessageReceiver(messageMarshaller, replicatedStorage, channel,
-      masterAddressRef, myAddress, replicationMessageSender)
+    val jgroupsMessageReceiver = new JGroupsRequestHandler(messageMarshaller, replicatedStorage,
+      masterAddressRef, myAddress)
+    val jgroupsMembershipListener = new JGroupsMembershipListener(channel, masterAddressRef, myAddress,
+      replicationMessageSender)
 
     messageDispatcher.setRequestHandler(jgroupsMessageReceiver)
-    messageDispatcher.setMembershipListener(jgroupsMessageReceiver)
+    messageDispatcher.setMembershipListener(jgroupsMembershipListener)
 
     channel.connect("ElasticMQ")
 
