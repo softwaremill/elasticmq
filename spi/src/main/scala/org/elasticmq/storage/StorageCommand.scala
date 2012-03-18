@@ -2,6 +2,7 @@ package org.elasticmq.storage
 
 import org.elasticmq.data.{MessageData, QueueData}
 import org.elasticmq.{MessageStatistics, MillisNextDelivery, MessageId, QueueStatistics}
+import java.io.{InputStream, OutputStream}
 
 sealed trait StorageCommand[R]
 
@@ -36,3 +37,10 @@ case class UpdateMessageStatisticsCommand(queueName: String, messageId: MessageI
 
 case class GetMessageStatisticsCommand(queueName: String, messageId: MessageId)
   extends StorageCommand[MessageStatistics]
+
+
+/**
+ * Important: when executing this command, the storage is not required to block concurrent execution of other commands.
+ */
+case class DumpStateCommand(outputStream: OutputStream) extends StorageCommand[Unit]
+case class RestoreStateCommand(inputStream: InputStream) extends StorageCommand[Unit]
