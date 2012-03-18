@@ -32,6 +32,8 @@ trait MultiStorageTest extends FunSuite with MustMatchers with OneInstancePerTes
 
   private var storageCommandExecutor: StorageCommandExecutor = null
 
+  private var currentSetup: StorageTestSetup = null
+  
   private var _befores: List[() => Unit] = Nil
 
   def before(block: => Unit) {
@@ -41,18 +43,29 @@ trait MultiStorageTest extends FunSuite with MustMatchers with OneInstancePerTes
   abstract override protected def test(testName: String, testTags: Tag*)(testFun: => Unit) {
     for (setup <- setups) {
       super.test(testName+" using "+setup.storageName, testTags: _*) {
-        storageCommandExecutor = setup.initialize()
+        currentSetup = setup
+
         try {
-          _befores.foreach(_())
+          newStorageCommandExecutor()
           testFun
         } finally {
           setup.shutdown()
+          currentSetup = null
         }
       }
     }
   }
   
   def execute[R](command: StorageCommand[R]): R = storageCommandExecutor.execute(command)
+  
+  def newStorageCommandExecutor() {
+    if (storageCommandExecutor != null) {
+      currentSetup.shutdown()
+    }
+    
+    _befores.foreach(_())
+    storageCommandExecutor = currentSetup.initialize()
+  }
 }
 
 
