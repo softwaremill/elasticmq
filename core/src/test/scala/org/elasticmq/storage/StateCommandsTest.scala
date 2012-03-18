@@ -18,7 +18,7 @@ class StateCommandsTest extends MultiStorageTest {
     dumpAndRestoreState()
 
     // Then
-    execute(LookupQueueCommand("q1")) must be (q1)
+    execute(LookupQueueCommand(q1.name)) must be (q1)
   }
 
   test("dumping and restoring multiple queues") {
@@ -35,9 +35,9 @@ class StateCommandsTest extends MultiStorageTest {
     dumpAndRestoreState()
 
     // Then
-    execute(LookupQueueCommand("q1")) must be (q1)
-    execute(LookupQueueCommand("q2")) must be (q2)
-    execute(LookupQueueCommand("q3")) must be (q3)
+    execute(LookupQueueCommand(q1.name)) must be (q1)
+    execute(LookupQueueCommand(q2.name)) must be (q2)
+    execute(LookupQueueCommand(q3.name)) must be (q3)
   }
 
   test("dumping and restoring single message") {
@@ -46,13 +46,13 @@ class StateCommandsTest extends MultiStorageTest {
     val m1 = createMessageData("m1", "c1", MillisNextDelivery(100L))
 
     execute(CreateQueueCommand(q1))
-    execute(SendMessageCommand("q1", m1))
+    execute(SendMessageCommand(q1.name, m1))
 
     // When
     dumpAndRestoreState()
 
     // Then
-    execute(LookupMessageCommand("q1", m1.id)) must be (m1)
+    execute(LookupMessageCommand(q1.name, m1.id)) must be (m1)
   }
 
   test("dumping and restoring multiple message") {
@@ -67,17 +67,17 @@ class StateCommandsTest extends MultiStorageTest {
     execute(CreateQueueCommand(q1))
     execute(CreateQueueCommand(q2))
 
-    execute(SendMessageCommand("q1", m1))
-    execute(SendMessageCommand("q2", m2))
-    execute(SendMessageCommand("q2", m3))
+    execute(SendMessageCommand(q1.name, m1))
+    execute(SendMessageCommand(q2.name, m2))
+    execute(SendMessageCommand(q2.name, m3))
 
     // When
     dumpAndRestoreState()
 
     // Then
-    execute(LookupMessageCommand("q1", m1.id)) must be (m1)
-    execute(LookupMessageCommand("q2", m2.id)) must be (m2)
-    execute(LookupMessageCommand("q2", m3.id)) must be (m3)
+    execute(LookupMessageCommand(q1.name, m1.id)) must be (m1)
+    execute(LookupMessageCommand(q2.name, m2.id)) must be (m2)
+    execute(LookupMessageCommand(q2.name, m3.id)) must be (m3)
   }
 
   test("dumping and restoring statistics") {
@@ -94,23 +94,23 @@ class StateCommandsTest extends MultiStorageTest {
 
     execute(CreateQueueCommand(q1))
 
-    execute(SendMessageCommand("q1", m1))
-    execute(SendMessageCommand("q1", m2))
-    execute(SendMessageCommand("q1", m3))
+    execute(SendMessageCommand(q1.name, m1))
+    execute(SendMessageCommand(q1.name, m2))
+    execute(SendMessageCommand(q1.name, m3))
 
-    execute(UpdateMessageStatisticsCommand("q1", m1.id, s1))
-    execute(UpdateMessageStatisticsCommand("q1", m2.id, s2))
-    execute(UpdateMessageStatisticsCommand("q1", m3.id, s3))
+    execute(UpdateMessageStatisticsCommand(q1.name, m1.id, s1))
+    execute(UpdateMessageStatisticsCommand(q1.name, m2.id, s2))
+    execute(UpdateMessageStatisticsCommand(q1.name, m3.id, s3))
 
     // When
     dumpAndRestoreState()
 
     // Then
-    execute(GetMessageStatisticsCommand("q1", m1.id)) must be (s1)
-    execute(GetMessageStatisticsCommand("q1", m2.id)) must be (s2)
-    execute(GetMessageStatisticsCommand("q1", m3.id)) must be (s3)
+    execute(GetMessageStatisticsCommand(q1.name, m1.id)) must be (s1)
+    execute(GetMessageStatisticsCommand(q1.name, m2.id)) must be (s2)
+    execute(GetMessageStatisticsCommand(q1.name, m3.id)) must be (s3)
 
-    execute(GetQueueStatisticsCommand("q1", 5000L)) must be (QueueStatistics(1L, 1L, 1L))
+    execute(GetQueueStatisticsCommand(q1.name, 5000L)) must be (QueueStatistics(1L, 1L, 1L))
   }
   
   def dumpAndRestoreState() {
