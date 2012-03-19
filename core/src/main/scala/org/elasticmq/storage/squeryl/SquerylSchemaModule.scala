@@ -29,6 +29,10 @@ trait SquerylSchemaModule {
     val messagesToMessageStatistics = oneToManyRelation(messages, messageStatistics).via((m, ms) => m.id === ms.id)
     messagesToMessageStatistics.foreignKeyDeclaration.constrainReference(onDelete cascade)
   }
+
+  def deleteAll(table: Table[_]) {
+    table.deleteWhere(_ => true === true)
+  }
 }
 
 // These must be top-level classes, because of Squeryl requirements

@@ -30,15 +30,15 @@ trait SquerylStorageStateModule {
       }
 
       transaction {
-        deleteAll()
+        clearStorage()
         readNext()
       }
     }
 
-    private def deleteAll() {
-      messageStatistics.deleteWhere(_ => true === true)
-      messages.deleteWhere(_ => true === true)
-      queues.deleteWhere(_ => true === true)
+    private def clearStorage() {
+      deleteAll(messageStatistics)
+      deleteAll(messages)
+      deleteAll(queues)
     }
   }
 
