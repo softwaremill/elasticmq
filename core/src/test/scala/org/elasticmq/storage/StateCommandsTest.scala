@@ -113,13 +113,33 @@ class StateCommandsTest extends MultiStorageTest {
     execute(GetQueueStatisticsCommand(q1.name, 5000L)) must be (QueueStatistics(1L, 1L, 1L))
   }
   
+  test("restoring should clear previous state") {
+    // Given
+    val clearState = dumpState
+    
+    val q1 = createQueueData("q1", MillisVisibilityTimeout(1L))
+    execute(CreateQueueCommand(q1))
+    
+    // When
+    restoreState(clearState)
+
+    // Then
+    execute(LookupQueueCommand(q1.name)) must be (None)
+  }
+  
   def dumpAndRestoreState() {
+    val bytes = dumpState
+    newStorageCommandExecutor()
+    restoreState(bytes)
+  }
+  
+  def dumpState = {
     val ouputStream = new ByteArrayOutputStream()
     execute(DumpStateCommand(ouputStream))
-    val bytes = ouputStream.toByteArray
-
-    newStorageCommandExecutor()
-
+    ouputStream.toByteArray
+  }
+  
+  def restoreState(bytes: Array[Byte]) {
     execute(RestoreStateCommand(new ByteArrayInputStream(bytes)))
   }
 }
