@@ -63,8 +63,8 @@ trait MultiStorageTest extends FunSuite with MustMatchers with OneInstancePerTes
       currentSetup.shutdown()
     }
     
-    _befores.foreach(_())
     storageCommandExecutor = currentSetup.initialize()
+    _befores.foreach(_())
   }
 }
 
