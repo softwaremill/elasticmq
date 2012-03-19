@@ -20,8 +20,6 @@ trait SquerylStorageStateModule {
     def restore(inputStream: InputStream) {
       val ois = new ObjectInputStream(inputStream)
 
-      deleteAll()
-
       @tailrec
       def readNext() {
         val nextObject = ois.readObject()
@@ -30,16 +28,17 @@ trait SquerylStorageStateModule {
           readNext()
         }
       }
-      
-      readNext()      
+
+      transaction {
+        deleteAll()
+        readNext()
+      }
     }
 
     private def deleteAll() {
-      transaction {
-        messageStatistics.deleteWhere(_ => true === true)
-        messages.deleteWhere(_ => true === true)
-        queues.deleteWhere(_ => true === true)
-      }
+      messageStatistics.deleteWhere(_ => true === true)
+      messages.deleteWhere(_ => true === true)
+      queues.deleteWhere(_ => true === true)
     }
   }
 

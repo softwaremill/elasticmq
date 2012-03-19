@@ -17,7 +17,7 @@ trait SquerylQueuesStorageModule {
         msg.contains("unique index") || msg.contains("unique key") || msg.contains("primary key")
       }
 
-      transaction {
+      inTransaction {
         try {
           queues.insert(SquerylQueue.from(queue))
         } catch {
@@ -28,31 +28,31 @@ trait SquerylQueuesStorageModule {
     }
 
     def updateQueue(queue: QueueData) {
-      transaction {
+      inTransaction {
         queues.update(SquerylQueue.from(queue))
       }
     }
 
     def deleteQueue(name: String) {
-      transaction {
+      inTransaction {
         queues.delete(name)
       }
     }
 
     def lookupQueue(name: String) = {
-      transaction {
+      inTransaction {
         queues.lookup(name).map(_.toQueue)
       }
     }
 
     def listQueues: Seq[QueueData] = {
-      transaction {
+      inTransaction {
         from(queues)(q => select(q)).map(_.toQueue).toSeq
       }
     }
 
     def queueStatistics(name: String, deliveryTime: Long): QueueStatistics = {
-      transaction {
+      inTransaction {
         def countVisibleMessages() = {
           from(messages)(m =>
             where(m.queueName === name and

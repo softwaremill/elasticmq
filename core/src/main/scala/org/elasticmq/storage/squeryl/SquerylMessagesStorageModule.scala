@@ -10,14 +10,14 @@ trait SquerylMessagesStorageModule {
 
   class SquerylMessagesStorage(queueName: String) extends MessagesStorage {
     def sendMessage(message: MessageData) {
-      transaction {
+      inTransaction {
         messages.insert(SquerylMessage.from(queueName, message))
         messageStatisticsStorage(queueName).updateMessageStatistics(message.id, MessageStatistics.empty, false)
       }
     }
 
     def updateNextDelivery(messageId: MessageId, newNextDelivery: MillisNextDelivery) {
-      transaction {
+      inTransaction {
         update(messages)(m =>
           where(m.id === messageId.id)
             set(m.nextDelivery := newNextDelivery.millis))
@@ -25,7 +25,7 @@ trait SquerylMessagesStorageModule {
     }
 
     def deleteMessage(id: MessageId) {
-      transaction {
+      inTransaction {
         val messageId = id.id
         messages.delete(messageId)
         messageStatistics.delete(messageId)
@@ -33,7 +33,7 @@ trait SquerylMessagesStorageModule {
     }
 
     def lookupMessage(id: MessageId) = {
-      transaction {
+      inTransaction {
         from(messages)(m => where(m.id === id.id) select(m)).headOption.map(_.toMessage)
       }
     }
