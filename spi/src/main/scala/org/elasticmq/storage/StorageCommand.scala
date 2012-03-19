@@ -41,6 +41,11 @@ case class GetMessageStatisticsCommand(queueName: String, messageId: MessageId)
 
 /**
  * Important: when executing this command, the storage is not required to block concurrent execution of other commands.
+ * The stream won't be closed.
  */
 case class DumpStateCommand(outputStream: OutputStream) extends StorageCommand[Unit]
+
+/**
+ * The stream won't be closed.
+ */
 case class RestoreStateCommand(inputStream: InputStream) extends StorageCommand[Unit]
