@@ -84,12 +84,12 @@ class StateCommandsTest extends MultiStorageTest {
     // Given
     val q1 = createQueueData("q1", MillisVisibilityTimeout(1L))
 
-    val m1 = createMessageData("m1", "c1", MillisNextDelivery(1L))
+    val m1 = createMessageData("m1", "c1", MillisNextDelivery(501L))
     val m2 = createMessageData("m2", "c2", MillisNextDelivery(10001L))
     val m3 = createMessageData("m3", "c3", MillisNextDelivery(20001L))
 
-    val s1 = MessageStatistics(OnDateTimeReceived(new DateTime(0)), 2)
-    val s2 = MessageStatistics(OnDateTimeReceived(new DateTime(10000)), 0)
+    val s1 = MessageStatistics(OnDateTimeReceived(new DateTime(500)), 2)
+    val s2 = MessageStatistics(NeverReceived, 0)
     val s3 = MessageStatistics(OnDateTimeReceived(new DateTime(20000)), 3)
 
     execute(CreateQueueCommand(q1))
@@ -99,7 +99,7 @@ class StateCommandsTest extends MultiStorageTest {
     execute(SendMessageCommand(q1.name, m3))
 
     execute(UpdateMessageStatisticsCommand(q1.name, m1.id, s1))
-    execute(UpdateMessageStatisticsCommand(q1.name, m2.id, s2))
+    // s2 isn't and update, and can't be executed - it's the default
     execute(UpdateMessageStatisticsCommand(q1.name, m3.id, s3))
 
     // When

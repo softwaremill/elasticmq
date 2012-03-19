@@ -1,18 +1,73 @@
 package org.elasticmq.storage.squeryl
 
+import scala.annotation.tailrec
+import java.io.{ObjectOutputStream, ObjectInputStream, OutputStream, InputStream}
 import org.elasticmq.storage.interfaced.StorageState
-import java.io.{OutputStream, InputStream}
+import org.squeryl.PrimitiveTypeMode._
+import org.elasticmq.data.{MessageData, QueueData}
+import org.elasticmq.storage._
 
 trait SquerylStorageStateModule {
-  class SquerylStorageState extends StorageState {
+  this: SquerylSchemaModule =>
+  
+  class SquerylStorageState(storageCommandExecutor: StorageCommandExecutor) extends StorageState {
     def dump(outputStream: OutputStream) {
-
+      val oos = new ObjectOutputStream(outputStream)
+      new Dumper(oos).dumpQueues()
+      oos.writeObject(EndOfCommands)
     }
 
     def restore(inputStream: InputStream) {
+      val ois = new ObjectInputStream(inputStream)
 
+      deleteAll()
+
+      @tailrec
+      def readNext() {
+        val nextObject = ois.readObject()
+        if (nextObject != EndOfCommands) {
+          storageCommandExecutor.execute(nextObject.asInstanceOf[IdempotentMutativeCommand[_]])
+          readNext()
+        }
+      }
+      
+      readNext()      
+    }
+
+    private def deleteAll() {
+      transaction {
+        messageStatistics.deleteWhere(_ => true === true)
+        messages.deleteWhere(_ => true === true)
+        queues.deleteWhere(_ => true === true)
+      }
     }
   }
 
-  def storageState = new SquerylStorageState
+  private class Dumper(oos: ObjectOutputStream) {
+    def dumpQueues() {
+      transaction {
+        from(queues)(q => select(q)).map(_.toQueue).foreach(dumpQueue(_))
+      }
+    }
+
+    def dumpQueue(queue: QueueData) {
+      oos.writeObject(CreateQueueCommand(queue))
+      from(messages)(m => where(m.queueName === queue.name) select(m)).map(_.toMessage).foreach(dumpMessage(queue, _))
+    }
+    
+    def dumpMessage(queue: QueueData, message: MessageData) {
+      oos.writeObject(SendMessageCommand(queue.name, message))
+
+      messageStatistics.lookup(message.id.id).map(_.toMessageStatistics).foreach(stats => {
+        // If the receive count is 0, the same object will be created when executing the send command
+        if (stats.approximateReceiveCount != 0) {
+          oos.writeObject(UpdateMessageStatisticsCommand(queue.name, message.id, stats))
+        }
+      })
+    }
+  }
+
+  def storageState(storageCommandExecutor: StorageCommandExecutor) = new SquerylStorageState(storageCommandExecutor)
 }
+
+private case object EndOfCommands 
