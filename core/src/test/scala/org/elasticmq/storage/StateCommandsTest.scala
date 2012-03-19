@@ -18,7 +18,7 @@ class StateCommandsTest extends MultiStorageTest {
     dumpAndRestoreState()
 
     // Then
-    execute(LookupQueueCommand(q1.name)) must be (q1)
+    execute(LookupQueueCommand(q1.name)) must be (Some(q1))
   }
 
   test("dumping and restoring multiple queues") {
@@ -35,9 +35,9 @@ class StateCommandsTest extends MultiStorageTest {
     dumpAndRestoreState()
 
     // Then
-    execute(LookupQueueCommand(q1.name)) must be (q1)
-    execute(LookupQueueCommand(q2.name)) must be (q2)
-    execute(LookupQueueCommand(q3.name)) must be (q3)
+    execute(LookupQueueCommand(q1.name)) must be (Some(q1))
+    execute(LookupQueueCommand(q2.name)) must be (Some(q2))
+    execute(LookupQueueCommand(q3.name)) must be (Some(q3))
   }
 
   test("dumping and restoring single message") {
@@ -52,7 +52,7 @@ class StateCommandsTest extends MultiStorageTest {
     dumpAndRestoreState()
 
     // Then
-    execute(LookupMessageCommand(q1.name, m1.id)) must be (m1)
+    execute(LookupMessageCommand(q1.name, m1.id)) must be (Some(m1))
   }
 
   test("dumping and restoring multiple message") {
@@ -75,18 +75,18 @@ class StateCommandsTest extends MultiStorageTest {
     dumpAndRestoreState()
 
     // Then
-    execute(LookupMessageCommand(q1.name, m1.id)) must be (m1)
-    execute(LookupMessageCommand(q2.name, m2.id)) must be (m2)
-    execute(LookupMessageCommand(q2.name, m3.id)) must be (m3)
+    execute(LookupMessageCommand(q1.name, m1.id)) must be (Some(m1))
+    execute(LookupMessageCommand(q2.name, m2.id)) must be (Some(m2))
+    execute(LookupMessageCommand(q2.name, m3.id)) must be (Some(m3))
   }
 
   test("dumping and restoring statistics") {
     // Given
     val q1 = createQueueData("q1", MillisVisibilityTimeout(1L))
 
-    val m1 = createMessageData("m1", "c1", MillisNextDelivery(100L))
-    val m2 = createMessageData("m2", "c2", MillisNextDelivery(200L))
-    val m3 = createMessageData("m3", "c3", MillisNextDelivery(300L))
+    val m1 = createMessageData("m1", "c1", MillisNextDelivery(1L))
+    val m2 = createMessageData("m2", "c2", MillisNextDelivery(10001L))
+    val m3 = createMessageData("m3", "c3", MillisNextDelivery(20001L))
 
     val s1 = MessageStatistics(OnDateTimeReceived(new DateTime(0)), 2)
     val s2 = MessageStatistics(OnDateTimeReceived(new DateTime(10000)), 0)
