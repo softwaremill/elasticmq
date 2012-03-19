@@ -48,4 +48,4 @@ case class DumpStateCommand(outputStream: OutputStream) extends StorageCommand[U
 /**
  * The stream won't be closed.
  */
-case class RestoreStateCommand(inputStream: InputStream) extends StorageCommand[Unit]
+case class RestoreStateCommand(inputStream: InputStream) extends StorageCommand[Unit] with MutativeCommand[Unit]
