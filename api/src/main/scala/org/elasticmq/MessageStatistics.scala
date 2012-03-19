@@ -9,6 +9,6 @@ object MessageStatistics {
   val empty = MessageStatistics(NeverReceived, 0)
 }
 
-sealed abstract class Received
+sealed trait Received
 case class OnDateTimeReceived(when: DateTime) extends Received
-object NeverReceived extends Received
+case object NeverReceived extends Received
