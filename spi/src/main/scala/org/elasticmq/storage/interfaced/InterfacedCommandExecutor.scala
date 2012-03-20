@@ -6,7 +6,7 @@ trait InterfacedCommandExecutor extends StorageCommandExecutor {
   def queuesStorage: QueuesStorage
   def messagesStorage(queueName: String): MessagesStorage
   def messageStatisticsStorage(queueName: String): MessageStatisticsStorage
-  def storageState: StorageState
+  def storageStateManager: StorageStateManager
 
   def execute[R](command: StorageCommand[R]) = command match {
     case CreateQueueCommand(queue) => queuesStorage.createQueue(queue)
@@ -29,7 +29,7 @@ trait InterfacedCommandExecutor extends StorageCommandExecutor {
     case GetMessageStatisticsCommand(queueName, messageId) =>
       messageStatisticsStorage(queueName).readMessageStatistics(messageId)
 
-    case DumpStateCommand(outputStream) => storageState.dump(outputStream)
-    case RestoreStateCommand(inputStream) => storageState.restore(inputStream)
+    case DumpStateCommand(outputStream) => storageStateManager.dump(outputStream)
+    case RestoreStateCommand(inputStream) => storageStateManager.restore(inputStream)
   }
 }

@@ -2,7 +2,7 @@ package org.elasticmq.storage.squeryl
 
 import scala.annotation.tailrec
 import java.io.{ObjectOutputStream, ObjectInputStream, OutputStream, InputStream}
-import org.elasticmq.storage.interfaced.StorageState
+import org.elasticmq.storage.interfaced.StorageStateManager
 import org.squeryl.PrimitiveTypeMode._
 import org.elasticmq.data.{MessageData, QueueData}
 import org.elasticmq.storage._
@@ -10,7 +10,7 @@ import org.elasticmq.storage._
 trait SquerylStorageStateModule {
   this: SquerylSchemaModule =>
   
-  class SquerylStorageState(storageCommandExecutor: StorageCommandExecutor) extends StorageState {
+  class SquerylStorageStateManager(storageCommandExecutor: StorageCommandExecutor) extends StorageStateManager {
     def dump(outputStream: OutputStream) {
       val oos = new ObjectOutputStream(outputStream)
       new Dumper(oos).dumpQueues()
@@ -66,7 +66,7 @@ trait SquerylStorageStateModule {
     }
   }
 
-  def storageState(storageCommandExecutor: StorageCommandExecutor) = new SquerylStorageState(storageCommandExecutor)
+  def storageState(storageCommandExecutor: StorageCommandExecutor) = new SquerylStorageStateManager(storageCommandExecutor)
 }
 
 private case object EndOfCommands 

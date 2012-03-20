@@ -1,10 +1,10 @@
 package org.elasticmq.storage.inmemory
 
-import org.elasticmq.storage.interfaced.StorageState
+import org.elasticmq.storage.interfaced.StorageStateManager
 import java.io.{ObjectInputStream, ObjectOutputStream, OutputStream, InputStream}
 import scala.collection.mutable.ConcurrentMap
 
-class InMemoryStorageState(inMemoryQueuesStorage: InMemoryQueuesStorage) extends StorageState {
+class InMemoryStorageStateManager(inMemoryQueuesStorage: InMemoryQueuesStorage) extends StorageStateManager {
   def dump(outputStream: OutputStream) {
     val oos = new ObjectOutputStream(outputStream)
     oos.writeObject(inMemoryQueuesStorage.queues)
