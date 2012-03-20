@@ -12,10 +12,7 @@ import scala.collection.JavaConversions
 import org.joda.time.DateTime
 import org.elasticmq.storage.interfaced.MessagesStorage
 
-class InMemoryMessagesStorage(queueName: String, statistics: InMemoryMessageStatisticsStorage)
-  // Serializable because of state management (see InMemoryStorageStateManager)
-  extends MessagesStorage with Serializable {
-
+class InMemoryMessagesStorage(queueName: String, statistics: InMemoryMessageStatisticsStorage) extends MessagesStorage {
   val messagesById = JavaConversions.asScalaConcurrentMap(new ConcurrentHashMap[MessageId, InMemoryMessage])
   val messageQueue = new PriorityBlockingQueue[InMemoryMessage]()
 

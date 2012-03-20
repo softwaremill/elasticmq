@@ -14,5 +14,5 @@ class InMemoryStorageCommandExecutor extends InterfacedCommandExecutor {
   def queuesStorage = queues
   def messagesStorage(queueName: String) = queues(queueName).messages
   def messageStatisticsStorage(queueName: String) = queues(queueName).statistics
-  def storageStateManager = new InMemoryStorageStateManager(queues)
+  def storageStateManager = new InMemoryStorageStateManager(queues, this)
 }

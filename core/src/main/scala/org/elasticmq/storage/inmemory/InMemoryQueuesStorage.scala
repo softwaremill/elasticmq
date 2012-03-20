@@ -7,7 +7,6 @@ import java.util.concurrent.ConcurrentHashMap
 
 import scala.collection.JavaConversions
 import org.elasticmq.storage.interfaced.QueuesStorage
-import scala.collection.mutable.ConcurrentMap
 
 class InMemoryQueuesStorage(createInMemoryQueue: QueueData => InMemoryQueue) extends QueuesStorage {
   val queues = JavaConversions.asScalaConcurrentMap(new ConcurrentHashMap[String, InMemoryQueue])
@@ -50,10 +49,5 @@ class InMemoryQueuesStorage(createInMemoryQueue: QueueData => InMemoryQueue) ext
       visible.size,
       delivered.size,
       undelivered.size)
-  }
-  
-  def replaceWithQueues(newQueues: ConcurrentMap[String, InMemoryQueue]) = {
-    queues.clear()
-    queues ++= newQueues
   }
 }
