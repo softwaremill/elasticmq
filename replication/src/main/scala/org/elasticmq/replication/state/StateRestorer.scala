@@ -3,10 +3,11 @@ package org.elasticmq.replication.state
 import scala.annotation.tailrec
 import org.elasticmq.storage.{ClearStorageCommand, StorageCommandExecutor, IdempotentMutativeCommand}
 import java.io.{InputStream, ObjectInputStream}
+import org.elasticmq.replication.serialization.ClassLoaderObjectInputStream
 
 class StateRestorer(storageCommandExecutor: StorageCommandExecutor) {
   def restore(inputStream: InputStream) {
-    val ois = new ObjectInputStream(inputStream)
+    val ois = new ClassLoaderObjectInputStream(inputStream)
     storageCommandExecutor.executeStateManagement(dataSource => {
       restore(ois)
     })
