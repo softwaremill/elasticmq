@@ -50,4 +50,8 @@ class InMemoryQueuesStorage(createInMemoryQueue: QueueData => InMemoryQueue) ext
       delivered.size,
       undelivered.size)
   }
+
+  def clear() {
+    queues.clear()
+  }
 }

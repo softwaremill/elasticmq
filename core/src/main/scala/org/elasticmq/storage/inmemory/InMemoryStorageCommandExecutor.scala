@@ -1,6 +1,7 @@
 package org.elasticmq.storage.inmemory
 
 import org.elasticmq.storage.interfaced.InterfacedCommandExecutor
+import org.elasticmq.data.DataSource
 
 class InMemoryStorageCommandExecutor extends InterfacedCommandExecutor {
   val queues = new InMemoryQueuesStorage(queueData => {
@@ -14,5 +15,6 @@ class InMemoryStorageCommandExecutor extends InterfacedCommandExecutor {
   def queuesStorage = queues
   def messagesStorage(queueName: String) = queues(queueName).messages
   def messageStatisticsStorage(queueName: String) = queues(queueName).statistics
-  def storageStateManager = new InMemoryStorageStateManager(queues, this)
+
+  def executeWithDataSource[T](f: (DataSource) => T) = f(new InMemoryDataSource(queues))
 }

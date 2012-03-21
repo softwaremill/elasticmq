@@ -30,7 +30,7 @@ trait MultiStorageTest extends FunSuite with MustMatchers with OneInstancePerTes
       () => new InMemoryStorageModule {}.storageCommandExecutor,
       () => ()) :: Nil
 
-  private var storageCommandExecutor: StorageCommandExecutor = null
+  protected var storageCommandExecutor: StorageCommandExecutor = null
 
   private var currentSetup: StorageTestSetup = null
   

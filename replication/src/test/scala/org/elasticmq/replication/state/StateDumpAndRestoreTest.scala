@@ -1,10 +1,11 @@
-package org.elasticmq.storage
+package org.elasticmq.replication.state
 
 import org.elasticmq._
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
 import org.joda.time.DateTime
+import org.elasticmq.storage._
 
-class StateCommandsTest extends MultiStorageTest {
+class StateDumpAndRestoreTest extends MultiStorageTest {
   test("dumping and restoring empty state") {
     dumpAndRestoreState()
   }
@@ -18,7 +19,7 @@ class StateCommandsTest extends MultiStorageTest {
     dumpAndRestoreState()
 
     // Then
-    execute(LookupQueueCommand(q1.name)) must be (Some(q1))
+    execute(LookupQueueCommand(q1.name)) must be(Some(q1))
   }
 
   test("dumping and restoring multiple queues") {
@@ -35,9 +36,9 @@ class StateCommandsTest extends MultiStorageTest {
     dumpAndRestoreState()
 
     // Then
-    execute(LookupQueueCommand(q1.name)) must be (Some(q1))
-    execute(LookupQueueCommand(q2.name)) must be (Some(q2))
-    execute(LookupQueueCommand(q3.name)) must be (Some(q3))
+    execute(LookupQueueCommand(q1.name)) must be(Some(q1))
+    execute(LookupQueueCommand(q2.name)) must be(Some(q2))
+    execute(LookupQueueCommand(q3.name)) must be(Some(q3))
   }
 
   test("dumping and restoring single message") {
@@ -52,7 +53,7 @@ class StateCommandsTest extends MultiStorageTest {
     dumpAndRestoreState()
 
     // Then
-    execute(LookupMessageCommand(q1.name, m1.id)) must be (Some(m1))
+    execute(LookupMessageCommand(q1.name, m1.id)) must be(Some(m1))
   }
 
   test("dumping and restoring multiple message") {
@@ -75,9 +76,9 @@ class StateCommandsTest extends MultiStorageTest {
     dumpAndRestoreState()
 
     // Then
-    execute(LookupMessageCommand(q1.name, m1.id)) must be (Some(m1))
-    execute(LookupMessageCommand(q2.name, m2.id)) must be (Some(m2))
-    execute(LookupMessageCommand(q2.name, m3.id)) must be (Some(m3))
+    execute(LookupMessageCommand(q1.name, m1.id)) must be(Some(m1))
+    execute(LookupMessageCommand(q2.name, m2.id)) must be(Some(m2))
+    execute(LookupMessageCommand(q2.name, m3.id)) must be(Some(m3))
   }
 
   test("dumping and restoring statistics") {
@@ -106,40 +107,40 @@ class StateCommandsTest extends MultiStorageTest {
     dumpAndRestoreState()
 
     // Then
-    execute(GetMessageStatisticsCommand(q1.name, m1.id)) must be (s1)
-    execute(GetMessageStatisticsCommand(q1.name, m2.id)) must be (s2)
-    execute(GetMessageStatisticsCommand(q1.name, m3.id)) must be (s3)
+    execute(GetMessageStatisticsCommand(q1.name, m1.id)) must be(s1)
+    execute(GetMessageStatisticsCommand(q1.name, m2.id)) must be(s2)
+    execute(GetMessageStatisticsCommand(q1.name, m3.id)) must be(s3)
 
-    execute(GetQueueStatisticsCommand(q1.name, 5000L)) must be (QueueStatistics(1L, 1L, 1L))
+    execute(GetQueueStatisticsCommand(q1.name, 5000L)) must be(QueueStatistics(1L, 1L, 1L))
   }
-  
+
   test("restoring should clear previous state") {
     // Given
     val clearState = dumpState
-    
+
     val q1 = createQueueData("q1", MillisVisibilityTimeout(1L))
     execute(CreateQueueCommand(q1))
-    
+
     // When
     restoreState(clearState)
 
     // Then
-    execute(LookupQueueCommand(q1.name)) must be (None)
+    execute(LookupQueueCommand(q1.name)) must be(None)
   }
-  
+
   def dumpAndRestoreState() {
     val bytes = dumpState
     newStorageCommandExecutor()
     restoreState(bytes)
   }
-  
+
   def dumpState = {
     val ouputStream = new ByteArrayOutputStream()
-    execute(DumpStateCommand(ouputStream))
+    new StateDumper(storageCommandExecutor).dump(ouputStream)
     ouputStream.toByteArray
   }
-  
+
   def restoreState(bytes: Array[Byte]) {
-    execute(RestoreStateCommand(new ByteArrayInputStream(bytes)))
+    new StateRestorer(storageCommandExecutor).restore(new ByteArrayInputStream(bytes))
   }
 }

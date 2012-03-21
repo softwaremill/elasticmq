@@ -5,6 +5,7 @@ import org.jgroups.JChannel
 import java.util.concurrent.atomic.AtomicReference
 import org.elasticmq.{NodeIsNotMasterException, NodeAddress}
 import org.elasticmq.replication.{CommandResultReplicator, CommandApplier, ReplicatedStorage}
+import org.elasticmq.data.DataSource
 
 class JGroupsReplicatedStorage(masterAddressRef: AtomicReference[Option[NodeAddress]],
                                delegateStorage: StorageCommandExecutor,
@@ -22,6 +23,8 @@ class JGroupsReplicatedStorage(masterAddressRef: AtomicReference[Option[NodeAddr
       throw new NodeIsNotMasterException(masterAddress)
     }
   }
+
+  def executeWithDataSource[T](f: (DataSource) => T) = delegateStorage.executeWithDataSource(f)
 
   def apply(command: IdempotentMutativeCommand[_]) {
     delegateStorage.execute(command)

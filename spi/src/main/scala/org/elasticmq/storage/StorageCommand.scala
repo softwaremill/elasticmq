@@ -38,14 +38,4 @@ case class UpdateMessageStatisticsCommand(queueName: String, messageId: MessageI
 case class GetMessageStatisticsCommand(queueName: String, messageId: MessageId)
   extends StorageCommand[MessageStatistics]
 
-
-/**
- * Important: when executing this command, the storage is not required to block concurrent execution of other commands.
- * The stream won't be closed.
- */
-case class DumpStateCommand(outputStream: OutputStream) extends StorageCommand[Unit]
-
-/**
- * The stream won't be closed.
- */
-case class RestoreStateCommand(inputStream: InputStream) extends StorageCommand[Unit] with MutativeCommand[Unit]
+case class ClearStorageCommand() extends StorageCommand[Unit] with IdempotentMutativeCommand[Unit]

@@ -86,6 +86,12 @@ trait SquerylQueuesStorageModule {
           countDelayedMessages())
       }
     }
+
+    def clear() {
+      transaction {
+        deleteAll(queues)
+      }
+    }
   }
 
   val queuesStorage = new SquerylQueuesStorage

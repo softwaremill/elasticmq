@@ -10,4 +10,5 @@ trait QueuesStorage {
   def lookupQueue(name: String): Option[QueueData]
   def listQueues: Seq[QueueData]
   def queueStatistics(name: String, deliveryTime: Long): QueueStatistics
+  def clear()
 }

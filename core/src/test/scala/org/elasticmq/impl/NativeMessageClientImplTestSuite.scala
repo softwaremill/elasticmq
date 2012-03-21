@@ -8,9 +8,9 @@ import org.elasticmq._
 import org.joda.time.{Duration, DateTime}
 import org.elasticmq.test.DataCreationHelpers
 import org.elasticmq.impl.nativeclient.NativeModule
-import org.elasticmq.data.QueueData
 import org.elasticmq.storage._
 import scala.collection.mutable.ListBuffer
+import org.elasticmq.data.{DataSource, QueueData}
 
 class NativeMessageClientImplTestSuite extends FunSuite with MustMatchers with MockitoSugar with DataCreationHelpers {
   val Now = 1316168602L
@@ -164,6 +164,10 @@ class NativeMessageClientImplTestSuite extends FunSuite with MustMatchers with M
       commandResults.get(command.getClass).getOrElse({
         null
       }).asInstanceOf[R]
+    }
+
+    def executeWithDataSource[T](f: (DataSource) => T) = {
+      throw new UnsupportedOperationException()
     }
   }
 }

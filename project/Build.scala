@@ -95,7 +95,7 @@ object ElasticMQBuild extends Build {
     "replication",
     file("replication"),
     settings = buildSettings ++ Seq(libraryDependencies := Seq(jgroups, julToSlf4j) ++ common)
-  ) dependsOn(api, spi, core % "test", commonTest % "test")
+  ) dependsOn(api, spi, core % "compile->test;test->test", commonTest % "test")
 
   lazy val rest: Project = Project(
     "rest",
