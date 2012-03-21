@@ -13,6 +13,18 @@ class JGroupsRequestHandler(messageMarshaller: ReplicationMessageMarshaller,
                             masterAddressRef: AtomicReference[Option[NodeAddress]],
                             myAddress: NodeAddress) extends RequestHandler with Logging {
   def handle(msg: Message) = {
+    try {
+      tryHandle(msg)
+    } catch {
+      case e => {
+        // JGroups doesn't log exceptions that occure during request handling in any way.
+        logger.error("Exception when handling a jgroups message", e)
+        throw e
+      }
+    }
+  }
+  
+  def tryHandle(msg: Message) = {
     val message = messageMarshaller.deserialize(msg.getBuffer)
 
     message match {
