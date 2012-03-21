@@ -22,7 +22,7 @@ trait SquerylDataSourceModule {
     }
   }
 
-  def executeWithDataSource[T](f: (DataSource) => T) = {
+  def executeStateManagement[T](f: (DataSource) => T) = {
     transaction {
       f(new SquerylDataSource)
     }

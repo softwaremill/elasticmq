@@ -24,7 +24,7 @@ class JGroupsReplicatedStorage(masterAddressRef: AtomicReference[Option[NodeAddr
     }
   }
 
-  def executeWithDataSource[T](f: (DataSource) => T) = delegateStorage.executeWithDataSource(f)
+  def executeStateManagement[T](f: (DataSource) => T) = delegateStorage.executeStateManagement(f)
 
   def apply(command: IdempotentMutativeCommand[_]) {
     delegateStorage.execute(command)

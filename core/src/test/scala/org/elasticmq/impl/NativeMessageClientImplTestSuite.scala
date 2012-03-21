@@ -166,7 +166,7 @@ class NativeMessageClientImplTestSuite extends FunSuite with MustMatchers with M
       }).asInstanceOf[R]
     }
 
-    def executeWithDataSource[T](f: (DataSource) => T) = {
+    def executeStateManagement[T](f: (DataSource) => T) = {
       throw new UnsupportedOperationException()
     }
   }

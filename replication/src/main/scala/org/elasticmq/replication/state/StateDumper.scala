@@ -8,7 +8,7 @@ import java.io.{OutputStream, ObjectOutputStream}
 class StateDumper(storageCommandExecutor: StorageCommandExecutor) {
   def dump(outputStream: OutputStream) {
     val oos = new ObjectOutputStream(outputStream)
-    storageCommandExecutor.executeWithDataSource(dataSource => {
+    storageCommandExecutor.executeStateManagement(dataSource => {
       new DataSourceDumper(dataSource, oos).dumpQueues()
     })
   }

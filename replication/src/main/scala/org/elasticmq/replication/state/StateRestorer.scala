@@ -7,8 +7,7 @@ import java.io.{InputStream, ObjectInputStream}
 class StateRestorer(storageCommandExecutor: StorageCommandExecutor) {
   def restore(inputStream: InputStream) {
     val ois = new ObjectInputStream(inputStream)
-    // TODO ...
-    storageCommandExecutor.executeWithDataSource(dataSource => {
+    storageCommandExecutor.executeStateManagement(dataSource => {
       restore(ois)
     })
   }
