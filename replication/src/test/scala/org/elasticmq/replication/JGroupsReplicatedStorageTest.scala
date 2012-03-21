@@ -49,6 +49,7 @@ class JGroupsReplicatedStorageTest extends FunSuite with MustMatchers with Await
     cluster.master.execute(new SendMessageCommand("q1", MessageData(MessageId("1"), "z",
       MillisNextDelivery(System.currentTimeMillis()), new DateTime)))
 
+    // We need to wait for the message to be replicated & applied
     Thread.sleep(100L)
 
     // Then
