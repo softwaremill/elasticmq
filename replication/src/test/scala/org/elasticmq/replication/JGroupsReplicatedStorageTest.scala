@@ -20,7 +20,7 @@ class JGroupsReplicatedStorageTest extends FunSuite with MustMatchers with Await
                             (testFun: (ClusterConfigurator, StorageCluster) => Unit) {
     test(testName) {
       val clusterConfigurator = new ClusterConfigurator(commandReplicationMode)
-      val allStorages = (1 to clusterNodes).map(_ => clusterConfigurator.startNewStorage())
+      val allStorages = (1 to clusterNodes).map(_ => clusterConfigurator.startNewNode())
 
       val cluster = StorageCluster(allStorages.map(_._1), allStorages.map(_._2))
 
@@ -44,7 +44,7 @@ class JGroupsReplicatedStorageTest extends FunSuite with MustMatchers with Await
 
     def newNodeAddress() = { i += 1; NodeAddress("node"+i) }
 
-    def startNewStorage() = {
+    def startNewNode() = {
       val storage = new InMemoryStorageCommandExecutor
       val replicatedStorage = new ReplicatedStorageConfigurator(storage, newNodeAddress(), commandReplicationMode).start()
       (storage, replicatedStorage)
@@ -89,14 +89,21 @@ class JGroupsReplicatedStorageTest extends FunSuite with MustMatchers with Await
     sendExampleData(cluster.master)
 
     // When
+    val (newStorage, newReplicatedStorage) = clusterConfigurator.startNewNode()
+    await until { newReplicatedStorage.masterAddress == Some(cluster.master.address) }
+    sendExampleData(cluster.master, "q2")
 
+    // Then
+    // Both new and old data should be found on the new storage
+    newStorage.execute(LookupMessageCommand("q1", MessageId("1"))) must be ('defined)
+    newStorage.execute(LookupMessageCommand("q2", MessageId("1"))) must be ('defined)
   }
 
 
-  def sendExampleData(storage: ReplicatedStorage) {
-    storage.execute(new CreateQueueCommand(QueueData("q1", MillisVisibilityTimeout(1000L),
+  def sendExampleData(storage: ReplicatedStorage, queueName: String = "q1") {
+    storage.execute(new CreateQueueCommand(QueueData(queueName, MillisVisibilityTimeout(1000L),
       Duration.ZERO, new DateTime, new DateTime)))
-    storage.execute(new SendMessageCommand("q1", MessageData(MessageId("1"), "z",
+    storage.execute(new SendMessageCommand(queueName, MessageData(MessageId("1"), "z",
       MillisNextDelivery(System.currentTimeMillis()), new DateTime)))
   }
   
