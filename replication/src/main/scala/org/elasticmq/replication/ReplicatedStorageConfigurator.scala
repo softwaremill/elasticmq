@@ -34,9 +34,12 @@ class ReplicatedStorageConfigurator(delegate: StorageCommandExecutor,
       masterAddressRef, myAddress)
     val jgroupsMembershipListener = new JGroupsMembershipListener(channel, masterAddressRef, myAddress,
       replicationMessageSender)
+    
+    val jgroupsStateTransferMessageListener = new JGroupsStateTransferMessageListener(delegate)
 
     messageDispatcher.setRequestHandler(jgroupsRequestHandler)
     messageDispatcher.setMembershipListener(jgroupsMembershipListener)
+    messageDispatcher.setMessageListener(jgroupsStateTransferMessageListener)
 
     channel.connect("ElasticMQ")
 
