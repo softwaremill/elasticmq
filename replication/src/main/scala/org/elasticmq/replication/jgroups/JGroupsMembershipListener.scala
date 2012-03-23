@@ -26,9 +26,6 @@ class JGroupsMembershipListener(channel: JChannel,
 
       // The message isn't broadcast to this node
       masterAddressRef.set(Some(myAddress))
-    } else {
-      // We are not the master, requesting state transfer.
-      channel.getState(null, 0)
     }
   }
 

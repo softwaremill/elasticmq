@@ -42,6 +42,7 @@ class ReplicatedStorageConfigurator(delegate: StorageCommandExecutor,
     messageDispatcher.setMessageListener(jgroupsStateTransferMessageListener)
 
     channel.connect("ElasticMQ")
+    channel.getState(null, 0)
 
     replicatedStorage
   }
