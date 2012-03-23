@@ -17,21 +17,18 @@ class JGroupsReplicatedStorageTest extends FunSuite with MustMatchers with Await
   def testWithStorageCluster(testName: String,
                              clusterNodes: Int,
                              commandReplicationMode: CommandReplicationMode = DoNotWaitReplicationMode)
-                            (testFun: StorageCluster => Unit) {
+                            (testFun: (ClusterConfigurator, StorageCluster) => Unit) {
     test(testName) {
-      var i = 0
-      def newNodeAddress() = { i+=1; NodeAddress("node"+i) }
-      
-      val storages = (1 to clusterNodes).map(_ => new InMemoryStorageCommandExecutor)      
-      val replicatedStorages = storages.map(
-        new ReplicatedStorageConfigurator(_, newNodeAddress(), commandReplicationMode).start())
-      val cluster = StorageCluster(storages, replicatedStorages)
+      val clusterConfigurator = new ClusterConfigurator(commandReplicationMode)
+      val allStorages = (1 to clusterNodes).map(_ => clusterConfigurator.startNewStorage())
+
+      val cluster = StorageCluster(allStorages.map(_._1), allStorages.map(_._2))
 
       try {
-        val clusterFormation = timed { await until replicatedStorages.forall(_.masterAddress.isDefined) }
+        val clusterFormation = timed { await until cluster.replicatedStorages.forall(_.masterAddress.isDefined) }
         logger.info("cluster formed in " + clusterFormation)
 
-        testFun(cluster)
+        testFun(clusterConfigurator, cluster)
       } finally {
         val result = cluster.replicatedStorages.flatMap(rs => try { rs.stop(); None } catch { case e => Some(e) })
         result match {
@@ -42,7 +39,19 @@ class JGroupsReplicatedStorageTest extends FunSuite with MustMatchers with Await
     }
   }
 
-  testWithStorageCluster("should replicate command", 2) { cluster =>
+  class ClusterConfigurator(commandReplicationMode: CommandReplicationMode) {
+    var i = 0
+
+    def newNodeAddress() = { i += 1; NodeAddress("node"+i) }
+
+    def startNewStorage() = {
+      val storage = new InMemoryStorageCommandExecutor
+      val replicatedStorage = new ReplicatedStorageConfigurator(storage, newNodeAddress(), commandReplicationMode).start()
+      (storage, replicatedStorage)
+    }
+  }
+
+  testWithStorageCluster("should replicate command", 2) { (_, cluster) =>
     // When
     cluster.master.execute(new CreateQueueCommand(QueueData("q1", MillisVisibilityTimeout(1000L),
       Duration.ZERO, new DateTime, new DateTime)))
@@ -57,23 +66,38 @@ class JGroupsReplicatedStorageTest extends FunSuite with MustMatchers with Await
     cluster.storages.foreach(_.execute(LookupMessageCommand("q1", MessageId("1"))) must be ('defined))
   }
 
-  testWithStorageCluster("should replicate command waiting for other nodes", 3, WaitForAllReplicationMode) { cluster =>
-  // When
-    cluster.master.execute(new CreateQueueCommand(QueueData("q1", MillisVisibilityTimeout(1000L),
-      Duration.ZERO, new DateTime, new DateTime)))
-    cluster.master.execute(new SendMessageCommand("q1", MessageData(MessageId("1"), "z",
-      MillisNextDelivery(System.currentTimeMillis()), new DateTime)))
+  testWithStorageCluster("should replicate command waiting for other nodes", 3, WaitForAllReplicationMode) { (_, cluster) =>
+    // When
+    sendExampleData(cluster.master)
 
     // Then
     cluster.replicatedStorages.count(_.isMaster) must be (1)
     cluster.storages.foreach(_.execute(LookupMessageCommand("q1", MessageId("1"))) must be ('defined))
   }
 
-  testWithStorageCluster("all nodes should point to the same master", 3) { cluster =>
+  testWithStorageCluster("all nodes should point to the same master", 3) { (_, cluster) =>
     val masterAddress = cluster.master.address
     cluster.replicatedStorages.foreach {
       _.masterAddress must be (Some(masterAddress))
     }
+  }
+
+  testWithStorageCluster("should replicate state when a new node starts", 2, WaitForAllReplicationMode) {
+    (clusterConfigurator, cluster) =>
+
+    // Given
+    sendExampleData(cluster.master)
+
+    // When
+
+  }
+
+
+  def sendExampleData(storage: ReplicatedStorage) {
+    storage.execute(new CreateQueueCommand(QueueData("q1", MillisVisibilityTimeout(1000L),
+      Duration.ZERO, new DateTime, new DateTime)))
+    storage.execute(new SendMessageCommand("q1", MessageData(MessageId("1"), "z",
+      MillisNextDelivery(System.currentTimeMillis()), new DateTime)))
   }
   
   case class StorageCluster(storages: Seq[StorageCommandExecutor], replicatedStorages: Seq[ReplicatedStorage]) {
