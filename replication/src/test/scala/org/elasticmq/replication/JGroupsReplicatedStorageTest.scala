@@ -2,7 +2,7 @@ package org.elasticmq.replication
 
 import org.scalatest.matchers.MustMatchers
 import org.scalatest.FunSuite
-import org.elasticmq.storage.inmemory.InMemoryStorageCommandExecutor
+import org.elasticmq.storage.inmemory.InMemoryStorage
 import org.joda.time.{Duration, DateTime}
 import org.elasticmq.data.{MessageData, QueueData}
 import org.elasticmq.storage.{StorageCommandExecutor, LookupMessageCommand, SendMessageCommand, CreateQueueCommand}
@@ -45,7 +45,7 @@ class JGroupsReplicatedStorageTest extends FunSuite with MustMatchers with Await
     def newNodeAddress() = { i += 1; NodeAddress("node"+i) }
 
     def startNewNode() = {
-      val storage = new InMemoryStorageCommandExecutor
+      val storage = new InMemoryStorage
       val replicatedStorage = new ReplicatedStorageConfigurator(storage, newNodeAddress(), commandReplicationMode).start()
       (storage, replicatedStorage)
     }

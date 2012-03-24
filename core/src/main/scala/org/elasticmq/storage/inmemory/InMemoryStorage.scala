@@ -3,7 +3,7 @@ package org.elasticmq.storage.inmemory
 import org.elasticmq.storage.interfaced.InterfacedCommandExecutor
 import org.elasticmq.data.DataSource
 
-class InMemoryStorageCommandExecutor extends InterfacedCommandExecutor {
+class InMemoryStorage extends InterfacedCommandExecutor {
   val queues = new InMemoryQueuesStorage(queueData => {
     val statistics = new InMemoryMessageStatisticsStorage(queueData.name)
     new InMemoryQueue(

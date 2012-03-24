@@ -14,9 +14,9 @@ trait MultiStorageTest extends FunSuite with MustMatchers with OneInstancePerTes
 
   private val setups: List[StorageTestSetup] =
     StorageTestSetup("Squeryl",
-      () => new SquerylStorageCommandExecutor(squerylDBConfiguration)) ::
+      () => new SquerylStorage(squerylDBConfiguration)) ::
     StorageTestSetup("In memory",
-      () => new InMemoryStorageCommandExecutor()) ::
+      () => new InMemoryStorage()) ::
     Nil
 
   protected var storageCommandExecutor: StorageCommandExecutor = null

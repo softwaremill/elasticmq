@@ -3,7 +3,7 @@ package org.elasticmq.storage.squeryl
 import org.elasticmq.storage.interfaced.InterfacedCommandExecutor
 import org.elasticmq.data.DataSource
 
-class SquerylStorageCommandExecutor(dbConfiguration: DBConfiguration) extends InterfacedCommandExecutor {
+class SquerylStorage(dbConfiguration: DBConfiguration) extends InterfacedCommandExecutor {
   val modules =
     new SquerylInitializerModule
       with SquerylSchemaModule

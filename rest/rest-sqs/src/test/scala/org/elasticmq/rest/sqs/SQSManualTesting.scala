@@ -2,8 +2,8 @@ package org.elasticmq.rest.sqs
 
 import org.jboss.netty.logging.{Log4JLoggerFactory, InternalLoggerFactory}
 import org.elasticmq.NodeBuilder
-import org.elasticmq.storage.squeryl.{DBConfiguration, SquerylStorageCommandExecutor}
-import org.elasticmq.storage.inmemory.InMemoryStorageCommandExecutor
+import org.elasticmq.storage.squeryl.{DBConfiguration, SquerylStorage}
+import org.elasticmq.storage.inmemory.InMemoryStorage
 
 object SQSManualTesting {
   def main(args: Array[String]) {
@@ -12,8 +12,8 @@ object SQSManualTesting {
   }
 
   def mysql() {
-    val node = NodeBuilder.createWithStorage(
-      new SquerylStorageCommandExecutor(DBConfiguration.mysql("elasticmq", "root", "")))
+    val node = NodeBuilder.withStorage(
+      new SquerylStorage(DBConfiguration.mysql("elasticmq", "root", "")))
     val client = node.nativeClient
 
     readLine()
@@ -22,7 +22,7 @@ object SQSManualTesting {
   }
 
   def simple() {
-    val node = NodeBuilder.createWithStorage(new InMemoryStorageCommandExecutor)
+    val node = NodeBuilder.withStorage(new InMemoryStorage)
     val client = node.nativeClient
 
     val server = SQSRestServerFactory.start(client, 8888, "http://localhost:8888")
