@@ -30,7 +30,7 @@ class JGroupsReplicatedStorageTest extends FunSuite with MustMatchers with Await
 
         testFun(clusterConfigurator, cluster)
       } finally {
-        val result = cluster.replicatedStorages.flatMap(rs => try { rs.stop(); None } catch { case e => Some(e) })
+        val result = cluster.replicatedStorages.flatMap(rs => try { rs.shutdown(); None } catch { case e => Some(e) })
         result match {
           case e :: _ => throw e
           case _ =>

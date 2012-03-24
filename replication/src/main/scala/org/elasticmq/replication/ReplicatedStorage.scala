@@ -7,5 +7,4 @@ trait ReplicatedStorage extends StorageCommandExecutor {
   def isMaster: Boolean
   def address: NodeAddress
   def masterAddress: Option[NodeAddress]
-  def stop()
 }
