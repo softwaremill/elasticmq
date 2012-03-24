@@ -39,6 +39,10 @@ class JGroupsReplicatedStorage(masterAddressRef: AtomicReference[Option[NodeAddr
   def stop() {
     channel.close()
   }
+
+  def shutdown() {
+    delegateStorage.shutdown()
+  }
 }
 
 

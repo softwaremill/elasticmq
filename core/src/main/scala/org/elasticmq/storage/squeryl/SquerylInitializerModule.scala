@@ -3,7 +3,6 @@ package org.elasticmq.storage.squeryl
 import org.squeryl._
 import PrimitiveTypeMode._
 import com.mchange.v2.c3p0.ComboPooledDataSource
-import org.elasticmq.DBConfiguration
 
 trait SquerylInitializerModule {
   this: SquerylSchemaModule =>

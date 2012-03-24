@@ -17,4 +17,6 @@ class InMemoryStorageCommandExecutor extends InterfacedCommandExecutor {
   def messageStatisticsStorage(queueName: String) = queues(queueName).statistics
 
   def executeStateManagement[T](f: (DataSource) => T) = f(new InMemoryDataSource(queues))
+
+  def shutdown() {}
 }

@@ -9,6 +9,7 @@ import com.amazonaws.services.sqs.{AmazonSQS, AmazonSQSClient}
 
 import scala.collection.JavaConversions._
 import com.amazonaws.services.sqs.model._
+import org.elasticmq.storage.inmemory.InMemoryStorageCommandExecutor
 
 class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAfter {
   val visibilityTimeoutAttribute = "VisibilityTimeout"
@@ -20,7 +21,7 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
   var client: AmazonSQS = _
 
   before {
-    node = NodeBuilder.withInMemoryStorage().build()
+    node = NodeBuilder.createWithStorage(new InMemoryStorageCommandExecutor)
     server = SQSRestServerFactory.start(node.nativeClient, 8888, "http://localhost:8888")
 
     client = new AmazonSQSClient(new BasicAWSCredentials("x", "x"))
