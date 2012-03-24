@@ -1,10 +1,12 @@
 ElasticMQ
 =========
 
-ElasticMQ is a simple message queue system, written entirely in [Scala](http://scala-lang.org).
+ElasticMQ is a message queue system, written entirely in [Scala](http://scala-lang.org).
 
 Currently messages are stored either in-memory, or persisted in a database (MySQL, Postgres, H2, ...)
 using [Squeryl](http://squeryl.org/).
+
+Messages can be replicated across several nodes. Clustering is implemented using [JGroups](http://www.jgroups.org/).
 
 ElasticMQ implements a subset of the [SQS](http://aws.amazon.com/sqs/) REST interface,
 providing an SQS alternative e.g. for testing purposes.
@@ -22,11 +24,11 @@ Community
 
 Forum (discussions, help): [Google group](https://groups.google.com/forum/?fromgroups#!forum/elasticmq).
 
-Starting an ElasticMQ server
-----------------------------
+Starting an ElasticMQ server with an SQS interface
+--------------------------------------------------
 
     // First we need to create a Node
-    val node = NodeBuilder.withInMemoryStorage().build()
+    val node = NodeBuilder.withStorage(new InMemoryStorage).build()
     // Then we can expose the native client using the SQS REST interface
     val server = SQSRestServerFactory.start(node.nativeClient, 8888, "http://localhost:8888")
     // ... use ...
@@ -36,15 +38,38 @@ Starting an ElasticMQ server
 
 Alternatively, you can use MySQL to store the datea:
 
-    val node = NodeBuilder.withMySQLStorage("elasticmq", "root", "").build()
+    val node = NodeBuilder.withStorage(new SquerylStorage(DBConfiguration.mysql("elasticmq", "root", "")))
+
+Starting a replicated storage
+-----------------------------
+
+Any storage can be replicated by wrapping it using `ReplicatedStorageConfigurator`. Nodes can join and leave the cluster
+at any time; existing data will be transferred to new cluster member.
+
+Storage commands commands can be replicated in several modes: fire-and-forget (`DoNotWaitReplicationMode`), waiting
+for at least one cluster member to apply the changes (`WaitForAnyReplicationMode`), waiting for a majority of cluster
+members (`WaitForMajorityReplicationMode`), or waiting for all (`WaitForAllReplicationMode`). Client operations return
+only when the specified number of members applied the changes.
+
+    val storage = new InMemoryStorage
+    val replicatedStorage = ReplicatedStorageConfigurator.start(storage, NodeAddress(),
+            WaitForMajorityReplicationMode)
+    val node = NodeBuilder.withStorage(replicatedStorage)
+
+    // ... use ...
+
+    node.shutdown()
+    storage.shutdown()
 
 ElasticMQ dependencies in SBT
 -----------------------------
 
-    val elasticmqCore = "org.elasticmq" %% "core" % "0.3"
-    val elasticmqSqs  = "org.elasticmq" %% "rest-sqs" % "0.3"
+    val elasticmqCore = "org.elasticmq" %% "core"           % "0.4-SNAPSHOT"
+    val elasticmqSqs  = "org.elasticmq" %% "rest-sqs"       % "0.4-SNAPSHOT"
+    val elasticmqRepl = "org.elasticmq" %% "replication"    % "0.4-SNAPSHOT"
 
-    val smlResolver = "SotwareMill Public Releases" at "http://tools.softwaremill.pl/nexus/content/repositories/snapshots"
+    val smlResolverReleases  = "SotwareMill Public Releases"  at "http://tools.softwaremill.pl/nexus/content/repositories/releases"
+    val smlResolverSnapshots = "SotwareMill Public Snapshots" at "http://tools.softwaremill.pl/nexus/content/repositories/snapshots"
 
 ElasticMQ dependencies in Maven
 -------------------------------
@@ -54,19 +79,29 @@ Dependencies:
     <dependency>
         <groupId>org.elasticmq</groupId>
         <artifactId>core_2.9.1</artifactId>
-        <version>0.3</version>
+        <version>0.4-SNAPSHOT</version>
     </dependency>
     <dependency>
         <groupId>org.elasticmq</groupId>
         <artifactId>rest-sqs_2.9.1</artifactId>
-        <version>0.3</version>
+        <version>0.4-SNAPSHOT</version>
+    </dependency>
+    <dependency>
+        <groupId>org.elasticmq</groupId>
+        <artifactId>replication_2.9.1</artifactId>
+        <version>0.4-SNAPSHOT</version>
     </dependency>
 
-And our repository:
+And our repositories:
 
     <repository>
         <id>SotwareMillPublicReleases</id>
         <name>SotwareMill Public Releases</name>
+        <url>http://tools.softwaremill.pl/nexus/content/repositories/releases/</url>
+    </repository>
+    <repository>
+        <id>SotwareMillPublicSnapshots</id>
+        <name>SotwareMill Public Snapshots</name>
         <url>http://tools.softwaremill.pl/nexus/content/repositories/snapshots/</url>
     </repository>
 
@@ -111,19 +146,23 @@ Test class: `org.elasticmq.performance.MultiThreadPerformanceTest`.
 Change log
 ----------
 
-#### Version 0.3
+#### Version 0.4 (pending)
+
+* replication
+
+#### Version 0.3 (6 Feb 2012)
 
 * in-memory storage
 * new native API
 * bug fixes
 
-#### Version 0.2
+#### Version 0.2 (12 Jan 2012)
 
 * new SQS functions support
 * testing with Amazon Java SDK
 * bug fixes
 
-#### Version 0.1
+#### Version 0.1 (12 Oct 2011)
 
 * initial release
 * DB storage
