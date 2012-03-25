@@ -1,23 +1,42 @@
 ElasticMQ
 =========
 
-ElasticMQ is a message queue system, written entirely in [Scala](http://scala-lang.org).
+tl;dr
+-----
 
-Currently messages are stored either in-memory, or persisted in a database (MySQL, Postgres, H2, ...)
-using [Squeryl](http://squeryl.org/).
+* message queue system
+* emphasis on not loosing any messages
+* Amazon SQS-compatible interface
+* in-memory and db-backed message storage
+* optionally replicated (guaranteed messaging)
 
-Messages can be replicated across several nodes. Clustering is implemented using [JGroups](http://www.jgroups.org/).
+Summary
+-------
 
-ElasticMQ implements a subset of the [SQS](http://aws.amazon.com/sqs/) REST interface,
-providing an SQS alternative e.g. for testing purposes.
+ElasticMQ is a message queue system, offerring Java, Scala and a [SQS](http://aws.amazon.com/sqs/)-compatible
+REST interface.
 
-The REST server is implemented using [Netty](http://www.jboss.org/netty), a high-performance,
-asynchronous, event-driven server Java framework.
+ElasticMQ follows the semantics of SQS. Messages are received by polling the queue.
+When a message is received, it is blocked for a specified amount of time (the visibility timeout).
+If the message isn't deleted during that time, it will be again available for delivery.
+Moreover, queues and messages can be configured to always deliver messages with a delay.
 
-The SQS interface has been tested using the [Amazon Java SDK](http://aws.amazon.com/sdkforjava/) library;
-see the `rest-sqs-testing-amazon-java-sdk` module for the testsuite.
+The focus in ElasticMQ is to make sure that the messages are delivered, and that no message is lost.
+It may happen, however, that a message is delivered twice (if, for example, a client dies after receiving a message and
+processing it, but before deleting). That's why clients of ElasticMQ (and Amazon SQS) should be idempotent.
 
-In the future... ElasticMQ may provide many more exciting features :).
+There are several message storage implementations. Messages can be stored entirely in-memory, providing a
+volatile but fast message queue. Alternatively, they can be persisted in a database (MySQL, Postgres, H2, ...),
+making the data durable.
+
+ElasticMQ supports data replication across a cluster, thus providing a replicated/guaranteed message queue.
+Each node can use any storage implementation.
+
+As ElasticMQ implements a subset of the [SQS](http://aws.amazon.com/sqs/) REST interface, it is a great SQS alternative
+both for testing purposes (ElasticMQ is easily embeddable) and for creating systems which work both within and
+outside of the Amazon infrastructure.
+
+The future will most probably bring more exciting features :).
 
 Community
 ---------
@@ -36,7 +55,7 @@ Starting an ElasticMQ server with an SQS interface
     server.stop()
     node.shutdown()
 
-Alternatively, you can use MySQL to store the datea:
+Alternatively, you can use MySQL to store the data:
 
     val node = NodeBuilder.withStorage(new SquerylStorage(DBConfiguration.mysql("elasticmq", "root", "")))
 
@@ -44,12 +63,16 @@ Starting a replicated storage
 -----------------------------
 
 Any storage can be replicated by wrapping it using `ReplicatedStorageConfigurator`. Nodes can join and leave the cluster
-at any time; existing data will be transferred to new cluster member.
+at any time; existing data will be transferred to new cluster members.
 
-Storage commands commands can be replicated in several modes: fire-and-forget (`DoNotWaitReplicationMode`), waiting
-for at least one cluster member to apply the changes (`WaitForAnyReplicationMode`), waiting for a majority of cluster
-members (`WaitForMajorityReplicationMode`), or waiting for all (`WaitForAllReplicationMode`). Client operations return
-only when the specified number of members applied the changes.
+Storage commands commands can be replicated in several modes:
+* fire-and-forget (`DoNotWaitReplicationMode`)
+* waiting for at least one cluster member to apply the changes (`WaitForAnyReplicationMode`)
+* waiting for a majority of cluster members (`WaitForMajorityReplicationMode`)
+* waiting for all (`WaitForAllReplicationMode`).
+Client operations return only when the specified number of members applied the changes.
+
+Example:
 
     val storage = new InMemoryStorage
     val replicatedStorage = ReplicatedStorageConfigurator.start(storage, NodeAddress(),
@@ -60,6 +83,21 @@ only when the specified number of members applied the changes.
 
     node.shutdown()
     storage.shutdown()
+
+The provided `NodeAddress`es are entirely logical (the actual value can be any string) and can be used by ElasticMQ
+clients to determine which node is the master, for example.
+
+Deployment scenarios
+--------------------
+
+1. In-memory storage, single node: ideal for testing
+2. DB storage, local DB, single node: persistent messaging
+3. DB storage, shared DB, multiple nodes: persistent messaging. Multiple nodes can use the same database.
+   The database can be replicated/backed up for data safety.
+4. In-memory storage, multiple nodes, replicated: good for systems where at least one node is always alive.
+   Can provide data safety if using the right replication mode.
+5. DB storage, local DB, multiple nodes, replication: each node stores the data in a separate DB. Recommended if a
+   shared DB is not available. Provides good data safety.
 
 ElasticMQ dependencies in SBT
 -----------------------------
@@ -142,6 +180,17 @@ Tests done on a 2.4GHz Core2Duo, 8GB Ram:
     Receive took: 30 (30388), ops: 10000, ops per second: 333
 
 Test class: `org.elasticmq.performance.MultiThreadPerformanceTest`.
+
+Technology
+----------
+
+* Core: [Scala](http://scala-lang.org)
+* Database access: [Squeryl](http://squeryl.org/)
+* Rest server: [Netty](http://www.jboss.org/netty), a high-performance,
+  asynchronous, event-driven Java NIO framework.
+* Replication: [JGroups](http://www.jgroups.org/)
+* Testing the SQS interface: [Amazon Java SDK](http://aws.amazon.com/sdkforjava/) library;
+  see the `rest-sqs-testing-amazon-java-sdk` module for the testsuite.
 
 Change log
 ----------

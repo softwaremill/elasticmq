@@ -9,6 +9,9 @@ import org.jgroups.protocols.pbcast.FLUSH
 import org.jgroups.blocks.MessageDispatcher
 import org.elasticmq.replication.jgroups._
 
+/**
+ * @param myAddress Logical address of the node.
+ */
 class ReplicatedStorageConfigurator(delegate: StorageCommandExecutor,
                                     myAddress: NodeAddress,
                                     commandReplicationMode: CommandReplicationMode) {
