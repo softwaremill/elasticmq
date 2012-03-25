@@ -99,7 +99,7 @@ trait ClientModule {
 trait QueueURLModule {
   def serverAddress: NodeAddress
 
-  def queueURL(queue: Queue) = serverAddress.toString+"/"+Constants.QueueUrlPath+"/"+queue.name
+  def queueURL(queue: Queue) = serverAddress.address+"/"+Constants.QueueUrlPath+"/"+queue.name
 }
 
 
