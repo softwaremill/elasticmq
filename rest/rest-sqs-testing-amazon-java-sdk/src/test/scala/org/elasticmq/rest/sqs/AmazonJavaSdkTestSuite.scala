@@ -3,13 +3,13 @@ package org.elasticmq.rest.sqs
 import org.scalatest.matchers.MustMatchers
 import org.scalatest.{BeforeAndAfter, FunSuite}
 import org.elasticmq.rest.RestServer
-import org.elasticmq.{Node, NodeBuilder}
 import com.amazonaws.auth.BasicAWSCredentials
 import com.amazonaws.services.sqs.{AmazonSQS, AmazonSQSClient}
 
 import scala.collection.JavaConversions._
 import com.amazonaws.services.sqs.model._
 import org.elasticmq.storage.inmemory.InMemoryStorage
+import org.elasticmq.{NodeAddress, Node, NodeBuilder}
 
 class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAfter {
   val visibilityTimeoutAttribute = "VisibilityTimeout"
@@ -22,7 +22,7 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
 
   before {
     node = NodeBuilder.withStorage(new InMemoryStorage)
-    server = SQSRestServerFactory.start(node.nativeClient, 8888, "http://localhost:8888")
+    server = SQSRestServerFactory.start(node.nativeClient, 8888, NodeAddress("http://localhost:8888"))
 
     client = new AmazonSQSClient(new BasicAWSCredentials("x", "x"))
     client.setEndpoint("http://localhost:8888")

@@ -2,15 +2,20 @@ package org.elasticmq.rest.sqs
 
 import org.elasticmq.rest.RestPath._
 import org.elasticmq.rest.RestServer
-import org.elasticmq.{Queue, Client}
 
 import xml.{Null, UnprefixedAttribute}
 import java.security.MessageDigest
+import org.elasticmq.{NodeAddress, Queue, Client}
 
 object SQSRestServerFactory {
-  def start(client: Client, port: Int, baseAddress: String): RestServer = {
+  /**
+   * @param port Port on which the server will listen.
+   * @param serverAddress Address which will be returned as the queue address. Requests to this address
+   * should be routed to this server.
+   */
+  def start(client: Client, port: Int, serverAddress: NodeAddress): RestServer = {
     val theClient = client
-    val theBaseAddress = baseAddress
+    val theServerAddress = serverAddress
 
     val env = new ClientModule
       with QueueURLModule
@@ -26,7 +31,7 @@ object SQSRestServerFactory {
       with GetQueueUrlHandlerModule
       with AttributesModule {
       val client = theClient
-      val baseAddress = theBaseAddress
+      val serverAddress = theServerAddress
     }
 
     import env._
@@ -92,9 +97,9 @@ trait ClientModule {
 }
 
 trait QueueURLModule {
-  def baseAddress: String
+  def serverAddress: NodeAddress
 
-  def queueURL(queue: Queue) = baseAddress+"/"+Constants.QueueUrlPath+"/"+queue.name
+  def queueURL(queue: Queue) = serverAddress.toString+"/"+Constants.QueueUrlPath+"/"+queue.name
 }
 
 
