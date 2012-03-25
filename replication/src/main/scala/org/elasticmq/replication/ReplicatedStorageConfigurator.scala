@@ -17,7 +17,7 @@ import org.elasticmq.replication.jgroups._
 class ReplicatedStorageConfigurator(delegate: StorageCommandExecutor,
                                     myAddress: NodeAddress,
                                     commandReplicationMode: CommandReplicationMode,
-                                    createJChannel: () => JChannel = new JChannel()) {
+                                    createJChannel: () => JChannel = () => new JChannel()) {
   def start(): ReplicatedStorage = {
     val channel = createJChannel()
     channel.setDiscardOwnMessages(true)
