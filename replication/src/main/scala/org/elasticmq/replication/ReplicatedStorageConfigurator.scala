@@ -11,12 +11,15 @@ import org.elasticmq.replication.jgroups._
 
 /**
  * @param myAddress Logical address of the node.
+ * @param createJChannel Method that will create the JGroups JChannel. By default will create a channel which uses
+ * the standard (multicast) UDP stack.
  */
 class ReplicatedStorageConfigurator(delegate: StorageCommandExecutor,
                                     myAddress: NodeAddress,
-                                    commandReplicationMode: CommandReplicationMode) {
+                                    commandReplicationMode: CommandReplicationMode,
+                                    createJChannel: () => JChannel = new JChannel()) {
   def start(): ReplicatedStorage = {
-    val channel = new JChannel();
+    val channel = createJChannel()
     channel.setDiscardOwnMessages(true)
 
     // We need flush so that when the master broadcasts his address after a new node joins, all nodes receive it.
