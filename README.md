@@ -66,10 +66,12 @@ Any storage can be replicated by wrapping it using `ReplicatedStorageConfigurato
 at any time; existing data will be transferred to new cluster members.
 
 Storage commands commands can be replicated in several modes:
+
 * fire-and-forget (`DoNotWaitReplicationMode`)
 * waiting for at least one cluster member to apply the changes (`WaitForAnyReplicationMode`)
 * waiting for a majority of cluster members (`WaitForMajorityReplicationMode`)
 * waiting for all (`WaitForAllReplicationMode`).
+
 Client operations return only when the specified number of members applied the changes.
 
 Example:
@@ -160,7 +162,7 @@ Logging
 -------
 
 ElasticMQ uses [Slf4j](http://www.slf4j.org/) for logging. By default no logger backend is included as a dependency,
-however I recommend [Logback](http://logback.qos.ch/).
+however [Logback](http://logback.qos.ch/) is recommended.
 
 Performance
 -----------
