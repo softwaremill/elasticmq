@@ -89,6 +89,19 @@ Example:
 The provided `NodeAddress`es are entirely logical (the actual value can be any string) and can be used by ElasticMQ
 clients to determine which node is the master, for example.
 
+Operations can be only executed on the master node. If you attempt to execute an operation on a node which is not
+the master, the `NodeIsNotMasterException` exception will be thrown, containing the master node address, if available.
+
+(not yet implemented)
+In case of cluster partitions, replication is designed to only operate on the parition which contains
+a majority of nodes (`n/2+1`). Otherwise data could get easily corrupted, if two cluster disconnected cluster partitions
+(split-brain) changed the same data; such a situation could lead to a very high number of duplicate deliveries and an
+unmergeable state.
+
+That is also why when creating the replicated storage, you must provide the expected number of nodes. Note that
+an even number of nodes makes most sense (e.g. in a 3-node cluster, 2 nodes must be active in order for the cluster
+to work).
+
 Deployment scenarios
 --------------------
 
