@@ -20,9 +20,10 @@ trait Client {
   
   def listQueues: Seq[Queue]
 
-  /** Returns an interface to operations on the given queue.
-    *
-    * This method does not query the server and does not verify if the queue exists.
-    */
+  /**
+   * Returns an interface to operations on the given queue.
+   *
+   * This method does not query the server and does not verify if the queue exists.
+   */
   def queueOperations(name: String): QueueOperations
 }
