@@ -6,20 +6,21 @@ import org.elasticmq.storage.inmemory.InMemoryStorage
 import org.joda.time.{Duration, DateTime}
 import org.elasticmq.data.{MessageData, QueueData}
 import org.elasticmq.storage.{StorageCommandExecutor, LookupMessageCommand, SendMessageCommand, CreateQueueCommand}
-import org.elasticmq.{NodeAddress, MillisNextDelivery, MessageId, MillisVisibilityTimeout}
 import org.elasticmq.test._
 
 import com.jayway.awaitility.Awaitility._
 import com.jayway.awaitility.scala.AwaitilitySupport
 import com.weiglewilczek.slf4s.Logging
+import org.elasticmq._
 
 class JGroupsReplicatedStorageTest extends FunSuite with MustMatchers with AwaitilitySupport with Logging {
   def testWithStorageCluster(testName: String,
                              clusterNodes: Int,
-                             commandReplicationMode: CommandReplicationMode = DoNotWaitReplicationMode)
+                             commandReplicationMode: CommandReplicationMode = DoNotWaitReplicationMode,
+                             numberOfNodes: Option[Int] = None)
                             (testFun: (ClusterConfigurator, StorageCluster) => Unit) {
     test(testName) {
-      val clusterConfigurator = new ClusterConfigurator(commandReplicationMode)
+      val clusterConfigurator = new ClusterConfigurator(commandReplicationMode, numberOfNodes.getOrElse(clusterNodes))
       val allStorages = (1 to clusterNodes).map(_ => clusterConfigurator.startNewNode())
 
       val cluster = StorageCluster(allStorages.map(_._1), allStorages.map(_._2))
@@ -39,14 +40,18 @@ class JGroupsReplicatedStorageTest extends FunSuite with MustMatchers with Await
     }
   }
 
-  class ClusterConfigurator(commandReplicationMode: CommandReplicationMode) {
+  class ClusterConfigurator(commandReplicationMode: CommandReplicationMode, numberOfNodes: Int) {
     var i = 0
 
     def newNodeAddress() = { i += 1; NodeAddress("node"+i) }
 
     def startNewNode() = {
       val storage = new InMemoryStorage
-      val replicatedStorage = new ReplicatedStorageConfigurator(storage, newNodeAddress(), commandReplicationMode).start()
+      val replicatedStorage = new ReplicatedStorageConfigurator(storage,
+        newNodeAddress(),
+        commandReplicationMode,
+        numberOfNodes).start()
+
       (storage, replicatedStorage)
     }
   }
@@ -97,15 +102,36 @@ class JGroupsReplicatedStorageTest extends FunSuite with MustMatchers with Await
     // Both new and old data should be found on the new storage
     newStorage.execute(LookupMessageCommand("q1", MessageId("1"))) must be ('defined)
     newStorage.execute(LookupMessageCommand("q2", MessageId("1"))) must be ('defined)
+
+    // Finally
+    newReplicatedStorage.shutdown()
   }
 
+  testWithStorageCluster("should allow operations only when n/2+1 nodes are active", 2, WaitForAllReplicationMode, numberOfNodes = Some(5)) {
+    (clusterConfigurator, cluster) =>
+
+    // When
+    intercept[NodeIsNotActiveException] { cluster.master.execute(createQueueCommand("qx")) }
+
+    // Starting new node - cluster should become active
+    val (_, newReplicatedStorage) = clusterConfigurator.startNewNode()
+    await until { newReplicatedStorage.masterAddress == Some(cluster.master.address) }
+
+    // This should succeed now
+    cluster.master.execute(createQueueCommand("qx"))
+
+    // Finally
+    newReplicatedStorage.shutdown()
+  }
 
   def sendExampleData(storage: ReplicatedStorage, queueName: String = "q1") {
-    storage.execute(new CreateQueueCommand(QueueData(queueName, MillisVisibilityTimeout(1000L),
-      Duration.ZERO, new DateTime, new DateTime)))
+    storage.execute(createQueueCommand(queueName))
     storage.execute(new SendMessageCommand(queueName, MessageData(MessageId("1"), "z",
       MillisNextDelivery(System.currentTimeMillis()), new DateTime)))
   }
+
+  def createQueueCommand(queueName: String) = new CreateQueueCommand(QueueData(queueName,
+    MillisVisibilityTimeout(1000L), Duration.ZERO, new DateTime, new DateTime))
   
   case class StorageCluster(storages: Seq[StorageCommandExecutor], replicatedStorages: Seq[ReplicatedStorage]) {
     def master = replicatedStorages.find(_.isMaster).get

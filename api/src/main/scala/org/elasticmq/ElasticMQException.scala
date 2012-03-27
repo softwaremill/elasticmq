@@ -15,3 +15,8 @@ class MessageDoesNotExistException(queueName: String, messageId: MessageId)
 class NodeIsNotMasterException(masterAddress: Option[NodeAddress])
   extends ElasticMQException("Commands can be only executed on master server: " +
     masterAddress.map(_.address).getOrElse("unknown"), null)
+
+class NodeIsNotActiveException(minimumNumberOfNodes: Int, currentNumberOfNodes: Int)
+  extends ElasticMQException(
+    "Node is not active. Currently %d nodes are active out of the minimum %d nodes required."
+      .format(minimumNumberOfNodes, currentNumberOfNodes), null)
