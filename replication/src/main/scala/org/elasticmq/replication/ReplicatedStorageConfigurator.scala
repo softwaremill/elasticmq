@@ -1,6 +1,5 @@
 package org.elasticmq.replication
 
-import java.util.concurrent.atomic.AtomicReference
 import org.elasticmq.storage.StorageCommandExecutor
 import org.jgroups.JChannel
 import org.elasticmq.NodeAddress
@@ -8,15 +7,20 @@ import org.elasticmq.replication.message.JavaSerializationReplicationMessageMars
 import org.jgroups.protocols.pbcast.FLUSH
 import org.jgroups.blocks.MessageDispatcher
 import org.elasticmq.replication.jgroups._
+import java.util.concurrent.atomic.{AtomicBoolean, AtomicReference}
 
 /**
  * @param myAddress Logical address of the node.
+ * @param numberOfNodes (n) The number of nodes that this cluster will have. In case of a cluster partition, only
+ * the partition with n/2+1 nodes will work, to avoid data corruption and receiving messages from two cluster
+ * parititions.
  * @param createJChannel Method that will create the JGroups JChannel. By default will create a channel which uses
  * the standard (multicast) UDP stack.
  */
 class ReplicatedStorageConfigurator(delegate: StorageCommandExecutor,
                                     myAddress: NodeAddress,
                                     commandReplicationMode: CommandReplicationMode,
+                                    numberOfNodes: Int,
                                     createJChannel: () => JChannel = () => new JChannel()) {
   def start(): ReplicatedStorage = {
     val channel = createJChannel()
@@ -27,6 +31,8 @@ class ReplicatedStorageConfigurator(delegate: StorageCommandExecutor,
 
     val messageMarshaller = new JavaSerializationReplicationMessageMarshaller
     val masterAddressRef = new AtomicReference[Option[NodeAddress]](None)
+    
+    val clusterState = new ClusterState(numberOfNodes)
 
     val messageDispatcher = new MessageDispatcher(channel, null, null)
     val replicationMessageSender = new JGroupsReplicationMessageSender(messageMarshaller, commandReplicationMode,
@@ -34,12 +40,12 @@ class ReplicatedStorageConfigurator(delegate: StorageCommandExecutor,
 
     val commandResultReplicator = new CommandResultReplicator(delegate, replicationMessageSender)
     val replicatedStorage = new JGroupsReplicatedStorage(masterAddressRef, delegate, channel,
-      commandResultReplicator, myAddress)
+      commandResultReplicator, myAddress, clusterState)
     
     val jgroupsRequestHandler = new JGroupsRequestHandler(messageMarshaller, replicatedStorage,
       masterAddressRef, myAddress)
     val jgroupsMembershipListener = new JGroupsMembershipListener(channel, masterAddressRef, myAddress,
-      replicationMessageSender)
+      replicationMessageSender, clusterState)
     
     val jgroupsStateTransferMessageListener = new JGroupsStateTransferMessageListener(delegate)
 

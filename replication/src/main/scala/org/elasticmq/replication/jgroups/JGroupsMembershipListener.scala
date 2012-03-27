@@ -5,15 +5,18 @@ import org.jgroups._
 import org.elasticmq.NodeAddress
 import org.elasticmq.replication.message.SetMaster
 import com.weiglewilczek.slf4s.Logging
-import org.elasticmq.replication.ReplicationMessageSender
+import org.elasticmq.replication.{ClusterState, ReplicationMessageSender}
 
 class JGroupsMembershipListener(channel: JChannel,
                                 masterAddressRef: AtomicReference[Option[NodeAddress]],
                                 myAddress: NodeAddress,
-                                replicationMessageSender: ReplicationMessageSender) extends MembershipListener with Logging {
+                                replicationMessageSender: ReplicationMessageSender,
+                                clusterState: ClusterState) extends MembershipListener with Logging {
   def viewAccepted(view: View) {
     logger.info("Received new view in %s: [%s]".format(channel.getAddress, view))
 
+    clusterState.currentNumberOfNodes = view.getMembers.size()
+    
     // The first node is always the master. If we are the master, sending out our address.
     if (view.getMembers.get(0) == channel.getAddress) {
       // Any blocking ops must be done in a separate thread!
