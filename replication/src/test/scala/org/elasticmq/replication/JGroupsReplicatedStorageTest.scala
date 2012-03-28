@@ -12,6 +12,7 @@ import com.jayway.awaitility.Awaitility._
 import com.jayway.awaitility.scala.AwaitilitySupport
 import com.weiglewilczek.slf4s.Logging
 import org.elasticmq._
+import scala.collection.mutable.ArrayBuffer
 
 class JGroupsReplicatedStorageTest extends FunSuite with MustMatchers with AwaitilitySupport with Logging {
   def testWithStorageCluster(testName: String,
@@ -20,18 +21,20 @@ class JGroupsReplicatedStorageTest extends FunSuite with MustMatchers with Await
                              numberOfNodes: Option[Int] = None)
                             (testFun: (ClusterConfigurator, StorageCluster) => Unit) {
     test(testName) {
-      val clusterConfigurator = new ClusterConfigurator(commandReplicationMode, numberOfNodes.getOrElse(clusterNodes))
-      val allStorages = (1 to clusterNodes).map(_ => clusterConfigurator.startNewNode())
+      val cluster = new StorageCluster()
 
-      val cluster = StorageCluster(allStorages.map(_._1), allStorages.map(_._2))
+      val clusterConfigurator = new ClusterConfigurator(commandReplicationMode,
+        numberOfNodes.getOrElse(clusterNodes),
+        cluster)
+
+      (1 to clusterNodes).map(_ => clusterConfigurator.startNewNode())
 
       try {
-        val clusterFormation = timed { await until cluster.replicatedStorages.forall(_.masterAddress.isDefined) }
-        logger.info("cluster formed in " + clusterFormation)
+        cluster.awaitUntilFormed()
 
         testFun(clusterConfigurator, cluster)
       } finally {
-        val result = cluster.replicatedStorages.flatMap(rs => try { rs.shutdown(); None } catch { case e => Some(e) })
+        val result = cluster.replicatedStorages.flatMap(rs => try { rs.shutdown(); None } catch { case e => Some(e) }).toList
         result match {
           case e :: _ => throw e
           case _ =>
@@ -40,7 +43,24 @@ class JGroupsReplicatedStorageTest extends FunSuite with MustMatchers with Await
     }
   }
 
-  class ClusterConfigurator(commandReplicationMode: CommandReplicationMode, numberOfNodes: Int) {
+  class StorageCluster() {
+    val allStorages = new ArrayBuffer[(StorageCommandExecutor, ReplicatedStorage)]
+
+    def storages = allStorages.map(_._1)
+
+    def replicatedStorages = allStorages.map(_._2)
+
+    def master = replicatedStorages.find(_.isMaster).get
+
+    def awaitUntilFormed() {
+      val clusterFormation = timed { await until replicatedStorages.forall(_.masterAddress.isDefined) }
+      logger.info("cluster formed in " + clusterFormation)
+    }
+  }
+
+  class ClusterConfigurator(commandReplicationMode: CommandReplicationMode,
+                            numberOfNodes: Int,
+                            cluster: StorageCluster) {
     var i = 0
 
     def newNodeAddress() = { i += 1; NodeAddress("node"+i) }
@@ -51,6 +71,8 @@ class JGroupsReplicatedStorageTest extends FunSuite with MustMatchers with Await
         newNodeAddress(),
         commandReplicationMode,
         numberOfNodes).start()
+
+      cluster.allStorages += ((storage, replicatedStorage))
 
       (storage, replicatedStorage)
     }
@@ -102,9 +124,6 @@ class JGroupsReplicatedStorageTest extends FunSuite with MustMatchers with Await
     // Both new and old data should be found on the new storage
     newStorage.execute(LookupMessageCommand("q1", MessageId("1"))) must be ('defined)
     newStorage.execute(LookupMessageCommand("q2", MessageId("1"))) must be ('defined)
-
-    // Finally
-    newReplicatedStorage.shutdown()
   }
 
   testWithStorageCluster("should allow operations only when n/2+1 nodes are active", 2, WaitForAllReplicationMode, numberOfNodes = Some(5)) {
@@ -119,9 +138,6 @@ class JGroupsReplicatedStorageTest extends FunSuite with MustMatchers with Await
 
     // This should succeed now
     cluster.master.execute(createQueueCommand("qx"))
-
-    // Finally
-    newReplicatedStorage.shutdown()
   }
 
   def sendExampleData(storage: ReplicatedStorage, queueName: String = "q1") {
@@ -132,8 +148,4 @@ class JGroupsReplicatedStorageTest extends FunSuite with MustMatchers with Await
 
   def createQueueCommand(queueName: String) = new CreateQueueCommand(QueueData(queueName,
     MillisVisibilityTimeout(1000L), Duration.ZERO, new DateTime, new DateTime))
-  
-  case class StorageCluster(storages: Seq[StorageCommandExecutor], replicatedStorages: Seq[ReplicatedStorage]) {
-    def master = replicatedStorages.find(_.isMaster).get
-  }
 }
