@@ -15,9 +15,8 @@ import scala.collection.mutable.ArrayBuffer
 import org.elasticmq.storage._
 import org.jgroups.stack.ProtocolStack
 import java.util.concurrent.TimeUnit
-import scala.collection.JavaConverters
-import org.jgroups.protocols.{FD_SOCK, FD_ALL, UDP, DISCARD}
-import org.jgroups.{Event, JChannel}
+import org.jgroups.protocols.{FD_ALL, UDP, DISCARD}
+import org.jgroups.JChannel
 
 class JGroupsReplicatedStorageTest extends FunSuite with MustMatchers with AwaitilitySupport with Logging {
   def testWithStorageCluster(testName: String,
@@ -132,7 +131,8 @@ class JGroupsReplicatedStorageTest extends FunSuite with MustMatchers with Await
     newStorage.execute(LookupMessageCommand("q2", MessageId("1"))) must be ('defined)
   }
 
-  testWithStorageCluster("should allow operations only when n/2+1 nodes are active", 2, WaitForAllReplicationMode, numberOfNodes = Some(5)) {
+  testWithStorageCluster("should allow operations only when n/2+1 nodes are active", 2, WaitForAllReplicationMode,
+    numberOfNodes = Some(5)) {
     (clusterConfigurator, cluster) =>
 
     // When
@@ -146,7 +146,8 @@ class JGroupsReplicatedStorageTest extends FunSuite with MustMatchers with Await
     cluster.master.execute(createQueueCommand("qx"))
   }
 
-  testWithStorageCluster("should replicate state if a node becomes inactive and then active again", 0, WaitForAllReplicationMode) {
+  testWithStorageCluster("should replicate state if a node becomes inactive and then active again", 0,
+    WaitForAllReplicationMode, numberOfNodes = Some(3)) {
     (clusterConfigurator, cluster) =>
 
     // Given
@@ -177,19 +178,19 @@ class JGroupsReplicatedStorageTest extends FunSuite with MustMatchers with Await
 
     discardProtocol.setDiscardAll(true)
 
-    // Waiting until the member is removed
+    logger.info("Waiting until the member is removed")
     waitAtMost(20, TimeUnit.SECONDS) until { cluster.master.clusterState.currentNumberOfNodes == 2 }
 
-    // Executing a command
+    logger.info("Executing a command")
     cluster.master.execute(createQueueCommand("qy"))
 
-    // Bringing the partitioned member back & waiting
+    logger.info("Bringing the partitioned member back & waiting")
     discardProtocol.setDiscardAll(false)
     waitAtMost(20, TimeUnit.SECONDS) until { cluster.master.clusterState.currentNumberOfNodes == 3 }
 
     // Then
-    // State should be replicated
-    newStorage.execute(LookupQueueCommand("qy")) must be ('defined)
+    logger.info("State should be replicated")
+    await until { newStorage.execute(LookupQueueCommand("qy")).isDefined }
   }
 
   def sendExampleData(storage: ReplicatedStorage, queueName: String = "q1") {
