@@ -13,7 +13,7 @@ tl;dr
 Summary
 -------
 
-ElasticMQ is a message queue system, offerring Java, Scala and a [SQS](http://aws.amazon.com/sqs/)-compatible
+ElasticMQ is a message queue system, offerring Java, Scala and an [SQS](http://aws.amazon.com/sqs/)-compatible
 REST interface.
 
 ElasticMQ follows the semantics of SQS. Messages are received by polling the queue.
@@ -65,7 +65,7 @@ Starting a replicated storage
 Any storage can be replicated by wrapping it using `ReplicatedStorageConfigurator`. Nodes can join and leave the cluster
 at any time; existing data will be transferred to new cluster members.
 
-Storage commands commands can be replicated in several modes:
+Storage commands can be replicated in several modes:
 
 * fire-and-forget (`DoNotWaitReplicationMode`)
 * waiting for at least one cluster member to apply the changes (`WaitForAnyReplicationMode`)
@@ -86,15 +86,15 @@ Example:
     node.shutdown()
     storage.shutdown()
 
-The provided `NodeAddress`es are entirely logical (the actual value can be any string) and can be used by ElasticMQ
-clients to determine which node is the master, for example.
+The provided `NodeAddress`es are entirely logical (the actual value can be any string) and for example can be used
+by ElasticMQ clients to determine which node is the master.
 
 Operations can be only executed on the master node. If you attempt to execute an operation on a node which is not
 the master, the `NodeIsNotMasterException` exception will be thrown, containing the master node address, if available.
 
 In case of cluster partitions, replication is designed to only operate on the parition which contains
-a majority of nodes (`n/2+1`). Otherwise data could get easily corrupted, if two cluster disconnected cluster partitions
-(split-brain) changed the same data; such a situation could lead to a very high number of duplicate deliveries and an
+a majority of nodes (`n/2+1`). Otherwise data could get easily corrupted, if two disconnected cluster partitions
+(split-brain) changed the same things; such a situation could lead to a very high number of duplicate deliveries and an
 unmergeable state.
 
 That is also why when creating the replicated storage, you must provide the expected number of nodes. Note that
@@ -116,9 +116,9 @@ Deployment scenarios
 ElasticMQ dependencies in SBT
 -----------------------------
 
-    val elasticmqCore = "org.elasticmq" %% "core"           % "0.4-SNAPSHOT"
-    val elasticmqSqs  = "org.elasticmq" %% "rest-sqs"       % "0.4-SNAPSHOT"
-    val elasticmqRepl = "org.elasticmq" %% "replication"    % "0.4-SNAPSHOT"
+    val elasticmqCore = "org.elasticmq" %% "core"           % "0.4"
+    val elasticmqSqs  = "org.elasticmq" %% "rest-sqs"       % "0.4"
+    val elasticmqRepl = "org.elasticmq" %% "replication"    % "0.4"
 
     val smlResolverReleases  = "SotwareMill Public Releases"  at "http://tools.softwaremill.pl/nexus/content/repositories/releases"
     val smlResolverSnapshots = "SotwareMill Public Snapshots" at "http://tools.softwaremill.pl/nexus/content/repositories/snapshots"
@@ -131,17 +131,17 @@ Dependencies:
     <dependency>
         <groupId>org.elasticmq</groupId>
         <artifactId>core_2.9.1</artifactId>
-        <version>0.4-SNAPSHOT</version>
+        <version>0.4</version>
     </dependency>
     <dependency>
         <groupId>org.elasticmq</groupId>
         <artifactId>rest-sqs_2.9.1</artifactId>
-        <version>0.4-SNAPSHOT</version>
+        <version>0.4</version>
     </dependency>
     <dependency>
         <groupId>org.elasticmq</groupId>
         <artifactId>replication_2.9.1</artifactId>
-        <version>0.4-SNAPSHOT</version>
+        <version>0.4</version>
     </dependency>
 
 And our repositories:
@@ -160,9 +160,9 @@ And our repositories:
 Current versions
 --------
 
-*Stable*: 0.3
+*Stable*: 0.4
 
-*Development*: 0.4-SNAPSHOT
+*Development*: 0.5-SNAPSHOT
 
 DB Schema
 ---------
@@ -179,7 +179,7 @@ however [Logback](http://logback.qos.ch/) is recommended.
 Performance
 -----------
 
-Tests done on a 2.4GHz Core2Duo, 8GB Ram:
+Tests done on a 2.4GHz Core2Duo, 8GB RAM, no replication:
 
     Storage: InMemory, number of threads: 5, number of messages: 50000
     Send took: 3 (3140), ops: 250000, ops per second: 83333
@@ -203,13 +203,13 @@ Technology
 * Rest server: [Netty](http://www.jboss.org/netty), a high-performance,
   asynchronous, event-driven Java NIO framework.
 * Replication: [JGroups](http://www.jgroups.org/)
-* Testing the SQS interface: [Amazon Java SDK](http://aws.amazon.com/sdkforjava/) library;
+* Testing the SQS interface: [Amazon Java SDK](http://aws.amazon.com/sdkforjava/);
   see the `rest-sqs-testing-amazon-java-sdk` module for the testsuite.
 
 Change log
 ----------
 
-#### Version 0.4 (pending)
+#### Version 0.4 (27 Mar 2012)
 
 * replication
 
