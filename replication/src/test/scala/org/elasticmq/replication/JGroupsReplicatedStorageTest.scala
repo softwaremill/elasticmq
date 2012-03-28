@@ -5,7 +5,6 @@ import org.scalatest.FunSuite
 import org.elasticmq.storage.inmemory.InMemoryStorage
 import org.joda.time.{Duration, DateTime}
 import org.elasticmq.data.{MessageData, QueueData}
-import org.elasticmq.storage.{StorageCommandExecutor, LookupMessageCommand, SendMessageCommand, CreateQueueCommand}
 import org.elasticmq.test._
 
 import com.jayway.awaitility.Awaitility._
@@ -13,6 +12,12 @@ import com.jayway.awaitility.scala.AwaitilitySupport
 import com.weiglewilczek.slf4s.Logging
 import org.elasticmq._
 import scala.collection.mutable.ArrayBuffer
+import org.elasticmq.storage._
+import org.jgroups.stack.ProtocolStack
+import java.util.concurrent.TimeUnit
+import scala.collection.JavaConverters
+import org.jgroups.protocols.{FD_SOCK, FD_ALL, UDP, DISCARD}
+import org.jgroups.{Event, JChannel}
 
 class JGroupsReplicatedStorageTest extends FunSuite with MustMatchers with AwaitilitySupport with Logging {
   def testWithStorageCluster(testName: String,
@@ -65,12 +70,13 @@ class JGroupsReplicatedStorageTest extends FunSuite with MustMatchers with Await
 
     def newNodeAddress() = { i += 1; NodeAddress("node"+i) }
 
-    def startNewNode() = {
+    def startNewNode(createJChannel: () => JChannel = () => new JChannel()) = {
       val storage = new InMemoryStorage
       val replicatedStorage = new ReplicatedStorageConfigurator(storage,
         newNodeAddress(),
         commandReplicationMode,
-        numberOfNodes).start()
+        numberOfNodes,
+        createJChannel).start()
 
       cluster.allStorages += ((storage, replicatedStorage))
 
@@ -138,6 +144,52 @@ class JGroupsReplicatedStorageTest extends FunSuite with MustMatchers with Await
 
     // This should succeed now
     cluster.master.execute(createQueueCommand("qx"))
+  }
+
+  testWithStorageCluster("should replicate state if a node becomes inactive and then active again", 0, WaitForAllReplicationMode) {
+    (clusterConfigurator, cluster) =>
+
+    // Given
+    def createJChannelWithQuickFD = {
+      val jchannel = new JChannel()
+      val fdAll = jchannel.getProtocolStack.findProtocol(classOf[FD_ALL]).asInstanceOf[FD_ALL]
+      fdAll.setInterval(500L)
+      fdAll.setTimeout(1000L)
+      jchannel
+    }
+
+    def createJChannelWithDiscard = {
+      val jchannel = createJChannelWithQuickFD
+      val discardProtocol = new DISCARD()
+      jchannel.getProtocolStack.insertProtocol(discardProtocol, ProtocolStack.ABOVE, classOf[UDP])
+
+      (jchannel, discardProtocol)
+    }
+
+    clusterConfigurator.startNewNode(createJChannelWithQuickFD _)
+    clusterConfigurator.startNewNode(createJChannelWithQuickFD _)
+
+    cluster.awaitUntilFormed()
+
+    // When
+    val (newChannel, discardProtocol) = createJChannelWithDiscard
+    val (newStorage, _) = clusterConfigurator.startNewNode(() => newChannel)
+
+    discardProtocol.setDiscardAll(true)
+
+    // Waiting until the member is removed
+    waitAtMost(20, TimeUnit.SECONDS) until { cluster.master.clusterState.currentNumberOfNodes == 2 }
+
+    // Executing a command
+    cluster.master.execute(createQueueCommand("qy"))
+
+    // Bringing the partitioned member back & waiting
+    discardProtocol.setDiscardAll(false)
+    waitAtMost(20, TimeUnit.SECONDS) until { cluster.master.clusterState.currentNumberOfNodes == 3 }
+
+    // Then
+    // State should be replicated
+    newStorage.execute(LookupQueueCommand("qy")) must be ('defined)
   }
 
   def sendExampleData(storage: ReplicatedStorage, queueName: String = "q1") {
