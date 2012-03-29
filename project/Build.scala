@@ -10,6 +10,7 @@ object Resolvers {
 
 object BuildSettings {
   import Resolvers._
+  import ls.Plugin._
 
   val buildSettings = Defaults.defaultSettings ++ Seq (
     organization  := "org.elasticmq",
@@ -24,8 +25,19 @@ object BuildSettings {
     credentials   += Credentials(Path.userHome / ".ivy2" / ".credentials"),
     publishMavenStyle := true,
     parallelExecution := false,
-    scalacOptions += "-unchecked"
-  ) ++ net.virtualvoid.sbt.graph.Plugin.graphSettings
+    scalacOptions += "-unchecked",
+    homepage      := Some(new java.net.URL("http://www.elasticmq.org")),
+    licenses      := ("Apache2", new java.net.URL("http://www.apache.org/licenses/LICENSE-2.0.txt")) :: Nil
+  ) ++ net.virtualvoid.sbt.graph.Plugin.graphSettings ++ lsSettings ++ Seq (
+    (LsKeys.tags in LsKeys.lsync) := Seq("elasticmq", "messaging", "guaranteed messaging", "replication", "aws",
+      "amazon", "sqs", "embedded", "server"),
+    (externalResolvers in LsKeys.lsync) := Seq(
+      "softwaremill-public-releases" at "http://tools.softwaremill.pl/nexus/content/repositories/releases"),
+    (description in LsKeys.lsync) :=
+      "Message queueing server with a Java, Scala and Amazon SQS compatible interfaces. " +
+        "Supports guaranteed messaging via queue and message replication. Can run embedded (great for testing " +
+        "applications which use SQS), storing data in-memory or in a database, etc."
+  )
 }
 
 object Dependencies {
