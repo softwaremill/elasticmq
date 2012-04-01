@@ -34,10 +34,11 @@ class JGroupsReplicatedStorage(masterAddressRef: AtomicReference[Option[NodeAddr
     import scala.util.control.Exception._
 
     handling(classOf[QueueDoesNotExistException],
-      classOf[QueueDoesNotExistException],
+      classOf[QueueAlreadyExistsException],
       classOf[MessageDoesNotExistException])
     .by(logger.warn("Exception when applying command; a conflicting command was already applied to the storage. " +
-      "This can happen immediately after state replication.", _))
+      "This can happen immediately after state replication, if commands were executed on the master when the " +
+      "state was being read.", _))
     .apply {
       delegateStorage.execute(command)
     }
