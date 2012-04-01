@@ -41,7 +41,8 @@ The future will most probably bring more exciting features :).
 Community
 ---------
 
-Forum (discussions, help): [Google group](https://groups.google.com/forum/?fromgroups#!forum/elasticmq).
+* [Blog](http://www.warski.org/blog/category/elasticmq/)
+* Forum (discussions, help): [Google group](https://groups.google.com/forum/?fromgroups#!forum/elasticmq).
 
 Starting an ElasticMQ server with an SQS interface
 --------------------------------------------------
