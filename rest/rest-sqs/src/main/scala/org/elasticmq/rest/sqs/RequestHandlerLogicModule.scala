@@ -3,10 +3,10 @@ package org.elasticmq.rest.sqs
 import org.jboss.netty.handler.codec.http.HttpRequest
 
 import org.elasticmq.rest.{StringResponse, RequestHandlerLogic}
-import org.elasticmq.Queue
 
 import Constants._
 import xml.Elem
+import org.elasticmq.{ElasticMQException, Queue}
 
 trait RequestHandlerLogicModule { this: ClientModule =>
   def logicWithQueue(body: (Queue, HttpRequest, Map[String, String]) => Elem): RequestHandlerLogic = {
@@ -58,8 +58,11 @@ trait RequestHandlerLogicModule { this: ClientModule =>
       try {
         super.handle(request, parameters)
       } catch {
-        case e: SQSException => StringResponse(e.toXml(EmptyRequestId).toString())
+        case e: SQSException => handleSQSException(e)
+        case e: ElasticMQException => handleSQSException(new SQSException(e.code, e.getMessage))
       }
     }
+
+    private def handleSQSException(e: SQSException) = StringResponse(e.toXml(EmptyRequestId).toString())
   }
 }
