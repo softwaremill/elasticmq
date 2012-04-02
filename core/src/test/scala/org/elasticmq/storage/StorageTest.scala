@@ -1,23 +1,14 @@
 package org.elasticmq.storage
 
-import inmemory._
 import org.scalatest.matchers.MustMatchers
 import org.scalatest._
-import org.elasticmq.storage.squeryl._
 import org.elasticmq.test.DataCreationHelpers
 
-trait MultiStorageTest extends FunSuite with MustMatchers with OneInstancePerTest with DataCreationHelpers {
-  private case class StorageTestSetup(storageName: String, 
+trait StorageTest extends FunSuite with MustMatchers with OneInstancePerTest with DataCreationHelpers {
+  case class StorageTestSetup(storageName: String,
                                       initialize: () => StorageCommandExecutor)
-  
-  val squerylDBConfiguration = DBConfiguration.h2(this.getClass.getName)
 
-  private val setups: List[StorageTestSetup] =
-    StorageTestSetup("Squeryl",
-      () => new SquerylStorage(squerylDBConfiguration)) ::
-    StorageTestSetup("In memory",
-      () => new InMemoryStorage()) ::
-    Nil
+  def setups: List[StorageTestSetup] = Nil
 
   protected var storageCommandExecutor: StorageCommandExecutor = null
 

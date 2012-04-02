@@ -77,7 +77,7 @@ object ElasticMQBuild extends Build {
     "root",
     file("."),
     settings = buildSettings
-  ) aggregate(commonTest, api, spi, core, replication, rest)
+  ) aggregate(commonTest, api, spi, core, storageDatabase, replication, rest)
 
   lazy val commonTest: Project = Project(
     "common-test",
@@ -100,14 +100,20 @@ object ElasticMQBuild extends Build {
   lazy val core: Project = Project(
     "core",
     file("core"),
-    settings = buildSettings ++ Seq(libraryDependencies := Seq(squeryl, h2, c3p0, log4jOverSlf4j, mysqlConnector % "test") ++ common)
+    settings = buildSettings
   ) dependsOn(api, spi, commonTest % "test")
+
+  lazy val storageDatabase: Project = Project(
+    "storage-database",
+    file("storage-database"),
+    settings = buildSettings ++ Seq(libraryDependencies := Seq(squeryl, h2, c3p0, log4jOverSlf4j, mysqlConnector % "test") ++ common)
+  ) dependsOn(api, spi, core % "test->test")
 
   lazy val replication: Project = Project(
     "replication",
     file("replication"),
     settings = buildSettings ++ Seq(libraryDependencies := Seq(jgroups, julToSlf4j) ++ common)
-  ) dependsOn(api, spi, core % "compile->test;test->test", commonTest % "test")
+  ) dependsOn(api, spi, core % "test->test", storageDatabase % "test->test")
 
   lazy val rest: Project = Project(
     "rest",

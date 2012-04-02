@@ -3,7 +3,7 @@ package org.elasticmq.storage
 import org.joda.time.DateTime
 import org.elasticmq.{MillisNextDelivery, MessageId, MillisVisibilityTimeout}
 
-class MessageCommandsTest extends MultiStorageTest {
+abstract class MessageCommandsTest extends StorageTest {
   test("non-existent message should not be found") {
     // Given
     val q1 = createQueueData("q1", MillisVisibilityTimeout(1L))

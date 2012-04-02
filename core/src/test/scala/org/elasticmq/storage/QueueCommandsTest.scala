@@ -4,7 +4,7 @@ import org.elasticmq._
 import org.elasticmq.data.QueueData
 import org.joda.time.{Duration, DateTime}
 
-class QueueCommandsTest extends MultiStorageTest {
+abstract class QueueCommandsTest extends StorageTest {
   test("non-existent queue should not be found") {
     // Given
     execute(CreateQueueCommand(createQueueData("q1", MillisVisibilityTimeout(10L))))

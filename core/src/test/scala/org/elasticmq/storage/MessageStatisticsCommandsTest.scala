@@ -3,7 +3,7 @@ package org.elasticmq.storage
 import org.elasticmq._
 import org.joda.time.DateTime
 
-class MessageStatisticsCommandsTest extends MultiStorageTest {
+abstract class MessageStatisticsCommandsTest extends StorageTest {
   val q1 = createQueueData("q1", MillisVisibilityTimeout(1L))
   val m1 = createMessageData("xyz", "123", MillisNextDelivery(123L))
 

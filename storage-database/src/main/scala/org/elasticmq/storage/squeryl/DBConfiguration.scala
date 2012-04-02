@@ -16,7 +16,7 @@ object DBConfiguration {
             create: Boolean = true,
             drop: Boolean = false) = {
     DBConfiguration(new MySQLAdapter,
-      "jdbc:mysql://"+host+":"+port+"/"+dbName+"?useUnicode=true&amp;characterEncoding=UTF-8&amp;cacheServerConfiguration=true",
+      "jdbc:mysql://" + host + ":" + port + "/" + dbName + "?useUnicode=true&amp;characterEncoding=UTF-8&amp;cacheServerConfiguration=true",
       "com.mysql.jdbc.Driver",
       Some(username, password),
       create, drop)
@@ -24,7 +24,7 @@ object DBConfiguration {
 
   def h2(inMemoryDatabaseName: String = "elasticmq") = {
     DBConfiguration(new H2Adapter,
-      "jdbc:h2:mem:"+inMemoryDatabaseName+";DB_CLOSE_DELAY=-1",
+      "jdbc:h2:mem:" + inMemoryDatabaseName + ";DB_CLOSE_DELAY=-1",
       "org.h2.Driver",
       None, true, true)
   }

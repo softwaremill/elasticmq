@@ -14,7 +14,7 @@ trait SquerylDataSourceModule {
     }
 
     def messagesData(queue: QueueData) = {
-      from(messages)(m => where(m.queueName === queue.name) select(m)).map(_.toMessage)
+      from(messages)(m => where(m.queueName === queue.name) select (m)).map(_.toMessage)
     }
 
     def messageStatisticsWithId(queue: QueueData) = {

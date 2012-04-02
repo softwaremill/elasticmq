@@ -168,8 +168,8 @@ Current versions
 DB Schema
 ---------
 
-The MySQL Schema can be found in `core/src/main/resource/schema-mysql.sql` file. It should be easily adaptable to
-other databases.
+The MySQL Schema can be found in `storage-database/src/main/resource/schema-mysql.sql` file. It should be easily
+adaptable to other databases.
 
 Logging
 -------

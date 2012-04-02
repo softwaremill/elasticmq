@@ -56,8 +56,8 @@ trait SquerylQueuesStorageModule {
         def countVisibleMessages() = {
           from(messages)(m =>
             where(m.queueName === name and
-                    (m.nextDelivery lte deliveryTime))
-                    compute(count(m.id))).single.measures.toLong
+              (m.nextDelivery lte deliveryTime))
+              compute (count(m.id))).single.measures.toLong
         }
 
         def countInvisibileMessages(): Long = {
@@ -65,8 +65,8 @@ trait SquerylQueuesStorageModule {
             where((m.queueName === name) and
               (ms.approximateReceiveCount gt 0) and
               (m.nextDelivery gt deliveryTime))
-              compute(count(m.id))
-              on(m.id === ms.id)
+              compute (count(m.id))
+              on (m.id === ms.id)
           )
         }
 
@@ -75,8 +75,8 @@ trait SquerylQueuesStorageModule {
             where((m.queueName === name) and
               (ms.approximateReceiveCount === 0) and
               (m.nextDelivery gt deliveryTime))
-            compute(count(m.id))
-            on(m.id === ms.id)
+              compute (count(m.id))
+              on (m.id === ms.id)
           )
         }
 

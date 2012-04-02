@@ -2,19 +2,21 @@ package org.elasticmq.performance
 
 import org.elasticmq.{NodeBuilder, Queue}
 import org.elasticmq.test._
-import org.elasticmq.storage.squeryl.{DBConfiguration, SquerylStorage}
+import org.elasticmq.storage.inmemory.InMemoryStorage
+
+//import org.elasticmq.storage.squeryl.{SquerylStorage, DBConfiguration}
 
 object MultiThreadPerformanceTest {
   def main(args: Array[String]) {
     val numberOfThreads = 5
     val messageCount = 4000
 
-    //val node = NodeBuilder.withInMemoryStorage().build()
-    //val storageName = "InMemory"
+    val node = NodeBuilder.withStorage(new InMemoryStorage())
+    val storageName = "InMemory"
 
-    val node = NodeBuilder.withStorage(
-      new SquerylStorage(DBConfiguration.mysql("elasticmq", "root", "")))
-    val storageName = "MySQL"
+//    val node = NodeBuilder.withStorage(
+//      new SquerylStorage(DBConfiguration.mysql("elasticmq", "root", "")))
+//    val storageName = "MySQL"
 
     //val node = NodeBuilder.withH2InMemoryStorage().build()
     //val storageName = "H2"

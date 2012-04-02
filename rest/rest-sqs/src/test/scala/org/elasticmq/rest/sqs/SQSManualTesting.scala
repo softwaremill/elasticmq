@@ -1,7 +1,6 @@
 package org.elasticmq.rest.sqs
 
 import org.jboss.netty.logging.{Log4JLoggerFactory, InternalLoggerFactory}
-import org.elasticmq.storage.squeryl.{DBConfiguration, SquerylStorage}
 import org.elasticmq.storage.inmemory.InMemoryStorage
 import org.elasticmq.{NodeAddress, NodeBuilder}
 
@@ -12,8 +11,9 @@ object SQSManualTesting {
   }
 
   def mysql() {
-    val node = NodeBuilder.withStorage(
-      new SquerylStorage(DBConfiguration.mysql("elasticmq", "root", "")))
+//    val node = NodeBuilder.withStorage(
+//      new SquerylStorage(DBConfiguration.mysql("elasticmq", "root", "")))
+    val node = NodeBuilder.withStorage(new InMemoryStorage)
     val client = node.nativeClient
 
     readLine()

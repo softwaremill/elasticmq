@@ -5,7 +5,7 @@ import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
 import org.joda.time.DateTime
 import org.elasticmq.storage._
 
-class StateDumpAndRestoreTest extends MultiStorageTest {
+class StateDumpAndRestoreTest extends StorageTest with InMemoryStorageTest with SquerylStorageTest {
   test("dumping and restoring empty state") {
     dumpAndRestoreState()
   }

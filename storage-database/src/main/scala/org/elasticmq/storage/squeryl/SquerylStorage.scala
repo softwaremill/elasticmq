@@ -16,7 +16,9 @@ class SquerylStorage(dbConfiguration: DBConfiguration) extends InterfacedCommand
   modules.initializeSqueryl(dbConfiguration)
 
   def queuesStorage = modules.queuesStorage
+
   def messagesStorage(queueName: String) = modules.messagesStorage(queueName)
+
   def messageStatisticsStorage(queueName: String) = modules.messageStatisticsStorage(queueName)
 
   def executeStateManagement[T](f: (DataSource) => T) = modules.executeStateManagement(f)

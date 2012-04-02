@@ -23,7 +23,7 @@ trait SquerylMessageStatisticsStorageModule {
 
     /**
      * @param checkIfMessageExists: Should a check if the message exists be done before writing stats. This should be
-     * `false` when we are certain that the message is in the DB.
+     *                            `false` when we are certain that the message is in the DB.
      */
     def updateMessageStatistics(messageId: MessageId, statistics: MessageStatistics, checkIfMessageExists: Boolean) {
       inTransaction {
