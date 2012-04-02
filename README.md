@@ -117,9 +117,17 @@ Deployment scenarios
 ElasticMQ dependencies in SBT
 -----------------------------
 
-    val elasticmqCore = "org.elasticmq" %% "core"           % "0.4"
-    val elasticmqSqs  = "org.elasticmq" %% "rest-sqs"       % "0.4"
-    val elasticmqRepl = "org.elasticmq" %% "replication"    % "0.4"
+    // Includes the in-memory storage
+    val elasticmqCore       = "org.elasticmq" %% "core"             % "0.4"
+
+    // If you want to use the database storage
+    val elasticmqStorageDb  = "org.elasticmq" %% "storage-database" % "0.4"
+
+    // If you want to expose an SQS interface
+    val elasticmqSqs        = "org.elasticmq" %% "rest-sqs"         % "0.4"
+
+    // If you want to use replication
+    val elasticmqRepl       = "org.elasticmq" %% "replication"      % "0.4"
 
     val smlResolverReleases  = "SotwareMill Public Releases"  at "http://tools.softwaremill.pl/nexus/content/repositories/releases"
     val smlResolverSnapshots = "SotwareMill Public Snapshots" at "http://tools.softwaremill.pl/nexus/content/repositories/snapshots"
@@ -132,6 +140,11 @@ Dependencies:
     <dependency>
         <groupId>org.elasticmq</groupId>
         <artifactId>core_2.9.1</artifactId>
+        <version>0.4</version>
+    </dependency>
+    <dependency>
+        <groupId>org.elasticmq</groupId>
+        <artifactId>storage-database_2.9.1</artifactId>
         <version>0.4</version>
     </dependency>
     <dependency>
