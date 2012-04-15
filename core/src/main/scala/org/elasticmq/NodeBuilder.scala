@@ -6,7 +6,7 @@ import org.elasticmq.impl.{NowModule, NodeImpl}
 import org.elasticmq.impl.nativeclient.NativeModule
 
 object NodeBuilder {
-  def withStorage(storage: StorageCommandExecutor) = {
+  def withStorage(storage: StorageCommandExecutor): Node = {
     val env = new NativeModule
       with NowModule
       with BackgroundVolatileTaskSchedulerModule
