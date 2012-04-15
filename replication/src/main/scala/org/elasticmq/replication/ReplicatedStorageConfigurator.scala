@@ -3,11 +3,11 @@ package org.elasticmq.replication
 import org.elasticmq.storage.StorageCommandExecutor
 import org.jgroups.JChannel
 import org.elasticmq.NodeAddress
-import org.elasticmq.replication.message.JavaSerializationReplicationMessageMarshaller
 import org.jgroups.protocols.pbcast.FLUSH
 import org.jgroups.blocks.MessageDispatcher
 import org.elasticmq.replication.jgroups._
-import java.util.concurrent.atomic.{AtomicBoolean, AtomicReference}
+import java.util.concurrent.atomic.AtomicReference
+import org.elasticmq.marshalling.JavaSerializationMarshaller
 
 /**
  * @param myAddress Logical address of the node.
@@ -29,20 +29,20 @@ class ReplicatedStorageConfigurator(delegate: StorageCommandExecutor,
     // We need flush so that when the master broadcasts his address after a new node joins, all nodes receive it.
     channel.getProtocolStack.addProtocol(new FLUSH())
 
-    val messageMarshaller = new JavaSerializationReplicationMessageMarshaller
+    val objectMarshaller = new JavaSerializationMarshaller
     val masterAddressRef = new AtomicReference[Option[NodeAddress]](None)
     
     val clusterState = new ClusterState(numberOfNodes)
 
     val messageDispatcher = new MessageDispatcher(channel, null, null)
-    val replicationMessageSender = new JGroupsReplicationMessageSender(messageMarshaller, commandReplicationMode,
+    val replicationMessageSender = new JGroupsReplicationMessageSender(objectMarshaller, commandReplicationMode,
       messageDispatcher)
 
     val commandResultReplicator = new CommandResultReplicator(delegate, replicationMessageSender)
     val replicatedStorage = new JGroupsReplicatedStorage(masterAddressRef, delegate, channel,
       commandResultReplicator, myAddress, clusterState)
     
-    val jgroupsRequestHandler = new JGroupsRequestHandler(messageMarshaller, replicatedStorage,
+    val jgroupsRequestHandler = new JGroupsRequestHandler(objectMarshaller, replicatedStorage,
       masterAddressRef, myAddress)
     val jgroupsMembershipListener = new JGroupsMembershipListener(channel, masterAddressRef, myAddress,
       replicationMessageSender, clusterState)

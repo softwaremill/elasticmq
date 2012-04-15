@@ -3,12 +3,13 @@ package org.elasticmq.replication.jgroups
 import java.util.concurrent.atomic.AtomicReference
 import org.jgroups._
 import org.elasticmq.NodeAddress
-import org.elasticmq.replication.message.{ApplyCommands, SetMaster, ReplicationMessageMarshaller}
 import com.weiglewilczek.slf4s.Logging
 import org.jgroups.blocks.RequestHandler
 import org.elasticmq.replication.CommandApplier
+import org.elasticmq.marshalling.ObjectMarshaller
+import org.elasticmq.replication.message.{ReplicationMessage, ApplyCommands, SetMaster}
 
-class JGroupsRequestHandler(messageMarshaller: ReplicationMessageMarshaller,
+class JGroupsRequestHandler(objectMarshaller: ObjectMarshaller,
                             commandApplier: CommandApplier,
                             masterAddressRef: AtomicReference[Option[NodeAddress]],
                             myAddress: NodeAddress) extends RequestHandler with Logging {
@@ -25,7 +26,7 @@ class JGroupsRequestHandler(messageMarshaller: ReplicationMessageMarshaller,
   }
   
   def tryHandle(msg: Message) = {
-    val message = messageMarshaller.deserialize(msg.getBuffer)
+    val message = objectMarshaller.deserialize(msg.getBuffer).asInstanceOf[ReplicationMessage]
 
     message match {
       case SetMaster(masterAddress) => {

@@ -2,8 +2,8 @@ package org.elasticmq.marshalling
 
 import java.io.{ByteArrayInputStream, ObjectOutputStream}
 
-class JavaSerializationMarshaller {
-  def serialize(message: AnyRef): Array[Byte] = {
+class JavaSerializationMarshaller extends ObjectMarshaller {
+  def serialize(message: AnyRef) = {
     // Based on Util#objectToByteBuffer, but without writing the type
     val outStream = new ExposedByteArrayOutputStream(128)
     val out = new ObjectOutputStream(outStream)
@@ -12,7 +12,7 @@ class JavaSerializationMarshaller {
     outStream.getRawBuffer
   }
 
-  def deserialize(bytes: Array[Byte]): AnyRef = {
+  def deserialize(bytes: Array[Byte]) = {
     // Based on Util#objectFromByteBuffer, but with a custom different ObjectInputStream
     val inStream = new ByteArrayInputStream(bytes, 0, bytes.length)
     val in = new ClassLoaderObjectInputStream(inStream)

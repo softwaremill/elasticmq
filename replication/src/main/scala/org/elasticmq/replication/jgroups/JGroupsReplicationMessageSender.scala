@@ -1,11 +1,12 @@
 package org.elasticmq.replication.jgroups
 
-import org.elasticmq.replication.message.{ReplicationMessage, ReplicationMessageMarshaller}
+import org.elasticmq.replication.message.ReplicationMessage
 import org.jgroups.blocks.{MessageDispatcher, ResponseMode, RequestOptions}
 import org.jgroups.Message
 import org.elasticmq.replication._
+import org.elasticmq.marshalling.ObjectMarshaller
 
-class JGroupsReplicationMessageSender(messageMarshaller: ReplicationMessageMarshaller,
+class JGroupsReplicationMessageSender(objectMarshaller: ObjectMarshaller,
                                       defaultCommandReplicationMode: CommandReplicationMode,
                                       messageDispatcher: MessageDispatcher)
   extends ReplicationMessageSender {
@@ -24,7 +25,7 @@ class JGroupsReplicationMessageSender(messageMarshaller: ReplicationMessageMarsh
     // The val _ is needed because of type inferencing problems
     val _ = messageDispatcher.castMessage(
       null,
-      new Message(null, messageMarshaller.serialize(replicationMessage)),
+      new Message(null, objectMarshaller.serialize(replicationMessage)),
       requestOptions)
   }
 
