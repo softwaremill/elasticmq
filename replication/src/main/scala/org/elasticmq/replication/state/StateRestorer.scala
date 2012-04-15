@@ -3,7 +3,7 @@ package org.elasticmq.replication.state
 import scala.annotation.tailrec
 import org.elasticmq.storage.{ClearStorageCommand, StorageCommandExecutor, IdempotentMutativeCommand}
 import java.io.{InputStream, ObjectInputStream}
-import org.elasticmq.replication.serialization.ClassLoaderObjectInputStream
+import org.elasticmq.marshalling.ClassLoaderObjectInputStream
 
 class StateRestorer(storageCommandExecutor: StorageCommandExecutor) {
   def restore(inputStream: InputStream) {

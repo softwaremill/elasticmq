@@ -1,8 +1,6 @@
 package org.elasticmq.replication.message
 
-import org.jgroups.util.{ExposedByteArrayInputStream, ExposedByteArrayOutputStream, Util}
-import java.io.ObjectOutputStream
-import org.elasticmq.replication.serialization.ClassLoaderObjectInputStream
+import org.elasticmq.marshalling.JavaSerializationMarshaller
 
 trait ReplicationMessageMarshaller {
   def serialize(message: ReplicationMessage): Array[Byte]
@@ -11,23 +9,9 @@ trait ReplicationMessageMarshaller {
 }
 
 class JavaSerializationReplicationMessageMarshaller extends ReplicationMessageMarshaller {
-  def serialize(message: ReplicationMessage) = {
-    // Based on Util#objectToByteBuffer, but without writing the type
-    val outStream = new ExposedByteArrayOutputStream(128)
-    val out = new ObjectOutputStream(outStream)
-    out.writeObject(message)
-    out.close()
-    outStream.getRawBuffer
-  }
+  val marshaller = new JavaSerializationMarshaller
 
-  def deserialize(bytes: Array[Byte]) = {
-    // Based on Util#objectFromByteBuffer, but with a custom different ObjectInputStream
-    val inStream = new ExposedByteArrayInputStream(bytes, 0, bytes.length)
-    val in = new ClassLoaderObjectInputStream(inStream)
-    try {
-      in.readObject().asInstanceOf[ReplicationMessage]
-    } finally {
-      Util.close(in)
-    }
-  }
+  def serialize(message: ReplicationMessage) = marshaller.serialize(message)
+
+  def deserialize(bytes: Array[Byte]) = marshaller.deserialize(bytes).asInstanceOf[ReplicationMessage]
 }
