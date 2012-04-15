@@ -8,6 +8,7 @@ import org.apache.http.util.EntityUtils
 import org.scalatest.{BeforeAndAfterAll, FunSuite}
 import org.apache.http.client.methods.{HttpPost, HttpGet}
 import org.apache.http.entity.StringEntity
+import java.net.InetSocketAddress
 
 class RestServerTestSuite extends FunSuite with MustMatchers with BeforeAndAfterAll {
   import RequestHandlerBuilder.createHandler
@@ -135,7 +136,7 @@ class RestServerTestSuite extends FunSuite with MustMatchers with BeforeAndAfter
 
   def testWithServer(handlers: List[CheckingRequestHandlerWrapper], name: String)(block: RestServer => Unit) {
     test(name) {
-      val server = RestServer.start(handlers, TestPort)
+      val server = RestServer.start(handlers, new InetSocketAddress(TestPort))
 
       try {
         block(server)

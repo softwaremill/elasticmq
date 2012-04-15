@@ -2,7 +2,6 @@ package org.elasticmq.rest
 
 import java.util.concurrent.Executors
 import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory
-import java.net.InetSocketAddress
 import org.jboss.netty.bootstrap.ServerBootstrap
 import org.jboss.netty.channel.group.{ChannelGroup, DefaultChannelGroup}
 import org.jboss.netty.channel._
@@ -11,6 +10,7 @@ import org.jboss.netty.handler.stream.ChunkedWriteHandler
 import org.jboss.netty.handler.execution.{ExecutionHandler, OrderedMemoryAwareThreadPoolExecutor}
 import com.weiglewilczek.slf4s.Logging
 import org.jboss.netty.logging.{Slf4JLoggerFactory, InternalLoggerFactory}
+import java.net.SocketAddress
 
 class RestServer(doStop: () => Unit) {
   def stop() {
@@ -41,7 +41,7 @@ class RestPipelineFactory(handlers: List[CheckingRequestHandlerWrapper],
 }
 
 object RestServer {
-  def start(handlers: List[CheckingRequestHandlerWrapper], port: Int): RestServer = {
+  def start(handlers: List[CheckingRequestHandlerWrapper], socketAddress: SocketAddress): RestServer = {
     InternalLoggerFactory.setDefaultFactory(new Slf4JLoggerFactory())
 
     val factory: ChannelFactory =
@@ -58,35 +58,12 @@ object RestServer {
     bootstrap.setOption("child.tcpNoDelay", true);
     bootstrap.setOption("child.keepAlive", true);
 
-    val serverChannel = bootstrap.bind(new InetSocketAddress(port));
+    val serverChannel = bootstrap.bind(socketAddress);
     allChannels.add(serverChannel)
 
     new RestServer(() => {
       allChannels.close().awaitUninterruptibly()
       bootstrap.releaseExternalResources()
     })
-  }
-}
-
-object Testing {
-  def createTestHandler = {
-    import RequestHandlerBuilder._
-    import RestPath._
-
-    (createHandler
-            forMethod HttpMethod.GET
-            forPath (root / "test" / "me")
-            requiringParameters List("param1")
-            running (new RequestHandlerLogic() {
-      def handle(request: HttpRequest, parameters: Map[String, String]) = StringResponse("OK!")
-    }))
-  }
-
-  def main(args: Array[String]) {
-    val server = RestServer.start(List(createTestHandler), 8888)
-    println("Started")
-    readLine()
-    server.stop()
-    println("Stopped")
   }
 }

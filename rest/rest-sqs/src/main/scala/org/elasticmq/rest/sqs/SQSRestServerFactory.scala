@@ -6,6 +6,7 @@ import org.elasticmq.rest.RestServer
 import xml.{Null, UnprefixedAttribute}
 import java.security.MessageDigest
 import org.elasticmq.{NodeAddress, Queue, Client}
+import java.net.{InetSocketAddress, SocketAddress}
 
 object SQSRestServerFactory {
   /**
@@ -14,6 +15,15 @@ object SQSRestServerFactory {
    * should be routed to this server.
    */
   def start(client: Client, port: Int, serverAddress: NodeAddress): RestServer = {
+    start(client, new InetSocketAddress(port), serverAddress)
+  }
+
+  /**
+   * @param socketAddress Address on which the server will listen.
+   * @param serverAddress Address which will be returned as the queue address. Requests to this address
+   * should be routed to this server.
+   */
+  def start(client: Client, socketAddress: SocketAddress, serverAddress: NodeAddress): RestServer = {
     val theClient = client
     val theServerAddress = serverAddress
 
@@ -49,7 +59,7 @@ object SQSRestServerFactory {
         deleteQueueGetHandler :: deleteQueuePostHandler ::
         getQueueAttributesGetHandler :: getQueueAttributesPostHandler ::
         setQueueAttributesGetHandler :: setQueueAttributesPostHandler ::
-        Nil, port)
+        Nil, socketAddress)
   }
 }
 
