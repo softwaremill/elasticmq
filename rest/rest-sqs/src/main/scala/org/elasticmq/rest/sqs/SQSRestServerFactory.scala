@@ -10,6 +10,14 @@ import java.net.{InetSocketAddress, SocketAddress}
 
 object SQSRestServerFactory {
   /**
+   * Starts the SQS server on `localhost:9324`. The returned queue addresses will use `http://localhost:9324` as
+   * the base address.
+   */
+  def start(client: Client) = {
+    start(client, 9324, NodeAddress("http://localhost:9324"))
+  }
+
+  /**
    * @param port Port on which the server will listen.
    * @param serverAddress Address which will be returned as the queue address. Requests to this address
    * should be routed to this server.
