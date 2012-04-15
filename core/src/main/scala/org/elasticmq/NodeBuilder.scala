@@ -4,8 +4,9 @@ import org.elasticmq.storage.{StorageCommandExecutor, StorageModule}
 import org.elasticmq.impl.scheduler.BackgroundVolatileTaskSchedulerModule
 import org.elasticmq.impl.{NowModule, NodeImpl}
 import org.elasticmq.impl.nativeclient.NativeModule
+import com.weiglewilczek.slf4s.Logging
 
-object NodeBuilder {
+object NodeBuilder extends Logging {
   def withStorage(storage: StorageCommandExecutor): Node = {
     val env = new NativeModule
       with NowModule
@@ -14,7 +15,11 @@ object NodeBuilder {
       def storageCommandExecutor = storage
     }
 
-    new NodeImpl(env.nativeClient, () => storage.shutdown())
+    val node = new NodeImpl(env.nativeClient, () => storage.shutdown())
+
+    logger.info("Started new node with storage %s".format(storage.getClass.getSimpleName))
+
+    node
   }
 }
 

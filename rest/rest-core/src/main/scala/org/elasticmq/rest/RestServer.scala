@@ -12,9 +12,11 @@ import com.weiglewilczek.slf4s.Logging
 import org.jboss.netty.logging.{Slf4JLoggerFactory, InternalLoggerFactory}
 import java.net.SocketAddress
 
-class RestServer(doStop: () => Unit) {
+class RestServer(doStop: () => Unit) extends Logging {
   def stop() {
     doStop()
+
+    logger.info("Rest server stopped")
   }
 }
 

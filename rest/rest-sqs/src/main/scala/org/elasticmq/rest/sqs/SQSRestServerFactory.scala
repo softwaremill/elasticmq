@@ -7,8 +7,9 @@ import xml.{Null, UnprefixedAttribute}
 import java.security.MessageDigest
 import org.elasticmq.{NodeAddress, Queue, Client}
 import java.net.{InetSocketAddress, SocketAddress}
+import com.weiglewilczek.slf4s.Logging
 
-object SQSRestServerFactory {
+object SQSRestServerFactory extends Logging {
   /**
    * Starts the SQS server on `localhost:9324`. The returned queue addresses will use `http://localhost:9324` as
    * the base address.
@@ -53,7 +54,7 @@ object SQSRestServerFactory {
     }
 
     import env._
-    RestServer.start(
+    val server = RestServer.start(
         // 1. Sending, receiving, deleting messages
         sendMessageGetHandler :: sendMessagePostHandler ::
         receiveMessageGetHandler :: receiveMessagePostHandler ::
@@ -68,6 +69,11 @@ object SQSRestServerFactory {
         getQueueAttributesGetHandler :: getQueueAttributesPostHandler ::
         setQueueAttributesGetHandler :: setQueueAttributesPostHandler ::
         Nil, socketAddress)
+
+    logger.info("Started SQS rest server on address %s, server address %s"
+      .format(socketAddress, theServerAddress.address))
+
+    server
   }
 }
 
