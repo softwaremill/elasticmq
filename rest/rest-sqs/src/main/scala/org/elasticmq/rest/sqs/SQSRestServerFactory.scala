@@ -13,7 +13,7 @@ object SQSRestServerFactory {
    * Starts the SQS server on `localhost:9324`. The returned queue addresses will use `http://localhost:9324` as
    * the base address.
    */
-  def start(client: Client) = {
+  def start(client: Client): RestServer = {
     start(client, 9324, NodeAddress("http://localhost:9324"))
   }
 
