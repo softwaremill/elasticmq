@@ -5,7 +5,7 @@ import java.io.{ByteArrayInputStream, ObjectOutputStream}
 class JavaSerializationMarshaller extends ObjectMarshaller {
   def serialize(message: AnyRef) = {
     // Based on Util#objectToByteBuffer, but without writing the type
-    val outStream = new ExposedByteArrayOutputStream(128)
+    val outStream = new ExposedByteArrayOutputStream(512)
     val out = new ObjectOutputStream(outStream)
     out.writeObject(message)
     out.close()
