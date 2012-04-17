@@ -4,10 +4,9 @@ import org.elasticmq.storage.IdempotentMutativeCommand
 import com.weiglewilczek.slf4s.Logging
 import org.elasticmq.marshalling.{JavaSerializationMarshaller, ObjectMarshaller}
 import java.io._
+import javax.annotation.concurrent.NotThreadSafe
 
-/**
- * Not thread safe.
- */
+@NotThreadSafe
 class CommandReader(inputStream: DataInputStream, objectMarshaller: ObjectMarshaller) extends Logging with Closeable {
   val crc = new CRC
 

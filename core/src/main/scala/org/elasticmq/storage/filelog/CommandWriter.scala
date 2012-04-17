@@ -4,10 +4,9 @@ import org.elasticmq.storage.IdempotentMutativeCommand
 import java.io._
 import org.elasticmq.marshalling.{JavaSerializationMarshaller, ObjectMarshaller}
 import java.util.zip.CRC32
+import javax.annotation.concurrent.NotThreadSafe
 
-/**
- * Not thread safe.
- */
+@NotThreadSafe
 class CommandWriter(outputStream: DataOutputStream, objectMarshaller: ObjectMarshaller) extends Closeable{
   private val crc = new CRC
 

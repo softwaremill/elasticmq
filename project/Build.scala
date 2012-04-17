@@ -65,7 +65,9 @@ object Dependencies {
 
   val jgroups       = "org.jgroups"               % "jgroups"               % "3.1.0.Alpha2" exclude ("log4j", "log4j")
 
-  val common = Seq(slf4s)
+  val jsr305        = "com.google.code.findbugs"  % "jsr305"                % "1.3.9"
+
+  val common = Seq(slf4s, jsr305)
   val httpTesting = Seq(apacheHttp % "test", jclOverSlf4j % "test")
 }
 
