@@ -7,7 +7,7 @@ import java.util.zip.CRC32
 import javax.annotation.concurrent.NotThreadSafe
 
 @NotThreadSafe
-class CommandWriter(outputStream: DataOutputStream, objectMarshaller: ObjectMarshaller) extends Closeable{
+private[filelog] class CommandWriter(outputStream: DataOutputStream, objectMarshaller: ObjectMarshaller) extends Closeable{
   private val crc = new CRC
 
   /**
@@ -35,7 +35,7 @@ class CommandWriter(outputStream: DataOutputStream, objectMarshaller: ObjectMars
   }
 }
 
-object CommandWriter {
+private[filelog] object CommandWriter {
   def create(writeTo: File) = {
     new CommandWriter(
       new DataOutputStream(new BufferedOutputStream(new FileOutputStream(writeTo))),
@@ -43,7 +43,7 @@ object CommandWriter {
   }
 }
 
-class CRC {
+private[filelog] class CRC {
   private val crc32 = new CRC32()
 
   def of(bytes: Array[Byte]): Long = {

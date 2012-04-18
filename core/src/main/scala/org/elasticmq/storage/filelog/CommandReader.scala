@@ -7,7 +7,7 @@ import java.io._
 import javax.annotation.concurrent.NotThreadSafe
 
 @NotThreadSafe
-class CommandReader(inputStream: DataInputStream, objectMarshaller: ObjectMarshaller) extends Logging with Closeable {
+private[filelog] class CommandReader(inputStream: DataInputStream, objectMarshaller: ObjectMarshaller) extends Logging with Closeable {
   val crc = new CRC
 
   def read(): Option[IdempotentMutativeCommand[_]] = {
@@ -67,7 +67,7 @@ class CommandReader(inputStream: DataInputStream, objectMarshaller: ObjectMarsha
   }
 }
 
-object CommandReader {
+private[filelog] object CommandReader {
   def create(readFrom: File) = {
     new CommandReader(
       new DataInputStream(new BufferedInputStream(new FileInputStream(readFrom))),
