@@ -69,7 +69,7 @@ class FileLogDataDirTest extends FunSuite with MustMatchers with BeforeAndAfter 
     val log3 = fileLogDataDir.createOrGetNextLogFile()
 
     // When
-    val result = fileLogDataDir.existingLogFilesAfter(snapshot1)
+    val result = fileLogDataDir.existingLogFilesAfter(Some(snapshot1))
 
     // Then
     result.toList must be (List(log2, log3))
