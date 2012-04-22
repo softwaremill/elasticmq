@@ -1,8 +1,9 @@
 package org.elasticmq.storage.filelog
 
 import java.io.File
+import com.weiglewilczek.slf4s.Logging
 
-private[filelog] class FileLogDataDir(configuration: FileLogConfiguration) {
+private[filelog] class FileLogDataDir(configuration: FileLogConfiguration) extends Logging {
   if (!configuration.storageDir.exists() && !configuration.storageDir.mkdir()) {
     throw new IllegalArgumentException("The directory %s doesn't exist and cannot be created."
       .format(configuration.storageDir.getAbsolutePath))
@@ -39,14 +40,23 @@ private[filelog] class FileLogDataDir(configuration: FileLogConfiguration) {
   }
 
   def deleteSnapshotsExceptOldest() {
-    allSnapshotFiles.dropRight(1).foreach(_.delete())
+    val toDelete = allSnapshotFiles.dropRight(1)
+    if (toDelete.size > 0) {
+      logger.debug("Deleting (%s) snapshots except the oldest (%s)".format(toDelete, allSnapshotFiles.last))
+      toDelete.foreach(_.delete())
+    }
   }
 
   def deleteOldDataFiles() {
+    val snapshotsToDelete = allSnapshotFiles.tail
+    val logsToDelete = allLogFiles.tail
+
+    logger.debug("Deleting old snapshots (%s) and logs (%s)".format(snapshotsToDelete, logsToDelete))
+
     // It is important to delete the snapshots first, as otherwise if the system failed with the log file delete and
     // snapshot present, restore would fail as well.
-    allSnapshotFiles.tail.foreach(_.delete())
-    allLogFiles.tail.foreach(_.delete())
+    snapshotsToDelete.foreach(_.delete())
+    logsToDelete.foreach(_.delete())
   }
 
   private def createIfNeeded(file: File): File = {
