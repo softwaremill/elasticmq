@@ -23,11 +23,12 @@ private[filelog] class FileLogDataDir(configuration: FileLogConfiguration) exten
   }
 
   def existingLogFilesAfter(snapshotOpt: Option[File]): Seq[File] = {
+    val allLogFilesSeq = allLogFiles.toSeq
     snapshotOpt.map(snapshot => {
       val snapshotCounter = counterFromFile(SnapshotFilePrefix, snapshot)
       val firstFileName = dataFileNameWithCounter(LogFilePrefix, snapshotCounter)
-      allLogFiles.filter(f => f.getName.compareTo(firstFileName) > 0).reverse
-    }).getOrElse(allLogFiles)
+      allLogFilesSeq.filter(f => f.getName.compareTo(firstFileName) > 0).reverse
+    }).getOrElse(allLogFilesSeq)
   }
 
   def createOrGetNextSnapshot(): File = {
