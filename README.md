@@ -223,6 +223,11 @@ Technology
 Change log
 ----------
 
+#### Version 0.5 (pending)
+
+* file log for message storage
+* factoring out `storage-database` module, to decrease the dependencies of the core modules
+
 #### Version 0.4 (27 Mar 2012)
 
 * replication
