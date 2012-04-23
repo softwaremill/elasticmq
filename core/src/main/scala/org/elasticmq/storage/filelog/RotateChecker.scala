@@ -19,4 +19,8 @@ private[filelog] class RotateChecker(configuration: FileLogConfiguration) {
   def reset() {
     commandsWrittenSinceLastRotate = 0
   }
+
+  def update(commandsCount: Int) {
+    commandsWrittenSinceLastRotate = commandsCount
+  }
 }
