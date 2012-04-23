@@ -6,7 +6,6 @@ import java.util.concurrent.atomic.AtomicReference
 import org.elasticmq.data.DataSource
 import org.elasticmq.replication.{ClusterState, CommandResultReplicator, CommandApplier, ReplicatedStorage}
 import org.elasticmq._
-import com.weiglewilczek.slf4s.Logging
 
 class JGroupsReplicatedStorage(masterAddressRef: AtomicReference[Option[NodeAddress]],
                                delegateStorage: StorageCommandExecutor,
@@ -14,7 +13,7 @@ class JGroupsReplicatedStorage(masterAddressRef: AtomicReference[Option[NodeAddr
                                commandResultReplicator: CommandResultReplicator,
                                myAdress: NodeAddress,
                                val clusterState: ClusterState)
-  extends ReplicatedStorage with CommandApplier with Logging {
+  extends ReplicatedStorage with CommandApplier {
 
   def execute[R](command: StorageCommand[R]) = {
     clusterState.assertNodeActive()
@@ -31,17 +30,7 @@ class JGroupsReplicatedStorage(masterAddressRef: AtomicReference[Option[NodeAddr
   def executeStateManagement[T](f: (DataSource) => T) = delegateStorage.executeStateManagement(f)
 
   def apply(command: IdempotentMutativeCommand[_]) {
-    import scala.util.control.Exception._
-
-    handling(classOf[QueueDoesNotExistException],
-      classOf[QueueAlreadyExistsException],
-      classOf[MessageDoesNotExistException])
-    .by(logger.warn("Exception when applying command; a conflicting command was already applied to the storage. " +
-      "This can happen immediately after state replication, if commands were executed on the master when the " +
-      "state was being read.", _))
-    .apply {
-      delegateStorage.execute(command)
-    }
+    delegateStorage.executeToleratingAppliedCommands(command)
   }
 
   def address = myAdress
