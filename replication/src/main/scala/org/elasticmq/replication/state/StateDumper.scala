@@ -1,8 +1,8 @@
 package org.elasticmq.replication.state
 
-import org.elasticmq.storage.StorageCommandExecutor
 import java.io.{OutputStream, ObjectOutputStream}
 import org.elasticmq.data.StateDump
+import org.elasticmq.storage.{EndOfCommands, StorageCommandExecutor}
 
 class StateDumper(storageCommandExecutor: StorageCommandExecutor) {
   def dump(outputStream: OutputStream) {
