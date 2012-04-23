@@ -1,35 +1,39 @@
 package org.elasticmq.storage.filelog
 
 import javax.annotation.concurrent.NotThreadSafe
-import java.util.concurrent.atomic.AtomicBoolean
 import collection.JavaConverters._
 import org.elasticmq.storage.{StorageCommandExecutor, IdempotentMutativeCommand}
 import org.elasticmq.data.StateDump
 import java.util.concurrent.BlockingQueue
 import java.util.ArrayList
 import com.weiglewilczek.slf4s.Logging
+import annotation.tailrec
 
 @NotThreadSafe
 class FileLogWriter(rotateChecker: RotateChecker,
                     dataDir: FileLogDataDir,
                     storage: StorageCommandExecutor,
-                    running: AtomicBoolean,
-                    commandQueue: BlockingQueue[IdempotentMutativeCommand[_]]) extends Runnable with Logging {
+                    commandQueue: BlockingQueue[IdempotentMutativeCommandOrEnd]) extends Runnable with Logging {
 
-  private val MaxBatch = 500
-  private val drainList = new ArrayList[IdempotentMutativeCommand[_]](MaxBatch)
   private var currentCommandWriter = CommandWriter.create(dataDir.createOrGetCurrentLogFile())
 
   def run() {
-    while (running.get()) {
-      commandQueue.drainTo(drainList, MaxBatch)
-      if (drainList.size() != 0) {
-        logCommands(drainList.asScala)
-        drainList.clear()
-      }
-    }
+    doRun()
 
     currentCommandWriter.close()
+
+    logger.info("File log writer thread exiting")
+  }
+
+  @tailrec
+  private def doRun() {
+    commandQueue.take match {
+      case Left(command) => {
+        logCommands(command :: Nil)
+        doRun()
+      }
+      case Right(_) =>
+    }
   }
 
   private def logCommands(commands: Seq[IdempotentMutativeCommand[_]]) {

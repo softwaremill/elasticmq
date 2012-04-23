@@ -10,4 +10,6 @@ package object filelog {
       closeable.close()
     }
   }
+
+  type IdempotentMutativeCommandOrEnd = Either[IdempotentMutativeCommand[_], EndOfCommands.type]
 }

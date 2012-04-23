@@ -1,11 +1,10 @@
 package org.elasticmq.storage.filelog
 
 import javax.annotation.concurrent.{ThreadSafe, NotThreadSafe}
-import org.elasticmq.storage.{StorageCommandExecutor, IdempotentMutativeCommand}
 import java.io.File
-import org.elasticmq.ElasticMQException
 import java.util.concurrent.BlockingQueue
 import com.weiglewilczek.slf4s.Logging
+import org.elasticmq.storage.{EndOfCommands, StorageCommandExecutor, IdempotentMutativeCommand}
 
 /**
  * The FileLog consists of a series of files, each of which is either a command log, or a snapshot.
@@ -21,11 +20,16 @@ import com.weiglewilczek.slf4s.Logging
 class FileLog(rotateChecker: RotateChecker,
               dataDir: FileLogDataDir,
               storage: StorageCommandExecutor,
-              commandQueue: BlockingQueue[IdempotentMutativeCommand[_]]) extends Logging {
+              commandQueue: BlockingQueue[IdempotentMutativeCommandOrEnd]) extends Logging {
 
   @ThreadSafe
   def addCommands(commands: Seq[IdempotentMutativeCommand[_]]) {
-    commands.foreach(commandQueue.offer(_))
+    commands.foreach(command => commandQueue.offer(Left(command)))
+  }
+
+  @ThreadSafe
+  def shutdown() {
+    commandQueue.offer(Right(EndOfCommands))
   }
 
   @NotThreadSafe
