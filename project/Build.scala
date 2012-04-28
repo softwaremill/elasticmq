@@ -3,7 +3,8 @@ import Keys._
 
 object Resolvers {
   val elasticmqResolvers = Seq(
-    ScalaToolsSnapshots,
+    "Sonatype releases" at "http://oss.sonatype.org/content/repositories/releases/",
+    "Sonatype snapshots" at "http://oss.sonatype.org/content/repositories/snapshots/",
     "SotwareMill Public Releases" at "http://tools.softwaremill.pl/nexus/content/repositories/releases/",
     "JBoss Releases" at "https://repository.jboss.org/nexus/content/groups/public")
 }
