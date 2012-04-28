@@ -140,4 +140,10 @@ object ElasticMQBuild extends Build {
     file("rest/rest-sqs-testing-amazon-java-sdk"),
     settings = buildSettings ++ Seq(libraryDependencies := Seq(amazonJavaSdk) ++ common)
   ) dependsOn(restSqs % "test->test")
+
+  lazy val server: Project = Project(
+    "server",
+    file("server"),
+    settings = buildSettings
+  ) dependsOn(core, storageDatabase, replication, restSqs)
 }
