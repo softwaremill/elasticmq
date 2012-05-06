@@ -145,7 +145,7 @@ object ElasticMQBuild extends Build {
   lazy val server: Project = Project(
     "server",
     file("server"),
-    settings = buildSettings ++ CustomTasks.distributionSettings
+    settings = buildSettings ++ CustomTasks.distributionSettings ++ Seq(libraryDependencies := Seq(logback))
   ) dependsOn(core, storageDatabase, replication, restSqs, commonTest % "test")
 }
 
@@ -234,11 +234,11 @@ object CustomTasks {
     },
 
     distributionCopyBin <<= (distributionBinDirectory, resourceDirectory in Compile) map { (dbd, rd) =>
-      IO.copy(rd.listFiles().filter(_.getName.startsWith("run")).map(script => (script, dbd / script.getName)))
+      IO.copy((rd / "bin").listFiles().map(script => (script, dbd / script.getName)))
     },
 
-    distributionCopyConf <<= (distributionConfDirectory) map { (dcd) =>
-      Set()
+    distributionCopyConf <<= (distributionConfDirectory, resourceDirectory in Compile) map { (dcd, rd) =>
+      IO.copy((rd / "conf").listFiles().map(script => (script, dcd / script.getName)))
     },
 
     distributionCopyDocs <<= (distributionDirectory) map { (dd) =>

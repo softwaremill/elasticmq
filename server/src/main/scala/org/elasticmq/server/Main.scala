@@ -1,7 +1,9 @@
 package org.elasticmq.server
 
-object Main {
+import com.weiglewilczek.slf4s.Logging
+
+object Main extends Logging {
   def main(args: Array[String]) {
-    println("Welcome to ElasticMQ!")
+    logger.info("Welcome to ElasticMQ!")
   }
 }

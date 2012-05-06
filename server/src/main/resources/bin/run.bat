@@ -48,20 +48,19 @@ goto repoSetup
 set BASEDIR=%~dp0\..
 
 :repoSetup
-#ENV_SETUP#
 
-if "%JAVACMD%"=="" set JAVACMD=#JAVA_BINARY#
+if "%JAVACMD%"=="" set JAVACMD=java
 
-if "%REPO%"=="" set REPO=%BASEDIR%\#REPO#
+if "%REPO%"=="" set REPO=%BASEDIR%\bin
 
-set CLASSPATH=#CLASSPATH#
-set EXTRA_JVM_ARGUMENTS=#EXTRA_JVM_ARGUMENTS#
+set CLASSPATH="%REPO%"\*
+set EXTRA_JVM_ARGUMENTS=-server -Dlogback.configurationFile=$BASEDIR/conf/logback.xml
 goto endInit
 
 @REM Reaching here means variables are defined and arguments have been captured
 :endInit
 
-%JAVACMD% %JAVA_OPTS% %EXTRA_JVM_ARGUMENTS% -classpath %CLASSPATH_PREFIX%;%CLASSPATH% -Dapp.name="#APP_NAME#" -Dapp.repo="%REPO%" -Dbasedir="%BASEDIR%" #MAINCLASS# #APP_ARGUMENTS#%CMD_LINE_ARGS%
+%JAVACMD% %JAVA_OPTS% %EXTRA_JVM_ARGUMENTS% -classpath %CLASSPATH_PREFIX%;%CLASSPATH% org.elasticmq.server.Main %CMD_LINE_ARGS%
 if ERRORLEVEL 1 goto error
 goto end
 

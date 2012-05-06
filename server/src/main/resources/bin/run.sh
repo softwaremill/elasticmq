@@ -18,8 +18,6 @@ done
 PRGDIR=`dirname "$PRG"`
 BASEDIR=`cd "$PRGDIR/.." >/dev/null; pwd`
 
-@ENV_SETUP@
-
 # OS specific support.  $var _must_ be set to either true or false.
 cygwin=false;
 darwin=false;
@@ -71,11 +69,11 @@ fi
 
 if [ -z "$REPO" ]
 then
- REPO="$BASEDIR"/@REPO@
+ REPO="$BASEDIR"/lib
 fi
 
-CLASSPATH=$CLASSPATH_PREFIX:@CLASSPATH@
-EXTRA_JVM_ARGUMENTS="@EXTRA_JVM_ARGUMENTS@"
+CLASSPATH=$CLASSPATH_PREFIX:"$REPO"/*
+EXTRA_JVM_ARGUMENTS="-server -Dlogback.configurationFile=$BASEDIR/conf/logback.xml"
 
 # For Cygwin, switch paths to Windows format before running java
 if $cygwin; then
@@ -89,10 +87,5 @@ fi
 exec "$JAVACMD" $JAVA_OPTS \
  $EXTRA_JVM_ARGUMENTS \
  -classpath "$CLASSPATH" \
- -Dapp.name="@APP_NAME@" \
- -Dapp.pid="$$" \
- -Dapp.repo="$REPO" \
- -Dapp.home="$BASEDIR" \
- -Dbasedir="$BASEDIR" \
- @MAINCLASS@ \
- @APP_ARGUMENTS@"$@"
+ org.elasticmq.server.Main \
+ "$@"
