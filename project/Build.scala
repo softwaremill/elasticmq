@@ -210,27 +210,14 @@ object CustomTasks {
       projectWithTransitiveDependencies(thr, Set(thr))
     },
 
-    distributionCopyInternalDependencies <<= (thisProjectRef, state, distributionLibDirectory, projectDependenciesClosure) map { (thr, s, dld, pdc) =>
+    distributionCopyInternalDependencies <<= (state, distributionLibDirectory, projectDependenciesClosure) flatMap { (s, dld, pdc) =>
       val structure = Project.structure(s)
-
       val packageTaskKey = (packageBin in Compile).task
-
-      println("1 " + structure.data)
-      println("2 " + pdc.flatMap(p => (packageTaskKey in p).get(structure.data)))
-
-      val packageAllTask = pdc.flatMap(pr => (packageTaskKey in pr).get(structure.data)).toList
-
-      pdc.map(pr => {
-        val packageTaskOption = (packageTaskKey in pr).get(structure.data)
-        packageTaskOption.map(packageTask => packageTask.map(file => println("result: " + file)))
-      })
+      val packageAllTask = pdc.flatMap(pr => (packageTaskKey in pr).get(structure.data)).toList.join
 
       packageAllTask.map { jars =>
-        println("jars = " + jars)
-        jars.map(f => println("f = " + f))
+        IO.copy(jars.map {f => (f, dld / f.getName)})
       }
-
-      Set()
     },
 
     distributionCopyBin <<= (distributionBinDirectory, resourceDirectory in Compile) map { (dbd, rd) =>
