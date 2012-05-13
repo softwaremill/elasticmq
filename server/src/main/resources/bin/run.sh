@@ -73,7 +73,7 @@ then
 fi
 
 CLASSPATH=$CLASSPATH_PREFIX:"$REPO"/*
-EXTRA_JVM_ARGUMENTS="-server -Dlogback.configurationFile=$BASEDIR/conf/logback.xml"
+EXTRA_JVM_ARGUMENTS="-server -DBASEDIR=$BASEDIR -Dlogback.configurationFile=$BASEDIR/conf/logback.xml"
 
 # For Cygwin, switch paths to Windows format before running java
 if $cygwin; then

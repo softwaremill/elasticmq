@@ -6,7 +6,7 @@
     </appender>
 
     <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>../logs/elasticmq.log</file>
+        <file>${BASEDIR}/logs/elasticmq.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
             <!-- daily rollover -->
             <fileNamePattern>elasticmq.%d{yyyy-MM-dd}.log</fileNamePattern>

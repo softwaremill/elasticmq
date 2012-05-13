@@ -54,7 +54,7 @@ if "%JAVACMD%"=="" set JAVACMD=java
 if "%REPO%"=="" set REPO=%BASEDIR%\bin
 
 set CLASSPATH="%REPO%"\*
-set EXTRA_JVM_ARGUMENTS=-server -Dlogback.configurationFile=$BASEDIR/conf/logback.xml
+set EXTRA_JVM_ARGUMENTS=-server -DBASEDIR=%BASEDIR% -Dlogback.configurationFile=%BASEDIR%/conf/logback.xml
 goto endInit
 
 @REM Reaching here means variables are defined and arguments have been captured
