@@ -80,7 +80,7 @@ object ElasticMQBuild extends Build {
     "root",
     file("."),
     settings = buildSettings
-  ) aggregate(commonTest, api, spi, core, storageDatabase, replication, rest)
+  ) aggregate(commonTest, api, spi, core, storageDatabase, replication, rest, server)
 
   lazy val commonTest: Project = Project(
     "common-test",
@@ -175,7 +175,7 @@ object CustomTasks {
   val projectDependenciesClosure = TaskKey[Set[ProjectRef]]("project-dependency-closure", "Calculates the closure of the project's dependencies, including transitive ones.")
 
   val distributionSettings = Seq(
-    distributionName <<= (name, version) { (n, v) => n + "-" + v },
+    distributionName <<= (version) { (v) => "elasticmq-" + v },
 
     distributionDirectory <<= (target, distributionName) { (t, n) => t / "distribution" / n },
 
