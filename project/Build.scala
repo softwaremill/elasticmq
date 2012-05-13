@@ -6,7 +6,8 @@ object Resolvers {
     "Sonatype releases" at "http://oss.sonatype.org/content/repositories/releases/",
     "Sonatype snapshots" at "http://oss.sonatype.org/content/repositories/snapshots/",
     "SotwareMill Public Releases" at "http://tools.softwaremill.pl/nexus/content/repositories/releases/",
-    "JBoss Releases" at "https://repository.jboss.org/nexus/content/groups/public")
+    "JBoss Releases" at "https://repository.jboss.org/nexus/content/groups/public",
+    "Twitter Maven" at "http://maven.twttr.com")
 }
 
 object BuildSettings {
@@ -67,6 +68,8 @@ object Dependencies {
   val jgroups       = "org.jgroups"               % "jgroups"               % "3.1.0.Alpha2" exclude ("log4j", "log4j")
 
   val jsr305        = "com.google.code.findbugs"  % "jsr305"                % "1.3.9"
+
+  val ostrich       = "com.twitter"               %% "ostrich"              % "4.10.6"
 
   val common = Seq(slf4s, jsr305)
   val httpTesting = Seq(apacheHttp % "test", jclOverSlf4j % "test")
@@ -145,7 +148,7 @@ object ElasticMQBuild extends Build {
   lazy val server: Project = Project(
     "elasticmq-server",
     file("server"),
-    settings = buildSettings ++ CustomTasks.distributionSettings ++ Seq(libraryDependencies := Seq(logback))
+    settings = buildSettings ++ CustomTasks.distributionSettings ++ Seq(libraryDependencies := Seq(logback, ostrich))
   ) dependsOn(core, storageDatabase, replication, restSqs, commonTest % "test")
 }
 
