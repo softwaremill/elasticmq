@@ -221,7 +221,9 @@ object CustomTasks {
     },
 
     distributionCopyBin <<= (distributionBinDirectory, resourceDirectory in Compile) map { (dbd, rd) =>
-      IO.copy((rd / "bin").listFiles().map(script => (script, dbd / script.getName)))
+      val result = IO.copy((rd / "bin").listFiles().map(script => (script, dbd / script.getName)))
+      result.filter(_.getName.endsWith(".sh")).foreach(file => file.setExecutable(true))
+      result
     },
 
     distributionCopyConf <<= (distributionConfDirectory, resourceDirectory in Compile) map { (dcd, rd) =>
