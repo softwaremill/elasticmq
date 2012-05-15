@@ -71,7 +71,7 @@ object SQSRestServerFactory extends Logging {
         Nil, socketAddress)
 
     logger.info("Started SQS rest server on address %s, server address %s"
-      .format(socketAddress, theServerAddress.address))
+      .format(socketAddress, theServerAddress.fullAddress))
 
     server
   }
@@ -123,7 +123,7 @@ trait ClientModule {
 trait QueueURLModule {
   def serverAddress: NodeAddress
 
-  def queueURL(queue: Queue) = serverAddress.address+"/"+Constants.QueueUrlPath+"/"+queue.name
+  def queueURL(queue: Queue) = serverAddress.fullAddress+"/"+Constants.QueueUrlPath+"/"+queue.name
 }
 
 

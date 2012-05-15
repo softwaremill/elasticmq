@@ -29,7 +29,7 @@ class ElasticMQServerConfig extends Config[RuntimeEnvironment => ElasticMQServer
 
   // What is the outside visible address of this ElasticMQ node (used by replication and rest-sqs)
 
-  var nodeAddress = NodeAddress("localhost:9324")
+  var nodeAddress = NodeAddress()
 
   // Replication
 

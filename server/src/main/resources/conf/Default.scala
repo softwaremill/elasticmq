@@ -17,7 +17,7 @@ new ElasticMQServerConfig {
   // fileLog.storageDir = new File("/path/to/a/directory")
 
   // To change the outside visible address of this ElasticMQ node:
-  // nodeAddress = NodeAddress("host:9324")
+  // nodeAddress = NodeAddress(host = "host", port = 9324)
 
   // To enable replication:
   // replication.enabled = true

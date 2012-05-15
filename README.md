@@ -50,7 +50,7 @@ Starting an ElasticMQ server with an SQS interface
     // First we need to create a Node
     val node = NodeBuilder.withStorage(new InMemoryStorage)
     // Then we can expose the native client using the SQS REST interface
-    val server = SQSRestServerFactory.start(node.nativeClient, 9324, new NodeAddress("http://localhost:9324"))
+    val server = SQSRestServerFactory.start(node.nativeClient, 9324, new NodeAddress())
     // ... use ...
     // Finally we need to stop the server and the node
     server.stop()
