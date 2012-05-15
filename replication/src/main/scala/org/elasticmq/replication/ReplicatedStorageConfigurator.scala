@@ -8,6 +8,7 @@ import org.jgroups.blocks.MessageDispatcher
 import org.elasticmq.replication.jgroups._
 import java.util.concurrent.atomic.AtomicReference
 import org.elasticmq.marshalling.JavaSerializationMarshaller
+import com.weiglewilczek.slf4s.Logging
 
 /**
  * @param myAddress Logical address of the node.
@@ -21,8 +22,11 @@ class ReplicatedStorageConfigurator(delegate: StorageCommandExecutor,
                                     myAddress: NodeAddress,
                                     commandReplicationMode: CommandReplicationMode,
                                     numberOfNodes: Int,
-                                    createJChannel: () => JChannel = () => new JChannel()) {
+                                    createJChannel: () => JChannel = () => new JChannel()) extends Logging {
   def start(): ReplicatedStorage = {
+    logger.info("Starting replication, mode: %s, number of nodes: %d".format(
+      commandReplicationMode.toString, numberOfNodes))
+
     val channel = createJChannel()
     channel.setDiscardOwnMessages(true)
 

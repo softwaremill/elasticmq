@@ -26,7 +26,7 @@ new ElasticMQServerConfig {
   // ensure data consistency.
   // replication.numberOfNodes = 5
   // If the nodes can't be discovered via multicast, you will need to provide the initial set of memebers manually:
-  // replication.nodeDiscovery = TCP("host1:9324", "host2:9333", ...)
+  // replication.nodeDiscovery = TCP(List("host1:9324", "host2:9333", ...))
 
   // To bind REST SQS to a different host/port:
   // restSqs.bindPort = 9325

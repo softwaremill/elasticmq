@@ -2,8 +2,11 @@ package org.elasticmq.storage.inmemory
 
 import org.elasticmq.storage.interfaced.InterfacedCommandExecutor
 import org.elasticmq.data.DataSource
+import com.weiglewilczek.slf4s.Logging
 
-class InMemoryStorage extends InterfacedCommandExecutor {
+class InMemoryStorage extends InterfacedCommandExecutor with Logging {
+  logger.info("Creating a new in-memory storage")
+
   val queues = new InMemoryQueuesStorage(queueData => {
     val statistics = new InMemoryMessageStatisticsStorage(queueData.name)
     new InMemoryQueue(

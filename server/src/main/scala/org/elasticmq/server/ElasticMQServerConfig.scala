@@ -35,7 +35,7 @@ class ElasticMQServerConfig extends Config[RuntimeEnvironment => ElasticMQServer
 
   sealed trait NodeDiscovery
   case object UDP extends NodeDiscovery
-  case class TCP(initialMembers: List[String]) extends NodeDiscovery
+  case class TCP(initialMembers: List[String], replicationBindAddress: String = "localhost:7800") extends NodeDiscovery
 
   class ReplicationConfiguration {
     var enabled = false

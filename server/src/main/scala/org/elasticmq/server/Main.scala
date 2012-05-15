@@ -17,7 +17,6 @@ object Main extends Logging {
     server.start()
   }
 
-  private lazy val baseDir = System.getProperty("BASEDIR")
-  private lazy val configFile = baseDir + File.separator + "conf" + File.separator + "Default.scala"
+  private lazy val configFile = Environment.BaseDir + File.separator + "conf" + File.separator + "Default.scala"
   private lazy val configTarget = "tmp"
 }
