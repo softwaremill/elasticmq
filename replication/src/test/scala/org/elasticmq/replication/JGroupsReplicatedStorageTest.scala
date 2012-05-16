@@ -67,7 +67,7 @@ class JGroupsReplicatedStorageTest extends FunSuite with MustMatchers with Await
                             cluster: StorageCluster) {
     var i = 0
 
-    def newNodeAddress() = { i += 1; NodeAddress("node"+i) }
+    def newNodeAddress() = { i += 1; NodeAddress(host = "node"+i) }
 
     def startNewNode(createJChannel: () => JChannel = () => new JChannel()) = {
       val storage = new InMemoryStorage

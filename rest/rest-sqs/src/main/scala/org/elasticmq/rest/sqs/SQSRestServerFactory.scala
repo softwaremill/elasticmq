@@ -15,7 +15,7 @@ object SQSRestServerFactory extends Logging {
    * the base address.
    */
   def start(client: Client): RestServer = {
-    start(client, 9324, NodeAddress("http://localhost:9324"))
+    start(client, 9324, NodeAddress())
   }
 
   /**
