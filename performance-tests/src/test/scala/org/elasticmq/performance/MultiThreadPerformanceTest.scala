@@ -14,13 +14,13 @@ object MultiThreadPerformanceTest {
     val node = NodeBuilder.withStorage(new InMemoryStorage())
     val storageName = "InMemory"
 
-//    val node = NodeBuilder.withStorage(
-//      new SquerylStorage(DBConfiguration.mysql("elasticmq", "root", "")))
-//    val storageName = "MySQL"
+    //    val node = NodeBuilder.withStorage(
+    //      new SquerylStorage(DBConfiguration.mysql("elasticmq", "root", "")))
+    //    val storageName = "MySQL"
 
     //val node = NodeBuilder.withH2InMemoryStorage().build()
     //val storageName = "H2"
-    
+
     val client = node.nativeClient
     val testQueue = client.lookupOrCreateQueue("perfTest")
 
@@ -36,7 +36,7 @@ object MultiThreadPerformanceTest {
 
   def run(storageName: String, queue: Queue, numberOfThreads: Int, messageCount: Int) {
     println("Storage: %s, number of threads: %d, number of messages: %d".format(storageName, numberOfThreads, messageCount))
-    val ops = messageCount*numberOfThreads
+    val ops = messageCount * numberOfThreads
 
     val sendTook = timeRunAndJoinThreads(numberOfThreads, () => new SendMessages(queue, messageCount))
     printStats("Send", sendTook, ops)
@@ -47,13 +47,13 @@ object MultiThreadPerformanceTest {
 
     println()
   }
-  
+
   def printStats(name: String, took: Long, ops: Int) {
-    val seconds = took/1000L
+    val seconds = took / 1000L
     println("%s took: %d (%d), ops: %d, ops per second: %d".format(name, seconds, took, ops,
-      if (seconds == 0) ops else ops/seconds))
-  } 
-  
+      if (seconds == 0) ops else ops / seconds))
+  }
+
   def timeRunAndJoinThreads(numberOfThreads: Int, runnable: () => Runnable) = {
     timed {
       val threads = for (i <- 1 to numberOfThreads) yield {
@@ -70,7 +70,7 @@ object MultiThreadPerformanceTest {
     def run() {
       var i = 0;
       while (i < count) {
-        queue.sendMessage("message"+i)
+        queue.sendMessage("message" + i)
         i += 1
       }
     }
@@ -87,7 +87,7 @@ object MultiThreadPerformanceTest {
       }
     }
   }
-  
+
   def assertQueueEmpty(queue: Queue) {
     val stats = queue.fetchStatistics()
     assert(stats.approximateNumberOfVisibleMessages == 0)

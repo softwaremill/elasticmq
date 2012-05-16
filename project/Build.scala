@@ -150,6 +150,12 @@ object ElasticMQBuild extends Build {
     file("server"),
     settings = buildSettings ++ CustomTasks.distributionSettings ++ Seq(libraryDependencies := Seq(logback, ostrich))
   ) dependsOn(core, storageDatabase, replication, restSqs, commonTest % "test")
+
+  lazy val performanceTests: Project = Project(
+    "elasticmq-performance-tests",
+    file("performance-tests"),
+    settings = buildSettings ++ Seq(libraryDependencies := Seq(amazonJavaSdk, logback) ++ common)
+  ) dependsOn(core, storageDatabase, replication, restSqs, commonTest % "test")
 }
 
 object CustomTasks {
