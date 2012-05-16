@@ -14,7 +14,7 @@ import java.net.InetSocketAddress
 import org.elasticmq.rest.RestServer
 
 class ElasticMQServer(config: ElasticMQServerConfig) extends Logging {
-  def start() {
+  def start() = {
     val start = System.currentTimeMillis()
 
     logger.info("Starting the ElasticMQ server ...")
@@ -25,7 +25,12 @@ class ElasticMQServer(config: ElasticMQServerConfig) extends Logging {
 
     val restServerOpt = optionallyStartRestSqs(withOptionalReplication)
 
-    logger.info("ElasticMQ server started in %d ms.".format(System.currentTimeMillis() - start))
+    logger.info("=== ElasticMQ server started in %d ms ===".format(System.currentTimeMillis() - start))
+
+    () => {
+      restServerOpt.map(_.stop())
+      withOptionalReplication.shutdown()
+    }
   }
 
   private def createStorage() = {

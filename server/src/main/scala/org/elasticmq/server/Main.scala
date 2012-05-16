@@ -6,15 +6,31 @@ import java.io.File
 
 object Main extends Logging {
   def main(args: Array[String]) {
+    logUncaughtExcpetions()
+
+    val runtime = RuntimeEnvironment(this, Array("-f", configFile, "--config-target", configTarget))
+    val server = runtime.loadRuntimeConfig[ElasticMQServer]()
+    val shutdown = server.start()
+
+    addShutdownHook(shutdown)
+  }
+
+  private def logUncaughtExcpetions() {
     Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
       def uncaughtException(t: Thread, e: Throwable) {
         logger.error("Uncaught exception in thread: " + t.getName, e)
       }
     })
+  }
 
-    val runtime = RuntimeEnvironment(this, Array("-f", configFile, "--config-target", configTarget))
-    val server = runtime.loadRuntimeConfig[ElasticMQServer]()
-    server.start()
+  private def addShutdownHook(shutdown: () => Unit) {
+    Runtime.getRuntime.addShutdownHook(new Thread() {
+      override def run() {
+        logger.info("ElasticMQ server stopping ...")
+        shutdown()
+        logger.info("=== ElsticMQ server stopped ===")
+      }
+    });
   }
 
   private lazy val configFile = Environment.BaseDir + File.separator + "conf" + File.separator + "Default.scala"
