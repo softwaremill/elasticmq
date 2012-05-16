@@ -7,7 +7,7 @@ tl;dr
 * message queue system
 * emphasis on not loosing any messages
 * Amazon SQS-compatible interface
-* in-memory and db-backed message storage
+* in-memory with optional journalling and db-backed message storage
 * optionally replicated (guaranteed messaging)
 
 Summary
@@ -26,17 +26,17 @@ It may happen, however, that a message is delivered twice (if, for example, a cl
 processing it, but before deleting). That's why clients of ElasticMQ (and Amazon SQS) should be idempotent.
 
 There are several message storage implementations. Messages can be stored entirely in-memory, providing a
-volatile but fast message queue. Alternatively, they can be persisted in a database (MySQL, Postgres, H2, ...),
-making the data durable.
+volatile but fast message queue. The in-memory storage can be journaled on disk, providing message durability across
+server restarts/crashes. Alternatively, messages can be persisted in a database (MySQL, Postgres, H2, ...).
 
 ElasticMQ supports data replication across a cluster, thus providing a replicated/guaranteed message queue.
-Each node can use any storage implementation.
+Each node in the cluster can use any storage implementation.
 
 As ElasticMQ implements a subset of the [SQS](http://aws.amazon.com/sqs/) REST interface, it is a great SQS alternative
 both for testing purposes (ElasticMQ is easily embeddable) and for creating systems which work both within and
 outside of the Amazon infrastructure.
 
-The future will most probably bring more exciting features :).
+The future will most probably bring even more exciting features :).
 
 Community
 ---------
@@ -44,8 +44,28 @@ Community
 * [Blog](http://www.warski.org/blog/category/elasticmq/)
 * Forum (discussions, help): [Google group](https://groups.google.com/forum/?fromgroups#!forum/elasticmq).
 
-Starting an ElasticMQ server with an SQS interface
---------------------------------------------------
+Installation: stand-alone
+-------------------------
+
+You can download the stand-alone distribution here: [TBD](http://www.elasticmq.org).
+Java 6 or above is required for running the server.
+
+Installation is as easy as unpacking the `.zip`/`.tar.gz` file. The content of the package is:
+* `bin`: scripts to start the server
+* `conf`: ElasticMQ and logging (logback) configuration
+* `lib`: binaries
+* `README.md`, `LICENSE.txt`, `NOTICE.txt`: this file, license documentation
+
+Additionally two directories will be created when the server is started:
+* `data`: stores the command journal (messages file log), if enabled
+* `log`: default location for log files
+
+You can configure ElasticMQ through the `conf/Default.scala` file. There you can choose which storage to use, should
+journalling and replication be enabled, should the server expose an SQS interface, on what interface and port to bind
+etc. More documentation can be found in the file itself.
+
+Starting an embedded ElasticMQ server with an SQS interface
+-----------------------------------------------------------
 
     // First we need to create a Node
     val node = NodeBuilder.withStorage(new InMemoryStorage)
@@ -59,6 +79,20 @@ Starting an ElasticMQ server with an SQS interface
 Alternatively, you can use MySQL to store the data:
 
     val node = NodeBuilder.withStorage(new SquerylStorage(DBConfiguration.mysql("elasticmq", "root", "")))
+
+Adding journaling to an in-memory storage
+-----------------------------------------
+
+This is as simple as wrapping the original storage:
+
+    val wrappedStorage = new FileLogConfigurator(
+        mainStorage,
+        FileLogConfiguration(new File("/store/here"), 100000)
+        .start()
+
+Note that even though messages are now durable (restarting the server won't cause message loss), the overall capacity
+of the queues (how many messages the queue can store at a time) is limited by the amount of RAM allocated to the
+process.
 
 Starting a replicated storage
 -----------------------------
@@ -105,14 +139,15 @@ to work).
 Deployment scenarios
 --------------------
 
-1. In-memory storage, single node: ideal for testing
-2. DB storage, local DB, single node: persistent messaging
-3. DB storage, shared DB, multiple nodes: persistent messaging. Multiple nodes can use the same database.
+1. In-memory storage, single node, embedded: ideal for testing
+2. In-memory storage, single node, journalling: fast persistent messaging with queues bounded by the amount of memory
+3. DB storage, local DB, single node: persistent messaging with unbounded queues
+4. DB storage, shared DB, multiple nodes: persistent messaging. Multiple nodes can use the same database.
    The database can be replicated/backed up for data safety.
-4. In-memory storage, multiple nodes, replicated: good for systems where at least one node is always alive.
-   Can provide data safety if using the right replication mode.
-5. DB storage, local DB, multiple nodes, replication: each node stores the data in a separate DB. Recommended if a
-   shared DB is not available. Provides good data safety.
+5. In-memory storage, multiple nodes, journalled, replicated: Data safety through replication and journalling.
+   Fast guaranteed messaging.
+6. DB storage, local DB, multiple nodes, replication: each node stores the data in a separate DB. Recommended if a
+   shared DB is not available. Provides good data safety and unbounded queues.
 
 ElasticMQ dependencies in SBT
 -----------------------------
@@ -219,13 +254,15 @@ Technology
 * Replication: [JGroups](http://www.jgroups.org/)
 * Testing the SQS interface: [Amazon Java SDK](http://aws.amazon.com/sdkforjava/);
   see the `rest-sqs-testing-amazon-java-sdk` module for the testsuite.
+* Server configuration: [Ostrich](https://github.com/twitter/ostrich/)
 
 Change log
 ----------
 
 #### Version 0.5 (pending)
 
-* file log for message storage
+* stand-alone distribution
+* file log for message storage (journal)
 * factoring out `storage-database` module, to decrease the dependencies of the core modules
 
 #### Version 0.4 (27 Mar 2012)
