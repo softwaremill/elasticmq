@@ -10,7 +10,7 @@ new ElasticMQServerConfig {
   // E.g. for mysql database-backed:
   // storage = DatabaseStorage(DBConfiguration.mysql("elasticmq", "user", "password"))
 
-  // Logging commands to a file only makes sense for the in-memory storage.
+  // Logging commands to a file (journalling) only makes sense for the in-memory storage.
   // To turn off:
   // fileLog.enabled = false
   // To store data is another directory:

@@ -15,17 +15,11 @@ import org.elasticmq.rest.RestServer
 
 class ElasticMQServer(config: ElasticMQServerConfig) extends Logging {
   def start() = {
-    val start = System.currentTimeMillis()
-
-    logger.info("Starting the ElasticMQ server ...")
-
     val baseStorage = createStorage()
     val withOptionalFileLog = optionallyWrapWithFileLog(baseStorage)
     val withOptionalReplication = optionallyStartReplication(withOptionalFileLog)
 
     val restServerOpt = optionallyStartRestSqs(withOptionalReplication)
-
-    logger.info("=== ElasticMQ server started in %d ms ===".format(System.currentTimeMillis() - start))
 
     () => {
       restServerOpt.map(_.stop())

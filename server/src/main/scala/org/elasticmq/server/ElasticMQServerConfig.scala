@@ -17,7 +17,7 @@ class ElasticMQServerConfig extends Config[RuntimeEnvironment => ElasticMQServer
 
   var storage: Storage = InMemoryStorage
 
-  // Configure the file command log
+  // Configure the file command log (journal)
 
   class FileLogConfiguration {
     var enabled = true

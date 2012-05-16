@@ -6,16 +6,21 @@ import java.io.File
 
 object Main extends Logging {
   def main(args: Array[String]) {
-    logUncaughtExcpetions()
+    val start = System.currentTimeMillis()
+    logger.info("Starting the ElasticMQ server ...")
+
+    logUncaughtExceptions()
 
     val runtime = RuntimeEnvironment(this, Array("-f", configFile, "--config-target", configTarget))
     val server = runtime.loadRuntimeConfig[ElasticMQServer]()
     val shutdown = server.start()
 
     addShutdownHook(shutdown)
+
+    logger.info("=== ElasticMQ server started in %d ms ===".format(System.currentTimeMillis() - start))
   }
 
-  private def logUncaughtExcpetions() {
+  private def logUncaughtExceptions() {
     Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
       def uncaughtException(t: Thread, e: Throwable) {
         logger.error("Uncaught exception in thread: " + t.getName, e)
