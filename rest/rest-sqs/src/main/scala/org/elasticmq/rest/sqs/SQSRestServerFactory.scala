@@ -70,7 +70,7 @@ object SQSRestServerFactory extends Logging {
         setQueueAttributesGetHandler :: setQueueAttributesPostHandler ::
         Nil, socketAddress)
 
-    logger.info("Started SQS rest server on address %s, server address %s"
+    logger.info("Started SQS rest server, bind address %s, visiible server address %s"
       .format(socketAddress, theServerAddress.fullAddress))
 
     server
