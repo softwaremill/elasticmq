@@ -143,6 +143,20 @@ That is also why when creating the replicated storage, you must provide the expe
 an even number of nodes makes most sense (e.g. in a 3-node cluster, 2 nodes must be active in order for the cluster
 to work).
 
+Using the Amazon Java SDK to access an ElasticMQ Server
+-------------------------------------------------------
+
+To use [Amazon Java SDK](http://aws.amazon.com/sdkforjava/) as an interface to an ElasticMQ server you just need
+to change the endpoint:
+
+    client = new AmazonSQSClient(new BasicAWSCredentials("x", "x"))
+    client.setEndpoint("http://localhost:9324")
+
+The endpoint value should be the same address as the `NodeAddress` provided as an argument to
+`SQSRestServerFactory` or in the configuration file.
+
+The `rest-sqs-testing-amazon-java-sdk` module contains some more usage examples.
+
 Deployment scenarios
 --------------------
 
