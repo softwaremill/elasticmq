@@ -11,24 +11,50 @@ import com.amazonaws.auth.BasicAWSCredentials
 import com.amazonaws.services.sqs.model.{CreateQueueRequest, DeleteMessageRequest, ReceiveMessageRequest, SendMessageRequest}
 import org.elasticmq.rest.sqs.SQSRestServerFactory
 import org.elasticmq.rest.RestServer
+import org.elasticmq.test._
 
 object LocalPerformanceTest extends App {
   testAll()
 
   def testAll() {
-    val iterations = 30
-    val msgsInIteration = 10000
+    val iterations = 10
+    val msgsInIteration = 100000
 
-    //testWithMq(new InMemoryMQ, iterations, msgsInIteration, "in-memory            ")
-    testWithMq(new InMemoryWithFileLogMQ, iterations, msgsInIteration, "file log + in-memory ")
-    //testWithMq(new MysqlMQ, iterations, msgsInIteration,    "mysql                ")
-    //testWithMq(new H2MQ, iterations, msgsInIteration,       "h2                   ")
-    //testWithMq(new RestSQSMQ, iterations, msgsInIteration,  "rest-sqs + in-memory ")
+    testWithMq(new InMemoryMQ, iterations, msgsInIteration, "in-memory", 1)
+    testWithMq(new InMemoryMQ, iterations, msgsInIteration, "in-memory", 2)
+    testWithMq(new InMemoryMQ, iterations, msgsInIteration, "in-memory", 3)
+    //testWithMq(new InMemoryWithFileLogMQ, iterations, msgsInIteration, "file log + in-memory", 1)
+    //testWithMq(new MysqlMQ, iterations, msgsInIteration,    "mysql", 1)
+    //testWithMq(new H2MQ, iterations, msgsInIteration,       "h2", 1)
+    //testWithMq(new RestSQSMQ, iterations, msgsInIteration,  "rest-sqs + in-memory", 1)
   }
 
-  def testWithMq(mq: MQ, iterations: Int, msgsInIteration: Int, name: String) {
+  def testWithMq(mq: MQ, iterations: Int, msgsInIteration: Int, name: String, threadCount: Int) {
+    println("Running test for [%s], iterations: %d, msgs in iteration: %d, thread count: %d."
+      .format(name, iterations, msgsInIteration, threadCount))
+
     mq.start()
 
+    val took = timed {
+      val threads = for (i <- 1 to threadCount) yield {
+        val t = new Thread(new Runnable() {
+          def run() { runTest(mq, iterations, msgsInIteration, name + " " + i) }
+        })
+        t.start()
+        t
+      }
+
+      threads.foreach(_.join())
+    }
+
+    val count = msgsInIteration * iterations * threadCount
+    println("Overall %s throughput: %f".format(name, (count.toDouble / (took.toDouble / 1000.0))))
+    println()
+
+    mq.stop()
+  }
+
+  private def runTest(mq: MQ, iterations: Int, msgsInIteration: Int, name: String) {
     var count = 0
 
     val start = System.currentTimeMillis()
@@ -46,12 +72,8 @@ object LocalPerformanceTest extends App {
       count += msgsInIteration
 
       val loopEnd = System.currentTimeMillis()
-      println(name + " throughput: " + (count.toDouble / ((loopEnd-start).toDouble / 1000.0)) + ", " + (loopEnd - loopStart))
+      println("%-20s throughput: %f, %d".format(name, (count.toDouble / ((loopEnd-start).toDouble / 1000.0)), (loopEnd - loopStart)))
     }
-
-    mq.stop()
-
-    println()
   }
 
   class InMemoryMQ extends MQWithClient {
