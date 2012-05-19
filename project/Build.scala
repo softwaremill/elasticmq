@@ -239,11 +239,9 @@ object CustomTasks {
       IO.copy((rd / "conf").listFiles().map(script => (script, dcd / script.getName)))
     },
 
-    distributionCopyDocs <<= (distributionDirectory, resourceDirectory in Compile, baseDirectory in Compile) map { (dd, rd, bd) =>
-      val ReadmeName = "README.md"
-
-      IO.copy((rd / "docs").listFiles().map(doc => (doc, dd / doc.getName))) ++
-        IO.copy(List((bd.getParentFile / ReadmeName, dd / ReadmeName)))
+    distributionCopyDocs <<= (distributionDirectory, baseDirectory in Compile) map { (dd, bd) =>
+      val docsFromRoot = List("README.md", "LICENSE.txt", "NOTICE.txt")
+      IO.copy(docsFromRoot.map(d => (bd.getParentFile / d, dd / d)))
     },
 
     distributionClean <<= (distributionDirectory) map { (dd) => IO.delete(dd) },
