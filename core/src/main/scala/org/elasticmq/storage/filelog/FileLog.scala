@@ -29,7 +29,7 @@ class FileLog(rotateChecker: RotateChecker,
 
   @ThreadSafe
   def shutdown() {
-    commandQueue.offer(Right(EndOfCommands))
+    commandQueue.put(Right(EndOfCommands))
   }
 
   @NotThreadSafe

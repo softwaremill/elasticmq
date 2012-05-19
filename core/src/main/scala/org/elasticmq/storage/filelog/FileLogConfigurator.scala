@@ -10,7 +10,9 @@ class FileLogConfigurator(delegate: StorageCommandExecutor, configuration: FileL
       configuration.storageDir, configuration.rotateLogsAfterCommandWritten))
 
     val rotateChecker = new RotateChecker(configuration)
-    val commandQueue = new LinkedBlockingQueue[IdempotentMutativeCommandOrEnd]
+    // The queu is bounded by the maximum number of commands between rotations. That way the backlog will never be higher
+    // than lifetime of a single file.
+    val commandQueue = new LinkedBlockingQueue[IdempotentMutativeCommandOrEnd](configuration.rotateLogsAfterCommandWritten)
     val dataDir = new FileLogDataDir(configuration)
 
     val fileLog = new FileLog(rotateChecker, dataDir, delegate, commandQueue)
