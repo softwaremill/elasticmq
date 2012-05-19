@@ -1,7 +1,6 @@
 package org.elasticmq.performance
 
 import org.elasticmq.storage.StorageCommandExecutor
-import org.elasticmq.{Queue, NodeBuilder}
 import org.elasticmq.storage.inmemory.InMemoryStorage
 import org.elasticmq.storage.filelog.{FileLogConfiguration, FileLogConfigurator}
 import java.io.File
@@ -12,6 +11,8 @@ import com.amazonaws.services.sqs.model.{CreateQueueRequest, DeleteMessageReques
 import org.elasticmq.rest.sqs.SQSRestServerFactory
 import org.elasticmq.rest.RestServer
 import org.elasticmq.test._
+import org.elasticmq.{MillisVisibilityTimeout, QueueBuilder, Queue, NodeBuilder}
+import scala.collection.JavaConversions._
 
 object LocalPerformanceTest extends App {
   testAll()
@@ -20,10 +21,12 @@ object LocalPerformanceTest extends App {
     val iterations = 10
     val msgsInIteration = 100000
 
+    testWithMq(new InMemoryMQ, 3, 100000, "in-memory warmup", 1)
+
     testWithMq(new InMemoryMQ, iterations, msgsInIteration, "in-memory", 1)
-    testWithMq(new InMemoryMQ, iterations, msgsInIteration, "in-memory", 2)
-    testWithMq(new InMemoryMQ, iterations, msgsInIteration, "in-memory", 3)
-    //testWithMq(new InMemoryWithFileLogMQ, iterations, msgsInIteration, "file log + in-memory", 1)
+    //testWithMq(new InMemoryMQ, iterations, msgsInIteration, "in-memory", 2)
+    //testWithMq(new InMemoryMQ, iterations, msgsInIteration, "in-memory", 3)
+    //testWithMq(new InMemoryWithFileLogMQ(300000), iterations, msgsInIteration, "file log + in-memory", 1)
     //testWithMq(new MysqlMQ, iterations, msgsInIteration,    "mysql", 1)
     //testWithMq(new H2MQ, iterations, msgsInIteration,       "h2", 1)
     //testWithMq(new RestSQSMQ, iterations, msgsInIteration,  "rest-sqs + in-memory", 1)
@@ -80,7 +83,7 @@ object LocalPerformanceTest extends App {
     def createStorage() = new InMemoryStorage
   }
 
-  class InMemoryWithFileLogMQ extends MQWithClient {
+  class InMemoryWithFileLogMQ(rotateAfter: Int) extends MQWithClient {
     import org.elasticmq.test._
 
     private var tempDir: File = _
@@ -88,7 +91,7 @@ object LocalPerformanceTest extends App {
     def createStorage() = {
       tempDir = createTempDir()
       println("Log dir: " + tempDir)
-      new FileLogConfigurator(new InMemoryStorage, FileLogConfiguration(tempDir, 10000)).start()
+      new FileLogConfigurator(new InMemoryStorage, FileLogConfiguration(tempDir, rotateAfter)).start()
     }
 
     override def stop() {
@@ -122,7 +125,9 @@ object LocalPerformanceTest extends App {
 
       currentSQSClient = new AmazonSQSClient(new BasicAWSCredentials("x", "x"))
       currentSQSClient.setEndpoint("http://localhost:9324")
-      currentQueueUrl = currentSQSClient.createQueue(new CreateQueueRequest("testQueue")).getQueueUrl
+      currentQueueUrl = currentSQSClient.createQueue(
+        new CreateQueueRequest("testQueue").withAttributes(Map("VisibilityTimeout" -> "1")))
+        .getQueueUrl
     }
 
     def stop() {
@@ -165,7 +170,8 @@ object LocalPerformanceTest extends App {
     def start() {
       currentStorage = createStorage()
       val client = NodeBuilder.withStorage(currentStorage).nativeClient
-      currentQueue = client.createQueue("testQueue")
+      currentQueue = client.createQueue(QueueBuilder("testQueue")
+        .withDefaultVisibilityTimeout(MillisVisibilityTimeout(1000)))
     }
 
     def stop() {
