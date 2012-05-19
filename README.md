@@ -6,6 +6,7 @@ tl;dr
 
 * message queue system
 * emphasis on not loosing any messages
+* runs stand-alone or embedded
 * Amazon SQS-compatible interface
 * in-memory with optional journalling and db-backed message storage
 * optionally replicated (guaranteed messaging)
@@ -26,8 +27,8 @@ It may happen, however, that a message is delivered twice (if, for example, a cl
 processing it, but before deleting). That's why clients of ElasticMQ (and Amazon SQS) should be idempotent.
 
 There are several message storage implementations. Messages can be stored entirely in-memory, providing a
-volatile but fast message queue. The in-memory storage can be journaled on disk, providing message durability across
-server restarts/crashes. Alternatively, messages can be persisted in a database (MySQL, Postgres, H2, ...).
+volatile but fast message queue. Operations on in-memory storage can be journaled on disk, providing message durability
+across server restarts/crashes. Alternatively, messages can be persisted in a database (MySQL, Postgres, H2, ...).
 
 ElasticMQ supports data replication across a cluster, thus providing a replicated/guaranteed message queue.
 Each node in the cluster can use any storage implementation.
@@ -50,7 +51,7 @@ Installation: stand-alone
 You can download the stand-alone distribution here: [TBD](http://www.elasticmq.org).
 Java 6 or above is required for running the server.
 
-Installation is as easy as unpacking the `.zip`/`.tar.gz` file. The content of the package is:
+Installation is as easy as unpacking the `.zip`/`.tar.gz` file. The contents of the package are:
 * `bin`: scripts to start the server
 * `conf`: ElasticMQ and logging (logback) configuration
 * `lib`: binaries
@@ -76,23 +77,29 @@ Starting an embedded ElasticMQ server with an SQS interface
     server.stop()
     node.shutdown()
 
-Alternatively, you can use MySQL to store the data:
+Alternatively, you can use e.g. MySQL to store the data:
 
     val node = NodeBuilder.withStorage(new SquerylStorage(DBConfiguration.mysql("elasticmq", "root", "")))
 
 Adding journaling to an in-memory storage
 -----------------------------------------
 
-This is as simple as wrapping the original storage:
+This is as simple as wrapping the original storage (it only makes sense to wrap an in memory storage, as a DB storage
+has its own persistence):
 
     val wrappedStorage = new FileLogConfigurator(
-        mainStorage,
+        inMemoryStorage,
         FileLogConfiguration(new File("/store/here"), 100000)
         .start()
 
 Note that even though messages are now durable (restarting the server won't cause message loss), the overall capacity
 of the queues (how many messages the queue can store at a time) is limited by the amount of RAM allocated to the
 process.
+
+Writing the journal is an asynchronous process, done by a separate thread. In case of a server crash, some
+commands may thus be lost. Even if writing the journal was a synchronous process, data could end up not being flushed
+from buffers; even then, if some OS caches are not disabled, data could be lost. That's why if you require even more
+data durability, use replication.
 
 Starting a replicated storage
 -----------------------------
