@@ -24,7 +24,7 @@ class FileLog(rotateChecker: RotateChecker,
 
   @ThreadSafe
   def addCommands(commands: Seq[IdempotentMutativeCommand[_]]) {
-    commands.foreach(command => commandQueue.offer(Left(command)))
+    commands.foreach(command => commandQueue.put(Left(command)))
   }
 
   @ThreadSafe
