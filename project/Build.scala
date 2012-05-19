@@ -148,7 +148,8 @@ object ElasticMQBuild extends Build {
   lazy val server: Project = Project(
     "elasticmq-server",
     file("server"),
-    settings = buildSettings ++ CustomTasks.distributionSettings ++ Seq(libraryDependencies := Seq(logback, ostrich))
+    settings = buildSettings ++ CustomTasks.distributionSettings ++ CustomTasks.generateVersionFileSettings ++
+      Seq(libraryDependencies := Seq(logback, ostrich))
   ) dependsOn(core, storageDatabase, replication, restSqs, commonTest % "test")
 
   lazy val performanceTests: Project = Project(
@@ -250,6 +251,14 @@ object CustomTasks {
       distributionCopyBin, distributionCopyConf, distributionCopyDocs,
       distributionCopyExternalDependencies, distributionCopyInternalDependencies) map { (s, v, dd, _, _, _, _, _) =>
       s.log.info("ElasticMQ distribution for version " + v.green + " created successfully in: " + dd.getPath)
+    }
+  )
+
+  val generateVersionFileSettings = Seq(
+    resourceGenerators in Compile <+= (version, resourceManaged in Compile) map { (v, t) =>
+      val targetFile = t / "version"
+      IO.write(targetFile, v.toString)
+      Seq(targetFile)
     }
   )
 }

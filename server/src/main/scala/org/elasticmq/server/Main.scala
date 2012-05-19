@@ -3,11 +3,13 @@ package org.elasticmq.server
 import com.weiglewilczek.slf4s.Logging
 import com.twitter.ostrich.admin.RuntimeEnvironment
 import java.io.File
+import io.Source
 
 object Main extends Logging {
   def main(args: Array[String]) {
     val start = System.currentTimeMillis()
-    logger.info("Starting the ElasticMQ server ...")
+    val version = readVersion()
+    logger.info("Starting ElasticMQ server (%s) ...".format(version))
 
     logUncaughtExceptions()
 
@@ -17,7 +19,12 @@ object Main extends Logging {
 
     addShutdownHook(shutdown)
 
-    logger.info("=== ElasticMQ server started in %d ms ===".format(System.currentTimeMillis() - start))
+    logger.info("=== ElasticMQ server (%s) started in %d ms ===".format(version, System.currentTimeMillis() - start))
+  }
+
+  private def readVersion() = {
+    val stream = this.getClass.getResourceAsStream("/version")
+    Source.fromInputStream(stream).getLines().next()
   }
 
   private def logUncaughtExceptions() {
