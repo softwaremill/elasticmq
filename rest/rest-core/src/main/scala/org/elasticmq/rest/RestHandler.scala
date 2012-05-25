@@ -10,9 +10,10 @@ import org.jboss.netty.handler.codec.http._
 import org.jboss.netty.handler.codec.http.HttpHeaders._
 import com.weiglewilczek.slf4s.Logging
 import scala.annotation.tailrec
+import java.util.concurrent.atomic.{AtomicInteger, AtomicLong}
 
 class RestHandler(handlers: List[CheckingRequestHandlerWrapper]) extends SimpleChannelUpstreamHandler with Logging {
-  private def respondWith(stringResponse: StringResponse, channel: Channel) {
+  private def respondWith(stringResponse: StringResponse, channel: Channel, isKeepAlive: Boolean) {
     val httpResponse: HttpResponse = new DefaultHttpResponse(HTTP_1_1, OK)
     httpResponse.setContent(ChannelBuffers.copiedBuffer(stringResponse.content, CharsetUtil.UTF_8))
     httpResponse.setHeader(CONTENT_TYPE, stringResponse.contentType+"; charset=UTF-8")
@@ -20,7 +21,10 @@ class RestHandler(handlers: List[CheckingRequestHandlerWrapper]) extends SimpleC
     setContentLength(httpResponse, httpResponse.getContent.readableBytes())
 
     val writeFuture = channel.write(httpResponse)
-    writeFuture.addListener(ChannelFutureListener.CLOSE)
+
+    if (!isKeepAlive) {
+      writeFuture.addListener(ChannelFutureListener.CLOSE)
+    }
   }
 
   override def messageReceived(ctx: ChannelHandlerContext, e: MessageEvent) {
@@ -37,7 +41,7 @@ class RestHandler(handlers: List[CheckingRequestHandlerWrapper]) extends SimpleC
         case handler :: tail => {
           handler.canHandle(request, Map()) match {
             case None => tryHandlers(tail)
-            case Some(parameters) => respondWith(handler.clientHandler.handle(request, parameters), e.getChannel)
+            case Some(parameters) => respondWith(handler.clientHandler.handle(request, parameters), e.getChannel, isKeepAlive(request))
           }
         }
       }

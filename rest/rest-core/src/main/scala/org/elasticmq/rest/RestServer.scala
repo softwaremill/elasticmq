@@ -30,7 +30,7 @@ class RestPipelineFactory(handlers: List[CheckingRequestHandlerWrapper],
     pipeline.addLast("addChannelToGroup", new AddChannelToGroupHandler(allChannels))
 
     pipeline.addLast("decoder", new HttpRequestDecoder)
-    pipeline.addLast("aggregator", new HttpChunkAggregator(65536))
+    pipeline.addLast("aggregator", new HttpChunkAggregator(1048576))
     pipeline.addLast("encoder", new HttpResponseEncoder)
     pipeline.addLast("chunkedWriter", new ChunkedWriteHandler)
 
@@ -59,6 +59,7 @@ object RestServer {
 
     bootstrap.setOption("child.tcpNoDelay", true);
     bootstrap.setOption("child.keepAlive", true);
+    bootstrap.setOption("reuseAddress", true);
 
     val serverChannel = bootstrap.bind(socketAddress);
     allChannels.add(serverChannel)
