@@ -43,11 +43,12 @@ object BuildSettings {
 }
 
 object Dependencies {
-  val squeryl       = "org.squeryl"               %% "squeryl"              % "0.9.5-RC1"
+  val squeryl       = "org.squeryl"               %% "squeryl"              % "0.9.5"
   val h2            = "com.h2database"            % "h2"                    % "1.3.156"
   val c3p0          = "c3p0"                      % "c3p0"                  % "0.9.1.2"
-  val jodaTime      = "joda-time"                 % "joda-time"             % "1.6.2" // when available use https://github.com/jorgeortiz85/scala-time
-  val netty         = "org.jboss.netty"           % "netty"                 % "3.2.4.Final"
+  val jodaTime      = "joda-time"                 % "joda-time"             % "2.1"
+  val jodaConvert   = "org.joda"                  % "joda-convert"          % "1.2"
+  val netty         = "io.netty"                  % "netty"                 % "3.4.5.Final"
 
   val slf4s         = "com.weiglewilczek.slf4s"   %% "slf4s"                % "1.0.7"
   val logback       = "ch.qos.logback"            % "logback-classic"       % "1.0.0"
@@ -65,7 +66,7 @@ object Dependencies {
 
   val mysqlConnector = "mysql"                    % "mysql-connector-java"  % "5.1.12"
 
-  val jgroups       = "org.jgroups"               % "jgroups"               % "3.1.0.Alpha2" exclude ("log4j", "log4j")
+  val jgroups       = "org.jgroups"               % "jgroups"               % "3.1.0.Beta1" exclude ("log4j", "log4j")
 
   val jsr305        = "com.google.code.findbugs"  % "jsr305"                % "1.3.9"
 
@@ -94,7 +95,7 @@ object ElasticMQBuild extends Build {
   lazy val api: Project = Project(
     "elasticmq-api",
     file("api"),
-    settings = buildSettings ++ Seq(libraryDependencies := Seq(jodaTime))
+    settings = buildSettings ++ Seq(libraryDependencies := Seq(jodaTime, jodaConvert))
   )
 
   lazy val spi: Project = Project(
