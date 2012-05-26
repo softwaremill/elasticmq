@@ -272,7 +272,7 @@ Directly accessing the client:
     Running test for [mysql], iterations: 10, msgs in iteration: 1000, thread count: 2.
     Overall mysql throughput: 143.620383
 
-Thorugh the SQS REST interface:
+Through the SQS REST interface:
 
     Running test for [rest-sqs + in-memory], iterations: 10, msgs in iteration: 1000, thread count: 20.
     Overall rest-sqs + in-memory throughput: 781.460628
