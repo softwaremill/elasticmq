@@ -6,7 +6,7 @@ tl;dr
 
 * message queue system
 * emphasis on not loosing any messages
-* runs stand-alone or embedded
+* runs stand-alone ([download](https://github.com/downloads/adamw/elasticmq/elasticmq-0.5.tar.gz)) or embedded
 * Amazon SQS-compatible interface
 * in-memory with optional journalling and db-backed message storage
 * optionally replicated (guaranteed messaging)
@@ -48,7 +48,9 @@ Community
 Installation: stand-alone
 -------------------------
 
-You can download the stand-alone distribution here: [TBD](http://www.elasticmq.org).
+You can download the stand-alone distribution here:
+* [https://github.com/.../elasticmq-0.5.tar.gz](https://github.com/downloads/adamw/elasticmq/elasticmq-0.5.tar.gz)
+* [https://github.com/.../elasticmq-0.5.zip](https://github.com/downloads/adamw/elasticmq/elasticmq-0.5.zip)
 Java 6 or above is required for running the server.
 
 Installation is as easy as unpacking the `.zip`/`.tar.gz` file. The contents of the package are:
@@ -301,7 +303,7 @@ Change log
 
 #### Version 0.5 (pending)
 
-* stand-alone distribution
+* stand-alone distribution ([download](https://github.com/downloads/adamw/elasticmq/elasticmq-0.5.tar.gz))
 * file log for message storage (journal)
 * factoring out `storage-database` module, to decrease the dependencies of the core modules
 
