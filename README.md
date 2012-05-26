@@ -51,6 +51,7 @@ Installation: stand-alone
 You can download the stand-alone distribution here:
 * [https://github.com/.../elasticmq-0.5.tar.gz](https://github.com/downloads/adamw/elasticmq/elasticmq-0.5.tar.gz)
 * [https://github.com/.../elasticmq-0.5.zip](https://github.com/downloads/adamw/elasticmq/elasticmq-0.5.zip)
+
 Java 6 or above is required for running the server.
 
 Installation is as easy as unpacking the `.zip`/`.tar.gz` file. The contents of the package are:
@@ -176,16 +177,16 @@ ElasticMQ dependencies in SBT
 -----------------------------
 
     // Includes the in-memory storage
-    val elasticmqCore       = "org.elasticmq" %% "core"             % "0.4"
+    val elasticmqCore       = "org.elasticmq" %% "core"             % "0.5"
 
     // If you want to use the database storage
-    val elasticmqStorageDb  = "org.elasticmq" %% "storage-database" % "0.4"
+    val elasticmqStorageDb  = "org.elasticmq" %% "storage-database" % "0.5"
 
     // If you want to expose an SQS interface
-    val elasticmqSqs        = "org.elasticmq" %% "rest-sqs"         % "0.4"
+    val elasticmqSqs        = "org.elasticmq" %% "rest-sqs"         % "0.5"
 
     // If you want to use replication
-    val elasticmqRepl       = "org.elasticmq" %% "replication"      % "0.4"
+    val elasticmqRepl       = "org.elasticmq" %% "replication"      % "0.5"
 
     val smlResolverReleases  = "SotwareMill Public Releases"  at "http://tools.softwaremill.pl/nexus/content/repositories/releases"
     val smlResolverSnapshots = "SotwareMill Public Snapshots" at "http://tools.softwaremill.pl/nexus/content/repositories/snapshots"
@@ -198,22 +199,22 @@ Dependencies:
     <dependency>
         <groupId>org.elasticmq</groupId>
         <artifactId>core_2.9.1</artifactId>
-        <version>0.4</version>
+        <version>0.5</version>
     </dependency>
     <dependency>
         <groupId>org.elasticmq</groupId>
         <artifactId>storage-database_2.9.1</artifactId>
-        <version>0.4</version>
+        <version>0.5</version>
     </dependency>
     <dependency>
         <groupId>org.elasticmq</groupId>
         <artifactId>rest-sqs_2.9.1</artifactId>
-        <version>0.4</version>
+        <version>0.5</version>
     </dependency>
     <dependency>
         <groupId>org.elasticmq</groupId>
         <artifactId>replication_2.9.1</artifactId>
-        <version>0.4</version>
+        <version>0.5</version>
     </dependency>
 
 And our repositories:
@@ -232,9 +233,9 @@ And our repositories:
 Current versions
 --------
 
-*Stable*: 0.4
+*Stable*: 0.5
 
-*Development*: 0.5-SNAPSHOT
+*Development*: 0.6-SNAPSHOT
 
 DB Schema
 ---------
@@ -301,7 +302,7 @@ Technology
 Change log
 ----------
 
-#### Version 0.5 (pending)
+#### Version 0.5 (26 May 2012)
 
 * stand-alone distribution ([download](https://github.com/downloads/adamw/elasticmq/elasticmq-0.5.tar.gz))
 * file log for message storage (journal)
