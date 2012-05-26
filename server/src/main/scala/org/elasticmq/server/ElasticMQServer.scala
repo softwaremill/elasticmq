@@ -12,6 +12,7 @@ import org.elasticmq.rest.sqs.SQSRestServerFactory
 import org.elasticmq.NodeBuilder
 import java.net.InetSocketAddress
 import org.elasticmq.rest.RestServer
+import org.jgroups.protocols.TCP
 
 class ElasticMQServer(config: ElasticMQServerConfig) extends Logging {
   def start() = {
@@ -80,9 +81,17 @@ class ElasticMQServer(config: ElasticMQServerConfig) extends Logging {
           case config.UDP => () => new JChannel()
           case config.TCP(initialMembers, replicationBindAddress) => {
             () => {
-              System.setProperty("jgroups.bind_addr", replicationBindAddress)
+              val hostAndPort = replicationBindAddress.split(":")
+
+              System.setProperty("jgroups.bind_addr", hostAndPort(0))
               System.setProperty("jgroups.tcpping.initial_hosts", membersListInJGroupsFormat(initialMembers))
-              new JChannel("tcp.xml")
+
+              val channel = new JChannel("tcp.xml")
+
+              // Overwriting the default bind port
+              channel.getProtocolStack.findProtocol(classOf[TCP]).asInstanceOf[TCP].setBindPort(hostAndPort(1).toInt)
+
+              channel
             }
           }
         }
