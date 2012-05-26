@@ -64,7 +64,7 @@ object Dependencies {
 
   val amazonJavaSdk = "com.amazonaws"             % "aws-java-sdk"          % "1.2.15" exclude ("commons-logging", "commons-logging")
 
-  val mysqlConnector = "mysql"                    % "mysql-connector-java"  % "5.1.12"
+  val mysqlConnector = "mysql"                    % "mysql-connector-java"  % "5.1.20"
 
   val jgroups       = "org.jgroups"               % "jgroups"               % "3.1.0.Beta1" exclude ("log4j", "log4j")
 
