@@ -249,21 +249,40 @@ however [Logback](http://logback.qos.ch/) is recommended.
 Performance
 -----------
 
-Tests done on a 2.4GHz Core2Duo, 8GB RAM, no replication:
+Tests done on a 2009 MBP, 2.4GHz Core2Duo, 8GB RAM, no replication. Throughput is in messages per second (messages are
+small).
 
-    Storage: InMemory, number of threads: 5, number of messages: 50000
-    Send took: 3 (3140), ops: 250000, ops per second: 83333
-    Receive took: 5 (5057), ops: 250000, ops per second: 50000
+Directly accessing the client:
 
-    Storage: MySQL, number of threads: 5, number of messages: 2000
-    Send took: 5 (5500), ops: 10000, ops per second: 2000
-    Receive took: 74 (74269), ops: 10000, ops per second: 135
+    Running test for [in-memory], iterations: 10, msgs in iteration: 100000, thread count: 1.
+    Overall in-memory throughput: 41373.603641
 
-    Storage: H2, number of threads: 5, number of messages: 2000
-    Send took: 0 (841), ops: 10000, ops per second: 10000
-    Receive took: 30 (30388), ops: 10000, ops per second: 333
+    Running test for [in-memory], iterations: 10, msgs in iteration: 100000, thread count: 2.
+    Overall in-memory throughput: 32646.665143
 
-Test class: `org.elasticmq.performance.MultiThreadPerformanceTest`.
+    Running test for [in-memory], iterations: 3, msgs in iteration: 1000000, thread count: 1.
+    Overall in-memory throughput: 35157.211330
+
+    Running test for [file log + in-memory], iterations: 10, msgs in iteration: 100000, thread count: 1.
+    Overall file log + in-memory throughput: 15464.316091
+
+    Running test for [h2], iterations: 10, msgs in iteration: 1000, thread count: 8.
+    Overall h2 throughput: 334.085025
+
+    Running test for [mysql], iterations: 10, msgs in iteration: 1000, thread count: 2.
+    Overall mysql throughput: 143.620383
+
+Thorugh the SQS REST interface:
+
+    Running test for [rest-sqs + in-memory], iterations: 10, msgs in iteration: 1000, thread count: 20.
+    Overall rest-sqs + in-memory throughput: 781.460628
+
+    Running test for [rest-sqs + file log + in-memory], iterations: 10, msgs in iteration: 1000, thread count: 20.
+    Overall rest-sqs + in-memory throughput: 675.851488
+
+Note that both the client and the server were on the same machine.
+
+Test class: `org.elasticmq.performance.LocalPerformanceTest`.
 
 Technology
 ----------
