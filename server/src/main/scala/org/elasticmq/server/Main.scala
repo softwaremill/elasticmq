@@ -40,7 +40,7 @@ object Main extends Logging {
       override def run() {
         logger.info("ElasticMQ server stopping ...")
         shutdown()
-        logger.info("=== ElsticMQ server stopped ===")
+        logger.info("=== ElasticMQ server stopped ===")
       }
     });
   }
