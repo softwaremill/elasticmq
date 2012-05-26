@@ -1,6 +1,7 @@
 import org.elasticmq.server.ElasticMQServerConfig
 import org.elasticmq.replication._
 import org.elasticmq.storage.squeryl.DBConfiguration
+import org.elasticmq.NodeAddress
 
 new ElasticMQServerConfig {
   // For a full reference on possible options see the ElasticMQServerConfig class. Head version:
@@ -17,7 +18,7 @@ new ElasticMQServerConfig {
   // fileLog.storageDir = new File("/path/to/a/directory")
 
   // To change the outside visible address of this ElasticMQ node:
-  // nodeAddress = NodeAddress(host = "host", port = 9324)
+  // nodeAddress = NodeAddress(host = "localhost", port = 9325)
 
   // To enable replication:
   // replication.enabled = true
@@ -29,5 +30,6 @@ new ElasticMQServerConfig {
   // replication.nodeDiscovery = TCP(List("host1:9324", "host2:9333", ...))
 
   // To bind REST SQS to a different host/port:
+  // Note that you will most probably need to change the "nodeAddress" when changing this port.
   // restSqs.bindPort = 9325
 }
