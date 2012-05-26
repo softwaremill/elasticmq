@@ -177,16 +177,16 @@ ElasticMQ dependencies in SBT
 -----------------------------
 
     // Includes the in-memory storage
-    val elasticmqCore       = "org.elasticmq" %% "core"             % "0.5"
+    val elasticmqCore       = "org.elasticmq" %% "elasticmq-core"             % "0.5"
 
     // If you want to use the database storage
-    val elasticmqStorageDb  = "org.elasticmq" %% "storage-database" % "0.5"
+    val elasticmqStorageDb  = "org.elasticmq" %% "elasticmq-storage-database" % "0.5"
 
     // If you want to expose an SQS interface
-    val elasticmqSqs        = "org.elasticmq" %% "rest-sqs"         % "0.5"
+    val elasticmqSqs        = "org.elasticmq" %% "elasticmq-rest-sqs"         % "0.5"
 
     // If you want to use replication
-    val elasticmqRepl       = "org.elasticmq" %% "replication"      % "0.5"
+    val elasticmqRepl       = "org.elasticmq" %% "elasticmq-replication"      % "0.5"
 
     val smlResolverReleases  = "SotwareMill Public Releases"  at "http://tools.softwaremill.pl/nexus/content/repositories/releases"
     val smlResolverSnapshots = "SotwareMill Public Snapshots" at "http://tools.softwaremill.pl/nexus/content/repositories/snapshots"
@@ -198,22 +198,22 @@ Dependencies:
 
     <dependency>
         <groupId>org.elasticmq</groupId>
-        <artifactId>core_2.9.1</artifactId>
+        <artifactId>elasticmq-core_2.9.1</artifactId>
         <version>0.5</version>
     </dependency>
     <dependency>
         <groupId>org.elasticmq</groupId>
-        <artifactId>storage-database_2.9.1</artifactId>
+        <artifactId>elasticmq-storage-database_2.9.1</artifactId>
         <version>0.5</version>
     </dependency>
     <dependency>
         <groupId>org.elasticmq</groupId>
-        <artifactId>rest-sqs_2.9.1</artifactId>
+        <artifactId>elasticmq-rest-sqs_2.9.1</artifactId>
         <version>0.5</version>
     </dependency>
     <dependency>
         <groupId>org.elasticmq</groupId>
-        <artifactId>replication_2.9.1</artifactId>
+        <artifactId>elasticmq-replication_2.9.1</artifactId>
         <version>0.5</version>
     </dependency>
 
