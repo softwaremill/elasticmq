@@ -63,7 +63,7 @@ class JGroupsMembershipListener(channel: JChannel,
       // all the time and contains the latest state.
       case Some(primaryPartition) => primaryPartition
       // Otherwise we get first of the biggest subgroups - it is most likely to have most up-to-date state 
-      case None => subgroups.sortBy(_.getMembers.size()).head
+      case None => subgroups.sortBy(- _.getMembers.size()).head
     }
   }
 
