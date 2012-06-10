@@ -30,7 +30,8 @@ class ReplicatedStorageConfigurator(delegate: StorageCommandExecutor,
     val channel = createJChannel()
     channel.setDiscardOwnMessages(true)
 
-    // We need flush so that when the master broadcasts his address after a new node joins, all nodes receive it.
+    // We need flush so that when the master broadcasts his address after a new node joins, all nodes receive it
+    // (otherwise the SetMaster could be sent before the new node installs the view and starts receiving messages).
     channel.getProtocolStack.addProtocol(new FLUSH())
 
     val objectMarshaller = new JavaSerializationMarshaller
