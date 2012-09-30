@@ -96,6 +96,42 @@ abstract class MessageCommandsTest extends StorageTest {
     lookupResult must be (Some(createMessageData("xyz", "123", MillisNextDelivery(567L))))
   }
 
+  test("receiveing multiple messages should return as much messages as possible") {
+    // Given
+    val q1 = createQueueData("q1", MillisVisibilityTimeout(1L))
+
+    execute(CreateQueueCommand(q1))
+
+    execute(new SendMessageCommand(q1.name, createMessageData("xyz1", "1", MillisNextDelivery(123L))))
+    execute(new SendMessageCommand(q1.name, createMessageData("xyz2", "2", MillisNextDelivery(123L))))
+    execute(new SendMessageCommand(q1.name, createMessageData("xyz3", "3", MillisNextDelivery(123L))))
+
+    // When
+    val result = execute(ReceiveMessagesCommand(q1.name, 200L, MillisNextDelivery(567L), 5))
+
+    // Then
+    result.map(_.content).toSet must be (Set("1", "2", "3"))
+  }
+
+  test("next delivery should be updated after receiving multiple messages") {
+    // Given
+    val q1 = createQueueData("q1", MillisVisibilityTimeout(1L))
+
+    execute(CreateQueueCommand(q1))
+
+    execute(new SendMessageCommand(q1.name, createMessageData("xyz1", "1", MillisNextDelivery(123L))))
+    execute(new SendMessageCommand(q1.name, createMessageData("xyz2", "2", MillisNextDelivery(124L))))
+
+    // When
+    execute(ReceiveMessagesCommand(q1.name, 200L, MillisNextDelivery(567L), 2))
+    val lookupResult1 = execute(LookupMessageCommand(q1.name, MessageId("xyz1")))
+    val lookupResult2 = execute(LookupMessageCommand(q1.name, MessageId("xyz2")))
+
+    // Then
+    lookupResult1 must be (Some(createMessageData("xyz1", "1", MillisNextDelivery(567L))))
+    lookupResult2 must be (Some(createMessageData("xyz2", "2", MillisNextDelivery(567L))))
+  }
+
   test("delivered message should not be found in a non-empty queue when it is not visible") {
     // Given
     val q1 = createQueueData("q1", MillisVisibilityTimeout(1L))

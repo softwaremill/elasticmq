@@ -21,7 +21,7 @@ trait InterfacedCommandExecutor extends StorageCommandExecutor {
     case UpdateNextDeliveryCommand(queueName, messageId, newNextDelivery) =>
       messagesStorage(queueName).updateNextDelivery(messageId, newNextDelivery)
     case ReceiveMessagesCommand(queueName, deliveryTime, newNextDelivery, maxCount) =>
-      messagesStorage(queueName).receiveMessage(deliveryTime, newNextDelivery).toList
+      messagesStorage(queueName).receiveMessages(deliveryTime, newNextDelivery, maxCount)
     case DeleteMessageCommand(queueName, messageId) => messagesStorage(queueName).deleteMessage(messageId)
     case LookupMessageCommand(queueName, messageId) => messagesStorage(queueName).lookupMessage(messageId)
 
