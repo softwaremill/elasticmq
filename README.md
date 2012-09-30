@@ -302,6 +302,10 @@ Technology
 Change log
 ----------
 
+#### Version 0.6 (pending)
+
+* batch operations (send, receive)
+
 #### Version 0.5 (26 May 2012)
 
 * stand-alone distribution ([download](https://github.com/downloads/adamw/elasticmq/elasticmq-0.5.tar.gz))
