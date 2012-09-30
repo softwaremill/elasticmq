@@ -9,7 +9,7 @@ import com.amazonaws.services.sqs.{AmazonSQS, AmazonSQSClient}
 import scala.collection.JavaConversions._
 import com.amazonaws.services.sqs.model._
 import org.elasticmq.storage.inmemory.InMemoryStorage
-import org.elasticmq.{NodeAddress, Node, NodeBuilder}
+import org.elasticmq.{Node, NodeBuilder}
 
 class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAfter {
   val visibilityTimeoutAttribute = "VisibilityTimeout"
@@ -132,6 +132,21 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
 
     // Then
     message must be (Some("Message 1"))
+  }
+
+  test("should send and receive two messages in a batch") {
+    // Given
+    val queueUrl = client.createQueue(new CreateQueueRequest("testQueue1")).getQueueUrl
+
+    // When
+    client.sendMessage(new SendMessageRequest(queueUrl, "Message 1"))
+    client.sendMessage(new SendMessageRequest(queueUrl, "Message 2"))
+
+    val messages = client.receiveMessage(new ReceiveMessageRequest(queueUrl).withMaxNumberOfMessages(2)).getMessages
+
+    // Then
+    val bodies = messages.map(_.getBody).toSet
+    bodies must be (Set("Message 1", "Message 2"))
   }
 
   test("should block message for the visibility timeout duration") {
