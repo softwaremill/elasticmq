@@ -47,12 +47,19 @@ trait NativeQueueModule {
       new NativeMessage(queueName, message)
     }
 
-    def receiveMessage(): Option[Message] = receiveMessage(DefaultVisibilityTimeout)
+    def receiveMessage() = receiveMessages(1).headOption
 
-    def receiveMessage(visibilityTimeout: VisibilityTimeout) = {
-      val messageOption = doReceiveMessage(visibilityTimeout)
+    def receiveMessage(visibilityTimeout: VisibilityTimeout) = receiveMessages(visibilityTimeout, 1).headOption
 
-      messageOption.foreach(message => volatileTaskScheduler.schedule {
+    def receiveMessageWithStatistics(visibilityTimeout: VisibilityTimeout) =
+      receiveMessagesWithStatistics(visibilityTimeout, 1).headOption
+
+    def receiveMessages(maxCount: Int) = receiveMessages(DefaultVisibilityTimeout, maxCount)
+
+    def receiveMessages(visibilityTimeout: VisibilityTimeout, maxCount: Int) = {
+      val messages = doReceiveMessages(visibilityTimeout, maxCount)
+
+      messages.foreach(message => volatileTaskScheduler.schedule {
         try {
           val stats = storageCommandExecutor.execute(GetMessageStatisticsCommand(queueName, message.id))
           val bumpedStats = bumpMessageStatistics(stats)
@@ -65,13 +72,13 @@ trait NativeQueueModule {
         logger.debug("Received message: %s with visibility timeout: %s".format(message.id, visibilityTimeout))
       })
 
-      messageOption.map(new NativeMessage(queueName, _))
+      messages.map(new NativeMessage(queueName, _))
     }
 
-    def receiveMessageWithStatistics(visibilityTimeout: VisibilityTimeout) = {
-      val messageOption = doReceiveMessage(visibilityTimeout)
+    def receiveMessagesWithStatistics(visibilityTimeout: VisibilityTimeout, maxCount: Int) = {
+      val messages = doReceiveMessages(visibilityTimeout, maxCount)
 
-      messageOption.map(message => {
+      messages.map(message => {
         val stats = storageCommandExecutor.execute(GetMessageStatisticsCommand(queueName, message.id))
         val bumpedStats = bumpMessageStatistics(stats)
         volatileTaskScheduler.schedule {
@@ -85,13 +92,13 @@ trait NativeQueueModule {
       })
     }
 
-    private def doReceiveMessage(visibilityTimeout: VisibilityTimeout) = {
+    private def doReceiveMessages(visibilityTimeout: VisibilityTimeout, maxCount: Int) = {
       val newNextDelivery = visibilityTimeout match {
         case DefaultVisibilityTimeout => defaultNextDelivery()
         case MillisVisibilityTimeout(millis) => computeNextDelivery(millis)
       }
 
-      storageCommandExecutor.execute(ReceiveMessagesCommand(queueName, now, newNextDelivery, 1)).headOption
+      storageCommandExecutor.execute(ReceiveMessagesCommand(queueName, now, newNextDelivery, maxCount))
     }
 
     def lookupMessage(messageId: MessageId) = {

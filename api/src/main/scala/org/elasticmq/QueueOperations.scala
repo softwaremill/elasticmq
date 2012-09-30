@@ -10,6 +10,10 @@ trait QueueOperations {
   def receiveMessage(visibilityTimeout: VisibilityTimeout): Option[Message]
   def receiveMessageWithStatistics(visibilityTimeout: VisibilityTimeout): Option[Pair[Message, MessageStatistics]]
 
+  def receiveMessages(maxCount: Int): List[Message]
+  def receiveMessages(visibilityTimeout: VisibilityTimeout, maxCount: Int): List[Message]
+  def receiveMessagesWithStatistics(visibilityTimeout: VisibilityTimeout, maxCount: Int): List[Pair[Message, MessageStatistics]]
+
   def lookupMessage(id: MessageId): Option[Message]
 
   def updateDefaultVisibilityTimeout(defaultVisibilityTimeout: MillisVisibilityTimeout): Queue
