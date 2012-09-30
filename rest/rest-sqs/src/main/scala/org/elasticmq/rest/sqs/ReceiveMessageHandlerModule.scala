@@ -13,6 +13,7 @@ trait ReceiveMessageHandlerModule { this: ClientModule with RequestHandlerLogicM
     val SentTimestampAttribute = "SentTimestamp"
     val ApproximateReceiveCountAttribute = "ApproximateReceiveCount"
     val ApproximateFirstReceiveTimestampAttribute = "ApproximateFirstReceiveTimestamp"
+    val MaxNumberOfMessagesAttribute = "MaxNumberOfMessages"
 
     val AllAttributeNames = SentTimestampAttribute :: ApproximateReceiveCountAttribute ::
             ApproximateFirstReceiveTimestampAttribute :: Nil
@@ -28,7 +29,14 @@ trait ReceiveMessageHandlerModule { this: ClientModule with RequestHandlerLogicM
       }
     }
 
-    val msgWithStats = queue.receiveMessageWithStatistics(calculateVisibilityTimeout())
+    def getMaxNumberOfMessages = {
+      parameters.get(MaxNumberOfMessagesAttribute) match {
+        case Some(maxCount) => maxCount.toInt
+        case None => 1
+      }
+    }
+
+    val msgsWithStats = queue.receiveMessagesWithStatistics(calculateVisibilityTimeout(), getMaxNumberOfMessages)
 
     lazy val attributeNames = attributeNamesReader.read(parameters, AllAttributeNames)
 
@@ -47,7 +55,7 @@ trait ReceiveMessageHandlerModule { this: ClientModule with RequestHandlerLogicM
 
     <ReceiveMessageResponse>
       <ReceiveMessageResult>
-        {msgWithStats.map { case (msg, stats) =>
+        {msgsWithStats.map { case (msg, stats) =>
         <Message>
           <MessageId>{msg.id.id}</MessageId>
           <ReceiptHandle>{msg.id.id}</ReceiptHandle>
