@@ -91,7 +91,7 @@ trait NativeQueueModule {
         case MillisVisibilityTimeout(millis) => computeNextDelivery(millis)
       }
 
-      storageCommandExecutor.execute(ReceiveMessageCommand(queueName, now, newNextDelivery))
+      storageCommandExecutor.execute(ReceiveMessagesCommand(queueName, now, newNextDelivery, 1)).headOption
     }
 
     def lookupMessage(messageId: MessageId) = {
