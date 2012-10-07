@@ -250,6 +250,31 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
     m2 must be (None)
   }
 
+  test("should delete messages in a batch") {
+    // Given
+    val queueUrl = client.createQueue(new CreateQueueRequest("testQueue1")
+      .withAttributes(Map(defaultVisibilityTimeoutAttribute -> "1"))).getQueueUrl
+
+    client.sendMessageBatch(new SendMessageBatchRequest(queueUrl).withEntries(
+      new SendMessageBatchRequestEntry("1", "Message 1"),
+      new SendMessageBatchRequestEntry("2", "Message 2")
+    ))
+
+    val msgIds = client.receiveMessage(new ReceiveMessageRequest(queueUrl).withMaxNumberOfMessages(2)).getMessages.map(_.getReceiptHandle)
+
+    // When
+    client.deleteMessageBatch(new DeleteMessageBatchRequest(queueUrl).withEntries(
+      new DeleteMessageBatchRequestEntry("1", msgIds(0)),
+      new DeleteMessageBatchRequestEntry("2", msgIds(1))
+    ))
+    Thread.sleep(1100)
+
+    val m = receiveSingleMessage(queueUrl)
+
+    // Then
+    m must be (None) // messages deleted
+  }
+
   test("should update message visibility timeout") {
     // Given
     val queueUrl = client.createQueue(new CreateQueueRequest("testQueue1")
