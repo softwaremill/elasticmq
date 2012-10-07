@@ -134,7 +134,7 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
     message must be (Some("Message 1"))
   }
 
-  test("should send and receive two messages in a batch") {
+  test("should receive two messages in a batch") {
     // Given
     val queueUrl = client.createQueue(new CreateQueueRequest("testQueue1")).getQueueUrl
 
@@ -147,6 +147,28 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
     // Then
     val bodies = messages.map(_.getBody).toSet
     bodies must be (Set("Message 1", "Message 2"))
+  }
+
+  test("should send two messages in a batch") {
+    // Given
+    val queueUrl = client.createQueue(new CreateQueueRequest("testQueue1")).getQueueUrl
+
+    // When
+    val result = client.sendMessageBatch(new SendMessageBatchRequest(queueUrl).withEntries(
+      new SendMessageBatchRequestEntry("1", "Message 1"),
+      new SendMessageBatchRequestEntry("2", "Message 2")
+    ))
+
+    // Then
+    result.getSuccessful must have size (2)
+    result.getSuccessful.map(_.getId).toSet must be (Set("1", "2"))
+
+    val messages = client.receiveMessage(new ReceiveMessageRequest(queueUrl).withMaxNumberOfMessages(2)).getMessages
+
+    val bodies = messages.map(_.getBody).toSet
+    bodies must be (Set("Message 1", "Message 2"))
+
+    messages.map(_.getMessageId).toSet must be (result.getSuccessful.map(_.getMessageId).toSet)
   }
 
   test("should block message for the visibility timeout duration") {
