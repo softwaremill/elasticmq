@@ -5,16 +5,11 @@ import org.jboss.netty.handler.codec.http.HttpMethod._
 
 import Constants._
 import ActionUtil._
-import org.elasticmq.{MessageId, MillisVisibilityTimeout}
+import org.elasticmq.{Queue, MessageId, MillisVisibilityTimeout}
 
 trait ChangeMessageVisibilityHandlerModule { this: ClientModule with RequestHandlerLogicModule =>
-  val ChangeMessageVisibilityAction = createAction("ChangeMessageVisibility")
-
   val changeMessageVisibilityLogic = logicWithQueue((queue, request, parameters) => {
-    val visibilityTimeout = MillisVisibilityTimeout.fromSeconds(parameters(VisibilityTimeoutParameter).toLong)
-    val message = queue.lookupMessage(MessageId(parameters(ReceiptHandleParameter)))
-      .getOrElse(throw SQSException.invalidParameterValue)
-    message.updateVisibilityTimeout(visibilityTimeout)
+    changeMessageVisibility(queue, parameters)
 
     <ChangeMessageVisibilityResponse>
       <ResponseMetadata>
@@ -22,6 +17,15 @@ trait ChangeMessageVisibilityHandlerModule { this: ClientModule with RequestHand
       </ResponseMetadata>
     </ChangeMessageVisibilityResponse>
   })
+
+  def changeMessageVisibility(queue: Queue, parameters: Map[String, String]) {
+    val visibilityTimeout = MillisVisibilityTimeout.fromSeconds(parameters(VisibilityTimeoutParameter).toLong)
+    val message = queue.lookupMessage(MessageId(parameters(ReceiptHandleParameter)))
+      .getOrElse(throw SQSException.invalidParameterValue)
+    message.updateVisibilityTimeout(visibilityTimeout)
+  }
+
+  private val ChangeMessageVisibilityAction = createAction("ChangeMessageVisibility")
 
   val changeMessageVisibilityGetHandler = (createHandler
             forMethod GET

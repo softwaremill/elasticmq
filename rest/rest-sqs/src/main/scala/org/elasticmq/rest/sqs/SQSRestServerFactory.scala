@@ -50,6 +50,7 @@ object SQSRestServerFactory extends Logging {
       with DeleteMessageHandlerModule
       with DeleteMessageBatchHandlerModule
       with ChangeMessageVisibilityHandlerModule
+      with ChangeMessageVisibilityBatchHandlerModule
       with GetQueueUrlHandlerModule
       with AttributesModule {
       val client = theClient
@@ -70,6 +71,7 @@ object SQSRestServerFactory extends Logging {
         listQueuesGetHandler :: listQueuesPostHandler ::
         // 3. Other
         changeMessageVisibilityGetHandler :: changeMessageVisibilityPostHandler ::
+        changeMessageVisibilityBatchGetHandler :: changeMessageVisibilityBatchPostHandler ::
         deleteQueueGetHandler :: deleteQueuePostHandler ::
         getQueueAttributesGetHandler :: getQueueAttributesPostHandler ::
         setQueueAttributesGetHandler :: setQueueAttributesPostHandler ::
