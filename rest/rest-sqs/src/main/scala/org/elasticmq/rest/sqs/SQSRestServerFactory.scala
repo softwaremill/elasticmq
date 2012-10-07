@@ -44,6 +44,7 @@ object SQSRestServerFactory extends Logging {
       with QueueAttributesHandlersModule
       with ListQueuesHandlerModule
       with SendMessageHandlerModule
+      with SendMessageBatchHandlerModule
       with ReceiveMessageHandlerModule
       with DeleteMessageHandlerModule
       with ChangeMessageVisibilityHandlerModule
@@ -57,6 +58,7 @@ object SQSRestServerFactory extends Logging {
     val server = RestServer.start(
         // 1. Sending, receiving, deleting messages
         sendMessageGetHandler :: sendMessagePostHandler ::
+        sendMessageBatchGetHandler :: sendMessageBatchPostHandler ::
         receiveMessageGetHandler :: receiveMessagePostHandler ::
         deleteMessageGetHandler :: deleteMessagePostHandler ::
         // 2. Getting, creating queues
