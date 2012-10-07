@@ -54,7 +54,7 @@ class NativeMessageClientImplTestSuite extends FunSuite with MustMatchers with M
     val m = createMessageData("1", "z", MillisNextDelivery(123L))
     val stats = MessageStatistics(NeverReceived, 0)
 
-    mockExecutor.returnWhenCommandClass(classOf[ReceiveMessagesCommand], List(m))
+    mockExecutor.returnWhenCommandClass(classOf[ReceiveMessageCommand], Some(m))
     mockExecutor.returnWhenCommandClass(classOf[GetMessageStatisticsCommand], stats)
 
     // When
@@ -77,7 +77,7 @@ class NativeMessageClientImplTestSuite extends FunSuite with MustMatchers with M
     val m = createMessageData("1", "z", MillisNextDelivery(123L))
     val stats = MessageStatistics(OnDateTimeReceived(new DateTime(Now - 100000L)), 7)
 
-    mockExecutor.returnWhenCommandClass(classOf[ReceiveMessagesCommand], List(m))
+    mockExecutor.returnWhenCommandClass(classOf[ReceiveMessageCommand], Some(m))
     mockExecutor.returnWhenCommandClass(classOf[GetMessageStatisticsCommand], stats)
 
     // When
@@ -100,13 +100,13 @@ class NativeMessageClientImplTestSuite extends FunSuite with MustMatchers with M
     val m = createMessageData("1", "z", MillisNextDelivery(123L))
 
     mockExecutor.returnWhenCommandClass(classOf[GetMessageStatisticsCommand], MessageStatistics(OnDateTimeReceived(NowAsDateTime), 0))
-    mockExecutor.returnWhenCommandClass(classOf[ReceiveMessagesCommand], List(m))
+    mockExecutor.returnWhenCommandClass(classOf[ReceiveMessageCommand], Some(m))
 
     // When
     queueOperations.receiveMessage(DefaultVisibilityTimeout)
 
     // Then
-    mockExecutor.findExecutedCommand[ReceiveMessagesCommand].newNextDelivery must be (MillisNextDelivery(Now + 123L))
+    mockExecutor.findExecutedCommand[ReceiveMessageCommand].newNextDelivery must be (MillisNextDelivery(Now + 123L))
   }
 
   test("should correctly set next delivery if receiving a message with a specific visibility timeout") {
@@ -118,13 +118,13 @@ class NativeMessageClientImplTestSuite extends FunSuite with MustMatchers with M
     val m = createMessageData("1", "z", MillisNextDelivery(123L))
 
     mockExecutor.returnWhenCommandClass(classOf[GetMessageStatisticsCommand], MessageStatistics(OnDateTimeReceived(NowAsDateTime), 0))
-    mockExecutor.returnWhenCommandClass(classOf[ReceiveMessagesCommand], List(m))
+    mockExecutor.returnWhenCommandClass(classOf[ReceiveMessageCommand], Some(m))
 
     // When
     queueOperations.receiveMessage(MillisVisibilityTimeout(1000L))
 
     // Then
-    mockExecutor.findExecutedCommand[ReceiveMessagesCommand].newNextDelivery must be (MillisNextDelivery(Now + 1000L))
+    mockExecutor.findExecutedCommand[ReceiveMessageCommand].newNextDelivery must be (MillisNextDelivery(Now + 1000L))
   }
 
   def createQueueOperationsWithMockStorage(queueData: QueueData): (QueueOperations, MockStorageCommandExecutor) = {

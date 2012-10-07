@@ -22,17 +22,21 @@ case class LookupQueueCommand(name: String) extends StorageCommand[Option[QueueD
 case class ListQueuesCommand() extends StorageCommand[Seq[QueueData]] with NonMutativeCommand[Seq[QueueData]]
 case class GetQueueStatisticsCommand(name: String, deliveryTime: Long) extends StorageCommand[QueueStatistics] with NonMutativeCommand[QueueStatistics]
 
+
 case class SendMessageCommand(queueName: String, message: MessageData)
   extends StorageCommand[Unit] with IdempotentMutativeCommand[Unit]
 
 case class UpdateNextDeliveryCommand(queueName: String, messageId: MessageId, newNextDelivery: MillisNextDelivery)
   extends StorageCommand[Unit] with IdempotentMutativeCommand[Unit]
 
-case class ReceiveMessagesCommand(queueName: String, deliveryTime: Long, newNextDelivery: MillisNextDelivery, maxCount: Int)
-  extends StorageCommand[List[MessageData]] with MutativeCommand[List[MessageData]] {
+case class ReceiveMessageCommand(queueName: String, deliveryTime: Long, newNextDelivery: MillisNextDelivery)
+  extends StorageCommand[Option[MessageData]] with MutativeCommand[Option[MessageData]] {
 
-  def resultingMutations(result: List[MessageData]) = {
-    result.map(messageData => UpdateNextDeliveryCommand(queueName, messageData.id, messageData.nextDelivery))
+  def resultingMutations(result: Option[MessageData]) = {
+    result match {
+      case Some(messageData) => UpdateNextDeliveryCommand(queueName, messageData.id, messageData.nextDelivery) :: Nil
+      case None => Nil
+    }
   }
 }
 
@@ -40,6 +44,7 @@ case class DeleteMessageCommand(queueName: String, messageId: MessageId)
   extends StorageCommand[Unit] with IdempotentMutativeCommand[Unit]
 
 case class LookupMessageCommand(queueName: String, messageId: MessageId) extends StorageCommand[Option[MessageData]] with NonMutativeCommand[Option[MessageData]]
+
 
 case class UpdateMessageStatisticsCommand(queueName: String, messageId: MessageId, messageStatistics: MessageStatistics)
   extends StorageCommand[Unit] with IdempotentMutativeCommand[Unit]

@@ -57,10 +57,10 @@ abstract class MessageCommandsTest extends StorageTest {
     execute(new SendMessageCommand(q1.name, createMessageData("xyz", "123", MillisNextDelivery(123L))))
 
     // When
-    val lookupResult = execute(ReceiveMessagesCommand(q2.name, 1000L, MillisNextDelivery(234L), 1))
+    val lookupResult = execute(ReceiveMessageCommand(q2.name, 1000L, MillisNextDelivery(234L)))
 
     // Then
-    lookupResult must be (Nil)
+    lookupResult must be (None)
   }
 
   test("undelivered message should be found in a non-empty queue") {
@@ -74,10 +74,10 @@ abstract class MessageCommandsTest extends StorageTest {
     execute(new SendMessageCommand(q1.name, createMessageData("xyz", "123", MillisNextDelivery(123L))))
 
     // When
-    val lookupResult = execute(ReceiveMessagesCommand(q1.name, 200L, MillisNextDelivery(234L), 1))
+    val lookupResult = execute(ReceiveMessageCommand(q1.name, 200L, MillisNextDelivery(234L)))
 
     // Then
-    lookupResult must be (List(createMessageData("xyz", "123", MillisNextDelivery(234L))))
+    lookupResult must be (Some(createMessageData("xyz", "123", MillisNextDelivery(234L))))
   }
 
   test("next delivery should be updated after receiving") {
@@ -89,7 +89,7 @@ abstract class MessageCommandsTest extends StorageTest {
     execute(new SendMessageCommand(q1.name, createMessageData("xyz", "123", MillisNextDelivery(123L))))
 
     // When
-    execute(ReceiveMessagesCommand(q1.name, 200L, MillisNextDelivery(567L), 1))
+    execute(ReceiveMessageCommand(q1.name, 200L, MillisNextDelivery(567L)))
     val lookupResult = execute(LookupMessageCommand(q1.name, MessageId("xyz")))
 
     // Then
@@ -105,10 +105,10 @@ abstract class MessageCommandsTest extends StorageTest {
     execute(new SendMessageCommand(q1.name, createMessageData("xyz", "123", MillisNextDelivery(123L))))
 
     // When
-    val lookupResult = execute(ReceiveMessagesCommand(q1.name, 100L, MillisNextDelivery(234L), 1))
+    val lookupResult = execute(ReceiveMessageCommand(q1.name, 100L, MillisNextDelivery(234L)))
 
     // Then
-    lookupResult must be (Nil)
+    lookupResult must be (None)
   }
 
   test("increasing next delivery of a message") {
@@ -143,7 +143,7 @@ abstract class MessageCommandsTest extends StorageTest {
 
     // Then
     // This should find the first message, as it has the visibility timeout decreased.
-    execute(ReceiveMessagesCommand(q1.name, 75L, MillisNextDelivery(100L), 1)).map(_.id) must be (List(m2.id))
+    execute(ReceiveMessageCommand(q1.name, 75L, MillisNextDelivery(100L))).map(_.id) must be (Some(m2.id))
   }
 
   test("message should be deleted") {
