@@ -7,12 +7,14 @@ import Constants._
 import org.elasticmq._
 import org.elasticmq.rest.sqs.ActionUtil._
 import org.elasticmq.rest.sqs.MD5Util._
+import annotation.tailrec
 
 trait ReceiveMessageHandlerModule { this: ClientModule with RequestHandlerLogicModule with AttributesModule =>
   object MessageReadeableAttributeNames {
     val SentTimestampAttribute = "SentTimestamp"
     val ApproximateReceiveCountAttribute = "ApproximateReceiveCount"
     val ApproximateFirstReceiveTimestampAttribute = "ApproximateFirstReceiveTimestamp"
+    val MaxNumberOfMessagesAttribute = "MaxNumberOfMessages"
 
     val AllAttributeNames = SentTimestampAttribute :: ApproximateReceiveCountAttribute ::
             ApproximateFirstReceiveTimestampAttribute :: Nil
@@ -21,14 +23,33 @@ trait ReceiveMessageHandlerModule { this: ClientModule with RequestHandlerLogicM
   val receiveMessageLogic = logicWithQueue((queue, request, parameters) => {
     import MessageReadeableAttributeNames._
 
-    def calculateVisibilityTimeout() = {
+    val visibilityTimeoutFromParameters = {
       parameters.get(VisibilityTimeoutParameter) match {
         case Some(vt) => MillisVisibilityTimeout.fromSeconds(vt.toInt)
         case None => DefaultVisibilityTimeout
       }
     }
 
-    val msgWithStats = queue.receiveMessageWithStatistics(calculateVisibilityTimeout())
+    val maxNumberOfMessagesFromParameters = {
+      parameters.get(MaxNumberOfMessagesAttribute) match {
+        case Some(maxCount) => maxCount.toInt
+        case None => 1
+      }
+    }
+
+    @tailrec
+    def receiveMessages(messagesLeft: Int, received: List[(Message, MessageStatistics)]): List[(Message, MessageStatistics)] = {
+      if (messagesLeft == 0) {
+        received
+      } else {
+        queue.receiveMessageWithStatistics(visibilityTimeoutFromParameters) match {
+          case Some(data) => receiveMessages(messagesLeft - 1, data :: received)
+          case None => received
+        }
+      }
+    }
+
+    val msgWithStats = receiveMessages(maxNumberOfMessagesFromParameters, Nil)
 
     lazy val attributeNames = attributeNamesReader.read(parameters, AllAttributeNames)
 
