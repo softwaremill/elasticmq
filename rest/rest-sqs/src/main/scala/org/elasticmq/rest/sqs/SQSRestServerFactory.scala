@@ -8,6 +8,8 @@ import java.security.MessageDigest
 import org.elasticmq.{NodeAddress, Queue, Client}
 import java.net.{InetSocketAddress, SocketAddress}
 import com.weiglewilczek.slf4s.Logging
+import collection.parallel.mutable
+import java.util.regex.Pattern
 
 object SQSRestServerFactory extends Logging {
   /**
@@ -94,7 +96,7 @@ object ActionUtil {
   def createAction(action: String) = "Action" -> action
 }
 
-object ParametersParserUtil {
+object ParametersUtil {
   class ParametersParser(parameters: Map[String, String]) {
     def parseOptionalLong(name: String) = {
       val param = parameters.get(name)
@@ -107,6 +109,26 @@ object ParametersParserUtil {
   }
 
   implicit def mapToParametersParser(parameters: Map[String, String]): ParametersParser = new ParametersParser(parameters)
+
+  /**
+   * In the given list of parameters, lookups all parameters of the form: <code>{prefix}.{discriminator}.key=value</code>,
+   * and for each discriminator builds a map of found key-value mappings.
+   */
+  def subParametersMaps(prefix: String, parameters: Map[String, String]): List[Map[String, String]] = {
+    val subParameters = collection.mutable.Map[String, Map[String, String]]()
+    val keyRegexp = (Pattern.quote(prefix) + "\\.(.+)\\.(.+)").r
+    parameters.foreach{ case (key, value) =>
+      keyRegexp.findFirstMatchIn(key).map { keyMatch =>
+        val discriminator = keyMatch.group(1)
+        val subKey = keyMatch.group(2)
+
+        val subMap = subParameters.get(discriminator).getOrElse(Map[String, String]())
+        subParameters.put(discriminator, subMap + (subKey -> value))
+      }
+    }
+
+    subParameters.values.map(_.toMap).toList
+  }
 }
 
 object MD5Util {

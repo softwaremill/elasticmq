@@ -6,7 +6,7 @@ import org.jboss.netty.handler.codec.http.HttpMethod._
 import Constants._
 import ActionUtil._
 import MD5Util._
-import ParametersParserUtil._
+import ParametersUtil._
 import org.elasticmq.{MessageBuilder, AfterMillisNextDelivery, Queue}
 
 trait SendMessageHandlerModule { this: ClientModule with RequestHandlerLogicModule =>

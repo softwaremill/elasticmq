@@ -8,7 +8,7 @@ import org.jboss.netty.handler.codec.http.HttpMethod._
 
 import Constants._
 import ActionUtil._
-import ParametersParserUtil._
+import ParametersUtil._
 import org.joda.time.Duration
 import org.elasticmq.{QueueBuilder, MillisVisibilityTimeout}
 
