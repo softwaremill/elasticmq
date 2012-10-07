@@ -106,31 +106,7 @@ class NativeMessageClientImplTestSuite extends FunSuite with MustMatchers with M
     queueOperations.receiveMessage(DefaultVisibilityTimeout)
 
     // Then
-    val receiveMessagesCommand: ReceiveMessagesCommand = mockExecutor.findExecutedCommand[ReceiveMessagesCommand]
-    receiveMessagesCommand.newNextDelivery must be (MillisNextDelivery(Now + 123L))
-    receiveMessagesCommand.maxCount must be (1)
-  }
-
-  test("should receive multiple messages and correctly set the visibility timeout") {
-    // Given
-    val q = createQueueData("q1", MillisVisibilityTimeout(123L))
-
-    val (queueOperations, mockExecutor) = createQueueOperationsWithMockStorage(q)
-
-    val messages = (for (i <- 1 to 8) yield createMessageData(i.toString, "z" + i, MillisNextDelivery(123L))).toList
-
-    mockExecutor.returnWhenCommandClass(classOf[GetMessageStatisticsCommand], MessageStatistics(OnDateTimeReceived(NowAsDateTime), 0))
-    mockExecutor.returnWhenCommandClass(classOf[ReceiveMessagesCommand], messages)
-
-    // When
-    val result = queueOperations.receiveMessages(messages.size)
-
-    // Then
-    result must have size (messages.size)
-
-    val receiveMessagesCommand: ReceiveMessagesCommand = mockExecutor.findExecutedCommand[ReceiveMessagesCommand]
-    receiveMessagesCommand.newNextDelivery must be (MillisNextDelivery(Now + 123L))
-    receiveMessagesCommand.maxCount must be (messages.size)
+    mockExecutor.findExecutedCommand[ReceiveMessagesCommand].newNextDelivery must be (MillisNextDelivery(Now + 123L))
   }
 
   test("should correctly set next delivery if receiving a message with a specific visibility timeout") {
