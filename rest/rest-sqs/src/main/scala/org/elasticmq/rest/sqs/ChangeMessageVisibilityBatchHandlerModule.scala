@@ -5,7 +5,6 @@ import org.jboss.netty.handler.codec.http.HttpMethod._
 
 import Constants._
 import ActionUtil._
-import org.elasticmq.{MessageId, MillisVisibilityTimeout}
 
 trait ChangeMessageVisibilityBatchHandlerModule { this: ClientModule with RequestHandlerLogicModule with ChangeMessageVisibilityHandlerModule =>
   val changeMessageVisibilityBatchLogic = logicWithQueue((queue, request, parameters) => {
