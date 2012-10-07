@@ -304,7 +304,7 @@ Change log
 
 #### Version 0.6 (pending)
 
-* batch operations (send, receive)
+* batch operations in SQS (send, receive, delete, change visibility)
 
 #### Version 0.5 (26 May 2012)
 
