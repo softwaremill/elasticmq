@@ -240,7 +240,7 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
 
     // When
     client.sendMessage(new SendMessageRequest(queueUrl, "Message 1"))
-    val m1 = client.receiveMessage(new ReceiveMessageRequest(queueUrl).withVisibilityTimeout(2)).getMessages.get(0)
+    val m1 = client.receiveMessage(new ReceiveMessageRequest(queueUrl)).getMessages.get(0)
     client.deleteMessage(new DeleteMessageRequest(queueUrl, m1.getReceiptHandle))
     Thread.sleep(1100)
     val m2 = receiveSingleMessage(queueUrl)
