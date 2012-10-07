@@ -8,7 +8,6 @@ import java.security.MessageDigest
 import org.elasticmq.{NodeAddress, Queue, Client}
 import java.net.{InetSocketAddress, SocketAddress}
 import com.weiglewilczek.slf4s.Logging
-import collection.parallel.mutable
 import java.util.regex.Pattern
 
 object SQSRestServerFactory extends Logging {
@@ -90,6 +89,7 @@ object Constants {
   val ReceiptHandlerParameter = "ReceiptHandle"
   val VisibilityTimeoutParameter = "VisibilityTimeout"
   val DelayParameter = "DelaySeconds"
+  val IdSubParameter = "Id"
 }
 
 object ActionUtil {

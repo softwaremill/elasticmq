@@ -11,12 +11,7 @@ import org.elasticmq.{MessageBuilder, AfterMillisNextDelivery, Queue}
 
 trait SendMessageHandlerModule { this: ClientModule with RequestHandlerLogicModule =>
   val sendMessageLogic = logicWithQueue((queue, request, parameters) => {
-    val body = parameters(MessageBodyParameter)
-    val delaySecondsOption = parameters.parseOptionalLong(DelaySecondsParameter)
-    val messageToSend = createMessage(queue, body, delaySecondsOption)
-    val message = queue.sendMessage(messageToSend)
-
-    val digest = md5Digest(body)
+    val (message, digest) = sendMessage(queue, parameters)
 
     <SendMessageResponse>
       <SendMessageResult>
@@ -28,8 +23,19 @@ trait SendMessageHandlerModule { this: ClientModule with RequestHandlerLogicModu
       </ResponseMetadata>
     </SendMessageResponse>
   })
-  
-  def createMessage(queue: Queue, body: String, delaySecondsOption: Option[Long]) = {
+
+  def sendMessage(queue: Queue, parameters: Map[String, String]) = {
+    val body = parameters(MessageBodyParameter)
+    val delaySecondsOption = parameters.parseOptionalLong(DelaySecondsParameter)
+    val messageToSend = createMessage(queue, body, delaySecondsOption)
+    val message = queue.sendMessage(messageToSend)
+
+    val digest = md5Digest(body)
+
+    (message, digest)
+  }
+
+  private def createMessage(queue: Queue, body: String, delaySecondsOption: Option[Long]) = {
     val base = MessageBuilder(body)
     delaySecondsOption match {
       case None => base
