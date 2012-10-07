@@ -48,6 +48,7 @@ object SQSRestServerFactory extends Logging {
       with SendMessageBatchHandlerModule
       with ReceiveMessageHandlerModule
       with DeleteMessageHandlerModule
+      with DeleteMessageBatchHandlerModule
       with ChangeMessageVisibilityHandlerModule
       with GetQueueUrlHandlerModule
       with AttributesModule {
@@ -62,6 +63,7 @@ object SQSRestServerFactory extends Logging {
         sendMessageBatchGetHandler :: sendMessageBatchPostHandler ::
         receiveMessageGetHandler :: receiveMessagePostHandler ::
         deleteMessageGetHandler :: deleteMessagePostHandler ::
+        deleteMessageBatchGetHandler :: deleteMessageBatchPostHandler ::
         // 2. Getting, creating queues
         getQueueUrlGetHandler :: getQueueUrlPostHandler ::
         createQueueGetHandler :: createQueuePostHandler ::
@@ -86,7 +88,7 @@ object Constants {
   val QueueUrlPath = "queue"
   val QueuePath = root / QueueUrlPath / %("QueueName")
   val QueueNameParameter = "QueueName"
-  val ReceiptHandlerParameter = "ReceiptHandle"
+  val ReceiptHandleParameter = "ReceiptHandle"
   val VisibilityTimeoutParameter = "VisibilityTimeout"
   val DelayParameter = "DelaySeconds"
   val IdSubParameter = "Id"

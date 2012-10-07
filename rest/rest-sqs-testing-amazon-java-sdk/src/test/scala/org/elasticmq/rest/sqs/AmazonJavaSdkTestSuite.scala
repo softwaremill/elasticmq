@@ -263,7 +263,7 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
     val msgIds = client.receiveMessage(new ReceiveMessageRequest(queueUrl).withMaxNumberOfMessages(2)).getMessages.map(_.getReceiptHandle)
 
     // When
-    client.deleteMessageBatch(new DeleteMessageBatchRequest(queueUrl).withEntries(
+    val result = client.deleteMessageBatch(new DeleteMessageBatchRequest(queueUrl).withEntries(
       new DeleteMessageBatchRequestEntry("1", msgIds(0)),
       new DeleteMessageBatchRequestEntry("2", msgIds(1))
     ))
@@ -272,6 +272,7 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
     val m = receiveSingleMessage(queueUrl)
 
     // Then
+    result.getSuccessful.map(_.getId).toSet must be (Set("1", "2"))
     m must be (None) // messages deleted
   }
 

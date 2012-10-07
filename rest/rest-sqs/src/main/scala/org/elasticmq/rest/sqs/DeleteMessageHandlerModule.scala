@@ -9,7 +9,7 @@ import org.elasticmq.MessageId
 
 trait DeleteMessageHandlerModule { this: ClientModule with RequestHandlerLogicModule =>
   val deleteMessageLogic = logicWithQueue((queue, request, parameters) => {
-    val id = parameters(ReceiptHandlerParameter)
+    val id = parameters(ReceiptHandleParameter)
     val messageOption = queue.lookupMessage(MessageId(id))
     // No failure even if the message doesn't exist
     messageOption.foreach(_.delete())
@@ -26,7 +26,7 @@ trait DeleteMessageHandlerModule { this: ClientModule with RequestHandlerLogicMo
   val deleteMessageGetHandler = (createHandler
             forMethod GET
             forPath (QueuePath)
-            requiringParameters List(ReceiptHandlerParameter)
+            requiringParameters List(ReceiptHandleParameter)
             requiringParameterValues Map(DeleteMessageAction)
             running deleteMessageLogic)
 
@@ -34,7 +34,7 @@ trait DeleteMessageHandlerModule { this: ClientModule with RequestHandlerLogicMo
             forMethod POST
             forPath (QueuePath)
             includingParametersFromBody()
-            requiringParameters List(ReceiptHandlerParameter)
+            requiringParameters List(ReceiptHandleParameter)
             requiringParameterValues Map(DeleteMessageAction)
             running deleteMessageLogic)
 }

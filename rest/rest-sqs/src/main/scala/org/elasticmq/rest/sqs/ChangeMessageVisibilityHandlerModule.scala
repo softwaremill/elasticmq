@@ -12,7 +12,7 @@ trait ChangeMessageVisibilityHandlerModule { this: ClientModule with RequestHand
 
   val changeMessageVisibilityLogic = logicWithQueue((queue, request, parameters) => {
     val visibilityTimeout = MillisVisibilityTimeout.fromSeconds(parameters(VisibilityTimeoutParameter).toLong)
-    val message = queue.lookupMessage(MessageId(parameters(ReceiptHandlerParameter)))
+    val message = queue.lookupMessage(MessageId(parameters(ReceiptHandleParameter)))
       .getOrElse(throw SQSException.invalidParameterValue)
     message.updateVisibilityTimeout(visibilityTimeout)
 
@@ -26,7 +26,7 @@ trait ChangeMessageVisibilityHandlerModule { this: ClientModule with RequestHand
   val changeMessageVisibilityGetHandler = (createHandler
             forMethod GET
             forPath (QueuePath)
-            requiringParameters List(ReceiptHandlerParameter, VisibilityTimeoutParameter)
+            requiringParameters List(ReceiptHandleParameter, VisibilityTimeoutParameter)
             requiringParameterValues Map(ChangeMessageVisibilityAction)
             running changeMessageVisibilityLogic)
 
@@ -34,7 +34,7 @@ trait ChangeMessageVisibilityHandlerModule { this: ClientModule with RequestHand
             forMethod POST
             forPath (QueuePath)
             includingParametersFromBody ()
-            requiringParameters List(ReceiptHandlerParameter, VisibilityTimeoutParameter)
+            requiringParameters List(ReceiptHandleParameter, VisibilityTimeoutParameter)
             requiringParameterValues Map(ChangeMessageVisibilityAction)
             running changeMessageVisibilityLogic)
 }
