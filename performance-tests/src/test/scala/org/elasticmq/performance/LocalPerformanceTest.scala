@@ -8,7 +8,7 @@ import org.elasticmq.storage.squeryl.{DBConfiguration, SquerylStorage}
 import com.amazonaws.services.sqs.AmazonSQSClient
 import com.amazonaws.auth.BasicAWSCredentials
 import com.amazonaws.services.sqs.model.{CreateQueueRequest, DeleteMessageRequest, ReceiveMessageRequest, SendMessageRequest}
-import org.elasticmq.rest.sqs.SQSRestServerFactory
+import org.elasticmq.rest.sqs.SQSRestServerBuilder
 import org.elasticmq.rest.RestServer
 import org.elasticmq.test._
 import org.elasticmq.{MillisVisibilityTimeout, QueueBuilder, Queue, NodeBuilder}
@@ -121,7 +121,7 @@ object LocalPerformanceTest extends App {
     def start() {
       currentStorage = new InMemoryStorage
 
-      currentRestServer = SQSRestServerFactory.start(NodeBuilder.withStorage(currentStorage).nativeClient)
+      currentRestServer = new SQSRestServerBuilder(NodeBuilder.withStorage(currentStorage).nativeClient).start()
 
       currentSQSClient = new AmazonSQSClient(new BasicAWSCredentials("x", "x"))
       currentSQSClient.setEndpoint("http://localhost:9324")

@@ -74,7 +74,7 @@ Starting an embedded ElasticMQ server with an SQS interface
     // First we need to create a Node
     val node = NodeBuilder.withStorage(new InMemoryStorage)
     // Then we can expose the native client using the SQS REST interface
-    val server = SQSRestServerFactory.start(node.nativeClient, 9324, new NodeAddress())
+    val server = new SQSRestServerBuilder(node.nativeClient, 9324, new NodeAddress()).start()
     // ... use ...
     // Finally we need to stop the server and the node
     server.stop()
@@ -156,7 +156,7 @@ to change the endpoint:
     client.setEndpoint("http://localhost:9324")
 
 The endpoint value should be the same address as the `NodeAddress` provided as an argument to
-`SQSRestServerFactory` or in the configuration file.
+`SQSRestServerBuilder` or in the configuration file.
 
 The `rest-sqs-testing-amazon-java-sdk` module contains some more usage examples.
 
@@ -305,6 +305,7 @@ Change log
 #### Version 0.6 (pending)
 
 * batch operations in SQS (send, receive, delete, change visibility)
+* changed SQSRestServerFactory to SQSRestServerBuilder
 
 #### Version 0.5 (26 May 2012)
 

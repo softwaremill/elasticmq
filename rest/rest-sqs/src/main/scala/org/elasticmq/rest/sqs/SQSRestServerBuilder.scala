@@ -10,30 +10,45 @@ import java.net.{InetSocketAddress, SocketAddress}
 import com.weiglewilczek.slf4s.Logging
 import java.util.regex.Pattern
 
-object SQSRestServerFactory extends Logging {
-  /**
-   * Starts the SQS server on `localhost:9324`. The returned queue addresses will use `http://localhost:9324` as
-   * the base address.
-   */
-  def start(client: Client): RestServer = {
-    start(client, 9324, NodeAddress())
-  }
-
+/**
+ * @param socketAddress Address on which the server will listen.
+ * @param serverAddress Address which will be returned as the queue address. Requests to this address
+ * should be routed to this server.
+ */
+class SQSRestServerBuilder(client: Client, socketAddress: SocketAddress, serverAddress: NodeAddress) extends Logging {
   /**
    * @param port Port on which the server will listen.
    * @param serverAddress Address which will be returned as the queue address. Requests to this address
    * should be routed to this server.
    */
-  def start(client: Client, port: Int, serverAddress: NodeAddress): RestServer = {
-    start(client, new InetSocketAddress(port), serverAddress)
+  def this(client: Client, port: Int, serverAddress: NodeAddress) = {
+    this(client, new InetSocketAddress(port), serverAddress)
   }
 
   /**
-   * @param socketAddress Address on which the server will listen.
-   * @param serverAddress Address which will be returned as the queue address. Requests to this address
-   * should be routed to this server.
+   * By default:
+   * <li>
+   *  <ul>for `socketAddress`: when started, the server will bind to `localhost:9324`</ul>
+   *  <ul>for `serverAddress`: returned queue addresses will use `http://localhost:9324` as the base address.</ul>
+   * </li>
    */
-  def start(client: Client, socketAddress: SocketAddress, serverAddress: NodeAddress): RestServer = {
+  def this(client: Client) = {
+    this(client, 9324, NodeAddress())
+  }
+
+  def withPort(port: Int) = {
+    new SQSRestServerBuilder(client, new InetSocketAddress(port), serverAddress)
+  }
+
+  def withServerAddress(newServerAddress: NodeAddress) = {
+    new SQSRestServerBuilder(client, socketAddress, newServerAddress)
+  }
+
+  def withSocketAddress(newSocketAddress: SocketAddress) = {
+    new SQSRestServerBuilder(client, newSocketAddress, serverAddress)
+  }
+
+  def start(): RestServer = {
     val theClient = client
     val theServerAddress = serverAddress
 

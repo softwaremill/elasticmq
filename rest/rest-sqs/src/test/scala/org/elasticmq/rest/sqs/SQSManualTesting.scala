@@ -25,7 +25,7 @@ object SQSManualTesting {
     val node = NodeBuilder.withStorage(new InMemoryStorage)
     val client = node.nativeClient
 
-    val server = SQSRestServerFactory.start(client)
+    val server = new SQSRestServerBuilder(client).start()
     println("Started")
     readLine()
     server.stop()

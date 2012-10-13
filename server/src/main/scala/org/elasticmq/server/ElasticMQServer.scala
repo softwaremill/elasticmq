@@ -8,7 +8,7 @@ import org.elasticmq.storage.filelog.{FileLogConfiguration, FileLogConfigurator}
 import java.io.File
 import org.elasticmq.replication.ReplicatedStorageConfigurator
 import org.jgroups.JChannel
-import org.elasticmq.rest.sqs.SQSRestServerFactory
+import org.elasticmq.rest.sqs.SQSRestServerBuilder
 import org.elasticmq.NodeBuilder
 import java.net.InetSocketAddress
 import org.elasticmq.rest.RestServer
@@ -113,9 +113,9 @@ class ElasticMQServer(config: ElasticMQServerConfig) extends Logging {
   private def optionallyStartRestSqs(storage: StorageCommandExecutor): Option[RestServer] = {
     if (config.restSqs.enabled) {
       val client = NodeBuilder.withStorage(storage).nativeClient
-      val server = SQSRestServerFactory.start(client,
+      val server = new SQSRestServerBuilder(client,
         new InetSocketAddress(config.restSqs.bindHostname, config.restSqs.bindPort),
-        config.nodeAddress)
+        config.nodeAddress).start()
 
       Some(server)
     } else {
