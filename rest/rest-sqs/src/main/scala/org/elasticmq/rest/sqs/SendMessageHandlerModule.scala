@@ -32,6 +32,8 @@ trait SendMessageHandlerModule { this: ClientModule with RequestHandlerLogicModu
       "InvalidMessageContents"
     }
 
+    verifyMessageNotTooLong(body.length)
+
     val delaySecondsOption = parameters.parseOptionalLong(DelaySecondsParameter)
     val messageToSend = createMessage(queue, body, delaySecondsOption)
     val message = queue.sendMessage(messageToSend)
@@ -39,6 +41,12 @@ trait SendMessageHandlerModule { this: ClientModule with RequestHandlerLogicModu
     val digest = md5Digest(body)
 
     (message, digest)
+  }
+
+  def verifyMessageNotTooLong(messageLength: Int) {
+    ifStrictLimits(messageLength > 65536) {
+      "MessageTooLong"
+    }
   }
 
   private def bodyContainsInvalidCharacters(body: String) = {

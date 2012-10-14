@@ -6,10 +6,14 @@ import org.jboss.netty.handler.codec.http.HttpMethod._
 import Constants._
 import ActionUtil._
 
-trait SendMessageBatchHandlerModule { this: ClientModule with RequestHandlerLogicModule with SendMessageHandlerModule with BatchRequestsModule =>
+trait SendMessageBatchHandlerModule { this: ClientModule with RequestHandlerLogicModule with SendMessageHandlerModule with BatchRequestsModule with SQSLimitsModule =>
   val sendMessageBatchLogic = logicWithQueue((queue, request, parameters) => {
+    var totalLength = 0
+
     val results = batchRequest("SendMessageBatchRequestEntry", parameters) { (messageData, id) =>
       val (message, digest) = sendMessage(queue, messageData)
+
+      totalLength += messageData(MessageBodyParameter).length
 
       <SendMessageBatchResultEntry>
         <Id>{id}</Id>
@@ -17,6 +21,8 @@ trait SendMessageBatchHandlerModule { this: ClientModule with RequestHandlerLogi
         <MessageId>{message.id.id}</MessageId>
       </SendMessageBatchResultEntry>
     }
+
+    verifyMessageNotTooLong(totalLength)
 
     <SendMessageBatchResponse>
       <SendMessageBatchResult>

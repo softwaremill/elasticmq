@@ -538,6 +538,27 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
     }
   }
 
+  test("should return an error if strict & message body is too long") {
+    // Given
+    val queueUrl = client.createQueue(new CreateQueueRequest("testQueue1")).getQueueUrl
+
+    strictOnlyShouldThrowException {
+      _.sendMessage(new SendMessageRequest(queueUrl, "x"*65537))
+    }
+  }
+
+  test("should return an error if strict & total message bodies length is too long in a batch send") {
+    // Given
+    val queueUrl = client.createQueue(new CreateQueueRequest("testQueue1")).getQueueUrl
+
+    strictOnlyShouldThrowException {
+      _.sendMessageBatch(new SendMessageBatchRequest(queueUrl).withEntries(
+        new SendMessageBatchRequestEntry("1", "x"*40000),
+        new SendMessageBatchRequestEntry("2", "x"*40000)
+      ))
+    }
+  }
+
   test("should return a failure for one message, send another if strict & sending two messages in a batch, one with illegal characters") {
     // Given
     val queueUrl = client.createQueue(new CreateQueueRequest("testQueue1")).getQueueUrl
