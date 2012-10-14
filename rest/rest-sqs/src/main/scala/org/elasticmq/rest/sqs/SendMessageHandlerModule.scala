@@ -8,8 +8,9 @@ import ActionUtil._
 import MD5Util._
 import ParametersUtil._
 import org.elasticmq.{MessageBuilder, AfterMillisNextDelivery, Queue}
+import annotation.tailrec
 
-trait SendMessageHandlerModule { this: ClientModule with RequestHandlerLogicModule =>
+trait SendMessageHandlerModule { this: ClientModule with RequestHandlerLogicModule with SQSLimitsModule =>
   val sendMessageLogic = logicWithQueue((queue, request, parameters) => {
     val (message, digest) = sendMessage(queue, parameters)
 
@@ -26,6 +27,11 @@ trait SendMessageHandlerModule { this: ClientModule with RequestHandlerLogicModu
 
   def sendMessage(queue: Queue, parameters: Map[String, String]) = {
     val body = parameters(MessageBodyParameter)
+
+    ifStrictLimits(bodyContainsInvalidCharacters(body)) {
+      "InvalidMessageContents"
+    }
+
     val delaySecondsOption = parameters.parseOptionalLong(DelaySecondsParameter)
     val messageToSend = createMessage(queue, body, delaySecondsOption)
     val message = queue.sendMessage(messageToSend)
@@ -33,6 +39,29 @@ trait SendMessageHandlerModule { this: ClientModule with RequestHandlerLogicModu
     val digest = md5Digest(body)
 
     (message, digest)
+  }
+
+  private def bodyContainsInvalidCharacters(body: String) = {
+    val bodyLength = body.length
+
+    @tailrec
+    def findInvalidCharacter(offset: Int): Boolean = {
+      if (offset < bodyLength) {
+        val c = body.codePointAt(offset)
+
+        // Allow chars: #x9 | #xA | #xD | [#x20 to #xD7FF] | [#xE000 to #xFFFD] | [#x10000 to #x10FFFF]
+        if (c == 0x9 || c == 0xA || c == 0xD || (c >= 0x20 && c <= 0xD7FF) || (c >= 0xE000 && c <= 0xFFFD) || (c >= 0x10000 && c <= 0x10FFFF)) {
+          // Current char is valid
+          findInvalidCharacter(offset + Character.charCount(c))
+        } else {
+          true
+        }
+      } else {
+        false
+      }
+    }
+
+    findInvalidCharacter(0)
   }
 
   private def createMessage(queue: Queue, body: String, delaySecondsOption: Option[Long]) = {

@@ -525,6 +525,15 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
     }
   }
 
+  test("should return an error if strict & sending an invalid character") {
+    // Given
+    val queueUrl = client.createQueue(new CreateQueueRequest("testQueue1")).getQueueUrl
+
+    strictOnlyShouldThrowException {
+      _.sendMessage(new SendMessageRequest(queueUrl, "\u0000"))
+    }
+  }
+
   def queueVisibilityTimeout(queueUrl: String) = getQueueLongAttribute(queueUrl, visibilityTimeoutAttribute)
 
   def queueDelay(queueUrl: String) = getQueueLongAttribute(queueUrl, delaySecondsAttribute)
