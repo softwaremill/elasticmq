@@ -500,6 +500,21 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
     result.isLeft must be (true)
   }
 
+  test("should return an error if sending too many messages in a batch") {
+    // Given
+    val queueUrl = client.createQueue(new CreateQueueRequest("testQueue1")).getQueueUrl
+
+    // When
+    val result = catching(classOf[AmazonServiceException]) either {
+      client.sendMessageBatch(new SendMessageBatchRequest(queueUrl).withEntries(
+        (for (i <- 1 to 11) yield new SendMessageBatchRequestEntry(i.toString, "Message")): _*
+      ))
+    }
+
+    // Then
+    result.isLeft must be (true)
+  }
+
   def queueVisibilityTimeout(queueUrl: String) = getQueueLongAttribute(queueUrl, visibilityTimeoutAttribute)
 
   def queueDelay(queueUrl: String) = getQueueLongAttribute(queueUrl, delaySecondsAttribute)
