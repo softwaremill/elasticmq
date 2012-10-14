@@ -519,10 +519,14 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
     }
   }
 
-  test("should return an error if strict & queue name contains invalid characters") {
-    strictOnlyShouldThrowException {
-      _.createQueue(new CreateQueueRequest("queue with spaces"))
+  test("should return an error if queue name contains invalid characters") {
+    // When
+    val result = catching(classOf[AmazonServiceException]) either {
+      client.createQueue(new CreateQueueRequest("queue with spaces"))
     }
+
+    // Then
+    result.isLeft must be (true)
   }
 
   test("should return an error if strict & sending an invalid character") {

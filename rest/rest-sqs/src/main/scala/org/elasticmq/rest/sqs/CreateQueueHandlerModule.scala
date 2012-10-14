@@ -43,8 +43,8 @@ trait CreateQueueHandlerModule { this: ClientModule with QueueURLModule with Req
       throw new SQSException("AWS.SimpleQueueService.QueueNameExists")
     }
 
-    ifStrictLimits(!queueName.matches("[\\p{Alnum}_-]*")) {
-      "InvalidParameterValue"
+    if (!queueName.matches("[\\p{Alnum}_-]*")) {
+      throw new SQSException("InvalidParameterValue")
     }
 
     <CreateQueueResponse>
