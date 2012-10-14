@@ -64,6 +64,7 @@ class SQSRestServerBuilder(client: Client,
     val env = new ClientModule
       with QueueURLModule
       with SQSLimitsModule
+      with BatchRequestsModule
       with RequestHandlerLogicModule
       with CreateQueueHandlerModule
       with DeleteQueueHandlerModule

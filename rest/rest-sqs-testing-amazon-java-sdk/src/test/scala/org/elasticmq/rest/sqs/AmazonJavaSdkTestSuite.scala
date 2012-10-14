@@ -151,17 +151,6 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
     bodies must be (Set("Message 1", "Message 2"))
   }
 
-  test("should return an error if trying to receive more than 10 messages") {
-    // Given
-    val queueUrl = client.createQueue(new CreateQueueRequest("testQueue1")).getQueueUrl
-
-    // When
-    val result = catching(classOf[AmazonServiceException]) either client.receiveMessage(new ReceiveMessageRequest(queueUrl).withMaxNumberOfMessages(11))
-
-    // Then
-    result.isLeft must be (true)
-  }
-
   test("should receive no more than the given amount of messages") {
     // Given
     val queueUrl = client.createQueue(new CreateQueueRequest("testQueue1")).getQueueUrl
@@ -480,6 +469,35 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
 
     // Then
     queueDelay(queueUrl) must be (10)
+  }
+
+  // Errors
+
+  test("should return an error if trying to receive more than 10 messages") {
+    // Given
+    val queueUrl = client.createQueue(new CreateQueueRequest("testQueue1")).getQueueUrl
+
+    // When
+    val result = catching(classOf[AmazonServiceException]) either client.receiveMessage(new ReceiveMessageRequest(queueUrl).withMaxNumberOfMessages(11))
+
+    // Then
+    result.isLeft must be (true)
+  }
+
+  test("should return an error if an id is duplicate in a batch request") {
+    // Given
+    val queueUrl = client.createQueue(new CreateQueueRequest("testQueue1")).getQueueUrl
+
+    // When
+    val result = catching(classOf[AmazonServiceException]) either {
+      client.sendMessageBatch(new SendMessageBatchRequest(queueUrl).withEntries(
+        new SendMessageBatchRequestEntry("1", "Message 1"),
+        new SendMessageBatchRequestEntry("1", "Message 2")
+      ))
+    }
+
+    // Then
+    result.isLeft must be (true)
   }
 
   def queueVisibilityTimeout(queueUrl: String) = getQueueLongAttribute(queueUrl, visibilityTimeoutAttribute)

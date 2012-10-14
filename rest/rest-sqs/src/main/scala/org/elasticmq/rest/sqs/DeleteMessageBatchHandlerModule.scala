@@ -7,9 +7,9 @@ import Constants._
 import org.elasticmq.rest.sqs.ActionUtil._
 import org.elasticmq.MessageId
 
-trait DeleteMessageBatchHandlerModule { this: ClientModule with RequestHandlerLogicModule =>
+trait DeleteMessageBatchHandlerModule { this: ClientModule with RequestHandlerLogicModule with BatchRequestsModule  =>
   val deleteMessageBatchLogic = logicWithQueue((queue, request, parameters) => {
-    val messagesData = ParametersUtil.subParametersMaps("DeleteMessageBatchRequestEntry", parameters)
+    val messagesData = batchParametersMap("DeleteMessageBatchRequestEntry", parameters)
 
     val results = messagesData.map(messageData => {
       val id = messageData(IdSubParameter)

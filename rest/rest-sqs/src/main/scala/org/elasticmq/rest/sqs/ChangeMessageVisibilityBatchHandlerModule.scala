@@ -6,9 +6,11 @@ import org.jboss.netty.handler.codec.http.HttpMethod._
 import Constants._
 import ActionUtil._
 
-trait ChangeMessageVisibilityBatchHandlerModule { this: ClientModule with RequestHandlerLogicModule with ChangeMessageVisibilityHandlerModule =>
+trait ChangeMessageVisibilityBatchHandlerModule { this: ClientModule with RequestHandlerLogicModule
+  with ChangeMessageVisibilityHandlerModule with BatchRequestsModule =>
+
   val changeMessageVisibilityBatchLogic = logicWithQueue((queue, request, parameters) => {
-    val messagesData = ParametersUtil.subParametersMaps("ChangeMessageVisibilityBatchRequestEntry", parameters)
+    val messagesData = batchParametersMap("ChangeMessageVisibilityBatchRequestEntry", parameters)
 
     val results = messagesData.map(messageData => {
       val id = messageData(IdSubParameter)

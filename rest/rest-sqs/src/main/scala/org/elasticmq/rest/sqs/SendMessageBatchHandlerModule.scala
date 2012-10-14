@@ -6,9 +6,9 @@ import org.jboss.netty.handler.codec.http.HttpMethod._
 import Constants._
 import ActionUtil._
 
-trait SendMessageBatchHandlerModule { this: ClientModule with RequestHandlerLogicModule with SendMessageHandlerModule =>
+trait SendMessageBatchHandlerModule { this: ClientModule with RequestHandlerLogicModule with SendMessageHandlerModule with BatchRequestsModule =>
   val sendMessageBatchLogic = logicWithQueue((queue, request, parameters) => {
-    val messagesData = ParametersUtil.subParametersMaps("SendMessageBatchRequestEntry", parameters)
+    val messagesData = batchParametersMap("SendMessageBatchRequestEntry", parameters)
 
     val results = messagesData.map(messageData => {
       val id = messageData(IdSubParameter)
