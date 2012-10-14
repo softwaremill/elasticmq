@@ -59,9 +59,11 @@ class SQSRestServerBuilder(client: Client,
   def start(): RestServer = {
     val theClient = client
     val theServerAddress = serverAddress
+    val theLimits = sqsLimits
 
     val env = new ClientModule
       with QueueURLModule
+      with SQSLimitsModule
       with RequestHandlerLogicModule
       with CreateQueueHandlerModule
       with DeleteQueueHandlerModule
@@ -78,6 +80,7 @@ class SQSRestServerBuilder(client: Client,
       with AttributesModule {
       val client = theClient
       val serverAddress = theServerAddress
+      val sqsLimits = theLimits
     }
 
     import env._
@@ -180,6 +183,15 @@ trait QueueURLModule {
 object SQSLimits extends Enumeration {
   val Strict = Value
   val Relaxed = Value
+}
+
+trait SQSLimitsModule {
+  def sqsLimits: SQSLimits.Value
+  def ifStrictLimits(condition: => Boolean)(exception: String) {
+    if (sqsLimits == SQSLimits.Strict && condition) {
+      throw new SQSException(exception)
+    }
+  }
 }
 
 

@@ -10,6 +10,8 @@ import scala.collection.JavaConversions._
 import com.amazonaws.services.sqs.model._
 import org.elasticmq.storage.inmemory.InMemoryStorage
 import org.elasticmq.{Node, NodeBuilder}
+import scala.util.control.Exception._
+import com.amazonaws.AmazonServiceException
 
 class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAfter {
   val visibilityTimeoutAttribute = "VisibilityTimeout"
@@ -149,6 +151,17 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
     bodies must be (Set("Message 1", "Message 2"))
   }
 
+  test("should return an error if trying to receive more than 10 messages") {
+    // Given
+    val queueUrl = client.createQueue(new CreateQueueRequest("testQueue1")).getQueueUrl
+
+    // When
+    val result = catching(classOf[AmazonServiceException]) either client.receiveMessage(new ReceiveMessageRequest(queueUrl).withMaxNumberOfMessages(11))
+
+    // Then
+    result.isLeft must be (true)
+  }
+
   test("should receive no more than the given amount of messages") {
     // Given
     val queueUrl = client.createQueue(new CreateQueueRequest("testQueue1")).getQueueUrl
@@ -166,11 +179,11 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
     val queueUrl = client.createQueue(new CreateQueueRequest("testQueue1")).getQueueUrl
 
     // When
-    for (i <- 1 to 10) client.sendMessage(new SendMessageRequest(queueUrl, "Message " + i))
-    val messages = client.receiveMessage(new ReceiveMessageRequest(queueUrl).withMaxNumberOfMessages(15)).getMessages
+    for (i <- 1 to 9) client.sendMessage(new SendMessageRequest(queueUrl, "Message " + i))
+    val messages = client.receiveMessage(new ReceiveMessageRequest(queueUrl).withMaxNumberOfMessages(10)).getMessages
 
     // Then
-    messages must have size (10)
+    messages must have size (9)
   }
 
   test("should send two messages in a batch") {

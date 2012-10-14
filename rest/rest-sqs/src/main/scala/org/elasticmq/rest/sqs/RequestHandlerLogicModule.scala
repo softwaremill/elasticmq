@@ -63,6 +63,6 @@ trait RequestHandlerLogicModule { this: ClientModule =>
       }
     }
 
-    private def handleSQSException(e: SQSException) = StringResponse(e.toXml(EmptyRequestId).toString())
+    private def handleSQSException(e: SQSException) = StringResponse(e.toXml(EmptyRequestId).toString(), e.httpStatusCode)
   }
 }

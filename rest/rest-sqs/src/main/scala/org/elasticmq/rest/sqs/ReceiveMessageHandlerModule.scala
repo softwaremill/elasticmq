@@ -9,7 +9,7 @@ import org.elasticmq.rest.sqs.ActionUtil._
 import org.elasticmq.rest.sqs.MD5Util._
 import annotation.tailrec
 
-trait ReceiveMessageHandlerModule { this: ClientModule with RequestHandlerLogicModule with AttributesModule =>
+trait ReceiveMessageHandlerModule { this: ClientModule with RequestHandlerLogicModule with AttributesModule with SQSLimitsModule =>
   object MessageReadeableAttributeNames {
     val SentTimestampAttribute = "SentTimestamp"
     val ApproximateReceiveCountAttribute = "ApproximateReceiveCount"
@@ -35,6 +35,10 @@ trait ReceiveMessageHandlerModule { this: ClientModule with RequestHandlerLogicM
         case Some(maxCount) => maxCount.toInt
         case None => 1
       }
+    }
+
+    ifStrictLimits(maxNumberOfMessagesFromParameters < 1 || maxNumberOfMessagesFromParameters > 10) {
+      "ReadCountOutOfRange"
     }
 
     @tailrec
