@@ -8,10 +8,7 @@ import ActionUtil._
 
 trait SendMessageBatchHandlerModule { this: ClientModule with RequestHandlerLogicModule with SendMessageHandlerModule with BatchRequestsModule =>
   val sendMessageBatchLogic = logicWithQueue((queue, request, parameters) => {
-    val messagesData = batchParametersMap("SendMessageBatchRequestEntry", parameters)
-
-    val results = messagesData.map(messageData => {
-      val id = messageData(IdSubParameter)
+    val results = batchRequest("SendMessageBatchRequestEntry", parameters) { (messageData, id) =>
       val (message, digest) = sendMessage(queue, messageData)
 
       <SendMessageBatchResultEntry>
@@ -19,7 +16,7 @@ trait SendMessageBatchHandlerModule { this: ClientModule with RequestHandlerLogi
         <MD5OfMessageBody>{digest}</MD5OfMessageBody>
         <MessageId>{message.id.id}</MessageId>
       </SendMessageBatchResultEntry>
-    })
+    }
 
     <SendMessageBatchResponse>
       <SendMessageBatchResult>

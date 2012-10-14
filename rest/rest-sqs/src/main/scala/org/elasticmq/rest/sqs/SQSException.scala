@@ -2,8 +2,8 @@ package org.elasticmq.rest.sqs
 
 import Constants._
 
-class SQSException(code: String,
-                   message: String = "See the SQS docs.",
+class SQSException(val code: String,
+                   val message: String = "See the SQS docs.",
                    val httpStatusCode: Int = 400,
                    errorType: String = "Sender") extends Exception {
   def toXml(requestId: String) =

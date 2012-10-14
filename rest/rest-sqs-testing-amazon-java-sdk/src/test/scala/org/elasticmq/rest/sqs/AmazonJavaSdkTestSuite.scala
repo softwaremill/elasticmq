@@ -534,6 +534,29 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
     }
   }
 
+  test("should return a failure for one message, send another if strict & sending two messages in a batch, one with illegal characters") {
+    // Given
+    val queueUrl = client.createQueue(new CreateQueueRequest("testQueue1")).getQueueUrl
+
+    // When
+    val result = client.sendMessageBatch(new SendMessageBatchRequest(queueUrl).withEntries(
+      new SendMessageBatchRequestEntry("1", "OK"),
+      new SendMessageBatchRequestEntry("2", "\u0000")
+    ))
+
+    // Then
+    result.getSuccessful must have size (1)
+    result.getSuccessful.get(0).getId must be ("1")
+
+    result.getFailed must have size (1)
+    result.getFailed.get(0).getId must be ("2")
+
+    val messages = client.receiveMessage(new ReceiveMessageRequest(queueUrl).withMaxNumberOfMessages(2)).getMessages
+
+    val bodies = messages.map(_.getBody).toSet
+    bodies must be (Set("OK"))
+  }
+
   def queueVisibilityTimeout(queueUrl: String) = getQueueLongAttribute(queueUrl, visibilityTimeoutAttribute)
 
   def queueDelay(queueUrl: String) = getQueueLongAttribute(queueUrl, delaySecondsAttribute)
