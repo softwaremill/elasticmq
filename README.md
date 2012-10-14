@@ -306,7 +306,7 @@ Change log
 
 * batch operations in SQS (send, receive, delete, change visibility)
 * changed `SQSRestServerFactory` to `SQSRestServerBuilder`
-* "strict" and "relaxed" modes when creating an SQS server: the limits enforced by are optionally checked SQS, e.g. for
+* "strict" and "relaxed" modes when creating an SQS server: the limits enforced by SQS are optionally checked, e.g. for
 batch operations (max 10 messages), maximum message size (64KB). Strict by default.
 
 #### Version 0.5 (26 May 2012)
