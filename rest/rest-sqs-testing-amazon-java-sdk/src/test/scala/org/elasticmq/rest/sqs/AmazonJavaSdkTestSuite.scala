@@ -519,6 +519,12 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
     }
   }
 
+  test("should return an error if strict & queue name contains invalid characters") {
+    strictOnlyShouldThrowException {
+      _.createQueue(new CreateQueueRequest("queue with spaces"))
+    }
+  }
+
   def queueVisibilityTimeout(queueUrl: String) = getQueueLongAttribute(queueUrl, visibilityTimeoutAttribute)
 
   def queueDelay(queueUrl: String) = getQueueLongAttribute(queueUrl, delaySecondsAttribute)

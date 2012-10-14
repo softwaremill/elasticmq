@@ -13,10 +13,10 @@ import org.joda.time.Duration
 import org.elasticmq.{QueueBuilder, MillisVisibilityTimeout}
 
 trait CreateQueueHandlerModule { this: ClientModule with QueueURLModule with RequestHandlerLogicModule
-  with AttributesModule =>
+  with AttributesModule with SQSLimitsModule =>
 
-  val DefaultVisibilityTimeout = 30L;
-  val DefaultDelay = 0L;
+  val DefaultVisibilityTimeout = 30L
+  val DefaultDelay = 0L
 
   val CreateQueueAction = createAction("CreateQueue")
 
@@ -27,11 +27,11 @@ trait CreateQueueHandlerModule { this: ClientModule with QueueURLModule with Req
 
     val secondsVisibilityTimeout =
       (attributes.parseOptionalLong(VisibilityTimeoutParameter)
-              .getOrElse(DefaultVisibilityTimeout));
+              .getOrElse(DefaultVisibilityTimeout))
 
     val secondsDelay =
       (attributes.parseOptionalLong(DelayParameter)
-        .getOrElse(DefaultDelay));
+        .getOrElse(DefaultDelay))
 
     val queue = queueOption.getOrElse(client.createQueue(
       QueueBuilder(queueName)
@@ -41,6 +41,10 @@ trait CreateQueueHandlerModule { this: ClientModule with QueueURLModule with Req
     if (queue.defaultVisibilityTimeout.seconds != secondsVisibilityTimeout) {
       // Special case: the queue existed, but has a different visibility timeout
       throw new SQSException("AWS.SimpleQueueService.QueueNameExists")
+    }
+
+    ifStrictLimits(!queueName.matches("[\\p{Alnum}_-]*")) {
+      "InvalidParameterValue"
     }
 
     <CreateQueueResponse>
