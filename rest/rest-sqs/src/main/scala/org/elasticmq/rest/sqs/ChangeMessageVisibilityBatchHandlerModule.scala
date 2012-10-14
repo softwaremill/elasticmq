@@ -10,16 +10,13 @@ trait ChangeMessageVisibilityBatchHandlerModule { this: ClientModule with Reques
   with ChangeMessageVisibilityHandlerModule with BatchRequestsModule =>
 
   val changeMessageVisibilityBatchLogic = logicWithQueue((queue, request, parameters) => {
-    val messagesData = batchParametersMap("ChangeMessageVisibilityBatchRequestEntry", parameters)
-
-    val results = messagesData.map(messageData => {
-      val id = messageData(IdSubParameter)
+    val results = batchRequest("ChangeMessageVisibilityBatchRequestEntry", parameters) { (messageData, id) =>
       changeMessageVisibility(queue, messageData)
 
       <ChangeMessageVisibilityBatchResultEntry>
         <Id>{id}</Id>
       </ChangeMessageVisibilityBatchResultEntry>
-    })
+    }
 
     <ChangeMessageVisibilityBatchResponse>
       <ChangeMessageVisibilityBatchResult>

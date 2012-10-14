@@ -9,11 +9,7 @@ import org.elasticmq.MessageId
 
 trait DeleteMessageBatchHandlerModule { this: ClientModule with RequestHandlerLogicModule with BatchRequestsModule  =>
   val deleteMessageBatchLogic = logicWithQueue((queue, request, parameters) => {
-    val messagesData = batchParametersMap("DeleteMessageBatchRequestEntry", parameters)
-
-    val results = messagesData.map(messageData => {
-      val id = messageData(IdSubParameter)
-
+    val results = batchRequest("DeleteMessageBatchRequestEntry", parameters) { (messageData, id) =>
       val receiptHandle = messageData(ReceiptHandleParameter)
       val messageOption = queue.lookupMessage(MessageId(receiptHandle))
       // No failure even if the message doesn't exist
@@ -22,7 +18,7 @@ trait DeleteMessageBatchHandlerModule { this: ClientModule with RequestHandlerLo
       <DeleteMessageBatchResultEntry>
         <Id>{id}</Id>
       </DeleteMessageBatchResultEntry>
-    })
+    }
 
     <DeleteMessageBatchResponse>
       <DeleteMessageBatchResult>
