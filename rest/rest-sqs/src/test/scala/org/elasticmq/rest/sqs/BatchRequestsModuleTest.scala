@@ -3,7 +3,7 @@ package org.elasticmq.rest.sqs
 import org.scalatest.FunSuite
 import org.scalatest.matchers.MustMatchers
 
-class ParametersUtilTest extends FunSuite with MustMatchers {
+class BatchRequestsModuleTest extends FunSuite with MustMatchers {
   test("should correctly find sub parameters") {
     // Given
     val parameters = Map(
@@ -18,7 +18,7 @@ class ParametersUtilTest extends FunSuite with MustMatchers {
     )
 
     // When
-    val subParameters = ParametersUtil.subParametersMaps("SomePrefix", parameters)
+    val subParameters = BatchRequestsModule.subParametersMaps("SomePrefix", parameters)
 
     // Then
     subParameters must have length (3)
