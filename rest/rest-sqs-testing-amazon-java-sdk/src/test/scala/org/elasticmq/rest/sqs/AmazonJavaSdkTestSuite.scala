@@ -19,21 +19,31 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
   val delaySecondsAttribute = "DelaySeconds"
 
   var node: Node = _
-  var server: RestServer = _
-  var client: AmazonSQS = _
+
+  var strictServer: RestServer = _
+  var relaxedServer: RestServer = _
+
+  var client: AmazonSQS = _ // strict server
+  var relaxedClient: AmazonSQS = _
 
   before {
     node = NodeBuilder.withStorage(new InMemoryStorage)
-    server = new SQSRestServerBuilder(node.nativeClient).start()
+    strictServer = new SQSRestServerBuilder(node.nativeClient).start()
+    relaxedServer = new SQSRestServerBuilder(node.nativeClient).withPort(9325).withSQSLimits(SQSLimits.Relaxed).start()
 
     client = new AmazonSQSClient(new BasicAWSCredentials("x", "x"))
     client.setEndpoint("http://localhost:9324")
+
+    relaxedClient = new AmazonSQSClient(new BasicAWSCredentials("x", "x"))
+    relaxedClient.setEndpoint("http://localhost:9325")
   }
 
   after {
     client.shutdown()
 
-    server.stop()
+    strictServer.stop()
+    relaxedServer.stop()
+
     node.shutdown()
   }
 
@@ -473,15 +483,13 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
 
   // Errors
 
-  test("should return an error if trying to receive more than 10 messages") {
+  test("should return an error if strict & trying to receive more than 10 messages") {
     // Given
     val queueUrl = client.createQueue(new CreateQueueRequest("testQueue1")).getQueueUrl
 
-    // When
-    val result = catching(classOf[AmazonServiceException]) either client.receiveMessage(new ReceiveMessageRequest(queueUrl).withMaxNumberOfMessages(11))
-
-    // Then
-    result.isLeft must be (true)
+    strictOnlyShouldThrowException {
+      _.receiveMessage(new ReceiveMessageRequest(queueUrl).withMaxNumberOfMessages(11))
+    }
   }
 
   test("should return an error if an id is duplicate in a batch request") {
@@ -500,19 +508,15 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
     result.isLeft must be (true)
   }
 
-  test("should return an error if sending too many messages in a batch") {
+  test("should return an error if strict & sending too many messages in a batch") {
     // Given
     val queueUrl = client.createQueue(new CreateQueueRequest("testQueue1")).getQueueUrl
 
-    // When
-    val result = catching(classOf[AmazonServiceException]) either {
-      client.sendMessageBatch(new SendMessageBatchRequest(queueUrl).withEntries(
+    strictOnlyShouldThrowException {
+      _.sendMessageBatch(new SendMessageBatchRequest(queueUrl).withEntries(
         (for (i <- 1 to 11) yield new SendMessageBatchRequestEntry(i.toString, "Message")): _*
       ))
     }
-
-    // Then
-    result.isLeft must be (true)
   }
 
   def queueVisibilityTimeout(queueUrl: String) = getQueueLongAttribute(queueUrl, visibilityTimeoutAttribute)
@@ -533,5 +537,15 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
     } else {
       Some(messages.get(0).getBody)
     }
+  }
+
+  def strictOnlyShouldThrowException(body: AmazonSQS => Unit) {
+    // When
+    val resultStrict = catching(classOf[AmazonServiceException]) either body(client)
+    val resultRelaxed = catching(classOf[AmazonServiceException]) either body(relaxedClient)
+
+    // Then
+    resultStrict.isLeft must be (true)
+    resultRelaxed.isRight must be (true)
   }
 }
