@@ -6,6 +6,7 @@ import org.elasticmq.NodeAddress
 import org.elasticmq.storage.squeryl.DBConfiguration
 import java.io.File
 import org.elasticmq.replication.{WaitForMajorityReplicationMode, CommandReplicationMode}
+import org.elasticmq.rest.sqs.SQSLimits
 
 class ElasticMQServerConfig extends Config[RuntimeEnvironment => ElasticMQServer] {
   // Configure main storage: either in-memory or database-backed
@@ -53,6 +54,7 @@ class ElasticMQServerConfig extends Config[RuntimeEnvironment => ElasticMQServer
     var enabled = true
     var bindPort = 9324
     var bindHostname = "0.0.0.0"
+    var sqsLimits = SQSLimits.Relaxed
   }
 
   var restSqs = new RestSqsConfiguration

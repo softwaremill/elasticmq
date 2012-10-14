@@ -15,14 +15,17 @@ import java.util.regex.Pattern
  * @param serverAddress Address which will be returned as the queue address. Requests to this address
  * should be routed to this server.
  */
-class SQSRestServerBuilder(client: Client, socketAddress: SocketAddress, serverAddress: NodeAddress) extends Logging {
+class SQSRestServerBuilder(client: Client,
+                           socketAddress: SocketAddress,
+                           serverAddress: NodeAddress,
+                           sqsLimits: SQSLimits.Value) extends Logging {
   /**
    * @param port Port on which the server will listen.
    * @param serverAddress Address which will be returned as the queue address. Requests to this address
    * should be routed to this server.
    */
   def this(client: Client, port: Int, serverAddress: NodeAddress) = {
-    this(client, new InetSocketAddress(port), serverAddress)
+    this(client, new InetSocketAddress(port), serverAddress, SQSLimits.Strict)
   }
 
   /**
@@ -30,6 +33,7 @@ class SQSRestServerBuilder(client: Client, socketAddress: SocketAddress, serverA
    * <li>
    *  <ul>for `socketAddress`: when started, the server will bind to `localhost:9324`</ul>
    *  <ul>for `serverAddress`: returned queue addresses will use `http://localhost:9324` as the base address.</ul>
+   *  <ul>for `sqsLimits`: relaxed
    * </li>
    */
   def this(client: Client) = {
@@ -37,15 +41,19 @@ class SQSRestServerBuilder(client: Client, socketAddress: SocketAddress, serverA
   }
 
   def withPort(port: Int) = {
-    new SQSRestServerBuilder(client, new InetSocketAddress(port), serverAddress)
+    new SQSRestServerBuilder(client, new InetSocketAddress(port), serverAddress, sqsLimits)
   }
 
   def withServerAddress(newServerAddress: NodeAddress) = {
-    new SQSRestServerBuilder(client, socketAddress, newServerAddress)
+    new SQSRestServerBuilder(client, socketAddress, newServerAddress, sqsLimits)
   }
 
   def withSocketAddress(newSocketAddress: SocketAddress) = {
-    new SQSRestServerBuilder(client, newSocketAddress, serverAddress)
+    new SQSRestServerBuilder(client, newSocketAddress, serverAddress, sqsLimits)
+  }
+
+  def withSQSLimits(newSqsLimits: SQSLimits.Value) = {
+    new SQSRestServerBuilder(client, socketAddress, serverAddress, newSqsLimits)
   }
 
   def start(): RestServer = {
@@ -169,5 +177,9 @@ trait QueueURLModule {
   def queueURL(queue: Queue) = serverAddress.fullAddress+"/"+Constants.QueueUrlPath+"/"+queue.name
 }
 
+object SQSLimits extends Enumeration {
+  val Strict = Value
+  val Relaxed = Value
+}
 
 
