@@ -6,7 +6,7 @@ tl;dr
 
 * message queue system
 * emphasis on not loosing any messages
-* runs stand-alone ([download](https://github.com/downloads/adamw/elasticmq/elasticmq-0.5.tar.gz)) or embedded
+* runs stand-alone ([download](https://github.com/downloads/adamw/elasticmq/elasticmq-0.6.tar.gz)) or embedded
 * Amazon SQS-compatible interface
 * in-memory with optional journalling and db-backed message storage
 * optionally replicated (guaranteed messaging)
@@ -49,8 +49,8 @@ Installation: stand-alone
 -------------------------
 
 You can download the stand-alone distribution here:
-* [https://github.com/.../elasticmq-0.5.tar.gz](https://github.com/downloads/adamw/elasticmq/elasticmq-0.5.tar.gz)
-* [https://github.com/.../elasticmq-0.5.zip](https://github.com/downloads/adamw/elasticmq/elasticmq-0.5.zip)
+* [https://github.com/.../elasticmq-0.6.tar.gz](https://github.com/downloads/adamw/elasticmq/elasticmq-0.6.tar.gz)
+* [https://github.com/.../elasticmq-0.6.zip](https://github.com/downloads/adamw/elasticmq/elasticmq-0.6.zip)
 
 Java 6 or above is required for running the server.
 
@@ -177,16 +177,16 @@ ElasticMQ dependencies in SBT
 -----------------------------
 
     // Includes the in-memory storage
-    val elasticmqCore       = "org.elasticmq" %% "elasticmq-core"             % "0.5"
+    val elasticmqCore       = "org.elasticmq" %% "elasticmq-core"             % "0.6"
 
     // If you want to use the database storage
-    val elasticmqStorageDb  = "org.elasticmq" %% "elasticmq-storage-database" % "0.5"
+    val elasticmqStorageDb  = "org.elasticmq" %% "elasticmq-storage-database" % "0.6"
 
     // If you want to expose an SQS interface
-    val elasticmqSqs        = "org.elasticmq" %% "elasticmq-rest-sqs"         % "0.5"
+    val elasticmqSqs        = "org.elasticmq" %% "elasticmq-rest-sqs"         % "0.6"
 
     // If you want to use replication
-    val elasticmqRepl       = "org.elasticmq" %% "elasticmq-replication"      % "0.5"
+    val elasticmqRepl       = "org.elasticmq" %% "elasticmq-replication"      % "0.6"
 
     val smlResolverReleases  = "SotwareMill Public Releases"  at "http://tools.softwaremill.pl/nexus/content/repositories/releases"
     val smlResolverSnapshots = "SotwareMill Public Snapshots" at "http://tools.softwaremill.pl/nexus/content/repositories/snapshots"
@@ -199,22 +199,22 @@ Dependencies:
     <dependency>
         <groupId>org.elasticmq</groupId>
         <artifactId>elasticmq-core_2.9.1</artifactId>
-        <version>0.5</version>
+        <version>0.6</version>
     </dependency>
     <dependency>
         <groupId>org.elasticmq</groupId>
         <artifactId>elasticmq-storage-database_2.9.1</artifactId>
-        <version>0.5</version>
+        <version>0.6</version>
     </dependency>
     <dependency>
         <groupId>org.elasticmq</groupId>
         <artifactId>elasticmq-rest-sqs_2.9.1</artifactId>
-        <version>0.5</version>
+        <version>0.6</version>
     </dependency>
     <dependency>
         <groupId>org.elasticmq</groupId>
         <artifactId>elasticmq-replication_2.9.1</artifactId>
-        <version>0.5</version>
+        <version>0.6</version>
     </dependency>
 
 And our repositories:
@@ -233,9 +233,9 @@ And our repositories:
 Current versions
 --------
 
-*Stable*: 0.5
+*Stable*: 0.6
 
-*Development*: 0.6-SNAPSHOT
+*Development*: 0.7-SNAPSHOT
 
 DB Schema
 ---------
@@ -302,7 +302,7 @@ Technology
 Change log
 ----------
 
-#### Version 0.6 (pending)
+#### Version 0.6 (19 October 2012)
 
 * batch operations in SQS (send, receive, delete, change visibility)
 * changed `SQSRestServerFactory` to `SQSRestServerBuilder`
