@@ -8,13 +8,13 @@ tl;dr
 * emphasis on not loosing any messages
 * runs stand-alone ([download](https://github.com/downloads/adamw/elasticmq/elasticmq-0.6.tar.gz)) or embedded
 * Amazon SQS-compatible interface
-* in-memory with optional journalling and db-backed message storage
+* in-memory with optional journaling and db-backed message storage
 * optionally replicated (guaranteed messaging)
 
 Summary
 -------
 
-ElasticMQ is a message queue system, offerring Java, Scala and an [SQS](http://aws.amazon.com/sqs/)-compatible
+ElasticMQ is a message queue system, offering Java, Scala and an [SQS](http://aws.amazon.com/sqs/)-compatible
 REST interface.
 
 ElasticMQ follows the semantics of SQS. Messages are received by polling the queue.
@@ -299,11 +299,11 @@ Technology
   see the `rest-sqs-testing-amazon-java-sdk` module for the testsuite.
 * Server configuration: [Ostrich](https://github.com/twitter/ostrich/)
 
-Building the server
--------------------
+Building the stand-alone server
+-------------------------------
 
-The server isn't aggregated in the main build, as it depends on Ostrich, which isn't available in the main Maven
-repositories. To build:
+The stand-alone server subproject isn't aggregated by the root project in the build, as it depends on Ostrich,
+which isn't available in the main Maven repositories. To build:
 
     sbt
     > project elasticmq-server
