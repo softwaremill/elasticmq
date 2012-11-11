@@ -1,22 +1,13 @@
 import sbt._
 import Keys._
 
-object Resolvers {
-  val elasticmqResolvers = Seq(
-    "Sonatype releases" at "http://oss.sonatype.org/content/repositories/releases/",
-    "Sonatype snapshots" at "http://oss.sonatype.org/content/repositories/snapshots/",
-    "Twitter Maven" at "http://maven.twttr.com")
-}
-
 object BuildSettings {
-  import Resolvers._
   import ls.Plugin._
 
   val buildSettings = Defaults.defaultSettings ++ Seq (
     organization  := "org.elasticmq",
     version       := "0.7-SNAPSHOT",
     scalaVersion  := "2.9.1",
-    resolvers     := elasticmqResolvers,
     publishTo     <<= (version) { version: String =>
       val nexus = "http://tools.softwaremill.pl/nexus/content/repositories/"
       if (version.trim.endsWith("SNAPSHOT"))  Some("softwaremill-public-snapshots" at nexus + "snapshots/")
@@ -78,11 +69,15 @@ object ElasticMQBuild extends Build {
   import Dependencies._
   import BuildSettings._
 
+  /*
+  The `server` project is intentionally not aggregated, as it depends on an artifacts from a third-party repository.
+  Hence it can't be included in the main build, to generate the correct POMs for OSS Sonatype deployment.
+   */
   lazy val root: Project = Project(
     "elasticmq-root",
     file("."),
     settings = buildSettings
-  ) aggregate(commonTest, api, spi, core, storageDatabase, replication, rest, server)
+  ) aggregate(commonTest, api, spi, core, storageDatabase, replication, rest)
 
   lazy val commonTest: Project = Project(
     "elasticmq-common-test",
@@ -148,7 +143,7 @@ object ElasticMQBuild extends Build {
     "elasticmq-server",
     file("server"),
     settings = buildSettings ++ CustomTasks.distributionSettings ++ CustomTasks.generateVersionFileSettings ++
-      Seq(libraryDependencies ++= Seq(logback, ostrich))
+      Seq(libraryDependencies ++= Seq(logback, ostrich), resolvers += "Twitter Maven" at "http://maven.twttr.com")
   ) dependsOn(core, storageDatabase, replication, restSqs, commonTest % "test")
 
   lazy val performanceTests: Project = Project(

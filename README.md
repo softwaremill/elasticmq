@@ -299,6 +299,17 @@ Technology
   see the `rest-sqs-testing-amazon-java-sdk` module for the testsuite.
 * Server configuration: [Ostrich](https://github.com/twitter/ostrich/)
 
+Building the server
+-------------------
+
+The server isn't aggregated in the main build, as it depends on Ostrich, which isn't available in the main Maven
+repositories. To build:
+
+    sbt
+    project elasticmq-server
+    compile
+    distribution
+
 Change log
 ----------
 
