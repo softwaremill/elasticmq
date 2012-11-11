@@ -1,4 +1,4 @@
-addSbtPlugin("net.virtualvoid" % "sbt-dependency-graph" % "0.5.1")
+addSbtPlugin("net.virtual-void" % "sbt-dependency-graph" % "0.7.0")
 
 resolvers ++= Seq(
   "less is" at "http://repo.lessis.me",
