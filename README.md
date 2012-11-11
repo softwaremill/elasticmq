@@ -306,9 +306,9 @@ The server isn't aggregated in the main build, as it depends on Ostrich, which i
 repositories. To build:
 
     sbt
-    project elasticmq-server
-    compile
-    distribution
+    > project elasticmq-server
+    > compile
+    > distribution
 
 Change log
 ----------
