@@ -8,13 +8,32 @@ object BuildSettings {
     organization  := "org.elasticmq",
     version       := "0.7-SNAPSHOT",
     scalaVersion  := "2.9.1",
-    publishTo     <<= (version) { version: String =>
-      val nexus = "http://tools.softwaremill.pl/nexus/content/repositories/"
-      if (version.trim.endsWith("SNAPSHOT"))  Some("softwaremill-public-snapshots" at nexus + "snapshots/")
-      else                                    Some("softwaremill-public-releases"  at nexus + "releases/")
+
+    // Sonatype OSS deployment
+    publishTo <<= version { (v: String) =>
+      val nexus = "https://oss.sonatype.org/"
+      if (v.trim.endsWith("SNAPSHOT"))
+        Some("snapshots" at nexus + "content/repositories/snapshots")
+      else
+        Some("releases"  at nexus + "service/local/staging/deploy/maven2")
     },
     credentials   += Credentials(Path.userHome / ".ivy2" / ".credentials"),
     publishMavenStyle := true,
+    publishArtifact in Test := false,
+    pomIncludeRepository := { _ => false },
+    pomExtra := (
+      <scm>
+        <url>git@github.com:adamw/elasticmq.git</url>
+        <connection>scm:git:git@github.com:adamw/elasticmq.git</connection>
+      </scm>
+      <developers>
+        <developer>
+          <id>adamw</id>
+          <name>Adam Warski</name>
+          <url>http://www.warski.org</url>
+        </developer>
+      </developers>),
+
     parallelExecution := false,
     scalacOptions += "-unchecked",
     homepage      := Some(new java.net.URL("http://www.elasticmq.org")),
@@ -70,8 +89,8 @@ object ElasticMQBuild extends Build {
   import BuildSettings._
 
   /*
-  The `server` project is intentionally not aggregated, as it depends on an artifacts from a third-party repository.
-  Hence it can't be included in the main build, to generate the correct POMs for OSS Sonatype deployment.
+  The `server` project is intentionally not aggregated, as it depends on artifacts from a third-party repository.
+  Hence it can't be included in the main build, to be able to deploy to Sonatype OSS.
    */
   lazy val root: Project = Project(
     "elasticmq-root",
