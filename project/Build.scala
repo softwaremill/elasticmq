@@ -5,8 +5,6 @@ object Resolvers {
   val elasticmqResolvers = Seq(
     "Sonatype releases" at "http://oss.sonatype.org/content/repositories/releases/",
     "Sonatype snapshots" at "http://oss.sonatype.org/content/repositories/snapshots/",
-    "SotwareMill Public Releases" at "http://tools.softwaremill.pl/nexus/content/repositories/releases/",
-    "JBoss Releases" at "https://repository.jboss.org/nexus/content/groups/public",
     "Twitter Maven" at "http://maven.twttr.com")
 }
 
@@ -43,30 +41,30 @@ object BuildSettings {
 }
 
 object Dependencies {
-  val squeryl       = "org.squeryl"               %% "squeryl"              % "0.9.5"
-  val h2            = "com.h2database"            % "h2"                    % "1.3.156"
+  val squeryl       = "org.squeryl"               %% "squeryl"              % "0.9.5-2"
+  val h2            = "com.h2database"            % "h2"                    % "1.3.168"
   val c3p0          = "c3p0"                      % "c3p0"                  % "0.9.1.2"
   val jodaTime      = "joda-time"                 % "joda-time"             % "2.1"
   val jodaConvert   = "org.joda"                  % "joda-convert"          % "1.2"
-  val netty         = "io.netty"                  % "netty"                 % "3.4.5.Final"
+  val netty         = "io.netty"                  % "netty"                 % "3.5.9.Final"
 
   val slf4s         = "com.weiglewilczek.slf4s"   %% "slf4s"                % "1.0.7"
-  val logback       = "ch.qos.logback"            % "logback-classic"       % "1.0.0"
+  val logback       = "ch.qos.logback"            % "logback-classic"       % "1.0.7"
   val jclOverSlf4j  = "org.slf4j"                 % "jcl-over-slf4j"        % "1.6.1"
   val log4jOverSlf4j = "org.slf4j"                % "log4j-over-slf4j"      % "1.6.1"
   val julToSlf4j    = "org.slf4j"                 % "jul-to-slf4j"          % "1.6.1"
 
-  val scalatest     = "org.scalatest"             %% "scalatest"            % "1.6.1"
-  val mockito       = "org.mockito"               % "mockito-core"          % "1.7"
-  val awaitility    = "com.jayway.awaitility"     % "awaitility-scala"      % "1.3.3"
+  val scalatest     = "org.scalatest"             %% "scalatest"            % "1.8"
+  val mockito       = "org.mockito"               % "mockito-core"          % "1.9.5"
+  val awaitility    = "com.jayway.awaitility"     % "awaitility-scala"      % "1.3.4"
 
-  val apacheHttp    = "org.apache.httpcomponents" % "httpclient"            % "4.1.1" exclude ("commons-logging", "commons-logging")
+  val apacheHttp    = "org.apache.httpcomponents" % "httpclient"            % "4.2.2" exclude ("commons-logging", "commons-logging")
 
-  val amazonJavaSdk = "com.amazonaws"             % "aws-java-sdk"          % "1.2.15" exclude ("commons-logging", "commons-logging")
+  val amazonJavaSdk = "com.amazonaws"             % "aws-java-sdk"          % "1.3.24" exclude ("commons-logging", "commons-logging")
 
   val mysqlConnector = "mysql"                    % "mysql-connector-java"  % "5.1.20"
 
-  val jgroups       = "org.jgroups"               % "jgroups"               % "3.1.0.Beta1" exclude ("log4j", "log4j")
+  val jgroups       = "org.jgroups"               % "jgroups"               % "3.2.0.Final" exclude ("log4j", "log4j")
 
   val jsr305        = "com.google.code.findbugs"  % "jsr305"                % "1.3.9"
 
