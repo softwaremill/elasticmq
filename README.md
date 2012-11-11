@@ -65,7 +65,7 @@ Additionally two directories will be created when the server is started:
 * `log`: default location for log files
 
 You can configure ElasticMQ through the `conf/Default.scala` file. There you can choose which storage to use, should
-journalling and replication be enabled, should the server expose an SQS interface, on what interface and port to bind
+journaling and replication be enabled, should the server expose an SQS interface, on what interface and port to bind
 etc. More documentation can be found in the file itself.
 
 Starting an embedded ElasticMQ server with an SQS interface
@@ -137,7 +137,7 @@ by ElasticMQ clients to determine which node is the master.
 Operations can be only executed on the master node. If you attempt to execute an operation on a node which is not
 the master, the `NodeIsNotMasterException` exception will be thrown, containing the master node address, if available.
 
-In case of cluster partitions, replication is designed to only operate on the parition which contains
+In case of cluster partitions, replication is designed to only operate on the partition which contains
 a majority of nodes (`n/2+1`). Otherwise data could get easily corrupted, if two disconnected cluster partitions
 (split-brain) changed the same things; such a situation could lead to a very high number of duplicate deliveries and an
 unmergeable state.
@@ -164,11 +164,11 @@ Deployment scenarios
 --------------------
 
 1. In-memory storage, single node, embedded: ideal for testing
-2. In-memory storage, single node, journalling: fast persistent messaging with queues bounded by the amount of memory
+2. In-memory storage, single node, journaling: fast persistent messaging with queues bounded by the amount of memory
 3. DB storage, local DB, single node: persistent messaging with unbounded queues
 4. DB storage, shared DB, multiple nodes: persistent messaging. Multiple nodes can use the same database.
    The database can be replicated/backed up for data safety.
-5. In-memory storage, multiple nodes, journalled, replicated: Data safety through replication and journalling.
+5. In-memory storage, multiple nodes, journaled, replicated: Data safety through replication and journalling.
    Fast guaranteed messaging.
 6. DB storage, local DB, multiple nodes, replication: each node stores the data in a separate DB. Recommended if a
    shared DB is not available. Provides good data safety and unbounded queues.

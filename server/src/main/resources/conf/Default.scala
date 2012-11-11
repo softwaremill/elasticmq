@@ -11,7 +11,7 @@ new ElasticMQServerConfig {
   // E.g. for mysql database-backed:
   // storage = DatabaseStorage(DBConfiguration.mysql("elasticmq", "user", "password"))
 
-  // Logging commands to a file (journalling) only makes sense for the in-memory storage.
+  // Logging commands to a file (journaling) only makes sense for the in-memory storage.
   // To turn off:
   // fileLog.enabled = false
   // To store data is another directory:
@@ -26,7 +26,7 @@ new ElasticMQServerConfig {
   // the messaging server only works if at least half of the configured number of nodes is alive. This is needed to
   // ensure data consistency.
   // replication.numberOfNodes = 5
-  // If the nodes can't be discovered via multicast, you will need to provide the initial set of memebers manually:
+  // If the nodes can't be discovered via multicast, you will need to provide the initial set of members manually:
   // replication.nodeDiscovery = TCP(List("host1:9324", "host2:9333", ...))
 
   // To bind REST SQS to a different host/port:
