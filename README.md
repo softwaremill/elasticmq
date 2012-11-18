@@ -313,7 +313,7 @@ which isn't available in the main Maven repositories. To build:
 Change log
 ----------
 
-#### Version 0.6.1 (pending)
+#### Version 0.6.1 (18 November 2012)
 
 * using Sonatype's OSS repositories for releases
 * library upgrades
