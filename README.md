@@ -313,6 +313,11 @@ which isn't available in the main Maven repositories. To build:
 Change log
 ----------
 
+#### Version 0.6.1 (pending)
+
+* using Sonatype's OSS repositories for releases
+* library upgrades
+
 #### Version 0.6 (19 October 2012)
 
 * batch operations in SQS (send, receive, delete, change visibility)
