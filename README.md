@@ -177,19 +177,16 @@ ElasticMQ dependencies in SBT
 -----------------------------
 
     // Includes the in-memory storage
-    val elasticmqCore       = "org.elasticmq" %% "elasticmq-core"             % "0.6"
+    val elasticmqCore       = "org.elasticmq" %% "elasticmq-core"             % "0.6.1"
 
     // If you want to use the database storage
-    val elasticmqStorageDb  = "org.elasticmq" %% "elasticmq-storage-database" % "0.6"
+    val elasticmqStorageDb  = "org.elasticmq" %% "elasticmq-storage-database" % "0.6.1"
 
     // If you want to expose an SQS interface
-    val elasticmqSqs        = "org.elasticmq" %% "elasticmq-rest-sqs"         % "0.6"
+    val elasticmqSqs        = "org.elasticmq" %% "elasticmq-rest-sqs"         % "0.6.1"
 
     // If you want to use replication
-    val elasticmqRepl       = "org.elasticmq" %% "elasticmq-replication"      % "0.6"
-
-    val smlResolverReleases  = "SotwareMill Public Releases"  at "http://tools.softwaremill.pl/nexus/content/repositories/releases"
-    val smlResolverSnapshots = "SotwareMill Public Snapshots" at "http://tools.softwaremill.pl/nexus/content/repositories/snapshots"
+    val elasticmqRepl       = "org.elasticmq" %% "elasticmq-replication"      % "0.6.1"
 
 ElasticMQ dependencies in Maven
 -------------------------------
@@ -199,41 +196,28 @@ Dependencies:
     <dependency>
         <groupId>org.elasticmq</groupId>
         <artifactId>elasticmq-core_2.9.1</artifactId>
-        <version>0.6</version>
+        <version>0.6.1</version>
     </dependency>
     <dependency>
         <groupId>org.elasticmq</groupId>
         <artifactId>elasticmq-storage-database_2.9.1</artifactId>
-        <version>0.6</version>
+        <version>0.6.1</version>
     </dependency>
     <dependency>
         <groupId>org.elasticmq</groupId>
         <artifactId>elasticmq-rest-sqs_2.9.1</artifactId>
-        <version>0.6</version>
+        <version>0.6.1</version>
     </dependency>
     <dependency>
         <groupId>org.elasticmq</groupId>
         <artifactId>elasticmq-replication_2.9.1</artifactId>
-        <version>0.6</version>
+        <version>0.6.1</version>
     </dependency>
-
-And our repositories:
-
-    <repository>
-        <id>SotwareMillPublicReleases</id>
-        <name>SotwareMill Public Releases</name>
-        <url>http://tools.softwaremill.pl/nexus/content/repositories/releases/</url>
-    </repository>
-    <repository>
-        <id>SotwareMillPublicSnapshots</id>
-        <name>SotwareMill Public Snapshots</name>
-        <url>http://tools.softwaremill.pl/nexus/content/repositories/snapshots/</url>
-    </repository>
 
 Current versions
 --------
 
-*Stable*: 0.6
+*Stable*: 0.6.1
 
 *Development*: 0.7-SNAPSHOT
 
