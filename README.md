@@ -188,6 +188,8 @@ ElasticMQ dependencies in SBT
     // If you want to use replication
     val elasticmqRepl       = "org.elasticmq" %% "elasticmq-replication"      % "0.6.1"
 
+If you want to use a snapshot version, you will need to add the [https://oss.sonatype.org/content/repositories/snapshots/](https://oss.sonatype.org/content/repositories/snapshots/) repository to your configuration.
+
 ElasticMQ dependencies in Maven
 -------------------------------
 
@@ -214,12 +216,14 @@ Dependencies:
         <version>0.6.1</version>
     </dependency>
 
+If you want to use a snapshot version, you will need to add the [https://oss.sonatype.org/content/repositories/snapshots/](https://oss.sonatype.org/content/repositories/snapshots/) repository to your configuration.
+
 Current versions
 --------
 
 *Stable*: 0.6.1
 
-*Development*: 0.7-SNAPSHOT
+*Development*: 0.6.2-SNAPSHOT
 
 DB Schema
 ---------
@@ -296,6 +300,10 @@ which isn't available in the main Maven repositories. To build:
 
 Change log
 ----------
+
+#### Version 0.6.2 (pending)
+
+* bug fixes
 
 #### Version 0.6.1 (18 November 2012)
 
