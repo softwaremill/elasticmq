@@ -77,7 +77,7 @@ trait ReceiveMessageHandlerModule { this: ClientModule with RequestHandlerLogicM
           <MessageId>{msg.id.id}</MessageId>
           <ReceiptHandle>{msg.id.id}</ReceiptHandle>
           <MD5OfBody>{md5Digest(msg.content)}</MD5OfBody>
-          <Body>{msg.content}</Body>
+          <Body>{XmlUtil.convertTexWithCRToNodeSeq(msg.content)}</Body>
           {attributesToXmlConverter.convert(calculateAttributeValues(msg, stats))}
         </Message> }.toList}
       </ReceiveMessageResult>

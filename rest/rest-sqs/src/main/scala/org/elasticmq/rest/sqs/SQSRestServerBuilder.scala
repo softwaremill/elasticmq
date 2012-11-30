@@ -3,11 +3,14 @@ package org.elasticmq.rest.sqs
 import org.elasticmq.rest.RestPath._
 import org.elasticmq.rest.RestServer
 
-import xml.{Null, UnprefixedAttribute}
+import xml._
 import java.security.MessageDigest
 import org.elasticmq.{NodeAddress, Queue, Client}
 import java.net.{InetSocketAddress, SocketAddress}
 import com.weiglewilczek.slf4s.Logging
+import xml.EntityRef
+import org.elasticmq.NodeAddress
+import collection.mutable.ArrayBuffer
 
 /**
  * @param socketAddress Address on which the server will listen.
@@ -147,6 +150,28 @@ object MD5Util {
     md5.reset()
     md5.update(s.getBytes)
     md5.digest().map(0xFF & _).map { "%02x".format(_) }.foldLeft(""){_ + _}
+  }
+}
+
+object XmlUtil {
+  private val CR = EntityRef("#13")
+
+  def convertTexWithCRToNodeSeq(text: String): NodeSeq = {
+    val parts = text.split("\r")
+    val partsCount = parts.length
+    if (partsCount == 1) {
+      Text(text)
+    } else {
+      val combined = new ArrayBuffer[scala.xml.Node]()
+      for (i <- 0 until partsCount) {
+        combined += Text(parts(i))
+        if (i != partsCount - 1) {
+          combined += CR
+        }
+      }
+
+      combined
+    }
   }
 }
 

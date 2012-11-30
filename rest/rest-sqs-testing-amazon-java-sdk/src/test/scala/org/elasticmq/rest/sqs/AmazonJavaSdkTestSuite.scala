@@ -134,16 +134,40 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
     queueVisibilityTimeout(queueUrl) must be (10)
   }
 
-  test("should send and receive a message") {
+  test("should send and receive a simple message") {
+    doTestSendAndReceiveMessage("Message 1")
+  }
+
+  test("should send and receive a message with caret return and new line characters") {
+    doTestSendAndReceiveMessage("a\rb\r\nc\nd")
+  }
+
+  test("should send and receive a message with all allowed 1-byte sqs characters") {
+    val builder = new StringBuilder
+    builder.append(0x9).append(0xA).append(0xD)
+    appendRange(builder, 0x20, 0xFF)
+
+    doTestSendAndReceiveMessage(builder.toString())
+  }
+
+  test("should send and receive a message with some 2-byte characters") {
+    val builder = new StringBuilder
+    appendRange(builder, 0x51F9, 0x5210)
+    appendRange(builder, 0x30C9, 0x30FF)
+
+    doTestSendAndReceiveMessage(builder.toString())
+  }
+
+  def doTestSendAndReceiveMessage(content: String) {
     // Given
     val queueUrl = client.createQueue(new CreateQueueRequest("testQueue1")).getQueueUrl
 
     // When
-    client.sendMessage(new SendMessageRequest(queueUrl, "Message 1"))
+    client.sendMessage(new SendMessageRequest(queueUrl, content))
     val message = receiveSingleMessage(queueUrl)
 
     // Then
-    message must be (Some("Message 1"))
+    message must be (Some(content))
   }
 
   test("should receive two messages in a batch") {
@@ -610,5 +634,13 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
     // Then
     resultStrict.isLeft must be (true)
     resultRelaxed.isRight must be (true)
+  }
+
+  def appendRange(builder: StringBuilder, start: Int, end: Int) {
+    var current = start
+    while (current <= end) {
+      builder.appendAll(Character.toChars(current))
+      current += 1
+    }
   }
 }
