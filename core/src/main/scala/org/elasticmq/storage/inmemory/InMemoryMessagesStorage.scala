@@ -79,6 +79,7 @@ class InMemoryMessagesStorage(queueName: String, statistics: InMemoryMessageStat
               None
             } else if (messagesById.contains(MessageId(message.id))) {
               // Putting the message again into the queue, with a new next delivery
+              message.deliveryReceipt.set(Some(DeliveryReceipt.generate.receipt))
               message.nextDelivery.set(newNextDelivery.millis)
               messageQueue.add(message)
 
@@ -106,7 +107,7 @@ class InMemoryMessagesStorage(queueName: String, statistics: InMemoryMessageStat
 }
 
 case class InMemoryMessage(id: String,
-                           deliveryReceipt: Option[String],
+                           deliveryReceipt: AtomicReference[Option[String]],
                            nextDelivery: AtomicLong,
                            content: String,
                            created: DateTime,
@@ -115,14 +116,14 @@ case class InMemoryMessage(id: String,
 
   def compareTo(other: InMemoryMessage) = nextDelivery.get().compareTo(other.nextDelivery.get())
 
-  def toMessageData = MessageData(MessageId(id), deliveryReceipt.map(DeliveryReceipt(_)), content,
+  def toMessageData = MessageData(MessageId(id), deliveryReceipt.get().map(DeliveryReceipt(_)), content,
     MillisNextDelivery(nextDelivery.get()), created)
 }
 
 object InMemoryMessage {
   def from(message: MessageData) = InMemoryMessage(
     message.id.id,
-    message.deliveryReceipt.map(_.receipt),
+    new AtomicReference(message.deliveryReceipt.map(_.receipt)),
     new AtomicLong(message.nextDelivery.millis),
     message.content,
     message.created,

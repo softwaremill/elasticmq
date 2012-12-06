@@ -1,6 +1,7 @@
 package org.elasticmq
 
 import org.joda.time.DateTime
+import java.util.UUID
 
 trait Message extends MessageOperations {
   def content: String
@@ -23,6 +24,10 @@ sealed case class MessageId(id: String) {
 
 sealed case class DeliveryReceipt(receipt: String) {
   override def toString = receipt
+}
+
+object DeliveryReceipt {
+  def generate = new DeliveryReceipt(UUID.randomUUID().toString)
 }
 
 case class MessageBuilder private (content: String, id: Option[MessageId], nextDelivery: NextDelivery) {

@@ -2,6 +2,7 @@ package org.elasticmq.storage
 
 import org.joda.time.DateTime
 import org.elasticmq.{MillisNextDelivery, MessageId, MillisVisibilityTimeout}
+import org.elasticmq.data.MessageData
 
 abstract class MessageCommandsTest extends StorageTest {
   test("non-existent message should not be found") {
@@ -77,7 +78,7 @@ abstract class MessageCommandsTest extends StorageTest {
     val lookupResult = execute(ReceiveMessageCommand(q1.name, 200L, MillisNextDelivery(234L)))
 
     // Then
-    lookupResult must be (Some(createMessageData("xyz", "123", MillisNextDelivery(234L))))
+    withoutDeliveryReceipt(lookupResult) must be (Some(createMessageData("xyz", "123", MillisNextDelivery(234L))))
   }
 
   test("next delivery should be updated after receiving") {
@@ -93,7 +94,7 @@ abstract class MessageCommandsTest extends StorageTest {
     val lookupResult = execute(LookupMessageCommand(q1.name, MessageId("xyz")))
 
     // Then
-    lookupResult must be (Some(createMessageData("xyz", "123", MillisNextDelivery(567L))))
+    withoutDeliveryReceipt(lookupResult) must be (Some(createMessageData("xyz", "123", MillisNextDelivery(567L))))
   }
 
   test("receipt handle should be filled when receiving") {
@@ -204,5 +205,9 @@ abstract class MessageCommandsTest extends StorageTest {
 
     // Then
     execute(LookupMessageCommand(q1.name, MessageId("xyz"))) must be (None)
+  }
+
+  def withoutDeliveryReceipt(messageOpt: Option[MessageData]) = {
+    messageOpt.map(_.copy(deliveryReceipt = None))
   }
 }
