@@ -606,6 +606,27 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
     bodies must be (Set("OK"))
   }
 
+  test("should delete a message only if the most recent receipt handle is provided") {
+    // Given
+    val queueUrl = client.createQueue(new CreateQueueRequest("testQueue1")
+      .withAttributes(Map(defaultVisibilityTimeoutAttribute -> "1"))).getQueueUrl
+
+    // When
+    client.sendMessage(new SendMessageRequest(queueUrl, "Message 1"))
+
+    val m1 = client.receiveMessage(new ReceiveMessageRequest(queueUrl)).getMessages.get(0)  // 1st receive
+
+    Thread.sleep(1100)
+    client.receiveMessage(new ReceiveMessageRequest(queueUrl)).getMessages.get(0)           // 2nd receive
+
+    client.deleteMessage(new DeleteMessageRequest(queueUrl, m1.getReceiptHandle))           // Shouldn't delete - old receipt
+
+    // Then
+    Thread.sleep(1100)
+    val m3 = receiveSingleMessage(queueUrl)
+    m3 must be (Some("Message 1"))
+  }
+
   def queueVisibilityTimeout(queueUrl: String) = getQueueLongAttribute(queueUrl, visibilityTimeoutAttribute)
 
   def queueDelay(queueUrl: String) = getQueueLongAttribute(queueUrl, delaySecondsAttribute)
