@@ -63,7 +63,7 @@ class InMemoryMessagesStorage(queueName: String, statistics: InMemoryMessageStat
       case message => {
         message.nextDeliveryState.get() match {
           case NextDeliveryIsBeingUpdated => {
-            // Putting the message back and letting the thread that updates the next delviery finish
+            // Putting the message back and letting the thread that updates the next delivery finish
             messageQueue.add(message)
             receiveMessage(deliveryTime, newNextDelivery)
           }
