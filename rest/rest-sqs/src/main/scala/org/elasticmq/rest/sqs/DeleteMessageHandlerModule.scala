@@ -5,12 +5,12 @@ import org.jboss.netty.handler.codec.http.HttpMethod._
 
 import Constants._
 import org.elasticmq.rest.sqs.ActionUtil._
-import org.elasticmq.MessageId
+import org.elasticmq.DeliveryReceipt
 
 trait DeleteMessageHandlerModule { this: ClientModule with RequestHandlerLogicModule =>
   val deleteMessageLogic = logicWithQueue((queue, request, parameters) => {
-    val id = parameters(ReceiptHandleParameter)
-    val messageOption = queue.lookupMessage(MessageId(id))
+    val receipt = parameters(ReceiptHandleParameter)
+    val messageOption = queue.lookupMessage(DeliveryReceipt(receipt))
     // No failure even if the message doesn't exist
     messageOption.foreach(_.delete())
 

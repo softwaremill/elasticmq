@@ -51,6 +51,6 @@ trait NativeMessageModule {
 
     def created = data.created
 
-    def lastDeliveryReceipt = None
+    def lastDeliveryReceipt = data.deliveryReceipt
   }
 }

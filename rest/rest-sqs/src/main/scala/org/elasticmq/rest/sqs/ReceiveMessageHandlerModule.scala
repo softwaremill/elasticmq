@@ -73,9 +73,10 @@ trait ReceiveMessageHandlerModule { this: ClientModule with RequestHandlerLogicM
     <ReceiveMessageResponse>
       <ReceiveMessageResult>
         {msgWithStats.map { case (msg, stats) =>
+        val receipt = msg.lastDeliveryReceipt.map(_.receipt).getOrElse(throw new RuntimeException("No receipt for a received message."))
         <Message>
           <MessageId>{msg.id.id}</MessageId>
-          <ReceiptHandle>{msg.id.id}</ReceiptHandle>
+          <ReceiptHandle>{receipt}</ReceiptHandle>
           <MD5OfBody>{md5Digest(msg.content)}</MD5OfBody>
           <Body>{XmlUtil.convertTexWithCRToNodeSeq(msg.content)}</Body>
           {attributesToXmlConverter.convert(calculateAttributeValues(msg, stats))}
