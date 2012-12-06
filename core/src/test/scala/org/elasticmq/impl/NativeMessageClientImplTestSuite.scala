@@ -127,6 +127,41 @@ class NativeMessageClientImplTestSuite extends FunSuite with MustMatchers with M
     mockExecutor.findExecutedCommand[ReceiveMessageCommand].newNextDelivery must be (MillisNextDelivery(Now + 1000L))
   }
 
+  test("looking up a message by delivery receipt should succeed if delivery receipts match") {
+    // Given
+    val (queueOperations, mockExecutor) = createQueueOperationsWithMockStorage(createQueueData("q1", MillisVisibilityTimeout(123L)))
+
+    val id = MessageId("abc")
+    val receipt = DeliveryReceipt.generate(id)
+
+    val m = createMessageData(id.id, "z", MillisNextDelivery(123L), Some(receipt))
+    mockExecutor.returnWhenCommandClass(classOf[LookupMessageCommand], Some(m))
+
+    // When
+    val msg = queueOperations.lookupMessage(receipt)
+
+    // Then
+    msg.map(_.id) must be (Some(id))
+  }
+
+  test("looking up a message by delivery receipt should return none if delivery don't receipts match") {
+    // Given
+    val (queueOperations, mockExecutor) = createQueueOperationsWithMockStorage(createQueueData("q1", MillisVisibilityTimeout(123L)))
+
+    val id = MessageId("abc")
+    val receipt1 = DeliveryReceipt.generate(id)
+    val receipt2 = DeliveryReceipt.generate(id)
+
+    val m = createMessageData(id.id, "z", MillisNextDelivery(123L), Some(receipt1))
+    mockExecutor.returnWhenCommandClass(classOf[LookupMessageCommand], Some(m))
+
+    // When
+    val msg = queueOperations.lookupMessage(receipt2)
+
+    // Then
+    msg must be (None)
+  }
+
   def createQueueOperationsWithMockStorage(queueData: QueueData): (QueueOperations, MockStorageCommandExecutor) = {
     val env = new NativeModule
       with StorageModule

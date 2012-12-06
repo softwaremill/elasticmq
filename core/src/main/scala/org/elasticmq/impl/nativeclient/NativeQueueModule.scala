@@ -99,7 +99,15 @@ trait NativeQueueModule {
     }
 
     def lookupMessage(deliveryReceipt: DeliveryReceipt) = {
-      None // TODO
+      val id = deliveryReceipt.extractId
+      val messageOpt = lookupMessage(id)
+      messageOpt.flatMap(message => {
+        if (message.lastDeliveryReceipt == Some(deliveryReceipt)) {
+          Some(message)
+        } else {
+          None
+        }
+      })
     }
 
     def updateDefaultVisibilityTimeout(defaultVisibilityTimeout: MillisVisibilityTimeout): Queue = {
