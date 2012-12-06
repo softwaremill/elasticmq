@@ -5,13 +5,13 @@ import org.jboss.netty.handler.codec.http.HttpMethod._
 
 import Constants._
 import org.elasticmq.rest.sqs.ActionUtil._
-import org.elasticmq.MessageId
+import org.elasticmq.{DeliveryReceipt, MessageId}
 
 trait DeleteMessageBatchHandlerModule { this: ClientModule with RequestHandlerLogicModule with BatchRequestsModule  =>
   val deleteMessageBatchLogic = logicWithQueue((queue, request, parameters) => {
     val results = batchRequest("DeleteMessageBatchRequestEntry", parameters) { (messageData, id) =>
       val receiptHandle = messageData(ReceiptHandleParameter)
-      val messageOption = queue.lookupMessage(MessageId(receiptHandle))
+      val messageOption = queue.lookupMessage(DeliveryReceipt(receiptHandle))
       // No failure even if the message doesn't exist
       messageOption.foreach(_.delete())
 
