@@ -77,7 +77,7 @@ trait SquerylMessagesStorageModule {
 
     private def updateNextDelivery(message: MessageData, nextDelivery: MillisNextDelivery) = {
       inTransaction {
-        val deliveryReceipt = DeliveryReceipt.generate
+        val deliveryReceipt = DeliveryReceipt.generate(message.id)
 
         val updatedCount = update(messages)(m =>
           where(m.id === message.id.id and m.nextDelivery === message.nextDelivery.millis)

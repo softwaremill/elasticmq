@@ -108,7 +108,7 @@ object ElasticMQBuild extends Build {
     "elasticmq-api",
     file("api"),
     settings = buildSettings ++ Seq(libraryDependencies ++= Seq(jodaTime, jodaConvert))
-  )
+  ) dependsOn(commonTest % "test")
 
   lazy val spi: Project = Project(
     "elasticmq-spi",

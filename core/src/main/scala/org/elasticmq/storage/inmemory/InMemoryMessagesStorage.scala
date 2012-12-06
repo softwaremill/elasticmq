@@ -73,13 +73,14 @@ class InMemoryMessagesStorage(queueName: String, statistics: InMemoryMessageStat
             receiveMessage(deliveryTime, newNextDelivery)
           }
           case NextDeliveryUnchanged => {
+            val id = MessageId(message.id)
             if (message.nextDelivery.get() > deliveryTime) {
               // Putting the message back. That's the youngest message, so there is no message that can be received.
               messageQueue.add(message)
               None
-            } else if (messagesById.contains(MessageId(message.id))) {
+            } else if (messagesById.contains(id)) {
               // Putting the message again into the queue, with a new next delivery
-              message.deliveryReceipt.set(Some(DeliveryReceipt.generate.receipt))
+              message.deliveryReceipt.set(Some(DeliveryReceipt.generate(id).receipt))
               message.nextDelivery.set(newNextDelivery.millis)
               messageQueue.add(message)
 
