@@ -96,6 +96,51 @@ abstract class MessageCommandsTest extends StorageTest {
     lookupResult must be (Some(createMessageData("xyz", "123", MillisNextDelivery(567L))))
   }
 
+  test("receipt handle should be filled when receiving") {
+    // Given
+    val q1 = createQueueData("q1", MillisVisibilityTimeout(1L))
+
+    execute(CreateQueueCommand(q1))
+
+    execute(new SendMessageCommand(q1.name, createMessageData("xyz", "123", MillisNextDelivery(123L))))
+
+    // When
+    val lookupBeforeReceiving = execute(LookupMessageCommand(q1.name, MessageId("xyz")))
+    val received = execute(ReceiveMessageCommand(q1.name, 200L, MillisNextDelivery(567L)))
+    val lookupAfterReceiving = execute(LookupMessageCommand(q1.name, MessageId("xyz")))
+
+    // Then
+    lookupBeforeReceiving.flatMap(_.deliveryReceipt) must be (None)
+
+    val receivedReceipt = received.flatMap(_.deliveryReceipt)
+    val lookedUpReceipt = lookupAfterReceiving.flatMap(_.deliveryReceipt)
+
+    receivedReceipt must be ('defined)
+    lookedUpReceipt must be ('defined)
+
+    receivedReceipt must be (lookedUpReceipt)
+  }
+
+  test("receipt handle should change on subsequent receives") {
+    // Given
+    val q1 = createQueueData("q1", MillisVisibilityTimeout(1L))
+    execute(CreateQueueCommand(q1))
+    execute(new SendMessageCommand(q1.name, createMessageData("xyz", "123", MillisNextDelivery(100L))))
+
+    // When
+    val received1 = execute(ReceiveMessageCommand(q1.name, 200L, MillisNextDelivery(300L)))
+    val received2 = execute(ReceiveMessageCommand(q1.name, 400L, MillisNextDelivery(500L)))
+
+    // Then
+    val received1Receipt = received1.flatMap(_.deliveryReceipt)
+    val received2Receipt = received2.flatMap(_.deliveryReceipt)
+
+    received1Receipt must be ('defined)
+    received2Receipt must be ('defined)
+
+    received1Receipt must not be (received2Receipt)
+  }
+
   test("delivered message should not be found in a non-empty queue when it is not visible") {
     // Given
     val q1 = createQueueData("q1", MillisVisibilityTimeout(1L))
