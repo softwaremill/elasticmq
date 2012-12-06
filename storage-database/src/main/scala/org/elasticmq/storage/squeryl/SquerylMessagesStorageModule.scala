@@ -77,11 +77,17 @@ trait SquerylMessagesStorageModule {
 
     private def updateNextDelivery(message: MessageData, nextDelivery: MillisNextDelivery) = {
       inTransaction {
+        val deliveryReceipt = DeliveryReceipt.generate
+
         val updatedCount = update(messages)(m =>
           where(m.id === message.id.id and m.nextDelivery === message.nextDelivery.millis)
-                  set(m.nextDelivery := nextDelivery.millis))
+                  set(m.nextDelivery := nextDelivery.millis, m.receipt := Some(deliveryReceipt.receipt)))
 
-        if (updatedCount == 0) None else Some(message.copy(nextDelivery = nextDelivery))
+        if (updatedCount == 0) None else {
+          Some(message
+            .copy(nextDelivery = nextDelivery)
+            .copy(deliveryReceipt = Some(deliveryReceipt)))
+        }
       }
     }
   }
