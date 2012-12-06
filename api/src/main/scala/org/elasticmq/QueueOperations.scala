@@ -11,6 +11,7 @@ trait QueueOperations {
   def receiveMessageWithStatistics(visibilityTimeout: VisibilityTimeout): Option[Pair[Message, MessageStatistics]]
 
   def lookupMessage(id: MessageId): Option[Message]
+  def lookupMessage(deliveryReceipt: DeliveryReceipt): Option[Message]
 
   def updateDefaultVisibilityTimeout(defaultVisibilityTimeout: MillisVisibilityTimeout): Queue
   def updateDelay(delay: Duration): Queue

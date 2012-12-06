@@ -7,16 +7,22 @@ trait Message extends MessageOperations {
   def id: MessageId
   def nextDelivery: MillisNextDelivery
   def created: DateTime
+  def lastDeliveryReceipt: Option[DeliveryReceipt]
   
   // Java-style
   def getContent = content
   def getId = id
   def getNextDelivery = nextDelivery
   def getCreated = created
+  def getLastDeliveryReceipt = lastDeliveryReceipt
 }
 
 sealed case class MessageId(id: String) {
   override def toString = id
+}
+
+sealed case class DeliveryReceipt(receipt: String) {
+  override def toString = receipt
 }
 
 case class MessageBuilder private (content: String, id: Option[MessageId], nextDelivery: NextDelivery) {
