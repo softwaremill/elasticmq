@@ -58,17 +58,25 @@ object SquerylQueue {
 }
 
 class SquerylMessage(val id: String,
+                     val receipt: String,
                      @Column("queue_name") val queueName: String,
                      val content: String,
                      @Column("next_delivery") val nextDelivery: Long,
                      @Column("created_timestamp") val createdTimestamp: Long) extends KeyedEntity[String] {
-  def toMessage: MessageData = MessageData(MessageId(id), content,
-    MillisNextDelivery(nextDelivery), new DateTime(createdTimestamp))
+  def toMessage: MessageData = MessageData(MessageId(id),
+    if (receipt == null) None else Some(DeliveryReceipt(receipt)),
+    content,
+    MillisNextDelivery(nextDelivery),
+    new DateTime(createdTimestamp))
 }
 
 object SquerylMessage {
   def from(queueName: String, message: MessageData) = {
-    new SquerylMessage(message.id.id, queueName, message.content, message.nextDelivery.millis,
+    new SquerylMessage(message.id.id,
+      message.deliveryReceipt.map(_.receipt).getOrElse(null),
+      queueName,
+      message.content,
+      message.nextDelivery.millis,
       message.created.getMillis)
   }
 }

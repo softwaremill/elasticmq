@@ -87,7 +87,7 @@ class JGroupsReplicatedStorageTest extends FunSuite with MustMatchers with Await
     // When
     cluster.master.execute(new CreateQueueCommand(QueueData("q1", MillisVisibilityTimeout(1000L),
       Duration.ZERO, new DateTime, new DateTime)))
-    cluster.master.execute(new SendMessageCommand("q1", MessageData(MessageId("1"), "z",
+    cluster.master.execute(new SendMessageCommand("q1", MessageData(MessageId("1"), None, "z",
       MillisNextDelivery(System.currentTimeMillis()), new DateTime)))
 
     // We need to wait for the message to be replicated & applied
@@ -195,7 +195,7 @@ class JGroupsReplicatedStorageTest extends FunSuite with MustMatchers with Await
 
   def sendExampleData(storage: ReplicatedStorage, queueName: String = "q1") {
     storage.execute(createQueueCommand(queueName))
-    storage.execute(new SendMessageCommand(queueName, MessageData(MessageId("1"), "z",
+    storage.execute(new SendMessageCommand(queueName, MessageData(MessageId("1"), None, "z",
       MillisNextDelivery(System.currentTimeMillis()), new DateTime)))
   }
 

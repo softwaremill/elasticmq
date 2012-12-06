@@ -9,7 +9,7 @@ import org.scalatest.{BeforeAndAfter, FunSuite}
 import java.io.{DataOutputStream, FileOutputStream, File}
 
 class CommandWriterReaderTest extends FunSuite with MustMatchers with BeforeAndAfter {
-  val cmds = SendMessageCommand("q1", MessageData(MessageId("id1"), "xyz", MillisNextDelivery(12562L), new DateTime())) ::
+  val cmds = SendMessageCommand("q1", MessageData(MessageId("id1"), None, "xyz", MillisNextDelivery(12562L), new DateTime())) ::
     CreateQueueCommand(QueueData("q2", MillisVisibilityTimeout(10000L), Duration.ZERO, new DateTime(), new DateTime())) ::
     DeleteMessageCommand("q3", MessageId("123912-12412-124182412")) :: Nil
 

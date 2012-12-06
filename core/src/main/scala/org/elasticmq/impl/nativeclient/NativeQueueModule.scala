@@ -38,7 +38,7 @@ trait NativeQueueModule {
         case m: MillisNextDelivery => m
       }
 
-      val message = MessageData(messageId, messageBuilder.content, nextDelivery, nowAsDateTime)
+      val message = MessageData(messageId, None, messageBuilder.content, nextDelivery, nowAsDateTime)
 
       storageCommandExecutor.execute(SendMessageCommand(queueName, message))
       
@@ -96,6 +96,10 @@ trait NativeQueueModule {
 
     def lookupMessage(messageId: MessageId) = {
       storageCommandExecutor.execute(LookupMessageCommand(queueName, messageId)).map(new NativeMessage(queueName, _))
+    }
+
+    def lookupMessage(deliveryReceipt: DeliveryReceipt) = {
+      None // TODO
     }
 
     def updateDefaultVisibilityTimeout(defaultVisibilityTimeout: MillisVisibilityTimeout): Queue = {

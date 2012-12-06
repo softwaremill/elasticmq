@@ -9,5 +9,5 @@ trait DataCreationHelpers {
     QueueData(name, defaultVisibilityTimeout, Duration.ZERO, new DateTime(0), new DateTime(0))
 
   def createMessageData(id: String, content: String, nextDelivery: MillisNextDelivery) =
-    MessageData(MessageId(id), content, nextDelivery, new DateTime(0))
+    MessageData(MessageId(id), None, content, nextDelivery, new DateTime(0))
 }
