@@ -304,6 +304,7 @@ Change log
 #### Version 0.6.2 (pending)
 
 * bug fixes
+* properly handling SQS receipt handles - message can be deleted only when passing the most recent receipt handle
 
 #### Version 0.6.1 (18 November 2012)
 
