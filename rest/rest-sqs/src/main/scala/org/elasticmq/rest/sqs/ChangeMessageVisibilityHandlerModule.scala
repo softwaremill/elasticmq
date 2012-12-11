@@ -5,7 +5,7 @@ import org.jboss.netty.handler.codec.http.HttpMethod._
 
 import Constants._
 import ActionUtil._
-import org.elasticmq.{Queue, MessageId, MillisVisibilityTimeout}
+import org.elasticmq.{DeliveryReceipt, Queue, MessageId, MillisVisibilityTimeout}
 
 trait ChangeMessageVisibilityHandlerModule { this: ClientModule with RequestHandlerLogicModule =>
   val changeMessageVisibilityLogic = logicWithQueue((queue, request, parameters) => {
@@ -20,7 +20,7 @@ trait ChangeMessageVisibilityHandlerModule { this: ClientModule with RequestHand
 
   def changeMessageVisibility(queue: Queue, parameters: Map[String, String]) {
     val visibilityTimeout = MillisVisibilityTimeout.fromSeconds(parameters(VisibilityTimeoutParameter).toLong)
-    val message = queue.lookupMessage(MessageId(parameters(ReceiptHandleParameter)))
+    val message = queue.lookupMessage(DeliveryReceipt(parameters(ReceiptHandleParameter)))
       .getOrElse(throw SQSException.invalidParameterValue)
     message.updateVisibilityTimeout(visibilityTimeout)
   }

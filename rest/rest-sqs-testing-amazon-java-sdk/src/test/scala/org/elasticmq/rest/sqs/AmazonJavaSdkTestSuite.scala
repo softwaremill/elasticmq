@@ -315,22 +315,22 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
   test("should update message visibility timeout") {
     // Given
     val queueUrl = client.createQueue(new CreateQueueRequest("testQueue1")
-      .withAttributes(Map(defaultVisibilityTimeoutAttribute -> "1"))).getQueueUrl
+      .withAttributes(Map(defaultVisibilityTimeoutAttribute -> "5"))).getQueueUrl
 
     // When
-    val msgId = client.sendMessage(new SendMessageRequest(queueUrl, "Message 1")).getMessageId
-    client.changeMessageVisibility(new ChangeMessageVisibilityRequest(queueUrl, msgId, 2))
+    client.sendMessage(new SendMessageRequest(queueUrl, "Message 1"))
 
-    val m1 = receiveSingleMessage(queueUrl)
+    val m1 = client.receiveMessage(new ReceiveMessageRequest(queueUrl)).getMessages.apply(0)
+    client.changeMessageVisibility(new ChangeMessageVisibilityRequest(queueUrl, m1.getReceiptHandle, 1))
 
-    Thread.sleep(1100) // Queue vis timeout - 1 second. The message shouldn't be received yet
     val m2 = receiveSingleMessage(queueUrl)
 
+    // Message should be already visible
     Thread.sleep(1100)
     val m3 = receiveSingleMessage(queueUrl)
 
     // Then
-    m1 must be (None)
+    m1.getBody must be ("Message 1")
     m2 must be (None)
     m3 must be (Some("Message 1"))
   }
@@ -338,23 +338,22 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
   test("should update message visibility timeout in a batch") {
     // Given
     val queueUrl = client.createQueue(new CreateQueueRequest("testQueue1")
-      .withAttributes(Map(defaultVisibilityTimeoutAttribute -> "1"))).getQueueUrl
+      .withAttributes(Map(defaultVisibilityTimeoutAttribute -> "5"))).getQueueUrl
 
     // When
-    val msgId1 = client.sendMessage(new SendMessageRequest(queueUrl, "Message 1")).getMessageId
-    val msgId2 = client.sendMessage(new SendMessageRequest(queueUrl, "Message 2")).getMessageId
+    client.sendMessage(new SendMessageRequest(queueUrl, "Message 1")).getMessageId
+    client.sendMessage(new SendMessageRequest(queueUrl, "Message 2")).getMessageId
+
+    val msg1 = client.receiveMessage(new ReceiveMessageRequest(queueUrl)).getMessages.apply(0)
+    val msg2 = client.receiveMessage(new ReceiveMessageRequest(queueUrl)).getMessages.apply(0)
 
     val result = client.changeMessageVisibilityBatch(new ChangeMessageVisibilityBatchRequest().withQueueUrl(queueUrl)
       .withEntries(
-      new ChangeMessageVisibilityBatchRequestEntry("1", msgId1).withVisibilityTimeout(2),
-      new ChangeMessageVisibilityBatchRequestEntry("2", msgId2).withVisibilityTimeout(2)
+      new ChangeMessageVisibilityBatchRequestEntry("1", msg1.getReceiptHandle).withVisibilityTimeout(1),
+      new ChangeMessageVisibilityBatchRequestEntry("2", msg2.getReceiptHandle).withVisibilityTimeout(1)
     ))
 
-    val m1 = receiveSingleMessage(queueUrl)
-
-    Thread.sleep(1100) // Queue vis timeout - 1 second. Both messages shouldn't be received yet
-    val m2 = receiveSingleMessage(queueUrl)
-
+    // Messages should be already visible
     Thread.sleep(1100)
     val m3 = receiveSingleMessage(queueUrl)
     val m4 = receiveSingleMessage(queueUrl)
@@ -362,8 +361,6 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
     // Then
     result.getSuccessful.map(_.getId).toSet must be (Set("1", "2"))
 
-    m1 must be (None)
-    m2 must be (None)
     Set(m3, m4) must be (Set(Some("Message 1"), Some("Message 2")))
   }
 
