@@ -1,0 +1,3 @@
+* ElasticMQ is now synced to Maven central; snapshots @ [https://oss.sonatype.org/content/repositories/snapshots/](https://oss.sonatype.org/content/repositories/snapshots/)
+* The Amazon SQS-compatible interface now generates unique message receipt handles, which brings ElasticMQ closer to the original semantics
+* bug fixes
