@@ -177,16 +177,16 @@ ElasticMQ dependencies in SBT
 -----------------------------
 
     // Includes the in-memory storage
-    val elasticmqCore       = "org.elasticmq" %% "elasticmq-core"             % "0.6.1"
+    val elasticmqCore       = "org.elasticmq" %% "elasticmq-core"             % "0.6.2"
 
     // If you want to use the database storage
-    val elasticmqStorageDb  = "org.elasticmq" %% "elasticmq-storage-database" % "0.6.1"
+    val elasticmqStorageDb  = "org.elasticmq" %% "elasticmq-storage-database" % "0.6.2"
 
     // If you want to expose an SQS interface
-    val elasticmqSqs        = "org.elasticmq" %% "elasticmq-rest-sqs"         % "0.6.1"
+    val elasticmqSqs        = "org.elasticmq" %% "elasticmq-rest-sqs"         % "0.6.2"
 
     // If you want to use replication
-    val elasticmqRepl       = "org.elasticmq" %% "elasticmq-replication"      % "0.6.1"
+    val elasticmqRepl       = "org.elasticmq" %% "elasticmq-replication"      % "0.6.2"
 
 If you want to use a snapshot version, you will need to add the [https://oss.sonatype.org/content/repositories/snapshots/](https://oss.sonatype.org/content/repositories/snapshots/) repository to your configuration.
 
@@ -198,22 +198,22 @@ Dependencies:
     <dependency>
         <groupId>org.elasticmq</groupId>
         <artifactId>elasticmq-core_2.9.1</artifactId>
-        <version>0.6.1</version>
+        <version>0.6.2</version>
     </dependency>
     <dependency>
         <groupId>org.elasticmq</groupId>
         <artifactId>elasticmq-storage-database_2.9.1</artifactId>
-        <version>0.6.1</version>
+        <version>0.6.2</version>
     </dependency>
     <dependency>
         <groupId>org.elasticmq</groupId>
         <artifactId>elasticmq-rest-sqs_2.9.1</artifactId>
-        <version>0.6.1</version>
+        <version>0.6.2</version>
     </dependency>
     <dependency>
         <groupId>org.elasticmq</groupId>
         <artifactId>elasticmq-replication_2.9.1</artifactId>
-        <version>0.6.1</version>
+        <version>0.6.2</version>
     </dependency>
 
 If you want to use a snapshot version, you will need to add the [https://oss.sonatype.org/content/repositories/snapshots/](https://oss.sonatype.org/content/repositories/snapshots/) repository to your configuration.
@@ -221,9 +221,9 @@ If you want to use a snapshot version, you will need to add the [https://oss.son
 Current versions
 --------
 
-*Stable*: 0.6.1
+*Stable*: 0.6.2
 
-*Development*: 0.6.2-SNAPSHOT
+*Development*: 0.6.3-SNAPSHOT
 
 DB Schema
 ---------
@@ -301,7 +301,7 @@ which isn't available in the main Maven repositories. To build:
 Change log
 ----------
 
-#### Version 0.6.2 (pending)
+#### Version 0.6.2 (13 December 2012)
 
 * bug fixes
 * properly handling SQS receipt handles - message can be deleted only when passing the most recent receipt handle
