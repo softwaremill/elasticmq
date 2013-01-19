@@ -285,21 +285,13 @@ Technology
 * Replication: [JGroups](http://www.jgroups.org/)
 * Testing the SQS interface: [Amazon Java SDK](http://aws.amazon.com/sdkforjava/);
   see the `rest-sqs-testing-amazon-java-sdk` module for the testsuite.
-* Server configuration: [Ostrich](https://github.com/twitter/ostrich/)
-
-Building the stand-alone server
--------------------------------
-
-The stand-alone server subproject isn't aggregated by the root project in the build, as it depends on Ostrich,
-which isn't available in the main Maven repositories. To build:
-
-    sbt
-    > project elasticmq-server
-    > compile
-    > distribution
 
 Change log
 ----------
+
+#### Version 0.6.3 (?? ?? 2013)
+
+* Scala 2.10 support
 
 #### Version 0.6.2 (13 December 2012)
 

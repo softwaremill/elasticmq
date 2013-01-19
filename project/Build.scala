@@ -7,7 +7,7 @@ object BuildSettings {
   val buildSettings = Defaults.defaultSettings ++ Seq (
     organization  := "org.elasticmq",
     version       := "0.6.3-SNAPSHOT",
-    scalaVersion  := "2.9.1",
+    scalaVersion  := "2.10.0",
 
     // Sonatype OSS deployment
     publishTo <<= version { (v: String) =>
@@ -51,20 +51,22 @@ object BuildSettings {
 }
 
 object Dependencies {
-  val squeryl       = "org.squeryl"               %% "squeryl"              % "0.9.5-2"
+  val squeryl       = "org.squeryl"               %% "squeryl"              % "0.9.5-6"
   val h2            = "com.h2database"            % "h2"                    % "1.3.168"
   val c3p0          = "c3p0"                      % "c3p0"                  % "0.9.1.2"
   val jodaTime      = "joda-time"                 % "joda-time"             % "2.1"
   val jodaConvert   = "org.joda"                  % "joda-convert"          % "1.2"
   val netty         = "io.netty"                  % "netty"                 % "3.5.9.Final"
+  val scalaActors   = scalaVersion("org.scala-lang"  % "scala-actors" % _)
+  val config        = "com.typesafe"              % "config"                % "1.0.0"
 
-  val slf4s         = "com.weiglewilczek.slf4s"   %% "slf4s"                % "1.0.7"
-  val logback       = "ch.qos.logback"            % "logback-classic"       % "1.0.7"
-  val jclOverSlf4j  = "org.slf4j"                 % "jcl-over-slf4j"        % "1.6.1"
-  val log4jOverSlf4j = "org.slf4j"                % "log4j-over-slf4j"      % "1.6.1"
-  val julToSlf4j    = "org.slf4j"                 % "jul-to-slf4j"          % "1.6.1"
+  val scalalogging  = "com.typesafe"              %% "scalalogging-slf4j"   % "1.0.1"
+  val logback       = "ch.qos.logback"            % "logback-classic"       % "1.0.9"
+  val jclOverSlf4j  = "org.slf4j"                 % "jcl-over-slf4j"        % "1.7.2"
+  val log4jOverSlf4j = "org.slf4j"                % "log4j-over-slf4j"      % "1.7.2"
+  val julToSlf4j    = "org.slf4j"                 % "jul-to-slf4j"          % "1.7.2"
 
-  val scalatest     = "org.scalatest"             %% "scalatest"            % "1.8"
+  val scalatest     = "org.scalatest"             %% "scalatest"            % "1.9.1"
   val mockito       = "org.mockito"               % "mockito-core"          % "1.9.5"
   val awaitility    = "com.jayway.awaitility"     % "awaitility-scala"      % "1.3.4"
 
@@ -78,9 +80,7 @@ object Dependencies {
 
   val jsr305        = "com.google.code.findbugs"  % "jsr305"                % "1.3.9"
 
-  val ostrich       = "com.twitter"               %% "ostrich"              % "4.10.6"
-
-  val common = Seq(slf4s, jsr305)
+  val common = Seq(scalalogging, jsr305)
   val httpTesting = Seq(apacheHttp % "test", jclOverSlf4j % "test")
 }
 
@@ -88,15 +88,11 @@ object ElasticMQBuild extends Build {
   import Dependencies._
   import BuildSettings._
 
-  /*
-  The `server` project is intentionally not aggregated, as it depends on artifacts from a third-party repository.
-  Hence it can't be included in the main build, to be able to deploy to Sonatype OSS.
-   */
   lazy val root: Project = Project(
     "elasticmq-root",
     file("."),
     settings = buildSettings
-  ) aggregate(commonTest, api, spi, core, storageDatabase, replication, rest)
+  ) aggregate(commonTest, api, spi, core, storageDatabase, replication, rest, server)
 
   lazy val commonTest: Project = Project(
     "elasticmq-common-test",
@@ -119,7 +115,7 @@ object ElasticMQBuild extends Build {
   lazy val core: Project = Project(
     "elasticmq-core",
     file("core"),
-    settings = buildSettings
+    settings = buildSettings ++ Seq(libraryDependencies <+= scalaActors)
   ) dependsOn(api, spi, commonTest % "test")
 
   lazy val storageDatabase: Project = Project(
@@ -162,7 +158,7 @@ object ElasticMQBuild extends Build {
     "elasticmq-server",
     file("server"),
     settings = buildSettings ++ CustomTasks.distributionSettings ++ CustomTasks.generateVersionFileSettings ++
-      Seq(libraryDependencies ++= Seq(logback, ostrich), resolvers += "Twitter Maven" at "http://maven.twttr.com")
+      Seq(libraryDependencies ++= Seq(logback, config))
   ) dependsOn(core, storageDatabase, replication, restSqs, commonTest % "test")
 
   lazy val performanceTests: Project = Project(
