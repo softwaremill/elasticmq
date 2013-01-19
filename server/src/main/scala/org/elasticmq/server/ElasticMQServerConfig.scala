@@ -1,14 +1,15 @@
 package org.elasticmq.server
 
-import com.twitter.util.Config
-import com.twitter.ostrich.admin.RuntimeEnvironment
 import org.elasticmq.NodeAddress
 import org.elasticmq.storage.squeryl.DBConfiguration
 import java.io.File
 import org.elasticmq.replication.{WaitForMajorityReplicationMode, CommandReplicationMode}
 import org.elasticmq.rest.sqs.SQSLimits
+import com.typesafe.config.{ConfigFactory, Config}
+import scala.collection.JavaConverters._
+import org.squeryl.internals.DatabaseAdapter
 
-class ElasticMQServerConfig extends Config[RuntimeEnvironment => ElasticMQServer] {
+class ElasticMQServerConfig(config: Config) {
   // Configure main storage: either in-memory or database-backed
 
   sealed trait Storage
@@ -16,21 +17,48 @@ class ElasticMQServerConfig extends Config[RuntimeEnvironment => ElasticMQServer
   case object InMemoryStorage extends Storage
   case class DatabaseStorage(dbConfiguration: DBConfiguration) extends Storage
 
-  var storage: Storage = InMemoryStorage
+  val storage: Storage = {
+    val subConfig = config.getConfig("storage")
+    val storageType = subConfig.getString("type")
+    if ("in-memory".equalsIgnoreCase(storageType)) {
+      InMemoryStorage
+    } else if ("database".equalsIgnoreCase(storageType)) {
+      val subSubConfig = subConfig.getConfig("database")
+      val dbConfiguration = DBConfiguration(
+        Thread.currentThread().getContextClassLoader
+          .loadClass("org.squeryl.adapters." + subSubConfig.getString("adapter") + "Adapter")
+          .newInstance()
+          .asInstanceOf[DatabaseAdapter],
+        subSubConfig.getString("jdbc-url"),
+        subSubConfig.getString("driver-class"),
+        Some((subSubConfig.getString("username"), subSubConfig.getString("password"))),
+        subSubConfig.getBoolean("create"),
+        subSubConfig.getBoolean("drop")
+      )
+      DatabaseStorage(dbConfiguration)
+    } else {
+      throw new IllegalArgumentException("Unknown storage type: " + storageType)
+    }
+  }
 
   // Configure the file command log (journal)
 
   class FileLogConfiguration {
-    var enabled = true
-    var storageDir = new File("$BASEDIR" + File.separator + "data")
-    var rotateLogsAfterCommandWritten = 10000
+    private val subConfig = config.getConfig("file-log")
+    val enabled = subConfig.getBoolean("enabled")
+    val storageDir = new File(subConfig.getString("storage-dir"))
+    val rotateLogsAfterCommandWritten = subConfig.getInt("rotate-logs-after-command-written")
   }
 
-  var fileLog: FileLogConfiguration = new FileLogConfiguration
+  val fileLog: FileLogConfiguration = new FileLogConfiguration
 
   // What is the outside visible address of this ElasticMQ node (used by replication and rest-sqs)
 
-  var nodeAddress = NodeAddress()
+  val nodeAddress = {
+    val subConfig = config.getConfig("node-address")
+    NodeAddress(subConfig.getString("protocol"), subConfig.getString("host"), subConfig.getInt("port"),
+      subConfig.getString("context-path"))
+  }
 
   // Replication
 
@@ -39,29 +67,45 @@ class ElasticMQServerConfig extends Config[RuntimeEnvironment => ElasticMQServer
   case class TCP(initialMembers: List[String], replicationBindAddress: String = "localhost:7800") extends NodeDiscovery
 
   class ReplicationConfiguration {
-    var enabled = false
-    var commandReplicationMode: CommandReplicationMode = WaitForMajorityReplicationMode
-    var numberOfNodes = 3
-    var nodeDiscovery: NodeDiscovery = UDP
-    var customJGroupsStackConfigurationFile: Option[File] = None
+    private val subConfig = config.getConfig("replication")
+    val enabled = subConfig.getBoolean("enabled")
+    val commandReplicationMode: CommandReplicationMode = WaitForMajorityReplicationMode
+    val numberOfNodes = subConfig.getInt("number-of-nodes")
+
+    private val nodeDiscoveryType = subConfig.getString("node-discovery")
+    val nodeDiscovery: NodeDiscovery = if ("udp".equalsIgnoreCase(nodeDiscoveryType)) {
+      UDP
+    } else if ("tcp".equalsIgnoreCase(nodeDiscoveryType)) {
+      TCP(
+        subConfig.getStringList("tcp.initial-members").asScala.toList,
+        subConfig.getString("tcp.replication-bind-address")
+      )
+    } else {
+      throw new IllegalArgumentException("Unknown node discovery type: " + nodeDiscoveryType)
+    }
+
+    val customJGroupsStackConfigurationFile: Option[File] = if (subConfig.getBoolean("custom-jgroups-stack-configuration-file.enabled")) {
+      Some(new File(subConfig.getString("custom-jgroups-stack-configuration-file.path")))
+    } else {
+      None
+    }
   }
 
-  var replication = new ReplicationConfiguration
+  val replication = new ReplicationConfiguration
 
   // Optionally expose the REST SQS interface
 
   class RestSqsConfiguration {
-    var enabled = true
-    var bindPort = 9324
-    var bindHostname = "0.0.0.0"
-    var sqsLimits = SQSLimits.Relaxed
+    private val subConfig = config.getConfig("rest-sqs")
+    val enabled = subConfig.getBoolean("enabled")
+    val bindPort = subConfig.getInt("bind-port")
+    val bindHostname = subConfig.getString("bind-hostname")
+    val sqsLimits = SQSLimits.withName(subConfig.getString("sqs-limits"))
   }
 
-  var restSqs = new RestSqsConfiguration
+  val restSqs = new RestSqsConfiguration
+}
 
-  // End
-
-  def apply() = { (runtime: RuntimeEnvironment) =>
-    new ElasticMQServer(this)
-  }
+object ElasticMQServerConfig {
+  def load = new ElasticMQServerConfig(ConfigFactory.load("elasticmq"))
 }

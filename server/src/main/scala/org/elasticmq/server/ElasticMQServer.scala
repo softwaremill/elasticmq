@@ -1,6 +1,6 @@
 package org.elasticmq.server
 
-import com.weiglewilczek.slf4s.Logging
+import com.typesafe.scalalogging.slf4j.Logging
 import org.elasticmq.storage.inmemory.InMemoryStorage
 import org.elasticmq.storage.squeryl.SquerylStorage
 import org.elasticmq.storage.StorageCommandExecutor

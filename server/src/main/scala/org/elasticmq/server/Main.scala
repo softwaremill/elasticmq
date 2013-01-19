@@ -1,9 +1,8 @@
 package org.elasticmq.server
 
-import com.weiglewilczek.slf4s.Logging
-import com.twitter.ostrich.admin.RuntimeEnvironment
-import java.io.File
+import com.typesafe.scalalogging.slf4j.Logging
 import io.Source
+import com.typesafe.config.ConfigFactory
 
 object Main extends Logging {
   def main(args: Array[String]) {
@@ -13,8 +12,7 @@ object Main extends Logging {
 
     logUncaughtExceptions()
 
-    val runtime = RuntimeEnvironment(this, Array("-f", configFile, "--config-target", configTarget))
-    val server = runtime.loadRuntimeConfig[ElasticMQServer]()
+    val server = new ElasticMQServer(ElasticMQServerConfig.load)
     val shutdown = server.start()
 
     addShutdownHook(shutdown)
@@ -42,9 +40,6 @@ object Main extends Logging {
         shutdown()
         logger.info("=== ElasticMQ server stopped ===")
       }
-    });
+    })
   }
-
-  private lazy val configFile = Environment.BaseDir + File.separator + "conf" + File.separator + "Default.scala"
-  private lazy val configTarget = "tmp"
 }
