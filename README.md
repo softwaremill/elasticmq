@@ -64,7 +64,7 @@ Additionally two directories will be created when the server is started:
 * `data`: stores the command journal (messages file log), if enabled
 * `log`: default location for log files
 
-You can configure ElasticMQ through the `conf/Default.scala` file. There you can choose which storage to use, should
+You can configure ElasticMQ through the `conf/elasticmq.conf` file. There you can choose which storage to use, should
 journaling and replication be enabled, should the server expose an SQS interface, on what interface and port to bind
 etc. More documentation can be found in the file itself.
 
