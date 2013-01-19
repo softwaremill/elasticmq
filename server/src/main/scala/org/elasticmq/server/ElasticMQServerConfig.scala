@@ -72,13 +72,13 @@ class ElasticMQServerConfig(config: Config) {
     val commandReplicationMode: CommandReplicationMode = WaitForMajorityReplicationMode
     val numberOfNodes = subConfig.getInt("number-of-nodes")
 
-    private val nodeDiscoveryType = subConfig.getString("node-discovery")
+    private val nodeDiscoveryType = subConfig.getString("node-discovery.type")
     val nodeDiscovery: NodeDiscovery = if ("udp".equalsIgnoreCase(nodeDiscoveryType)) {
       UDP
     } else if ("tcp".equalsIgnoreCase(nodeDiscoveryType)) {
       TCP(
-        subConfig.getStringList("tcp.initial-members").asScala.toList,
-        subConfig.getString("tcp.replication-bind-address")
+        subConfig.getStringList("node-discovery.tcp.initial-members").asScala.toList,
+        subConfig.getString("node-discovery.tcp.replication-bind-address")
       )
     } else {
       throw new IllegalArgumentException("Unknown node discovery type: " + nodeDiscoveryType)
@@ -100,12 +100,21 @@ class ElasticMQServerConfig(config: Config) {
     val enabled = subConfig.getBoolean("enabled")
     val bindPort = subConfig.getInt("bind-port")
     val bindHostname = subConfig.getString("bind-hostname")
-    val sqsLimits = SQSLimits.withName(subConfig.getString("sqs-limits"))
+    val sqsLimits = {
+      val name = subConfig.getString("sqs-limits")
+      if ("relaxed".equalsIgnoreCase(name)) {
+        SQSLimits.Relaxed
+      } else if ("strict".equalsIgnoreCase(name)) {
+        SQSLimits.Strict
+      } else {
+        throw new IllegalArgumentException("Unknown sqs-limits name: " + name)
+      }
+    }
   }
 
   val restSqs = new RestSqsConfiguration
 }
 
 object ElasticMQServerConfig {
-  def load = new ElasticMQServerConfig(ConfigFactory.load("elasticmq"))
+  def load = new ElasticMQServerConfig(ConfigFactory.load("conf/elasticmq"))
 }
