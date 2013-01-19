@@ -3,7 +3,7 @@ package org.elasticmq.storage.filelog
 import javax.annotation.concurrent.{ThreadSafe, NotThreadSafe}
 import java.io.File
 import java.util.concurrent.BlockingQueue
-import com.weiglewilczek.slf4s.Logging
+import com.typesafe.scalalogging.slf4j.Logging
 import org.elasticmq.storage.{EndOfCommands, StorageCommandExecutor, IdempotentMutativeCommand}
 
 /**

@@ -3,7 +3,7 @@ package org.elasticmq.replication.jgroups
 import java.util.concurrent.atomic.AtomicReference
 import org.jgroups._
 import org.elasticmq.NodeAddress
-import com.weiglewilczek.slf4s.Logging
+import com.typesafe.scalalogging.slf4j.Logging
 import org.jgroups.blocks.RequestHandler
 import org.elasticmq.replication.CommandApplier
 import org.elasticmq.marshalling.ObjectMarshaller
@@ -17,7 +17,7 @@ class JGroupsRequestHandler(objectMarshaller: ObjectMarshaller,
     try {
       tryHandle(msg)
     } catch {
-      case e => {
+      case e: Exception => {
         // JGroups doesn't log exceptions that occure during request handling in any way.
         logger.error("Exception when handling a jgroups message", e)
         throw e

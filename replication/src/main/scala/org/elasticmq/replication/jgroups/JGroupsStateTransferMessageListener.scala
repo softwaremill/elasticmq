@@ -2,7 +2,7 @@ package org.elasticmq.replication.jgroups
 
 import java.io.{OutputStream, InputStream}
 import org.jgroups.{Message, MessageListener}
-import com.weiglewilczek.slf4s.Logging
+import com.typesafe.scalalogging.slf4j.Logging
 import org.elasticmq.storage.StorageCommandExecutor
 import org.elasticmq.replication.state.{StateRestorer, StateDumper}
 

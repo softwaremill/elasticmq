@@ -7,7 +7,7 @@ import xml._
 import java.security.MessageDigest
 import org.elasticmq.{NodeAddress, Queue, Client}
 import java.net.{InetSocketAddress, SocketAddress}
-import com.weiglewilczek.slf4s.Logging
+import com.typesafe.scalalogging.slf4j.Logging
 import xml.EntityRef
 import org.elasticmq.NodeAddress
 import collection.mutable.ArrayBuffer

@@ -8,7 +8,7 @@ import org.jboss.netty.channel._
 import org.jboss.netty.handler.codec.http._
 import org.jboss.netty.handler.stream.ChunkedWriteHandler
 import org.jboss.netty.handler.execution.{ExecutionHandler, OrderedMemoryAwareThreadPoolExecutor}
-import com.weiglewilczek.slf4s.Logging
+import com.typesafe.scalalogging.slf4j.Logging
 import org.jboss.netty.logging.{Slf4JLoggerFactory, InternalLoggerFactory}
 import java.net.SocketAddress
 

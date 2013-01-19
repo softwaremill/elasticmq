@@ -9,7 +9,7 @@ import org.elasticmq.test._
 
 import com.jayway.awaitility.Awaitility._
 import com.jayway.awaitility.scala.AwaitilitySupport
-import com.weiglewilczek.slf4s.Logging
+import com.typesafe.scalalogging.slf4j.Logging
 import org.elasticmq._
 import scala.collection.mutable.ArrayBuffer
 import org.elasticmq.storage._
@@ -38,7 +38,7 @@ class JGroupsReplicatedStorageTest extends FunSuite with MustMatchers with Await
 
         testFun(clusterConfigurator, cluster)
       } finally {
-        val result = cluster.replicatedStorages.flatMap(rs => try { rs.shutdown(); None } catch { case e => Some(e) }).toList
+        val result = cluster.replicatedStorages.flatMap(rs => try { rs.shutdown(); None } catch { case e: Exception => Some(e) }).toList
         result match {
           case e :: _ => throw e
           case _ =>

@@ -1,7 +1,7 @@
 package org.elasticmq.impl.scheduler
 
-import scala.actors.DaemonActor
-import com.weiglewilczek.slf4s.Logging
+import com.typesafe.scalalogging.slf4j.Logging
+import actors.DaemonActor
 
 trait BackgroundVolatileTaskSchedulerModule extends VolatileTaskSchedulerModule {
   val volatileTaskScheduler = new BackgroundTaskScheduler

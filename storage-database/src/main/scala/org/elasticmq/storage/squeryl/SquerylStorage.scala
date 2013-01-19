@@ -2,7 +2,7 @@ package org.elasticmq.storage.squeryl
 
 import org.elasticmq.storage.interfaced.InterfacedCommandExecutor
 import org.elasticmq.data.DataSource
-import com.weiglewilczek.slf4s.Logging
+import com.typesafe.scalalogging.slf4j.Logging
 
 class SquerylStorage(dbConfiguration: DBConfiguration) extends InterfacedCommandExecutor with Logging {
   logger.info("Creating new DB storage, dialect: %s, host: %s, drop data: %s".format(

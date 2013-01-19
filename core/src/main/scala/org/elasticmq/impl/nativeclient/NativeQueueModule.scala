@@ -6,7 +6,7 @@ import org.elasticmq.data.{MessageData, QueueData}
 import org.elasticmq.impl.NowModule
 import org.joda.time.Duration
 import java.util.UUID
-import com.weiglewilczek.slf4s.Logging
+import com.typesafe.scalalogging.slf4j.Logging
 import org.elasticmq.storage._
 
 trait NativeQueueModule {

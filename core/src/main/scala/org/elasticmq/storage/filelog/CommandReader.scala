@@ -1,7 +1,7 @@
 package org.elasticmq.storage.filelog
 
 import org.elasticmq.storage.IdempotentMutativeCommand
-import com.weiglewilczek.slf4s.Logging
+import com.typesafe.scalalogging.slf4j.Logging
 import org.elasticmq.marshalling.{JavaSerializationMarshaller, ObjectMarshaller}
 import java.io._
 import javax.annotation.concurrent.NotThreadSafe

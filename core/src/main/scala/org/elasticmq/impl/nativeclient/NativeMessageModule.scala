@@ -2,7 +2,7 @@ package org.elasticmq.impl.nativeclient
 
 import org.elasticmq.data.MessageData
 import org.elasticmq.{MillisVisibilityTimeout, MessageDoesNotExistException, Message, MessageId}
-import com.weiglewilczek.slf4s.Logging
+import com.typesafe.scalalogging.slf4j.Logging
 import org.elasticmq.storage._
 
 trait NativeMessageModule {

@@ -19,7 +19,7 @@ class JavaSerializationMarshaller extends ObjectMarshaller {
     try {
       in.readObject()
     } finally {
-      try { in.close() } catch { case _ => }
+      try { in.close() } catch { case _: Exception => }
     }
   }
 }

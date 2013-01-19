@@ -6,7 +6,7 @@ import org.elasticmq.storage.{StorageCommandExecutor, IdempotentMutativeCommand}
 import org.elasticmq.data.StateDump
 import java.util.concurrent.BlockingQueue
 import java.util.ArrayList
-import com.weiglewilczek.slf4s.Logging
+import com.typesafe.scalalogging.slf4j.Logging
 import annotation.tailrec
 
 @NotThreadSafe

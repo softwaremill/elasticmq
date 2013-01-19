@@ -4,7 +4,7 @@ import org.elasticmq.storage.{StorageCommandExecutor, StorageModule}
 import org.elasticmq.impl.scheduler.BackgroundVolatileTaskSchedulerModule
 import org.elasticmq.impl.{NowModule, NodeImpl}
 import org.elasticmq.impl.nativeclient.NativeModule
-import com.weiglewilczek.slf4s.Logging
+import com.typesafe.scalalogging.slf4j.Logging
 
 object NodeBuilder extends Logging {
   def withStorage(storage: StorageCommandExecutor): Node = {

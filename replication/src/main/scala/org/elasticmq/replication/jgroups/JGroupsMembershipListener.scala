@@ -4,7 +4,7 @@ import java.util.concurrent.atomic.AtomicReference
 import org.jgroups._
 import org.elasticmq.NodeAddress
 import org.elasticmq.replication.message.SetMaster
-import com.weiglewilczek.slf4s.Logging
+import com.typesafe.scalalogging.slf4j.Logging
 import org.elasticmq.replication.{ClusterState, ReplicationMessageSender}
 import scala.collection.JavaConverters._
 

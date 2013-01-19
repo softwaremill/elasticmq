@@ -3,7 +3,7 @@ package org.elasticmq.impl.nativeclient
 import org.elasticmq._
 import org.elasticmq.data.QueueData
 import org.elasticmq.impl.NowModule
-import com.weiglewilczek.slf4s.Logging
+import com.typesafe.scalalogging.slf4j.Logging
 import org.elasticmq.storage.{ListQueuesCommand, CreateQueueCommand, LookupQueueCommand, StorageModule}
 
 trait NativeClientModule {

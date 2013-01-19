@@ -2,7 +2,7 @@ package org.elasticmq.storage.filelog
 
 import java.util.concurrent.LinkedBlockingQueue
 import org.elasticmq.storage._
-import com.weiglewilczek.slf4s.Logging
+import com.typesafe.scalalogging.slf4j.Logging
 
 class FileLogConfigurator(delegate: StorageCommandExecutor, configuration: FileLogConfiguration) extends Logging {
   def start(): FileLogStorage = {

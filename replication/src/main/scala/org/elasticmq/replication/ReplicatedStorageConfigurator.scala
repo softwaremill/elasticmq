@@ -8,7 +8,7 @@ import org.jgroups.blocks.MessageDispatcher
 import org.elasticmq.replication.jgroups._
 import java.util.concurrent.atomic.AtomicReference
 import org.elasticmq.marshalling.JavaSerializationMarshaller
-import com.weiglewilczek.slf4s.Logging
+import com.typesafe.scalalogging.slf4j.Logging
 
 /**
  * @param myAddress Logical address of the node.

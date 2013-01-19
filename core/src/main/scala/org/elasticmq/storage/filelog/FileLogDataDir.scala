@@ -1,7 +1,7 @@
 package org.elasticmq.storage.filelog
 
 import java.io.File
-import com.weiglewilczek.slf4s.Logging
+import com.typesafe.scalalogging.slf4j.Logging
 
 private[filelog] class FileLogDataDir(configuration: FileLogConfiguration) extends Logging {
   if (!configuration.storageDir.exists() && !configuration.storageDir.mkdir()) {
