@@ -3,6 +3,7 @@ package org.elasticmq.server
 import com.typesafe.scalalogging.slf4j.Logging
 import io.Source
 import com.typesafe.config.ConfigFactory
+import java.io.File
 
 object Main extends Logging {
   def main(args: Array[String]) {
@@ -12,7 +13,9 @@ object Main extends Logging {
 
     logUncaughtExceptions()
 
-    val server = new ElasticMQServer(ElasticMQServerConfig.load)
+    val configFile = Environment.BaseDir + File.separator + "conf" + File.separator + "elasticmq.conf"
+    val config = ConfigFactory.parseFile(new File(configFile))
+    val server = new ElasticMQServer(new ElasticMQServerConfig(config))
     val shutdown = server.start()
 
     addShutdownHook(shutdown)

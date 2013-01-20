@@ -5,7 +5,7 @@ import org.elasticmq.storage.squeryl.DBConfiguration
 import java.io.File
 import org.elasticmq.replication.{WaitForMajorityReplicationMode, CommandReplicationMode}
 import org.elasticmq.rest.sqs.SQSLimits
-import com.typesafe.config.{ConfigFactory, Config}
+import com.typesafe.config.Config
 import scala.collection.JavaConverters._
 import org.squeryl.internals.DatabaseAdapter
 
@@ -113,8 +113,4 @@ class ElasticMQServerConfig(config: Config) {
   }
 
   val restSqs = new RestSqsConfiguration
-}
-
-object ElasticMQServerConfig {
-  def load = new ElasticMQServerConfig(ConfigFactory.load("conf/elasticmq"))
 }
