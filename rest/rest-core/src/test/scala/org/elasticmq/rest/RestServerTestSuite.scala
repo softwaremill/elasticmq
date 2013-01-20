@@ -15,7 +15,7 @@ class RestServerTestSuite extends FunSuite with MustMatchers with BeforeAndAfter
   import RestPath._
   import HttpMethod._
 
-  val TestPort = 9324
+  val TestPort = 9320
   val TestHost = "http://localhost:"+TestPort
   
   val echoParamsHandler = (createHandler

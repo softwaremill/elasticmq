@@ -28,14 +28,14 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
 
   before {
     node = NodeBuilder.withStorage(new InMemoryStorage)
-    strictServer = new SQSRestServerBuilder(node.nativeClient).start()
-    relaxedServer = new SQSRestServerBuilder(node.nativeClient).withPort(9325).withSQSLimits(SQSLimits.Relaxed).start()
+    strictServer = new SQSRestServerBuilder(node.nativeClient).withPort(9321).start()
+    relaxedServer = new SQSRestServerBuilder(node.nativeClient).withPort(9322).withSQSLimits(SQSLimits.Relaxed).start()
 
     client = new AmazonSQSClient(new BasicAWSCredentials("x", "x"))
-    client.setEndpoint("http://localhost:9324")
+    client.setEndpoint("http://localhost:9321")
 
     relaxedClient = new AmazonSQSClient(new BasicAWSCredentials("x", "x"))
-    relaxedClient.setEndpoint("http://localhost:9325")
+    relaxedClient.setEndpoint("http://localhost:9322")
   }
 
   after {

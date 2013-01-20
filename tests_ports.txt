@@ -1,0 +1,4 @@
+Ports taken by tests. New tests should use new port numbers, so that sub-projects can be built concurrently.
+
+RestServerTestSuite - 9320
+AmazonJavaSdkTestSuite - 9321, 9322
