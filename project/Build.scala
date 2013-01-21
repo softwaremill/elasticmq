@@ -6,7 +6,7 @@ object BuildSettings {
 
   val buildSettings = Defaults.defaultSettings ++ Seq (
     organization  := "org.elasticmq",
-    version       := "0.6.3",
+    version       := "0.7.0-SNAPSHOT",
     scalaVersion  := "2.10.0",
 
     // Sonatype OSS deployment
