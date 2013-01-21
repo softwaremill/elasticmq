@@ -6,7 +6,7 @@ tl;dr
 
 * message queue system
 * emphasis on not loosing any messages
-* runs stand-alone ([download](https://s3-eu-west-1.amazonaws.com/softwaremill-public/elasticmq-0.6.2.tar.gz)) or embedded
+* runs stand-alone ([download](https://s3-eu-west-1.amazonaws.com/softwaremill-public/elasticmq-0.6.3.tar.gz)) or embedded
 * Amazon SQS-compatible interface
 * in-memory with optional journaling and db-backed message storage
 * optionally replicated (guaranteed messaging)
@@ -49,8 +49,8 @@ Installation: stand-alone
 -------------------------
 
 You can download the stand-alone distribution here:
-* [https://s3/.../elasticmq-0.6.2.tar.gz](https://s3-eu-west-1.amazonaws.com/softwaremill-public/elasticmq-0.6.2.tar.gz)
-* [https://s3/.../elasticmq-0.6.2.zip](https://s3-eu-west-1.amazonaws.com/softwaremill-public/elasticmq-0.6.2.zip)
+* [https://s3/.../elasticmq-0.6.3.tar.gz](https://s3-eu-west-1.amazonaws.com/softwaremill-public/elasticmq-0.6.3.tar.gz)
+* [https://s3/.../elasticmq-0.6.3.zip](https://s3-eu-west-1.amazonaws.com/softwaremill-public/elasticmq-0.6.3.zip)
 
 Java 6 or above is required for running the server.
 
@@ -177,18 +177,20 @@ ElasticMQ dependencies in SBT
 -----------------------------
 
     // Includes the in-memory storage
-    val elasticmqCore       = "org.elasticmq" %% "elasticmq-core"             % "0.6.2"
+    val elasticmqCore       = "org.elasticmq" %% "elasticmq-core"             % "0.6.3"
 
     // If you want to use the database storage
-    val elasticmqStorageDb  = "org.elasticmq" %% "elasticmq-storage-database" % "0.6.2"
+    val elasticmqStorageDb  = "org.elasticmq" %% "elasticmq-storage-database" % "0.6.3"
 
     // If you want to expose an SQS interface
-    val elasticmqSqs        = "org.elasticmq" %% "elasticmq-rest-sqs"         % "0.6.2"
+    val elasticmqSqs        = "org.elasticmq" %% "elasticmq-rest-sqs"         % "0.6.3"
 
     // If you want to use replication
-    val elasticmqRepl       = "org.elasticmq" %% "elasticmq-replication"      % "0.6.2"
+    val elasticmqRepl       = "org.elasticmq" %% "elasticmq-replication"      % "0.6.3"
 
 If you want to use a snapshot version, you will need to add the [https://oss.sonatype.org/content/repositories/snapshots/](https://oss.sonatype.org/content/repositories/snapshots/) repository to your configuration.
+
+Until version 0.6.2, ElasticMQ was built and deployed with Scala 2.9. Since 0.6.3, it is built and deployed with Scala 2.10.
 
 ElasticMQ dependencies in Maven
 -------------------------------
@@ -197,23 +199,23 @@ Dependencies:
 
     <dependency>
         <groupId>org.elasticmq</groupId>
-        <artifactId>elasticmq-core_2.9.1</artifactId>
-        <version>0.6.2</version>
+        <artifactId>elasticmq-core_2.10</artifactId>
+        <version>0.6.3</version>
     </dependency>
     <dependency>
         <groupId>org.elasticmq</groupId>
-        <artifactId>elasticmq-storage-database_2.9.1</artifactId>
-        <version>0.6.2</version>
+        <artifactId>elasticmq-storage-database_2.10</artifactId>
+        <version>0.6.3</version>
     </dependency>
     <dependency>
         <groupId>org.elasticmq</groupId>
-        <artifactId>elasticmq-rest-sqs_2.9.1</artifactId>
-        <version>0.6.2</version>
+        <artifactId>elasticmq-rest-sqs_2.10</artifactId>
+        <version>0.6.3</version>
     </dependency>
     <dependency>
         <groupId>org.elasticmq</groupId>
-        <artifactId>elasticmq-replication_2.9.1</artifactId>
-        <version>0.6.2</version>
+        <artifactId>elasticmq-replication_2.10</artifactId>
+        <version>0.6.3</version>
     </dependency>
 
 If you want to use a snapshot version, you will need to add the [https://oss.sonatype.org/content/repositories/snapshots/](https://oss.sonatype.org/content/repositories/snapshots/) repository to your configuration.
@@ -221,9 +223,9 @@ If you want to use a snapshot version, you will need to add the [https://oss.son
 Current versions
 --------
 
-*Stable*: 0.6.2
+*Stable*: 0.6.3
 
-*Development*: 0.6.3-SNAPSHOT
+*Development*: 0.7.0-SNAPSHOT
 
 DB Schema
 ---------
@@ -289,9 +291,10 @@ Technology
 Change log
 ----------
 
-#### Version 0.6.3 (?? ?? 2013)
+#### Version 0.6.3 (21 January 2013)
 
 * Scala 2.10 support
+* Changing the way the stand-alone server is configured
 
 #### Version 0.6.2 (13 December 2012)
 
