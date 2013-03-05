@@ -13,8 +13,10 @@ trait RequestHandlerLogicModule { this: ClientModule =>
     class TheLogic extends RequestHandlerLogic {
       def handle(request: HttpRequest, parameters: Map[String, String]) = {
         val queueName = parameters(QueueNameParameter)
+        val version = parameters(VersionParameter)
+        val namespace = namespaceFor(version)
         val queue = queueFor(queueName)
-        body(queue, request, parameters) % SqsNamespace
+        body(queue, request, parameters) % namespace
       }
     }
 
@@ -25,7 +27,9 @@ trait RequestHandlerLogicModule { this: ClientModule =>
     class TheLogic extends RequestHandlerLogic {
       def handle(request: HttpRequest, parameters: Map[String, String]) = {
         val queueName = parameters(QueueNameParameter)
-        body(queueName, request, parameters) % SqsNamespace
+        val version = parameters(VersionParameter)
+        val namespace = namespaceFor(version)
+        body(queueName, request, parameters) % namespace
       }
     }
 
@@ -35,7 +39,9 @@ trait RequestHandlerLogicModule { this: ClientModule =>
   def logic(body: (HttpRequest, Map[String, String]) => Elem): RequestHandlerLogic = {
     class TheLogic extends RequestHandlerLogic {
       def handle(request: HttpRequest, parameters: Map[String, String]) = {
-        body(request, parameters) % SqsNamespace
+        val version = parameters(VersionParameter)
+        val namespace = namespaceFor(version)
+        body(request, parameters) % namespace
       }
     }
 
@@ -43,6 +49,12 @@ trait RequestHandlerLogicModule { this: ClientModule =>
   }
 
   private implicit def elemToStringResponse(e: Elem): StringResponse = StringResponse(e.toString())
+
+  private def namespaceFor(version: String) = {
+    if (version == null || version.isEmpty) { version = SqsDefaultVersion }
+
+    new UnprefixedAttribute("xmlns", "http://queue.amazonaws.com/doc/%s/".format(version), Null)
+  }
 
   private def queueFor(queueName: String) = {
     val queueOption = client.lookupQueue(queueName)

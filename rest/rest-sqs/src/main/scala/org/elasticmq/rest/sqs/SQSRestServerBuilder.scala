@@ -115,11 +115,12 @@ class SQSRestServerBuilder(client: Client,
 
 object Constants {
   val EmptyRequestId = "00000000-0000-0000-0000-000000000000"
-  val SqsNamespace = new UnprefixedAttribute("xmlns", "http://queue.amazonaws.com/doc/2009-02-01/", Null)
+  val SqsDefaultVersion = "2012-11-05"
   val QueueUrlPath = "queue"
   val QueuePath = root / QueueUrlPath / %("QueueName")
   val QueueNameParameter = "QueueName"
   val ReceiptHandleParameter = "ReceiptHandle"
+  val VersionParameter = "Version"
   val VisibilityTimeoutParameter = "VisibilityTimeout"
   val DelayParameter = "DelaySeconds"
   val IdSubParameter = "Id"
