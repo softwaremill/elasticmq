@@ -1,13 +1,12 @@
 package org.elasticmq.rest.sqs
 
-import Constants._
+import xml.UnprefixedAttribute
 
 class SQSException(val code: String,
                    val message: String = "See the SQS docs.",
                    val httpStatusCode: Int = 400,
-                   errorType: String = "Sender",
-                   sqsVersion: String = SqsDefaultVersion) extends Exception {
-  def toXml(requestId: String) =
+                   errorType: String = "Sender") extends Exception {
+  def toXml(requestId: String, namespaceAttribute: UnprefixedAttribute) =
     <ErrorResponse>
       <Error>
         <Type>{errorType}</Type>
@@ -16,13 +15,7 @@ class SQSException(val code: String,
         <Detail/>
       </Error>
       <RequestId>{requestId}</RequestId>
-    </ErrorResponse> % namespaceFor(sqsVersion)
-
-  private def namespaceFor(version: String) = {
-    if (version == null || version.isEmpty) { version = SqsDefaultVersion }
-
-    new UnprefixedAttribute("xmlns", "http://queue.amazonaws.com/doc/%s/".format(version), Null)
-  }
+    </ErrorResponse> % namespaceAttribute
 }
 
 object SQSException {

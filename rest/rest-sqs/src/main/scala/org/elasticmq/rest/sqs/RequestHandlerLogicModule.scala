@@ -5,7 +5,7 @@ import org.jboss.netty.handler.codec.http.HttpRequest
 import org.elasticmq.rest.{StringResponse, RequestHandlerLogic}
 
 import Constants._
-import xml.Elem
+import xml.{Null, UnprefixedAttribute, Elem}
 import org.elasticmq.{ElasticMQException, Queue}
 
 trait RequestHandlerLogicModule { this: ClientModule =>
@@ -13,8 +13,7 @@ trait RequestHandlerLogicModule { this: ClientModule =>
     class TheLogic extends RequestHandlerLogic {
       def handle(request: HttpRequest, parameters: Map[String, String]) = {
         val queueName = parameters(QueueNameParameter)
-        val version = parameters(VersionParameter)
-        val namespace = namespaceFor(version)
+        val namespace = namespaceFor(parameters)
         val queue = queueFor(queueName)
         body(queue, request, parameters) % namespace
       }
@@ -27,8 +26,7 @@ trait RequestHandlerLogicModule { this: ClientModule =>
     class TheLogic extends RequestHandlerLogic {
       def handle(request: HttpRequest, parameters: Map[String, String]) = {
         val queueName = parameters(QueueNameParameter)
-        val version = parameters(VersionParameter)
-        val namespace = namespaceFor(version)
+        val namespace = namespaceFor(parameters)
         body(queueName, request, parameters) % namespace
       }
     }
@@ -39,8 +37,7 @@ trait RequestHandlerLogicModule { this: ClientModule =>
   def logic(body: (HttpRequest, Map[String, String]) => Elem): RequestHandlerLogic = {
     class TheLogic extends RequestHandlerLogic {
       def handle(request: HttpRequest, parameters: Map[String, String]) = {
-        val version = parameters(VersionParameter)
-        val namespace = namespaceFor(version)
+        val namespace = namespaceFor(parameters)
         body(request, parameters) % namespace
       }
     }
@@ -50,8 +47,12 @@ trait RequestHandlerLogicModule { this: ClientModule =>
 
   private implicit def elemToStringResponse(e: Elem): StringResponse = StringResponse(e.toString())
 
-  private def namespaceFor(version: String) = {
-    if (version == null || version.isEmpty) { version = SqsDefaultVersion }
+  private def namespaceFor(parameters: Map[String, String]) = {
+    val versionOpt = parameters.get(VersionParameter)
+    val version = versionOpt match {
+      case Some(v) if !v.isEmpty => v
+      case _ => SqsDefaultVersion
+    }
 
     new UnprefixedAttribute("xmlns", "http://queue.amazonaws.com/doc/%s/".format(version), Null)
   }
@@ -67,6 +68,10 @@ trait RequestHandlerLogicModule { this: ClientModule =>
 
   private trait ExceptionRequestHandlingLogic extends RequestHandlerLogic {
     abstract override def handle(request: HttpRequest, parameters: Map[String, String]) = {
+      def handleSQSException(e: SQSException) = {
+        StringResponse(e.toXml(EmptyRequestId, namespaceFor(parameters)).toString(), e.httpStatusCode)
+      }
+
       try {
         super.handle(request, parameters)
       } catch {
@@ -74,7 +79,5 @@ trait RequestHandlerLogicModule { this: ClientModule =>
         case e: ElasticMQException => handleSQSException(new SQSException(e.code, e.getMessage))
       }
     }
-
-    private def handleSQSException(e: SQSException) = StringResponse(e.toXml(EmptyRequestId).toString(), e.httpStatusCode)
   }
 }

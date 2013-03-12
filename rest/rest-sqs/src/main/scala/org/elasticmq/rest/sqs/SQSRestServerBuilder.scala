@@ -5,7 +5,7 @@ import org.elasticmq.rest.RestServer
 
 import xml._
 import java.security.MessageDigest
-import org.elasticmq.{NodeAddress, Queue, Client}
+import org.elasticmq.{Queue, Client}
 import java.net.{InetSocketAddress, SocketAddress}
 import com.typesafe.scalalogging.slf4j.Logging
 import xml.EntityRef
