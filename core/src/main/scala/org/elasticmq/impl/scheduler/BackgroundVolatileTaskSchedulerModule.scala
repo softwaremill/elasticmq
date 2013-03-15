@@ -1,32 +1,23 @@
 package org.elasticmq.impl.scheduler
 
 import com.typesafe.scalalogging.slf4j.Logging
-import actors.DaemonActor
+import concurrent.{ExecutionContext, Future}
+import java.util.concurrent.Executors
 
 trait BackgroundVolatileTaskSchedulerModule extends VolatileTaskSchedulerModule {
   val volatileTaskScheduler = new BackgroundTaskScheduler
 
+  implicit private val ec = ExecutionContext.fromExecutorService(Executors.newCachedThreadPool())
+
   class BackgroundTaskScheduler extends VolatileTaskScheduler with Logging {
-    object Executor extends DaemonActor {
-      def act() {
-        loop {
-          react {
-            case Block(block) => {
-              try {
-                block()
-              } catch {
-                case e => logger.warn("Failed to execute background task", e)
-              }
-            }
-          }
+    def schedule(block: => Unit) {
+      Future {
+        try {
+          block
+        } catch {
+          case e => logger.warn("Failed to execute background task", e)
         }
       }
-    }
-
-    Executor.start()
-
-    def schedule(block: => Unit) {
-      Executor ! Block(() => block)
     }
   }
   

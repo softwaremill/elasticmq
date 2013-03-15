@@ -57,7 +57,6 @@ object Dependencies {
   val jodaTime      = "joda-time"                 % "joda-time"             % "2.1"
   val jodaConvert   = "org.joda"                  % "joda-convert"          % "1.2"
   val netty         = "io.netty"                  % "netty"                 % "3.5.9.Final"
-  val scalaActors   = scalaVersion("org.scala-lang"  % "scala-actors" % _)
   val config        = "com.typesafe"              % "config"                % "1.0.0"
 
   val scalalogging  = "com.typesafe"              %% "scalalogging-slf4j"   % "1.0.1"
@@ -115,7 +114,7 @@ object ElasticMQBuild extends Build {
   lazy val core: Project = Project(
     "elasticmq-core",
     file("core"),
-    settings = buildSettings ++ Seq(libraryDependencies <+= scalaActors)
+    settings = buildSettings
   ) dependsOn(api, spi, commonTest % "test")
 
   lazy val storageDatabase: Project = Project(
