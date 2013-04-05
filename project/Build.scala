@@ -79,6 +79,14 @@ object Dependencies {
 
   val jsr305        = "com.google.code.findbugs"  % "jsr305"                % "1.3.9"
 
+  val akka2Version          = "2.1.2"
+  val akka2Actor            = "com.typesafe.akka" %% "akka-actor"           % akka2Version
+  val akka2Slf4j            = "com.typesafe.akka" %% "akka-slf4j"           % akka2Version
+
+  val sprayVersion          = "1.1-M7"
+  val sprayCan              = "io.spray"          %   "spray-can"          % sprayVersion
+  val sprayRouting          = "io.spray"          %   "spray-routing"      % sprayVersion
+
   val common = Seq(scalalogging, jsr305)
   val httpTesting = Seq(apacheHttp % "test", jclOverSlf4j % "test")
 }
@@ -144,7 +152,8 @@ object ElasticMQBuild extends Build {
   lazy val restSqs: Project = Project(
     "elasticmq-rest-sqs",
     file("rest/rest-sqs"),
-    settings = buildSettings ++ Seq(libraryDependencies ++= Seq(mysqlConnector % "test") ++ common ++ httpTesting)
+    settings = buildSettings ++ Seq(libraryDependencies ++= Seq(akka2Actor, akka2Slf4j, sprayCan, sprayRouting)
+      ++ common ++ httpTesting)
   ) dependsOn(api, restCore, core % "test", commonTest % "test")
 
   lazy val restSqsTestingAmazonJavaSdk: Project = Project(
