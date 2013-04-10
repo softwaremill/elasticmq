@@ -16,15 +16,10 @@ trait AnyParamDefMagnet {
 }
 
 object AnyParamDefMagnet {
-  import FormFieldDirectives._
-  import ParameterDirectives._
-
-  implicit def forString(value: String) = {
-    val route = formFields(value) | parameters(value)
-
+  implicit def forString(value: String)(implicit apdm2: AnyParamDefMagnet2[Tuple1[String]]) = {
     new AnyParamDefMagnet {
-      type Out = route.type
-      def apply() = route
+      type Out = apdm2.Out
+      def apply() = apdm2(Tuple1(value))
     }
   }
 
