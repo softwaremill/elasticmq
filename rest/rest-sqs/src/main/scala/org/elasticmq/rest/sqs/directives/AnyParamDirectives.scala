@@ -3,9 +3,40 @@ package org.elasticmq.rest.sqs.directives
 import shapeless._
 import spray.routing._
 import spray.routing.directives._
+import spray.http.HttpForm
+import spray.httpx.unmarshalling._
+import spray.routing.directives.NameReceptacle
+import shapeless.::
 
 trait AnyParamDirectives {
+  import BasicDirectives._
+  import RouteDirectives._
+
   def anyParam(apdm: AnyParamDefMagnet): apdm.Out = apdm()
+
+  def anyParamsMap: Directive[Map[String, String] :: HNil] = {
+    BasicDirectives.extract { ctx =>
+      val queryParams = ctx.request.queryParams
+      ctx.request.entity.as[HttpForm].right.flatMap { httpForm =>
+        val fieldNames = httpForm.fields.keySet
+
+        val pairs: Set[Deserialized[(String, String)]] = for (fieldName <- fieldNames) yield {
+          httpForm.field(fieldName).as[String].right.map(fieldName -> _)
+        }
+
+        pairs.collectFirst {
+          case Left(x) => x
+        } match {
+          case Some(x) => Left(x)
+          case None => Right(Map() ++ pairs.collect { case Right(y) => y } )
+        }
+      }.right.map(_ ++ queryParams)
+    }.flatMap {
+      case Right(map) => provide(map)
+      case Left(MalformedContent(msg, _)) => reject(MalformedFormFieldRejection(msg, ""))
+      case Left(UnsupportedContentType(msg)) => reject(UnsupportedRequestContentTypeRejection(msg))
+    }
+  }
 }
 
 object AnyParamDirectives extends AnyParamDirectives
