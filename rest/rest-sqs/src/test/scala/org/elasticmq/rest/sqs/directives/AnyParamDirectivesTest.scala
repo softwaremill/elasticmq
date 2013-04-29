@@ -103,6 +103,20 @@ class AnyParamDirectivesTest extends FlatSpec with ShouldMatchers with Scalatest
     }
   }
 
+  it should "work with type conversions" in {
+    val route = path("test") {
+      anyParam("x".as[Int], "y".as[Boolean]) { (x, y) => _.complete(s"$x $y") }
+    }
+
+    Get("/test?x=1&y=false") ~> route ~> check {
+      entityAs[String] should be ("1 false")
+    }
+
+    Post("/test", FormData(Map("x" -> "10", "y" -> "true"))) ~> route ~> check {
+      entityAs[String] should be ("10 true")
+    }
+  }
+
   "anyParamsMap" should "extract both query and form parameters" in {
     val route = path("test") {
       anyParamsMap { map => _.complete(map.toList.sorted.toString()) }
