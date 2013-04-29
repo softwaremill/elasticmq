@@ -43,3 +43,32 @@ trait ChangeMessageVisibilityBatchHandlerModule { this: ClientModule with Reques
             requiringParameterValues Map(ChangeMessageVisibilityBatchAction)
             running changeMessageVisibilityBatchLogic)
 }
+
+trait ChangeMessageVisibilityBatchDirectives { this: ElasticMQDirectives with ChangeMessageVisibilityDirectives with BatchRequestsModule =>
+  val changeMessageVisibilityBatch = {
+    action("ChangeMessageVisibilityBatch") {
+      queuePath { queue =>
+        anyParamsMap { parameters =>
+          val results = batchRequest("ChangeMessageVisibilityBatchRequestEntry", parameters) { (messageData, id) =>
+            doChangeMessageVisibility(queue, messageData)
+
+            <ChangeMessageVisibilityBatchResultEntry>
+              <Id>{id}</Id>
+            </ChangeMessageVisibilityBatchResultEntry>
+          }
+
+          respondWith {
+            <ChangeMessageVisibilityBatchResponse>
+              <ChangeMessageVisibilityBatchResult>
+                {results}
+              </ChangeMessageVisibilityBatchResult>
+              <ResponseMetadata>
+                <RequestId>{EmptyRequestId}</RequestId>
+              </ResponseMetadata>
+            </ChangeMessageVisibilityBatchResponse>
+          }
+        }
+      }
+    }
+  }
+}

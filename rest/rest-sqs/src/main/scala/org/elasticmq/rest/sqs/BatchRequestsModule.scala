@@ -16,7 +16,7 @@ trait BatchRequestsModule {
     }
 
     ifStrictLimits(uniqueIds.size > 10) {
-      "AWS.SimpleQueueService.TooManyEntriesInBatchRequest"
+      throw new SQSException("AWS.SimpleQueueService.TooManyEntriesInBatchRequest")
     }
 
     subParameters

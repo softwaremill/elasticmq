@@ -33,3 +33,21 @@ trait DeleteQueueHandlerModule { this: ClientModule with RequestHandlerLogicModu
           requiringParameterValues Map(DeleteQueueAction)
           running deleteQueueLogic)
 }
+
+trait DeleteQueueDirectives { this: ElasticMQDirectives with QueueURLModule =>
+  val deleteQueue = {
+    action("DeleteQueue") {
+      queuePath { queue =>
+        queue.delete()
+
+        respondWith {
+          <DeleteQueueResponse>
+            <ResponseMetadata>
+              <RequestId>{EmptyRequestId}</RequestId>
+            </ResponseMetadata>
+          </DeleteQueueResponse>
+        }
+      }
+    }
+  }
+}

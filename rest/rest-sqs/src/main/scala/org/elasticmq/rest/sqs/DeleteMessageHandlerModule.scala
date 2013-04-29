@@ -38,3 +38,25 @@ trait DeleteMessageHandlerModule { this: ClientModule with RequestHandlerLogicMo
             requiringParameterValues Map(DeleteMessageAction)
             running deleteMessageLogic)
 }
+
+trait DeleteMessageDirectives { this: ElasticMQDirectives =>
+  val deleteMessage = {
+    action("DeleteMessage") {
+      queuePath { queue =>
+        anyParam(ReceiptHandleParameter) { receipt =>
+          val messageOption = queue.lookupMessage(DeliveryReceipt(receipt))
+          // No failure even if the message doesn't exist
+          messageOption.foreach(_.delete())
+
+          respondWith {
+            <DeleteMessageResponse>
+              <ResponseMetadata>
+                <RequestId>{EmptyRequestId}</RequestId>
+              </ResponseMetadata>
+            </DeleteMessageResponse>
+          }
+        }
+      }
+    }
+  }
+}
