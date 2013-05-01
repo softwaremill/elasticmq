@@ -10,6 +10,7 @@ object BuildSettings {
     scalaVersion  := "2.10.1",
 
     resolvers += "spray repo" at "http://repo.spray.io", // TODO
+    resolvers += "nightly spray repo" at "http://nightlies.spray.io/", // TODO
 
     // Sonatype OSS deployment
     publishTo <<= version { (v: String) =>
@@ -85,7 +86,7 @@ object Dependencies {
   val akka2Actor            = "com.typesafe.akka" %% "akka-actor"           % akka2Version
   val akka2Slf4j            = "com.typesafe.akka" %% "akka-slf4j"           % akka2Version
 
-  val sprayVersion          = "1.1-M7"
+  val sprayVersion          = "1.1-20130501" //"1.1-M7"
   val sprayCan              = "io.spray"          %   "spray-can"          % sprayVersion
   val sprayRouting          = "io.spray"          %   "spray-routing"      % sprayVersion
   val sprayTestkit          = "io.spray"          %   "spray-testkit"      % sprayVersion % "test"
