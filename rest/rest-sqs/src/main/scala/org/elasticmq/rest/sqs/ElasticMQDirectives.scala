@@ -30,13 +30,13 @@ trait ElasticMQDirectives extends Directives with AnyParamDirectives with Client
       if (actionName == requiredActionName) {
         pass
       } else {
-        reject(UnsupportedActionRejection(actionName))
+        reject
       }
     }
   }
 
   def withQueueName(body: String => Route) = {
-    parameter("QueueName") { queueName =>
+    anyParam("QueueName") { queueName =>
       body(queueName)
     }
   }
@@ -66,8 +66,6 @@ trait ElasticMQDirectives extends Directives with AnyParamDirectives with Client
       body(queue)
     }
   }
-
-  case class UnsupportedActionRejection(actionName: String) extends Rejection
 
   private def queueFor(queueName: String) = {
     val queueOption = client.lookupQueue(queueName)
