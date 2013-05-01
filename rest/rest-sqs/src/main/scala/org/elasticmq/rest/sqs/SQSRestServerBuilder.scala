@@ -6,19 +6,20 @@ import org.elasticmq.rest.RestServer
 import xml._
 import java.security.MessageDigest
 import org.elasticmq.{Queue, Client}
-import java.net.{InetSocketAddress, SocketAddress}
 import com.typesafe.scalalogging.slf4j.Logging
 import xml.EntityRef
 import org.elasticmq.NodeAddress
 import collection.mutable.ArrayBuffer
+import spray.routing.SimpleRoutingApp
 
 /**
- * @param socketAddress Address on which the server will listen.
+ * @param interface Hostname to which the server will bind.
+ * @param port Port to which the server will bind.
  * @param serverAddress Address which will be returned as the queue address. Requests to this address
  * should be routed to this server.
  */
 class SQSRestServerBuilder(client: Client,
-                           socketAddress: SocketAddress,
+                           interface: String, port: Int,
                            serverAddress: NodeAddress,
                            sqsLimits: SQSLimits.Value) extends Logging {
   /**
@@ -27,7 +28,7 @@ class SQSRestServerBuilder(client: Client,
    * should be routed to this server.
    */
   def this(client: Client, port: Int, serverAddress: NodeAddress) = {
-    this(client, new InetSocketAddress(port), serverAddress, SQSLimits.Strict)
+    this(client, "", port, serverAddress, SQSLimits.Strict)
   }
 
   /**
@@ -42,20 +43,20 @@ class SQSRestServerBuilder(client: Client,
     this(client, 9324, NodeAddress())
   }
 
-  def withPort(port: Int) = {
-    new SQSRestServerBuilder(client, new InetSocketAddress(port), serverAddress, sqsLimits)
+  def withInterface(_interface: String) = {
+    new SQSRestServerBuilder(client, _interface, port, serverAddress, sqsLimits)
   }
 
-  def withServerAddress(newServerAddress: NodeAddress) = {
-    new SQSRestServerBuilder(client, socketAddress, newServerAddress, sqsLimits)
+  def withPort(_port: Int) = {
+    new SQSRestServerBuilder(client, interface, _port, serverAddress, sqsLimits)
   }
 
-  def withSocketAddress(newSocketAddress: SocketAddress) = {
-    new SQSRestServerBuilder(client, newSocketAddress, serverAddress, sqsLimits)
+  def withServerAddress(_ServerAddress: NodeAddress) = {
+    new SQSRestServerBuilder(client, interface, port, _ServerAddress, sqsLimits)
   }
 
-  def withSQSLimits(newSqsLimits: SQSLimits.Value) = {
-    new SQSRestServerBuilder(client, socketAddress, serverAddress, newSqsLimits)
+  def withSQSLimits(_sqsLimits: SQSLimits.Value) = {
+    new SQSRestServerBuilder(client, interface, port, serverAddress, _sqsLimits)
   }
 
   def start(): RestServer = {
@@ -67,19 +68,19 @@ class SQSRestServerBuilder(client: Client,
       with QueueURLModule
       with SQSLimitsModule
       with BatchRequestsModule
-      with RequestHandlerLogicModule
-      with CreateQueueHandlerModule
-      with DeleteQueueHandlerModule
-      with QueueAttributesHandlersModule
-      with ListQueuesHandlerModule
-      with SendMessageHandlerModule
-      with SendMessageBatchHandlerModule
-      with ReceiveMessageHandlerModule
-      with DeleteMessageHandlerModule
-      with DeleteMessageBatchHandlerModule
-      with ChangeMessageVisibilityHandlerModule
-      with ChangeMessageVisibilityBatchHandlerModule
-      with GetQueueUrlHandlerModule
+      with ElasticMQDirectives
+      with CreateQueueDirectives
+      with DeleteQueueDirectives
+      with QueueAttributesDirectives
+      with ListQueuesDirectives
+      with SendMessageDirectives
+      with SendMessageBatchDirectives
+      with ReceiveMessageDirectives
+      with DeleteMessageDirectives
+      with DeleteMessageBatchDirectives
+      with ChangeMessageVisibilityDirectives
+      with ChangeMessageVisibilityBatchDirectives
+      with GetQueueUrlDirectives
       with AttributesModule {
       val client = theClient
       val serverAddress = theServerAddress
@@ -87,29 +88,37 @@ class SQSRestServerBuilder(client: Client,
     }
 
     import env._
-    val server = RestServer.start(
+    val routes =
         // 1. Sending, receiving, deleting messages
-        sendMessageGetHandler :: sendMessagePostHandler ::
-        sendMessageBatchGetHandler :: sendMessageBatchPostHandler ::
-        receiveMessageGetHandler :: receiveMessagePostHandler ::
-        deleteMessageGetHandler :: deleteMessagePostHandler ::
-        deleteMessageBatchGetHandler :: deleteMessageBatchPostHandler ::
+        sendMessage ~
+        sendMessageBatch ~
+        receiveMessage ~
+        deleteMessage ~
+        deleteMessageBatch ~
         // 2. Getting, creating queues
-        getQueueUrlGetHandler :: getQueueUrlPostHandler ::
-        createQueueGetHandler :: createQueuePostHandler ::
-        listQueuesGetHandler :: listQueuesPostHandler ::
+        getQueueUrl ~
+        createQueue ~
+        listQueues ~
         // 3. Other
-        changeMessageVisibilityGetHandler :: changeMessageVisibilityPostHandler ::
-        changeMessageVisibilityBatchGetHandler :: changeMessageVisibilityBatchPostHandler ::
-        deleteQueueGetHandler :: deleteQueuePostHandler ::
-        getQueueAttributesGetHandler :: getQueueAttributesPostHandler ::
-        setQueueAttributesGetHandler :: setQueueAttributesPostHandler ::
-        Nil, socketAddress)
+        changeMessageVisibility ~
+        changeMessageVisibilityBatch ~
+        deleteQueue ~
+        getQueueAttributes ~
+        setQueueAttributes
 
-    logger.info("Started SQS rest server, bind address %s, visible server address %s"
-      .format(socketAddress, theServerAddress.fullAddress))
+    val server = new SimpleRoutingApp {
+      startServer(interface, port) {
+        routes
+      }
+    }
 
-    server
+    logger.info("Started SQS rest server, bind address %s:%d, visible server address %s"
+      .format(interface, port, theServerAddress.fullAddress))
+
+    new RestServer(() => {
+      server.system.shutdown()
+      server.system.awaitTermination()
+    })
   }
 }
 

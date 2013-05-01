@@ -58,7 +58,7 @@ trait SendMessageBatchDirectives { this: ElasticMQDirectives with SendMessageDir
           var totalLength = 0
 
           val results = batchRequest("SendMessageBatchRequestEntry", parameters) { (messageData, id) =>
-            val (message, digest) = sendMessage(queue, messageData)
+            val (message, digest) = doSendMessage(queue, messageData)
 
             totalLength += messageData(MessageBodyParameter).length
 

@@ -104,11 +104,11 @@ trait SendMessageDirectives { this: ElasticMQDirectives with SQSLimitsModule =>
   val MessageBodyParameter = "MessageBody"
   val DelaySecondsParameter = "DelaySeconds"
 
-  val sendMesage = {
+  val sendMessage = {
     action("SendMessage") {
       queuePath { queue =>
         anyParamsMap { parameters =>
-          val (message, digest) = sendMessage(queue, parameters)
+          val (message, digest) = doSendMessage(queue, parameters)
 
           respondWith {
             <SendMessageResponse>
@@ -126,7 +126,7 @@ trait SendMessageDirectives { this: ElasticMQDirectives with SQSLimitsModule =>
     }
   }
 
-  def sendMessage(queue: Queue, parameters: Map[String, String]) = {
+  def doSendMessage(queue: Queue, parameters: Map[String, String]) = {
     val body = parameters(MessageBodyParameter)
 
     ifStrictLimits(bodyContainsInvalidCharacters(body)) {
