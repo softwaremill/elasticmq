@@ -16,7 +16,7 @@ trait AnyParamDirectives {
 
   def anyParamsMap: Directive[Map[String, String] :: HNil] = {
     BasicDirectives.extract { ctx =>
-      val queryParams = ctx.request.queryParams
+      val queryParams = ctx.request.uri.query.toMap
       ctx.request.entity.as[HttpForm].right.map((_, queryParams))
     }.flatMap {
       case Right((httpForm, queryParams)) => {

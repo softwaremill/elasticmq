@@ -11,6 +11,7 @@ import xml.EntityRef
 import org.elasticmq.NodeAddress
 import collection.mutable.ArrayBuffer
 import spray.routing.SimpleRoutingApp
+import akka.actor.ActorSystem
 
 /**
  * @param interface Hostname to which the server will bind.
@@ -106,6 +107,7 @@ class SQSRestServerBuilder(client: Client,
         getQueueAttributes ~
         setQueueAttributes
 
+    implicit val actorSystem = ActorSystem()
     val server = new SimpleRoutingApp {
       startServer(interface, port) {
         routes
@@ -116,8 +118,8 @@ class SQSRestServerBuilder(client: Client,
       .format(interface, port, theServerAddress.fullAddress))
 
     new RestServer(() => {
-      server.system.shutdown()
-      server.system.awaitTermination()
+      actorSystem.shutdown()
+      actorSystem.awaitTermination()
     })
   }
 }
