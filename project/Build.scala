@@ -107,7 +107,9 @@ object ElasticMQBuild extends Build {
   lazy val commonTest: Project = Project(
     "elasticmq-common-test",
     file("common-test"),
-    settings = buildSettings ++ Seq(libraryDependencies ++= Seq(scalatest, mockito, awaitility, logback))
+    settings = buildSettings ++ Seq(
+      libraryDependencies ++= Seq(scalatest, mockito, awaitility, logback),
+      publishArtifact := false)
   )
 
   lazy val api: Project = Project(
@@ -156,7 +158,9 @@ object ElasticMQBuild extends Build {
   lazy val restSqsTestingAmazonJavaSdk: Project = Project(
     "elasticmq-rest-sqs-testing-amazon-java-sdk",
     file("rest/rest-sqs-testing-amazon-java-sdk"),
-    settings = buildSettings ++ Seq(libraryDependencies ++= Seq(amazonJavaSdk) ++ common)
+    settings = buildSettings ++ Seq(
+      libraryDependencies ++= Seq(amazonJavaSdk) ++ common,
+      publishArtifact := false)
   ) dependsOn(restSqs % "test->test")
 
   lazy val server: Project = Project(
@@ -169,7 +173,10 @@ object ElasticMQBuild extends Build {
   lazy val performanceTests: Project = Project(
     "elasticmq-performance-tests",
     file("performance-tests"),
-    settings = buildSettings ++ Seq(libraryDependencies ++= Seq(amazonJavaSdk, logback) ++ common)
+    settings = buildSettings ++ Seq(
+      libraryDependencies ++= Seq(amazonJavaSdk, logback) ++ common,
+      publishArtifact := false
+    )
   ) dependsOn(core, storageDatabase, replication, restSqs, commonTest % "test")
 }
 
