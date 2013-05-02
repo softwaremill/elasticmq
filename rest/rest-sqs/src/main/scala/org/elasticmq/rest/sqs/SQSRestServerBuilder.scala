@@ -110,18 +110,14 @@ class SQSRestServerBuilder(client: Client,
 
     new SimpleRoutingApp {
       startServer(interface, port) {
-        routes
-      }
-
-      // TODO: nicer way to use a custom exception handler?
-      override def runRoute(route: Route)(implicit eh: ExceptionHandler, rh: RejectionHandler, ac: ActorContext,
-                                          rs: RoutingSettings, log: LoggingContext) = {
-        val exceptionHandler: ExceptionHandler = ExceptionHandler.fromPF {
+        val exceptionHandler = ExceptionHandler.fromPF {
           case e: SQSException => handleSQSException(e)
           case e: ElasticMQException => handleSQSException(new SQSException(e.code, e.getMessage))
         }
 
-        super.runRoute(route)(exceptionHandler, rh, ac, rs, log)
+        handleExceptions(exceptionHandler) {
+          routes
+        }
       }
     }
 
