@@ -2,7 +2,6 @@ package org.elasticmq.rest.sqs
 
 import org.scalatest.matchers.MustMatchers
 import org.scalatest.{BeforeAndAfter, FunSuite}
-import org.elasticmq.rest.RestServer
 import com.amazonaws.auth.BasicAWSCredentials
 import com.amazonaws.services.sqs.{AmazonSQS, AmazonSQSClient}
 
@@ -20,8 +19,8 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
 
   var node: Node = _
 
-  var strictServer: RestServer = _
-  var relaxedServer: RestServer = _
+  var strictServer: Stoppable = _
+  var relaxedServer: Stoppable = _
 
   var client: AmazonSQS = _ // strict server
   var relaxedClient: AmazonSQS = _

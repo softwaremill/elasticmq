@@ -1,12 +1,10 @@
 package org.elasticmq.rest.sqs
 
-import org.jboss.netty.logging.{Log4JLoggerFactory, InternalLoggerFactory}
 import org.elasticmq.storage.inmemory.InMemoryStorage
 import org.elasticmq.{NodeAddress, NodeBuilder}
 
 object SQSManualTesting {
   def main(args: Array[String]) {
-    InternalLoggerFactory.setDefaultFactory(new Log4JLoggerFactory())
     mysql()
   }
 

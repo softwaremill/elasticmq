@@ -1,8 +1,5 @@
 package org.elasticmq.rest.sqs
 
-import org.elasticmq.rest.RestPath._
-import org.elasticmq.rest.RestServer
-
 import xml._
 import java.security.MessageDigest
 import org.elasticmq.{ElasticMQException, Queue, Client}
@@ -62,7 +59,7 @@ class SQSRestServerBuilder(client: Client,
     new SQSRestServerBuilder(client, interface, port, serverAddress, _sqsLimits)
   }
 
-  def start(): RestServer = {
+  def start(): Stoppable = {
     val theClient = client
     val theServerAddress = serverAddress
     val theLimits = sqsLimits
@@ -131,10 +128,12 @@ class SQSRestServerBuilder(client: Client,
     logger.info("Started SQS rest server, bind address %s:%d, visible server address %s"
       .format(interface, port, theServerAddress.fullAddress))
 
-    new RestServer(() => {
-      actorSystem.shutdown()
-      actorSystem.awaitTermination()
-    })
+    new Stoppable {
+      def stop() {
+        actorSystem.shutdown()
+        actorSystem.awaitTermination()
+      }
+    }
   }
 }
 
@@ -142,7 +141,6 @@ object Constants {
   val EmptyRequestId = "00000000-0000-0000-0000-000000000000"
   val SqsDefaultVersion = "2012-11-05"
   val QueueUrlPath = "queue"
-  val QueuePath = root / QueueUrlPath / %("QueueName")
   val QueueNameParameter = "QueueName"
   val ReceiptHandleParameter = "ReceiptHandle"
   val VersionParameter = "Version"
@@ -225,4 +223,6 @@ trait SQSLimitsModule {
   }
 }
 
-
+trait Stoppable {
+  def stop()
+}

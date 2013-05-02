@@ -59,7 +59,6 @@ object Dependencies {
   val c3p0          = "c3p0"                      % "c3p0"                  % "0.9.1.2"
   val jodaTime      = "joda-time"                 % "joda-time"             % "2.1"
   val jodaConvert   = "org.joda"                  % "joda-convert"          % "1.2"
-  val netty         = "io.netty"                  % "netty"                 % "3.5.9.Final"
   val config        = "com.typesafe"              % "config"                % "1.0.0"
 
   val scalalogging  = "com.typesafe"              %% "scalalogging-slf4j"   % "1.0.1"
@@ -145,20 +144,14 @@ object ElasticMQBuild extends Build {
     "elasticmq-rest",
     file("rest"),
     settings = buildSettings
-  ) aggregate(restCore, restSqs, restSqsTestingAmazonJavaSdk)
-
-  lazy val restCore: Project = Project(
-    "elasticmq-rest-core",
-    file("rest/rest-core"),
-    settings = buildSettings ++ Seq(libraryDependencies ++= Seq(netty) ++ common ++ httpTesting)
-  ) dependsOn(commonTest % "test")
+  ) aggregate(restSqs, restSqsTestingAmazonJavaSdk)
 
   lazy val restSqs: Project = Project(
     "elasticmq-rest-sqs",
     file("rest/rest-sqs"),
     settings = buildSettings ++ Seq(libraryDependencies ++= Seq(akka2Actor, akka2Slf4j, sprayCan, sprayRouting, sprayTestkit)
       ++ common ++ httpTesting)
-  ) dependsOn(api, restCore, core % "test", commonTest % "test")
+  ) dependsOn(api, core % "test", commonTest % "test")
 
   lazy val restSqsTestingAmazonJavaSdk: Project = Project(
     "elasticmq-rest-sqs-testing-amazon-java-sdk",
