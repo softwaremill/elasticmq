@@ -6,7 +6,7 @@ trait GetQueueUrlDirectives { this: ElasticMQDirectives with QueueURLModule =>
   val getQueueUrl = {
     action("GetQueueUrl") {
       rootPath {
-        anyParam(QueueNameParameter) { queueName =>
+        anyParam("QueueName") { queueName =>
           val queueOption = client.lookupQueue(queueName)
 
           queueOption match {

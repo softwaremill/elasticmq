@@ -140,17 +140,9 @@ class SQSRestServerBuilder(client: Client,
 object Constants {
   val EmptyRequestId = "00000000-0000-0000-0000-000000000000"
   val SqsDefaultVersion = "2012-11-05"
-  val QueueUrlPath = "queue"
-  val QueueNameParameter = "QueueName"
   val ReceiptHandleParameter = "ReceiptHandle"
-  val VersionParameter = "Version"
   val VisibilityTimeoutParameter = "VisibilityTimeout"
-  val DelayParameter = "DelaySeconds"
   val IdSubParameter = "Id"
-}
-
-object ActionUtil {
-  def createAction(action: String) = "Action" -> action
 }
 
 object ParametersUtil {
@@ -206,7 +198,7 @@ trait ClientModule {
 trait QueueURLModule {
   def serverAddress: NodeAddress
 
-  def queueURL(queue: Queue) = serverAddress.fullAddress+"/"+Constants.QueueUrlPath+"/"+queue.name
+  def queueURL(queue: Queue) = serverAddress.fullAddress+"/queue/"+queue.name
 }
 
 object SQSLimits extends Enumeration {

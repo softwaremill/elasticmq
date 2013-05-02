@@ -30,7 +30,7 @@ trait ElasticMQDirectives extends Directives with AnyParamDirectives with Client
     }
   }
 
-  def namespace(route: UnprefixedAttribute => Route): Route = parameter(VersionParameter?) { versionOpt =>
+  def namespace(route: UnprefixedAttribute => Route): Route = parameter("Version"?) { versionOpt =>
     val version = versionOpt match {
       case Some(v) if !v.isEmpty => v
       case _ => SqsDefaultVersion

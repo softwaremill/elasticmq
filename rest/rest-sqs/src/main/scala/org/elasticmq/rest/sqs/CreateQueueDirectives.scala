@@ -23,7 +23,7 @@ trait CreateQueueDirectives { this: ElasticMQDirectives with QueueURLModule with
                 .getOrElse(DefaultVisibilityTimeout))
 
             val secondsDelay =
-              (attributes.parseOptionalLong(DelayParameter)
+              (attributes.parseOptionalLong("DelaySeconds")
                 .getOrElse(DefaultDelay))
 
             val queue = queueOption.getOrElse(client.createQueue(
