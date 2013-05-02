@@ -5,13 +5,15 @@ import org.elasticmq.rest.RestServer
 
 import xml._
 import java.security.MessageDigest
-import org.elasticmq.{Queue, Client}
+import org.elasticmq.{ElasticMQException, Queue, Client}
 import com.typesafe.scalalogging.slf4j.Logging
-import xml.EntityRef
-import org.elasticmq.NodeAddress
 import collection.mutable.ArrayBuffer
-import spray.routing.SimpleRoutingApp
-import akka.actor.ActorSystem
+import spray.routing.{RoutingSettings, RejectionHandler, ExceptionHandler, SimpleRoutingApp}
+import akka.actor.{ActorContext, ActorSystem}
+import scala.xml.EntityRef
+import org.elasticmq.NodeAddress
+import spray.util.LoggingContext
+import spray.routing.Route
 
 /**
  * @param interface Hostname to which the server will bind.
@@ -108,9 +110,21 @@ class SQSRestServerBuilder(client: Client,
         setQueueAttributes
 
     implicit val actorSystem = ActorSystem()
-    val server = new SimpleRoutingApp {
+
+    new SimpleRoutingApp {
       startServer(interface, port) {
         routes
+      }
+
+      // TODO: nicer way to use a custom exception handler?
+      override def runRoute(route: Route)(implicit eh: ExceptionHandler, rh: RejectionHandler, ac: ActorContext,
+                                          rs: RoutingSettings, log: LoggingContext) = {
+        val exceptionHandler: ExceptionHandler = ExceptionHandler.fromPF {
+          case e: SQSException => handleSQSException(e)
+          case e: ElasticMQException => handleSQSException(new SQSException(e.code, e.getMessage))
+        }
+
+        super.runRoute(route)(exceptionHandler, rh, ac, rs, log)
       }
     }
 

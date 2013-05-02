@@ -69,7 +69,7 @@ trait RequestHandlerLogicModule { this: ClientModule =>
   private trait ExceptionRequestHandlingLogic extends RequestHandlerLogic {
     abstract override def handle(request: HttpRequest, parameters: Map[String, String]) = {
       def handleSQSException(e: SQSException) = {
-        StringResponse(e.toXml(EmptyRequestId, namespaceFor(parameters)).toString(), e.httpStatusCode)
+        StringResponse(e.toXml(EmptyRequestId).toString(), e.httpStatusCode)
       }
 
       try {

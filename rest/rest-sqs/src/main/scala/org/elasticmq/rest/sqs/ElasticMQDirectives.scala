@@ -6,6 +6,7 @@ import org.elasticmq.rest.sqs.Constants._
 import org.elasticmq.rest.sqs.directives.AnyParamDirectives
 import shapeless.HNil
 import org.elasticmq.Queue
+import spray.http.StatusCode._
 
 trait ElasticMQDirectives extends Directives with AnyParamDirectives with ClientModule {
 
@@ -13,6 +14,19 @@ trait ElasticMQDirectives extends Directives with AnyParamDirectives with Client
     (ctx: RequestContext) => {
       val result = elem % ns
       ctx.complete(result.toString())
+    }
+  }
+
+  def respondWith(statusCode: Int)(elem: Elem): Route = namespace { ns =>
+    (ctx: RequestContext) => {
+      val result = elem % ns
+      ctx.complete(statusCode, result.toString())
+    }
+  }
+
+  def handleSQSException(e: SQSException) = {
+    respondWith(e.httpStatusCode) {
+      e.toXml(EmptyRequestId)
     }
   }
 

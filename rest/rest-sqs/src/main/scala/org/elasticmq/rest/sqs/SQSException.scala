@@ -1,12 +1,10 @@
 package org.elasticmq.rest.sqs
 
-import xml.UnprefixedAttribute
-
 class SQSException(val code: String,
                    val message: String = "See the SQS docs.",
                    val httpStatusCode: Int = 400,
                    errorType: String = "Sender") extends Exception {
-  def toXml(requestId: String, namespaceAttribute: UnprefixedAttribute) =
+  def toXml(requestId: String) =
     <ErrorResponse>
       <Error>
         <Type>{errorType}</Type>
@@ -15,7 +13,7 @@ class SQSException(val code: String,
         <Detail/>
       </Error>
       <RequestId>{requestId}</RequestId>
-    </ErrorResponse> % namespaceAttribute
+    </ErrorResponse>
 }
 
 object SQSException {
