@@ -84,6 +84,7 @@ object Dependencies {
   val akka2Version          = "2.1.2"
   val akka2Actor            = "com.typesafe.akka" %% "akka-actor"           % akka2Version
   val akka2Slf4j            = "com.typesafe.akka" %% "akka-slf4j"           % akka2Version
+  val akka2Testkit          = "com.typesafe.akka" %% "akka-testkit"         % akka2Version
 
   val sprayVersion          = "1.1-20130501" //"1.1-M7"
   val sprayCan              = "io.spray"          %   "spray-can"          % sprayVersion
@@ -102,7 +103,7 @@ object ElasticMQBuild extends Build {
     "elasticmq-root",
     file("."),
     settings = buildSettings
-  ) aggregate(commonTest, api, spi, core, storageDatabase, replication, rest, server)
+  ) aggregate(commonTest, api, spi, core, core2, storageDatabase, replication, rest, server)
 
   lazy val commonTest: Project = Project(
     "elasticmq-common-test",
@@ -130,6 +131,12 @@ object ElasticMQBuild extends Build {
     settings = buildSettings
   ) dependsOn(api, spi, commonTest % "test")
 
+  lazy val core2: Project = Project(
+    "elasticmq-core2",
+    file("core2"),
+    settings = buildSettings ++ Seq(libraryDependencies ++= Seq(akka2Actor, akka2Testkit))
+  ) dependsOn(api, spi, commonTest % "test")
+
   lazy val storageDatabase: Project = Project(
     "elasticmq-storage-database",
     file("storage-database"),
@@ -151,7 +158,7 @@ object ElasticMQBuild extends Build {
   lazy val restSqs: Project = Project(
     "elasticmq-rest-sqs",
     file("rest/rest-sqs"),
-    settings = buildSettings ++ Seq(libraryDependencies ++= Seq(akka2Actor, akka2Slf4j, sprayCan, sprayRouting, sprayTestkit)
+    settings = buildSettings ++ Seq(libraryDependencies ++= Seq(akka2Actor, sprayCan, sprayRouting, sprayTestkit)
       ++ common ++ httpTesting)
   ) dependsOn(api, core % "test", commonTest % "test")
 
