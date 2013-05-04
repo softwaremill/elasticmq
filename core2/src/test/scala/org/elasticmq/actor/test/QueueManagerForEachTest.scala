@@ -1,7 +1,8 @@
-package org.elasticmq.actor
+package org.elasticmq.actor.test
 
 import org.scalatest.{Suite, BeforeAndAfterEach}
 import akka.actor.{Props, ActorSystem, ActorRef}
+import org.elasticmq.actor.QueueManagerActor
 
 trait QueueManagerForEachTest extends BeforeAndAfterEach {
   this: Suite =>

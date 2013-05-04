@@ -1,4 +1,4 @@
-package org.elasticmq.actor
+package org.elasticmq.actor.test
 
 import akka.testkit.TestKit
 import akka.actor.ActorSystem

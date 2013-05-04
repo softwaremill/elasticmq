@@ -29,7 +29,7 @@ class QueueManagerActor extends ReplyingActor with Logging {
 
     case DeleteQueue(queueName) => {
       logger.info(s"Deleting queue $queueName")
-      queues.get(queueName).foreach(context.stop(_))
+      queues.remove(queueName).foreach(context.stop(_))
     }
 
     case LookupQueue(queueName) => queues.get(queueName)
