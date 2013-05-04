@@ -19,4 +19,10 @@ abstract class ActorTest extends TestKit(ActorSystem()) with FunSuite with Shoul
   }
 
   def waitFor[T](f: Future[T]): T = Await.result(f, maxDuration)
+
+  def waitTest(testName: String)(body: => Future[_]) {
+    test(testName) {
+      waitFor(body)
+    }
+  }
 }

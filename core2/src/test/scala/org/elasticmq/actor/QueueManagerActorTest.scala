@@ -7,8 +7,8 @@ import org.elasticmq.actor.test.{DataCreationHelpers, QueueManagerForEachTest, A
 
 class QueueManagerActorTest extends ActorTest with QueueManagerForEachTest with DataCreationHelpers {
 
-  test("non-existent queue should not be found") {
-    waitFor(for {
+  waitTest("non-existent queue should not be found") {
+    for {
       // Given
       _ <- queueManagerActor ? CreateQueue(createQueueData("q1", MillisVisibilityTimeout(10L)))
 
@@ -17,11 +17,11 @@ class QueueManagerActorTest extends ActorTest with QueueManagerForEachTest with 
     } yield {
       // Then
       lookupResult should be (None)
-    })
+    }
   }
 
-  test("after persisting a queue it should be found") {
-    waitFor(for {
+  waitTest("after persisting a queue it should be found") {
+    for {
       // Given
       _ <- queueManagerActor ? CreateQueue(createQueueData("q1", MillisVisibilityTimeout(1L)))
       _ <- queueManagerActor ? CreateQueue(createQueueData("q2", MillisVisibilityTimeout(2L)))
@@ -32,15 +32,15 @@ class QueueManagerActorTest extends ActorTest with QueueManagerForEachTest with 
     } yield {
       // Then
       lookupResult should be ('defined)
-    })
+    }
   }
 
-  test("queues should be deleted") {
+  waitTest("queues should be deleted") {
     // Given
     val q1 = createQueueData("q1", MillisVisibilityTimeout(1L))
     val q2 = createQueueData("q2", MillisVisibilityTimeout(2L))
 
-    waitFor(for {
+    for {
       _ <- queueManagerActor ? CreateQueue(q1)
       _ <- queueManagerActor ? CreateQueue(q2)
 
@@ -53,29 +53,29 @@ class QueueManagerActorTest extends ActorTest with QueueManagerForEachTest with 
     } yield {
       r1 should be (None)
       r2 should be ('defined)
-    })
+    }
   }
 
-  test("trying to create an existing queue should throw an exception") {
+  waitTest("trying to create an existing queue should throw an exception") {
     // Given
     val q1 = createQueueData("q1", MillisVisibilityTimeout(1L))
 
-    waitFor(for {
+    for {
       _ <- queueManagerActor ? CreateQueue(q1)
 
       // When & then
       result <- queueManagerActor ? CreateQueue(q1)
     } yield {
       result should be ('left)
-    })
+    }
   }
 
-  test("listing queues") {
+  waitTest("listing queues") {
     // Given
     val q1 = createQueueData("q1", MillisVisibilityTimeout(1L))
     val q2 = createQueueData("q2", MillisVisibilityTimeout(2L))
 
-    waitFor(for {
+    for {
       _ <- queueManagerActor ? CreateQueue(q1)
       _ <- queueManagerActor ? CreateQueue(q2)
 
@@ -84,6 +84,6 @@ class QueueManagerActorTest extends ActorTest with QueueManagerForEachTest with 
     } yield {
       // Then
       queues.toSet should be (Set(q1.name, q2.name))
-    })
+    }
   }
 }
