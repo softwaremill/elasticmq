@@ -15,6 +15,7 @@ class QueueActor(initialQueueData: QueueData) extends ReplyingActor with Logging
   private var queueData = initialQueueData
 
   def receiveAndReply[T](msg: QueueMessage[T]) = msg match {
+    case GetQueueData() => queueData
     case UpdateQueueDefaultVisibilityTimeout(newDefaultVisibilityTimeout) => {
       logger.info(s"Updating default visibility timeout of ${queueData.name} to $newDefaultVisibilityTimeout")
       queueData = queueData.copy(defaultVisibilityTimeout = newDefaultVisibilityTimeout)
@@ -30,7 +31,7 @@ class QueueActor(initialQueueData: QueueData) extends ReplyingActor with Logging
     case DeleteMessage(messageId) =>
     case LookupMessage(messageId) => None
 
-    case GetQueueStatistics(name, deliveryTime) => null
+    case GetQueueStatistics(deliveryTime) => null
     case GetMessageStatistics(messageId) => null
   }
 }
