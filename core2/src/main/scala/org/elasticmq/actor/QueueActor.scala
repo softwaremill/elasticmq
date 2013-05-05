@@ -105,6 +105,9 @@ class QueueActor(nowProvider: NowProvider, initialQueueData: QueueData) extends 
         internalMessage.deliveryReceipt = Some(DeliveryReceipt.generate(id).receipt)
         internalMessage.nextDelivery = newNextDelivery.millis
 
+        internalMessage.receiveCount += 1
+        internalMessage.firstReceive = OnDateTimeReceived(new DateTime(deliveryTime))
+
         messageQueue += internalMessage
 
         Some(internalMessage.toMessageData)

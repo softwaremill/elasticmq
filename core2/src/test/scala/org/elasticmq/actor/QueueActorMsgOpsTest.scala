@@ -5,6 +5,7 @@ import org.elasticmq._
 import org.elasticmq.message._
 import org.elasticmq.actor.test.{DataCreationHelpers, QueueManagerForEachTest, ActorTest}
 import org.elasticmq.data.MessageData
+import org.joda.time.DateTime
 
 class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with DataCreationHelpers {
 
@@ -234,6 +235,27 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
     } yield {
       // Then
       lookupResult should be (None)
+    }
+  }
+
+  waitTest("message statistics should be updated") {
+    // Given
+    val q1 = createQueueData("q1", MillisVisibilityTimeout(1L))
+    val m1 = createNewMessageData("xyz", "123", MillisNextDelivery(100))
+
+    for {
+      Right(queueActor) <- queueManagerActor ? CreateQueue(q1)
+      _ <- queueActor ? SendMessage(m1)
+
+      // When
+      Some(lookupResult) <- queueActor ? LookupMessage(m1.id)
+      Some(receiveResult1) <- queueActor ? ReceiveMessage(100L, MillisNextDelivery(200L))
+      Some(receiveResult2) <- queueActor ? ReceiveMessage(200L, MillisNextDelivery(300L))
+    } yield {
+      // Then
+      lookupResult.statistics should be (MessageStatistics(NeverReceived, 0))
+      receiveResult1.statistics should be (MessageStatistics(OnDateTimeReceived(new DateTime(100L)), 1))
+      receiveResult2.statistics should be (MessageStatistics(OnDateTimeReceived(new DateTime(200L)), 2))
     }
   }
 
