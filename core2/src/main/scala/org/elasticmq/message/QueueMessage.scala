@@ -18,4 +18,3 @@ case class DeleteMessage(messageId: MessageId) extends QueueMessage[Unit]
 case class LookupMessage(messageId: MessageId) extends QueueMessage[Option[MessageData]]
 
 case class GetQueueStatistics(deliveryTime: Long) extends QueueMessage[QueueStatistics]
-case class GetMessageStatistics(messageId: MessageId) extends QueueMessage[MessageStatistics]

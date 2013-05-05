@@ -17,7 +17,6 @@ import scala.Some
 import org.elasticmq.message.UpdateQueueDefaultVisibilityTimeout
 import org.elasticmq.data.QueueData
 import org.elasticmq.data.NewMessageData
-import org.elasticmq.message.GetMessageStatistics
 import org.elasticmq.message.DeleteMessage
 import org.elasticmq.message.UpdateQueueDelay
 import org.elasticmq.MessageId
@@ -57,7 +56,6 @@ class QueueActor(nowProvider: NowProvider, initialQueueData: QueueData) extends 
     case LookupMessage(messageId) => messagesById.get(messageId.id).map(_.toMessageData)
 
     case GetQueueStatistics(deliveryTime) => getQueueStatistics(deliveryTime)
-    case GetMessageStatistics(messageId) => null
   }
 
   private def sendMessage(message: NewMessageData) {
