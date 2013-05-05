@@ -134,8 +134,8 @@ object ElasticMQBuild extends Build {
   lazy val core2: Project = Project(
     "elasticmq-core2",
     file("core2"),
-    settings = buildSettings ++ Seq(libraryDependencies ++= Seq(akka2Actor, akka2Testkit))
-  ) dependsOn(api, spi, commonTest % "test")
+    settings = buildSettings ++ Seq(libraryDependencies ++= Seq(akka2Actor, akka2Testkit) ++ common)
+  ) dependsOn(api, commonTest % "test")
 
   lazy val storageDatabase: Project = Project(
     "elasticmq-storage-database",
