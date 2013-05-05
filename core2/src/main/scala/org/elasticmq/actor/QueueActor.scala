@@ -4,14 +4,28 @@ import com.typesafe.scalalogging.slf4j.Logging
 import org.elasticmq.actor.reply.ReplyingActor
 import org.elasticmq.message._
 import scala.reflect._
-import org.elasticmq.message.GetQueueStatistics
-import org.elasticmq.message.UpdateQueueDefaultVisibilityTimeout
-import org.elasticmq.data.{NewMessageData, MessageDoesNotExist, MessageData, QueueData}
+import org.elasticmq.data.MessageDoesNotExist
 import scala.collection.mutable
-import org.elasticmq.{DeliveryReceipt, MillisNextDelivery, MessageId}
+import org.elasticmq._
 import org.joda.time.DateTime
 import scala.annotation.tailrec
 import org.elasticmq.util.NowProvider
+import org.elasticmq.message.GetQueueStatistics
+import org.elasticmq.message.GetQueueData
+import org.elasticmq.message.UpdateNextDelivery
+import scala.Some
+import org.elasticmq.message.UpdateQueueDefaultVisibilityTimeout
+import org.elasticmq.data.QueueData
+import org.elasticmq.data.NewMessageData
+import org.elasticmq.message.GetMessageStatistics
+import org.elasticmq.message.DeleteMessage
+import org.elasticmq.message.UpdateQueueDelay
+import org.elasticmq.MessageId
+import org.elasticmq.message.SendMessage
+import org.elasticmq.data.MessageData
+import org.elasticmq.MillisNextDelivery
+import org.elasticmq.message.ReceiveMessage
+import org.elasticmq.message.LookupMessage
 
 class QueueActor(nowProvider: NowProvider, initialQueueData: QueueData) extends ReplyingActor with Logging {
   type M[X] = QueueMessage[X]
@@ -107,7 +121,9 @@ class QueueActor(nowProvider: NowProvider, initialQueueData: QueueData) extends 
                              var deliveryReceipt: Option[String],
                              var nextDelivery: Long,
                              content: String,
-                             created: DateTime)
+                             created: DateTime,
+                             var firstReceive: Received,
+                             var receiveCount: Int)
     extends Comparable[InternalMessage] {
 
     // Priority queues have biggest elements first
@@ -118,7 +134,8 @@ class QueueActor(nowProvider: NowProvider, initialQueueData: QueueData) extends 
       deliveryReceipt.map(DeliveryReceipt(_)),
       content,
       MillisNextDelivery(nextDelivery),
-      created)
+      created,
+      MessageStatistics(firstReceive, receiveCount))
   }
 
   object InternalMessage {
@@ -127,13 +144,17 @@ class QueueActor(nowProvider: NowProvider, initialQueueData: QueueData) extends 
       messageData.deliveryReceipt.map(_.receipt),
       messageData.nextDelivery.millis,
       messageData.content,
-      messageData.created)
+      messageData.created,
+      messageData.statistics.approximateFirstReceive,
+      messageData.statistics.approximateReceiveCount)
 
     def from(newMessageData: NewMessageData) = InternalMessage(
       newMessageData.id.id,
       None,
       newMessageData.nextDelivery.toMillis(nowProvider.nowMillis).millis,
       newMessageData.content,
-      nowProvider.now)
+      nowProvider.now,
+      NeverReceived,
+      0)
   }
 }

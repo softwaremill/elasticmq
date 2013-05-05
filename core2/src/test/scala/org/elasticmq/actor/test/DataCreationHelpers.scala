@@ -1,8 +1,13 @@
 package org.elasticmq.actor.test
 
 import org.elasticmq.data.{NewMessageData, MessageData, QueueData}
-import org.elasticmq.{DeliveryReceipt, MessageId, MillisNextDelivery, MillisVisibilityTimeout}
+import org.elasticmq._
 import org.joda.time.{DateTime, Duration}
+import org.elasticmq.MessageId
+import org.elasticmq.data.NewMessageData
+import org.elasticmq.data.MessageData
+import org.elasticmq.MillisNextDelivery
+import org.elasticmq.data.QueueData
 
 trait DataCreationHelpers {
   def createQueueData(name: String, defaultVisibilityTimeout: MillisVisibilityTimeout) =
@@ -10,7 +15,7 @@ trait DataCreationHelpers {
 
   def createMessageData(id: String, content: String, nextDelivery: MillisNextDelivery,
                         deliveryReceipt: Option[DeliveryReceipt] = None) =
-    MessageData(MessageId(id), deliveryReceipt, content, nextDelivery, new DateTime(0))
+    MessageData(MessageId(id), deliveryReceipt, content, nextDelivery, new DateTime(0), MessageStatistics(NeverReceived, 0))
 
   def createNewMessageData(id: String, content: String, nextDelivery: MillisNextDelivery) =
     NewMessageData(MessageId(id), content, nextDelivery)
