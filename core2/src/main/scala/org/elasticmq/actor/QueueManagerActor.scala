@@ -8,8 +8,9 @@ import akka.actor.{Props, ActorRef}
 import org.elasticmq.data.QueueAlreadyExists
 import com.typesafe.scalalogging.slf4j.Logging
 import org.elasticmq.actor.reply.ReplyingActor
+import org.elasticmq.util.NowProvider
 
-class QueueManagerActor extends ReplyingActor with Logging {
+class QueueManagerActor(nowProvider: NowProvider) extends ReplyingActor with Logging {
   type M[X] = QueueManagerMessage[X]
   val ev = classTag[M[Unit]]
 
@@ -21,7 +22,7 @@ class QueueManagerActor extends ReplyingActor with Logging {
         Left(new QueueAlreadyExists(queueData.name))
       } else {
         logger.info(s"Creating queue $queueData")
-        val actor = context.actorOf(Props(new QueueActor(queueData)))
+        val actor = context.actorOf(Props(new QueueActor(nowProvider, queueData)))
         queues(queueData.name) = actor
         Right(actor)
       }

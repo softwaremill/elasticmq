@@ -11,8 +11,9 @@ import scala.collection.mutable
 import org.elasticmq.{DeliveryReceipt, MillisNextDelivery, MessageId}
 import org.joda.time.DateTime
 import scala.annotation.tailrec
+import org.elasticmq.util.NowProvider
 
-class QueueActor(initialQueueData: QueueData) extends ReplyingActor with Logging {
+class QueueActor(nowProvider: NowProvider, initialQueueData: QueueData) extends ReplyingActor with Logging {
   type M[X] = QueueMessage[X]
   val ev = classTag[M[Unit]]
 
@@ -131,7 +132,7 @@ class QueueActor(initialQueueData: QueueData) extends ReplyingActor with Logging
     def from(newMessageData: NewMessageData) = InternalMessage(
       newMessageData.id.id,
       None,
-      newMessageData.nextDelivery.millis,
+      newMessageData.nextDelivery.toMillis(nowProvider.nowMillis).millis,
       newMessageData.content,
       newMessageData.created)
   }
