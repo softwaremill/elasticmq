@@ -7,8 +7,9 @@ import org.elasticmq.data.MessageDoesNotExist
 import org.elasticmq.data.NewMessageData
 import org.elasticmq.data.MessageData
 import org.joda.time.DateTime
+import com.typesafe.scalalogging.slf4j.Logging
 
-trait QueueActorMessageOps {
+trait QueueActorMessageOps extends Logging {
   this: QueueActorStorage =>
 
   def receiveAndReplyMessageMsg[T](msg: QueueMessageMsg[T]): T = msg match {
@@ -27,6 +28,8 @@ trait QueueActorMessageOps {
     val internalMessage = InternalMessage.from(message)
     messageQueue += internalMessage
     messagesById(internalMessage.id) = internalMessage
+
+    logger.debug(s"Sent message with id ${message.id}")
   }
 
   private def updateNextDelivery(messageId: MessageId, newNextDelivery: MillisNextDelivery) = {
@@ -46,6 +49,8 @@ trait QueueActorMessageOps {
         // Else:
         // Just increasing the next delivery. Common case. It is enough to increase the value in the object. No need to
         // re-insert the msg into the queue, as it will be reinserted if needed during receiving.
+
+        logger.debug(s"Updated next delivery of $messageId to $newNextDelivery")
 
         Right(())
       }
@@ -74,6 +79,8 @@ trait QueueActorMessageOps {
         internalMessage.firstReceive = OnDateTimeReceived(new DateTime(deliveryTime))
 
         messageQueue += internalMessage
+
+        logger.debug(s"Receiving message $id")
 
         Some(internalMessage.toMessageData)
       } else {
