@@ -61,17 +61,17 @@ class QueueActorQueueOpsTest extends ActorTest with QueueManagerForEachTest with
     // Given
     val queue = createQueueData("q1", MillisVisibilityTimeout(1L))
 
-    val m1 = createMessageData("m1", "123", MillisNextDelivery(120L))
-    val m2 = createMessageData("m2", "123", MillisNextDelivery(121L))
-    val m3 = createMessageData("m3", "123", MillisNextDelivery(122L))
-    val m4 = createMessageData("m4", "123", MillisNextDelivery(123L))
+    val m1 = createNewMessageData("m1", "123", MillisNextDelivery(120L))
+    val m2 = createNewMessageData("m2", "123", MillisNextDelivery(121L))
+    val m3 = createNewMessageData("m3", "123", MillisNextDelivery(122L))
+    val m4 = createNewMessageData("m4", "123", MillisNextDelivery(123L))
 
-    val m5 = createMessageData("m5", "123", MillisNextDelivery(120L))
-    val m6 = createMessageData("m6", "123", MillisNextDelivery(120L))
+    val m5 = createNewMessageData("m5", "123", MillisNextDelivery(120L))
+    val m6 = createNewMessageData("m6", "123", MillisNextDelivery(120L))
 
-    val m7 = createMessageData("m7", "123", MillisNextDelivery(127L))
-    val m8 = createMessageData("m8", "123", MillisNextDelivery(128L))
-    val m9 = createMessageData("m9", "123", MillisNextDelivery(129L))
+    val m7 = createNewMessageData("m7", "123", MillisNextDelivery(127L))
+    val m8 = createNewMessageData("m8", "123", MillisNextDelivery(128L))
+    val m9 = createNewMessageData("m9", "123", MillisNextDelivery(129L))
 
     for {
       Right(queueActor) <- queueManagerActor ? CreateQueue(queue)

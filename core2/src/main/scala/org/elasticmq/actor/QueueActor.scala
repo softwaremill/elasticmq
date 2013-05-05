@@ -6,7 +6,7 @@ import org.elasticmq.message._
 import scala.reflect._
 import org.elasticmq.message.GetQueueStatistics
 import org.elasticmq.message.UpdateQueueDefaultVisibilityTimeout
-import org.elasticmq.data.{MessageDoesNotExist, MessageData, QueueData}
+import org.elasticmq.data.{NewMessageData, MessageDoesNotExist, MessageData, QueueData}
 import scala.collection.mutable
 import org.elasticmq.{DeliveryReceipt, MillisNextDelivery, MessageId}
 import org.joda.time.DateTime
@@ -45,7 +45,7 @@ class QueueActor(initialQueueData: QueueData) extends ReplyingActor with Logging
     case GetMessageStatistics(messageId) => null
   }
 
-  private def sendMessage(message: MessageData) {
+  private def sendMessage(message: NewMessageData) {
     val internalMessage = InternalMessage.from(message)
     messageQueue += internalMessage
     messagesById(internalMessage.id) = internalMessage
@@ -127,5 +127,12 @@ class QueueActor(initialQueueData: QueueData) extends ReplyingActor with Logging
       messageData.nextDelivery.millis,
       messageData.content,
       messageData.created)
+
+    def from(newMessageData: NewMessageData) = InternalMessage(
+      newMessageData.id.id,
+      None,
+      newMessageData.nextDelivery.millis,
+      newMessageData.content,
+      newMessageData.created)
   }
 }
