@@ -11,6 +11,7 @@ case class GetQueueData() extends QueueMessage[QueueData]
 case class UpdateQueueDefaultVisibilityTimeout(newDefaultVisibilityTimeout: MillisVisibilityTimeout) extends QueueMessage[Unit]
 case class UpdateQueueDelay(newDelay: Duration) extends QueueMessage[Unit]
 
+// TODO: NewMessageData; merge stats with MessageData
 case class SendMessage(message: MessageData) extends QueueMessage[Unit]
 case class UpdateNextDelivery(messageId: MessageId, newNextDelivery: MillisNextDelivery) extends QueueMessage[Unit]
 case class ReceiveMessage(deliveryTime: Long, newNextDelivery: MillisNextDelivery) extends QueueMessage[Option[MessageData]]
