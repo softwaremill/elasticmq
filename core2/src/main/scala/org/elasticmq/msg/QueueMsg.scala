@@ -7,14 +7,16 @@ import org.joda.time.Duration
 
 sealed trait QueueMsg[T] extends Replyable[T]
 
-case class GetQueueData() extends QueueMsg[QueueData]
-case class UpdateQueueDefaultVisibilityTimeout(newDefaultVisibilityTimeout: MillisVisibilityTimeout) extends QueueMsg[Unit]
-case class UpdateQueueDelay(newDelay: Duration) extends QueueMsg[Unit]
+sealed trait QueueQueueMsg[T] extends QueueMsg[T]
+sealed trait QueueMessageMsg[T] extends QueueMsg[T]
 
-case class SendMessage(message: NewMessageData) extends QueueMsg[Unit]
-case class UpdateNextDelivery(messageId: MessageId, newNextDelivery: MillisNextDelivery) extends QueueMsg[Either[MessageDoesNotExist, Unit]]
-case class ReceiveMessage(deliveryTime: Long, newNextDelivery: MillisNextDelivery) extends QueueMsg[Option[MessageData]]
-case class DeleteMessage(messageId: MessageId) extends QueueMsg[Unit]
-case class LookupMessage(messageId: MessageId) extends QueueMsg[Option[MessageData]]
+case class GetQueueData() extends QueueQueueMsg[QueueData]
+case class UpdateQueueDefaultVisibilityTimeout(newDefaultVisibilityTimeout: MillisVisibilityTimeout) extends QueueQueueMsg[Unit]
+case class UpdateQueueDelay(newDelay: Duration) extends QueueQueueMsg[Unit]
+case class GetQueueStatistics(deliveryTime: Long) extends QueueQueueMsg[QueueStatistics]
 
-case class GetQueueStatistics(deliveryTime: Long) extends QueueMsg[QueueStatistics]
+case class SendMessage(message: NewMessageData) extends QueueMessageMsg[Unit]
+case class UpdateNextDelivery(messageId: MessageId, newNextDelivery: MillisNextDelivery) extends QueueMessageMsg[Either[MessageDoesNotExist, Unit]]
+case class ReceiveMessage(deliveryTime: Long, newNextDelivery: MillisNextDelivery) extends QueueMessageMsg[Option[MessageData]]
+case class DeleteMessage(messageId: MessageId) extends QueueMessageMsg[Unit]
+case class LookupMessage(messageId: MessageId) extends QueueMessageMsg[Option[MessageData]]
