@@ -13,7 +13,6 @@ import org.elasticmq.util.NowProvider
 import org.elasticmq.message.GetQueueStatistics
 import org.elasticmq.message.GetQueueData
 import org.elasticmq.message.UpdateNextDelivery
-import scala.Some
 import org.elasticmq.message.UpdateQueueDefaultVisibilityTimeout
 import org.elasticmq.data.QueueData
 import org.elasticmq.data.NewMessageData

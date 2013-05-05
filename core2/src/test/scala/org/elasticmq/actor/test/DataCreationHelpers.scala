@@ -1,6 +1,5 @@
 package org.elasticmq.actor.test
 
-import org.elasticmq.data.{NewMessageData, MessageData, QueueData}
 import org.elasticmq._
 import org.joda.time.{DateTime, Duration}
 import org.elasticmq.MessageId
