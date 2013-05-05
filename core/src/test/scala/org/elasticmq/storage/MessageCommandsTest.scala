@@ -5,7 +5,7 @@ import org.elasticmq.{MillisNextDelivery, MessageId, MillisVisibilityTimeout}
 import org.elasticmq.data.MessageData
 
 abstract class MessageCommandsTest extends StorageTest {
-  test("non-existent message should not be found") {
+  test("non-existent msg should not be found") {
     // Given
     val q1 = createQueueData("q1", MillisVisibilityTimeout(1L))
     execute(CreateQueueCommand(q1))
@@ -17,7 +17,7 @@ abstract class MessageCommandsTest extends StorageTest {
     lookupResult must be (None)
   }
 
-  test("after persisting a message it should be found") {
+  test("after persisting a msg it should be found") {
     // Given
     val created = new DateTime(1216168602L)
     val q1 = createQueueData("q1", MillisVisibilityTimeout(1L))
@@ -32,7 +32,7 @@ abstract class MessageCommandsTest extends StorageTest {
     lookupResult must be (Some(message))
   }
 
-  test("sending message with maximum size should succeed") {
+  test("sending msg with maximum size should succeed") {
     // Given
     val maxMessageContent = "x" * 65535
 
@@ -47,7 +47,7 @@ abstract class MessageCommandsTest extends StorageTest {
     lookupResult must be (Some(createMessageData("xyz", maxMessageContent, MillisNextDelivery(123L))))
   }
 
-  test("no undelivered message should not be found in an empty queue") {
+  test("no undelivered msg should not be found in an empty queue") {
     // Given
     val q1 = createQueueData("q1", MillisVisibilityTimeout(1L))
     val q2 = createQueueData("q2", MillisVisibilityTimeout(2L))
@@ -64,7 +64,7 @@ abstract class MessageCommandsTest extends StorageTest {
     lookupResult must be (None)
   }
 
-  test("undelivered message should be found in a non-empty queue") {
+  test("undelivered msg should be found in a non-empty queue") {
     // Given
     val q1 = createQueueData("q1", MillisVisibilityTimeout(1L))
     val q2 = createQueueData("q2", MillisVisibilityTimeout(2L))
@@ -142,7 +142,7 @@ abstract class MessageCommandsTest extends StorageTest {
     received1Receipt must not be (received2Receipt)
   }
 
-  test("delivered message should not be found in a non-empty queue when it is not visible") {
+  test("delivered msg should not be found in a non-empty queue when it is not visible") {
     // Given
     val q1 = createQueueData("q1", MillisVisibilityTimeout(1L))
 
@@ -157,7 +157,7 @@ abstract class MessageCommandsTest extends StorageTest {
     lookupResult must be (None)
   }
 
-  test("increasing next delivery of a message") {
+  test("increasing next delivery of a msg") {
     // Given
     val q1 = createQueueData("q1", MillisVisibilityTimeout(1L))
     execute(CreateQueueCommand(q1))
@@ -172,7 +172,7 @@ abstract class MessageCommandsTest extends StorageTest {
     execute(LookupMessageCommand(q1.name, MessageId("xyz"))) must be (Some(createMessageData("xyz", "1234", MillisNextDelivery(345L))))
   }
 
-  test("decreasing next delivery of a message") {
+  test("decreasing next delivery of a msg") {
     // Given
     val q1 = createQueueData("q1", MillisVisibilityTimeout(1L))
     execute(CreateQueueCommand(q1))
@@ -188,11 +188,11 @@ abstract class MessageCommandsTest extends StorageTest {
     execute(UpdateNextDeliveryCommand(q1.name, m2.id, MillisNextDelivery(50L)))
 
     // Then
-    // This should find the first message, as it has the visibility timeout decreased.
+    // This should find the first msg, as it has the visibility timeout decreased.
     execute(ReceiveMessageCommand(q1.name, 75L, MillisNextDelivery(100L))).map(_.id) must be (Some(m2.id))
   }
 
-  test("message should be deleted") {
+  test("msg should be deleted") {
     // Given
     val q1 = createQueueData("q1", MillisVisibilityTimeout(1L))
     val m1 = createMessageData("xyz", "123", MillisNextDelivery(123L))

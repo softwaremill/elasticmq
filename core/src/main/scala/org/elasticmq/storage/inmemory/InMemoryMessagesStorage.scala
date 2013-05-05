@@ -19,11 +19,11 @@ class InMemoryMessagesStorage(queueName: String, statistics: InMemoryMessageStat
   def sendMessage(message: MessageData) {
     val inMemoryMessage = InMemoryMessage.from(message)
 
-    // First writing empty stats. This must be done before putting the message in the queue, as if we did it after,
-    // the message may get received and the stats updated.
+    // First writing empty stats. This must be done before putting the msg in the queue, as if we did it after,
+    // the msg may get received and the stats updated.
     statistics.updateMessageStatistics(message.id, MessageStatistics(NeverReceived, 0))
 
-    // First putting in the map so that the message is not considered deleted if it's received immediately after
+    // First putting in the map so that the msg is not considered deleted if it's received immediately after
     // putting in the queue.
     messagesById.put(MessageId(inMemoryMessage.id), inMemoryMessage)
     messageQueue.add(inMemoryMessage)
@@ -40,17 +40,17 @@ class InMemoryMessagesStorage(queueName: String, statistics: InMemoryMessageStat
     // Updating
     val oldNextDelivery = inMemoryMessage.nextDelivery.getAndSet(newNextDelivery.millis)
     if (newNextDelivery.millis < oldNextDelivery) {
-      // We have to re-insert the message, as another message with a bigger next delivery may be now before it,
-      // so the message wouldn't be correctly received.
+      // We have to re-insert the msg, as another msg with a bigger next delivery may be now before it,
+      // so the msg wouldn't be correctly received.
       // (!) This may be slow (!)
-      // Only inserting if removal was successfull (the message may have been removed from the queue concurrently).
+      // Only inserting if removal was successfull (the msg may have been removed from the queue concurrently).
       if (messageQueue.remove(inMemoryMessage)) {
         messageQueue.add(inMemoryMessage)
       }
     }
     // Else:
     // Just increasing the next delivery. Common case. It is enough to increase the value in the object. No need to
-    // re-insert the message into the queue, as it will be reinserted if needed during receiving.
+    // re-insert the msg into the queue, as it will be reinserted if needed during receiving.
 
     // Releasing lock
     inMemoryMessage.nextDeliveryState.set(NextDeliveryUpdated)
@@ -63,7 +63,7 @@ class InMemoryMessagesStorage(queueName: String, statistics: InMemoryMessageStat
       case message => {
         message.nextDeliveryState.get() match {
           case NextDeliveryIsBeingUpdated => {
-            // Putting the message back and letting the thread that updates the next delivery finish
+            // Putting the msg back and letting the thread that updates the next delivery finish
             messageQueue.add(message)
             receiveMessage(deliveryTime, newNextDelivery)
           }
@@ -75,18 +75,18 @@ class InMemoryMessagesStorage(queueName: String, statistics: InMemoryMessageStat
           case NextDeliveryUnchanged => {
             val id = MessageId(message.id)
             if (message.nextDelivery.get() > deliveryTime) {
-              // Putting the message back. That's the youngest message, so there is no message that can be received.
+              // Putting the msg back. That's the youngest msg, so there is no msg that can be received.
               messageQueue.add(message)
               None
             } else if (messagesById.contains(id)) {
-              // Putting the message again into the queue, with a new next delivery
+              // Putting the msg again into the queue, with a new next delivery
               message.deliveryReceipt.set(Some(DeliveryReceipt.generate(id).receipt))
               message.nextDelivery.set(newNextDelivery.millis)
               messageQueue.add(message)
 
               Some(message.toMessageData)
             } else {
-              // Deleted message - trying again
+              // Deleted msg - trying again
               receiveMessage(deliveryTime, newNextDelivery)
             }
           }
@@ -96,7 +96,7 @@ class InMemoryMessagesStorage(queueName: String, statistics: InMemoryMessageStat
   }
 
   def deleteMessage(messageId: MessageId) {
-    // Just removing the message from the map. The message will be removed from the queue when trying to receive it.
+    // Just removing the msg from the map. The msg will be removed from the queue when trying to receive it.
     messagesById.remove(messageId)
 
     statistics.deleteMessageStatistics(messageId)
@@ -135,11 +135,11 @@ sealed abstract class MessageNextDeliveryState
 
 case object NextDeliveryUnchanged extends MessageNextDeliveryState
 
-// The message's next delivery is being updated. The message should be re-inserted into the queue. This may cause
-// multiple tries to receive the message and put it back (while the next delivery is updated). So in fact this is
+// The msg's next delivery is being updated. The msg should be re-inserted into the queue. This may cause
+// multiple tries to receive the msg and put it back (while the next delivery is updated). So in fact this is
 // an active lock.
 case object NextDeliveryIsBeingUpdated extends MessageNextDeliveryState
 
-// The message's next delivery has been updated. When received, it must be re-inserted to the right position
+// The msg's next delivery has been updated. When received, it must be re-inserted to the right position
 // in the queue.
 case object NextDeliveryUpdated extends MessageNextDeliveryState

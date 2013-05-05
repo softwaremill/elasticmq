@@ -41,7 +41,7 @@ class StateDumpAndRestoreTest extends StorageTest with InMemoryStorageTest with 
     execute(LookupQueueCommand(q3.name)) must be(Some(q3))
   }
 
-  test("dumping and restoring single message") {
+  test("dumping and restoring single msg") {
     // Given
     val q1 = createQueueData("q1", MillisVisibilityTimeout(1L))
     val m1 = createMessageData("m1", "c1", MillisNextDelivery(100L))
@@ -56,7 +56,7 @@ class StateDumpAndRestoreTest extends StorageTest with InMemoryStorageTest with 
     execute(LookupMessageCommand(q1.name, m1.id)) must be(Some(m1))
   }
 
-  test("dumping and restoring multiple message") {
+  test("dumping and restoring multiple msg") {
     // Given
     val q1 = createQueueData("q1", MillisVisibilityTimeout(1L))
     val q2 = createQueueData("q2", MillisVisibilityTimeout(2L))

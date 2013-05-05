@@ -18,7 +18,7 @@ class InMemoryMessageStatisticsStorage(queueName: String) extends MessageStatist
     val previousOption = statistics.put(messageId, messageStatistics)
 
     if (messageStatistics.approximateReceiveCount != 0) {
-      // Not an initial write, previous value should be defined. If not, the message got deleted, cleaning up.
+      // Not an initial write, previous value should be defined. If not, the msg got deleted, cleaning up.
       if (!previousOption.isDefined) {
         deleteMessageStatistics(messageId);
       }

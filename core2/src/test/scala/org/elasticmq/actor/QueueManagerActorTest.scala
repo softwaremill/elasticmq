@@ -1,7 +1,7 @@
 package org.elasticmq.actor
 
 import org.elasticmq.actor.reply._
-import org.elasticmq.message.{DeleteQueue, LookupQueue, ListQueues, CreateQueue}
+import org.elasticmq.msg.{DeleteQueue, LookupQueue, ListQueues, CreateQueue}
 import org.elasticmq.MillisVisibilityTimeout
 import org.elasticmq.actor.test.{DataCreationHelpers, QueueManagerForEachTest, ActorTest}
 

@@ -14,7 +14,7 @@ abstract class MessageStatisticsCommandsTest extends StorageTest {
     execute(new SendMessageCommand(q1.name, m1))
   }
 
-  test("empty statistics should be returned for a non-delivered message") {
+  test("empty statistics should be returned for a non-delivered msg") {
     // When
     val stats = execute(GetMessageStatisticsCommand(q1.name, m1.id))
 
@@ -23,7 +23,7 @@ abstract class MessageStatisticsCommandsTest extends StorageTest {
     stats.approximateReceiveCount must be (0)
   }
 
-  test("statistics should be correct after receiving a message once") {
+  test("statistics should be correct after receiving a msg once") {
     // Given
     execute(UpdateMessageStatisticsCommand(q1.name, m1.id, MessageStatistics(OnDateTimeReceived(new DateTime(someTimestamp)), 1)))
 
@@ -35,7 +35,7 @@ abstract class MessageStatisticsCommandsTest extends StorageTest {
     readStats.approximateReceiveCount must be (1)
   }
 
-  test("statistics should be correct after receiving a message twice") {
+  test("statistics should be correct after receiving a msg twice") {
     // Given
     execute(UpdateMessageStatisticsCommand(q1.name, m1.id, MessageStatistics(OnDateTimeReceived(new DateTime(someTimestamp)), 1)))
     execute(UpdateMessageStatisticsCommand(q1.name, m1.id, MessageStatistics(OnDateTimeReceived(new DateTime(someTimestamp)), 2)))
@@ -48,7 +48,7 @@ abstract class MessageStatisticsCommandsTest extends StorageTest {
     readStats.approximateReceiveCount must be (2)
   }
 
-  test("statistics should be removed if the message is removed") {
+  test("statistics should be removed if the msg is removed") {
     // Given
     execute(UpdateMessageStatisticsCommand(q1.name, m1.id, MessageStatistics(OnDateTimeReceived(new DateTime(someTimestamp)), 1)))
     execute(DeleteMessageCommand(q1.name, m1.id))
@@ -59,7 +59,7 @@ abstract class MessageStatisticsCommandsTest extends StorageTest {
     } must produce[MessageDoesNotExistException]
   }
 
-  test("statistics shouldn't be written if the message is already deleted") {
+  test("statistics shouldn't be written if the msg is already deleted") {
     // Given
     execute(DeleteMessageCommand(q1.name, m1.id))
     execute(UpdateMessageStatisticsCommand(q1.name, m1.id, MessageStatistics(OnDateTimeReceived(new DateTime(someTimestamp)), 1)))

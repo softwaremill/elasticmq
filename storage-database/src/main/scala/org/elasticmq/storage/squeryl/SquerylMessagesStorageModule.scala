@@ -42,7 +42,7 @@ trait SquerylMessagesStorageModule {
       inTransaction {
         val messageOption = lookupPendingMessage(deliveryTime)
         messageOption.flatMap(message => {
-          // The message may already have been received by another thread. In that case, trying again.
+          // The msg may already have been received by another thread. In that case, trying again.
           updateNextDelivery(message, newNextDelivery) match {
             case None => receiveMessage(deliveryTime, newNextDelivery)
             case some => some
@@ -59,7 +59,7 @@ trait SquerylMessagesStorageModule {
                   (m.nextDelivery lte deliveryTime)) select(m, q))
                 .page(0, configuration.maxPendingMessageCandidates).map { case (m, q) => m.toMessage }.toList
 
-        // Picking a random message from the available ones. This way we decrease the chance of conflicts
+        // Picking a random msg from the available ones. This way we decrease the chance of conflicts
         // in case multiple threads try to receive messages.
         randomMessage(msgs)
       }

@@ -25,9 +25,9 @@ trait QueueOperations {
   def fetchQueue(): Queue
 
   /**
-   * Returns an interface to operations on the given message.
+   * Returns an interface to operations on the given msg.
    *
-   * This method does not query the server and does not verify if the message exists.
+   * This method does not query the server and does not verify if the msg exists.
    */
   def messageOperations(id: MessageId): MessageOperations
 }

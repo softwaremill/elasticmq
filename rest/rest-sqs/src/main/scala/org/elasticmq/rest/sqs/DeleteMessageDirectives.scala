@@ -9,7 +9,7 @@ trait DeleteMessageDirectives { this: ElasticMQDirectives =>
       queuePath { queue =>
         anyParam(ReceiptHandleParameter) { receipt =>
           val messageOption = queue.lookupMessage(DeliveryReceipt(receipt))
-          // No failure even if the message doesn't exist
+          // No failure even if the msg doesn't exist
           messageOption.foreach(_.delete())
 
           respondWith {

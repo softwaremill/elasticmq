@@ -35,7 +35,7 @@ class JGroupsMembershipListener(channel: JChannel,
         }
       }.start()
 
-      // The message isn't broadcast to this node
+      // The msg isn't broadcast to this node
       masterAddressRef.set(Some(myAddress))
     }
   }

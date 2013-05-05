@@ -6,7 +6,7 @@ trait MessageOperations {
   def delete()
 
   /**
-   * Retrieves the current state of the message form the server.
+   * Retrieves the current state of the msg form the server.
    */
   def fetchMessage(): Message
 }

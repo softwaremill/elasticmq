@@ -4,7 +4,7 @@ package org.elasticmq
  * Client to an ElasticMQ [[org.elasticmq.Node]].
  *
  * Were appropriate, methods may throw [[org.elasticmq.QueueDoesNotExistException]] or
- * [[org.elasticmq.MessageDoesNotExistException]] if an operation on a non-existent queue or message is
+ * [[org.elasticmq.MessageDoesNotExistException]] if an operation on a non-existent queue or msg is
  * requested. However, under correct API usage these exceptions should not occur.
  *
  * <strong>All ElasticMQ client classes are thread-safe.</strong>

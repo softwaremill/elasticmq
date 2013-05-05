@@ -16,7 +16,7 @@ class NativeMessageClientImplTestSuite extends FunSuite with MustMatchers with M
   val Now = 1316168602L
   val NowAsDateTime = new DateTime(1316168602L)
 
-  test("sending a message should generate an id, properly set the next delivery and the created date") {
+  test("sending a msg should generate an id, properly set the next delivery and the created date") {
     // Given
     val q1 = createQueueData("q1", MillisVisibilityTimeout(123L))
     val (queueOperations, mockExecutor) = createQueueOperationsWithMockStorage(q1)
@@ -31,7 +31,7 @@ class NativeMessageClientImplTestSuite extends FunSuite with MustMatchers with M
     msg.created.getMillis must be (Now)
   }
 
-  test("sending an immediate message to a delayed queue should properly set the next delivery") {
+  test("sending an immediate msg to a delayed queue should properly set the next delivery") {
     // Given
     val delayedSeconds = 12
     val q1 = createQueueData("q1", MillisVisibilityTimeout(123L)).copy(delay = Duration.standardSeconds(delayedSeconds))
@@ -46,7 +46,7 @@ class NativeMessageClientImplTestSuite extends FunSuite with MustMatchers with M
     msg.nextDelivery must be (MillisNextDelivery(expectedNextDelivery))
   }
 
-  test("should correctly bump a never received message statistics") {
+  test("should correctly bump a never received msg statistics") {
     // Given
     val q1 = createQueueData("q1", MillisVisibilityTimeout(123L))
     val (queueOperations, mockExecutor) = createQueueOperationsWithMockStorage(q1)
@@ -68,7 +68,7 @@ class NativeMessageClientImplTestSuite extends FunSuite with MustMatchers with M
     messageStatsOption must be (Some(expectedMessageStats))
   }
 
-  test("should correctly bump an already received message statistics") {
+  test("should correctly bump an already received msg statistics") {
     // Given
     val q1 = createQueueData("q1", MillisVisibilityTimeout(123L))
 
@@ -91,7 +91,7 @@ class NativeMessageClientImplTestSuite extends FunSuite with MustMatchers with M
     messageStatsOption must be (Some(expectedMessageStats))
   }
 
-  test("should correctly set next delivery if receiving a message with default visibility timeout") {
+  test("should correctly set next delivery if receiving a msg with default visibility timeout") {
     // Given
     val q = createQueueData("q1", MillisVisibilityTimeout(123L))
 
@@ -109,7 +109,7 @@ class NativeMessageClientImplTestSuite extends FunSuite with MustMatchers with M
     mockExecutor.findExecutedCommand[ReceiveMessageCommand].newNextDelivery must be (MillisNextDelivery(Now + 123L))
   }
 
-  test("should correctly set next delivery if receiving a message with a specific visibility timeout") {
+  test("should correctly set next delivery if receiving a msg with a specific visibility timeout") {
     // Given
     val q = createQueueData("q1", MillisVisibilityTimeout(123L))
 
@@ -127,7 +127,7 @@ class NativeMessageClientImplTestSuite extends FunSuite with MustMatchers with M
     mockExecutor.findExecutedCommand[ReceiveMessageCommand].newNextDelivery must be (MillisNextDelivery(Now + 1000L))
   }
 
-  test("looking up a message by delivery receipt should succeed if delivery receipts match") {
+  test("looking up a msg by delivery receipt should succeed if delivery receipts match") {
     // Given
     val (queueOperations, mockExecutor) = createQueueOperationsWithMockStorage(createQueueData("q1", MillisVisibilityTimeout(123L)))
 
@@ -144,7 +144,7 @@ class NativeMessageClientImplTestSuite extends FunSuite with MustMatchers with M
     msg.map(_.id) must be (Some(id))
   }
 
-  test("looking up a message by delivery receipt should return none if delivery don't receipts match") {
+  test("looking up a msg by delivery receipt should return none if delivery don't receipts match") {
     // Given
     val (queueOperations, mockExecutor) = createQueueOperationsWithMockStorage(createQueueData("q1", MillisVisibilityTimeout(123L)))
 

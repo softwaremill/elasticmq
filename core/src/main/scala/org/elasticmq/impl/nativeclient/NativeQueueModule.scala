@@ -42,7 +42,7 @@ trait NativeQueueModule {
 
       storageCommandExecutor.execute(SendMessageCommand(queueName, message))
       
-      logger.debug("Sent message: %s to %s".format(message.id, queueName))
+      logger.debug("Sent msg: %s to %s".format(message.id, queueName))
       
       new NativeMessage(queueName, message)
     }
@@ -58,11 +58,11 @@ trait NativeQueueModule {
           val bumpedStats = bumpMessageStatistics(stats)
           storageCommandExecutor.execute(UpdateMessageStatisticsCommand(queueName, message.id, bumpedStats))
         } catch {
-          // This may happen if the message is deleted before the stats are bumped.
+          // This may happen if the msg is deleted before the stats are bumped.
           case _: MessageDoesNotExistException => // ignore
         }
         
-        logger.debug("Received message: %s with visibility timeout: %s".format(message.id, visibilityTimeout))
+        logger.debug("Received msg: %s with visibility timeout: %s".format(message.id, visibilityTimeout))
       })
 
       messageOption.map(new NativeMessage(queueName, _))
@@ -78,7 +78,7 @@ trait NativeQueueModule {
           storageCommandExecutor.execute(UpdateMessageStatisticsCommand(queueName, message.id, bumpedStats))
         }
 
-        logger.debug("Received message: %s with statistics and visibility timeout: %s"
+        logger.debug("Received msg: %s with statistics and visibility timeout: %s"
           .format(message.id, visibilityTimeout))
         
         (new NativeMessage(queueName, message), bumpedStats)

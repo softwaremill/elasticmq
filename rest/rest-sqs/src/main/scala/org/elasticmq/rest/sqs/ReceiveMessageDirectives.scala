@@ -68,7 +68,7 @@ trait ReceiveMessageDirectives { this: ElasticMQDirectives with AttributesModule
               <ReceiveMessageResponse>
                 <ReceiveMessageResult>
                   {msgWithStats.map { case (msg, stats) =>
-                  val receipt = msg.lastDeliveryReceipt.map(_.receipt).getOrElse(throw new RuntimeException("No receipt for a received message."))
+                  val receipt = msg.lastDeliveryReceipt.map(_.receipt).getOrElse(throw new RuntimeException("No receipt for a received msg."))
                   <Message>
                     <MessageId>{msg.id.id}</MessageId>
                     <ReceiptHandle>{receipt}</ReceiptHandle>

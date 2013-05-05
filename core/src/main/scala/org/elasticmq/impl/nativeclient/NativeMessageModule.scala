@@ -24,7 +24,7 @@ trait NativeMessageModule {
       storageCommandExecutor.execute(
         UpdateNextDeliveryCommand(queueName, id, computeNextDelivery(newVisibilityTimeout.millis)))
       
-      logger.debug("Updated visibility timeout of message: %s in queue: %s to: %s"
+      logger.debug("Updated visibility timeout of msg: %s in queue: %s to: %s"
         .format(messageId, queueName, newVisibilityTimeout))
       fetchMessage()
     }
@@ -33,7 +33,7 @@ trait NativeMessageModule {
 
     def delete() {
       storageCommandExecutor.execute(DeleteMessageCommand(queueName, id))
-      logger.debug("Deleted message: %s".format(id))
+      logger.debug("Deleted msg: %s".format(id))
     }
 
     def fetchMessage() = {

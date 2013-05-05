@@ -19,7 +19,7 @@ class JGroupsRequestHandler(objectMarshaller: ObjectMarshaller,
     } catch {
       case e: Exception => {
         // JGroups doesn't log exceptions that occure during request handling in any way.
-        logger.error("Exception when handling a jgroups message", e)
+        logger.error("Exception when handling a jgroups msg", e)
         throw e
       }
     }
@@ -36,7 +36,7 @@ class JGroupsRequestHandler(objectMarshaller: ObjectMarshaller,
       case ApplyCommands(commands) => commands.foreach(commandApplier.apply(_))
     }
 
-    // We must return something so that the caller knows the message is handled.
+    // We must return something so that the caller knows the msg is handled.
     null
   }
 }

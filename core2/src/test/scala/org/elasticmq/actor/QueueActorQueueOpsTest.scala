@@ -2,7 +2,7 @@ package org.elasticmq.actor
 
 import org.elasticmq.actor.reply._
 import org.elasticmq._
-import org.elasticmq.message._
+import org.elasticmq.msg._
 import org.elasticmq.actor.test.{DataCreationHelpers, QueueManagerForEachTest, ActorTest}
 import org.joda.time.{Duration, DateTime}
 import org.elasticmq.data.QueueData

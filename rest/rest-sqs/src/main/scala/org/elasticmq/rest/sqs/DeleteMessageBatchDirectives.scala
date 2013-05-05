@@ -11,7 +11,7 @@ trait DeleteMessageBatchDirectives { this: ElasticMQDirectives with BatchRequest
           val results = batchRequest("DeleteMessageBatchRequestEntry", parameters) { (messageData, id) =>
             val receiptHandle = messageData(ReceiptHandleParameter)
             val messageOption = queue.lookupMessage(DeliveryReceipt(receiptHandle))
-            // No failure even if the message doesn't exist
+            // No failure even if the msg doesn't exist
             messageOption.foreach(_.delete())
 
             <DeleteMessageBatchResultEntry>
