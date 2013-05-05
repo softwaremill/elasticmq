@@ -56,7 +56,7 @@ class QueueActor(nowProvider: NowProvider, initialQueueData: QueueData) extends 
     }
     case LookupMessage(messageId) => messagesById.get(messageId.id).map(_.toMessageData)
 
-    case GetQueueStatistics(deliveryTime) => null
+    case GetQueueStatistics(deliveryTime) => getQueueStatistics(deliveryTime)
     case GetMessageStatistics(messageId) => null
   }
 
@@ -115,6 +115,24 @@ class QueueActor(nowProvider: NowProvider, initialQueueData: QueueData) extends 
         receiveMessage(deliveryTime, newNextDelivery)
       }
     }
+  }
+
+  def getQueueStatistics(deliveryTime: Long) = {
+    var visible = 0
+    var invisible = 0
+    var delayed = 0
+
+    messageQueue.foreach { internalMessage =>
+      if (internalMessage.nextDelivery < deliveryTime) {
+        visible += 1
+      } else if (internalMessage.deliveryReceipt.isDefined) {
+        invisible +=1
+      } else {
+        delayed += 1
+      }
+    }
+
+    QueueStatistics(visible, invisible, delayed)
   }
 
   case class InternalMessage(id: String,
