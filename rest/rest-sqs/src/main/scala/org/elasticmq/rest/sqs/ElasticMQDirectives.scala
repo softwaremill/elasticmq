@@ -8,7 +8,7 @@ import shapeless.HNil
 import org.elasticmq.Queue
 import spray.http.StatusCode._
 
-trait ElasticMQDirectives extends Directives with AnyParamDirectives with ClientModule {
+trait ElasticMQDirectives extends Directives with AnyParamDirectives with QueueManagerActorModule {
 
   def respondWith(elem: Elem): Route = namespace { ns =>
     (ctx: RequestContext) => {
@@ -69,7 +69,7 @@ trait ElasticMQDirectives extends Directives with AnyParamDirectives with Client
   }
 
   def queueNamePath(body: String => Route) = {
-    path("queue" / PathElement) { queueName =>
+    path("queue" / Segment) { queueName =>
       body(queueName)
     }
   }
