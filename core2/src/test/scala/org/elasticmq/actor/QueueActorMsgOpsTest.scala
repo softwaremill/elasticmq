@@ -7,7 +7,7 @@ import org.elasticmq.actor.test.{DataCreationHelpers, QueueManagerForEachTest, A
 import org.joda.time.{Duration, DateTime}
 import org.elasticmq.data.QueueData
 
-class QueueActorTest extends ActorTest with QueueManagerForEachTest with DataCreationHelpers {
+class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with DataCreationHelpers {
 
   waitTest("queue modified and created dates should be stored") {
     // Given
