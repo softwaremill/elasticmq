@@ -134,6 +134,6 @@ class QueueActor(nowProvider: NowProvider, initialQueueData: QueueData) extends 
       None,
       newMessageData.nextDelivery.toMillis(nowProvider.nowMillis).millis,
       newMessageData.content,
-      newMessageData.created)
+      nowProvider.now)
   }
 }

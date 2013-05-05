@@ -13,8 +13,8 @@ trait DataCreationHelpers {
     MessageData(MessageId(id), deliveryReceipt, content, nextDelivery, new DateTime(0))
 
   def createNewMessageData(id: String, content: String, nextDelivery: MillisNextDelivery) =
-    NewMessageData(MessageId(id), content, nextDelivery, new DateTime(0))
+    NewMessageData(MessageId(id), content, nextDelivery)
 
   def createNewMessageData(messageData: MessageData) =
-    NewMessageData(messageData.id, messageData.content, messageData.nextDelivery, messageData.created)
+    NewMessageData(messageData.id, messageData.content, messageData.nextDelivery)
 }

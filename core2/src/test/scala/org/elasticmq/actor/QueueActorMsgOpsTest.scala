@@ -26,9 +26,8 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
 
   waitTest("after persisting a message it should be found") {
     // Given
-    val created = new DateTime(1216168602L)
     val q1 = createQueueData("q1", MillisVisibilityTimeout(1L))
-    val message = createNewMessageData("xyz", "123", MillisNextDelivery(123L)).copy(created = created)
+    val message = createNewMessageData("xyz", "123", MillisNextDelivery(123L))
 
     for {
       Right(queueActor) <- queueManagerActor ? CreateQueue(q1)
