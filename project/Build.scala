@@ -160,7 +160,7 @@ object ElasticMQBuild extends Build {
     file("rest/rest-sqs"),
     settings = buildSettings ++ Seq(libraryDependencies ++= Seq(akka2Actor, sprayCan, sprayRouting, sprayTestkit)
       ++ common ++ httpTesting)
-  ) dependsOn(api, core % "test", commonTest % "test")
+  ) dependsOn(core2, commonTest % "test")
 
   lazy val restSqsTestingAmazonJavaSdk: Project = Project(
     "elasticmq-rest-sqs-testing-amazon-java-sdk",
