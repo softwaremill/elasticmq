@@ -12,6 +12,12 @@ object BuildSettings {
     resolvers += "spray repo" at "http://repo.spray.io", // TODO
     resolvers += "nightly spray repo" at "http://nightlies.spray.io/", // TODO
 
+    // Continuations
+    autoCompilerPlugins := true,
+    libraryDependencies <+= scalaVersion {
+      v => compilerPlugin("org.scala-lang.plugins" % "continuations" % v)
+    },
+
     // Sonatype OSS deployment
     publishTo <<= version { (v: String) =>
       val nexus = "https://oss.sonatype.org/"
@@ -84,6 +90,7 @@ object Dependencies {
   val akka2Version          = "2.1.2"
   val akka2Actor            = "com.typesafe.akka" %% "akka-actor"           % akka2Version
   val akka2Slf4j            = "com.typesafe.akka" %% "akka-slf4j"           % akka2Version
+  val akka2Dataflow         = "com.typesafe.akka" %% "akka-dataflow"        % akka2Version
   val akka2Testkit          = "com.typesafe.akka" %% "akka-testkit"         % akka2Version
 
   val sprayVersion          = "1.1-20130501" //"1.1-M7"
@@ -158,7 +165,7 @@ object ElasticMQBuild extends Build {
   lazy val restSqs: Project = Project(
     "elasticmq-rest-sqs",
     file("rest/rest-sqs"),
-    settings = buildSettings ++ Seq(libraryDependencies ++= Seq(akka2Actor, sprayCan, sprayRouting, sprayTestkit)
+    settings = buildSettings ++ Seq(libraryDependencies ++= Seq(akka2Actor, akka2Dataflow, sprayCan, sprayRouting, sprayTestkit)
       ++ common ++ httpTesting)
   ) dependsOn(core2, commonTest % "test")
 
