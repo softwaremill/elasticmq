@@ -8,14 +8,17 @@ import org.elasticmq.data.NewMessageData
 import org.elasticmq.data.MessageData
 import org.joda.time.DateTime
 import com.typesafe.scalalogging.slf4j.Logging
+import org.elasticmq.util.NowProvider
 
 trait QueueActorMessageOps extends Logging {
   this: QueueActorStorage =>
 
+  def nowProvider: NowProvider
+
   def receiveAndReplyMessageMsg[T](msg: QueueMessageMsg[T]): T = msg match {
     case SendMessage(message) => sendMessage(message)
     case UpdateNextDelivery(messageId, newNextDelivery) => updateNextDelivery(messageId, newNextDelivery)
-    case ReceiveMessage(deliveryTime, newNextDelivery) => receiveMessage(deliveryTime, newNextDelivery)
+    case ReceiveMessage(deliveryTime, visibilityTimeout) => receiveMessage(deliveryTime, visibilityTimeout)
     case DeleteMessage(messageId) => {
       // Just removing the msg from the map. The msg will be removed from the queue when trying to receive it.
       messagesById.remove(messageId.id)
@@ -57,6 +60,17 @@ trait QueueActorMessageOps extends Logging {
 
       case None => Left(new MessageDoesNotExist(queueData.name, messageId))
     }
+  }
+
+  private def receiveMessage(deliveryTime: Long, visibilityTimeout: VisibilityTimeout): Option[MessageData] = {
+    val nextDeliveryDelta = visibilityTimeout match {
+      case DefaultVisibilityTimeout => queueData.defaultVisibilityTimeout.millis
+      case MillisVisibilityTimeout(millis) => millis
+    }
+
+    val newNextDelivery = MillisNextDelivery(nowProvider.nowMillis + nextDeliveryDelta)
+
+    receiveMessage(deliveryTime, newNextDelivery)
   }
 
   @tailrec

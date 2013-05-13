@@ -71,7 +71,7 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
       _ <- queueActor1 ? SendMessage(createNewMessageData("xyz", "123", MillisNextDelivery(123L)))
 
       // When
-      lookupResult <- queueActor2 ? ReceiveMessage(1000L, MillisNextDelivery(234L))
+      lookupResult <- queueActor2 ? ReceiveMessage(1000L, DefaultVisibilityTimeout)
     } yield {
       // Then
       lookupResult should be (None)
@@ -90,10 +90,10 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
       _ <- queueActor1 ? SendMessage(m)
 
       // When
-      lookupResult <- queueActor1 ? ReceiveMessage(200L, MillisNextDelivery(234L))
+      lookupResult <- queueActor1 ? ReceiveMessage(200L, DefaultVisibilityTimeout)
     } yield {
       // Then
-      withoutDeliveryReceipt(lookupResult).map(createNewMessageData(_)) should be (Some(m.copy(nextDelivery = MillisNextDelivery(234L))))
+      withoutDeliveryReceipt(lookupResult).map(createNewMessageData(_)) should be (Some(m.copy(nextDelivery = MillisNextDelivery(101L))))
     }
   }
 
@@ -107,11 +107,11 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
       _ <- queueActor ? SendMessage(m)
 
       // When
-      _ <- queueActor ? ReceiveMessage(200L, MillisNextDelivery(567L))
+      _ <- queueActor ? ReceiveMessage(200L, DefaultVisibilityTimeout)
       lookupResult <- queueActor ? LookupMessage(MessageId("xyz"))
     } yield {
       // Then
-      withoutDeliveryReceipt(lookupResult).map(createNewMessageData(_)) should be (Some(m.copy(nextDelivery = MillisNextDelivery(567L))))
+      withoutDeliveryReceipt(lookupResult).map(createNewMessageData(_)) should be (Some(m.copy(nextDelivery = MillisNextDelivery(101L))))
     }
   }
 
@@ -126,7 +126,7 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
 
       // When
       lookupBeforeReceiving <- queueActor ? LookupMessage(MessageId("xyz"))
-      received <- queueActor ? ReceiveMessage(200L, MillisNextDelivery(567L))
+      received <- queueActor ? ReceiveMessage(200L, DefaultVisibilityTimeout)
       lookupAfterReceiving <- queueActor ? LookupMessage(MessageId("xyz"))
     } yield {
       // Then
@@ -151,8 +151,8 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
       _ <- queueActor ? SendMessage(createNewMessageData("xyz", "123", MillisNextDelivery(100L)))
 
       // When
-      received1 <- queueActor ? ReceiveMessage(200L, MillisNextDelivery(300L))
-      received2 <- queueActor ? ReceiveMessage(400L, MillisNextDelivery(500L))
+      received1 <- queueActor ? ReceiveMessage(200L, DefaultVisibilityTimeout)
+      received2 <- queueActor ? ReceiveMessage(400L, DefaultVisibilityTimeout)
     } yield {
       // Then
       val received1Receipt = received1.flatMap(_.deliveryReceipt)
@@ -174,7 +174,7 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
       _ <- queueActor ? SendMessage(createNewMessageData("xyz", "123", MillisNextDelivery(123L)))
 
       // When
-      receiveResult <- queueActor ? ReceiveMessage(100L, MillisNextDelivery(234L))
+      receiveResult <- queueActor ? ReceiveMessage(100L, DefaultVisibilityTimeout)
     } yield {
       // Then
       receiveResult should be (None)
@@ -212,7 +212,7 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
 
       // When
       _ <- queueActor ? UpdateNextDelivery(m2.id, MillisNextDelivery(50L))
-      receiveResult <- queueActor ? ReceiveMessage(75L, MillisNextDelivery(100L))
+      receiveResult <- queueActor ? ReceiveMessage(75L, DefaultVisibilityTimeout)
     } yield {
       // Then
       // This should find the first msg, as it has the visibility timeout decreased.
@@ -249,8 +249,8 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
 
       // When
       Some(lookupResult) <- queueActor ? LookupMessage(m1.id)
-      Some(receiveResult1) <- queueActor ? ReceiveMessage(100L, MillisNextDelivery(200L))
-      Some(receiveResult2) <- queueActor ? ReceiveMessage(200L, MillisNextDelivery(300L))
+      Some(receiveResult1) <- queueActor ? ReceiveMessage(100L, DefaultVisibilityTimeout)
+      Some(receiveResult2) <- queueActor ? ReceiveMessage(200L, DefaultVisibilityTimeout)
     } yield {
       // Then
       lookupResult.statistics should be (MessageStatistics(NeverReceived, 0))
