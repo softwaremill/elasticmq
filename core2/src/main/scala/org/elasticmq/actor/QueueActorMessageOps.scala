@@ -17,7 +17,7 @@ trait QueueActorMessageOps extends Logging {
 
   def receiveAndReplyMessageMsg[T](msg: QueueMessageMsg[T]): T = msg match {
     case SendMessage(message) => sendMessage(message)
-    case UpdateNextDelivery(messageId, newNextDelivery) => updateNextDelivery(messageId, newNextDelivery)
+    case UpdateVisibilityTimeout(messageId, visibilityTimeout) => updateVisibilityTimeout(messageId, visibilityTimeout)
     case ReceiveMessage(deliveryTime, visibilityTimeout) => receiveMessage(deliveryTime, visibilityTimeout)
     case DeleteMessage(messageId) => {
       // Just removing the msg from the map. The msg will be removed from the queue when trying to receive it.
@@ -33,6 +33,10 @@ trait QueueActorMessageOps extends Logging {
     messagesById(internalMessage.id) = internalMessage
 
     logger.debug(s"Sent message with id ${message.id}")
+  }
+
+  private def updateVisibilityTimeout(messageId: MessageId, visibilityTimeout: VisibilityTimeout) = {
+    updateNextDelivery(messageId, computeNextDelivery(visibilityTimeout))
   }
 
   private def updateNextDelivery(messageId: MessageId, newNextDelivery: MillisNextDelivery) = {
@@ -63,14 +67,7 @@ trait QueueActorMessageOps extends Logging {
   }
 
   private def receiveMessage(deliveryTime: Long, visibilityTimeout: VisibilityTimeout): Option[MessageData] = {
-    val nextDeliveryDelta = visibilityTimeout match {
-      case DefaultVisibilityTimeout => queueData.defaultVisibilityTimeout.millis
-      case MillisVisibilityTimeout(millis) => millis
-    }
-
-    val newNextDelivery = MillisNextDelivery(nowProvider.nowMillis + nextDeliveryDelta)
-
-    receiveMessage(deliveryTime, newNextDelivery)
+    receiveMessage(deliveryTime, computeNextDelivery(visibilityTimeout))
   }
 
   @tailrec
@@ -102,5 +99,14 @@ trait QueueActorMessageOps extends Logging {
         receiveMessage(deliveryTime, newNextDelivery)
       }
     }
+  }
+
+  private def computeNextDelivery(visibilityTimeout: VisibilityTimeout) = {
+    val nextDeliveryDelta = visibilityTimeout match {
+      case DefaultVisibilityTimeout => queueData.defaultVisibilityTimeout.millis
+      case MillisVisibilityTimeout(millis) => millis
+    }
+
+    MillisNextDelivery(nowProvider.nowMillis + nextDeliveryDelta)
   }
 }

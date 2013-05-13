@@ -191,18 +191,18 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
       _ <- queueActor ? SendMessage(m)
 
       // When
-      _ <- queueActor ? UpdateNextDelivery(m.id, MillisNextDelivery(345L))
+      _ <- queueActor ? UpdateVisibilityTimeout(m.id, MillisVisibilityTimeout(50L))
       lookupResult <- queueActor ? LookupMessage(MessageId("xyz"))
     } yield {
       // Then
-      lookupResult.map(createNewMessageData(_)) should be (Some(createNewMessageData("xyz", "1234", MillisNextDelivery(345L))))
+      lookupResult.map(createNewMessageData(_)) should be (Some(createNewMessageData("xyz", "1234", MillisNextDelivery(150L))))
     }
   }
 
   waitTest("decreasing next delivery of a msg") {
     // Given
     val q1 = createQueueData("q1", MillisVisibilityTimeout(1L))   // Initially m2 should be delivered after m1
-    val m1 = createNewMessageData("xyz1", "1234", MillisNextDelivery(100L))
+    val m1 = createNewMessageData("xyz1", "1234", MillisNextDelivery(150L))
     val m2 = createNewMessageData("xyz2", "1234", MillisNextDelivery(200L))
 
     for {
@@ -211,8 +211,8 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
       _ <- queueActor ? SendMessage(m2)
 
       // When
-      _ <- queueActor ? UpdateNextDelivery(m2.id, MillisNextDelivery(50L))
-      receiveResult <- queueActor ? ReceiveMessage(75L, DefaultVisibilityTimeout)
+      _ <- queueActor ? UpdateVisibilityTimeout(m2.id, MillisVisibilityTimeout(10L))
+      receiveResult <- queueActor ? ReceiveMessage(120L, DefaultVisibilityTimeout)
     } yield {
       // Then
       // This should find the first msg, as it has the visibility timeout decreased.
