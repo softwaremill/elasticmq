@@ -7,6 +7,7 @@ import org.elasticmq.data.{QueueData, NewMessageData, MessageData}
 import org.elasticmq.MessageId
 import org.elasticmq.MillisNextDelivery
 import org.elasticmq.util.NowProvider
+import java.util.UUID
 
 trait QueueActorStorage {
   def nowProvider: NowProvider
@@ -48,7 +49,7 @@ trait QueueActorStorage {
       messageData.statistics.approximateReceiveCount)
 
     def from(newMessageData: NewMessageData) = InternalMessage(
-      newMessageData.id.id,
+      newMessageData.id.getOrElse(generateId()).id,
       None,
       newMessageData.nextDelivery.toMillis(nowProvider.nowMillis).millis,
       newMessageData.content,
@@ -56,4 +57,6 @@ trait QueueActorStorage {
       NeverReceived,
       0)
   }
+
+  private def generateId() = MessageId(UUID.randomUUID().toString)
 }

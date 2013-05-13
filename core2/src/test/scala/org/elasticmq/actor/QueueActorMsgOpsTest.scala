@@ -191,7 +191,7 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
       _ <- queueActor ? SendMessage(m)
 
       // When
-      _ <- queueActor ? UpdateVisibilityTimeout(m.id, MillisVisibilityTimeout(50L))
+      _ <- queueActor ? UpdateVisibilityTimeout(m.id.get, MillisVisibilityTimeout(50L))
       lookupResult <- queueActor ? LookupMessage(MessageId("xyz"))
     } yield {
       // Then
@@ -211,12 +211,12 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
       _ <- queueActor ? SendMessage(m2)
 
       // When
-      _ <- queueActor ? UpdateVisibilityTimeout(m2.id, MillisVisibilityTimeout(10L))
+      _ <- queueActor ? UpdateVisibilityTimeout(m2.id.get, MillisVisibilityTimeout(10L))
       receiveResult <- queueActor ? ReceiveMessage(120L, DefaultVisibilityTimeout)
     } yield {
       // Then
       // This should find the first msg, as it has the visibility timeout decreased.
-      receiveResult.map(_.id) should be (Some(m2.id))
+      receiveResult.map(_.id) should be (m2.id)
     }
   }
 
@@ -230,7 +230,7 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
       _ <- queueActor ? SendMessage(m1)
 
       // When
-      _ <- queueActor ? DeleteMessage(m1.id)
+      _ <- queueActor ? DeleteMessage(m1.id.get)
       lookupResult <- queueActor ? LookupMessage(MessageId("xyz"))
     } yield {
       // Then
@@ -248,7 +248,7 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
       _ <- queueActor ? SendMessage(m1)
 
       // When
-      Some(lookupResult) <- queueActor ? LookupMessage(m1.id)
+      Some(lookupResult) <- queueActor ? LookupMessage(m1.id.get)
       Some(receiveResult1) <- queueActor ? ReceiveMessage(100L, DefaultVisibilityTimeout)
       Some(receiveResult2) <- queueActor ? ReceiveMessage(200L, DefaultVisibilityTimeout)
     } yield {
