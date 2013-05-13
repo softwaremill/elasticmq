@@ -27,12 +27,14 @@ trait QueueActorMessageOps extends Logging {
     case LookupMessage(messageId) => messagesById.get(messageId.id).map(_.toMessageData)
   }
 
-  private def sendMessage(message: NewMessageData) {
+  private def sendMessage(message: NewMessageData) = {
     val internalMessage = InternalMessage.from(message)
     messageQueue += internalMessage
     messagesById(internalMessage.id) = internalMessage
 
     logger.debug(s"Sent message with id ${message.id}")
+
+    internalMessage.toMessageData
   }
 
   private def updateVisibilityTimeout(messageId: MessageId, visibilityTimeout: VisibilityTimeout) = {
