@@ -3,49 +3,23 @@ package org.elasticmq.rest.sqs.directives
 import shapeless._
 import spray.routing._
 import spray.routing.directives._
-import spray.http.HttpForm
-import spray.httpx.unmarshalling._
+import spray.http.FormData
 import spray.routing.directives.NameReceptacle
 import shapeless.::
 
 trait AnyParamDirectives {
-  import BasicDirectives._
-  import RouteDirectives._
+  import ParameterDirectives._
+  import MarshallingDirectives._
 
   def anyParam(apdm: AnyParamDefMagnet): apdm.Out = apdm()
 
-  def anyParamsMap: Directive[Map[String, String] :: HNil] = {
-    BasicDirectives.extract { ctx =>
-      val queryParams = ctx.request.uri.query.toMap
-      ctx.request.entity.as[HttpForm].right.map((_, queryParams))
-    }.flatMap {
-      case Right((httpForm, queryParams)) => {
-        val fieldNames = httpForm.fields.keySet
-
-        val rejectionsOrPairs = for (fieldName <- fieldNames) yield {
-          httpForm.field(fieldName).as[String] match {
-            case Left(deserializationError) => Left(toRejection(deserializationError, fieldName))
-            case Right(fieldValue) => Right(fieldName -> fieldValue)
-          }
-        }
-
-        rejectionsOrPairs.collectFirst {
-          case Left(x) => x
-        } match {
-          case Some(x) => reject(x)
-          case None => provide(queryParams ++ rejectionsOrPairs.collect { case Right(y) => y } )
-        }
+  def anyParamsMap(body: Map[String, String] => Route) = {
+    parameterMap { queryParameters =>
+      entity(as[FormData]) { formData =>
+        val allParameters = formData.fields ++ queryParameters
+        body(allParameters)
       }
-
-      case Left(deserializationError) => reject(toRejection(deserializationError, "?"))
     }
-  }
-
-  // From FormFieldDirectives
-  private def toRejection(deserializationError: DeserializationError, fieldName: String) = deserializationError match {
-    case ContentExpected => MissingFormFieldRejection(fieldName)
-    case MalformedContent(msg, _) => MalformedFormFieldRejection(msg, fieldName)
-    case UnsupportedContentType(msg) => UnsupportedRequestContentTypeRejection(msg)
   }
 }
 
