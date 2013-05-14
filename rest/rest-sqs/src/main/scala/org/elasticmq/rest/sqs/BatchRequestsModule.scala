@@ -6,7 +6,7 @@ import java.util.regex.Pattern
 import scala.concurrent.Future
 
 trait BatchRequestsModule {
-  this: SQSLimitsModule =>
+  this: SQSLimitsModule with ActorSystemModule =>
 
   def batchParametersMap(prefix: String, parameters: Map[String, String]): List[Map[String, String]] = {
     val subParameters = BatchRequestsModule.subParametersMaps(prefix, parameters)

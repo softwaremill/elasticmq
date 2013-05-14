@@ -2,7 +2,7 @@ package org.elasticmq.rest.sqs
 
 import xml._
 import java.security.MessageDigest
-import org.elasticmq.{ElasticMQException, Queue}
+import org.elasticmq.ElasticMQException
 import com.typesafe.scalalogging.slf4j.Logging
 import collection.mutable.ArrayBuffer
 import spray.routing.{ExceptionHandler, SimpleRoutingApp}
@@ -10,6 +10,8 @@ import akka.actor.{ActorRef, ActorSystem}
 import scala.xml.EntityRef
 import org.elasticmq.NodeAddress
 import org.elasticmq.data.QueueData
+import com.typesafe.config.Config
+import spray.can.server.ServerSettings
 
 /**
  * @param interface Hostname to which the server will bind.
@@ -83,10 +85,12 @@ class SQSRestServerBuilder(actorSystem: ActorSystem,
       with ChangeMessageVisibilityBatchDirectives
       with GetQueueUrlDirectives
       with AttributesModule {
-      val actorSystem = theActorSystem
-      val queueManagerActor = theQueueManagerActor
-      val serverAddress = theServerAddress
-      val sqsLimits = theLimits
+
+      lazy val actorSystem = theActorSystem
+      lazy val queueManagerActor = theQueueManagerActor
+      lazy val serverAddress = theServerAddress
+      lazy val sqsLimits = theLimits
+      lazy val timeout = ServerSettings(actorSystem).requestTimeout
     }
 
     import env._
@@ -126,8 +130,8 @@ class SQSRestServerBuilder(actorSystem: ActorSystem,
 
     new Stoppable {
       def stop() {
-        actorSystem.shutdown()
-        actorSystem.awaitTermination()
+        theActorSystem.shutdown()
+        theActorSystem.awaitTermination()
       }
     }
   }

@@ -6,13 +6,13 @@ import org.elasticmq.rest.sqs.Constants._
 import org.elasticmq.rest.sqs.directives.AnyParamDirectives
 import shapeless.HNil
 import spray.http.StatusCode._
-import akka.actor.{ActorSystem, ActorRef}
+import akka.actor.ActorRef
 import org.elasticmq.data.QueueData
 import org.elasticmq.msg.{GetQueueData, LookupQueue}
 import org.elasticmq.actor.reply._
 import scala.concurrent.Future
 
-trait ElasticMQDirectives extends Directives with AnyParamDirectives with QueueManagerActorModule {
+trait ElasticMQDirectives extends Directives with AnyParamDirectives with QueueManagerActorModule with ActorSystemModule {
 
   def respondWith(elem: Elem): Route = namespace { ns =>
     (ctx: RequestContext) => {
@@ -124,8 +124,4 @@ trait ElasticMQDirectives extends Directives with AnyParamDirectives with QueueM
     futureRoute.onSuccess { case route => route(ctx) }
     futureRoute.onFailure { case e: SQSException => handleSQSException(e) }
   }
-
-  def actorSystem: ActorSystem
-
-  implicit def messageDispatcher = actorSystem.dispatcher
 }
