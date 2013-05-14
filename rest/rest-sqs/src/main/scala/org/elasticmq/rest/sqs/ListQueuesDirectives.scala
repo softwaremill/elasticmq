@@ -1,28 +1,32 @@
 package org.elasticmq.rest.sqs
 
 import Constants._
+import org.elasticmq.actor.reply._
+import org.elasticmq.msg.ListQueues
 
 trait ListQueuesDirectives { this: ElasticMQDirectives with QueueURLModule =>
   val listQueues = {
     action("ListQueues") {
       rootPath {
         anyParam("QueueNamePrefix"?) { prefixOption =>
-          val allQueues = client.listQueues
+          for {
+            allQueueNames <- queueManagerActor ? ListQueues()
+          } yield  {
+            val queueNames = prefixOption match {
+              case Some(prefix) => allQueueNames.filter(_.startsWith(prefix))
+              case None => allQueueNames
+            }
 
-          val queues = prefixOption match {
-            case Some(prefix) => allQueues.filter(_.name.startsWith(prefix))
-            case None => allQueues
-          }
-
-          respondWith {
-            <ListQueuesResponse>
-              <ListQueuesResult>
-                {queues.map(q => <QueueUrl>{queueURL(q)}</QueueUrl>)}
-              </ListQueuesResult>
-              <ResponseMetadata>
-                <RequestId>{EmptyRequestId}</RequestId>
-              </ResponseMetadata>
-            </ListQueuesResponse>
+            respondWith {
+              <ListQueuesResponse>
+                <ListQueuesResult>
+                  {queueNames.map(queueName => <QueueUrl>{queueURL(queueName)}</QueueUrl>)}
+                </ListQueuesResult>
+                <ResponseMetadata>
+                  <RequestId>{EmptyRequestId}</RequestId>
+                </ResponseMetadata>
+              </ListQueuesResponse>
+            }
           }
         }
       }

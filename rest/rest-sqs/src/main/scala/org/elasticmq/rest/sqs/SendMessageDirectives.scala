@@ -3,8 +3,13 @@ package org.elasticmq.rest.sqs
 import Constants._
 import MD5Util._
 import ParametersUtil._
-import org.elasticmq.{MessageBuilder, AfterMillisNextDelivery, Queue}
+import org.elasticmq.{ImmediateNextDelivery, AfterMillisNextDelivery}
 import annotation.tailrec
+import akka.actor.ActorRef
+import org.elasticmq.data.{MessageData, NewMessageData}
+import scala.concurrent.Future
+import org.elasticmq.msg.SendMessage
+import org.elasticmq.actor.reply._
 
 trait SendMessageDirectives { this: ElasticMQDirectives with SQSLimitsModule =>
   val MessageBodyParameter = "MessageBody"
@@ -12,27 +17,27 @@ trait SendMessageDirectives { this: ElasticMQDirectives with SQSLimitsModule =>
 
   val sendMessage = {
     action("SendMessage") {
-      queuePath { queue =>
+      queueActorFromPath { queueActor =>
         anyParamsMap { parameters =>
-          val (message, digest) = doSendMessage(queue, parameters)
-
-          respondWith {
-            <SendMessageResponse>
-              <SendMessageResult>
-                <MD5OfMessageBody>{digest}</MD5OfMessageBody>
-                <MessageId>{message.id.id}</MessageId>
-              </SendMessageResult>
-              <ResponseMetadata>
-                <RequestId>{EmptyRequestId}</RequestId>
-              </ResponseMetadata>
-            </SendMessageResponse>
+          doSendMessage(queueActor, parameters).map { case (message, digest) =>
+            respondWith {
+              <SendMessageResponse>
+                <SendMessageResult>
+                  <MD5OfMessageBody>{digest}</MD5OfMessageBody>
+                  <MessageId>{message.id.id}</MessageId>
+                </SendMessageResult>
+                <ResponseMetadata>
+                  <RequestId>{EmptyRequestId}</RequestId>
+                </ResponseMetadata>
+              </SendMessageResponse>
+            }
           }
         }
       }
     }
   }
 
-  def doSendMessage(queue: Queue, parameters: Map[String, String]) = {
+  def doSendMessage(queueActor: ActorRef, parameters: Map[String, String]): Future[(MessageData, String)] = {
     val body = parameters(MessageBodyParameter)
 
     ifStrictLimits(bodyContainsInvalidCharacters(body)) {
@@ -42,12 +47,12 @@ trait SendMessageDirectives { this: ElasticMQDirectives with SQSLimitsModule =>
     verifyMessageNotTooLong(body.length)
 
     val delaySecondsOption = parameters.parseOptionalLong(DelaySecondsParameter)
-    val messageToSend = createMessage(queue, body, delaySecondsOption)
-    val message = queue.sendMessage(messageToSend)
-
+    val messageToSend = createMessage(body, delaySecondsOption)
     val digest = md5Digest(body)
 
-    (message, digest)
+    for {
+      message <- queueActor ? SendMessage(messageToSend)
+    } yield (message, digest)
   }
 
   def verifyMessageNotTooLong(messageLength: Int) {
@@ -79,11 +84,12 @@ trait SendMessageDirectives { this: ElasticMQDirectives with SQSLimitsModule =>
     findInvalidCharacter(0)
   }
 
-  private def createMessage(queue: Queue, body: String, delaySecondsOption: Option[Long]) = {
-    val base = MessageBuilder(body)
-    delaySecondsOption match {
-      case None => base
-      case Some(delaySeconds) => base.withNextDelivery(AfterMillisNextDelivery(delaySeconds*1000))
+  private def createMessage(body: String, delaySecondsOption: Option[Long]) = {
+    val nextDelivery = delaySecondsOption match {
+      case None => ImmediateNextDelivery
+      case Some(delaySeconds) => AfterMillisNextDelivery(delaySeconds*1000)
     }
+
+    NewMessageData(None, body, nextDelivery)
   }
 }

@@ -2,22 +2,25 @@ package org.elasticmq.rest.sqs
 
 import Constants._
 import org.elasticmq.DeliveryReceipt
+import org.elasticmq.actor.reply._
+import org.elasticmq.msg.DeleteMessage
 
 trait DeleteMessageDirectives { this: ElasticMQDirectives =>
   val deleteMessage = {
     action("DeleteMessage") {
-      queuePath { queue =>
+      queueActorFromPath { queueActor =>
         anyParam(ReceiptHandleParameter) { receipt =>
-          val messageOption = queue.lookupMessage(DeliveryReceipt(receipt))
-          // No failure even if the msg doesn't exist
-          messageOption.foreach(_.delete())
+          val msgId = DeliveryReceipt(receipt).extractId
+          val result = queueActor ? DeleteMessage(msgId)
 
-          respondWith {
-            <DeleteMessageResponse>
-              <ResponseMetadata>
-                <RequestId>{EmptyRequestId}</RequestId>
-              </ResponseMetadata>
-            </DeleteMessageResponse>
+          result.map { _ =>
+            respondWith {
+              <DeleteMessageResponse>
+                <ResponseMetadata>
+                  <RequestId>{EmptyRequestId}</RequestId>
+                </ResponseMetadata>
+              </DeleteMessageResponse>
+            }
           }
         }
       }

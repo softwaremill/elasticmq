@@ -5,25 +5,27 @@ import Constants._
 trait ChangeMessageVisibilityBatchDirectives { this: ElasticMQDirectives with ChangeMessageVisibilityDirectives with BatchRequestsModule =>
   val changeMessageVisibilityBatch = {
     action("ChangeMessageVisibilityBatch") {
-      queuePath { queue =>
+      queueActorFromPath { queueActor =>
         anyParamsMap { parameters =>
-          val results = batchRequest("ChangeMessageVisibilityBatchRequestEntry", parameters) { (messageData, id) =>
-            doChangeMessageVisibility(queue, messageData)
-
-            <ChangeMessageVisibilityBatchResultEntry>
-              <Id>{id}</Id>
-            </ChangeMessageVisibilityBatchResultEntry>
+          val resultsFuture = batchRequest("ChangeMessageVisibilityBatchRequestEntry", parameters) { (messageData, id) =>
+            doChangeMessageVisibility(queueActor, messageData).map { _ =>
+              <ChangeMessageVisibilityBatchResultEntry>
+                <Id>{id}</Id>
+              </ChangeMessageVisibilityBatchResultEntry>
+            }
           }
 
-          respondWith {
-            <ChangeMessageVisibilityBatchResponse>
-              <ChangeMessageVisibilityBatchResult>
-                {results}
-              </ChangeMessageVisibilityBatchResult>
-              <ResponseMetadata>
-                <RequestId>{EmptyRequestId}</RequestId>
-              </ResponseMetadata>
-            </ChangeMessageVisibilityBatchResponse>
+          resultsFuture.map { results =>
+            respondWith {
+              <ChangeMessageVisibilityBatchResponse>
+                <ChangeMessageVisibilityBatchResult>
+                  {results}
+                </ChangeMessageVisibilityBatchResult>
+                <ResponseMetadata>
+                  <RequestId>{EmptyRequestId}</RequestId>
+                </ResponseMetadata>
+              </ChangeMessageVisibilityBatchResponse>
+            }
           }
         }
       }

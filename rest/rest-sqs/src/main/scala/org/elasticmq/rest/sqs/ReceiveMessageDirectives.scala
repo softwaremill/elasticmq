@@ -3,7 +3,11 @@ package org.elasticmq.rest.sqs
 import Constants._
 import org.elasticmq._
 import org.elasticmq.rest.sqs.MD5Util._
-import annotation.tailrec
+import org.elasticmq.actor.reply._
+import org.elasticmq.data.MessageData
+import akka.dataflow._
+import scala.concurrent.Future
+import org.elasticmq.msg.ReceiveMessage
 
 trait ReceiveMessageDirectives { this: ElasticMQDirectives with AttributesModule with SQSLimitsModule =>
   object MessageReadeableAttributeNames {
@@ -20,7 +24,7 @@ trait ReceiveMessageDirectives { this: ElasticMQDirectives with AttributesModule
     import MessageReadeableAttributeNames._
 
     action("ReceiveMessage") {
-      queuePath { queue =>
+      queueActorFromPath { queueActor =>
         anyParam(VisibilityTimeoutParameter.as[Int]?, MaxNumberOfMessagesAttribute.as[Int]?) {
           (visibilityTimeoutParameterOpt, maxNumberOfMessagesAttributeOpt) =>
 
@@ -35,52 +39,61 @@ trait ReceiveMessageDirectives { this: ElasticMQDirectives with AttributesModule
               "ReadCountOutOfRange"
             }
 
-            @tailrec
-            def receiveMessages(messagesLeft: Int, received: List[(Message, MessageStatistics)]): List[(Message, MessageStatistics)] = {
-              if (messagesLeft == 0) {
-                received
-              } else {
-                queue.receiveMessageWithStatistics(visibilityTimeoutFromParameters) match {
-                  case Some(data) => receiveMessages(messagesLeft - 1, data :: received)
-                  case None => received
+            def receiveMessages(messages: Int): Future[List[MessageData]] = {
+              flow {
+                if (messages == 0) {
+                  Nil
+                } else {
+                  val msgFuture = queueActor ? ReceiveMessage(System.currentTimeMillis(), visibilityTimeoutFromParameters)
+                  val msg = msgFuture()
+
+                  msg match {
+                    case Some(data) => {
+                      val other = receiveMessages(messages - 1)()
+                      data :: other
+                    }
+                    case None => Nil
+                  }
                 }
               }
             }
 
-            val msgWithStats = receiveMessages(maxNumberOfMessagesFromParameters, Nil)
+            val msgsFuture = receiveMessages(maxNumberOfMessagesFromParameters)
 
             lazy val attributeNames = attributeNamesReader.read(parameters, AllAttributeNames)
 
-            def calculateAttributeValues(msg: Message, stats: MessageStatistics): List[(String, String)] = {
+            def calculateAttributeValues(msg: MessageData): List[(String, String)] = {
               import AttributeValuesCalculator.Rule
 
               attributeValuesCalculator.calculate(attributeNames,
                 Rule(SentTimestampAttribute, ()=>msg.created.getMillis.toString),
-                Rule(ApproximateReceiveCountAttribute, ()=>stats.approximateReceiveCount.toString),
+                Rule(ApproximateReceiveCountAttribute, ()=>msg.statistics.approximateReceiveCount.toString),
                 Rule(ApproximateFirstReceiveTimestampAttribute,
-                  ()=>(stats.approximateFirstReceive match {
+                  ()=>(msg.statistics.approximateFirstReceive match {
                     case NeverReceived => 0
                     case OnDateTimeReceived(when) => when.getMillis
                   }).toString))
             }
 
-            respondWith {
-              <ReceiveMessageResponse>
-                <ReceiveMessageResult>
-                  {msgWithStats.map { case (msg, stats) =>
-                  val receipt = msg.lastDeliveryReceipt.map(_.receipt).getOrElse(throw new RuntimeException("No receipt for a received msg."))
-                  <Message>
-                    <MessageId>{msg.id.id}</MessageId>
-                    <ReceiptHandle>{receipt}</ReceiptHandle>
-                    <MD5OfBody>{md5Digest(msg.content)}</MD5OfBody>
-                    <Body>{XmlUtil.convertTexWithCRToNodeSeq(msg.content)}</Body>
-                    {attributesToXmlConverter.convert(calculateAttributeValues(msg, stats))}
-                  </Message> }.toList}
-                </ReceiveMessageResult>
-                <ResponseMetadata>
-                  <RequestId>{EmptyRequestId}</RequestId>
-                </ResponseMetadata>
-              </ReceiveMessageResponse>
+            msgsFuture.map { msgs =>
+              respondWith {
+                <ReceiveMessageResponse>
+                  <ReceiveMessageResult>
+                    {msgs.map { msg =>
+                    val receipt = msg.deliveryReceipt.map(_.receipt).getOrElse(throw new RuntimeException("No receipt for a received msg."))
+                    <Message>
+                      <MessageId>{msg.id.id}</MessageId>
+                      <ReceiptHandle>{receipt}</ReceiptHandle>
+                      <MD5OfBody>{md5Digest(msg.content)}</MD5OfBody>
+                      <Body>{XmlUtil.convertTexWithCRToNodeSeq(msg.content)}</Body>
+                      {attributesToXmlConverter.convert(calculateAttributeValues(msg))}
+                    </Message> }.toList}
+                  </ReceiveMessageResult>
+                  <ResponseMetadata>
+                    <RequestId>{EmptyRequestId}</RequestId>
+                  </ResponseMetadata>
+                </ReceiveMessageResponse>
+              }
             }
           }
         }

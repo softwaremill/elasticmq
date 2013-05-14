@@ -2,32 +2,38 @@ package org.elasticmq.rest.sqs
 
 import Constants._
 import org.elasticmq.DeliveryReceipt
+import org.elasticmq.msg.DeleteMessage
+import org.elasticmq.actor.reply._
 
 trait DeleteMessageBatchDirectives { this: ElasticMQDirectives with BatchRequestsModule =>
   val deleteMessageBatch = {
     action("DeleteMessageBatch") {
-      queuePath { queue =>
+      queueActorFromPath { queueActor =>
         anyParamsMap { parameters =>
-          val results = batchRequest("DeleteMessageBatchRequestEntry", parameters) { (messageData, id) =>
+          val resultsFuture = batchRequest("DeleteMessageBatchRequestEntry", parameters) { (messageData, id) =>
             val receiptHandle = messageData(ReceiptHandleParameter)
-            val messageOption = queue.lookupMessage(DeliveryReceipt(receiptHandle))
-            // No failure even if the msg doesn't exist
-            messageOption.foreach(_.delete())
+            val msgId = DeliveryReceipt(receiptHandle).extractId
 
-            <DeleteMessageBatchResultEntry>
-              <Id>{id}</Id>
-            </DeleteMessageBatchResultEntry>
+            val result = queueActor ? DeleteMessage(msgId)
+
+            result.map { _ =>
+              <DeleteMessageBatchResultEntry>
+                <Id>{id}</Id>
+              </DeleteMessageBatchResultEntry>
+            }
           }
 
-          respondWith {
-            <DeleteMessageBatchResponse>
-              <DeleteMessageBatchResult>
-                {results}
-              </DeleteMessageBatchResult>
-              <ResponseMetadata>
-                <RequestId>{EmptyRequestId}</RequestId>
-              </ResponseMetadata>
-            </DeleteMessageBatchResponse>
+          resultsFuture.map { results =>
+            respondWith {
+              <DeleteMessageBatchResponse>
+                <DeleteMessageBatchResult>
+                  {results}
+                </DeleteMessageBatchResult>
+                <ResponseMetadata>
+                  <RequestId>{EmptyRequestId}</RequestId>
+                </ResponseMetadata>
+              </DeleteMessageBatchResponse>
+            }
           }
         }
       }

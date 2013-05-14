@@ -2,15 +2,14 @@ package org.elasticmq.rest.sqs
 
 import xml._
 import java.security.MessageDigest
-import org.elasticmq.{ElasticMQException, Queue, Client}
+import org.elasticmq.{ElasticMQException, Queue}
 import com.typesafe.scalalogging.slf4j.Logging
 import collection.mutable.ArrayBuffer
-import spray.routing.{RoutingSettings, RejectionHandler, ExceptionHandler, SimpleRoutingApp}
-import akka.actor.{ActorContext, ActorSystem}
+import spray.routing.{ExceptionHandler, SimpleRoutingApp}
+import akka.actor.{ActorRef, ActorSystem}
 import scala.xml.EntityRef
 import org.elasticmq.NodeAddress
-import spray.util.LoggingContext
-import spray.routing.Route
+import org.elasticmq.data.QueueData
 
 /**
  * @param interface Hostname to which the server will bind.
@@ -18,7 +17,8 @@ import spray.routing.Route
  * @param serverAddress Address which will be returned as the queue address. Requests to this address
  * should be routed to this server.
  */
-class SQSRestServerBuilder(client: Client,
+class SQSRestServerBuilder(actorSystem: ActorSystem,
+                           queueManagerActor: ActorRef,
                            interface: String, port: Int,
                            serverAddress: NodeAddress,
                            sqsLimits: SQSLimits.Value) extends Logging {
@@ -27,8 +27,8 @@ class SQSRestServerBuilder(client: Client,
    * @param serverAddress Address which will be returned as the queue address. Requests to this address
    * should be routed to this server.
    */
-  def this(client: Client, port: Int, serverAddress: NodeAddress) = {
-    this(client, "", port, serverAddress, SQSLimits.Strict)
+  def this(actorSystem: ActorSystem, queueManagerActor: ActorRef, port: Int, serverAddress: NodeAddress) = {
+    this(actorSystem, queueManagerActor, "", port, serverAddress, SQSLimits.Strict)
   }
 
   /**
@@ -39,32 +39,33 @@ class SQSRestServerBuilder(client: Client,
    *  <ul>for `sqsLimits`: relaxed
    * </li>
    */
-  def this(client: Client) = {
-    this(client, 9324, NodeAddress())
+  def this(actorSystem: ActorSystem, queueManagerActor: ActorRef) = {
+    this(actorSystem, queueManagerActor, 9324, NodeAddress())
   }
 
   def withInterface(_interface: String) = {
-    new SQSRestServerBuilder(client, _interface, port, serverAddress, sqsLimits)
+    new SQSRestServerBuilder(actorSystem, queueManagerActor, _interface, port, serverAddress, sqsLimits)
   }
 
   def withPort(_port: Int) = {
-    new SQSRestServerBuilder(client, interface, _port, serverAddress, sqsLimits)
+    new SQSRestServerBuilder(actorSystem, queueManagerActor, interface, _port, serverAddress, sqsLimits)
   }
 
-  def withServerAddress(_ServerAddress: NodeAddress) = {
-    new SQSRestServerBuilder(client, interface, port, _ServerAddress, sqsLimits)
+  def withServerAddress(_serverAddress: NodeAddress) = {
+    new SQSRestServerBuilder(actorSystem, queueManagerActor, interface, port, _serverAddress, sqsLimits)
   }
 
   def withSQSLimits(_sqsLimits: SQSLimits.Value) = {
-    new SQSRestServerBuilder(client, interface, port, serverAddress, _sqsLimits)
+    new SQSRestServerBuilder(actorSystem, queueManagerActor, interface, port, serverAddress, _sqsLimits)
   }
 
   def start(): Stoppable = {
-    val theClient = client
+    implicit val theActorSystem = actorSystem
+    val theQueueManagerActor = queueManagerActor
     val theServerAddress = serverAddress
     val theLimits = sqsLimits
 
-    val env = new ClientModule
+    val env = new QueueManagerActorModule
       with QueueURLModule
       with SQSLimitsModule
       with BatchRequestsModule
@@ -82,7 +83,8 @@ class SQSRestServerBuilder(client: Client,
       with ChangeMessageVisibilityBatchDirectives
       with GetQueueUrlDirectives
       with AttributesModule {
-      val client = theClient
+      val actorSystem = theActorSystem
+      val queueManagerActor = theQueueManagerActor
       val serverAddress = theServerAddress
       val sqsLimits = theLimits
     }
@@ -105,8 +107,6 @@ class SQSRestServerBuilder(client: Client,
         deleteQueue ~
         getQueueAttributes ~
         setQueueAttributes
-
-    implicit val actorSystem = ActorSystem()
 
     new SimpleRoutingApp {
       startServer(interface, port) {
@@ -187,14 +187,15 @@ object XmlUtil {
   }
 }
 
-trait ClientModule {
-  def client: Client
+trait QueueManagerActorModule {
+  def queueManagerActor: ActorRef
 }
 
 trait QueueURLModule {
   def serverAddress: NodeAddress
 
-  def queueURL(queue: Queue) = serverAddress.fullAddress+"/queue/"+queue.name
+  def queueURL(queueData: QueueData) = serverAddress.fullAddress + "/queue/" + queueData.name
+  def queueURL(queueName: String) = serverAddress.fullAddress + "/queue/" + queueName
 }
 
 object SQSLimits extends Enumeration {

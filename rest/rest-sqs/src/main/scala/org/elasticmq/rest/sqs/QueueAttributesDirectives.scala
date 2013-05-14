@@ -4,6 +4,9 @@ import org.elasticmq.MillisVisibilityTimeout
 
 import Constants._
 import org.joda.time.Duration
+import org.elasticmq.msg.{UpdateQueueDelay, UpdateQueueDefaultVisibilityTimeout, GetQueueStatistics}
+import org.elasticmq.actor.reply._
+import scala.concurrent.Future
 
 trait QueueAttributesDirectives { this: ElasticMQDirectives with AttributesModule =>
   object QueueWriteableAttributeNames {
@@ -30,24 +33,24 @@ trait QueueAttributesDirectives { this: ElasticMQDirectives with AttributesModul
 
   val getQueueAttributes = {
     action("GetQueueAttributes") {
-      queuePath { queue =>
+      queueActorAndDataFromPath { (queueActor, queueData) =>
         anyParamsMap { parameters =>
           import QueueWriteableAttributeNames._
           import QueueReadableAttributeNames._
 
-          def calculateAttributeValues(attributeNames: List[String]) = {
-            lazy val stats = queue.fetchStatistics()
+          def calculateAttributeValues(attributeNames: List[String]): List[(String, Future[String])] = {
+            lazy val stats = queueActor ? GetQueueStatistics(System.currentTimeMillis())
 
             import AttributeValuesCalculator.Rule
 
             attributeValuesCalculator.calculate(attributeNames,
-              Rule(VisibilityTimeoutAttribute, ()=>queue.defaultVisibilityTimeout.seconds.toString),
-              Rule(DelaySecondsAttribute, ()=>queue.delay.getStandardSeconds.toString),
-              Rule(ApproximateNumberOfMessagesAttribute, ()=>stats.approximateNumberOfVisibleMessages.toString),
-              Rule(ApproximateNumberOfMessagesNotVisibleAttribute, ()=>stats.approximateNumberOfInvisibleMessages.toString),
-              Rule(ApproximateNumberOfMessagesDelayedAttribute, ()=>stats.approximateNumberOfMessagesDelayed.toString),
-              Rule(CreatedTimestampAttribute, ()=>(queue.created.getMillis/1000L).toString),
-              Rule(LastModifiedTimestampAttribute, ()=>(queue.lastModified.getMillis/1000L).toString))
+              Rule(VisibilityTimeoutAttribute, () => Future(queueData.defaultVisibilityTimeout.seconds.toString)),
+              Rule(DelaySecondsAttribute, () => Future(queueData.delay.getStandardSeconds.toString)),
+              Rule(ApproximateNumberOfMessagesAttribute, () => stats.map(_.approximateNumberOfVisibleMessages.toString)),
+              Rule(ApproximateNumberOfMessagesNotVisibleAttribute, () => stats.map(_.approximateNumberOfInvisibleMessages.toString)),
+              Rule(ApproximateNumberOfMessagesDelayedAttribute, () => stats.map(_.approximateNumberOfMessagesDelayed.toString)),
+              Rule(CreatedTimestampAttribute, () => Future((queueData.created.getMillis/1000L).toString)),
+              Rule(LastModifiedTimestampAttribute, () => Future((queueData.lastModified.getMillis/1000L).toString)))
           }
 
           def responseXml(attributes: List[(String, String)]) = {
@@ -62,10 +65,12 @@ trait QueueAttributesDirectives { this: ElasticMQDirectives with AttributesModul
           }
 
           val attributeNames = attributeNamesReader.read(parameters, AllAttributeNames)
-          val attributes = calculateAttributeValues(attributeNames)
+          val attributesFuture = Future.sequence(calculateAttributeValues(attributeNames).map(p => p._2.map((p._1, _))))
 
-          respondWith {
-            responseXml(attributes)
+          attributesFuture.map { attributes =>
+            respondWith {
+              responseXml(attributes)
+            }
           }
         }
       }
@@ -74,29 +79,30 @@ trait QueueAttributesDirectives { this: ElasticMQDirectives with AttributesModul
 
   val setQueueAttributes = {
     action("SetQueueAttributes") {
-      queuePath { queue =>
+      queueActorFromPath { queueActor =>
         anyParamsMap { parameters =>
           val attributes = attributeNameAndValuesReader.read(parameters)
 
-          attributes.foreach({ case (attributeName, attributeValue) =>
+          val result = attributes.map({ case (attributeName, attributeValue) =>
             attributeName match {
               case QueueWriteableAttributeNames.VisibilityTimeoutAttribute => {
-                queue.updateDefaultVisibilityTimeout(
-                  MillisVisibilityTimeout.fromSeconds(attributeValue.toLong))
+                queueActor ? UpdateQueueDefaultVisibilityTimeout(MillisVisibilityTimeout.fromSeconds(attributeValue.toLong))
               }
               case QueueWriteableAttributeNames.DelaySecondsAttribute => {
-                queue.updateDelay(Duration.standardSeconds(attributeValue.toLong))
+                queueActor ? UpdateQueueDelay(Duration.standardSeconds(attributeValue.toLong))
               }
-              case _ => throw new SQSException("InvalidAttributeName")
+              case _ => Future(throw new SQSException("InvalidAttributeName"))
             }
           })
 
-          respondWith {
-            <SetQueueAttributesResponse>
-              <ResponseMetadata>
-                <RequestId>{EmptyRequestId}</RequestId>
-              </ResponseMetadata>
-            </SetQueueAttributesResponse>
+          Future.sequence(result).map { _ =>
+            respondWith {
+              <SetQueueAttributesResponse>
+                <ResponseMetadata>
+                  <RequestId>{EmptyRequestId}</RequestId>
+                </ResponseMetadata>
+              </SetQueueAttributesResponse>
+            }
           }
         }
       }

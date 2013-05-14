@@ -3,6 +3,7 @@ package org.elasticmq.rest.sqs
 import xml.NodeSeq
 import Constants.IdSubParameter
 import java.util.regex.Pattern
+import scala.concurrent.Future
 
 trait BatchRequestsModule {
   this: SQSLimitsModule =>
@@ -22,16 +23,18 @@ trait BatchRequestsModule {
     subParameters
   }
 
-  def batchRequest(prefix: String, parameters: Map[String, String])(single: (Map[String, String], String) => NodeSeq) = {
+  def batchRequest(prefix: String, parameters: Map[String, String])
+                  (single: (Map[String, String], String) => Future[NodeSeq]): Future[NodeSeq] = {
+
     val messagesData = batchParametersMap(prefix, parameters)
 
-    messagesData.map(messageData => {
+    val futures = messagesData.map(messageData => {
       val id = messageData(IdSubParameter)
 
       try {
         single(messageData, id)
       } catch {
-        case e: SQSException => {
+        case e: SQSException => Future {
           <BatchResultErrorEntry>
             <Id>{id}</Id>
             <SenderFault>true</SenderFault>
@@ -41,6 +44,8 @@ trait BatchRequestsModule {
         }
       }
     })
+
+    Future.sequence(futures).map(_.flatten)
   }
 }
 
