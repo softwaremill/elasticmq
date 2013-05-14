@@ -10,7 +10,6 @@ import akka.actor.{ActorRef, ActorSystem}
 import scala.xml.EntityRef
 import org.elasticmq.NodeAddress
 import org.elasticmq.data.QueueData
-import com.typesafe.config.Config
 import spray.can.server.ServerSettings
 import akka.util.Timeout
 

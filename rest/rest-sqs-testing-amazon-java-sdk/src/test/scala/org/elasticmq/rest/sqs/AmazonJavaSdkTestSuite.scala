@@ -7,17 +7,18 @@ import com.amazonaws.services.sqs.{AmazonSQS, AmazonSQSClient}
 
 import scala.collection.JavaConversions._
 import com.amazonaws.services.sqs.model._
-import org.elasticmq.storage.inmemory.InMemoryStorage
-import org.elasticmq.{Node, NodeBuilder}
 import scala.util.control.Exception._
 import com.amazonaws.AmazonServiceException
+import akka.actor.{Props, ActorSystem}
+import org.elasticmq.util.NowProvider
+import org.elasticmq.actor.QueueManagerActor
 
 class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAfter {
   val visibilityTimeoutAttribute = "VisibilityTimeout"
   val defaultVisibilityTimeoutAttribute = "VisibilityTimeout"
   val delaySecondsAttribute = "DelaySeconds"
 
-  var node: Node = _
+  var systems: List[ActorSystem] = Nil
 
   var strictServer: Stoppable = _
   var relaxedServer: Stoppable = _
@@ -26,9 +27,17 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
   var relaxedClient: AmazonSQS = _
 
   before {
-    node = NodeBuilder.withStorage(new InMemoryStorage)
-    strictServer = new SQSRestServerBuilder(node.nativeClient).withPort(9321).start()
-    relaxedServer = new SQSRestServerBuilder(node.nativeClient).withPort(9322).withSQSLimits(SQSLimits.Relaxed).start()
+    val systemStrict = ActorSystem()
+    val systemRelaxed = ActorSystem()
+
+    systems = List(systemStrict, systemRelaxed)
+
+    val nowProvider = new NowProvider
+    val queueManagerActorStrict = systemStrict.actorOf(Props(new QueueManagerActor(nowProvider)))
+    val queueManagerActorRelaxed = systemRelaxed.actorOf(Props(new QueueManagerActor(nowProvider)))
+
+    strictServer = new SQSRestServerBuilder(systemStrict, queueManagerActorStrict).withPort(9321).start()
+    relaxedServer = new SQSRestServerBuilder(systemRelaxed, queueManagerActorRelaxed).withPort(9322).withSQSLimits(SQSLimits.Relaxed).start()
 
     client = new AmazonSQSClient(new BasicAWSCredentials("x", "x"))
     client.setEndpoint("http://localhost:9321")
@@ -43,7 +52,7 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
     strictServer.stop()
     relaxedServer.stop()
 
-    node.shutdown()
+    systems.foreach(_.shutdown())
   }
 
   test("should create a queue") {
