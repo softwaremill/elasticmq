@@ -51,7 +51,7 @@ trait QueueActorStorage {
     def from(newMessageData: NewMessageData) = InternalMessage(
       newMessageData.id.getOrElse(generateId()).id,
       None,
-      newMessageData.nextDelivery.toMillis(nowProvider.nowMillis).millis,
+      newMessageData.nextDelivery.toMillis(nowProvider.nowMillis, queueData.delay.getMillis).millis,
       newMessageData.content,
       nowProvider.now,
       NeverReceived,

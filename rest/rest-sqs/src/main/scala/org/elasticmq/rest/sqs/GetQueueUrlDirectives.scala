@@ -6,7 +6,7 @@ trait GetQueueUrlDirectives { this: ElasticMQDirectives with QueueURLModule =>
   val getQueueUrl = {
     action("GetQueueUrl") {
       rootPath {
-        queueDataFromPath { queueData =>
+        queueDataFromParams { queueData =>
           respondWith {
             <GetQueueUrlResponse>
               <GetQueueUrlResult>

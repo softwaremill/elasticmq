@@ -12,9 +12,7 @@ trait DeleteMessageBatchDirectives { this: ElasticMQDirectives with BatchRequest
         anyParamsMap { parameters =>
           val resultsFuture = batchRequest("DeleteMessageBatchRequestEntry", parameters) { (messageData, id) =>
             val receiptHandle = messageData(ReceiptHandleParameter)
-            val msgId = DeliveryReceipt(receiptHandle).extractId
-
-            val result = queueActor ? DeleteMessage(msgId)
+            val result = queueActor ? DeleteMessage(DeliveryReceipt(receiptHandle))
 
             result.map { _ =>
               <DeleteMessageBatchResultEntry>

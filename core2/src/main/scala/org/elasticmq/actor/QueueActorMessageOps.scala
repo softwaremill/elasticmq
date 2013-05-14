@@ -19,11 +19,7 @@ trait QueueActorMessageOps extends Logging {
     case SendMessage(message) => sendMessage(message)
     case UpdateVisibilityTimeout(messageId, visibilityTimeout) => updateVisibilityTimeout(messageId, visibilityTimeout)
     case ReceiveMessage(deliveryTime, visibilityTimeout) => receiveMessage(deliveryTime, visibilityTimeout)
-    case DeleteMessage(messageId) => {
-      // Just removing the msg from the map. The msg will be removed from the queue when trying to receive it.
-      messagesById.remove(messageId.id)
-      ()
-    }
+    case DeleteMessage(deliveryReceipt) => deleteMessage(deliveryReceipt)
     case LookupMessage(messageId) => messagesById.get(messageId.id).map(_.toMessageData)
   }
 
@@ -110,5 +106,16 @@ trait QueueActorMessageOps extends Logging {
     }
 
     MillisNextDelivery(nowProvider.nowMillis + nextDeliveryDelta)
+  }
+
+  private def deleteMessage(deliveryReceipt: DeliveryReceipt) {
+    val msgId = deliveryReceipt.extractId.toString
+
+    messagesById.get(msgId).foreach { msgData =>
+      if (msgData.deliveryReceipt == Some(deliveryReceipt.receipt)) {
+        // Just removing the msg from the map. The msg will be removed from the queue when trying to receive it.
+        messagesById.remove(msgId)
+      }
+    }
   }
 }

@@ -115,6 +115,12 @@ trait ElasticMQDirectives extends Directives with AnyParamDirectives with QueueM
     }
   }
 
+  def queueActorAndNameFromPath(body: (ActorRef, String) => Route) = {
+    queueNameFromPath { queueName =>
+      queueActor(queueName, qa => body(qa, queueName))
+    }
+  }
+
   private def queueActor(queueName: String, body: ActorRef => Route): Route = {
     for {
       lookupResult <- queueManagerActor ? LookupQueue(queueName)

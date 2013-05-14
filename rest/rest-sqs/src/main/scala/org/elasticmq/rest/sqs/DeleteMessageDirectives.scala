@@ -10,8 +10,7 @@ trait DeleteMessageDirectives { this: ElasticMQDirectives =>
     action("DeleteMessage") {
       queueActorFromPath { queueActor =>
         anyParam(ReceiptHandleParameter) { receipt =>
-          val msgId = DeliveryReceipt(receipt).extractId
-          val result = queueActor ? DeleteMessage(msgId)
+          val result = queueActor ? DeleteMessage(DeliveryReceipt(receipt))
 
           result.map { _ =>
             respondWith {

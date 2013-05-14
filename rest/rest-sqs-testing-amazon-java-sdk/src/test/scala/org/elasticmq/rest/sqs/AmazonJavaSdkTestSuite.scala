@@ -49,6 +49,7 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
     relaxedServer.stop()
 
     system.shutdown()
+    system.awaitTermination()
   }
 
   test("should create a queue") {
