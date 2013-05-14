@@ -12,6 +12,7 @@ import org.elasticmq.NodeAddress
 import org.elasticmq.data.QueueData
 import com.typesafe.config.Config
 import spray.can.server.ServerSettings
+import akka.util.Timeout
 
 /**
  * @param interface Hostname to which the server will bind.
@@ -90,7 +91,7 @@ class SQSRestServerBuilder(actorSystem: ActorSystem,
       lazy val queueManagerActor = theQueueManagerActor
       lazy val serverAddress = theServerAddress
       lazy val sqsLimits = theLimits
-      lazy val timeout = ServerSettings(actorSystem).requestTimeout
+      lazy val timeout = Timeout(ServerSettings(actorSystem).requestTimeout.toMillis)
     }
 
     import env._

@@ -17,6 +17,7 @@ object BuildSettings {
     libraryDependencies <+= scalaVersion {
       v => compilerPlugin("org.scala-lang.plugins" % "continuations" % v)
     },
+    scalacOptions += "-P:continuations:enable",
 
     // Sonatype OSS deployment
     publishTo <<= version { (v: String) =>
