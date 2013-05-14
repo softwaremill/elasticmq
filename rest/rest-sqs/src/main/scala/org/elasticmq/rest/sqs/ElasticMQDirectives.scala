@@ -11,8 +11,11 @@ import org.elasticmq.data.QueueData
 import org.elasticmq.msg.{GetQueueData, LookupQueue}
 import org.elasticmq.actor.reply._
 import scala.concurrent.Future
+import org.elasticmq.ElasticMQException
+import spray.http.StatusCodes
+import com.typesafe.scalalogging.slf4j.Logging
 
-trait ElasticMQDirectives extends Directives with AnyParamDirectives with QueueManagerActorModule with ActorSystemModule {
+trait ElasticMQDirectives extends Directives with AnyParamDirectives with QueueManagerActorModule with ActorSystemModule with Logging {
 
   def respondWith(elem: Elem): Route = namespace { ns =>
     (ctx: RequestContext) => {
@@ -33,6 +36,17 @@ trait ElasticMQDirectives extends Directives with AnyParamDirectives with QueueM
       e.toXml(EmptyRequestId)
     }
   }
+
+  val exceptionHandler = ExceptionHandler.fromPF {
+    case e: SQSException => handleSQSException(e)
+    case e: ElasticMQException => handleSQSException(new SQSException(e.code, e.getMessage))
+    case e: Exception => {
+      logger.error("Exception when running routes", e)
+      _.complete(StatusCodes.InternalServerError)
+    }
+  }
+
+  def handleServerExceptions = handleExceptions(exceptionHandler)
 
   def namespace(route: UnprefixedAttribute => Route): Route = parameter("Version"?) { versionOpt =>
     val version = versionOpt match {
@@ -121,7 +135,10 @@ trait ElasticMQDirectives extends Directives with AnyParamDirectives with QueueM
   }
 
   implicit def futureRouteToRoute(futureRoute: Future[Route]): Route = { ctx =>
-    futureRoute.onSuccess { case route => route(ctx) }
-    futureRoute.onFailure { case e: SQSException => handleSQSException(e) }
+    futureRoute.map { route =>
+      (handleServerExceptions {
+        route
+      })(ctx)
+    }
   }
 }

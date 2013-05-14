@@ -18,7 +18,7 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
   val defaultVisibilityTimeoutAttribute = "VisibilityTimeout"
   val delaySecondsAttribute = "DelaySeconds"
 
-  var systems: List[ActorSystem] = Nil
+  var system: ActorSystem = _
 
   var strictServer: Stoppable = _
   var relaxedServer: Stoppable = _
@@ -27,17 +27,13 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
   var relaxedClient: AmazonSQS = _
 
   before {
-    val systemStrict = ActorSystem()
-    val systemRelaxed = ActorSystem()
-
-    systems = List(systemStrict, systemRelaxed)
+    system = ActorSystem()
 
     val nowProvider = new NowProvider
-    val queueManagerActorStrict = systemStrict.actorOf(Props(new QueueManagerActor(nowProvider)))
-    val queueManagerActorRelaxed = systemRelaxed.actorOf(Props(new QueueManagerActor(nowProvider)))
+    val queueManagerActor = system.actorOf(Props(new QueueManagerActor(nowProvider)))
 
-    strictServer = new SQSRestServerBuilder(systemStrict, queueManagerActorStrict).withPort(9321).start()
-    relaxedServer = new SQSRestServerBuilder(systemRelaxed, queueManagerActorRelaxed).withPort(9322).withSQSLimits(SQSLimits.Relaxed).start()
+    strictServer = new SQSRestServerBuilder(system, queueManagerActor).withPort(9321).start()
+    relaxedServer = new SQSRestServerBuilder(system, queueManagerActor).withPort(9322).withSQSLimits(SQSLimits.Relaxed).start()
 
     client = new AmazonSQSClient(new BasicAWSCredentials("x", "x"))
     client.setEndpoint("http://localhost:9321")
@@ -52,7 +48,7 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
     strictServer.stop()
     relaxedServer.stop()
 
-    systems.foreach(_.shutdown())
+    system.shutdown()
   }
 
   test("should create a queue") {

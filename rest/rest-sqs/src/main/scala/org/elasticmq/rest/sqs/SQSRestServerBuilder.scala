@@ -112,20 +112,17 @@ class SQSRestServerBuilder(actorSystem: ActorSystem,
         getQueueAttributes ~
         setQueueAttributes
 
-    new SimpleRoutingApp {
-      startServer(interface, port) {
-        val exceptionHandler = ExceptionHandler.fromPF {
-          case e: SQSException => handleSQSException(e)
-          case e: ElasticMQException => handleSQSException(new SQSException(e.code, e.getMessage))
-        }
+    val serviceActorName = s"elasticmq-rest-sqs-$port"
 
-        handleExceptions(exceptionHandler) {
+    new SimpleRoutingApp {
+      startServer(interface, port, serviceActorName) {
+        handleServerExceptions {
           routes
         }
       }
     }
 
-    logger.info("Started SQS rest server, bind address %s:%d, visible server address %s"
+    SQSRestServerBuilder.this.logger.info("Started SQS rest server, bind address %s:%d, visible server address %s"
       .format(interface, port, theServerAddress.fullAddress))
 
     new Stoppable {
