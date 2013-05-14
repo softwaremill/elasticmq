@@ -31,15 +31,15 @@ trait CreateQueueDirectives { this: ElasticMQDirectives with QueueURLModule with
               Duration.standardSeconds(secondsDelay), new DateTime(), new DateTime())
 
             flow {
+              if (!queueName.matches("[\\p{Alnum}_-]*")) {
+                throw SQSException.invalidParameterValue
+              }
+
               val queueData = lookupOrCreateQueue(newQueueData).apply()
 
               if (queueData.defaultVisibilityTimeout.seconds != secondsVisibilityTimeout) {
                 // Special case: the queue existed, but has a different visibility timeout
                 throw new SQSException("AWS.SimpleQueueService.QueueNameExists")
-              }
-
-              if (!queueName.matches("[\\p{Alnum}_-]*")) {
-                throw SQSException.invalidParameterValue
               }
 
               respondWith {

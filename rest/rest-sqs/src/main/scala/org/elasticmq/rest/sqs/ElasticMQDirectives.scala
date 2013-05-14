@@ -37,7 +37,7 @@ trait ElasticMQDirectives extends Directives with AnyParamDirectives with QueueM
     }
   }
 
-  val exceptionHandler = ExceptionHandler.fromPF {
+  val exceptionHandlerPF: ExceptionHandler.PF = {
     case e: SQSException => handleSQSException(e)
     case e: ElasticMQException => handleSQSException(new SQSException(e.code, e.getMessage))
     case e: Exception => {
@@ -45,6 +45,8 @@ trait ElasticMQDirectives extends Directives with AnyParamDirectives with QueueM
       _.complete(StatusCodes.InternalServerError)
     }
   }
+
+  val exceptionHandler = ExceptionHandler.fromPF(exceptionHandlerPF)
 
   def handleServerExceptions = handleExceptions(exceptionHandler)
 
@@ -145,6 +147,8 @@ trait ElasticMQDirectives extends Directives with AnyParamDirectives with QueueM
       (handleServerExceptions {
         route
       })(ctx)
+    }.onFailure {
+      exceptionHandlerPF.andThen(_.apply(ctx))
     }
   }
 }
