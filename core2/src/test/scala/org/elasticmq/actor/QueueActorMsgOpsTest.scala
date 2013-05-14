@@ -227,7 +227,8 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
 
     for {
       Right(queueActor) <- queueManagerActor ? CreateQueue(q1)
-      m1data <- queueActor ? SendMessage(m1)
+      _ <- queueActor ? SendMessage(m1)
+      Some(m1data) <- queueActor ? ReceiveMessage(200L, DefaultVisibilityTimeout)
 
       // When
       _ <- queueActor ? DeleteMessage(m1data.deliveryReceipt.get)
