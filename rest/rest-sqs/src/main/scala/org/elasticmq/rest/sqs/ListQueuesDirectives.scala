@@ -3,6 +3,7 @@ package org.elasticmq.rest.sqs
 import Constants._
 import org.elasticmq.actor.reply._
 import org.elasticmq.msg.ListQueues
+import org.elasticmq.rest.sqs.directives.ElasticMQDirectives
 
 trait ListQueuesDirectives { this: ElasticMQDirectives with QueueURLModule =>
   val listQueues = {

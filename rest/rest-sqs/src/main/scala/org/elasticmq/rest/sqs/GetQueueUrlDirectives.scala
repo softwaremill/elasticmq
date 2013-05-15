@@ -1,6 +1,7 @@
 package org.elasticmq.rest.sqs
 
 import Constants._
+import org.elasticmq.rest.sqs.directives.ElasticMQDirectives
 
 trait GetQueueUrlDirectives { this: ElasticMQDirectives with QueueURLModule =>
   val getQueueUrl = {

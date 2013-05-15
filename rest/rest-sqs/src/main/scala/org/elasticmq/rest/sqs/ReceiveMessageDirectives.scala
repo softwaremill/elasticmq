@@ -8,6 +8,7 @@ import org.elasticmq.data.MessageData
 import akka.dataflow._
 import scala.concurrent.Future
 import org.elasticmq.msg.ReceiveMessage
+import org.elasticmq.rest.sqs.directives.ElasticMQDirectives
 
 trait ReceiveMessageDirectives { this: ElasticMQDirectives with AttributesModule with SQSLimitsModule =>
   object MessageReadeableAttributeNames {

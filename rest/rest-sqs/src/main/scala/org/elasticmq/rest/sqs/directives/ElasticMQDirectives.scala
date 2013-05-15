@@ -1,9 +1,10 @@
-package org.elasticmq.rest.sqs
+package org.elasticmq.rest.sqs.directives
 
 import spray.routing._
 import org.elasticmq.rest.sqs.directives._
 import shapeless.HNil
 import com.typesafe.scalalogging.slf4j.Logging
+import org.elasticmq.rest.sqs.{ActorSystemModule, QueueManagerActorModule}
 
 trait ElasticMQDirectives extends Directives
   with RespondDirectives

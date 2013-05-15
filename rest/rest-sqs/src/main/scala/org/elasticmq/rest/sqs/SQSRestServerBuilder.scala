@@ -12,6 +12,7 @@ import org.elasticmq.data.QueueData
 import spray.can.server.ServerSettings
 import akka.util.Timeout
 import scala.concurrent.Future
+import org.elasticmq.rest.sqs.directives.ElasticMQDirectives
 
 /**
  * @param interface Hostname to which the server will bind.

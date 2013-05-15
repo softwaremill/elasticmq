@@ -4,6 +4,7 @@ import Constants._
 import org.elasticmq.actor.reply._
 import akka.dataflow._
 import org.elasticmq.msg.DeleteQueue
+import org.elasticmq.rest.sqs.directives.ElasticMQDirectives
 
 trait DeleteQueueDirectives { this: ElasticMQDirectives with QueueURLModule =>
   val deleteQueue = {

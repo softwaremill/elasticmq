@@ -10,6 +10,7 @@ import org.elasticmq.data.{MessageData, NewMessageData}
 import scala.concurrent.Future
 import org.elasticmq.msg.SendMessage
 import org.elasticmq.actor.reply._
+import org.elasticmq.rest.sqs.directives.ElasticMQDirectives
 
 trait SendMessageDirectives { this: ElasticMQDirectives with SQSLimitsModule =>
   val MessageBodyParameter = "MessageBody"

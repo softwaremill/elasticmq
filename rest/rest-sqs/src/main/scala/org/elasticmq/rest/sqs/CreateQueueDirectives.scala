@@ -9,6 +9,7 @@ import org.elasticmq.actor.reply._
 import org.elasticmq.data.QueueData
 import akka.dataflow._
 import scala.concurrent.Future
+import org.elasticmq.rest.sqs.directives.ElasticMQDirectives
 
 trait CreateQueueDirectives { this: ElasticMQDirectives with QueueURLModule with AttributesModule with SQSLimitsModule =>
   val DefaultVisibilityTimeout = 30L

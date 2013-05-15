@@ -4,6 +4,7 @@ import Constants._
 import org.elasticmq.DeliveryReceipt
 import org.elasticmq.msg.DeleteMessage
 import org.elasticmq.actor.reply._
+import org.elasticmq.rest.sqs.directives.ElasticMQDirectives
 
 trait DeleteMessageBatchDirectives { this: ElasticMQDirectives with BatchRequestsModule =>
   val deleteMessageBatch = {

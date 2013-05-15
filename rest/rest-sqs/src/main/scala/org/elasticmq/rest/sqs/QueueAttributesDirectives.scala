@@ -7,6 +7,7 @@ import org.joda.time.Duration
 import org.elasticmq.msg.{UpdateQueueDelay, UpdateQueueDefaultVisibilityTimeout, GetQueueStatistics}
 import org.elasticmq.actor.reply._
 import scala.concurrent.Future
+import org.elasticmq.rest.sqs.directives.ElasticMQDirectives
 
 trait QueueAttributesDirectives { this: ElasticMQDirectives with AttributesModule =>
   object QueueWriteableAttributeNames {

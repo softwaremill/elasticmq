@@ -1,6 +1,7 @@
 package org.elasticmq.rest.sqs
 
 import Constants._
+import org.elasticmq.rest.sqs.directives.ElasticMQDirectives
 
 trait ChangeMessageVisibilityBatchDirectives { this: ElasticMQDirectives with ChangeMessageVisibilityDirectives with BatchRequestsModule =>
   val changeMessageVisibilityBatch = {
