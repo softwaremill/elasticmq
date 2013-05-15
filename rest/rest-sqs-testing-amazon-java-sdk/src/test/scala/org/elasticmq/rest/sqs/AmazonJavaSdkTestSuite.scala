@@ -12,6 +12,8 @@ import com.amazonaws.AmazonServiceException
 import akka.actor.{Props, ActorSystem}
 import org.elasticmq.util.NowProvider
 import org.elasticmq.actor.QueueManagerActor
+import scala.concurrent.Await
+import scala.concurrent.duration._
 
 class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAfter {
   val visibilityTimeoutAttribute = "VisibilityTimeout"
@@ -19,9 +21,6 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
   val delaySecondsAttribute = "DelaySeconds"
 
   var system: ActorSystem = _
-
-  var strictServer: Stoppable = _
-  var relaxedServer: Stoppable = _
 
   var client: AmazonSQS = _ // strict server
   var relaxedClient: AmazonSQS = _
@@ -32,8 +31,11 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
     val nowProvider = new NowProvider
     val queueManagerActor = system.actorOf(Props(new QueueManagerActor(nowProvider)))
 
-    strictServer = new SQSRestServerBuilder(system, queueManagerActor).withPort(9321).start()
-    relaxedServer = new SQSRestServerBuilder(system, queueManagerActor).withPort(9322).withSQSLimits(SQSLimits.Relaxed).start()
+    val strictServerFuture = new SQSRestServerBuilder(system, queueManagerActor).withPort(9321).start()
+    val relaxedServerFuture = new SQSRestServerBuilder(system, queueManagerActor).withPort(9322).withSQSLimits(SQSLimits.Relaxed).start()
+
+    Await.ready(strictServerFuture, 1.minute)
+    Await.ready(relaxedServerFuture, 1.minute)
 
     client = new AmazonSQSClient(new BasicAWSCredentials("x", "x"))
     client.setEndpoint("http://localhost:9321")
@@ -44,9 +46,6 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
 
   after {
     client.shutdown()
-
-    strictServer.stop()
-    relaxedServer.stop()
 
     system.shutdown()
     system.awaitTermination()

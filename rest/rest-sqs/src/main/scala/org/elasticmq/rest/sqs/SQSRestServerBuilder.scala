@@ -2,16 +2,16 @@ package org.elasticmq.rest.sqs
 
 import xml._
 import java.security.MessageDigest
-import org.elasticmq.ElasticMQException
 import com.typesafe.scalalogging.slf4j.Logging
 import collection.mutable.ArrayBuffer
-import spray.routing.{ExceptionHandler, SimpleRoutingApp}
+import spray.routing.SimpleRoutingApp
 import akka.actor.{ActorRef, ActorSystem}
 import scala.xml.EntityRef
 import org.elasticmq.NodeAddress
 import org.elasticmq.data.QueueData
 import spray.can.server.ServerSettings
 import akka.util.Timeout
+import scala.concurrent.Future
 
 /**
  * @param interface Hostname to which the server will bind.
@@ -61,7 +61,7 @@ class SQSRestServerBuilder(actorSystem: ActorSystem,
     new SQSRestServerBuilder(actorSystem, queueManagerActor, interface, port, serverAddress, _sqsLimits)
   }
 
-  def start(): Stoppable = {
+  def start(): Future[Any] = {
     implicit val theActorSystem = actorSystem
     val theQueueManagerActor = queueManagerActor
     val theServerAddress = serverAddress
@@ -114,23 +114,17 @@ class SQSRestServerBuilder(actorSystem: ActorSystem,
 
     val serviceActorName = s"elasticmq-rest-sqs-$port"
 
-    new SimpleRoutingApp {
-      startServer(interface, port, serviceActorName) {
-        handleServerExceptions {
-          routes
-        }
+    val app = new SimpleRoutingApp {}
+    val appStart = app.startServer(interface, port, serviceActorName) {
+      handleServerExceptions {
+        routes
       }
     }
 
     SQSRestServerBuilder.this.logger.info("Started SQS rest server, bind address %s:%d, visible server address %s"
       .format(interface, port, theServerAddress.fullAddress))
 
-    new Stoppable {
-      def stop() {
-        theActorSystem.shutdown()
-        theActorSystem.awaitTermination()
-      }
-    }
+    appStart
   }
 }
 
