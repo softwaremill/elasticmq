@@ -72,15 +72,12 @@ object Dependencies {
 
   val scalalogging  = "com.typesafe"              %% "scalalogging-slf4j"   % "1.0.1"
   val logback       = "ch.qos.logback"            % "logback-classic"       % "1.0.9"
-  val jclOverSlf4j  = "org.slf4j"                 % "jcl-over-slf4j"        % "1.7.2"
   val log4jOverSlf4j = "org.slf4j"                % "log4j-over-slf4j"      % "1.7.2"
   val julToSlf4j    = "org.slf4j"                 % "jul-to-slf4j"          % "1.7.2"
 
   val scalatest     = "org.scalatest"             %% "scalatest"            % "1.9.1"
   val mockito       = "org.mockito"               % "mockito-core"          % "1.9.5"
   val awaitility    = "com.jayway.awaitility"     % "awaitility-scala"      % "1.3.4"
-
-  val apacheHttp    = "org.apache.httpcomponents" % "httpclient"            % "4.2.2" exclude ("commons-logging", "commons-logging")
 
   val amazonJavaSdk = "com.amazonaws"             % "aws-java-sdk"          % "1.4.3" exclude ("commons-logging", "commons-logging")
 
@@ -102,7 +99,6 @@ object Dependencies {
   val sprayTestkit          = "io.spray"          %   "spray-testkit"      % sprayVersion % "test"
 
   val common = Seq(scalalogging, jsr305)
-  val httpTesting = Seq(apacheHttp % "test", jclOverSlf4j % "test")
 }
 
 object ElasticMQBuild extends Build {
@@ -169,7 +165,7 @@ object ElasticMQBuild extends Build {
     "elasticmq-rest-sqs",
     file("rest/rest-sqs"),
     settings = buildSettings ++ Seq(libraryDependencies ++= Seq(akka2Actor, akka2Dataflow, sprayCan, sprayRouting, sprayTestkit)
-      ++ common ++ httpTesting)
+      ++ common)
   ) dependsOn(core2, commonTest % "test")
 
   lazy val restSqsTestingAmazonJavaSdk: Project = Project(
