@@ -74,6 +74,7 @@ object Dependencies {
   val logback       = "ch.qos.logback"            % "logback-classic"       % "1.0.9"
   val log4jOverSlf4j = "org.slf4j"                % "log4j-over-slf4j"      % "1.7.2"
   val julToSlf4j    = "org.slf4j"                 % "jul-to-slf4j"          % "1.7.2"
+  val jclOverSlf4j  = "org.slf4j"                 % "jcl-over-slf4j"        % "1.7.2" // needed form amazon java sdk
 
   val scalatest     = "org.scalatest"             %% "scalatest"            % "1.9.1"
   val mockito       = "org.mockito"               % "mockito-core"          % "1.9.5"
@@ -172,7 +173,7 @@ object ElasticMQBuild extends Build {
     "elasticmq-rest-sqs-testing-amazon-java-sdk",
     file("rest/rest-sqs-testing-amazon-java-sdk"),
     settings = buildSettings ++ Seq(
-      libraryDependencies ++= Seq(amazonJavaSdk) ++ common,
+      libraryDependencies ++= Seq(amazonJavaSdk, jclOverSlf4j) ++ common,
       publishArtifact := false)
   ) dependsOn(restSqs % "test->test")
 
