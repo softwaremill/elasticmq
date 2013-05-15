@@ -14,7 +14,7 @@ import akka.util.Timeout
 import scala.concurrent.Future
 import org.elasticmq.rest.sqs.directives.ElasticMQDirectives
 import spray.can.Http
-import akka.io.IO
+import akka.io.{Inet, IO}
 
 /**
  * @param interface Hostname to which the server will bind.
@@ -118,7 +118,7 @@ class SQSRestServerBuilder(actorSystem: ActorSystem,
     val serviceActorName = s"elasticmq-rest-sqs-$port"
 
     val app = new SimpleRoutingApp {}
-    val appStart = app.startServer(interface, port, serviceActorName) {
+    val appStart = app.startServer(interface, port, serviceActorName, options = List(Inet.SO.ReuseAddress(on = true))) {
       handleServerExceptions {
         routes
       }
