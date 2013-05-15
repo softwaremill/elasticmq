@@ -40,8 +40,8 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
     val nowProvider = new NowProvider
     val queueManagerActor = system.actorOf(Props(new QueueManagerActor(nowProvider)))
 
-    val strictServer = new SQSRestServerBuilder(system, queueManagerActor).withPort(9321).start()
-    val relaxedServer = new SQSRestServerBuilder(system, queueManagerActor).withPort(9322).withSQSLimits(SQSLimits.Relaxed).start()
+    strictServer = new SQSRestServerBuilder(system, queueManagerActor).withPort(9321).start()
+    relaxedServer = new SQSRestServerBuilder(system, queueManagerActor).withPort(9322).withSQSLimits(SQSLimits.Relaxed).start()
 
     Await.result(strictServer.startFuture, 1.minute) must be (Http.Bound)
     Await.result(relaxedServer.startFuture, 1.minute) must be (Http.Bound)
