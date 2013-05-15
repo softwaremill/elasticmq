@@ -45,6 +45,8 @@ object BuildSettings {
       </developers>),
 
     parallelExecution := false,
+    // workaround for: https://github.com/sbt/sbt/issues/692
+    fork in Test := true,
     scalacOptions += "-unchecked",
     homepage      := Some(new java.net.URL("http://www.elasticmq.org")),
     licenses      := ("Apache2", new java.net.URL("http://www.apache.org/licenses/LICENSE-2.0.txt")) :: Nil
