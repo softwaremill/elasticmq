@@ -14,8 +14,8 @@ import org.elasticmq.util.NowProvider
 import org.elasticmq.actor.QueueManagerActor
 import scala.concurrent.{Future, Await}
 import scala.concurrent.duration._
-import scala.Some
 import com.typesafe.scalalogging.slf4j.Logging
+import spray.can.Http
 
 class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAfter with Logging {
   val visibilityTimeoutAttribute = "VisibilityTimeout"
@@ -29,8 +29,8 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
 
   var currentTestName: String = _
 
-  var aaa: () => Future[Any] = _
-  var bbb: () => Future[Any] = _
+  var strictServer: SQSRestServer = _
+  var relaxedServer: SQSRestServer = _
 
   before {
     logger.info(s"\n---\nRunning test: $currentTestName\n---\n")
@@ -40,23 +40,11 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
     val nowProvider = new NowProvider
     val queueManagerActor = system.actorOf(Props(new QueueManagerActor(nowProvider)))
 
-    val (strictServerFuture, aa) = new SQSRestServerBuilder(system, queueManagerActor).withPort(9321).start()
-    val (relaxedServerFuture, bb) = new SQSRestServerBuilder(system, queueManagerActor).withPort(9322).withSQSLimits(SQSLimits.Relaxed).start()
+    val strictServer = new SQSRestServerBuilder(system, queueManagerActor).withPort(9321).start()
+    val relaxedServer = new SQSRestServerBuilder(system, queueManagerActor).withPort(9322).withSQSLimits(SQSLimits.Relaxed).start()
 
-    aaa = aa
-    bbb = bb
-
-    try {
-      println("XXX", Await.result(strictServerFuture, 1.minute))
-    } catch {
-      case e: Exception => println("YYY", e.getMessage)
-    }
-
-    try {
-      println("XXX2", Await.result(relaxedServerFuture, 1.minute))
-    } catch {
-      case e: Exception => println("YYY2", e.getMessage)
-    }
+    Await.result(strictServer.startFuture, 1.minute) must be (Http.Bound)
+    Await.result(relaxedServer.startFuture, 1.minute) must be (Http.Bound)
 
     client = new AmazonSQSClient(new BasicAWSCredentials("x", "x"))
     client.setEndpoint("http://localhost:9321")
@@ -68,8 +56,8 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
   after {
     client.shutdown()
 
-    Await.result(aaa(), 1.minute)
-    Await.result(bbb(), 1.minute)
+    Await.result(strictServer.stopAndGetFuture(), 1.minute) must be (Http.ClosedAll)
+    Await.result(relaxedServer.stopAndGetFuture(), 1.minute) must be (Http.ClosedAll)
 
     system.shutdown()
     system.awaitTermination()

@@ -64,7 +64,7 @@ class SQSRestServerBuilder(actorSystem: ActorSystem,
     new SQSRestServerBuilder(actorSystem, queueManagerActor, interface, port, serverAddress, _sqsLimits)
   }
 
-  def start(): (Future[Any], () => Future[Any]) = {
+  def start(): SQSRestServer = {
     implicit val theActorSystem = actorSystem
     val theQueueManagerActor = queueManagerActor
     val theServerAddress = serverAddress
@@ -118,7 +118,7 @@ class SQSRestServerBuilder(actorSystem: ActorSystem,
     val serviceActorName = s"elasticmq-rest-sqs-$port"
 
     val app = new SimpleRoutingApp {}
-    val appStart = app.startServer(interface, port, serviceActorName, options = List(Inet.SO.ReuseAddress(on = true))) {
+    val appStartFuture = app.startServer(interface, port, serviceActorName, options = List(Inet.SO.ReuseAddress(on = true))) {
       handleServerExceptions {
         routes
       }
@@ -127,13 +127,14 @@ class SQSRestServerBuilder(actorSystem: ActorSystem,
     SQSRestServerBuilder.this.logger.info("Started SQS rest server, bind address %s:%d, visible server address %s"
       .format(interface, port, theServerAddress.fullAddress))
 
-    (appStart, () => {
+    SQSRestServer(appStartFuture, () => {
       import akka.pattern.ask
-      implicit val x = Timeout(1000L)
-      IO(Http) ? Http.CloseAll
+      IO(Http).ask(Http.CloseAll)(Timeout(10000L))
     })
   }
 }
+
+case class SQSRestServer(startFuture: Future[Any], stopAndGetFuture: () => Future[Any])
 
 object Constants {
   val EmptyRequestId = "00000000-0000-0000-0000-000000000000"
