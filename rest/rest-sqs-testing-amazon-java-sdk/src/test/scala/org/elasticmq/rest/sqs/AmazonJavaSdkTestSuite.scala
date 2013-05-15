@@ -16,6 +16,7 @@ import scala.concurrent.{Future, Await}
 import scala.concurrent.duration._
 import com.typesafe.scalalogging.slf4j.Logging
 import spray.can.Http
+import org.elasticmq.NodeAddress
 
 class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAfter with Logging {
   val visibilityTimeoutAttribute = "VisibilityTimeout"
@@ -40,8 +41,16 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
     val nowProvider = new NowProvider
     val queueManagerActor = system.actorOf(Props(new QueueManagerActor(nowProvider)))
 
-    strictServer = new SQSRestServerBuilder(system, queueManagerActor).withPort(9321).start()
-    relaxedServer = new SQSRestServerBuilder(system, queueManagerActor).withPort(9322).withSQSLimits(SQSLimits.Relaxed).start()
+    strictServer  = new SQSRestServerBuilder(system, queueManagerActor)
+      .withPort(9321)
+      .withServerAddress(NodeAddress(port = 9321))
+      .start()
+
+    relaxedServer = new SQSRestServerBuilder(system, queueManagerActor)
+      .withPort(9322)
+      .withServerAddress(NodeAddress(port = 9321))
+      .withSQSLimits(SQSLimits.Relaxed)
+      .start()
 
     Await.result(strictServer.startFuture, 1.minute) must be (Http.Bound)
     Await.result(relaxedServer.startFuture, 1.minute) must be (Http.Bound)
