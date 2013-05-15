@@ -30,7 +30,7 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
   var currentTestName: String = _
 
   before {
-    logger.info(s"---\nRunning test: $currentTestName\n---\n")
+    logger.info(s"\n---\nRunning test: $currentTestName\n---\n")
 
     system = ActorSystem()
 
@@ -56,7 +56,7 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
     system.shutdown()
     system.awaitTermination()
 
-    logger.info(s"---\nTest done: $currentTestName\n---\n")
+    logger.info(s"\n---\nTest done: $currentTestName\n---\n")
   }
 
   test("should create a queue") {
