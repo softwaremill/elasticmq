@@ -1,7 +1,7 @@
 package org.elasticmq.rest.sqs
 
 import org.scalatest.matchers.MustMatchers
-import org.scalatest.{BeforeAndAfter, FunSuite}
+import org.scalatest._
 import com.amazonaws.auth.BasicAWSCredentials
 import com.amazonaws.services.sqs.{AmazonSQS, AmazonSQSClient}
 
@@ -14,8 +14,10 @@ import org.elasticmq.util.NowProvider
 import org.elasticmq.actor.QueueManagerActor
 import scala.concurrent.Await
 import scala.concurrent.duration._
+import scala.Some
+import com.typesafe.scalalogging.slf4j.Logging
 
-class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAfter {
+class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAfter with Logging {
   val visibilityTimeoutAttribute = "VisibilityTimeout"
   val defaultVisibilityTimeoutAttribute = "VisibilityTimeout"
   val delaySecondsAttribute = "DelaySeconds"
@@ -25,7 +27,11 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
   var client: AmazonSQS = _ // strict server
   var relaxedClient: AmazonSQS = _
 
+  var currentTestName: String = _
+
   before {
+    logger.info(s"---\nRunning test: $currentTestName\n---\n")
+
     system = ActorSystem()
 
     val nowProvider = new NowProvider
@@ -49,6 +55,8 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
 
     system.shutdown()
     system.awaitTermination()
+
+    logger.info(s"---\nTest done: $currentTestName\n---\n")
   }
 
   test("should create a queue") {
@@ -664,5 +672,11 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
       builder.appendAll(Character.toChars(current))
       current += 1
     }
+  }
+
+  override protected def runTest(testName: String, reporter: Reporter, stopper: Stopper, configMap: Map[String, Any], tracker: Tracker) {
+    currentTestName = testName
+    super.runTest(testName, reporter, stopper, configMap, tracker)
+    currentTestName = null
   }
 }
