@@ -13,6 +13,8 @@ import spray.can.server.ServerSettings
 import akka.util.Timeout
 import scala.concurrent.Future
 import org.elasticmq.rest.sqs.directives.ElasticMQDirectives
+import spray.can.Http
+import akka.io.IO
 
 /**
  * @param interface Hostname to which the server will bind.
@@ -62,7 +64,7 @@ class SQSRestServerBuilder(actorSystem: ActorSystem,
     new SQSRestServerBuilder(actorSystem, queueManagerActor, interface, port, serverAddress, _sqsLimits)
   }
 
-  def start(): Future[Any] = {
+  def start(): (Future[Any], () => Future[Any]) = {
     implicit val theActorSystem = actorSystem
     val theQueueManagerActor = queueManagerActor
     val theServerAddress = serverAddress
@@ -125,7 +127,11 @@ class SQSRestServerBuilder(actorSystem: ActorSystem,
     SQSRestServerBuilder.this.logger.info("Started SQS rest server, bind address %s:%d, visible server address %s"
       .format(interface, port, theServerAddress.fullAddress))
 
-    appStart
+    (appStart, () => {
+      import akka.pattern.ask
+      implicit val x = Timeout(1000L)
+      IO(Http) ? Http.CloseAll
+    })
   }
 }
 

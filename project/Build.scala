@@ -82,7 +82,7 @@ object Dependencies {
 
   val apacheHttp    = "org.apache.httpcomponents" % "httpclient"            % "4.2.2" exclude ("commons-logging", "commons-logging")
 
-  val amazonJavaSdk = "com.amazonaws"             % "aws-java-sdk"          % "1.3.24" exclude ("commons-logging", "commons-logging")
+  val amazonJavaSdk = "com.amazonaws"             % "aws-java-sdk"          % "1.4.3" exclude ("commons-logging", "commons-logging")
 
   val mysqlConnector = "mysql"                    % "mysql-connector-java"  % "5.1.20"
 
