@@ -45,13 +45,13 @@ trait QueueAttributesDirectives { this: ElasticMQDirectives with AttributesModul
             import AttributeValuesCalculator.Rule
 
             attributeValuesCalculator.calculate(attributeNames,
-              Rule(VisibilityTimeoutAttribute, () => Future(queueData.defaultVisibilityTimeout.seconds.toString)),
-              Rule(DelaySecondsAttribute, () => Future(queueData.delay.getStandardSeconds.toString)),
+              Rule(VisibilityTimeoutAttribute, () => Future.successful(queueData.defaultVisibilityTimeout.seconds.toString)),
+              Rule(DelaySecondsAttribute, () => Future.successful(queueData.delay.getStandardSeconds.toString)),
               Rule(ApproximateNumberOfMessagesAttribute, () => stats.map(_.approximateNumberOfVisibleMessages.toString)),
               Rule(ApproximateNumberOfMessagesNotVisibleAttribute, () => stats.map(_.approximateNumberOfInvisibleMessages.toString)),
               Rule(ApproximateNumberOfMessagesDelayedAttribute, () => stats.map(_.approximateNumberOfMessagesDelayed.toString)),
-              Rule(CreatedTimestampAttribute, () => Future((queueData.created.getMillis/1000L).toString)),
-              Rule(LastModifiedTimestampAttribute, () => Future((queueData.lastModified.getMillis/1000L).toString)))
+              Rule(CreatedTimestampAttribute, () => Future.successful((queueData.created.getMillis/1000L).toString)),
+              Rule(LastModifiedTimestampAttribute, () => Future.successful((queueData.lastModified.getMillis/1000L).toString)))
           }
 
           def responseXml(attributes: List[(String, String)]) = {
