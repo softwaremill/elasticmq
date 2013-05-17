@@ -48,7 +48,7 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
 
     relaxedServer = new SQSRestServerBuilder(system, queueManagerActor)
       .withPort(9322)
-      .withServerAddress(NodeAddress(port = 9321))
+      .withServerAddress(NodeAddress(port = 9322))
       .withSQSLimits(SQSLimits.Relaxed)
       .start()
 
