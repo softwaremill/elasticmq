@@ -12,7 +12,7 @@ import com.amazonaws.AmazonServiceException
 import akka.actor.{Props, ActorSystem}
 import org.elasticmq.util.NowProvider
 import org.elasticmq.actor.QueueManagerActor
-import scala.concurrent.{Future, Await}
+import scala.concurrent.Await
 import scala.concurrent.duration._
 import com.typesafe.scalalogging.slf4j.Logging
 import spray.can.Http
@@ -23,7 +23,8 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
   val defaultVisibilityTimeoutAttribute = "VisibilityTimeout"
   val delaySecondsAttribute = "DelaySeconds"
 
-  var system: ActorSystem = _
+  var systemStrict: ActorSystem = _
+  var systemRelaxed: ActorSystem = _
 
   var client: AmazonSQS = _ // strict server
   var relaxedClient: AmazonSQS = _
@@ -36,17 +37,19 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
   before {
     logger.info(s"\n---\nRunning test: $currentTestName\n---\n")
 
-    system = ActorSystem()
+    systemStrict = ActorSystem()
+    systemRelaxed = ActorSystem()
 
     val nowProvider = new NowProvider
-    val queueManagerActor = system.actorOf(Props(new QueueManagerActor(nowProvider)))
+    val queueManagerActorStrict = systemStrict.actorOf(Props(new QueueManagerActor(nowProvider)))
+    val queueManagerActorRelaxed = systemRelaxed.actorOf(Props(new QueueManagerActor(nowProvider)))
 
-    strictServer  = new SQSRestServerBuilder(system, queueManagerActor)
+    strictServer  = new SQSRestServerBuilder(systemStrict, queueManagerActorStrict)
       .withPort(9321)
       .withServerAddress(NodeAddress(port = 9321))
       .start()
 
-    relaxedServer = new SQSRestServerBuilder(system, queueManagerActor)
+    relaxedServer = new SQSRestServerBuilder(systemRelaxed, queueManagerActorRelaxed)
       .withPort(9322)
       .withServerAddress(NodeAddress(port = 9322))
       .withSQSLimits(SQSLimits.Relaxed)
@@ -69,8 +72,11 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
     Await.result(strictServer.stopAndGetFuture(), 1.minute) must be (Http.ClosedAll)
     Await.result(relaxedServer.stopAndGetFuture(), 1.minute) must be (Http.ClosedAll)
 
-    system.shutdown()
-    system.awaitTermination()
+    systemStrict.shutdown()
+    systemStrict.awaitTermination()
+
+    systemRelaxed.shutdown()
+    systemRelaxed.awaitTermination()
 
     logger.info(s"\n---\nTest done: $currentTestName\n---\n")
   }
@@ -90,7 +96,7 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
     queueUrl must include ("testQueue1")
   }
 
-  test("should create a queue with the specified visibilty timeout") {
+  test("should create a queue with the specified visibility timeout") {
     // When
     client.createQueue(new CreateQueueRequest("testQueue1")
       .withAttributes(Map(defaultVisibilityTimeoutAttribute -> "14")))
@@ -533,11 +539,12 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
   // Errors
 
   test("should return an error if strict & trying to receive more than 10 messages") {
-    // Given
-    val queueUrl = client.createQueue(new CreateQueueRequest("testQueue1")).getQueueUrl
+    strictOnlyShouldThrowException { cli =>
+      // Given
+      val queueUrl = cli.createQueue(new CreateQueueRequest("testQueue1")).getQueueUrl
 
-    strictOnlyShouldThrowException {
-      _.receiveMessage(new ReceiveMessageRequest(queueUrl).withMaxNumberOfMessages(11))
+      // When
+      cli.receiveMessage(new ReceiveMessageRequest(queueUrl).withMaxNumberOfMessages(11))
     }
   }
 
@@ -558,11 +565,12 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
   }
 
   test("should return an error if strict & sending too many messages in a batch") {
-    // Given
-    val queueUrl = client.createQueue(new CreateQueueRequest("testQueue1")).getQueueUrl
+    strictOnlyShouldThrowException { cli =>
+      // Given
+      val queueUrl = cli.createQueue(new CreateQueueRequest("testQueue1")).getQueueUrl
 
-    strictOnlyShouldThrowException {
-      _.sendMessageBatch(new SendMessageBatchRequest(queueUrl).withEntries(
+      // When
+      cli.sendMessageBatch(new SendMessageBatchRequest(queueUrl).withEntries(
         (for (i <- 1 to 11) yield new SendMessageBatchRequestEntry(i.toString, "Message")): _*
       ))
     }
@@ -579,29 +587,31 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
   }
 
   test("should return an error if strict & sending an invalid character") {
-    // Given
-    val queueUrl = client.createQueue(new CreateQueueRequest("testQueue1")).getQueueUrl
+    strictOnlyShouldThrowException { cli =>
+      // Given
+      val queueUrl = cli.createQueue(new CreateQueueRequest("testQueue1")).getQueueUrl
 
-    strictOnlyShouldThrowException {
-      _.sendMessage(new SendMessageRequest(queueUrl, "\u0000"))
+      cli.sendMessage(new SendMessageRequest(queueUrl, "\u0000"))
     }
   }
 
   test("should return an error if strict & message body is too long") {
-    // Given
-    val queueUrl = client.createQueue(new CreateQueueRequest("testQueue1")).getQueueUrl
+    strictOnlyShouldThrowException { cli =>
+      // Given
+      val queueUrl = cli.createQueue(new CreateQueueRequest("testQueue1")).getQueueUrl
 
-    strictOnlyShouldThrowException {
-      _.sendMessage(new SendMessageRequest(queueUrl, "x"*65537))
+      // When
+      cli.sendMessage(new SendMessageRequest(queueUrl, "x"*65537))
     }
   }
 
   test("should return an error if strict & total message bodies length is too long in a batch send") {
-    // Given
-    val queueUrl = client.createQueue(new CreateQueueRequest("testQueue1")).getQueueUrl
+    strictOnlyShouldThrowException { cli =>
+      // Given
+      val queueUrl = cli.createQueue(new CreateQueueRequest("testQueue1")).getQueueUrl
 
-    strictOnlyShouldThrowException {
-      _.sendMessageBatch(new SendMessageBatchRequest(queueUrl).withEntries(
+      // When
+      cli.sendMessageBatch(new SendMessageBatchRequest(queueUrl).withEntries(
         new SendMessageBatchRequestEntry("1", "x"*40000),
         new SendMessageBatchRequestEntry("2", "x"*40000)
       ))
