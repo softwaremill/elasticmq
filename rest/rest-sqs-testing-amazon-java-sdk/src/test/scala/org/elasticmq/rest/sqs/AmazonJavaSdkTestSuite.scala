@@ -64,6 +64,7 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
 
   after {
     client.shutdown()
+    relaxedClient.shutdown()
 
     Await.result(strictServer.stopAndGetFuture(), 1.minute) must be (Http.ClosedAll)
     Await.result(relaxedServer.stopAndGetFuture(), 1.minute) must be (Http.ClosedAll)
