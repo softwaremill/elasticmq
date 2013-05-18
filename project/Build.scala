@@ -51,29 +51,23 @@ object BuildSettings {
     homepage      := Some(new java.net.URL("http://www.elasticmq.org")),
     licenses      := ("Apache2", new java.net.URL("http://www.apache.org/licenses/LICENSE-2.0.txt")) :: Nil
   ) ++ net.virtualvoid.sbt.graph.Plugin.graphSettings ++ lsSettings ++ Seq (
-    (LsKeys.tags in LsKeys.lsync) := Seq("elasticmq", "messaging", "guaranteed messaging", "replication", "aws",
-      "amazon", "sqs", "embedded", "msg queue", "distributed msg queue"),
+    (LsKeys.tags in LsKeys.lsync) := Seq("elasticmq", "messaging", "aws",
+      "amazon", "sqs", "embedded", "message queue"),
     (externalResolvers in LsKeys.lsync) := Seq(
       "softwaremill-public-releases" at "http://tools.softwaremill.pl/nexus/content/repositories/releases"),
     (description in LsKeys.lsync) :=
-      "Message queue server with a Java, Scala and Amazon SQS compatible interfaces. " +
-        "Supports guaranteed messaging via queue and msg replication. Can run embedded (great for testing " +
-        "applications which use SQS), storing data in-memory or in a database, or as a stand-alone server."
+      "Akka-based message queue server with an Amazon SQS compatible interface. " +
+        "Can run embedded (great for testing applications which use SQS), or as a stand-alone server."
   )
 }
 
 object Dependencies {
-  val squeryl       = "org.squeryl"               %% "squeryl"              % "0.9.5-6"
-  val h2            = "com.h2database"            % "h2"                    % "1.3.168"
-  val c3p0          = "c3p0"                      % "c3p0"                  % "0.9.1.2"
   val jodaTime      = "joda-time"                 % "joda-time"             % "2.1"
   val jodaConvert   = "org.joda"                  % "joda-convert"          % "1.2"
   val config        = "com.typesafe"              % "config"                % "1.0.0"
 
   val scalalogging  = "com.typesafe"              %% "scalalogging-slf4j"   % "1.0.1"
   val logback       = "ch.qos.logback"            % "logback-classic"       % "1.0.9"
-  val log4jOverSlf4j = "org.slf4j"                % "log4j-over-slf4j"      % "1.7.2"
-  val julToSlf4j    = "org.slf4j"                 % "jul-to-slf4j"          % "1.7.2"
   val jclOverSlf4j  = "org.slf4j"                 % "jcl-over-slf4j"        % "1.7.2" // needed form amazon java sdk
 
   val scalatest     = "org.scalatest"             %% "scalatest"            % "1.9.1"
@@ -81,10 +75,6 @@ object Dependencies {
   val awaitility    = "com.jayway.awaitility"     % "awaitility-scala"      % "1.3.4"
 
   val amazonJavaSdk = "com.amazonaws"             % "aws-java-sdk"          % "1.4.3" exclude ("commons-logging", "commons-logging")
-
-  val mysqlConnector = "mysql"                    % "mysql-connector-java"  % "5.1.20"
-
-  val jgroups       = "org.jgroups"               % "jgroups"               % "3.2.0.Final" exclude ("log4j", "log4j")
 
   val jsr305        = "com.google.code.findbugs"  % "jsr305"                % "1.3.9"
 
@@ -110,7 +100,7 @@ object ElasticMQBuild extends Build {
     "elasticmq-root",
     file("."),
     settings = buildSettings
-  ) aggregate(commonTest, api, spi, core, core2, storageDatabase, replication, rest, server)
+  ) aggregate(commonTest, api, core2, rest, server)
 
   lazy val commonTest: Project = Project(
     "elasticmq-common-test",
@@ -126,35 +116,11 @@ object ElasticMQBuild extends Build {
     settings = buildSettings ++ Seq(libraryDependencies ++= Seq(jodaTime, jodaConvert))
   ) dependsOn(commonTest % "test")
 
-  lazy val spi: Project = Project(
-    "elasticmq-spi",
-    file("spi"),
-    settings = buildSettings ++ Seq(libraryDependencies ++= common)
-  ) dependsOn(api, commonTest % "test")
-
-  lazy val core: Project = Project(
-    "elasticmq-core",
-    file("core"),
-    settings = buildSettings
-  ) dependsOn(api, spi, commonTest % "test")
-
   lazy val core2: Project = Project(
     "elasticmq-core2",
     file("core2"),
     settings = buildSettings ++ Seq(libraryDependencies ++= Seq(akka2Actor, akka2Testkit) ++ common)
   ) dependsOn(api, commonTest % "test")
-
-  lazy val storageDatabase: Project = Project(
-    "elasticmq-storage-database",
-    file("storage-database"),
-    settings = buildSettings ++ Seq(libraryDependencies ++= Seq(squeryl, h2, c3p0, log4jOverSlf4j, mysqlConnector % "test") ++ common)
-  ) dependsOn(api, spi, core % "test->test")
-
-  lazy val replication: Project = Project(
-    "elasticmq-replication",
-    file("replication"),
-    settings = buildSettings ++ Seq(libraryDependencies ++= Seq(jgroups, julToSlf4j) ++ common)
-  ) dependsOn(api, spi, core % "test->test", storageDatabase % "test->test")
 
   lazy val rest: Project = Project(
     "elasticmq-rest",
@@ -182,7 +148,7 @@ object ElasticMQBuild extends Build {
     file("server"),
     settings = buildSettings ++ CustomTasks.distributionSettings ++ CustomTasks.generateVersionFileSettings ++
       Seq(libraryDependencies ++= Seq(logback, config))
-  ) dependsOn(core, storageDatabase, replication, restSqs, commonTest % "test")
+  ) dependsOn(core2, restSqs, commonTest % "test")
 
   lazy val performanceTests: Project = Project(
     "elasticmq-performance-tests",
@@ -191,7 +157,7 @@ object ElasticMQBuild extends Build {
       libraryDependencies ++= Seq(amazonJavaSdk, logback) ++ common,
       publishArtifact := false
     )
-  ) dependsOn(core, storageDatabase, replication, restSqs, commonTest % "test")
+  ) dependsOn(core2, restSqs, commonTest % "test")
 }
 
 object CustomTasks {

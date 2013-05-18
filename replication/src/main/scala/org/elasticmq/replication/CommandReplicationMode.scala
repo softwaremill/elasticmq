@@ -1,9 +1,0 @@
-package org.elasticmq.replication
-
-sealed trait CommandReplicationMode
-
-case object DoNotWaitReplicationMode extends CommandReplicationMode
-case object WaitForAnyReplicationMode extends CommandReplicationMode
-case object WaitForMajorityReplicationMode extends CommandReplicationMode
-case object WaitForAllReplicationMode extends CommandReplicationMode
-
