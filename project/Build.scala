@@ -100,7 +100,7 @@ object ElasticMQBuild extends Build {
     "elasticmq-root",
     file("."),
     settings = buildSettings
-  ) aggregate(commonTest, api, core2, rest, server)
+  ) aggregate(commonTest, api, core, rest, server)
 
   lazy val commonTest: Project = Project(
     "elasticmq-common-test",
@@ -116,9 +116,9 @@ object ElasticMQBuild extends Build {
     settings = buildSettings ++ Seq(libraryDependencies ++= Seq(jodaTime, jodaConvert))
   ) dependsOn(commonTest % "test")
 
-  lazy val core2: Project = Project(
-    "elasticmq-core2",
-    file("core2"),
+  lazy val core: Project = Project(
+    "elasticmq-core",
+    file("core"),
     settings = buildSettings ++ Seq(libraryDependencies ++= Seq(akka2Actor, akka2Testkit) ++ common)
   ) dependsOn(api, commonTest % "test")
 
@@ -133,7 +133,7 @@ object ElasticMQBuild extends Build {
     file("rest/rest-sqs"),
     settings = buildSettings ++ Seq(libraryDependencies ++= Seq(akka2Actor, akka2Dataflow, sprayCan, sprayRouting, sprayTestkit)
       ++ common)
-  ) dependsOn(core2, commonTest % "test")
+  ) dependsOn(core, commonTest % "test")
 
   lazy val restSqsTestingAmazonJavaSdk: Project = Project(
     "elasticmq-rest-sqs-testing-amazon-java-sdk",
@@ -148,7 +148,7 @@ object ElasticMQBuild extends Build {
     file("server"),
     settings = buildSettings ++ CustomTasks.distributionSettings ++ CustomTasks.generateVersionFileSettings ++
       Seq(libraryDependencies ++= Seq(logback, config))
-  ) dependsOn(core2, restSqs, commonTest % "test")
+  ) dependsOn(core, restSqs, commonTest % "test")
 
   lazy val performanceTests: Project = Project(
     "elasticmq-performance-tests",
@@ -157,7 +157,7 @@ object ElasticMQBuild extends Build {
       libraryDependencies ++= Seq(amazonJavaSdk, logback) ++ common,
       publishArtifact := false
     )
-  ) dependsOn(core2, restSqs, commonTest % "test")
+  ) dependsOn(core, restSqs, commonTest % "test")
 }
 
 object CustomTasks {
