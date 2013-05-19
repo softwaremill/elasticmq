@@ -76,8 +76,6 @@ object Dependencies {
 
   val amazonJavaSdk = "com.amazonaws"             % "aws-java-sdk"          % "1.4.3" exclude ("commons-logging", "commons-logging")
 
-  val jsr305        = "com.google.code.findbugs"  % "jsr305"                % "1.3.9"
-
   val akka2Version          = "2.1.2"
   val akka2Actor            = "com.typesafe.akka" %% "akka-actor"           % akka2Version
   val akka2Slf4j            = "com.typesafe.akka" %% "akka-slf4j"           % akka2Version
@@ -89,7 +87,7 @@ object Dependencies {
   val sprayRouting          = "io.spray"          %   "spray-routing"      % sprayVersion
   val sprayTestkit          = "io.spray"          %   "spray-testkit"      % sprayVersion % "test"
 
-  val common = Seq(scalalogging, jsr305)
+  val common = Seq(scalalogging)
 }
 
 object ElasticMQBuild extends Build {
