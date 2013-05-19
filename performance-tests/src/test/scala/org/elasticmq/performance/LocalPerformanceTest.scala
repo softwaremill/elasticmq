@@ -1,12 +1,26 @@
 package org.elasticmq.performance
 
-import java.io.File
 import com.amazonaws.services.sqs.AmazonSQSClient
 import com.amazonaws.auth.BasicAWSCredentials
 import com.amazonaws.services.sqs.model.{CreateQueueRequest, DeleteMessageRequest, ReceiveMessageRequest, SendMessageRequest}
-import org.elasticmq.rest.sqs.SQSRestServerBuilder
+import org.elasticmq.rest.sqs.{SQSRestServer, SQSRestServerBuilder}
 import org.elasticmq.test._
 import scala.collection.JavaConversions._
+import akka.actor.{Props, ActorSystem, ActorRef}
+import org.elasticmq.actor.QueueManagerActor
+import org.elasticmq.util.NowProvider
+import org.elasticmq.actor.reply._
+import org.elasticmq.msg._
+import org.elasticmq._
+import scala.concurrent.Await
+import scala.concurrent.duration._
+import org.joda.time.DateTime
+import org.elasticmq.msg.ReceiveMessages
+import org.elasticmq.QueueData
+import org.elasticmq.NewMessageData
+import org.elasticmq.msg.SendMessage
+import org.elasticmq.msg.CreateQueue
+import akka.util.Timeout
 
 object LocalPerformanceTest extends App {
   testAll()
@@ -15,14 +29,11 @@ object LocalPerformanceTest extends App {
     val iterations = 10
     val msgsInIteration = 100000
 
-    testWithMq(new InMemoryMQ, 3, 100000, "in-memory warmup", 1)
+    testWithMq(new ActorBasedMQ, 3, 100000, "in-memory warmup", 1)
 
-    testWithMq(new InMemoryMQ, iterations, msgsInIteration, "in-memory", 1)
-    //testWithMq(new InMemoryMQ, iterations, msgsInIteration, "in-memory", 2)
-    //testWithMq(new InMemoryMQ, iterations, msgsInIteration, "in-memory", 3)
-    //testWithMq(new InMemoryWithFileLogMQ(300000), iterations, msgsInIteration, "file log + in-memory", 1)
-    //testWithMq(new MysqlMQ, iterations, msgsInIteration,    "mysql", 1)
-    //testWithMq(new H2MQ, iterations, msgsInIteration,       "h2", 1)
+    //testWithMq(new ActorBasedMQ, iterations, msgsInIteration, "in-memory", 1)
+    //testWithMq(new ActorBasedMQ, iterations, msgsInIteration, "in-memory", 2)
+    //testWithMq(new ActorBasedMQ, iterations, msgsInIteration, "in-memory", 3)
     //testWithMq(new RestSQSMQ, iterations, msgsInIteration,  "rest-sqs + in-memory", 1)
   }
 
@@ -73,60 +84,31 @@ object LocalPerformanceTest extends App {
     }
   }
 
-  class InMemoryMQ extends MQWithClient {
-    def createStorage() = new InMemoryStorage
-  }
-
-  class InMemoryWithFileLogMQ(rotateAfter: Int) extends MQWithClient {
-    import org.elasticmq.test._
-
-    private var tempDir: File = _
-
-    def createStorage() = {
-      tempDir = createTempDir()
-      println("Log dir: " + tempDir)
-      new FileLogConfigurator(new InMemoryStorage, FileLogConfiguration(tempDir, rotateAfter)).start()
-    }
-
-    override def stop() {
-      super.stop()
-      deleteDirRecursively(tempDir)
-    }
-  }
-
-  class MysqlMQ extends MQWithClient {
-    def createStorage() = {
-      new SquerylStorage(DBConfiguration.mysql("elasticmq", "root", "", drop = true))
-    }
-  }
-
-  class H2MQ extends MQWithClient {
-    def createStorage() = {
-      new SquerylStorage(DBConfiguration.h2())
-    }
-  }
+  class ActorBasedMQ extends MQWithQueueManagerActor
 
   class RestSQSMQ extends MQ {
-    private var currentStorage: StorageCommandExecutor = _
     private var currentSQSClient: AmazonSQSClient = _
     private var currentQueueUrl: String = _
-    private var currentRestServer: Stoppable = _
+    private var currentRestServer: SQSRestServer = _
 
-    def start() {
-      currentStorage = new InMemoryStorage
+    override def start() = {
+      val queueManagerActor = super.start()
 
-      currentRestServer = new SQSRestServerBuilder(NodeBuilder.withStorage(currentStorage).nativeClient).start()
+      currentRestServer = new SQSRestServerBuilder(actorSystem, queueManagerActor).start()
 
       currentSQSClient = new AmazonSQSClient(new BasicAWSCredentials("x", "x"))
       currentSQSClient.setEndpoint("http://localhost:9324")
       currentQueueUrl = currentSQSClient.createQueue(
         new CreateQueueRequest("testQueue").withAttributes(Map("VisibilityTimeout" -> "1")))
         .getQueueUrl
+
+      queueManagerActor
     }
 
-    def stop() {
+    override def stop() {
+      currentRestServer.stopAndGetFuture
       currentSQSClient.shutdown()
-      currentRestServer.stop()
+      super.stop()
     }
 
     def sendMessage(m: String) {
@@ -146,39 +128,47 @@ object LocalPerformanceTest extends App {
   }
 
   trait MQ {
-    def start()
+    var actorSystem: ActorSystem = _
 
-    def stop()
+    def start(): ActorRef = {
+      actorSystem = ActorSystem("performance-tests")
+      val queueManagerActor = actorSystem.actorOf(Props(new QueueManagerActor(new NowProvider())))
+
+      queueManagerActor
+    }
+
+    def stop() {
+      actorSystem.shutdown()
+      actorSystem.awaitTermination()
+    }
 
     def sendMessage(m: String)
 
     def receiveMessage(): String
   }
 
-  trait MQWithClient extends MQ {
-    def createStorage(): StorageCommandExecutor
+  trait MQWithQueueManagerActor extends MQ {
+    private var currentQueue: ActorRef = _
 
-    private var currentStorage: StorageCommandExecutor = _
-    private var currentQueue: Queue = _
+    implicit val timeout = Timeout(10000L)
 
-    def start() {
-      currentStorage = createStorage()
-      val client = NodeBuilder.withStorage(currentStorage).nativeClient
-      currentQueue = client.createQueue(QueueBuilder("testQueue")
-        .withDefaultVisibilityTimeout(MillisVisibilityTimeout(1000)))
-    }
+    override def start() = {
+      val queueManagerActor = super.start()
 
-    def stop() {
-      currentStorage.shutdown()
+      currentQueue = Await.result(queueManagerActor ? CreateQueue(QueueData("testQueue", MillisVisibilityTimeout(1000),
+       org.joda.time.Duration.ZERO, new DateTime(), new DateTime())), 10.seconds).right.get
+
+      queueManagerActor
     }
 
     def sendMessage(m: String) {
-      currentQueue.sendMessage(m)
+      Await.result(currentQueue ? SendMessage(NewMessageData(None, m, ImmediateNextDelivery)), 10.seconds)
     }
 
     def receiveMessage() = {
-      val message = currentQueue.receiveMessage().get
-      message.delete()
+      val messages = Await.result(currentQueue ? ReceiveMessages(System.currentTimeMillis(), DefaultVisibilityTimeout, 1), 10.seconds)
+      val message = messages.head
+      Await.result(currentQueue ? DeleteMessage(message.deliveryReceipt.get), 10.seconds)
       message.content
     }
   }
