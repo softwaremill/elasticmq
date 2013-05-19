@@ -14,7 +14,7 @@ import org.elasticmq.MessageId
 import org.elasticmq.msg.SendMessage
 import org.elasticmq.MessageData
 import org.elasticmq.MillisNextDelivery
-import org.elasticmq.msg.ReceiveMessage
+import org.elasticmq.msg.ReceiveMessages
 import org.elasticmq.msg.UpdateVisibilityTimeout
 import org.elasticmq.msg.LookupMessage
 
@@ -26,7 +26,7 @@ trait QueueActorMessageOps extends Logging {
   def receiveAndReplyMessageMsg[T](msg: QueueMessageMsg[T]): T = msg match {
     case SendMessage(message) => sendMessage(message)
     case UpdateVisibilityTimeout(messageId, visibilityTimeout) => updateVisibilityTimeout(messageId, visibilityTimeout)
-    case ReceiveMessage(deliveryTime, visibilityTimeout) => receiveMessage(deliveryTime, visibilityTimeout)
+    case ReceiveMessages(deliveryTime, visibilityTimeout, count) => receiveMessage(deliveryTime, visibilityTimeout).toList
     case DeleteMessage(deliveryReceipt) => deleteMessage(deliveryReceipt)
     case LookupMessage(messageId) => messagesById.get(messageId.id).map(_.toMessageData)
   }

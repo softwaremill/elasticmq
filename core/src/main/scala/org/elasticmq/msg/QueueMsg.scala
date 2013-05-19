@@ -16,6 +16,6 @@ case class GetQueueStatistics(deliveryTime: Long) extends QueueQueueMsg[QueueSta
 
 case class SendMessage(message: NewMessageData) extends QueueMessageMsg[MessageData]
 case class UpdateVisibilityTimeout(messageId: MessageId, visibilityTimeout: VisibilityTimeout) extends QueueMessageMsg[Either[MessageDoesNotExist, Unit]]
-case class ReceiveMessage(deliveryTime: Long, visibilityTimeout: VisibilityTimeout) extends QueueMessageMsg[Option[MessageData]]
+case class ReceiveMessages(deliveryTime: Long, visibilityTimeout: VisibilityTimeout, count: Int) extends QueueMessageMsg[List[MessageData]]
 case class DeleteMessage(deliveryReceipt: DeliveryReceipt) extends QueueMessageMsg[Unit]
 case class LookupMessage(messageId: MessageId) extends QueueMessageMsg[Option[MessageData]]

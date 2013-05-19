@@ -6,7 +6,7 @@ import org.elasticmq.rest.sqs.MD5Util._
 import org.elasticmq.actor.reply._
 import akka.dataflow._
 import scala.concurrent.Future
-import org.elasticmq.msg.ReceiveMessage
+import org.elasticmq.msg.ReceiveMessages
 import org.elasticmq.rest.sqs.directives.ElasticMQDirectives
 
 trait ReceiveMessageDirectives { this: ElasticMQDirectives with AttributesModule with SQSLimitsModule =>
@@ -44,10 +44,10 @@ trait ReceiveMessageDirectives { this: ElasticMQDirectives with AttributesModule
                 if (messages == 0) {
                   Nil
                 } else {
-                  val msgFuture = queueActor ? ReceiveMessage(System.currentTimeMillis(), visibilityTimeoutFromParameters)
+                  val msgFuture = queueActor ? ReceiveMessages(System.currentTimeMillis(), visibilityTimeoutFromParameters, 1)
                   val msg = msgFuture()
 
-                  msg match {
+                  msg.headOption match {
                     case Some(data) => {
                       val other = receiveMessages(messages - 1)()
                       data :: other
