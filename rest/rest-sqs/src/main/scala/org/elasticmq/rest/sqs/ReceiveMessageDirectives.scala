@@ -4,8 +4,6 @@ import Constants._
 import org.elasticmq._
 import org.elasticmq.rest.sqs.MD5Util._
 import org.elasticmq.actor.reply._
-import akka.dataflow._
-import scala.concurrent.Future
 import org.elasticmq.msg.ReceiveMessages
 import org.elasticmq.rest.sqs.directives.ElasticMQDirectives
 
@@ -39,26 +37,8 @@ trait ReceiveMessageDirectives { this: ElasticMQDirectives with AttributesModule
               "ReadCountOutOfRange"
             }
 
-            def receiveMessages(messages: Int): Future[List[MessageData]] = {
-              flow {
-                if (messages == 0) {
-                  Nil
-                } else {
-                  val msgFuture = queueActor ? ReceiveMessages(System.currentTimeMillis(), visibilityTimeoutFromParameters, 1)
-                  val msg = msgFuture()
-
-                  msg.headOption match {
-                    case Some(data) => {
-                      val other = receiveMessages(messages - 1)()
-                      data :: other
-                    }
-                    case None => Nil
-                  }
-                }
-              }
-            }
-
-            val msgsFuture = receiveMessages(maxNumberOfMessagesFromParameters)
+            val msgsFuture = queueActor ? ReceiveMessages(System.currentTimeMillis(),
+              visibilityTimeoutFromParameters, maxNumberOfMessagesFromParameters)
 
             lazy val attributeNames = attributeNamesReader.read(parameters, AllAttributeNames)
 
