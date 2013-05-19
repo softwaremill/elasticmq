@@ -9,14 +9,3 @@ For the core system:
 * slf4j (MIT, http://www.slf4j.org/license.html)
 * logback (EPL 1.0/LGPL 2.1, http://logback.qos.ch/license.html)
 
-For the REST-SQS module:
-* netty (Apache 2)
-
-For the replication module:
-* jgroups (LGPL 2.1, http://www.jgroups.org/license.html)
-
-For the database storage:
-* c3p0 (LGPL 2.0, http://sourceforge.net/projects/c3p0/)
-* cglib (Apache 1.1, http://cglib.sourceforge.net/license.html)
-* h2 (MPL 1.1/EPL 1.0, http://www.h2database.com/html/license.html)
-* squeryl (Apache 2)
