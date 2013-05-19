@@ -80,7 +80,7 @@ object Dependencies {
   val akka2Actor            = "com.typesafe.akka" %% "akka-actor"           % akka2Version
   val akka2Slf4j            = "com.typesafe.akka" %% "akka-slf4j"           % akka2Version
   val akka2Dataflow         = "com.typesafe.akka" %% "akka-dataflow"        % akka2Version
-  val akka2Testkit          = "com.typesafe.akka" %% "akka-testkit"         % akka2Version
+  val akka2Testkit          = "com.typesafe.akka" %% "akka-testkit"         % akka2Version % "test"
 
   val sprayVersion          = "1.1-20130516" //"1.1-M7"
   val sprayCan              = "io.spray"          %   "spray-can"          % sprayVersion
