@@ -3,8 +3,6 @@ package org.elasticmq.actor.queue
 import scala.annotation.tailrec
 import org.elasticmq._
 import org.elasticmq.msg._
-import NewMessageData
-import MessageData
 import org.joda.time.DateTime
 import com.typesafe.scalalogging.slf4j.Logging
 import org.elasticmq.util.NowProvider

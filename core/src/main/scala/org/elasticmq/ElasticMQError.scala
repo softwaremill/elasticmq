@@ -1,7 +1,5 @@
 package org.elasticmq
 
-import org.elasticmq.MessageId
-
 trait ElasticMQError {
   val queueName: String
   val code: String

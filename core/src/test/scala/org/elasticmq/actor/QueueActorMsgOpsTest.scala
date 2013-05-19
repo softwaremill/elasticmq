@@ -4,7 +4,6 @@ import org.elasticmq.actor.reply._
 import org.elasticmq._
 import org.elasticmq.msg._
 import org.elasticmq.actor.test.{DataCreationHelpers, QueueManagerForEachTest, ActorTest}
-import MessageData
 import org.joda.time.DateTime
 
 class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with DataCreationHelpers {

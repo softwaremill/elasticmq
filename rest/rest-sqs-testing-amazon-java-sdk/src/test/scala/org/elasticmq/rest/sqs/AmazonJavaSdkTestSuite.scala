@@ -662,6 +662,20 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
     m3 must be (Some("Message 1"))
   }
 
+  test("should return an error if creating an existing queue with a different visibility timeout") {
+    val result = catching(classOf[AmazonServiceException]) either {
+      // Given
+      client.createQueue(new CreateQueueRequest("testQueue1")
+        .withAttributes(Map(defaultVisibilityTimeoutAttribute -> "10"))).getQueueUrl
+
+      // When
+      client.createQueue(new CreateQueueRequest("testQueue1")
+        .withAttributes(Map(defaultVisibilityTimeoutAttribute -> "14"))).getQueueUrl
+    }
+
+    result.isLeft must be (true)
+  }
+
   def queueVisibilityTimeout(queueUrl: String) = getQueueLongAttribute(queueUrl, visibilityTimeoutAttribute)
 
   def queueDelay(queueUrl: String) = getQueueLongAttribute(queueUrl, delaySecondsAttribute)
