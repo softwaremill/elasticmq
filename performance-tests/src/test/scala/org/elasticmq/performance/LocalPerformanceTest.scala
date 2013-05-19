@@ -1,16 +1,11 @@
 package org.elasticmq.performance
 
-import org.elasticmq.storage.StorageCommandExecutor
-import org.elasticmq.storage.inmemory.InMemoryStorage
-import org.elasticmq.storage.filelog.{FileLogConfiguration, FileLogConfigurator}
 import java.io.File
-import org.elasticmq.storage.squeryl.{DBConfiguration, SquerylStorage}
 import com.amazonaws.services.sqs.AmazonSQSClient
 import com.amazonaws.auth.BasicAWSCredentials
 import com.amazonaws.services.sqs.model.{CreateQueueRequest, DeleteMessageRequest, ReceiveMessageRequest, SendMessageRequest}
-import org.elasticmq.rest.sqs.{Stoppable, SQSRestServerBuilder}
+import org.elasticmq.rest.sqs.SQSRestServerBuilder
 import org.elasticmq.test._
-import org.elasticmq.{MillisVisibilityTimeout, QueueBuilder, Queue, NodeBuilder}
 import scala.collection.JavaConversions._
 
 object LocalPerformanceTest extends App {

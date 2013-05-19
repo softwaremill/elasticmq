@@ -144,7 +144,7 @@ object Constants {
 }
 
 object ParametersUtil {
-  class ParametersParser(parameters: Map[String, String]) {
+  implicit class ParametersParser(parameters: Map[String, String]) {
     def parseOptionalLong(name: String) = {
       val param = parameters.get(name)
       try {
@@ -154,8 +154,6 @@ object ParametersUtil {
       }
     }
   }
-
-  implicit def mapToParametersParser(parameters: Map[String, String]): ParametersParser = new ParametersParser(parameters)
 }
 
 object MD5Util {
@@ -212,8 +210,4 @@ trait SQSLimitsModule {
       throw new SQSException(exception)
     }
   }
-}
-
-trait Stoppable {
-  def stop()
 }
