@@ -259,6 +259,54 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
     }
   }
 
+  waitTest("should receive at most as much messages as given") {
+    // Given
+    val q1 = createQueueData("q1", MillisVisibilityTimeout(1L))
+    val msgs = (for { i <- 1 to 5 } yield createNewMessageData("xyz" + i, "123", MillisNextDelivery(100))).toList
+    val List(m1, m2, m3, m4, m5) = msgs
+
+    for {
+      Right(queueActor) <- queueManagerActor ? CreateQueue(q1)
+      _ <- queueActor ? SendMessage(m1)
+      _ <- queueActor ? SendMessage(m2)
+      _ <- queueActor ? SendMessage(m3)
+      _ <- queueActor ? SendMessage(m4)
+      _ <- queueActor ? SendMessage(m5)
+
+      // When
+      receiveResults1 <- queueActor ? ReceiveMessages(100L, DefaultVisibilityTimeout, 3)
+      receiveResults2 <- queueActor ? ReceiveMessages(100L, DefaultVisibilityTimeout, 2)
+    } yield {
+      // Then
+      receiveResults1.size should be (3)
+      receiveResults2.size should be (2)
+
+      (receiveResults1.map(_.id.id).toSet ++ receiveResults2.map(_.id.id).toSet) should be (msgs.map(_.id.get.id).toSet)
+    }
+  }
+
+  waitTest("should receive as much messages as possible") {
+    // Given
+    val q1 = createQueueData("q1", MillisVisibilityTimeout(1L))
+    val msgs = (for { i <- 1 to 3 } yield createNewMessageData("xyz" + i, "123", MillisNextDelivery(100))).toList
+    val List(m1, m2, m3) = msgs
+
+    for {
+      Right(queueActor) <- queueManagerActor ? CreateQueue(q1)
+      _ <- queueActor ? SendMessage(m1)
+      _ <- queueActor ? SendMessage(m2)
+      _ <- queueActor ? SendMessage(m3)
+
+      // When
+      receiveResults <- queueActor ? ReceiveMessages(100L, DefaultVisibilityTimeout, 5)
+    } yield {
+      // Then
+      receiveResults.size should be (3)
+
+      receiveResults.map(_.id.id).toSet should be (msgs.map(_.id.get.id).toSet)
+    }
+  }
+
   def withoutDeliveryReceipt(messageOpt: Option[MessageData]) = {
     messageOpt.map(_.copy(deliveryReceipt = None))
   }
