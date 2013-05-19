@@ -17,11 +17,7 @@
         </encoder>
     </appender>
 
-    <logger name="org.apache.http" level="INFO"/>
     <logger name="org.elasticmq" level="INFO"/>
-    <logger name="org.elasticmq.impl.scheduler.BackgroundVolatileTaskSchedulerModule" level="ERROR"/>
-    <logger name="com.mchange" level="INFO"/>
-    <logger name="org.jgroups" level="INFO"/>
 
     <root level="INFO">
         <appender-ref ref="STDOUT" />

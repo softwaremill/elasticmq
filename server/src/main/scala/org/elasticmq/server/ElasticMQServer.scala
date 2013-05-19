@@ -1,117 +1,37 @@
 package org.elasticmq.server
 
 import com.typesafe.scalalogging.slf4j.Logging
-import org.elasticmq.storage.inmemory.InMemoryStorage
-import org.elasticmq.storage.squeryl.SquerylStorage
-import org.elasticmq.storage.StorageCommandExecutor
-import org.elasticmq.storage.filelog.{FileLogConfiguration, FileLogConfigurator}
-import java.io.File
-import org.elasticmq.replication.ReplicatedStorageConfigurator
-import org.jgroups.JChannel
-import org.elasticmq.rest.sqs.{Stoppable, SQSRestServerBuilder}
-import org.elasticmq.NodeBuilder
-import org.jgroups.protocols.TCP
+import org.elasticmq.rest.sqs.{SQSRestServer, SQSRestServerBuilder}
+import akka.actor.{Props, ActorRef, ActorSystem}
+import org.elasticmq.actor.QueueManagerActor
+import org.elasticmq.util.NowProvider
 
 class ElasticMQServer(config: ElasticMQServerConfig) extends Logging {
-  def start() = {
-    val baseStorage = createStorage()
-    val withOptionalFileLog = optionallyWrapWithFileLog(baseStorage)
-    val withOptionalReplication = optionallyStartReplication(withOptionalFileLog)
+  val actorSystem = ActorSystem("elasticmq")
 
-    val restServerOpt = optionallyStartRestSqs(withOptionalReplication)
+  def start() = {
+    val queueManagerActor = createBase()
+    val restServerOpt = optionallyStartRestSqs(queueManagerActor)
 
     () => {
-      restServerOpt.map(_.stop())
-      withOptionalReplication.shutdown()
+      restServerOpt.map(_.stopAndGetFuture())
+      actorSystem.shutdown()
+      actorSystem.awaitTermination()
     }
   }
 
-  private def createStorage() = {
+  private def createBase(): ActorRef = {
     config.storage match {
-      case config.InMemoryStorage => new InMemoryStorage()
-      case config.DatabaseStorage(dbConfiguration) => new SquerylStorage(dbConfiguration)
-    }
-  }
-
-  private def optionallyWrapWithFileLog(storage: StorageCommandExecutor) = {
-    if (config.fileLog.enabled) {
-      new FileLogConfigurator(storage,
-        FileLogConfiguration(
-          replaceBaseDirIfNeeded(config.fileLog.storageDir),
-          config.fileLog.rotateLogsAfterCommandWritten)).start()
-    } else {
-      storage
-    }
-  }
-
-  private def replaceBaseDirIfNeeded(file: File): File =  {
-    val BaseDirToken = "$BASEDIR"
-    val path = file.getPath
-    if (path.contains(BaseDirToken)) {
-      val newPath = path.replace(BaseDirToken, Environment.BaseDir)
-      new File(newPath)
-    } else {
-      file
-    }
-  }
-
-  private def optionallyStartReplication(storage: StorageCommandExecutor) = {
-    if (config.replication.enabled) {
-      new ReplicatedStorageConfigurator(
-        storage,
-        config.nodeAddress,
-        config.replication.commandReplicationMode,
-        config.replication.numberOfNodes,
-        jchannelCreationFunction
-      ).start()
-    } else {
-      storage
-    }
-  }
-
-  private def jchannelCreationFunction: () => JChannel = {
-    config.replication.customJGroupsStackConfigurationFile match {
-      case Some(file) => {
-        () => new JChannel(file)
-      }
-      case None => {
-        config.replication.nodeDiscovery match {
-          case config.UDP => () => new JChannel()
-          case config.TCP(initialMembers, replicationBindAddress) => {
-            () => {
-              val hostAndPort = replicationBindAddress.split(":")
-
-              System.setProperty("jgroups.bind_addr", hostAndPort(0))
-              System.setProperty("jgroups.tcpping.initial_hosts", membersListInJGroupsFormat(initialMembers))
-
-              val channel = new JChannel("tcp.xml")
-
-              // Overwriting the default bind port
-              channel.getProtocolStack.findProtocol(classOf[TCP]).asInstanceOf[TCP].setBindPort(hostAndPort(1).toInt)
-
-              channel
-            }
-          }
-        }
+      case config.InMemoryStorage => {
+        actorSystem.actorOf(Props(new QueueManagerActor(new NowProvider())))
       }
     }
   }
 
-  private def membersListInJGroupsFormat(members: List[String]) = {
-    members.map(member => {
-      val parts = member.split(":")
-      if (parts.size == 1) {
-        member
-      } else {
-        parts(0) + "[" + parts(1) + "]"
-      }
-    }).mkString(",")
-  }
-
-  private def optionallyStartRestSqs(storage: StorageCommandExecutor): Option[Stoppable] = {
+  private def optionallyStartRestSqs(queueManagerActor: ActorRef): Option[SQSRestServer] = {
     if (config.restSqs.enabled) {
-      val client = NodeBuilder.withStorage(storage).nativeClient
-      val server = new SQSRestServerBuilder(client,
+
+      val server = new SQSRestServerBuilder(actorSystem, queueManagerActor,
         config.restSqs.bindHostname, config.restSqs.bindPort,
         config.nodeAddress, config.restSqs.sqsLimits).start()
 
