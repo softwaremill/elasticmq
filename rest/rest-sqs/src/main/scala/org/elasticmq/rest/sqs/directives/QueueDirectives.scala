@@ -2,10 +2,10 @@ package org.elasticmq.rest.sqs.directives
 
 import spray.routing._
 import akka.actor.ActorRef
-import org.elasticmq.data.QueueData
 import org.elasticmq.msg.{GetQueueData, LookupQueue}
 import org.elasticmq.rest.sqs.{ActorSystemModule, QueueManagerActorModule, SQSException}
 import org.elasticmq.actor.reply._
+import org.elasticmq.QueueData
 
 trait QueueDirectives {
   this: Directives with QueueManagerActorModule with ActorSystemModule with FutureDirectives =>

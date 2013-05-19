@@ -2,7 +2,6 @@ package org.elasticmq.msg
 
 import org.elasticmq.actor.reply.Replyable
 import org.elasticmq._
-import org.elasticmq.data.{NewMessageData, MessageDoesNotExist, QueueData, MessageData}
 import org.joda.time.Duration
 
 sealed trait QueueMsg[T] extends Replyable[T]

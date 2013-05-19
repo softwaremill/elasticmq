@@ -3,12 +3,22 @@ package org.elasticmq.actor.queue
 import scala.annotation.tailrec
 import org.elasticmq._
 import org.elasticmq.msg._
-import org.elasticmq.data.MessageDoesNotExist
-import org.elasticmq.data.NewMessageData
-import org.elasticmq.data.MessageData
+import NewMessageData
+import MessageData
 import org.joda.time.DateTime
 import com.typesafe.scalalogging.slf4j.Logging
 import org.elasticmq.util.NowProvider
+import org.elasticmq.OnDateTimeReceived
+import scala.Some
+import org.elasticmq.NewMessageData
+import org.elasticmq.msg.DeleteMessage
+import org.elasticmq.MessageId
+import org.elasticmq.msg.SendMessage
+import org.elasticmq.MessageData
+import org.elasticmq.MillisNextDelivery
+import org.elasticmq.msg.ReceiveMessage
+import org.elasticmq.msg.UpdateVisibilityTimeout
+import org.elasticmq.msg.LookupMessage
 
 trait QueueActorMessageOps extends Logging {
   this: QueueActorStorage =>

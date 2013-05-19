@@ -3,7 +3,6 @@ package org.elasticmq.actor.queue
 import scala.collection.mutable
 import org.joda.time.DateTime
 import org.elasticmq._
-import org.elasticmq.data.{QueueData, NewMessageData, MessageData}
 import org.elasticmq.MessageId
 import org.elasticmq.MillisNextDelivery
 import org.elasticmq.util.NowProvider

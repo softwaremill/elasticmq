@@ -5,11 +5,11 @@ import scala.reflect._
 import org.elasticmq.msg.DeleteQueue
 import org.elasticmq.msg.CreateQueue
 import akka.actor.{Props, ActorRef}
-import org.elasticmq.data.QueueAlreadyExists
 import com.typesafe.scalalogging.slf4j.Logging
 import org.elasticmq.actor.reply.ReplyingActor
 import org.elasticmq.util.NowProvider
 import org.elasticmq.actor.queue.QueueActor
+import org.elasticmq.QueueAlreadyExists
 
 class QueueManagerActor(nowProvider: NowProvider) extends ReplyingActor with Logging {
   type M[X] = QueueManagerMsg[X]

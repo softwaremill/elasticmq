@@ -5,7 +5,7 @@ import org.elasticmq.actor.reply.ReplyingActor
 import org.elasticmq.msg._
 import scala.reflect._
 import org.elasticmq.util.NowProvider
-import org.elasticmq.data.QueueData
+import org.elasticmq.QueueData
 
 class QueueActor(val nowProvider: NowProvider, val initialQueueData: QueueData)
   extends QueueActorStorage with QueueActorQueueOps with QueueActorMessageOps with ReplyingActor with Logging {

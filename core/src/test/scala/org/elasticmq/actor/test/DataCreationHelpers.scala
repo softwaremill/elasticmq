@@ -3,10 +3,10 @@ package org.elasticmq.actor.test
 import org.elasticmq._
 import org.joda.time.{DateTime, Duration}
 import org.elasticmq.MessageId
-import org.elasticmq.data.NewMessageData
-import org.elasticmq.data.MessageData
+import NewMessageData
+import MessageData
 import org.elasticmq.MillisNextDelivery
-import org.elasticmq.data.QueueData
+import QueueData
 
 trait DataCreationHelpers {
   def createQueueData(name: String, defaultVisibilityTimeout: MillisVisibilityTimeout) =

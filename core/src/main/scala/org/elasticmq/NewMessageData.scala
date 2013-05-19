@@ -1,6 +1,5 @@
-package org.elasticmq.data
+package org.elasticmq
 
-import org.elasticmq.{NextDelivery, MessageId}
 
 case class NewMessageData(id: Option[MessageId],
                           content: String,

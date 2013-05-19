@@ -7,8 +7,7 @@ import collection.mutable.ArrayBuffer
 import spray.routing.SimpleRoutingApp
 import akka.actor.{ActorRef, ActorSystem}
 import scala.xml.EntityRef
-import org.elasticmq.NodeAddress
-import org.elasticmq.data.QueueData
+import org.elasticmq.{QueueData, NodeAddress}
 import spray.can.server.ServerSettings
 import akka.util.Timeout
 import scala.concurrent.Future

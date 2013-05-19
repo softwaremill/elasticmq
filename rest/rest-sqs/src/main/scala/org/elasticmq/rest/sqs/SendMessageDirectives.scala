@@ -3,10 +3,9 @@ package org.elasticmq.rest.sqs
 import Constants._
 import MD5Util._
 import ParametersUtil._
-import org.elasticmq.{ImmediateNextDelivery, AfterMillisNextDelivery}
+import org.elasticmq.{NewMessageData, MessageData, ImmediateNextDelivery, AfterMillisNextDelivery}
 import annotation.tailrec
 import akka.actor.ActorRef
-import org.elasticmq.data.{MessageData, NewMessageData}
 import scala.concurrent.Future
 import org.elasticmq.msg.SendMessage
 import org.elasticmq.actor.reply._

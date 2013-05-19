@@ -1,4 +1,4 @@
-package org.elasticmq.data
+package org.elasticmq
 
 import org.elasticmq.MessageId
 

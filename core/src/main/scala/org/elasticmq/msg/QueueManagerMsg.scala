@@ -1,8 +1,8 @@
 package org.elasticmq.msg
 
-import org.elasticmq.data.{QueueAlreadyExists, QueueData}
 import akka.actor.ActorRef
 import org.elasticmq.actor.reply.Replyable
+import org.elasticmq.{QueueData, QueueAlreadyExists}
 
 sealed trait QueueManagerMsg[T] extends Replyable[T]
 

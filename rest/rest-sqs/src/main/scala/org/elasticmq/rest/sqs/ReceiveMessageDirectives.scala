@@ -4,7 +4,7 @@ import Constants._
 import org.elasticmq._
 import org.elasticmq.rest.sqs.MD5Util._
 import org.elasticmq.actor.reply._
-import org.elasticmq.data.MessageData
+import MessageData
 import akka.dataflow._
 import scala.concurrent.Future
 import org.elasticmq.msg.ReceiveMessage

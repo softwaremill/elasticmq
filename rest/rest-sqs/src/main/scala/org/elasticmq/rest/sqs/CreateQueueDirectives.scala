@@ -3,10 +3,9 @@ package org.elasticmq.rest.sqs
 import Constants._
 import ParametersUtil._
 import org.joda.time.{DateTime, Duration}
-import org.elasticmq.MillisVisibilityTimeout
+import org.elasticmq.{QueueData, MillisVisibilityTimeout}
 import org.elasticmq.msg.{GetQueueData, CreateQueue, LookupQueue}
 import org.elasticmq.actor.reply._
-import org.elasticmq.data.QueueData
 import akka.dataflow._
 import scala.concurrent.Future
 import org.elasticmq.rest.sqs.directives.ElasticMQDirectives
