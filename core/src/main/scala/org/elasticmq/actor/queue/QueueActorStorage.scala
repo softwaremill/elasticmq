@@ -1,4 +1,4 @@
-package org.elasticmq.actor
+package org.elasticmq.actor.queue
 
 import scala.collection.mutable
 import org.joda.time.DateTime

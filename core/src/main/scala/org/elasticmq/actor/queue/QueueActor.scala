@@ -1,4 +1,4 @@
-package org.elasticmq.actor
+package org.elasticmq.actor.queue
 
 import com.typesafe.scalalogging.slf4j.Logging
 import org.elasticmq.actor.reply.ReplyingActor

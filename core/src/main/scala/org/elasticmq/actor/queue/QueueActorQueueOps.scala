@@ -1,4 +1,4 @@
-package org.elasticmq.actor
+package org.elasticmq.actor.queue
 
 import org.elasticmq._
 import org.elasticmq.msg._

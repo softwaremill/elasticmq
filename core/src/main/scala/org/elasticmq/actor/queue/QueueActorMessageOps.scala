@@ -1,4 +1,4 @@
-package org.elasticmq.actor
+package org.elasticmq.actor.queue
 
 import scala.annotation.tailrec
 import org.elasticmq._
