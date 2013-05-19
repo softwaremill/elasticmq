@@ -4,17 +4,15 @@ import Constants._
 import org.elasticmq.rest.sqs.directives.ElasticMQDirectives
 
 trait SendMessageBatchDirectives { this: ElasticMQDirectives with SendMessageDirectives with BatchRequestsModule =>
+  val SendMessageBatchPrefix = "SendMessageBatchRequestEntry"
+
   val sendMessageBatch = {
     action("SendMessageBatch") {
       queueActorFromPath { queueActor =>
         anyParamsMap { parameters =>
-          var totalLength = 0
+          verifyMessagesNotTooLong(parameters)
 
-          val resultsFuture = batchRequest("SendMessageBatchRequestEntry", parameters) { (messageData, id) =>
-
-            // TODO !!!
-            totalLength += messageData(MessageBodyParameter).length
-
+          val resultsFuture = batchRequest(SendMessageBatchPrefix, parameters) { (messageData, id) =>
             doSendMessage(queueActor, messageData).map { case (message, digest) =>
               <SendMessageBatchResultEntry>
                 <Id>{id}</Id>
@@ -23,8 +21,6 @@ trait SendMessageBatchDirectives { this: ElasticMQDirectives with SendMessageDir
               </SendMessageBatchResultEntry>
             }
           }
-
-          verifyMessageNotTooLong(totalLength)
 
           resultsFuture.map { results =>
             respondWith {
@@ -41,5 +37,15 @@ trait SendMessageBatchDirectives { this: ElasticMQDirectives with SendMessageDir
         }
       }
     }
+  }
+
+  def verifyMessagesNotTooLong(parameters: Map[String, String]) {
+    val messageLengths = for {
+      parameterMap <-batchParametersMap(SendMessageBatchPrefix, parameters)
+    } yield {
+      parameterMap(MessageBodyParameter).length
+    }
+
+    verifyMessageNotTooLong(messageLengths.sum)
   }
 }
