@@ -5,15 +5,18 @@ import org.elasticmq.rest.sqs.directives._
 import shapeless.HNil
 import com.typesafe.scalalogging.slf4j.Logging
 import org.elasticmq.rest.sqs.{ActorSystemModule, QueueManagerActorModule}
+import spray.routing.directives.ParameterDirectives._
+import spray.routing.directives.MarshallingDirectives._
+import spray.http.FormData
 
 trait ElasticMQDirectives extends Directives
   with RespondDirectives
   with FutureDirectives
   with ExceptionDirectives
-  with AnyParamDirectives
   with QueueDirectives
   with QueueManagerActorModule
   with ActorSystemModule
+  with AnyParamDirectives2
   with Logging {
 
   def action(requiredActionName: String): Directive[HNil] = {

@@ -8,7 +8,7 @@ import org.elasticmq.rest.sqs.{ActorSystemModule, QueueManagerActorModule, SQSEx
 import org.elasticmq.actor.reply._
 
 trait QueueDirectives {
-  this: Directives with AnyParamDirectives with QueueManagerActorModule with ActorSystemModule with FutureDirectives =>
+  this: Directives with QueueManagerActorModule with ActorSystemModule with FutureDirectives =>
 
   def queueNameFromParams(body: String => Route) = {
     anyParam("QueueName") { queueName =>

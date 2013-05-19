@@ -3,7 +3,6 @@ package org.elasticmq.rest.sqs.directives
 import org.elasticmq.rest.sqs.SQSException
 import org.elasticmq.rest.sqs.Constants._
 import spray.routing.{Directives, ExceptionHandler}
-import org.elasticmq.ElasticMQException
 import spray.http.StatusCodes
 import com.typesafe.scalalogging.slf4j.Logging
 
