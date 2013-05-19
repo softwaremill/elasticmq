@@ -15,7 +15,7 @@ Summary
 -------
 
 ElasticMQ is a message queue system, offering Java, Scala and an [SQS](http://aws.amazon.com/sqs/)-compatible
-REST interface.
+REST (query) interface.
 
 ElasticMQ follows the semantics of SQS. Messages are received by polling the queue.
 When a message is received, it is blocked for a specified amount of time (the visibility timeout).
@@ -33,7 +33,7 @@ across server restarts/crashes. Alternatively, messages can be persisted in a da
 ElasticMQ supports data replication across a cluster, thus providing a replicated/guaranteed message queue.
 Each node in the cluster can use any storage implementation.
 
-As ElasticMQ implements a subset of the [SQS](http://aws.amazon.com/sqs/) REST interface, it is a great SQS alternative
+As ElasticMQ implements a subset of the [SQS](http://aws.amazon.com/sqs/) query (REST) interface, it is a great SQS alternative
 both for testing purposes (ElasticMQ is easily embeddable) and for creating systems which work both within and
 outside of the Amazon infrastructure.
 
