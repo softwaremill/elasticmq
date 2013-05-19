@@ -18,7 +18,6 @@ trait ExceptionDirectives extends Logging {
 
   val exceptionHandlerPF: ExceptionHandler.PF = {
     case e: SQSException => handleSQSException(e)
-    case e: ElasticMQException => handleSQSException(new SQSException(e.code, e.getMessage))
     case e: Exception => {
       logger.error("Exception when running routes", e)
       _.complete(StatusCodes.InternalServerError)

@@ -100,7 +100,7 @@ object ElasticMQBuild extends Build {
     "elasticmq-root",
     file("."),
     settings = buildSettings
-  ) aggregate(commonTest, api, core, rest, server)
+  ) aggregate(commonTest, core, rest, server)
 
   lazy val commonTest: Project = Project(
     "elasticmq-common-test",
@@ -110,17 +110,11 @@ object ElasticMQBuild extends Build {
       publishArtifact := false)
   )
 
-  lazy val api: Project = Project(
-    "elasticmq-api",
-    file("api"),
-    settings = buildSettings ++ Seq(libraryDependencies ++= Seq(jodaTime, jodaConvert))
-  ) dependsOn(commonTest % "test")
-
   lazy val core: Project = Project(
     "elasticmq-core",
     file("core"),
-    settings = buildSettings ++ Seq(libraryDependencies ++= Seq(akka2Actor, akka2Testkit) ++ common)
-  ) dependsOn(api, commonTest % "test")
+    settings = buildSettings ++ Seq(libraryDependencies ++= Seq(jodaTime, jodaConvert, akka2Actor, akka2Testkit) ++ common)
+  ) dependsOn(commonTest % "test")
 
   lazy val rest: Project = Project(
     "elasticmq-rest",
