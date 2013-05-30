@@ -14,6 +14,7 @@ trait ReceiveMessageDirectives { this: ElasticMQDirectives with AttributesModule
     val ApproximateReceiveCountAttribute = "ApproximateReceiveCount"
     val ApproximateFirstReceiveTimestampAttribute = "ApproximateFirstReceiveTimestamp"
     val MaxNumberOfMessagesAttribute = "MaxNumberOfMessages"
+    val WaitTimeSecondsAttribute = "WaitTimeSeconds"
 
     val AllAttributeNames = SentTimestampAttribute :: ApproximateReceiveCountAttribute ::
       ApproximateFirstReceiveTimestampAttribute :: Nil
@@ -24,8 +25,8 @@ trait ReceiveMessageDirectives { this: ElasticMQDirectives with AttributesModule
 
     action("ReceiveMessage") {
       queueActorFromPath { queueActor =>
-        anyParam(VisibilityTimeoutParameter.as[Int]?, MaxNumberOfMessagesAttribute.as[Int]?) {
-          (visibilityTimeoutParameterOpt, maxNumberOfMessagesAttributeOpt) =>
+        anyParam(VisibilityTimeoutParameter.as[Int]?, MaxNumberOfMessagesAttribute.as[Int]?, WaitTimeSecondsAttribute.as[Long]?) {
+          (visibilityTimeoutParameterOpt, maxNumberOfMessagesAttributeOpt, waitTimeSecondsAttributeOpt) =>
 
           anyParamsMap { parameters =>
             val visibilityTimeoutFromParameters = visibilityTimeoutParameterOpt
@@ -34,12 +35,15 @@ trait ReceiveMessageDirectives { this: ElasticMQDirectives with AttributesModule
 
             val maxNumberOfMessagesFromParameters = maxNumberOfMessagesAttributeOpt.getOrElse(1)
 
+            val waitTimeSecondsFromParameters = Duration.standardSeconds(waitTimeSecondsAttributeOpt.getOrElse(0L))
+
             ifStrictLimits(maxNumberOfMessagesFromParameters < 1 || maxNumberOfMessagesFromParameters > 10) {
               "ReadCountOutOfRange"
             }
 
             val msgsFuture = queueActor ? ReceiveMessages(System.currentTimeMillis(),
-              visibilityTimeoutFromParameters, maxNumberOfMessagesFromParameters, Duration.ZERO)
+              visibilityTimeoutFromParameters, maxNumberOfMessagesFromParameters,
+              waitTimeSecondsFromParameters)
 
             lazy val attributeNames = attributeNamesReader.read(parameters, AllAttributeNames)
 
