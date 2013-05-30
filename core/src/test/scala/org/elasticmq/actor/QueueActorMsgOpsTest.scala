@@ -307,6 +307,68 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
     }
   }
 
+  waitTest("should wait for messages to be received for the specified period of time") {
+    // Given
+    val q1 = createQueueData("q1", MillisVisibilityTimeout(1L))
+    val start = System.currentTimeMillis()
+
+    for {
+      Right(queueActor) <- queueManagerActor ? CreateQueue(q1)
+
+      // When
+      receiveResults <- queueActor ? ReceiveMessages(100L, DefaultVisibilityTimeout, 5, Duration.millis(500L))
+    } yield {
+      // Then
+      val end = System.currentTimeMillis()
+      (end - start) should be >= (500L)
+
+      receiveResults should be (Nil)
+    }
+  }
+
+  waitTest("should wait until messages are available") {
+    // Given
+    val q1 = createQueueData("q1", MillisVisibilityTimeout(1L))
+    val msg = createNewMessageData("xyz", "123", MillisNextDelivery(100))
+
+    for {
+      Right(queueActor) <- queueManagerActor ? CreateQueue(q1)
+
+      // When
+      receiveResultsFuture = queueActor ? ReceiveMessages(100L, DefaultVisibilityTimeout, 5, Duration.millis(1000L))
+      _ <- { Thread.sleep(500); queueActor ? SendMessage(msg) }
+
+      receiveResults <- receiveResultsFuture
+    } yield {
+      // Then
+      receiveResults.size should be (1)
+      receiveResults.map(_.id.id) should be (List(msg.id))
+    }
+  }
+
+  waitTest("should wait until messages are available, and receive the message only once") {
+    // Given
+    val q1 = createQueueData("q1", MillisVisibilityTimeout(1L))
+    val msg = createNewMessageData("xyz", "123", MillisNextDelivery(100))
+
+    for {
+      Right(queueActor) <- queueManagerActor ? CreateQueue(q1)
+
+      // When
+      receiveResults1Future = queueActor ? ReceiveMessages(100L, DefaultVisibilityTimeout, 5, Duration.millis(1000L))
+      receiveResults2Future = queueActor ? ReceiveMessages(100L, DefaultVisibilityTimeout, 5, Duration.millis(1000L))
+
+      _ <- { Thread.sleep(500); queueActor ? SendMessage(msg) }
+
+      receiveResults1 <- receiveResults1Future
+      receiveResults2 <- receiveResults2Future
+    } yield {
+      // Then
+      Set(receiveResults1.size, receiveResults2.size) should be (Set(0, 1))
+      (receiveResults1 ++ receiveResults2).map(_.id.id) should be (List(msg.id))
+    }
+  }
+
   def withoutDeliveryReceipt(messageOpt: Option[MessageData]) = {
     messageOpt.map(_.copy(deliveryReceipt = None))
   }
