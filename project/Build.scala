@@ -146,7 +146,7 @@ object ElasticMQBuild extends Build {
     "elasticmq-performance-tests",
     file("performance-tests"),
     settings = buildSettings ++ Seq(
-      libraryDependencies ++= Seq(amazonJavaSdk, logback) ++ common,
+      libraryDependencies ++= Seq(amazonJavaSdk, jclOverSlf4j, logback) ++ common,
       publishArtifact := false
     )
   ) dependsOn(core, restSqs, commonTest % "test")

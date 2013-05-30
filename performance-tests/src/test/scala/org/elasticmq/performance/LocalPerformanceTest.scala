@@ -34,7 +34,7 @@ object LocalPerformanceTest extends App {
     //testWithMq(new ActorBasedMQ, iterations, msgsInIteration, "in-memory", 1)
     //testWithMq(new ActorBasedMQ, iterations, msgsInIteration, "in-memory", 2)
     //testWithMq(new ActorBasedMQ, iterations, msgsInIteration, "in-memory", 3)
-    //testWithMq(new RestSQSMQ, iterations, msgsInIteration,  "rest-sqs + in-memory", 1)
+    testWithMq(new RestSQSMQ, iterations, msgsInIteration,  "rest-sqs + in-memory", 1)
   }
 
   def testWithMq(mq: MQ, iterations: Int, msgsInIteration: Int, name: String, threadCount: Int) {
