@@ -140,6 +140,7 @@ object Constants {
   val SqsDefaultVersion = "2012-11-05"
   val ReceiptHandleParameter = "ReceiptHandle"
   val VisibilityTimeoutParameter = "VisibilityTimeout"
+  val DelaySecondsAttribute = "DelaySeconds"
   val IdSubParameter = "Id"
 }
 

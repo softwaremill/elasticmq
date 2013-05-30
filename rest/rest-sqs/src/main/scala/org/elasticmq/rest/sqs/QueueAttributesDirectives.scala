@@ -11,10 +11,7 @@ import org.elasticmq.rest.sqs.directives.ElasticMQDirectives
 
 trait QueueAttributesDirectives { this: ElasticMQDirectives with AttributesModule =>
   object QueueWriteableAttributeNames {
-    val VisibilityTimeoutAttribute = "VisibilityTimeout"
-    val DelaySecondsAttribute = "DelaySeconds"
-
-    val AllWriteableAttributeNames = VisibilityTimeoutAttribute :: DelaySecondsAttribute :: Nil
+    val AllWriteableAttributeNames = VisibilityTimeoutParameter :: DelaySecondsAttribute :: Nil
   }
 
   object QueueReadableAttributeNames {
@@ -45,7 +42,7 @@ trait QueueAttributesDirectives { this: ElasticMQDirectives with AttributesModul
             import AttributeValuesCalculator.Rule
 
             attributeValuesCalculator.calculate(attributeNames,
-              Rule(VisibilityTimeoutAttribute, () => Future.successful(queueData.defaultVisibilityTimeout.seconds.toString)),
+              Rule(VisibilityTimeoutParameter, () => Future.successful(queueData.defaultVisibilityTimeout.seconds.toString)),
               Rule(DelaySecondsAttribute, () => Future.successful(queueData.delay.getStandardSeconds.toString)),
               Rule(ApproximateNumberOfMessagesAttribute, () => stats.map(_.approximateNumberOfVisibleMessages.toString)),
               Rule(ApproximateNumberOfMessagesNotVisibleAttribute, () => stats.map(_.approximateNumberOfInvisibleMessages.toString)),
@@ -86,10 +83,10 @@ trait QueueAttributesDirectives { this: ElasticMQDirectives with AttributesModul
 
           val result = attributes.map({ case (attributeName, attributeValue) =>
             attributeName match {
-              case QueueWriteableAttributeNames.VisibilityTimeoutAttribute => {
+              case VisibilityTimeoutParameter => {
                 queueActor ? UpdateQueueDefaultVisibilityTimeout(MillisVisibilityTimeout.fromSeconds(attributeValue.toLong))
               }
-              case QueueWriteableAttributeNames.DelaySecondsAttribute => {
+              case DelaySecondsAttribute => {
                 queueActor ? UpdateQueueDelay(Duration.standardSeconds(attributeValue.toLong))
               }
               case _ => Future(throw new SQSException("InvalidAttributeName"))
