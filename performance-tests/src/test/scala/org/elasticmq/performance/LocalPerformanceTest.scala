@@ -14,7 +14,7 @@ import org.elasticmq.msg._
 import org.elasticmq._
 import scala.concurrent.Await
 import scala.concurrent.duration._
-import org.joda.time.DateTime
+import org.joda.time.{Duration, DateTime}
 import org.elasticmq.msg.ReceiveMessages
 import org.elasticmq.QueueData
 import org.elasticmq.NewMessageData
@@ -166,7 +166,7 @@ object LocalPerformanceTest extends App {
     }
 
     def receiveMessage() = {
-      val messages = Await.result(currentQueue ? ReceiveMessages(System.currentTimeMillis(), DefaultVisibilityTimeout, 1), 10.seconds)
+      val messages = Await.result(currentQueue ? ReceiveMessages(System.currentTimeMillis(), DefaultVisibilityTimeout, 1, Duration.ZERO), 10.seconds)
       val message = messages.head
       Await.result(currentQueue ? DeleteMessage(message.deliveryReceipt.get), 10.seconds)
       message.content

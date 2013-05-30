@@ -6,6 +6,7 @@ import org.elasticmq.rest.sqs.MD5Util._
 import org.elasticmq.actor.reply._
 import org.elasticmq.msg.ReceiveMessages
 import org.elasticmq.rest.sqs.directives.ElasticMQDirectives
+import org.joda.time.Duration
 
 trait ReceiveMessageDirectives { this: ElasticMQDirectives with AttributesModule with SQSLimitsModule =>
   object MessageReadeableAttributeNames {
@@ -38,7 +39,7 @@ trait ReceiveMessageDirectives { this: ElasticMQDirectives with AttributesModule
             }
 
             val msgsFuture = queueActor ? ReceiveMessages(System.currentTimeMillis(),
-              visibilityTimeoutFromParameters, maxNumberOfMessagesFromParameters)
+              visibilityTimeoutFromParameters, maxNumberOfMessagesFromParameters, Duration.ZERO)
 
             lazy val attributeNames = attributeNamesReader.read(parameters, AllAttributeNames)
 

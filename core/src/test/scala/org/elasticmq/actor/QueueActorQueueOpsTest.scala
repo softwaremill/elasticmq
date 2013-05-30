@@ -77,13 +77,13 @@ class QueueActorQueueOpsTest extends ActorTest with QueueManagerForEachTest with
 
       // Invisible messages - received
       _ <- queueActor ? SendMessage(m1)
-      _ <- queueActor ? ReceiveMessages(123L, DefaultVisibilityTimeout, 1)
+      _ <- queueActor ? ReceiveMessages(123L, DefaultVisibilityTimeout, 1, Duration.ZERO)
       _ <- queueActor ? SendMessage(m2)
-      _ <- queueActor ? ReceiveMessages(123L, DefaultVisibilityTimeout, 1)
+      _ <- queueActor ? ReceiveMessages(123L, DefaultVisibilityTimeout, 1, Duration.ZERO)
       _ <- queueActor ? SendMessage(m3)
-      _ <- queueActor ? ReceiveMessages(123L, DefaultVisibilityTimeout, 1)
+      _ <- queueActor ? ReceiveMessages(123L, DefaultVisibilityTimeout, 1, Duration.ZERO)
       _ <- queueActor ? SendMessage(m4)
-      _ <- queueActor ? ReceiveMessages(123L, DefaultVisibilityTimeout, 1)
+      _ <- queueActor ? ReceiveMessages(123L, DefaultVisibilityTimeout, 1, Duration.ZERO)
 
       // Visible messages
       _ <- queueActor ? SendMessage(m5)

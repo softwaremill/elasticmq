@@ -4,7 +4,7 @@ import org.elasticmq.actor.reply._
 import org.elasticmq._
 import org.elasticmq.msg._
 import org.elasticmq.actor.test.{DataCreationHelpers, QueueManagerForEachTest, ActorTest}
-import org.joda.time.DateTime
+import org.joda.time.{Duration, DateTime}
 
 class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with DataCreationHelpers {
 
@@ -70,7 +70,7 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
       _ <- queueActor1 ? SendMessage(createNewMessageData("xyz", "123", MillisNextDelivery(123L)))
 
       // When
-      lookupResult <- queueActor2 ? ReceiveMessages(1000L, DefaultVisibilityTimeout, 1)
+      lookupResult <- queueActor2 ? ReceiveMessages(1000L, DefaultVisibilityTimeout, 1, Duration.ZERO)
     } yield {
       // Then
       lookupResult should be (Nil)
@@ -89,7 +89,7 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
       _ <- queueActor1 ? SendMessage(m)
 
       // When
-      lookupResult <- queueActor1 ? ReceiveMessages(200L, DefaultVisibilityTimeout, 1)
+      lookupResult <- queueActor1 ? ReceiveMessages(200L, DefaultVisibilityTimeout, 1, Duration.ZERO)
     } yield {
       // Then
       withoutDeliveryReceipt(lookupResult.headOption).map(createNewMessageData(_)) should be (Some(m.copy(nextDelivery = MillisNextDelivery(101L))))
@@ -106,7 +106,7 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
       _ <- queueActor ? SendMessage(m)
 
       // When
-      _ <- queueActor ? ReceiveMessages(200L, DefaultVisibilityTimeout, 1)
+      _ <- queueActor ? ReceiveMessages(200L, DefaultVisibilityTimeout, 1, Duration.ZERO)
       lookupResult <- queueActor ? LookupMessage(MessageId("xyz"))
     } yield {
       // Then
@@ -125,7 +125,7 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
 
       // When
       lookupBeforeReceiving <- queueActor ? LookupMessage(MessageId("xyz"))
-      received <- queueActor ? ReceiveMessages(200L, DefaultVisibilityTimeout, 1)
+      received <- queueActor ? ReceiveMessages(200L, DefaultVisibilityTimeout, 1, Duration.ZERO)
       lookupAfterReceiving <- queueActor ? LookupMessage(MessageId("xyz"))
     } yield {
       // Then
@@ -150,8 +150,8 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
       _ <- queueActor ? SendMessage(createNewMessageData("xyz", "123", MillisNextDelivery(100L)))
 
       // When
-      received1 <- queueActor ? ReceiveMessages(200L, DefaultVisibilityTimeout, 1)
-      received2 <- queueActor ? ReceiveMessages(400L, DefaultVisibilityTimeout, 1)
+      received1 <- queueActor ? ReceiveMessages(200L, DefaultVisibilityTimeout, 1, Duration.ZERO)
+      received2 <- queueActor ? ReceiveMessages(400L, DefaultVisibilityTimeout, 1, Duration.ZERO)
     } yield {
       // Then
       val received1Receipt = received1.flatMap(_.deliveryReceipt)
@@ -173,7 +173,7 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
       _ <- queueActor ? SendMessage(createNewMessageData("xyz", "123", MillisNextDelivery(123L)))
 
       // When
-      receiveResult <- queueActor ? ReceiveMessages(100L, DefaultVisibilityTimeout, 1)
+      receiveResult <- queueActor ? ReceiveMessages(100L, DefaultVisibilityTimeout, 1, Duration.ZERO)
     } yield {
       // Then
       receiveResult should be (Nil)
@@ -211,7 +211,7 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
 
       // When
       _ <- queueActor ? UpdateVisibilityTimeout(m2.id.get, MillisVisibilityTimeout(10L))
-      receiveResult <- queueActor ? ReceiveMessages(120L, DefaultVisibilityTimeout, 1)
+      receiveResult <- queueActor ? ReceiveMessages(120L, DefaultVisibilityTimeout, 1, Duration.ZERO)
     } yield {
       // Then
       // This should find the first msg, as it has the visibility timeout decreased.
@@ -227,7 +227,7 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
     for {
       Right(queueActor) <- queueManagerActor ? CreateQueue(q1)
       _ <- queueActor ? SendMessage(m1)
-      List(m1data) <- queueActor ? ReceiveMessages(200L, DefaultVisibilityTimeout, 1)
+      List(m1data) <- queueActor ? ReceiveMessages(200L, DefaultVisibilityTimeout, 1, Duration.ZERO)
 
       // When
       _ <- queueActor ? DeleteMessage(m1data.deliveryReceipt.get)
@@ -249,8 +249,8 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
 
       // When
       Some(lookupResult) <- queueActor ? LookupMessage(m1.id.get)
-      List(receiveResult1) <- queueActor ? ReceiveMessages(100L, DefaultVisibilityTimeout, 1)
-      List(receiveResult2) <- queueActor ? ReceiveMessages(200L, DefaultVisibilityTimeout, 1)
+      List(receiveResult1) <- queueActor ? ReceiveMessages(100L, DefaultVisibilityTimeout, 1, Duration.ZERO)
+      List(receiveResult2) <- queueActor ? ReceiveMessages(200L, DefaultVisibilityTimeout, 1, Duration.ZERO)
     } yield {
       // Then
       lookupResult.statistics should be (MessageStatistics(NeverReceived, 0))
@@ -274,8 +274,8 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
       _ <- queueActor ? SendMessage(m5)
 
       // When
-      receiveResults1 <- queueActor ? ReceiveMessages(100L, DefaultVisibilityTimeout, 3)
-      receiveResults2 <- queueActor ? ReceiveMessages(100L, DefaultVisibilityTimeout, 2)
+      receiveResults1 <- queueActor ? ReceiveMessages(100L, DefaultVisibilityTimeout, 3, Duration.ZERO)
+      receiveResults2 <- queueActor ? ReceiveMessages(100L, DefaultVisibilityTimeout, 2, Duration.ZERO)
     } yield {
       // Then
       receiveResults1.size should be (3)
@@ -298,7 +298,7 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
       _ <- queueActor ? SendMessage(m3)
 
       // When
-      receiveResults <- queueActor ? ReceiveMessages(100L, DefaultVisibilityTimeout, 5)
+      receiveResults <- queueActor ? ReceiveMessages(100L, DefaultVisibilityTimeout, 5, Duration.ZERO)
     } yield {
       // Then
       receiveResults.size should be (3)
