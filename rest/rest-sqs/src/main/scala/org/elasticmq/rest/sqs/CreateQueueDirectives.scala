@@ -28,7 +28,7 @@ trait CreateQueueDirectives { this: ElasticMQDirectives with QueueURLModule with
                 .getOrElse(DefaultDelay))
 
             val newQueueData = QueueData(queueName, MillisVisibilityTimeout.fromSeconds(secondsVisibilityTimeout),
-              Duration.standardSeconds(secondsDelay), new DateTime(), new DateTime())
+              Duration.standardSeconds(secondsDelay), Duration.ZERO, new DateTime(), new DateTime())
 
             flow {
               if (!queueName.matches("[\\p{Alnum}_-]*")) {

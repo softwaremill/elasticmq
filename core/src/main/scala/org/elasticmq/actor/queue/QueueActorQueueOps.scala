@@ -17,6 +17,10 @@ trait QueueActorQueueOps extends Logging {
       logger.info(s"Updating delay of ${queueData.name} to $newDelay")
       queueData = queueData.copy(delay = newDelay)
     }
+    case UpdateQueueReceiveMessageWait(newReceiveMessageWait) => {
+      logger.info(s"Updating receive message wait of ${queueData.name} to $newReceiveMessageWait")
+      queueData = queueData.copy(receiveMessageWait = newReceiveMessageWait)
+    }
 
     case GetQueueStatistics(deliveryTime) => getQueueStatistics(deliveryTime)
   }

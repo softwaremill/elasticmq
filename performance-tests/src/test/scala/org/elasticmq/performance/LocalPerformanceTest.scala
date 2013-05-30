@@ -156,7 +156,7 @@ object LocalPerformanceTest extends App {
       val queueManagerActor = super.start()
 
       currentQueue = Await.result(queueManagerActor ? CreateQueue(QueueData("testQueue", MillisVisibilityTimeout(1000),
-       org.joda.time.Duration.ZERO, new DateTime(), new DateTime())), 10.seconds).right.get
+       org.joda.time.Duration.ZERO, org.joda.time.Duration.ZERO, new DateTime(), new DateTime())), 10.seconds).right.get
 
       queueManagerActor
     }
