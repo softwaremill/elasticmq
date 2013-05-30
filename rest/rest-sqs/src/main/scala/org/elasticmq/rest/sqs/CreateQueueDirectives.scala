@@ -71,7 +71,7 @@ trait CreateQueueDirectives { this: ElasticMQDirectives with QueueURLModule with
         case None => {
           val createResult = (queueManagerActor ? CreateQueue(newQueueData)).apply()
           createResult match {
-            case Left(_) => throw new SQSException("Concurrent access")
+            case Left(e) => throw new SQSException("Concurrent access: " + e.message)
             case Right(_) => newQueueData
           }
         }
