@@ -22,6 +22,7 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
   val visibilityTimeoutAttribute = "VisibilityTimeout"
   val defaultVisibilityTimeoutAttribute = "VisibilityTimeout"
   val delaySecondsAttribute = "DelaySeconds"
+  val receiveMessageWaitTimeSecondsAttribute = "ReceiveMessageWaitTimeSeconds"
 
   var systemStrict: ActorSystem = _
   var systemRelaxed: ActorSystem = _
@@ -420,6 +421,7 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
     attributes must contain key ("LastModifiedTimestamp")
     attributes must contain key (visibilityTimeoutAttribute)
     attributes must contain key (delaySecondsAttribute)
+    attributes must contain key (receiveMessageWaitTimeSecondsAttribute)
   }
 
   test("should read single queue attribute") {
@@ -534,6 +536,25 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
 
     // Then
     queueDelay(queueUrl) must be (10)
+  }
+
+  test("should get queue receive message wait") {
+    // When
+    val queueUrl = client.createQueue(new CreateQueueRequest("testQueue1")).getQueueUrl
+
+    // Then
+    queueReceiveMessageWaitTimeSeconds(queueUrl) must be (0)
+  }
+
+  test("should set queue receive message wait") {
+    // Given
+    val queueUrl = client.createQueue(new CreateQueueRequest("testQueue1")).getQueueUrl
+
+    // When
+    client.setQueueAttributes(new SetQueueAttributesRequest(queueUrl, Map(receiveMessageWaitTimeSecondsAttribute -> "13")))
+
+    // Then
+    queueReceiveMessageWaitTimeSeconds(queueUrl) must be (13)
   }
 
   // Errors
@@ -679,6 +700,8 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
   def queueVisibilityTimeout(queueUrl: String) = getQueueLongAttribute(queueUrl, visibilityTimeoutAttribute)
 
   def queueDelay(queueUrl: String) = getQueueLongAttribute(queueUrl, delaySecondsAttribute)
+
+  def queueReceiveMessageWaitTimeSeconds(queueUrl: String) = getQueueLongAttribute(queueUrl, receiveMessageWaitTimeSecondsAttribute)
 
   def getQueueLongAttribute(queueUrl: String, attributeName: String) = {
     client

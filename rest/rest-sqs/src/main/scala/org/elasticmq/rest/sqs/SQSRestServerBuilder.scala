@@ -141,6 +141,7 @@ object Constants {
   val ReceiptHandleParameter = "ReceiptHandle"
   val VisibilityTimeoutParameter = "VisibilityTimeout"
   val DelaySecondsAttribute = "DelaySeconds"
+  val ReceiveMessageWaitTimeSecondsAttribute = "ReceiveMessageWaitTimeSeconds"
   val IdSubParameter = "Id"
 }
 

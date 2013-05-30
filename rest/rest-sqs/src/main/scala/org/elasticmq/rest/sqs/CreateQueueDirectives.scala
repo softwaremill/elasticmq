@@ -13,6 +13,7 @@ import org.elasticmq.rest.sqs.directives.ElasticMQDirectives
 trait CreateQueueDirectives { this: ElasticMQDirectives with QueueURLModule with AttributesModule with SQSLimitsModule =>
   val DefaultVisibilityTimeout = 30L
   val DefaultDelay = 0L
+  val DefaultReceiveMessageWaitTimeSecondsAttribute = 0L
 
   val createQueue = {
     action("CreateQueue") {
@@ -27,8 +28,12 @@ trait CreateQueueDirectives { this: ElasticMQDirectives with QueueURLModule with
             val secondsDelay = (attributes.parseOptionalLong(DelaySecondsAttribute)
                 .getOrElse(DefaultDelay))
 
+            val secondsReceiveMessageWaitTime = (attributes.parseOptionalLong(ReceiveMessageWaitTimeSecondsAttribute)
+                .getOrElse(DefaultReceiveMessageWaitTimeSecondsAttribute))
+
             val newQueueData = QueueData(queueName, MillisVisibilityTimeout.fromSeconds(secondsVisibilityTimeout),
-              Duration.standardSeconds(secondsDelay), Duration.ZERO, new DateTime(), new DateTime())
+              Duration.standardSeconds(secondsDelay), Duration.standardSeconds(secondsReceiveMessageWaitTime),
+              new DateTime(), new DateTime())
 
             flow {
               if (!queueName.matches("[\\p{Alnum}_-]*")) {

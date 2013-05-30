@@ -4,14 +4,15 @@ import org.elasticmq.MillisVisibilityTimeout
 
 import Constants._
 import org.joda.time.Duration
-import org.elasticmq.msg.{UpdateQueueDelay, UpdateQueueDefaultVisibilityTimeout, GetQueueStatistics}
+import org.elasticmq.msg.{UpdateQueueReceiveMessageWait, UpdateQueueDelay, UpdateQueueDefaultVisibilityTimeout, GetQueueStatistics}
 import org.elasticmq.actor.reply._
 import scala.concurrent.Future
 import org.elasticmq.rest.sqs.directives.ElasticMQDirectives
 
 trait QueueAttributesDirectives { this: ElasticMQDirectives with AttributesModule =>
   object QueueWriteableAttributeNames {
-    val AllWriteableAttributeNames = VisibilityTimeoutParameter :: DelaySecondsAttribute :: Nil
+    val AllWriteableAttributeNames = VisibilityTimeoutParameter :: DelaySecondsAttribute ::
+      ReceiveMessageWaitTimeSecondsAttribute :: Nil
   }
 
   object QueueReadableAttributeNames {
@@ -33,7 +34,6 @@ trait QueueAttributesDirectives { this: ElasticMQDirectives with AttributesModul
     action("GetQueueAttributes") {
       queueActorAndDataFromPath { (queueActor, queueData) =>
         anyParamsMap { parameters =>
-          import QueueWriteableAttributeNames._
           import QueueReadableAttributeNames._
 
           def calculateAttributeValues(attributeNames: List[String]): List[(String, Future[String])] = {
@@ -48,7 +48,8 @@ trait QueueAttributesDirectives { this: ElasticMQDirectives with AttributesModul
               Rule(ApproximateNumberOfMessagesNotVisibleAttribute, () => stats.map(_.approximateNumberOfInvisibleMessages.toString)),
               Rule(ApproximateNumberOfMessagesDelayedAttribute, () => stats.map(_.approximateNumberOfMessagesDelayed.toString)),
               Rule(CreatedTimestampAttribute, () => Future.successful((queueData.created.getMillis/1000L).toString)),
-              Rule(LastModifiedTimestampAttribute, () => Future.successful((queueData.lastModified.getMillis/1000L).toString)))
+              Rule(LastModifiedTimestampAttribute, () => Future.successful((queueData.lastModified.getMillis/1000L).toString)),
+              Rule(ReceiveMessageWaitTimeSecondsAttribute, () => Future.successful(queueData.receiveMessageWait.getStandardSeconds.toString)))
           }
 
           def responseXml(attributes: List[(String, String)]) = {
@@ -88,6 +89,9 @@ trait QueueAttributesDirectives { this: ElasticMQDirectives with AttributesModul
               }
               case DelaySecondsAttribute => {
                 queueActor ? UpdateQueueDelay(Duration.standardSeconds(attributeValue.toLong))
+              }
+              case ReceiveMessageWaitTimeSecondsAttribute => {
+                queueActor ? UpdateQueueReceiveMessageWait(Duration.standardSeconds(attributeValue.toLong))
               }
               case _ => Future(throw new SQSException("InvalidAttributeName"))
             }
