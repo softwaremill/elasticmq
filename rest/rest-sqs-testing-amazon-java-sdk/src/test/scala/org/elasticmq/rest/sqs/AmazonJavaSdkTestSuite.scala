@@ -538,6 +538,21 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
     queueDelay(queueUrl) must be (10)
   }
 
+  test("should create queue with message wait") {
+    // Given
+    val queueUrl = client.createQueue(new CreateQueueRequest("testQueue1").withAttributes(Map(receiveMessageWaitTimeSecondsAttribute -> "1")))
+      .getQueueUrl
+
+    // When
+    val start = System.currentTimeMillis()
+    val m1 = receiveSingleMessage(queueUrl)
+    val end = System.currentTimeMillis()
+
+    // Then
+    m1 must be (None)
+    (end - start) must be >= (1000L)
+  }
+
   test("should get queue receive message wait") {
     // When
     val queueUrl = client.createQueue(new CreateQueueRequest("testQueue1")).getQueueUrl
@@ -555,6 +570,28 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
 
     // Then
     queueReceiveMessageWaitTimeSeconds(queueUrl) must be (13)
+  }
+
+  test("should receive message sent later when waiting for messages") {
+    // Given
+    val queueUrl = client.createQueue(new CreateQueueRequest("testQueue1")).getQueueUrl
+
+    val t = new Thread() {
+      override def run() {
+        Thread.sleep(500L)
+        client.sendMessage(new SendMessageRequest(queueUrl, "Message 1"))
+      }
+    }
+    t.start()
+
+    // When
+    val start = System.currentTimeMillis()
+    val messages = client.receiveMessage(new ReceiveMessageRequest(queueUrl).withWaitTimeSeconds(1)).getMessages
+    val end = System.currentTimeMillis()
+
+    // Then
+    (end - start) must be >= (500L)
+    messages.size must be (1)
   }
 
   // Errors
