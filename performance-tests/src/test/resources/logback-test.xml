@@ -5,8 +5,6 @@
         </encoder>
     </appender>
 
-    <logger name="org.elasticmq.impl.scheduler.BackgroundVolatileTaskSchedulerModule" level="ERROR"/>
-
     <root level="WARN">
         <appender-ref ref="STDOUT" />
     </root>
