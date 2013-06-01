@@ -166,7 +166,7 @@ object LocalPerformanceTest extends App {
     }
 
     def receiveMessage() = {
-      val messages = Await.result(currentQueue ? ReceiveMessages(System.currentTimeMillis(), DefaultVisibilityTimeout, 1, Duration.ZERO), 10.seconds)
+      val messages = Await.result(currentQueue ? ReceiveMessages(System.currentTimeMillis(), DefaultVisibilityTimeout, 1, None), 10.seconds)
       val message = messages.head
       Await.result(currentQueue ? DeleteMessage(message.deliveryReceipt.get), 10.seconds)
       message.content

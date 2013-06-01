@@ -28,8 +28,9 @@ trait QueueActorWaitForMessagesOps extends ReplyingActor with QueueActorMessageO
       tryReply()
       result
     }
-    case rm@ReceiveMessages(deliveryTime, visibilityTimeout, count, waitForMessages) => {
+    case rm@ReceiveMessages(deliveryTime, visibilityTimeout, count, waitForMessagesOpt) => {
       val result = super.receiveAndReplyMessageMsg(msg)
+      val waitForMessages = waitForMessagesOpt.getOrElse(queueData.receiveMessageWait)
       if (result == ReplyWith(Nil) && waitForMessages.getMillis > 0) {
         val seq = assignSequenceFor(rm)
         logger.debug(s"Awaiting messages: start for sequence $seq.")

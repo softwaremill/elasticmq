@@ -35,7 +35,7 @@ trait ReceiveMessageDirectives { this: ElasticMQDirectives with AttributesModule
 
             val maxNumberOfMessagesFromParameters = maxNumberOfMessagesAttributeOpt.getOrElse(1)
 
-            val waitTimeSecondsFromParameters = Duration.standardSeconds(waitTimeSecondsAttributeOpt.getOrElse(0L))
+            val waitTimeSecondsFromParameters = waitTimeSecondsAttributeOpt.map(Duration.standardSeconds(_))
 
             ifStrictLimits(maxNumberOfMessagesFromParameters < 1 || maxNumberOfMessagesFromParameters > 10) {
               "ReadCountOutOfRange"
