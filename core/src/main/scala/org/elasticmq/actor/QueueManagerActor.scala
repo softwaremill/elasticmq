@@ -20,6 +20,7 @@ class QueueManagerActor(nowProvider: NowProvider) extends ReplyingActor with Log
   def receiveAndReply[T](msg: QueueManagerMsg[T]): ReplyAction[T] = msg match {
     case CreateQueue(queueData) => {
       if (queues.contains(queueData.name)) {
+        logger.debug(s"Cannot create queue, as it already exists: $queueData")
         Left(new QueueAlreadyExists(queueData.name))
       } else {
         logger.info(s"Creating queue $queueData")
@@ -34,7 +35,11 @@ class QueueManagerActor(nowProvider: NowProvider) extends ReplyingActor with Log
       queues.remove(queueName).foreach(context.stop(_))
     }
 
-    case LookupQueue(queueName) => queues.get(queueName)
+    case LookupQueue(queueName) => {
+      val result = queues.get(queueName)
+      logger.debug(s"Looking up queue $queueName, found?: ${result.isDefined}")
+      result
+    }
 
     case ListQueues() => queues.keySet.toSeq
   }
