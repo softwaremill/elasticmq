@@ -11,7 +11,7 @@ trait QueueManagerForEachTest extends BeforeAndAfterEach {
   val system: ActorSystem
 
   var queueManagerActor: ActorRef = _
-  var nowProvider: NowProvider = _
+  var nowProvider: MutableNowProvider = _
 
   override protected def beforeEach() {
     super.beforeEach()

@@ -329,14 +329,14 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
   waitTest("should wait until messages are available") {
     // Given
     val q1 = createQueueData("q1", MillisVisibilityTimeout(1L))
-    val msg = createNewMessageData("xyz", "123", MillisNextDelivery(100))
+    val msg = createNewMessageData("xyz", "123", MillisNextDelivery(200L))
 
     for {
       Right(queueActor) <- queueManagerActor ? CreateQueue(q1)
 
       // When
       receiveResultsFuture = queueActor ? ReceiveMessages(100L, DefaultVisibilityTimeout, 5, Some(Duration.millis(1000L)))
-      _ <- { Thread.sleep(500); queueActor ? SendMessage(msg) }
+      _ <- { Thread.sleep(500); nowProvider._nowMillis = 200; queueActor ? SendMessage(msg) }
 
       receiveResults <- receiveResultsFuture
     } yield {

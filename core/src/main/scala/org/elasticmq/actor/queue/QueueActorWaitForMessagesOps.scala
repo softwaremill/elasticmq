@@ -11,13 +11,13 @@ trait QueueActorWaitForMessagesOps extends ReplyingActor with QueueActorMessageO
   this: QueueActorStorage =>
 
   private var senderSequence = 0L
-  private val awaitingReply = new collection.mutable.HashMap[Long, (ActorRef, ReceiveMessages)]()
+  private val awaitingReply = new collection.mutable.HashMap[Long, AwaitingData]()
 
   override def receive = super.receive orElse {
     case ReplyIfTimeout(seq, replyWith) => {
-      awaitingReply.remove(seq).foreach { case(actorRef, _) =>
+      awaitingReply.remove(seq).foreach { case AwaitingData(originalSender, _, _) =>
         logger.debug(s"${queueData.name}: Awaiting messages: sequence $seq timed out. Replying with no messages.")
-        actorRef ! replyWith
+        originalSender ! replyWith
       }
     }
   }
@@ -44,11 +44,15 @@ trait QueueActorWaitForMessagesOps extends ReplyingActor with QueueActorMessageO
   @tailrec
   private def tryReply() {
     awaitingReply.headOption match {
-      case Some((seq, (sender, ReceiveMessages(deliveryTime, visibilityTimeout, count, _)))) => {
-        val received = super.receiveMessages(deliveryTime, visibilityTimeout, count)
+      case Some((seq, AwaitingData(originalSender, ReceiveMessages(deliveryTime, visibilityTimeout, count, _), waitStart))) => {
+        // We want to receive messages visible right now, not only the ones visible at the original request
+        val waitEnd = nowProvider.nowMillis
+        val newDeliveryTime = deliveryTime + (waitEnd - waitStart)
+
+        val received = super.receiveMessages(newDeliveryTime, visibilityTimeout, count)
 
         if (received != Nil) {
-          sender ! received
+          originalSender ! received
           logger.debug(s"${queueData.name}: Awaiting messages: replying to sequence $seq with ${received.size} messages.")
           awaitingReply.remove(seq)
 
@@ -62,7 +66,7 @@ trait QueueActorWaitForMessagesOps extends ReplyingActor with QueueActorMessageO
   private def assignSequenceFor(receiveMessages: ReceiveMessages): Long = {
     val seq = senderSequence
     senderSequence += 1
-    awaitingReply(seq) = (sender, receiveMessages)
+    awaitingReply(seq) = AwaitingData(sender, receiveMessages, nowProvider.nowMillis)
     seq
   }
 
@@ -75,4 +79,6 @@ trait QueueActorWaitForMessagesOps extends ReplyingActor with QueueActorMessageO
   }
 
   case class ReplyIfTimeout(seq: Long, replyWith: AnyRef)
+
+  case class AwaitingData(originalSender: ActorRef, originalReceiveMessages: ReceiveMessages, waitStart: Long)
 }
