@@ -28,7 +28,7 @@ trait QueueActorWaitForMessagesOps extends ReplyingActor with QueueActorMessageO
       tryReply()
       result
     }
-    case rm@ReceiveMessages(deliveryTime, visibilityTimeout, count, waitForMessagesOpt) => {
+    case rm@ReceiveMessages(visibilityTimeout, count, waitForMessagesOpt) => {
       val result = super.receiveAndReplyMessageMsg(msg)
       val waitForMessages = waitForMessagesOpt.getOrElse(queueData.receiveMessageWait)
       if (result == ReplyWith(Nil) && waitForMessages.getMillis > 0) {
@@ -44,12 +44,8 @@ trait QueueActorWaitForMessagesOps extends ReplyingActor with QueueActorMessageO
   @tailrec
   private def tryReply() {
     awaitingReply.headOption match {
-      case Some((seq, AwaitingData(originalSender, ReceiveMessages(deliveryTime, visibilityTimeout, count, _), waitStart))) => {
-        // We want to receive messages visible right now, not only the ones visible at the original request
-        val waitEnd = nowProvider.nowMillis
-        val newDeliveryTime = deliveryTime + (waitEnd - waitStart)
-
-        val received = super.receiveMessages(newDeliveryTime, visibilityTimeout, count)
+      case Some((seq, AwaitingData(originalSender, ReceiveMessages(visibilityTimeout, count, _), waitStart))) => {
+        val received = super.receiveMessages(visibilityTimeout, count)
 
         if (received != Nil) {
           originalSender ! received

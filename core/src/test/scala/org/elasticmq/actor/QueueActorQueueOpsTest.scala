@@ -72,18 +72,20 @@ class QueueActorQueueOpsTest extends ActorTest with QueueManagerForEachTest with
     val m8 = createNewMessageData("m8", "123", MillisNextDelivery(128L))
     val m9 = createNewMessageData("m9", "123", MillisNextDelivery(129L))
 
+    nowProvider.mutableNowMillis.set(123L)
+
     for {
       Right(queueActor) <- queueManagerActor ? CreateQueue(queue)
 
       // Invisible messages - received
       _ <- queueActor ? SendMessage(m1)
-      _ <- queueActor ? ReceiveMessages(123L, DefaultVisibilityTimeout, 1, None)
+      _ <- queueActor ? ReceiveMessages(DefaultVisibilityTimeout, 1, None)
       _ <- queueActor ? SendMessage(m2)
-      _ <- queueActor ? ReceiveMessages(123L, DefaultVisibilityTimeout, 1, None)
+      _ <- queueActor ? ReceiveMessages(DefaultVisibilityTimeout, 1, None)
       _ <- queueActor ? SendMessage(m3)
-      _ <- queueActor ? ReceiveMessages(123L, DefaultVisibilityTimeout, 1, None)
+      _ <- queueActor ? ReceiveMessages(DefaultVisibilityTimeout, 1, None)
       _ <- queueActor ? SendMessage(m4)
-      _ <- queueActor ? ReceiveMessages(123L, DefaultVisibilityTimeout, 1, None)
+      _ <- queueActor ? ReceiveMessages(DefaultVisibilityTimeout, 1, None)
 
       // Visible messages
       _ <- queueActor ? SendMessage(m5)

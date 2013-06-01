@@ -2,10 +2,11 @@ package org.elasticmq.actor.test
 
 import org.joda.time.DateTime
 import org.elasticmq.util.NowProvider
+import java.util.concurrent.atomic.AtomicLong
 
 class MutableNowProvider extends NowProvider {
-  var _nowMillis = 100L
+  var mutableNowMillis = new AtomicLong(100L)
 
-  override def nowMillis = _nowMillis
+  override def nowMillis = mutableNowMillis.get()
   override def now = new DateTime(nowMillis)
 }

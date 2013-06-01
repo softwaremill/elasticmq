@@ -27,7 +27,7 @@ trait QueueActorMessageOps extends Logging {
   def receiveAndReplyMessageMsg[T](msg: QueueMessageMsg[T]): ReplyAction[T] = msg match {
     case SendMessage(message) => sendMessage(message)
     case UpdateVisibilityTimeout(messageId, visibilityTimeout) => updateVisibilityTimeout(messageId, visibilityTimeout)
-    case ReceiveMessages(deliveryTime, visibilityTimeout, count, waitForMessages) => receiveMessages(deliveryTime, visibilityTimeout, count)
+    case ReceiveMessages(visibilityTimeout, count, waitForMessages) => receiveMessages(visibilityTimeout, count)
     case DeleteMessage(deliveryReceipt) => deleteMessage(deliveryReceipt)
     case LookupMessage(messageId) => messagesById.get(messageId.id).map(_.toMessageData)
   }
@@ -73,8 +73,10 @@ trait QueueActorMessageOps extends Logging {
     }
   }
 
-  protected def receiveMessages(deliveryTime: Long, visibilityTimeout: VisibilityTimeout,
+  protected def receiveMessages(visibilityTimeout: VisibilityTimeout,
                                 count: Int): List[MessageData] = {
+    val deliveryTime = nowProvider.nowMillis
+
     @tailrec
     def doReceiveMessages(left: Int, acc: List[MessageData]): List[MessageData] = {
       if (left == 0) {
