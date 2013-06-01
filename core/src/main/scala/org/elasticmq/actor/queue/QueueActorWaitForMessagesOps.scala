@@ -16,7 +16,7 @@ trait QueueActorWaitForMessagesOps extends ReplyingActor with QueueActorMessageO
   override def receive = super.receive orElse {
     case ReplyIfTimeout(seq, replyWith) => {
       awaitingReply.remove(seq).foreach { case(actorRef, _) =>
-        logger.debug(s"Awaiting messages: sequence $seq timed out. Replying with no messages.")
+        logger.debug(s"${queueData.name}: Awaiting messages: sequence $seq timed out. Replying with no messages.")
         actorRef ! replyWith
       }
     }
@@ -33,7 +33,7 @@ trait QueueActorWaitForMessagesOps extends ReplyingActor with QueueActorMessageO
       val waitForMessages = waitForMessagesOpt.getOrElse(queueData.receiveMessageWait)
       if (result == ReplyWith(Nil) && waitForMessages.getMillis > 0) {
         val seq = assignSequenceFor(rm)
-        logger.debug(s"Awaiting messages: start for sequence $seq.")
+        logger.debug(s"${queueData.name}: Awaiting messages: start for sequence $seq.")
         scheduleTimeoutReply(seq, waitForMessages)
         DoNotReply()
       } else result
@@ -49,7 +49,7 @@ trait QueueActorWaitForMessagesOps extends ReplyingActor with QueueActorMessageO
 
         if (received != Nil) {
           sender ! received
-          logger.debug(s"Awaiting messages: replying to sequence $seq with ${received.size} messages.")
+          logger.debug(s"${queueData.name}: Awaiting messages: replying to sequence $seq with ${received.size} messages.")
           awaitingReply.remove(seq)
 
           tryReply()

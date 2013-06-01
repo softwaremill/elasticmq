@@ -11,15 +11,15 @@ trait QueueActorQueueOps extends Logging {
   def receiveAndReplyQueueMsg[T](msg: QueueQueueMsg[T]): ReplyAction[T] = msg match {
     case GetQueueData() => queueData
     case UpdateQueueDefaultVisibilityTimeout(newDefaultVisibilityTimeout) => {
-      logger.info(s"Updating default visibility timeout of ${queueData.name} to $newDefaultVisibilityTimeout")
+      logger.info(s"${queueData.name}: Updating default visibility timeout to $newDefaultVisibilityTimeout")
       queueData = queueData.copy(defaultVisibilityTimeout = newDefaultVisibilityTimeout)
     }
     case UpdateQueueDelay(newDelay) => {
-      logger.info(s"Updating delay of ${queueData.name} to $newDelay")
+      logger.info(s"${queueData.name}: Updating delay to $newDelay")
       queueData = queueData.copy(delay = newDelay)
     }
     case UpdateQueueReceiveMessageWait(newReceiveMessageWait) => {
-      logger.info(s"Updating receive message wait of ${queueData.name} to $newReceiveMessageWait")
+      logger.info(s"${queueData.name}: Updating receive message wait to $newReceiveMessageWait")
       queueData = queueData.copy(receiveMessageWait = newReceiveMessageWait)
     }
 

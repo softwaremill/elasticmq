@@ -37,7 +37,7 @@ trait QueueActorMessageOps extends Logging {
     messageQueue += internalMessage
     messagesById(internalMessage.id) = internalMessage
 
-    logger.debug(s"Sent message with id ${message.id}")
+    logger.debug(s"${queueData.name}: Sent message with id ${internalMessage.id}")
 
     internalMessage.toMessageData
   }
@@ -64,7 +64,7 @@ trait QueueActorMessageOps extends Logging {
         // Just increasing the next delivery. Common case. It is enough to increase the value in the object. No need to
         // re-insert the msg into the queue, as it will be reinserted if needed during receiving.
 
-        logger.debug(s"Updated next delivery of $messageId to $newNextDelivery")
+        logger.debug(s"${queueData.name}: Updated next delivery of $messageId to $newNextDelivery")
 
         Right(())
       }
@@ -111,7 +111,7 @@ trait QueueActorMessageOps extends Logging {
 
         messageQueue += internalMessage
 
-        logger.debug(s"Receiving message $id")
+        logger.debug(s"${queueData.name}: Receiving message $id")
 
         Some(internalMessage.toMessageData)
       } else {
