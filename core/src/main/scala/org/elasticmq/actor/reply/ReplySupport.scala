@@ -11,4 +11,6 @@ trait ReplySupport {
       akka.pattern.ask(actorRef, message).mapTo[T]
     }
   }
+
+  implicit def valueToReplyWith[T](t: T): ReplyWith[T] = ReplyWith(t)
 }

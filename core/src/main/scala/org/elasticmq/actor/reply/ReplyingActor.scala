@@ -11,13 +11,20 @@ trait ReplyingActor extends Actor {
 
   def receive = {
     case m if ev.runtimeClass.isAssignableFrom(m.getClass) => {
-      try {
-        sender ! receiveAndReply(m.asInstanceOf[M[Unit]])
-      } catch {
-        case e: Exception => sender ! Failure(e)
-      }
+      doReceiveAndReply(m.asInstanceOf[M[Unit]])
     }
   }
 
-  def receiveAndReply[T](msg: M[T]): T
+  private def doReceiveAndReply[T](msg: M[T]) {
+    try {
+      receiveAndReply(msg) match {
+        case ReplyWith(t) => sender ! t
+        case DoNotReply() => // do nothing
+      }
+    } catch {
+      case e: Exception => sender ! Failure(e)
+    }
+  }
+
+  def receiveAndReply[T](msg: M[T]): ReplyAction[T]
 }

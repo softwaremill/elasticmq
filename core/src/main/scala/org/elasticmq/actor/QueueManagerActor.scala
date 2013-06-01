@@ -6,10 +6,10 @@ import org.elasticmq.msg.DeleteQueue
 import org.elasticmq.msg.CreateQueue
 import akka.actor.{Props, ActorRef}
 import com.typesafe.scalalogging.slf4j.Logging
-import org.elasticmq.actor.reply.ReplyingActor
 import org.elasticmq.util.NowProvider
 import org.elasticmq.actor.queue.QueueActor
 import org.elasticmq.QueueAlreadyExists
+import org.elasticmq.actor.reply._
 
 class QueueManagerActor(nowProvider: NowProvider) extends ReplyingActor with Logging {
   type M[X] = QueueManagerMsg[X]
@@ -17,7 +17,7 @@ class QueueManagerActor(nowProvider: NowProvider) extends ReplyingActor with Log
 
   private val queues = collection.mutable.HashMap[String, ActorRef]()
 
-  def receiveAndReply[T](msg: QueueManagerMsg[T]) = msg match {
+  def receiveAndReply[T](msg: QueueManagerMsg[T]): ReplyAction[T] = msg match {
     case CreateQueue(queueData) => {
       if (queues.contains(queueData.name)) {
         Left(new QueueAlreadyExists(queueData.name))

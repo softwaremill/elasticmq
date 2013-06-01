@@ -3,11 +3,12 @@ package org.elasticmq.actor.queue
 import org.elasticmq._
 import org.elasticmq.msg._
 import com.typesafe.scalalogging.slf4j.Logging
+import org.elasticmq.actor.reply._
 
 trait QueueActorQueueOps extends Logging {
   this: QueueActorStorage =>
 
-  def receiveAndReplyQueueMsg[T](msg: QueueQueueMsg[T]): T = msg match {
+  def receiveAndReplyQueueMsg[T](msg: QueueQueueMsg[T]): ReplyAction[T] = msg match {
     case GetQueueData() => queueData
     case UpdateQueueDefaultVisibilityTimeout(newDefaultVisibilityTimeout) => {
       logger.info(s"Updating default visibility timeout of ${queueData.name} to $newDefaultVisibilityTimeout")

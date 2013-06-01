@@ -17,13 +17,14 @@ import org.elasticmq.MillisNextDelivery
 import org.elasticmq.msg.ReceiveMessages
 import org.elasticmq.msg.UpdateVisibilityTimeout
 import org.elasticmq.msg.LookupMessage
+import org.elasticmq.actor.reply._
 
 trait QueueActorMessageOps extends Logging {
   this: QueueActorStorage =>
 
   def nowProvider: NowProvider
 
-  def receiveAndReplyMessageMsg[T](msg: QueueMessageMsg[T]): T = msg match {
+  def receiveAndReplyMessageMsg[T](msg: QueueMessageMsg[T]): ReplyAction[T] = msg match {
     case SendMessage(message) => sendMessage(message)
     case UpdateVisibilityTimeout(messageId, visibilityTimeout) => updateVisibilityTimeout(messageId, visibilityTimeout)
     case ReceiveMessages(deliveryTime, visibilityTimeout, count, waitForMessages) => receiveMessages(deliveryTime, visibilityTimeout, count, waitForMessages)
