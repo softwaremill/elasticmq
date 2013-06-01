@@ -3,7 +3,7 @@ package org.elasticmq.actor.queue
 import scala.annotation.tailrec
 import org.elasticmq._
 import org.elasticmq.msg._
-import org.joda.time.{Duration, DateTime}
+import org.joda.time.DateTime
 import com.typesafe.scalalogging.slf4j.Logging
 import org.elasticmq.util.NowProvider
 import org.elasticmq.OnDateTimeReceived
@@ -27,7 +27,7 @@ trait QueueActorMessageOps extends Logging {
   def receiveAndReplyMessageMsg[T](msg: QueueMessageMsg[T]): ReplyAction[T] = msg match {
     case SendMessage(message) => sendMessage(message)
     case UpdateVisibilityTimeout(messageId, visibilityTimeout) => updateVisibilityTimeout(messageId, visibilityTimeout)
-    case ReceiveMessages(deliveryTime, visibilityTimeout, count, waitForMessages) => receiveMessages(deliveryTime, visibilityTimeout, count, waitForMessages)
+    case ReceiveMessages(deliveryTime, visibilityTimeout, count, waitForMessages) => receiveMessages(deliveryTime, visibilityTimeout, count)
     case DeleteMessage(deliveryReceipt) => deleteMessage(deliveryReceipt)
     case LookupMessage(messageId) => messagesById.get(messageId.id).map(_.toMessageData)
   }
@@ -73,8 +73,8 @@ trait QueueActorMessageOps extends Logging {
     }
   }
 
-  private def receiveMessages(deliveryTime: Long, visibilityTimeout: VisibilityTimeout,
-                              count: Int, waitForMessages: Duration): List[MessageData] = {
+  protected def receiveMessages(deliveryTime: Long, visibilityTimeout: VisibilityTimeout,
+                                count: Int): List[MessageData] = {
     @tailrec
     def doReceiveMessages(left: Int, acc: List[MessageData]): List[MessageData] = {
       if (left == 0) {

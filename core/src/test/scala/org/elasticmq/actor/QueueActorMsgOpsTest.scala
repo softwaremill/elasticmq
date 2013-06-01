@@ -342,14 +342,15 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
     } yield {
       // Then
       receiveResults.size should be (1)
-      receiveResults.map(_.id.id) should be (List(msg.id))
+      receiveResults.map(_.id) should be (msg.id.toList)
     }
   }
 
-  waitTest("should wait until messages are available, and receive the message only once") {
+  waitTest("multiple futures should wait until messages are available, and receive the message only once") {
     // Given
     val q1 = createQueueData("q1", MillisVisibilityTimeout(1L))
     val msg = createNewMessageData("xyz", "123", MillisNextDelivery(100))
+    val start = System.currentTimeMillis()
 
     for {
       Right(queueActor) <- queueManagerActor ? CreateQueue(q1)
@@ -364,8 +365,37 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
       receiveResults2 <- receiveResults2Future
     } yield {
       // Then
+      val end = System.currentTimeMillis()
+      (end - start) should be >= (1000L) // no reply for one of the futures
+
       Set(receiveResults1.size, receiveResults2.size) should be (Set(0, 1))
-      (receiveResults1 ++ receiveResults2).map(_.id.id) should be (List(msg.id))
+      (receiveResults1 ++ receiveResults2).map(_.id) should be (msg.id.toList)
+    }
+  }
+
+  waitTest("multiple futures should wait until messages are available, and receive all sent messages") {
+    // Given
+    val q1 = createQueueData("q1", MillisVisibilityTimeout(1L))
+    val msg1 = createNewMessageData("xyz1", "123a", MillisNextDelivery(100))
+    val msg2 = createNewMessageData("xyz2", "123b", MillisNextDelivery(100))
+
+    for {
+      Right(queueActor) <- queueManagerActor ? CreateQueue(q1)
+
+      // When
+      receiveResults1Future = queueActor ? ReceiveMessages(100L, DefaultVisibilityTimeout, 5, Duration.millis(1000L))
+      receiveResults2Future = queueActor ? ReceiveMessages(100L, DefaultVisibilityTimeout, 5, Duration.millis(1000L))
+      receiveResults3Future = queueActor ? ReceiveMessages(100L, DefaultVisibilityTimeout, 5, Duration.millis(1000L))
+
+      _ <- { Thread.sleep(500); queueActor ? SendMessage(msg1); queueActor ? SendMessage(msg2) }
+
+      receiveResults1 <- receiveResults1Future
+      receiveResults2 <- receiveResults2Future
+      receiveResults3 <- receiveResults3Future
+    } yield {
+      // Then
+      List(receiveResults1.size, receiveResults2.size, receiveResults3.size).sum should be (2)
+      (receiveResults1 ++ receiveResults2 ++ receiveResults3).map(_.id).toSet should be ((msg1.id.toList ++ msg2.id.toList).toSet)
     }
   }
 

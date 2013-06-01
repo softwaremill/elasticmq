@@ -8,7 +8,7 @@ import org.elasticmq.util.NowProvider
 import org.elasticmq.QueueData
 
 class QueueActor(val nowProvider: NowProvider, val initialQueueData: QueueData)
-  extends QueueActorStorage with QueueActorQueueOps with QueueActorMessageOps with ReplyingActor with Logging {
+  extends QueueActorStorage with QueueActorQueueOps with QueueActorWaitForMessagesOps with ReplyingActor with Logging {
 
   type M[X] = QueueMsg[X]
   val ev = classTag[M[Unit]]
