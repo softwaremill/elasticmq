@@ -42,8 +42,10 @@ trait CreateQueueDirectives { this: ElasticMQDirectives with QueueURLModule with
 
               val queueData = lookupOrCreateQueue(newQueueData).apply()
 
-              if (queueData.defaultVisibilityTimeout.seconds != secondsVisibilityTimeout) {
-                // Special case: the queue existed, but has a different visibility timeout
+              if ((queueData.delay.getStandardSeconds != secondsDelay) ||
+                (queueData.receiveMessageWait.getStandardSeconds != secondsReceiveMessageWaitTime) ||
+                (queueData.defaultVisibilityTimeout.seconds != secondsVisibilityTimeout)) {
+                // Special case: the queue existed, but has different attributes
                 throw new SQSException("AWS.SimpleQueueService.QueueNameExists")
               }
 
