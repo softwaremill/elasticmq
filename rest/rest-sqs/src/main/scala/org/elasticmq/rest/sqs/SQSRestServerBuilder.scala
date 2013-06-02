@@ -128,7 +128,7 @@ class SQSRestServerBuilder(actorSystem: ActorSystem,
     val serviceActorName = s"elasticmq-rest-sqs-$port"
 
     val app = new SimpleRoutingApp {}
-    val appStartFuture = app.startServer(interface, port, serviceActorName, options = List(Inet.SO.ReuseAddress(on = true))) {
+    val appStartFuture = app.startServer(interface, port, serviceActorName) {
       handleServerExceptions {
         routes
       }
