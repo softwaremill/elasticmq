@@ -6,14 +6,16 @@ import com.typesafe.scalalogging.slf4j.Logging
 import collection.mutable.ArrayBuffer
 import spray.routing.SimpleRoutingApp
 import akka.actor.{ActorRef, ActorSystem}
-import scala.xml.EntityRef
-import org.elasticmq.{QueueData, NodeAddress}
 import spray.can.server.ServerSettings
 import akka.util.Timeout
 import scala.concurrent.Future
 import org.elasticmq.rest.sqs.directives.ElasticMQDirectives
 import spray.can.Http
 import akka.io.{Inet, IO}
+import org.elasticmq.rest.sqs.Constants._
+import scala.xml.EntityRef
+import org.elasticmq.QueueData
+import org.elasticmq.NodeAddress
 
 /**
  * @param interface Hostname to which the server will bind.
@@ -211,6 +213,18 @@ trait SQSLimitsModule {
   def ifStrictLimits(condition: => Boolean)(exception: String) {
     if (sqsLimits == SQSLimits.Strict && condition) {
       throw new SQSException(exception)
+    }
+  }
+
+  def verifyMessageWaitTime(messageWaitTimeOpt: Option[Long]) {
+    messageWaitTimeOpt.foreach { messageWaitTime =>
+      if (messageWaitTime < 0) {
+        throw SQSException.invalidParameterValue
+      }
+
+      ifStrictLimits(messageWaitTime > 20 || messageWaitTime < 1) {
+        InvalidParameterValueErrorName
+      }
     }
   }
 }

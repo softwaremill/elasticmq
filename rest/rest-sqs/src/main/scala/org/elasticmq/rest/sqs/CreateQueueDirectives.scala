@@ -41,15 +41,7 @@ trait CreateQueueDirectives { this: ElasticMQDirectives with QueueURLModule with
                 throw SQSException.invalidParameterValue
               }
 
-              if (secondsReceiveMessageWaitTime < 0) {
-                throw SQSException.invalidParameterValue
-              }
-
-              secondsReceiveMessageWaitTimeOpt.foreach { specifiedSecondsReceiveMessageWaitTime =>
-                ifStrictLimits(specifiedSecondsReceiveMessageWaitTime > 20 || specifiedSecondsReceiveMessageWaitTime < 1) {
-                  InvalidParameterValueErrorName
-                }
-              }
+              verifyMessageWaitTime(secondsReceiveMessageWaitTimeOpt)
 
               val queueData = lookupOrCreateQueue(newQueueData).apply()
 

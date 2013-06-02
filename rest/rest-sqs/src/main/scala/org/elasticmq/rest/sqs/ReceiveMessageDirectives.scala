@@ -41,6 +41,8 @@ trait ReceiveMessageDirectives { this: ElasticMQDirectives with AttributesModule
               "ReadCountOutOfRange"
             }
 
+            verifyMessageWaitTime(waitTimeSecondsAttributeOpt)
+
             val msgsFuture = queueActor ? ReceiveMessages( visibilityTimeoutFromParameters,
               maxNumberOfMessagesFromParameters,
               waitTimeSecondsFromParameters)
