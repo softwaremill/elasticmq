@@ -28,8 +28,9 @@ trait CreateQueueDirectives { this: ElasticMQDirectives with QueueURLModule with
             val secondsDelay = (attributes.parseOptionalLong(DelaySecondsAttribute)
                 .getOrElse(DefaultDelay))
 
-            val secondsReceiveMessageWaitTime = (attributes.parseOptionalLong(ReceiveMessageWaitTimeSecondsAttribute)
-                .getOrElse(DefaultReceiveMessageWaitTimeSecondsAttribute))
+            val secondsReceiveMessageWaitTimeOpt = attributes.parseOptionalLong(ReceiveMessageWaitTimeSecondsAttribute)
+            val secondsReceiveMessageWaitTime = secondsReceiveMessageWaitTimeOpt
+              .getOrElse(DefaultReceiveMessageWaitTimeSecondsAttribute)
 
             val newQueueData = QueueData(queueName, MillisVisibilityTimeout.fromSeconds(secondsVisibilityTimeout),
               Duration.standardSeconds(secondsDelay), Duration.standardSeconds(secondsReceiveMessageWaitTime),
@@ -38,6 +39,16 @@ trait CreateQueueDirectives { this: ElasticMQDirectives with QueueURLModule with
             flow {
               if (!queueName.matches("[\\p{Alnum}_-]*")) {
                 throw SQSException.invalidParameterValue
+              }
+
+              if (secondsReceiveMessageWaitTime < 0) {
+                throw SQSException.invalidParameterValue
+              }
+
+              secondsReceiveMessageWaitTimeOpt.foreach { specifiedSecondsReceiveMessageWaitTime =>
+                ifStrictLimits(specifiedSecondsReceiveMessageWaitTime > 20 || specifiedSecondsReceiveMessageWaitTime < 1) {
+                  InvalidParameterValueErrorName
+                }
               }
 
               val queueData = lookupOrCreateQueue(newQueueData).apply()

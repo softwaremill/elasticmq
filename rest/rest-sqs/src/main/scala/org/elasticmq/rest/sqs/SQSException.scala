@@ -1,5 +1,7 @@
 package org.elasticmq.rest.sqs
 
+import Constants._
+
 class SQSException(val code: String,
                    val httpStatusCode: Int = 400,
                    errorType: String = "Sender") extends Exception {
@@ -18,6 +20,6 @@ class SQSException(val code: String,
 }
 
 object SQSException {
-  def invalidParameterValue = new SQSException("InvalidParameterValue")
+  def invalidParameterValue = new SQSException(InvalidParameterValueErrorName)
 }
 

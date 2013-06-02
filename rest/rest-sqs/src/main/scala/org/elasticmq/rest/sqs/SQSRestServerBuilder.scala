@@ -143,6 +143,7 @@ object Constants {
   val DelaySecondsAttribute = "DelaySeconds"
   val ReceiveMessageWaitTimeSecondsAttribute = "ReceiveMessageWaitTimeSeconds"
   val IdSubParameter = "Id"
+  val InvalidParameterValueErrorName = "InvalidParameterValue"
 }
 
 object ParametersUtil {
