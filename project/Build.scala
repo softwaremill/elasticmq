@@ -124,15 +124,15 @@ object ElasticMQBuild extends Build {
   lazy val restSqs: Project = Project(
     "elasticmq-rest-sqs",
     file("rest/rest-sqs"),
-    settings = buildSettings ++ Seq(libraryDependencies ++= Seq(akka2Actor, akka2Dataflow, sprayCan, sprayRouting, sprayTestkit)
-      ++ common)
+    settings = buildSettings ++
+      Seq(libraryDependencies ++= Seq(akka2Actor, akka2Dataflow, akka2Slf4j, sprayCan, sprayRouting, sprayTestkit) ++ common)
   ) dependsOn(core, commonTest % "test")
 
   lazy val restSqsTestingAmazonJavaSdk: Project = Project(
     "elasticmq-rest-sqs-testing-amazon-java-sdk",
     file("rest/rest-sqs-testing-amazon-java-sdk"),
     settings = buildSettings ++ Seq(
-      libraryDependencies ++= Seq(amazonJavaSdk, jclOverSlf4j, akka2Slf4j) ++ common,
+      libraryDependencies ++= Seq(amazonJavaSdk, jclOverSlf4j) ++ common,
       publishArtifact := false)
   ) dependsOn(restSqs % "test->test")
 
