@@ -1,9 +1,10 @@
 import sbt._
 import Keys._
+import sbtassembly.Plugin._
+import AssemblyKeys._
+import ls.Plugin._
 
 object BuildSettings {
-  import ls.Plugin._
-
   val buildSettings = Defaults.defaultSettings ++ Seq (
     organization  := "org.elasticmq",
     version       := "0.7.0-SNAPSHOT",
@@ -138,8 +139,10 @@ object ElasticMQBuild extends Build {
   lazy val server: Project = Project(
     "elasticmq-server",
     file("server"),
-    settings = buildSettings ++ CustomTasks.distributionSettings ++ CustomTasks.generateVersionFileSettings ++
-      Seq(libraryDependencies ++= Seq(logback, config))
+    settings = buildSettings ++ CustomTasks.generateVersionFileSettings ++ assemblySettings ++ Seq(
+      libraryDependencies ++= Seq(logback, config),
+      mainClass in assembly := Some("org.elasticmq.server.Main")
+    )
   ) dependsOn(core, restSqs, commonTest % "test")
 
   lazy val performanceTests: Project = Project(
@@ -153,100 +156,6 @@ object ElasticMQBuild extends Build {
 }
 
 object CustomTasks {
-  implicit def str2pimped(s: String) = new {
-    def bold = scala.Console.BOLD + s + scala.Console.RESET
-    def green = scala.Console.GREEN + s + scala.Console.RESET
-  }
-
-  // Main settings & tasks
-  val distributionName = SettingKey[String]("distribution-name", "Name of the distribution directory")
-  val distributionDirectory = SettingKey[File]("distribution-directory", "The distribution directory")
-  val distributionLibDirectory = SettingKey[File]("distribution-lib-directory", "The distribution library directory")
-  val distributionBinDirectory = SettingKey[File]("distribution-bin-directory", "The distribution binary directory")
-  val distributionConfDirectory = SettingKey[File]("distribution-conf-directory", "The distribution configuration directory")
-
-  val distributionClean = TaskKey[Unit]("distribution-clean", "Remove previous distribution.")
-  val distribution = TaskKey[Unit]("distribution", "Create a distribution containing startup script and all jars.")
-
-  // Helper tasks
-  val distributionCopyExternalDependencies = TaskKey[Set[File]]("distribution-copy-external-dependencies", "Copies the external dependencies to the distribution directory")
-  val distributionCopyInternalDependencies = TaskKey[Set[File]]("distribution-copy-internal-dependencies", "Copies the internal dependencies to the distribution directory")
-  val distributionCopyBin = TaskKey[Set[File]]("distribution-copy-bin", "Copy binaries (scripts).")
-  val distributionCopyConf = TaskKey[Set[File]]("distribution-copy-conf", "Copy configuration.")
-  val distributionCopyDocs = TaskKey[Set[File]]("distribution-copy-docs", "Copy documentation.")
-
-  val projectDependenciesClosure = TaskKey[Set[ProjectRef]]("project-dependency-closure", "Calculates the closure of the project's dependencies, including transitive ones.")
-
-  val distributionSettings = Seq(
-    distributionName <<= (version) { (v) => "elasticmq-" + v },
-
-    distributionDirectory <<= (target, distributionName) { (t, n) => t / "distribution" / n },
-
-    distributionLibDirectory <<= (distributionDirectory) { (dd) => dd / "lib" },
-
-    distributionBinDirectory <<= (distributionDirectory) { (dd) => dd / "bin" },
-
-    distributionConfDirectory <<= (distributionDirectory) { (dd) => dd / "conf" },
-
-    distributionCopyExternalDependencies <<= (distributionLibDirectory, externalDependencyClasspath in Compile) map { (dld, edc) =>
-      IO.copy(edc.files.map(f => (f, dld / f.getName)))
-    },
-
-    projectDependenciesClosure <<= (thisProjectRef, state) map { (thr, s) =>
-      val structure = Project.structure(s)
-
-      def isCompileConfiguration(configuration: Option[String]): Boolean = {
-        configuration.map(_.contains("compile->compile")).getOrElse(true)
-      }
-
-      def projectWithTransitiveDependencies(root: ProjectRef, acc: Set[ProjectRef]): Set[ProjectRef] = {
-        val dependencies = Project.getProject(root, structure).toList.flatMap(_.dependencies
-          // We only want compile dependencies
-          .filter(cpDep => isCompileConfiguration(cpDep.configuration))
-          .map(_.project))
-
-        dependencies.foldLeft(acc)((newAcc, dep) => {
-          if (newAcc.contains(dep)) newAcc else projectWithTransitiveDependencies(dep, newAcc + dep)
-        })
-      }
-
-      projectWithTransitiveDependencies(thr, Set(thr))
-    },
-
-    distributionCopyInternalDependencies <<= (state, distributionLibDirectory, projectDependenciesClosure) flatMap { (s, dld, pdc) =>
-      val structure = Project.structure(s)
-      val packageTaskKey = (packageBin in Compile).task
-      val packageAllTask = pdc.flatMap(pr => (packageTaskKey in pr).get(structure.data)).toList.join
-
-      packageAllTask.map { jars =>
-        IO.copy(jars.map {f => (f, dld / f.getName)})
-      }
-    },
-
-    distributionCopyBin <<= (distributionBinDirectory, resourceDirectory in Compile) map { (dbd, rd) =>
-      val result = IO.copy((rd / "bin").listFiles().map(script => (script, dbd / script.getName)))
-      result.filter(_.getName.endsWith(".sh")).foreach(file => file.setExecutable(true))
-      result
-    },
-
-    distributionCopyConf <<= (distributionConfDirectory, resourceDirectory in Compile) map { (dcd, rd) =>
-      IO.copy((rd / "conf").listFiles().map(script => (script, dcd / script.getName)))
-    },
-
-    distributionCopyDocs <<= (distributionDirectory, baseDirectory in Compile) map { (dd, bd) =>
-      val docsFromRoot = List("README.md", "LICENSE.txt", "NOTICE.txt")
-      IO.copy(docsFromRoot.map(d => (bd.getParentFile / d, dd / d)))
-    },
-
-    distributionClean <<= (distributionDirectory) map { (dd) => IO.delete(dd) },
-
-    distribution <<= (streams, version, distributionDirectory,
-      distributionCopyBin, distributionCopyConf, distributionCopyDocs,
-      distributionCopyExternalDependencies, distributionCopyInternalDependencies) map { (s, v, dd, _, _, _, _, _) =>
-      s.log.info("ElasticMQ distribution for version " + v.green + " created successfully in: " + dd.getPath)
-    }
-  )
-
   val generateVersionFileSettings = Seq(
     resourceGenerators in Compile <+= (version, resourceManaged in Compile) map { (v, t) =>
       val targetFile = t / "version"
