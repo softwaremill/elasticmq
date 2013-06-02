@@ -16,6 +16,7 @@ import org.elasticmq.rest.sqs.Constants._
 import scala.xml.EntityRef
 import org.elasticmq.QueueData
 import org.elasticmq.NodeAddress
+import com.typesafe.config.ConfigFactory
 
 /**
  * @param interface Hostname to which the server will bind.
@@ -98,7 +99,7 @@ class SQSRestServerBuilder(actorSystem: ActorSystem,
     }
 
     import env._
-    val routes =
+    val rawRoutes =
         // 1. Sending, receiving, deleting messages
         sendMessage ~
         sendMessageBatch ~
@@ -115,6 +116,14 @@ class SQSRestServerBuilder(actorSystem: ActorSystem,
         deleteQueue ~
         getQueueAttributes ~
         setQueueAttributes
+
+    val config = new ElasticMQConfig
+
+    val routes = if (config.debug) {
+      logRequestResponse("") {
+        rawRoutes
+      }
+    } else rawRoutes
 
     val serviceActorName = s"elasticmq-rest-sqs-$port"
 
@@ -227,4 +236,11 @@ trait SQSLimitsModule {
       }
     }
   }
+}
+
+class ElasticMQConfig {
+  private lazy val rootConfig = ConfigFactory.load()
+  private lazy val elasticMQConfig = rootConfig.getConfig("elasticmq")
+
+  lazy val debug = elasticMQConfig.getBoolean("debug")
 }
