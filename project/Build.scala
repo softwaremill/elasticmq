@@ -131,7 +131,7 @@ object ElasticMQBuild extends Build {
     "elasticmq-rest-sqs-testing-amazon-java-sdk",
     file("rest/rest-sqs-testing-amazon-java-sdk"),
     settings = buildSettings ++ Seq(
-      libraryDependencies ++= Seq(amazonJavaSdk, jclOverSlf4j) ++ common,
+      libraryDependencies ++= Seq(amazonJavaSdk, jclOverSlf4j, akka2Slf4j) ++ common,
       publishArtifact := false)
   ) dependsOn(restSqs % "test->test")
 
