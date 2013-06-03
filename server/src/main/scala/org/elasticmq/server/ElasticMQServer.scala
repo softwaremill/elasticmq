@@ -31,9 +31,12 @@ class ElasticMQServer(config: ElasticMQServerConfig) extends Logging {
   private def optionallyStartRestSqs(queueManagerActor: ActorRef): Option[SQSRestServer] = {
     if (config.restSqs.enabled) {
 
-      val server = new SQSRestServerBuilder(actorSystem, queueManagerActor,
-        config.restSqs.bindHostname, config.restSqs.bindPort,
-        config.nodeAddress, config.restSqs.sqsLimits).start()
+      val server = SQSRestServerBuilder(Some(actorSystem),
+        Some(queueManagerActor),
+        config.restSqs.bindHostname,
+        config.restSqs.bindPort,
+        config.nodeAddress,
+        config.restSqs.sqsLimits).start()
 
       Some(server)
     } else {

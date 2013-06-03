@@ -82,14 +82,17 @@ log INFO logs and above to the console):
 Starting an embedded ElasticMQ server with an SQS interface
 -----------------------------------------------------------
 
-    // First we need to create a Node
-    val node = NodeBuilder.withStorage(new InMemoryStorage)
-    // Then we can expose the native client using the SQS REST interface
-    val server = new SQSRestServerBuilder(actorSystem, 9324, new NodeAddress()).start()
+    val server = SQSRestServerBuilder.start()
     // ... use ...
-    // Finally we need to stop the server and the node
-    server.stop()
-    node.shutdown()
+    server.stopAndWait()
+
+If you need to bind to a different host/port, there are configuration methods on the builder:
+
+    val server = SQSRestServerBuilder.withPort(9325).withInterface("localhost").start()
+    // ... use ...
+    server.stopAndWait()
+
+You can also provide a custom `ActorSystem`; for details see the javadocs.
 
 Using the Amazon Java SDK to access an ElasticMQ Server
 -------------------------------------------------------

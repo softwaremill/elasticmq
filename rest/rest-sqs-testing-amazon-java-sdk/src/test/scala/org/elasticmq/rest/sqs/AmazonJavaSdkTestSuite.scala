@@ -9,9 +9,7 @@ import scala.collection.JavaConversions._
 import com.amazonaws.services.sqs.model._
 import scala.util.control.Exception._
 import com.amazonaws.AmazonServiceException
-import akka.actor.{Props, ActorSystem}
-import org.elasticmq.util.NowProvider
-import org.elasticmq.actor.QueueManagerActor
+import akka.actor.ActorSystem
 import scala.concurrent.Await
 import scala.concurrent.duration._
 import com.typesafe.scalalogging.slf4j.Logging
@@ -24,9 +22,6 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
   val delaySecondsAttribute = "DelaySeconds"
   val receiveMessageWaitTimeSecondsAttribute = "ReceiveMessageWaitTimeSeconds"
 
-  var systemStrict: ActorSystem = _
-  var systemRelaxed: ActorSystem = _
-
   var client: AmazonSQS = _ // strict server
   var relaxedClient: AmazonSQS = _
 
@@ -38,19 +33,12 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
   before {
     logger.info(s"\n---\nRunning test: $currentTestName\n---\n")
 
-    systemStrict = ActorSystem()
-    systemRelaxed = ActorSystem()
-
-    val nowProvider = new NowProvider
-    val queueManagerActorStrict = systemStrict.actorOf(Props(new QueueManagerActor(nowProvider)))
-    val queueManagerActorRelaxed = systemRelaxed.actorOf(Props(new QueueManagerActor(nowProvider)))
-
-    strictServer  = new SQSRestServerBuilder(systemStrict, queueManagerActorStrict)
+    strictServer  = SQSRestServerBuilder
       .withPort(9321)
       .withServerAddress(NodeAddress(port = 9321))
       .start()
 
-    relaxedServer = new SQSRestServerBuilder(systemRelaxed, queueManagerActorRelaxed)
+    relaxedServer = SQSRestServerBuilder
       .withPort(9322)
       .withServerAddress(NodeAddress(port = 9322))
       .withSQSLimits(SQSLimits.Relaxed)
@@ -70,14 +58,8 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
     client.shutdown()
     relaxedClient.shutdown()
 
-    Await.result(strictServer.stopAndGetFuture(), 1.minute) must be (Http.ClosedAll)
-    Await.result(relaxedServer.stopAndGetFuture(), 1.minute) must be (Http.ClosedAll)
-
-    systemStrict.shutdown()
-    systemStrict.awaitTermination()
-
-    systemRelaxed.shutdown()
-    systemRelaxed.awaitTermination()
+    strictServer.stopAndWait() must be (Http.ClosedAll)
+    relaxedServer.stopAndWait() must be (Http.ClosedAll)
 
     logger.info(s"\n---\nTest done: $currentTestName\n---\n")
   }

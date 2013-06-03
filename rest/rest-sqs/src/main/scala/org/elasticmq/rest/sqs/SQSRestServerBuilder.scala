@@ -5,72 +5,54 @@ import java.security.MessageDigest
 import com.typesafe.scalalogging.slf4j.Logging
 import collection.mutable.ArrayBuffer
 import spray.routing.SimpleRoutingApp
-import akka.actor.{ActorRef, ActorSystem}
+import akka.actor.{Props, ActorRef, ActorSystem}
 import spray.can.server.ServerSettings
 import akka.util.Timeout
-import scala.concurrent.Future
+import scala.concurrent.{Await, Future}
 import org.elasticmq.rest.sqs.directives.ElasticMQDirectives
 import spray.can.Http
-import akka.io.{Inet, IO}
+import akka.io.IO
 import org.elasticmq.rest.sqs.Constants._
 import scala.xml.EntityRef
 import org.elasticmq.QueueData
 import org.elasticmq.NodeAddress
 import com.typesafe.config.ConfigFactory
+import org.elasticmq.actor.QueueManagerActor
+import org.elasticmq.util.NowProvider
+import scala.concurrent.duration._
 
 /**
+ * @param providedActorSystem Optional actor system. If one is provided, it will be used to create ElasticMQ and Spray
+ *                            actors, but its lifecycle (shutdown) will be not managed by the server. If one is not
+ *                            provided, an actor system will be created, and its lifecycle will be bound to the server's
+ *                            lifecycle.
+ * @param providedQueueManagerActor Optional "main" ElasticMQ actor.
  * @param interface Hostname to which the server will bind.
  * @param port Port to which the server will bind.
  * @param serverAddress Address which will be returned as the queue address. Requests to this address
  * should be routed to this server.
  */
-class SQSRestServerBuilder(actorSystem: ActorSystem,
-                           queueManagerActor: ActorRef,
-                           interface: String, port: Int,
-                           serverAddress: NodeAddress,
-                           sqsLimits: SQSLimits.Value) extends Logging {
-  /**
-   * @param port Port on which the server will listen.
-   * @param serverAddress Address which will be returned as the queue address. Requests to this address
-   * should be routed to this server.
-   */
-  def this(actorSystem: ActorSystem, queueManagerActor: ActorRef, port: Int, serverAddress: NodeAddress) = {
-    this(actorSystem, queueManagerActor, "", port, serverAddress, SQSLimits.Strict)
-  }
+case class SQSRestServerBuilder(providedActorSystem: Option[ActorSystem],
+                                providedQueueManagerActor: Option[ActorRef],
+                                interface: String,
+                                port: Int,
+                                serverAddress: NodeAddress,
+                                sqsLimits: SQSLimits.Value) extends Logging {
 
-  /**
-   * By default:
-   * <li>
-   *  <ul>for `socketAddress`: when started, the server will bind to `localhost:9324`</ul>
-   *  <ul>for `serverAddress`: returned queue addresses will use `http://localhost:9324` as the base address.</ul>
-   *  <ul>for `sqsLimits`: relaxed
-   * </li>
-   */
-  def this(actorSystem: ActorSystem, queueManagerActor: ActorRef) = {
-    this(actorSystem, queueManagerActor, 9324, NodeAddress())
-  }
-
-  def withInterface(_interface: String) = {
-    new SQSRestServerBuilder(actorSystem, queueManagerActor, _interface, port, serverAddress, sqsLimits)
-  }
-
-  def withPort(_port: Int) = {
-    new SQSRestServerBuilder(actorSystem, queueManagerActor, interface, _port, serverAddress, sqsLimits)
-  }
-
-  def withServerAddress(_serverAddress: NodeAddress) = {
-    new SQSRestServerBuilder(actorSystem, queueManagerActor, interface, port, _serverAddress, sqsLimits)
-  }
-
-  def withSQSLimits(_sqsLimits: SQSLimits.Value) = {
-    new SQSRestServerBuilder(actorSystem, queueManagerActor, interface, port, serverAddress, _sqsLimits)
-  }
+  def withActorSystem(_actorSystem: ActorSystem) = this.copy(providedActorSystem = Some(_actorSystem))
+  def withQueueManagerActor(_queueManagerActor: ActorRef) = this.copy(providedQueueManagerActor = Some(_queueManagerActor))
+  def withInterface(_interface: String) = this.copy(interface = _interface)
+  def withPort(_port: Int) = this.copy(port = _port)
+  def withServerAddress(_serverAddress: NodeAddress) = this.copy(serverAddress = _serverAddress)
+  def withSQSLimits(_sqsLimits: SQSLimits.Value) = this.copy(sqsLimits = _sqsLimits)
 
   def start(): SQSRestServer = {
-    implicit val theActorSystem = actorSystem
-    val theQueueManagerActor = queueManagerActor
+    val (theActorSystem, stopActorSystem) = getOrCreateActorSystem()
+    val theQueueManagerActor = getOrCreateQueueManagerActor(theActorSystem)
     val theServerAddress = serverAddress
     val theLimits = sqsLimits
+
+    implicit val implictActorSystem = theActorSystem
 
     val env = new QueueManagerActorModule
       with QueueURLModule
@@ -139,12 +121,45 @@ class SQSRestServerBuilder(actorSystem: ActorSystem,
 
     SQSRestServer(appStartFuture, () => {
       import akka.pattern.ask
-      IO(Http).ask(Http.CloseAll)(Timeout(10000L))
+      val future = IO(Http).ask(Http.CloseAll)(Timeout(10000L))
+      future.map(v => { stopActorSystem(); v })
+      future
     })
+  }
+
+  private def getOrCreateActorSystem() = {
+    providedActorSystem
+      .map((_, () => ()))
+      .getOrElse {
+      val actorSystem = ActorSystem("elasticmq")
+      (actorSystem, () => {
+        actorSystem.shutdown()
+        actorSystem.awaitTermination()
+      })
+    }
+  }
+
+  private def getOrCreateQueueManagerActor(actorSystem: ActorSystem) = {
+    providedQueueManagerActor.getOrElse(actorSystem.actorOf(Props(new QueueManagerActor(new NowProvider()))))
   }
 }
 
-case class SQSRestServer(startFuture: Future[Any], stopAndGetFuture: () => Future[Any])
+/**
+ * By default:
+ * <li>
+ *  <ul>for `socketAddress`: when started, the server will bind to `localhost:9324`</ul>
+ *  <ul>for `serverAddress`: returned queue addresses will use `http://localhost:9324` as the base address.</ul>
+ *  <ul>for `sqsLimits`: relaxed
+ * </li>
+ */
+object SQSRestServerBuilder extends SQSRestServerBuilder(None, None, "", 9324, NodeAddress(), SQSLimits.Strict)
+
+case class SQSRestServer(startFuture: Future[Any], stopAndGetFuture: () => Future[Any]) {
+  def stopAndWait() = {
+    val stopFuture = stopAndGetFuture()
+    Await.result(stopFuture, 1.minute)
+  }
+}
 
 object Constants {
   val EmptyRequestId = "00000000-0000-0000-0000-000000000000"

@@ -14,7 +14,7 @@ import org.elasticmq.msg._
 import org.elasticmq._
 import scala.concurrent.Await
 import scala.concurrent.duration._
-import org.joda.time.{Duration, DateTime}
+import org.joda.time.DateTime
 import org.elasticmq.msg.ReceiveMessages
 import org.elasticmq.QueueData
 import org.elasticmq.NewMessageData
@@ -94,7 +94,10 @@ object LocalPerformanceTest extends App {
     override def start() = {
       val queueManagerActor = super.start()
 
-      currentRestServer = new SQSRestServerBuilder(actorSystem, queueManagerActor).start()
+      currentRestServer = SQSRestServerBuilder
+        .withActorSystem(actorSystem)
+        .withQueueManagerActor(queueManagerActor)
+        .start()
 
       currentSQSClient = new AmazonSQSClient(new BasicAWSCredentials("x", "x"))
       currentSQSClient.setEndpoint("http://localhost:9324")
