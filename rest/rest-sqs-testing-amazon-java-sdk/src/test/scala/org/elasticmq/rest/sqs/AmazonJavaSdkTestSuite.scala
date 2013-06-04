@@ -9,7 +9,6 @@ import scala.collection.JavaConversions._
 import com.amazonaws.services.sqs.model._
 import scala.util.control.Exception._
 import com.amazonaws.AmazonServiceException
-import akka.actor.ActorSystem
 import scala.concurrent.Await
 import scala.concurrent.duration._
 import com.typesafe.scalalogging.slf4j.Logging

@@ -7,8 +7,6 @@
 
     <logger name="org.apache.http" level="INFO"/>
     <logger name="org.elasticmq" level="DEBUG"/>
-    <logger name="com.mchange" level="INFO"/>
-    <logger name="org.jgroups" level="INFO"/>
 
     <root level="DEBUG">
         <appender-ref ref="STDOUT" />
