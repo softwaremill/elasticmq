@@ -31,7 +31,7 @@ object BuildSettings {
     credentials   += Credentials(Path.userHome / ".ivy2" / ".credentials"),
     publishMavenStyle := true,
     publishArtifact in Test := false,
-    pomIncludeRepository := { _ => false },
+    //pomIncludeRepository := { _ => false }, // TODO
     pomExtra := (
       <scm>
         <url>git@github.com:adamw/elasticmq.git</url>
