@@ -5,16 +5,14 @@ tl;dr
 -----
 
 * message queue system
-* emphasis on not loosing any messages
 * runs stand-alone ([download](https://s3-eu-west-1.amazonaws.com/softwaremill-public/elasticmq-0.6.3.tar.gz)) or embedded
-* Amazon SQS-compatible interface
-* in-memory with optional journaling and db-backed message storage
-* optionally replicated (guaranteed messaging)
+* [Amazon SQS](http://aws.amazon.com/sqs/)-compatible interface
+* fully asynchronous implementation, no blocking calls
 
 Summary
 -------
 
-ElasticMQ is a message queue system, offering Java, Scala and an [SQS](http://aws.amazon.com/sqs/)-compatible
+ElasticMQ is a message queue system, offering an actor-based Scala and an [SQS](http://aws.amazon.com/sqs/)-compatible
 REST (query) interface.
 
 ElasticMQ follows the semantics of SQS. Messages are received by polling the queue.
@@ -22,20 +20,13 @@ When a message is received, it is blocked for a specified amount of time (the vi
 If the message isn't deleted during that time, it will be again available for delivery.
 Moreover, queues and messages can be configured to always deliver messages with a delay.
 
-The focus in ElasticMQ is to make sure that the messages are delivered, and that no message is lost.
+The focus in SQS (and ElasticMQ) is to make sure that the messages are delivered.
 It may happen, however, that a message is delivered twice (if, for example, a client dies after receiving a message and
 processing it, but before deleting). That's why clients of ElasticMQ (and Amazon SQS) should be idempotent.
 
-There are several message storage implementations. Messages can be stored entirely in-memory, providing a
-volatile but fast message queue. Operations on in-memory storage can be journaled on disk, providing message durability
-across server restarts/crashes. Alternatively, messages can be persisted in a database (MySQL, Postgres, H2, ...).
-
-ElasticMQ supports data replication across a cluster, thus providing a replicated/guaranteed message queue.
-Each node in the cluster can use any storage implementation.
-
-As ElasticMQ implements a subset of the [SQS](http://aws.amazon.com/sqs/) query (REST) interface, it is a great SQS alternative
-both for testing purposes (ElasticMQ is easily embeddable) and for creating systems which work both within and
-outside of the Amazon infrastructure.
+As ElasticMQ implements a subset of the [SQS](http://aws.amazon.com/sqs/) query (REST) interface, it is a great SQS
+alternative both for testing purposes (ElasticMQ is easily embeddable) and for creating systems which work both within
+and outside of the Amazon infrastructure.
 
 The future will most probably bring even more exciting features :).
 
@@ -54,97 +45,54 @@ You can download the stand-alone distribution here:
 
 Java 6 or above is required for running the server.
 
-Installation is as easy as unpacking the `.zip`/`.tar.gz` file. The contents of the package are:
-* `bin`: scripts to start the server
-* `conf`: ElasticMQ and logging (logback) configuration
-* `lib`: binaries
-* `README.md`, `LICENSE.txt`, `NOTICE.txt`: this file, license documentation
+Simply run the jar and you should get a working server, which binds to `localhost:9324`:
 
-Additionally two directories will be created when the server is started:
-* `data`: stores the command journal (messages file log), if enabled
-* `log`: default location for log files
+    java -jar elasticmq-0.7.0.jar
 
-You can configure ElasticMQ through the `conf/elasticmq.conf` file. There you can choose which storage to use, should
-journaling and replication be enabled, should the server expose an SQS interface, on what interface and port to bind
-etc. More documentation can be found in the file itself.
+ElasticMQ uses [Typesafe Config](https://github.com/typesafehub/config) for configuration. To specify custom
+configuration values, create a file (e.g. `custom.conf`), fill it in with the desired values, and pass it to the server:
+
+    java -Dconfig.file=custom.conf -jar elasticmq-0.7.0.jar
+
+The config file may contain any configuration for Akka, Spray and ElasticMQ. Current ElasticMQ configuration values are:
+
+````
+// What is the outside visible address of this ElasticMQ node (used by rest-sqs)
+node-address {
+    protocol = http
+    host = localhost
+    port = 9324
+    context-path = ""
+}
+
+rest-sqs {
+    enabled = true
+    bind-port = 9324
+    bind-hostname = "0.0.0.0"
+    // Possible values: relaxed, strict
+    sqs-limits = relaxed
+}
+````
+
+You can also provide an alternative [Logback](http://logback.qos.ch/) configuration file (the default is configured to
+log INFO logs and above to the console):
+
+    java -Dlogback.configurationFile=my_logback.xml -jar elasticmq-0.7.0.jar
 
 Starting an embedded ElasticMQ server with an SQS interface
 -----------------------------------------------------------
 
-    // First we need to create a Node
-    val node = NodeBuilder.withStorage(new InMemoryStorage)
-    // Then we can expose the native client using the SQS REST interface
-    val server = new SQSRestServerBuilder(node.nativeClient, 9324, new NodeAddress()).start()
+    val server = SQSRestServerBuilder.start()
     // ... use ...
-    // Finally we need to stop the server and the node
-    server.stop()
-    node.shutdown()
+    server.stopAndWait()
 
-Alternatively, you can use e.g. MySQL to store the data:
+If you need to bind to a different host/port, there are configuration methods on the builder:
 
-    val node = NodeBuilder.withStorage(new SquerylStorage(DBConfiguration.mysql("elasticmq", "root", "")))
-
-Adding journaling to an in-memory storage
------------------------------------------
-
-This is as simple as wrapping the original storage (it only makes sense to wrap an in memory storage, as a DB storage
-has its own persistence):
-
-    val wrappedStorage = new FileLogConfigurator(
-        inMemoryStorage,
-        FileLogConfiguration(new File("/store/here"), 100000)
-        .start()
-
-Note that even though messages are now durable (restarting the server won't cause message loss), the overall capacity
-of the queues (how many messages the queue can store at a time) is limited by the amount of RAM allocated to the
-process.
-
-Writing the journal is an asynchronous process, done by a separate thread. In case of a server crash, some
-commands may thus be lost. Even if writing the journal was a synchronous process, data could end up not being flushed
-from buffers; even then, if some OS caches are not disabled, data could be lost. That's why if you require even more
-data durability, use replication.
-
-Starting a replicated storage
------------------------------
-
-Any storage can be replicated by wrapping it using `ReplicatedStorageConfigurator`. Nodes can join and leave the cluster
-at any time; existing data will be transferred to new cluster members.
-
-Storage commands can be replicated in several modes:
-
-* fire-and-forget (`DoNotWaitReplicationMode`)
-* waiting for at least one cluster member to apply the changes (`WaitForAnyReplicationMode`)
-* waiting for a majority of cluster members (`WaitForMajorityReplicationMode`)
-* waiting for all (`WaitForAllReplicationMode`).
-
-Client operations return only when the specified number of members applied the changes.
-
-Example:
-
-    val storage = new InMemoryStorage
-    val replicatedStorage = ReplicatedStorageConfigurator.start(storage, NodeAddress(),
-            WaitForMajorityReplicationMode)
-    val node = NodeBuilder.withStorage(replicatedStorage)
-
+    val server = SQSRestServerBuilder.withPort(9325).withInterface("localhost").start()
     // ... use ...
+    server.stopAndWait()
 
-    node.shutdown()
-    storage.shutdown()
-
-The provided `NodeAddress`es are entirely logical (the actual value can be any string) and for example can be used
-by ElasticMQ clients to determine which node is the master.
-
-Operations can be only executed on the master node. If you attempt to execute an operation on a node which is not
-the master, the `NodeIsNotMasterException` exception will be thrown, containing the master node address, if available.
-
-In case of cluster partitions, replication is designed to only operate on the partition which contains
-a majority of nodes (`n/2+1`). Otherwise data could get easily corrupted, if two disconnected cluster partitions
-(split-brain) changed the same things; such a situation could lead to a very high number of duplicate deliveries and an
-unmergeable state.
-
-That is also why when creating the replicated storage, you must provide the expected number of nodes. Note that
-an even number of nodes makes most sense (e.g. in a 3-node cluster, 2 nodes must be active in order for the cluster
-to work).
+You can also provide a custom `ActorSystem`; for details see the javadocs.
 
 Using the Amazon Java SDK to access an ElasticMQ Server
 -------------------------------------------------------
@@ -160,37 +108,17 @@ The endpoint value should be the same address as the `NodeAddress` provided as a
 
 The `rest-sqs-testing-amazon-java-sdk` module contains some more usage examples.
 
-Deployment scenarios
---------------------
-
-1. In-memory storage, single node, embedded: ideal for testing
-2. In-memory storage, single node, journaling: fast persistent messaging with queues bounded by the amount of memory
-3. DB storage, local DB, single node: persistent messaging with unbounded queues
-4. DB storage, shared DB, multiple nodes: persistent messaging. Multiple nodes can use the same database.
-   The database can be replicated/backed up for data safety.
-5. In-memory storage, multiple nodes, journaled, replicated: Data safety through replication and journalling.
-   Fast guaranteed messaging.
-6. DB storage, local DB, multiple nodes, replication: each node stores the data in a separate DB. Recommended if a
-   shared DB is not available. Provides good data safety and unbounded queues.
-
 ElasticMQ dependencies in SBT
 -----------------------------
 
-    // Includes the in-memory storage
-    val elasticmqCore       = "org.elasticmq" %% "elasticmq-core"             % "0.6.3"
+    val elasticmqSqs        = "org.elasticmq" %% "elasticmq-rest-sqs"         % "0.7.0"
 
-    // If you want to use the database storage
-    val elasticmqStorageDb  = "org.elasticmq" %% "elasticmq-storage-database" % "0.6.3"
+If you don't want the SQS interface, but just use the actors directly, you can add a dependency only to the `core`
+module:
 
-    // If you want to expose an SQS interface
-    val elasticmqSqs        = "org.elasticmq" %% "elasticmq-rest-sqs"         % "0.6.3"
-
-    // If you want to use replication
-    val elasticmqRepl       = "org.elasticmq" %% "elasticmq-replication"      % "0.6.3"
+    val elasticmqCore       = "org.elasticmq" %% "elasticmq-core"             % "0.7.0"
 
 If you want to use a snapshot version, you will need to add the [https://oss.sonatype.org/content/repositories/snapshots/](https://oss.sonatype.org/content/repositories/snapshots/) repository to your configuration.
-
-Until version 0.6.2, ElasticMQ was built and deployed with Scala 2.9. Since 0.6.3, it is built and deployed with Scala 2.10.
 
 ElasticMQ dependencies in Maven
 -------------------------------
@@ -199,39 +127,24 @@ Dependencies:
 
     <dependency>
         <groupId>org.elasticmq</groupId>
-        <artifactId>elasticmq-core_2.10</artifactId>
-        <version>0.6.3</version>
-    </dependency>
-    <dependency>
-        <groupId>org.elasticmq</groupId>
-        <artifactId>elasticmq-storage-database_2.10</artifactId>
-        <version>0.6.3</version>
-    </dependency>
-    <dependency>
-        <groupId>org.elasticmq</groupId>
         <artifactId>elasticmq-rest-sqs_2.10</artifactId>
-        <version>0.6.3</version>
-    </dependency>
-    <dependency>
-        <groupId>org.elasticmq</groupId>
-        <artifactId>elasticmq-replication_2.10</artifactId>
-        <version>0.6.3</version>
+        <version>0.7.0</version>
     </dependency>
 
 If you want to use a snapshot version, you will need to add the [https://oss.sonatype.org/content/repositories/snapshots/](https://oss.sonatype.org/content/repositories/snapshots/) repository to your configuration.
 
+Replication, journaling, SQL backend
+------------------------------------
+
+Until version 0.7.0, ElasticMQ included optional replication, journaling and an SQL message storage. These modules
+have not yet been reimplemented using the new Akka core.
+
 Current versions
---------
+----------------
 
-*Stable*: 0.6.3
+*Stable*: 0.7.0
 
-*Development*: 0.7.0-SNAPSHOT
-
-DB Schema
----------
-
-The MySQL Schema can be found in `storage-database/src/main/resource/schema-mysql.sql` file. It should be easily
-adaptable to other databases.
+*Development*: 0.7.1-SNAPSHOT
 
 Logging
 -------
@@ -242,36 +155,27 @@ however [Logback](http://logback.qos.ch/) is recommended.
 Performance
 -----------
 
-Tests done on a 2009 MBP, 2.4GHz Core2Duo, 8GB RAM, no replication. Throughput is in messages per second (messages are
+Tests done on a 2012 MBP, 2.6GHz, 16GB RAM, no replication. Throughput is in messages per second (messages are
 small).
 
 Directly accessing the client:
 
     Running test for [in-memory], iterations: 10, msgs in iteration: 100000, thread count: 1.
-    Overall in-memory throughput: 41373.603641
+    Overall in-memory throughput: 21326.054040
 
     Running test for [in-memory], iterations: 10, msgs in iteration: 100000, thread count: 2.
-    Overall in-memory throughput: 32646.665143
+    Overall in-memory throughput: 26292.956117
 
-    Running test for [in-memory], iterations: 3, msgs in iteration: 1000000, thread count: 1.
-    Overall in-memory throughput: 35157.211330
-
-    Running test for [file log + in-memory], iterations: 10, msgs in iteration: 100000, thread count: 1.
-    Overall file log + in-memory throughput: 15464.316091
-
-    Running test for [h2], iterations: 10, msgs in iteration: 1000, thread count: 8.
-    Overall h2 throughput: 334.085025
-
-    Running test for [mysql], iterations: 10, msgs in iteration: 1000, thread count: 2.
-    Overall mysql throughput: 143.620383
+    Running test for [in-memory], iterations: 10, msgs in iteration: 100000, thread count: 10.
+    Overall in-memory throughput: 25591.155697
 
 Through the SQS REST interface:
 
     Running test for [rest-sqs + in-memory], iterations: 10, msgs in iteration: 1000, thread count: 20.
-    Overall rest-sqs + in-memory throughput: 781.460628
+    Overall rest-sqs + in-memory throughput: 2540.553587
 
-    Running test for [rest-sqs + file log + in-memory], iterations: 10, msgs in iteration: 1000, thread count: 20.
-    Overall rest-sqs + in-memory throughput: 675.851488
+    Running test for [rest-sqs + in-memory], iterations: 10, msgs in iteration: 1000, thread count: 40.
+    Overall rest-sqs + in-memory throughput: 2600.002600
 
 Note that both the client and the server were on the same machine.
 
@@ -280,16 +184,20 @@ Test class: `org.elasticmq.performance.LocalPerformanceTest`.
 Technology
 ----------
 
-* Core: [Scala](http://scala-lang.org)
-* Database access: [Squeryl](http://squeryl.org/)
-* Rest server: [Netty](http://www.jboss.org/netty), a high-performance,
-  asynchronous, event-driven Java NIO framework.
-* Replication: [JGroups](http://www.jgroups.org/)
+* Core: [Scala](http://scala-lang.org) and [Akka](http://akka.io/).
+* Rest server: [Spray](http://http://spray.io/), a high-performance,
+  asynchronous, REST/HTTP toolkit.
 * Testing the SQS interface: [Amazon Java SDK](http://aws.amazon.com/sdkforjava/);
   see the `rest-sqs-testing-amazon-java-sdk` module for the testsuite.
 
 Change log
 ----------
+
+#### Version 0.7.0 (?? June 2013)
+
+* reimplemented using Akka and Spray (actor-based, no blocking)
+* long polling support
+* bug fixes
 
 #### Version 0.6.3 (21 January 2013)
 
