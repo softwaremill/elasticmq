@@ -22,28 +22,55 @@ import org.elasticmq.util.NowProvider
 import scala.concurrent.duration._
 
 /**
- * @param providedActorSystem Optional actor system. If one is provided, it will be used to create ElasticMQ and Spray
- *                            actors, but its lifecycle (shutdown) will be not managed by the server. If one is not
- *                            provided, an actor system will be created, and its lifecycle will be bound to the server's
- *                            lifecycle.
- * @param providedQueueManagerActor Optional "main" ElasticMQ actor.
- * @param interface Hostname to which the server will bind.
- * @param port Port to which the server will bind.
- * @param serverAddress Address which will be returned as the queue address. Requests to this address
- * should be routed to this server.
+ * By default:
+ * <li>
+ *  <ul>for `socketAddress`: when started, the server will bind to `localhost:9324`</ul>
+ *  <ul>for `serverAddress`: returned queue addresses will use `http://localhost:9324` as the base address.</ul>
+ *  <ul>for `sqsLimits`: relaxed
+ * </li>
  */
-case class SQSRestServerBuilder(providedActorSystem: Option[ActorSystem],
-                                providedQueueManagerActor: Option[ActorRef],
-                                interface: String,
-                                port: Int,
-                                serverAddress: NodeAddress,
-                                sqsLimits: SQSLimits.Value) extends Logging {
+object SQSRestServerBuilder extends TheSQSRestServerBuilder(None, None, "", 9324, NodeAddress(), SQSLimits.Strict)
 
+case class TheSQSRestServerBuilder(providedActorSystem: Option[ActorSystem],
+                                   providedQueueManagerActor: Option[ActorRef],
+                                   interface: String,
+                                   port: Int,
+                                   serverAddress: NodeAddress,
+                                   sqsLimits: SQSLimits.Value) extends Logging {
+
+  /**
+   * @param _actorSystem Optional actor system. If one is provided, it will be used to create ElasticMQ and Spray
+   *                     actors, but its lifecycle (shutdown) will be not managed by the server. If one is not
+   *                     provided, an actor system will be created, and its lifecycle will be bound to the server's
+   *                     lifecycle.
+   */
   def withActorSystem(_actorSystem: ActorSystem) = this.copy(providedActorSystem = Some(_actorSystem))
+
+  /**
+   * @param _queueManagerActor Optional "main" ElasticMQ actor.
+   */
   def withQueueManagerActor(_queueManagerActor: ActorRef) = this.copy(providedQueueManagerActor = Some(_queueManagerActor))
+
+  /**
+   * @param _interface Hostname to which the server will bind.
+   */
   def withInterface(_interface: String) = this.copy(interface = _interface)
+
+  /**
+   * @param _port Port to which the server will bind.
+   */
   def withPort(_port: Int) = this.copy(port = _port)
+
+  /**
+   * @param _serverAddress Address which will be returned as the queue address. Requests to this address
+   *                       should be routed to this server.
+   */
   def withServerAddress(_serverAddress: NodeAddress) = this.copy(serverAddress = _serverAddress)
+
+  /**
+   * @param _sqsLimits Should "real" SQS limits be used (strict), or should they be relaxed where possible (regarding
+   *                   e.g. message size).
+   */
   def withSQSLimits(_sqsLimits: SQSLimits.Value) = this.copy(sqsLimits = _sqsLimits)
 
   def start(): SQSRestServer = {
@@ -116,7 +143,7 @@ case class SQSRestServerBuilder(providedActorSystem: Option[ActorSystem],
       }
     }
 
-    SQSRestServerBuilder.this.logger.info("Started SQS rest server, bind address %s:%d, visible server address %s"
+    TheSQSRestServerBuilder.this.logger.info("Started SQS rest server, bind address %s:%d, visible server address %s"
       .format(interface, port, theServerAddress.fullAddress))
 
     SQSRestServer(appStartFuture, () => {
@@ -143,16 +170,6 @@ case class SQSRestServerBuilder(providedActorSystem: Option[ActorSystem],
     providedQueueManagerActor.getOrElse(actorSystem.actorOf(Props(new QueueManagerActor(new NowProvider()))))
   }
 }
-
-/**
- * By default:
- * <li>
- *  <ul>for `socketAddress`: when started, the server will bind to `localhost:9324`</ul>
- *  <ul>for `serverAddress`: returned queue addresses will use `http://localhost:9324` as the base address.</ul>
- *  <ul>for `sqsLimits`: relaxed
- * </li>
- */
-object SQSRestServerBuilder extends SQSRestServerBuilder(None, None, "", 9324, NodeAddress(), SQSLimits.Strict)
 
 case class SQSRestServer(startFuture: Future[Any], stopAndGetFuture: () => Future[Any]) {
   def stopAndWait() = {

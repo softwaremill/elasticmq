@@ -1,7 +1,7 @@
 package org.elasticmq.server
 
 import com.typesafe.scalalogging.slf4j.Logging
-import org.elasticmq.rest.sqs.{SQSRestServer, SQSRestServerBuilder}
+import org.elasticmq.rest.sqs.{TheSQSRestServerBuilder, SQSRestServer}
 import akka.actor.{Props, ActorRef, ActorSystem}
 import org.elasticmq.actor.QueueManagerActor
 import org.elasticmq.util.NowProvider
@@ -31,7 +31,7 @@ class ElasticMQServer(config: ElasticMQServerConfig) extends Logging {
   private def optionallyStartRestSqs(queueManagerActor: ActorRef): Option[SQSRestServer] = {
     if (config.restSqs.enabled) {
 
-      val server = SQSRestServerBuilder(Some(actorSystem),
+      val server = TheSQSRestServerBuilder(Some(actorSystem),
         Some(queueManagerActor),
         config.restSqs.bindHostname,
         config.restSqs.bindPort,
