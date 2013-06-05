@@ -118,6 +118,12 @@ module:
 
     val elasticmqCore       = "org.elasticmq" %% "elasticmq-core"             % "0.7.0"
 
+Repository:
+
+    resolvers += "SoftwareMill Releases" at "https://nexus.softwaremill.com/content/repositories/releases"
+
+(ElasticMQ 0.7.0 cannot be deployed to Maven Central as its dependency - Spray - isn't deployed there yet.)
+
 If you want to use a snapshot version, you will need to add the [https://oss.sonatype.org/content/repositories/snapshots/](https://oss.sonatype.org/content/repositories/snapshots/) repository to your configuration.
 
 ElasticMQ dependencies in Maven
@@ -130,6 +136,15 @@ Dependencies:
         <artifactId>elasticmq-rest-sqs_2.10</artifactId>
         <version>0.7.0</version>
     </dependency>
+
+Repository:
+
+    <distributionManagement>
+        <repository>
+            <id>releases</id>
+            <url>https://nexus.softwaremill.com/content/repositories/releases</url>
+        </repository>
+    </distributionManagement>
 
 If you want to use a snapshot version, you will need to add the [https://oss.sonatype.org/content/repositories/snapshots/](https://oss.sonatype.org/content/repositories/snapshots/) repository to your configuration.
 
