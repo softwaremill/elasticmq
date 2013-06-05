@@ -207,7 +207,7 @@ Technology
 Change log
 ----------
 
-#### Version 0.7.0 (?? June 2013)
+#### Version 0.7.0 (5 June 2013)
 
 * reimplemented using Akka and Spray (actor-based, no blocking)
 * long polling support
