@@ -54,6 +54,9 @@ case class SQSRestServerBuilder(providedActorSystem: Option[ActorSystem],
 
     implicit val implictActorSystem = theActorSystem
 
+    // TODO: debugging, remove later
+    spray.util.Utils.installDebuggingEventStreamLoggers()
+
     val env = new QueueManagerActorModule
       with QueueURLModule
       with SQSLimitsModule
