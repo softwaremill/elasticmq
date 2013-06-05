@@ -38,6 +38,8 @@ class ElasticMQServer(config: ElasticMQServerConfig) extends Logging {
         config.nodeAddress,
         config.restSqs.sqsLimits).start()
 
+      server.waitUntilStarted()
+
       Some(server)
     } else {
       None
