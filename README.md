@@ -93,6 +93,8 @@ If you need to bind to a different host/port, there are configuration methods on
 
 You can also provide a custom `ActorSystem`; for details see the javadocs.
 
+Embedded ElasticMQ can be used from any JVM-based language (Java, Scala, etc.).
+
 Using the Amazon Java SDK to access an ElasticMQ Server
 -------------------------------------------------------
 
