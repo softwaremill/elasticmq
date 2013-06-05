@@ -25,8 +25,10 @@ object BuildSettings {
       val nexus = "https://oss.sonatype.org/"
       if (v.trim.endsWith("SNAPSHOT"))
         Some("snapshots" at nexus + "content/repositories/snapshots")
-      else
-        Some("releases"  at nexus + "service/local/staging/deploy/maven2")
+      else {
+        //Some("releases"  at nexus + "service/local/staging/deploy/maven2") // TODO
+        Some("releases"  at "https://nexus.softwaremill.com/content/repositories/releases")
+      }
     },
     credentials   += Credentials(Path.userHome / ".ivy2" / ".credentials"),
     publishMavenStyle := true,
