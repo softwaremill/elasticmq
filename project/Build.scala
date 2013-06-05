@@ -7,7 +7,7 @@ import ls.Plugin._
 object BuildSettings {
   val buildSettings = Defaults.defaultSettings ++ Seq (
     organization  := "org.elasticmq",
-    version       := "0.7.0-SNAPSHOT",
+    version       := "0.7.0",
     scalaVersion  := "2.10.1",
 
     resolvers += "spray repo" at "http://repo.spray.io", // TODO
