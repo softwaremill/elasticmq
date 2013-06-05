@@ -49,7 +49,7 @@ Simply run the jar and you should get a working server, which binds to `localhos
 
     java -jar elasticmq-0.7.0.jar
 
-ElasticMQ uses [Typesafe Config](https://github.com/typesafehub/config) for configuration. To use specify custom
+ElasticMQ uses [Typesafe Config](https://github.com/typesafehub/config) for configuration. To specify custom
 configuration values, create a file (e.g. `custom.conf`), fill it in with the desired values, and pass it to the server:
 
     java -Dconfig.file=custom.conf -jar elasticmq-0.7.0.jar
@@ -155,24 +155,27 @@ however [Logback](http://logback.qos.ch/) is recommended.
 Performance
 -----------
 
-Tests done on a 2009 MBP, 2.4GHz Core2Duo, 8GB RAM, no replication. Throughput is in messages per second (messages are
+Tests done on a 2012 MBP, 2.6GHz, 16GB RAM, no replication. Throughput is in messages per second (messages are
 small).
 
 Directly accessing the client:
 
     Running test for [in-memory], iterations: 10, msgs in iteration: 100000, thread count: 1.
-    Overall in-memory throughput: 41373.603641
+    Overall in-memory throughput: 21326.054040
 
     Running test for [in-memory], iterations: 10, msgs in iteration: 100000, thread count: 2.
-    Overall in-memory throughput: 32646.665143
+    Overall in-memory throughput: 26292.956117
 
-    Running test for [in-memory], iterations: 3, msgs in iteration: 1000000, thread count: 1.
-    Overall in-memory throughput: 35157.211330
+    Running test for [in-memory], iterations: 10, msgs in iteration: 100000, thread count: 10.
+    Overall in-memory throughput: 25591.155697
 
 Through the SQS REST interface:
 
     Running test for [rest-sqs + in-memory], iterations: 10, msgs in iteration: 1000, thread count: 20.
-    Overall rest-sqs + in-memory throughput: 781.460628
+    Overall rest-sqs + in-memory throughput: 2540.553587
+
+    Running test for [rest-sqs + in-memory], iterations: 10, msgs in iteration: 1000, thread count: 40.
+    Overall rest-sqs + in-memory throughput: 2600.002600
 
 Note that both the client and the server were on the same machine.
 
@@ -192,7 +195,7 @@ Change log
 
 #### Version 0.7.0 (?? June 2013)
 
-* reimplemented using Akka and Spray
+* reimplemented using Akka and Spray (actor-based, no blocking)
 * long polling support
 * bug fixes
 
