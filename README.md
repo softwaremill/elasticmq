@@ -5,7 +5,7 @@ tl;dr
 -----
 
 * message queue system
-* runs stand-alone ([download](https://s3-eu-west-1.amazonaws.com/softwaremill-public/elasticmq-0.6.3.tar.gz)) or embedded
+* runs stand-alone ([download](https://s3-eu-west-1.amazonaws.com/softwaremill-public/elasticmq-server-0.7.0.jar)) or embedded
 * [Amazon SQS](http://aws.amazon.com/sqs/)-compatible interface
 * fully asynchronous implementation, no blocking calls
 
@@ -40,19 +40,18 @@ Installation: stand-alone
 -------------------------
 
 You can download the stand-alone distribution here:
-* [https://s3/.../elasticmq-0.6.3.tar.gz](https://s3-eu-west-1.amazonaws.com/softwaremill-public/elasticmq-0.6.3.tar.gz)
-* [https://s3/.../elasticmq-0.6.3.zip](https://s3-eu-west-1.amazonaws.com/softwaremill-public/elasticmq-0.6.3.zip)
+[https://s3/.../elasticmq-server-0.7.0.jar](https://s3-eu-west-1.amazonaws.com/softwaremill-public/elasticmq-server-0.7.0.jar)
 
 Java 6 or above is required for running the server.
 
 Simply run the jar and you should get a working server, which binds to `localhost:9324`:
 
-    java -jar elasticmq-0.7.0.jar
+    java -jar elasticmq-server-0.7.0.jar
 
 ElasticMQ uses [Typesafe Config](https://github.com/typesafehub/config) for configuration. To specify custom
 configuration values, create a file (e.g. `custom.conf`), fill it in with the desired values, and pass it to the server:
 
-    java -Dconfig.file=custom.conf -jar elasticmq-0.7.0.jar
+    java -Dconfig.file=custom.conf -jar elasticmq-server-0.7.0.jar
 
 The config file may contain any configuration for Akka, Spray and ElasticMQ. Current ElasticMQ configuration values are:
 
@@ -77,7 +76,7 @@ rest-sqs {
 You can also provide an alternative [Logback](http://logback.qos.ch/) configuration file (the default is configured to
 log INFO logs and above to the console):
 
-    java -Dlogback.configurationFile=my_logback.xml -jar elasticmq-0.7.0.jar
+    java -Dlogback.configurationFile=my_logback.xml -jar elasticmq-server-0.7.0.jar
 
 Starting an embedded ElasticMQ server with an SQS interface
 -----------------------------------------------------------
