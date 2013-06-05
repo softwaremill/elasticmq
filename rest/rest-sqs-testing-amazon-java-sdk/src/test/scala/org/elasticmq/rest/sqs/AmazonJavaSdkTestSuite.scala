@@ -43,8 +43,8 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
       .withSQSLimits(SQSLimits.Relaxed)
       .start()
 
-    Await.result(strictServer.startFuture, 1.minute).isInstanceOf[Http.Bound] must be (true)
-    Await.result(relaxedServer.startFuture, 1.minute).isInstanceOf[Http.Bound] must be (true)
+    strictServer.waitUntilStarted().isInstanceOf[Http.Bound] must be (true)
+    relaxedServer.waitUntilStarted().isInstanceOf[Http.Bound] must be (true)
 
     client = new AmazonSQSClient(new BasicAWSCredentials("x", "x"))
     client.setEndpoint("http://localhost:9321")

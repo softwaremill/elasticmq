@@ -172,6 +172,10 @@ case class TheSQSRestServerBuilder(providedActorSystem: Option[ActorSystem],
 }
 
 case class SQSRestServer(startFuture: Future[Any], stopAndGetFuture: () => Future[Any]) {
+  def waitUntilStarted() = {
+    Await.result(startFuture, 1.minute)
+  }
+
   def stopAndWait() = {
     val stopFuture = stopAndGetFuture()
     Await.result(stopFuture, 1.minute)
