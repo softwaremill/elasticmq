@@ -138,12 +138,10 @@ Dependencies:
 
 Repository:
 
-    <distributionManagement>
-        <repository>
-            <id>releases</id>
-            <url>https://nexus.softwaremill.com/content/repositories/releases</url>
-        </repository>
-    </distributionManagement>
+    <repository>
+        <id>softwaremill-releases</id>
+        <url>https://nexus.softwaremill.com/content/repositories/releases</url>
+    </repository>
 
 If you want to use a snapshot version, you will need to add the [https://oss.sonatype.org/content/repositories/snapshots/](https://oss.sonatype.org/content/repositories/snapshots/) repository to your configuration.
 
