@@ -8,7 +8,7 @@ object BuildSettings {
   val buildSettings = Defaults.defaultSettings ++ Seq (
     organization  := "org.elasticmq",
     version       := "0.7.1-SNAPSHOT",
-    scalaVersion  := "2.10.1",
+    scalaVersion  := "2.10.2",
 
     resolvers += "spray repo" at "http://repo.spray.io", // TODO
     resolvers += "nightly spray repo" at "http://nightlies.spray.io/", // TODO
