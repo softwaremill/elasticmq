@@ -23,7 +23,7 @@ trait ExceptionDirectives extends Logging {
     }
   }
 
-  val exceptionHandler = ExceptionHandler.fromPF(exceptionHandlerPF)
+  val exceptionHandler = ExceptionHandler(exceptionHandlerPF)
 
   def handleServerExceptions = handleExceptions(exceptionHandler)
 }
