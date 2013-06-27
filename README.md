@@ -73,6 +73,10 @@ rest-sqs {
 }
 ````
 
+By default the maximum SQS message wait time is 20 seconds, and the maximum duration of a request is set to 21 seconds.
+To change that (e.g. if you want longer message wait times), adjust the `spray.can.server.request-timeout` configuration
+property.
+
 You can also provide an alternative [Logback](http://logback.qos.ch/) configuration file (the default is configured to
 log INFO logs and above to the console):
 
