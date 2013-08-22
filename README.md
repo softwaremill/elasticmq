@@ -5,7 +5,7 @@ tl;dr
 -----
 
 * message queue system
-* runs stand-alone ([download](https://s3-eu-west-1.amazonaws.com/softwaremill-public/elasticmq-server-0.7.0.jar)) or embedded
+* runs stand-alone ([download](https://s3-eu-west-1.amazonaws.com/softwaremill-public/elasticmq-server-0.7.1.jar)) or embedded
 * [Amazon SQS](http://aws.amazon.com/sqs/)-compatible interface
 * fully asynchronous implementation, no blocking calls
 
@@ -40,18 +40,18 @@ Installation: stand-alone
 -------------------------
 
 You can download the stand-alone distribution here:
-[https://s3/.../elasticmq-server-0.7.0.jar](https://s3-eu-west-1.amazonaws.com/softwaremill-public/elasticmq-server-0.7.0.jar)
+[https://s3/.../elasticmq-server-0.7.1.jar](https://s3-eu-west-1.amazonaws.com/softwaremill-public/elasticmq-server-0.7.1.jar)
 
 Java 6 or above is required for running the server.
 
 Simply run the jar and you should get a working server, which binds to `localhost:9324`:
 
-    java -jar elasticmq-server-0.7.0.jar
+    java -jar elasticmq-server-0.7.1.jar
 
 ElasticMQ uses [Typesafe Config](https://github.com/typesafehub/config) for configuration. To specify custom
 configuration values, create a file (e.g. `custom.conf`), fill it in with the desired values, and pass it to the server:
 
-    java -Dconfig.file=custom.conf -jar elasticmq-server-0.7.0.jar
+    java -Dconfig.file=custom.conf -jar elasticmq-server-0.7.1.jar
 
 The config file may contain any configuration for Akka, Spray and ElasticMQ. Current ElasticMQ configuration values are:
 
@@ -80,7 +80,7 @@ property.
 You can also provide an alternative [Logback](http://logback.qos.ch/) configuration file (the default is configured to
 log INFO logs and above to the console):
 
-    java -Dlogback.configurationFile=my_logback.xml -jar elasticmq-server-0.7.0.jar
+    java -Dlogback.configurationFile=my_logback.xml -jar elasticmq-server-0.7.1.jar
 
 Starting an embedded ElasticMQ server with an SQS interface
 -----------------------------------------------------------
@@ -116,18 +116,18 @@ The `rest-sqs-testing-amazon-java-sdk` module contains some more usage examples.
 ElasticMQ dependencies in SBT
 -----------------------------
 
-    val elasticmqSqs        = "org.elasticmq" %% "elasticmq-rest-sqs"         % "0.7.0"
+    val elasticmqSqs        = "org.elasticmq" %% "elasticmq-rest-sqs"         % "0.7.1"
 
 If you don't want the SQS interface, but just use the actors directly, you can add a dependency only to the `core`
 module:
 
-    val elasticmqCore       = "org.elasticmq" %% "elasticmq-core"             % "0.7.0"
+    val elasticmqCore       = "org.elasticmq" %% "elasticmq-core"             % "0.7.1"
 
 Repository:
 
     resolvers += "SoftwareMill Releases" at "https://nexus.softwaremill.com/content/repositories/releases"
 
-(ElasticMQ 0.7.0 cannot be deployed to Maven Central as its dependency - Spray - isn't deployed there yet.)
+(ElasticMQ 0.7.1 cannot be deployed to Maven Central as its dependency - Spray - isn't deployed there yet.)
 
 If you want to use a snapshot version, you will need to add the [https://oss.sonatype.org/content/repositories/snapshots/](https://oss.sonatype.org/content/repositories/snapshots/) repository to your configuration.
 
@@ -139,7 +139,7 @@ Dependencies:
     <dependency>
         <groupId>org.elasticmq</groupId>
         <artifactId>elasticmq-rest-sqs_2.10</artifactId>
-        <version>0.7.0</version>
+        <version>0.7.1</version>
     </dependency>
 
 Repository:
@@ -160,9 +160,9 @@ have not yet been reimplemented using the new Akka core.
 Current versions
 ----------------
 
-*Stable*: 0.7.0
+*Stable*: 0.7.1
 
-*Development*: 0.7.1-SNAPSHOT
+*Development*: 0.7.2-SNAPSHOT
 
 Logging
 -------
@@ -210,6 +210,10 @@ Technology
 
 Change log
 ----------
+
+#### Version 0.7.1 (22 August 2013)
+
+* bug fixes
 
 #### Version 0.7.0 (5 June 2013)
 
