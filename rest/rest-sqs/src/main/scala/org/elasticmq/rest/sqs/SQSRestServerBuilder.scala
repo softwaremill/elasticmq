@@ -20,6 +20,7 @@ import com.typesafe.config.ConfigFactory
 import org.elasticmq.actor.QueueManagerActor
 import org.elasticmq.util.NowProvider
 import scala.concurrent.duration._
+import spray.http.MediaTypes
 
 /**
  * By default:
@@ -139,7 +140,9 @@ case class TheSQSRestServerBuilder(providedActorSystem: Option[ActorSystem],
     val app = new SimpleRoutingApp {}
     val appStartFuture = app.startServer(interface, port, serviceActorName) {
       handleServerExceptions {
-        routes
+        respondWithMediaType(MediaTypes.`text/xml`) {
+          routes
+        }
       }
     }
 
