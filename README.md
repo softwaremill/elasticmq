@@ -270,3 +270,6 @@ batch operations (max 10 messages), maximum message size (64KB). Strict by defau
 * initial release
 * DB storage
 * SQS interface support
+
+[![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/adamw/elasticmq/trend.png)](https://bitdeli.com/free "Bitdeli Badge")
+
