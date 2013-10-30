@@ -10,7 +10,7 @@ trait AnyParamDirectives2 {
     parameterMap { queryParameters =>
       entity(as[FormData]) { formData =>
         val allParameters = formData.fields ++ queryParameters
-        body(allParameters)
+        body(allParameters.toMap)
       }
     }
   }

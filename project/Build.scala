@@ -8,7 +8,7 @@ object BuildSettings {
   val buildSettings = Defaults.defaultSettings ++ Seq (
     organization  := "org.elasticmq",
     version       := "0.7.2-SNAPSHOT",
-    scalaVersion  := "2.10.2",
+    scalaVersion  := "2.10.3",
 
     resolvers += "spray repo" at "http://repo.spray.io", // TODO
 
@@ -84,7 +84,7 @@ object Dependencies {
   val akka2Dataflow         = "com.typesafe.akka" %% "akka-dataflow"        % akka2Version
   val akka2Testkit          = "com.typesafe.akka" %% "akka-testkit"         % akka2Version % "test"
 
-  val sprayVersion          = "1.1-M8"
+  val sprayVersion          = "1.1-RC2"
   val sprayCan              = "io.spray"          %   "spray-can"          % sprayVersion
   val sprayRouting          = "io.spray"          %   "spray-routing"      % sprayVersion
   val sprayTestkit          = "io.spray"          %   "spray-testkit"      % sprayVersion % "test"
