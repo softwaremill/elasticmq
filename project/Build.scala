@@ -66,7 +66,7 @@ object BuildSettings {
 object Dependencies {
   val jodaTime      = "joda-time"                 % "joda-time"             % "2.1"
   val jodaConvert   = "org.joda"                  % "joda-convert"          % "1.2"
-  val config        = "com.typesafe"              % "config"                % "1.0.0"
+  val config        = "com.typesafe"              % "config"                % "1.0.2"
 
   val scalalogging  = "com.typesafe"              %% "scalalogging-slf4j"   % "1.0.1"
   val logback       = "ch.qos.logback"            % "logback-classic"       % "1.0.9"

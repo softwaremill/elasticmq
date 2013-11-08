@@ -56,6 +56,8 @@ configuration values, create a file (e.g. `custom.conf`), fill it in with the de
 The config file may contain any configuration for Akka, Spray and ElasticMQ. Current ElasticMQ configuration values are:
 
 ````
+include classpath("application.conf")
+
 // What is the outside visible address of this ElasticMQ node (used by rest-sqs)
 node-address {
     protocol = http
