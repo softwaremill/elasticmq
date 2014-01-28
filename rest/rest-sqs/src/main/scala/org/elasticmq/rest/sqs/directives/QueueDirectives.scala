@@ -28,32 +28,35 @@ trait QueueDirectives {
     }
   }
 
-  def queueNameFromPath(body: String => Route) = {
+  def queueNameFromPathOrParams(body: String => Route) = {
     path("queue" / Segment) { queueName =>
+      body(queueName)
+    } ~
+    queueNameFromParams { queueName =>
       body(queueName)
     }
   }
 
   def queueActorFromPath(body: ActorRef => Route) = {
-    queueNameFromPath { queueName =>
+    queueNameFromPathOrParams { queueName =>
       queueActor(queueName, body)
     }
   }
 
   def queueDataFromPath(body: QueueData => Route) = {
-    queueNameFromPath { queueName =>
+    queueNameFromPathOrParams { queueName =>
       queueActor(queueName, queueData(_, body))
     }
   }
 
-  def queueActorAndDataFromPath(body: (ActorRef, QueueData) => Route) = {
-    queueNameFromPath { queueName =>
+  def queueActorAndDataFromPathOrParams(body: (ActorRef, QueueData) => Route) = {
+    queueNameFromPathOrParams { queueName =>
       queueActor(queueName, qa => queueData(qa, qd => body(qa, qd)))
     }
   }
 
-  def queueActorAndNameFromPath(body: (ActorRef, String) => Route) = {
-    queueNameFromPath { queueName =>
+  def queueActorAndNameFromPathOrParams(body: (ActorRef, String) => Route) = {
+    queueNameFromPathOrParams { queueName =>
       queueActor(queueName, qa => body(qa, queueName))
     }
   }

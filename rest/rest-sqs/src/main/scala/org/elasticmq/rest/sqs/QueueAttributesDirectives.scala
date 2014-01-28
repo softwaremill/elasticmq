@@ -32,7 +32,7 @@ trait QueueAttributesDirectives { this: ElasticMQDirectives with AttributesModul
 
   val getQueueAttributes = {
     action("GetQueueAttributes") {
-      queueActorAndDataFromPath { (queueActor, queueData) =>
+      queueActorAndDataFromPathOrParams { (queueActor, queueData) =>
         anyParamsMap { parameters =>
           import QueueReadableAttributeNames._
 
