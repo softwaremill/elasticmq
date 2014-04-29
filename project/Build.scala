@@ -6,7 +6,7 @@ import AssemblyKeys._
 object BuildSettings {
   val buildSettings = Defaults.defaultSettings ++ Seq (
     organization  := "org.elasticmq",
-    version       := "0.8-SNAPSHOT",
+    version       := "0.8.0",
     scalaVersion  := "2.11.0",
 
     resolvers += "spray repo" at "http://repo.spray.io", // TODO
