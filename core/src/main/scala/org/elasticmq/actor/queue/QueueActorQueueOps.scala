@@ -2,7 +2,7 @@ package org.elasticmq.actor.queue
 
 import org.elasticmq._
 import org.elasticmq.msg._
-import com.typesafe.scalalogging.slf4j.Logging
+import org.elasticmq.util.Logging
 import org.elasticmq.actor.reply._
 
 trait QueueActorQueueOps extends Logging {

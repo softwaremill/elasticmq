@@ -1,6 +1,6 @@
 package org.elasticmq.server
 
-import com.typesafe.scalalogging.slf4j.Logging
+import org.elasticmq.util.Logging
 import io.Source
 import com.typesafe.config.ConfigFactory
 

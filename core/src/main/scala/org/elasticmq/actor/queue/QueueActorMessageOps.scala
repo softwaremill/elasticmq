@@ -4,7 +4,7 @@ import scala.annotation.tailrec
 import org.elasticmq._
 import org.elasticmq.msg._
 import org.joda.time.DateTime
-import com.typesafe.scalalogging.slf4j.Logging
+import org.elasticmq.util.Logging
 import org.elasticmq.util.NowProvider
 import org.elasticmq.OnDateTimeReceived
 import scala.Some

@@ -5,8 +5,7 @@ import scala.reflect._
 import org.elasticmq.msg.DeleteQueue
 import org.elasticmq.msg.CreateQueue
 import akka.actor.{Props, ActorRef}
-import com.typesafe.scalalogging.slf4j.Logging
-import org.elasticmq.util.NowProvider
+import org.elasticmq.util.{Logging, NowProvider}
 import org.elasticmq.actor.queue.QueueActor
 import org.elasticmq.QueueAlreadyExists
 import org.elasticmq.actor.reply._

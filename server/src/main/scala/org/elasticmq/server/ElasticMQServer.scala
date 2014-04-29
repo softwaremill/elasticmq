@@ -1,6 +1,6 @@
 package org.elasticmq.server
 
-import com.typesafe.scalalogging.slf4j.Logging
+import org.elasticmq.util.Logging
 import org.elasticmq.rest.sqs.{TheSQSRestServerBuilder, SQSRestServer}
 import akka.actor.{Props, ActorRef, ActorSystem}
 import org.elasticmq.actor.QueueManagerActor

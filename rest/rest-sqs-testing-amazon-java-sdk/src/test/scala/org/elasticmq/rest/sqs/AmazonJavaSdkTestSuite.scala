@@ -9,9 +9,7 @@ import scala.collection.JavaConversions._
 import com.amazonaws.services.sqs.model._
 import scala.util.control.Exception._
 import com.amazonaws.AmazonServiceException
-import scala.concurrent.Await
-import scala.concurrent.duration._
-import com.typesafe.scalalogging.slf4j.Logging
+import org.elasticmq.util.Logging
 import spray.can.Http
 import org.elasticmq.NodeAddress
 
@@ -755,9 +753,10 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
     }
   }
 
-  override protected def runTest(testName: String, reporter: Reporter, stopper: Stopper, configMap: Map[String, Any], tracker: Tracker) {
+  override protected def runTest(testName: String, args: Args) = {
     currentTestName = testName
-    super.runTest(testName, reporter, stopper, configMap, tracker)
+    val result = super.runTest(testName, args)
     currentTestName = null
+    result
   }
 }

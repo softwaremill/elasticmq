@@ -2,22 +2,22 @@ import sbt._
 import Keys._
 import sbtassembly.Plugin._
 import AssemblyKeys._
-import ls.Plugin._
 
 object BuildSettings {
   val buildSettings = Defaults.defaultSettings ++ Seq (
     organization  := "org.elasticmq",
-    version       := "0.7.2-SNAPSHOT",
-    scalaVersion  := "2.10.3",
+    version       := "0.8-SNAPSHOT",
+    scalaVersion  := "2.11.0",
 
     resolvers += "spray repo" at "http://repo.spray.io", // TODO
 
     // Continuations
-    autoCompilerPlugins := true,
-    libraryDependencies <+= scalaVersion {
-      v => compilerPlugin("org.scala-lang.plugins" % "continuations" % v)
-    },
+    addCompilerPlugin("org.scala-lang.plugins" % "scala-continuations-plugin_2.11.0" % "1.0.1"),
+    libraryDependencies += "org.scala-lang.plugins" %% "scala-continuations-library" % "1.0.1",
     scalacOptions += "-P:continuations:enable",
+
+    // XML
+    libraryDependencies += "org.scala-lang.modules" %% "scala-xml" % "1.0.1",
 
     // Sonatype OSS deployment
     publishTo <<= version { (v: String) =>
@@ -33,18 +33,17 @@ object BuildSettings {
     publishMavenStyle := true,
     publishArtifact in Test := false,
     //pomIncludeRepository := { _ => false }, // TODO
-    pomExtra := (
-      <scm>
-        <url>git@github.com:adamw/elasticmq.git</url>
-        <connection>scm:git:git@github.com:adamw/elasticmq.git</connection>
-      </scm>
+    pomExtra := <scm>
+      <url>git@github.com:adamw/elasticmq.git</url>
+      <connection>scm:git:git@github.com:adamw/elasticmq.git</connection>
+    </scm>
       <developers>
         <developer>
           <id>adamw</id>
           <name>Adam Warski</name>
           <url>http://www.warski.org</url>
         </developer>
-      </developers>),
+      </developers>,
 
     parallelExecution := false,
     // workaround for: https://github.com/sbt/sbt/issues/692
@@ -52,42 +51,34 @@ object BuildSettings {
     scalacOptions ++= List("-unchecked", "-encoding", "UTF8"),
     homepage      := Some(new java.net.URL("http://www.elasticmq.org")),
     licenses      := ("Apache2", new java.net.URL("http://www.apache.org/licenses/LICENSE-2.0.txt")) :: Nil
-  ) ++ net.virtualvoid.sbt.graph.Plugin.graphSettings ++ lsSettings ++ Seq (
-    (LsKeys.tags in LsKeys.lsync) := Seq("elasticmq", "messaging", "aws",
-      "amazon", "sqs", "embedded", "message queue"),
-    (externalResolvers in LsKeys.lsync) := Seq(
-      "softwaremill-public-releases" at "http://tools.softwaremill.pl/nexus/content/repositories/releases"),
-    (description in LsKeys.lsync) :=
-      "Akka-based message queue server with an Amazon SQS compatible interface. " +
-        "Can run embedded (great for testing applications which use SQS), or as a stand-alone server."
-  )
+  ) ++ net.virtualvoid.sbt.graph.Plugin.graphSettings
 }
 
 object Dependencies {
-  val jodaTime      = "joda-time"                 % "joda-time"             % "2.1"
-  val jodaConvert   = "org.joda"                  % "joda-convert"          % "1.2"
-  val config        = "com.typesafe"              % "config"                % "1.0.2"
+  val jodaTime      = "joda-time"                 % "joda-time"             % "2.3"
+  val jodaConvert   = "org.joda"                  % "joda-convert"          % "1.6"
+  val config        = "com.typesafe"              % "config"                % "1.2.0"
 
-  val scalalogging  = "com.typesafe"              %% "scalalogging-slf4j"   % "1.0.1"
-  val logback       = "ch.qos.logback"            % "logback-classic"       % "1.0.9"
-  val jclOverSlf4j  = "org.slf4j"                 % "jcl-over-slf4j"        % "1.7.2" // needed form amazon java sdk
+  val scalalogging  = "com.typesafe.scala-logging" %% "scala-logging-slf4j" % "2.1.2"
+  val logback       = "ch.qos.logback"            % "logback-classic"       % "1.1.2"
+  val jclOverSlf4j  = "org.slf4j"                 % "jcl-over-slf4j"        % "1.7.7" // needed form amazon java sdk
 
-  val scalatest     = "org.scalatest"             %% "scalatest"            % "1.9.1"
+  val scalatest     = "org.scalatest"             %% "scalatest"            % "2.1.3"
   val mockito       = "org.mockito"               % "mockito-core"          % "1.9.5"
-  val awaitility    = "com.jayway.awaitility"     % "awaitility-scala"      % "1.3.4"
+  val awaitility    = "com.jayway.awaitility"     % "awaitility-scala"      % "1.5.0"
 
-  val amazonJavaSdk = "com.amazonaws"             % "aws-java-sdk"          % "1.4.5" exclude ("commons-logging", "commons-logging")
+  val amazonJavaSdk = "com.amazonaws"             % "aws-java-sdk"          % "1.7.7" exclude ("commons-logging", "commons-logging")
 
-  val akka2Version          = "2.1.4"
+  val akka2Version          = "2.3.2"
   val akka2Actor            = "com.typesafe.akka" %% "akka-actor"           % akka2Version
   val akka2Slf4j            = "com.typesafe.akka" %% "akka-slf4j"           % akka2Version
   val akka2Dataflow         = "com.typesafe.akka" %% "akka-dataflow"        % akka2Version
   val akka2Testkit          = "com.typesafe.akka" %% "akka-testkit"         % akka2Version % "test"
 
-  val sprayVersion          = "1.1.0"
-  val sprayCan              = "io.spray"          %   "spray-can"          % sprayVersion
-  val sprayRouting          = "io.spray"          %   "spray-routing"      % sprayVersion
-  val sprayTestkit          = "io.spray"          %   "spray-testkit"      % sprayVersion % "test"
+  val sprayVersion          = "1.3.1-20140423" // TODO
+  val sprayCan              = "io.spray"          %% "spray-can"            % sprayVersion
+  val sprayRouting          = "io.spray"          %% "spray-routing"        % sprayVersion
+  val sprayTestkit          = "io.spray"          %% "spray-testkit"        % sprayVersion % "test"
 
   val common = Seq(scalalogging)
 }

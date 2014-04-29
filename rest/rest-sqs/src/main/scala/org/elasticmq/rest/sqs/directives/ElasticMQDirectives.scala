@@ -3,7 +3,7 @@ package org.elasticmq.rest.sqs.directives
 import spray.routing._
 import org.elasticmq.rest.sqs.directives._
 import shapeless.HNil
-import com.typesafe.scalalogging.slf4j.Logging
+import org.elasticmq.util.Logging
 import org.elasticmq.rest.sqs.{ActorSystemModule, QueueManagerActorModule}
 import spray.routing.directives.ParameterDirectives._
 import spray.routing.directives.MarshallingDirectives._

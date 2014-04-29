@@ -2,7 +2,7 @@ package org.elasticmq.rest.sqs
 
 import xml._
 import java.security.MessageDigest
-import com.typesafe.scalalogging.slf4j.Logging
+import org.elasticmq.util.Logging
 import collection.mutable.ArrayBuffer
 import spray.routing.SimpleRoutingApp
 import akka.actor.{Props, ActorRef, ActorSystem}

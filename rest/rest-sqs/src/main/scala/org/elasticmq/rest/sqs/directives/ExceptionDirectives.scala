@@ -4,7 +4,7 @@ import org.elasticmq.rest.sqs.SQSException
 import org.elasticmq.rest.sqs.Constants._
 import spray.routing.{Directives, ExceptionHandler}
 import spray.http.StatusCodes
-import com.typesafe.scalalogging.slf4j.Logging
+import org.elasticmq.util.Logging
 
 trait ExceptionDirectives extends Logging {
   this: Directives with RespondDirectives =>

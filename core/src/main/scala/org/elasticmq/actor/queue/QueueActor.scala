@@ -1,6 +1,6 @@
 package org.elasticmq.actor.queue
 
-import com.typesafe.scalalogging.slf4j.Logging
+import org.elasticmq.util.Logging
 import org.elasticmq.actor.reply.ReplyingActor
 import org.elasticmq.msg._
 import scala.reflect._
