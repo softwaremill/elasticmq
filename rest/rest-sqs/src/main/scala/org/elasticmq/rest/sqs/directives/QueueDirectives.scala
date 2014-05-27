@@ -23,15 +23,6 @@ trait QueueDirectives {
     }
   }
 
-  def queueNameFromRequest(body: String => Route) = {
-    path(QueueUrlContext / Segment) { queueName =>
-      body(queueName)
-    } ~
-    queueNameFromParams { queueName =>
-      body(queueName)
-    }
-  }
-
   def queueActorFromRequest(body: ActorRef => Route) = {
     queueNameFromRequest { queueName =>
       queueActor(queueName, body)
@@ -47,6 +38,31 @@ trait QueueDirectives {
   def queueActorAndNameFromRequest(body: (ActorRef, String) => Route) = {
     queueNameFromRequest { queueName =>
       queueActor(queueName, qa => body(qa, queueName))
+    }
+  }
+
+  private val queueUrlParameter = "QueueUrl"
+
+  private def queueUrlFromParams(body: String => Route) = {
+    anyParam(queueUrlParameter) { queueUrl =>
+      body(queueUrl)
+    }
+  }
+
+  private val lastPathSegment = "/([^/]+)$".r
+
+  private def queueNameFromRequest(body: String => Route) = {
+    path(QueueUrlContext / Segment) { queueName =>
+      body(queueName)
+    } ~
+    queueNameFromParams { queueName =>
+      body(queueName)
+    } ~
+    queueUrlFromParams { queueUrl =>
+      lastPathSegment.findFirstMatchIn(queueUrl).map(_.group(1)) match {
+        case Some(queueName) => body(queueName)
+        case None => _.reject(MissingFormFieldRejection(queueUrlParameter))
+      }
     }
   }
 
