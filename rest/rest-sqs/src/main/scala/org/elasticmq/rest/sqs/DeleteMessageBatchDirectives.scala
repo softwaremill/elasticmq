@@ -9,7 +9,7 @@ import org.elasticmq.rest.sqs.directives.ElasticMQDirectives
 trait DeleteMessageBatchDirectives { this: ElasticMQDirectives with BatchRequestsModule =>
   val deleteMessageBatch = {
     action("DeleteMessageBatch") {
-      queueActorFromPath { queueActor =>
+      queueActorFromRequest { queueActor =>
         anyParamsMap { parameters =>
           val resultsFuture = batchRequest("DeleteMessageBatchRequestEntry", parameters) { (messageData, id) =>
             val receiptHandle = messageData(ReceiptHandleParameter)

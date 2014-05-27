@@ -16,19 +16,13 @@ trait QueueDirectives {
     }
   }
 
-  def queueActorFromParams(body: ActorRef => Route) = {
-    queueNameFromParams { queueName =>
-      queueActor(queueName, body)
-    }
-  }
-
   def queueDataFromParams(body: QueueData => Route) = {
     queueNameFromParams { queueName =>
       queueActor(queueName, queueData(_, body))
     }
   }
 
-  def queueNameFromPathOrParams(body: String => Route) = {
+  def queueNameFromRequest(body: String => Route) = {
     path("queue" / Segment) { queueName =>
       body(queueName)
     } ~
@@ -37,26 +31,20 @@ trait QueueDirectives {
     }
   }
 
-  def queueActorFromPath(body: ActorRef => Route) = {
-    queueNameFromPathOrParams { queueName =>
+  def queueActorFromRequest(body: ActorRef => Route) = {
+    queueNameFromRequest { queueName =>
       queueActor(queueName, body)
     }
   }
 
-  def queueDataFromPath(body: QueueData => Route) = {
-    queueNameFromPathOrParams { queueName =>
-      queueActor(queueName, queueData(_, body))
-    }
-  }
-
-  def queueActorAndDataFromPathOrParams(body: (ActorRef, QueueData) => Route) = {
-    queueNameFromPathOrParams { queueName =>
+  def queueActorAndDataFromRequest(body: (ActorRef, QueueData) => Route) = {
+    queueNameFromRequest { queueName =>
       queueActor(queueName, qa => queueData(qa, qd => body(qa, qd)))
     }
   }
 
-  def queueActorAndNameFromPathOrParams(body: (ActorRef, String) => Route) = {
-    queueNameFromPathOrParams { queueName =>
+  def queueActorAndNameFromRequest(body: (ActorRef, String) => Route) = {
+    queueNameFromRequest { queueName =>
       queueActor(queueName, qa => body(qa, queueName))
     }
   }

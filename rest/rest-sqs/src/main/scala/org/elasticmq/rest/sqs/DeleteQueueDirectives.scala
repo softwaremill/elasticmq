@@ -9,7 +9,7 @@ import org.elasticmq.rest.sqs.directives.ElasticMQDirectives
 trait DeleteQueueDirectives { this: ElasticMQDirectives with QueueURLModule =>
   val deleteQueue = {
     action("DeleteQueue") {
-      queueActorAndNameFromPathOrParams { (queueActor, queueName) => // We need the queue actor just to check that the queue exists
+      queueActorAndNameFromRequest { (queueActor, queueName) => // We need the queue actor just to check that the queue exists
         flow {
           (queueManagerActor ? DeleteQueue(queueName)).apply()
 

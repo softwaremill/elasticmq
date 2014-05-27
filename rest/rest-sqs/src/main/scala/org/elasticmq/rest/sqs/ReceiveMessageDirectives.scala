@@ -24,7 +24,7 @@ trait ReceiveMessageDirectives { this: ElasticMQDirectives with AttributesModule
     import MessageReadeableAttributeNames._
 
     action("ReceiveMessage") {
-      queueActorFromPath { queueActor =>
+      queueActorFromRequest { queueActor =>
         anyParam(VisibilityTimeoutParameter.as[Int]?, MaxNumberOfMessagesAttribute.as[Int]?, WaitTimeSecondsAttribute.as[Long]?) {
           (visibilityTimeoutParameterOpt, maxNumberOfMessagesAttributeOpt, waitTimeSecondsAttributeOpt) =>
 

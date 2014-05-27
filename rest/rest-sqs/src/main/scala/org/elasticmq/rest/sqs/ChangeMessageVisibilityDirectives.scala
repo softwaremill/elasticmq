@@ -10,7 +10,7 @@ import org.elasticmq.rest.sqs.directives.ElasticMQDirectives
 trait ChangeMessageVisibilityDirectives { this: ElasticMQDirectives =>
   val changeMessageVisibility = {
     action("ChangeMessageVisibility") {
-      queueActorFromPath { queueActor =>
+      queueActorFromRequest { queueActor =>
         anyParamsMap { parameters =>
           doChangeMessageVisibility(queueActor, parameters).map { _ =>
             respondWith {

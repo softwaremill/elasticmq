@@ -9,7 +9,7 @@ import org.elasticmq.rest.sqs.directives.ElasticMQDirectives
 trait DeleteMessageDirectives { this: ElasticMQDirectives =>
   val deleteMessage = {
     action("DeleteMessage") {
-      queueActorFromPath { queueActor =>
+      queueActorFromRequest { queueActor =>
         anyParam(ReceiptHandleParameter) { receipt =>
           val result = queueActor ? DeleteMessage(DeliveryReceipt(receipt))
 

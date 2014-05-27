@@ -17,7 +17,7 @@ trait SendMessageDirectives { this: ElasticMQDirectives with SQSLimitsModule =>
 
   val sendMessage = {
     action("SendMessage") {
-      queueActorFromPath { queueActor =>
+      queueActorFromRequest { queueActor =>
         anyParamsMap { parameters =>
           doSendMessage(queueActor, parameters).map { case (message, digest) =>
             respondWith {

@@ -8,7 +8,7 @@ trait SendMessageBatchDirectives { this: ElasticMQDirectives with SendMessageDir
 
   val sendMessageBatch = {
     action("SendMessageBatch") {
-      queueActorFromPath { queueActor =>
+      queueActorFromRequest { queueActor =>
         anyParamsMap { parameters =>
           verifyMessagesNotTooLong(parameters)
 
