@@ -6,6 +6,7 @@ import org.elasticmq.msg.{GetQueueData, LookupQueue}
 import org.elasticmq.rest.sqs.{ActorSystemModule, QueueManagerActorModule, SQSException}
 import org.elasticmq.actor.reply._
 import org.elasticmq.QueueData
+import org.elasticmq.rest.sqs.Constants._
 
 trait QueueDirectives {
   this: Directives with QueueManagerActorModule with ActorSystemModule with FutureDirectives =>
@@ -23,7 +24,7 @@ trait QueueDirectives {
   }
 
   def queueNameFromRequest(body: String => Route) = {
-    path("queue" / Segment) { queueName =>
+    path(QueueUrlContext / Segment) { queueName =>
       body(queueName)
     } ~
     queueNameFromParams { queueName =>

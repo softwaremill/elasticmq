@@ -194,6 +194,7 @@ object Constants {
   val ReceiveMessageWaitTimeSecondsAttribute = "ReceiveMessageWaitTimeSeconds"
   val IdSubParameter = "Id"
   val InvalidParameterValueErrorName = "InvalidParameterValue"
+  val QueueUrlContext = "queue"
 }
 
 object ParametersUtil {
@@ -247,8 +248,8 @@ trait QueueManagerActorModule {
 trait QueueURLModule {
   def serverAddress: NodeAddress
 
-  def queueURL(queueData: QueueData) = serverAddress.fullAddress + "/queue/" + queueData.name
-  def queueURL(queueName: String) = serverAddress.fullAddress + "/queue/" + queueName
+  def queueURL(queueData: QueueData) = List(serverAddress.fullAddress, QueueUrlContext, queueData.name).mkString("/")
+  def queueURL(queueName: String) = List(serverAddress.fullAddress, QueueUrlContext, queueName).mkString("/")
 }
 
 object SQSLimits extends Enumeration {
