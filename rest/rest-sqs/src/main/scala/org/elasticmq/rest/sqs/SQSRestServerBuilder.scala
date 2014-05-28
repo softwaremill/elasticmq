@@ -4,7 +4,7 @@ import xml._
 import java.security.MessageDigest
 import org.elasticmq.util.Logging
 import collection.mutable.ArrayBuffer
-import spray.routing.SimpleRoutingApp
+import spray.routing.{RejectionHandler, SimpleRoutingApp}
 import akka.actor.{Props, ActorRef, ActorSystem}
 import spray.can.server.ServerSettings
 import akka.util.Timeout
@@ -139,9 +139,11 @@ case class TheSQSRestServerBuilder(providedActorSystem: Option[ActorSystem],
 
     val app = new SimpleRoutingApp {}
     val appStartFuture = app.startServer(interface, port, serviceActorName) {
-      handleServerExceptions {
-        respondWithMediaType(MediaTypes.`text/xml`) {
-          routes
+      respondWithMediaType(MediaTypes.`text/xml`) {
+        handleServerExceptions {
+          handleRejectionsWithSQSError {
+            routes
+          }
         }
       }
     }

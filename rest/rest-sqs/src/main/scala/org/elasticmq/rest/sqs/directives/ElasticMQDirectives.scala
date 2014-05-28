@@ -17,6 +17,7 @@ trait ElasticMQDirectives extends Directives
   with QueueManagerActorModule
   with ActorSystemModule
   with AnyParamDirectives2
+  with RejectionDirectives
   with Logging {
 
   def action(requiredActionName: String): Directive[HNil] = {
