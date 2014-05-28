@@ -7,7 +7,7 @@ object BuildSettings {
   val buildSettings = Defaults.defaultSettings ++ Seq (
     organization  := "org.elasticmq",
     version       := "0.8.1-SNAPSHOT",
-    scalaVersion  := "2.11.0",
+    scalaVersion  := "2.11.1",
 
     resolvers += "spray repo" at "http://repo.spray.io", // TODO
 
@@ -69,7 +69,7 @@ object Dependencies {
 
   val amazonJavaSdk = "com.amazonaws"             % "aws-java-sdk"          % "1.7.7" exclude ("commons-logging", "commons-logging")
 
-  val akka2Version          = "2.3.2"
+  val akka2Version          = "2.3.3"
   val akka2Actor            = "com.typesafe.akka" %% "akka-actor"           % akka2Version
   val akka2Slf4j            = "com.typesafe.akka" %% "akka-slf4j"           % akka2Version
   val akka2Dataflow         = "com.typesafe.akka" %% "akka-dataflow"        % akka2Version
