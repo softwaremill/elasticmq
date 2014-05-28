@@ -217,6 +217,12 @@ Technology
 Change log
 ----------
 
+#### Version 0.8.1 (?? May 2014)
+
+* fixing Node.JS compatibility
+* fixing a bug when calculating queue attributes
+* updating to Scala 2.11.1, Akka 2.3.3
+
 #### Version 0.8.0 (29 April 2014)
 
 * updating to Scala 2.11, Akka 2.3.2
