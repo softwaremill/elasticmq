@@ -403,6 +403,38 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
     attributes must contain key (receiveMessageWaitTimeSecondsAttribute)
   }
 
+  test("should return proper queue statistics after receiving, deleting a message") {
+    // Given
+    val queueUrl = client.createQueue(new CreateQueueRequest("testQueue1")).getQueueUrl
+
+    def verifyQueueAttributes(expectedMsgs: Int, expectedNotVisible: Int, expectedDelayed: Int) {
+      val attributes = client.getQueueAttributes(new GetQueueAttributesRequest(queueUrl).withAttributeNames("All")).getAttributes
+
+      attributes.get("ApproximateNumberOfMessages") must be (expectedMsgs.toString)
+      attributes.get("ApproximateNumberOfMessagesNotVisible") must be (expectedNotVisible.toString)
+      attributes.get("ApproximateNumberOfMessagesDelayed") must be (expectedDelayed.toString)
+    }
+
+    // When
+    client.sendMessage(new SendMessageRequest(queueUrl, "Message 1"))
+    client.sendMessage(new SendMessageRequest(queueUrl, "Message 2"))
+
+    // Then
+    verifyQueueAttributes(2, 0, 0)
+
+    // When
+    val receiptHandle = client.receiveMessage(new ReceiveMessageRequest(queueUrl)).getMessages.get(0).getReceiptHandle
+
+    // Then
+    verifyQueueAttributes(1, 1, 0)
+
+    // When
+    client.deleteMessage(new DeleteMessageRequest(queueUrl, receiptHandle))
+
+    // Then
+    verifyQueueAttributes(1, 0, 0)
+  }
+
   test("should read single queue attribute") {
     // Given
     val approximateNumberOfMessagesAttribute = "ApproximateNumberOfMessages"
