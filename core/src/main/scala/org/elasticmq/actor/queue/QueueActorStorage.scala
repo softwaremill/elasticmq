@@ -20,6 +20,7 @@ trait QueueActorStorage {
                              var deliveryReceipt: Option[String],
                              var nextDelivery: Long,
                              content: String,
+                             messageAttributes: Map[String,String],
                              created: DateTime,
                              var firstReceive: Received,
                              var receiveCount: Int)
@@ -32,6 +33,7 @@ trait QueueActorStorage {
       MessageId(id),
       deliveryReceipt.map(DeliveryReceipt(_)),
       content,
+      messageAttributes,
       MillisNextDelivery(nextDelivery),
       created,
       MessageStatistics(firstReceive, receiveCount))
@@ -43,6 +45,7 @@ trait QueueActorStorage {
       messageData.deliveryReceipt.map(_.receipt),
       messageData.nextDelivery.millis,
       messageData.content,
+      messageData.messageAttributes,
       messageData.created,
       messageData.statistics.approximateFirstReceive,
       messageData.statistics.approximateReceiveCount)
@@ -52,6 +55,7 @@ trait QueueActorStorage {
       None,
       newMessageData.nextDelivery.toMillis(nowProvider.nowMillis, queueData.delay.getMillis).millis,
       newMessageData.content,
+      newMessageData.messageAttributes,
       nowProvider.now,
       NeverReceived,
       0)

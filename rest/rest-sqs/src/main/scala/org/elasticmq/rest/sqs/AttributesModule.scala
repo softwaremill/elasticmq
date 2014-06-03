@@ -3,6 +3,7 @@ package org.elasticmq.rest.sqs
 trait AttributesModule {
   val attributeNamesReader = new AttributeNamesReader
   val attributesToXmlConverter = new AttributesToXmlConverter
+  val messageAttributesToXmlConverter = new MessageAttributesToXmlConverter
   val attributeValuesCalculator = new AttributeValuesCalculator
   val attributeNameAndValuesReader = new AttributeNameAndValuesReader
 
@@ -37,6 +38,19 @@ trait AttributesModule {
           <Name>{a._1}</Name>
           <Value>{a._2}</Value>
         </Attribute>)
+    }
+  }
+
+  class MessageAttributesToXmlConverter {
+    def convert(attributes: List[(String, String)]) = {
+      attributes.map(a =>
+        <MessageAttribute>
+          <Name>{a._1}</Name>
+          <Value>
+            <DataType>String</DataType>
+            <StringValue>{a._2}</StringValue>
+          </Value>
+        </MessageAttribute>)
     }
   }
 

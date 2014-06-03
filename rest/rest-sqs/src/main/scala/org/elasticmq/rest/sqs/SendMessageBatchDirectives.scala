@@ -13,9 +13,10 @@ trait SendMessageBatchDirectives { this: ElasticMQDirectives with SendMessageDir
           verifyMessagesNotTooLong(parameters)
 
           val resultsFuture = batchRequest(SendMessageBatchPrefix, parameters) { (messageData, id) =>
-            doSendMessage(queueActor, messageData).map { case (message, digest) =>
+            doSendMessage(queueActor, messageData).map { case (message, digest, messageAttributeDigest) =>
               <SendMessageBatchResultEntry>
                 <Id>{id}</Id>
+                <MD5OfMessageAttributes>{messageAttributeDigest}</MD5OfMessageAttributes> // TODO: Only send if message attributes included
                 <MD5OfMessageBody>{digest}</MD5OfMessageBody>
                 <MessageId>{message.id.id}</MessageId>
               </SendMessageBatchResultEntry>

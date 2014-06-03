@@ -21,6 +21,9 @@ import org.elasticmq.actor.QueueManagerActor
 import org.elasticmq.util.NowProvider
 import scala.concurrent.duration._
 import spray.http.MediaTypes
+import java.nio.ByteBuffer
+import java.io.ByteArrayOutputStream
+import scala.collection.immutable.TreeMap
 
 /**
  * By default:
@@ -217,6 +220,29 @@ object MD5Util {
     val md5 = MessageDigest.getInstance("MD5")
     md5.reset()
     md5.update(s.getBytes)
+    md5.digest().map(0xFF & _).map { "%02x".format(_) }.foldLeft(""){_ + _}
+  }
+
+  def md5AttributeDigest(attributes: Map[String, String]): String = {
+    def addEncodedString(b: ByteArrayOutputStream, s: String) = {
+      val str = s.getBytes("UTF-8")
+      b.write(ByteBuffer.allocate(4).putInt(s.length).array) // Sadly, we'll need ByteBuffer here to get a properly encoded 4-byte int (alternatively, we could encode by hand)
+      b.write(str)
+    }
+
+    val byteStream = new ByteArrayOutputStream
+
+    TreeMap(attributes.toSeq:_*).foreach{ case (k,v) => { // TreeMap is for sorting, a requirement of algorithm
+        addEncodedString(byteStream, k)
+        addEncodedString(byteStream, "String") // Data Type
+        byteStream.write(1) // "String"
+        addEncodedString(byteStream, v)
+      }
+    }
+
+    val md5 = MessageDigest.getInstance("MD5")
+    md5.reset()
+    md5.update(byteStream.toByteArray)
     md5.digest().map(0xFF & _).map { "%02x".format(_) }.foldLeft(""){_ + _}
   }
 }
