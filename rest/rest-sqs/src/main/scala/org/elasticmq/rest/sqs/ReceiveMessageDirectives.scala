@@ -51,7 +51,7 @@ trait ReceiveMessageDirectives { this: ElasticMQDirectives with AttributesModule
 
             def calculateAttributeValues(msg: MessageData): List[(String, String)] = {
               import AttributeValuesCalculator.Rule
-
+              
               attributeValuesCalculator.calculate(attributeNames,
                 Rule(SentTimestampAttribute, ()=>msg.created.getMillis.toString),
                 Rule(ApproximateReceiveCountAttribute, ()=>msg.statistics.approximateReceiveCount.toString),
@@ -74,6 +74,8 @@ trait ReceiveMessageDirectives { this: ElasticMQDirectives with AttributesModule
                       <MD5OfBody>{md5Digest(msg.content)}</MD5OfBody>
                       <Body>{XmlUtil.convertTexWithCRToNodeSeq(msg.content)}</Body>
                       {attributesToXmlConverter.convert(calculateAttributeValues(msg))}
+                      <MD5OfMessageAttributes>{md5AttributeDigest(msg.messageAttributes)}</MD5OfMessageAttributes> // TODO: Only include if message attributes
+                      {messageAttributesToXmlConverter.convert(msg.messageAttributes.toList)} // TODO: Filter to only requested attributes
                     </Message> }.toList}
                   </ReceiveMessageResult>
                   <ResponseMetadata>

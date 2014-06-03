@@ -9,13 +9,13 @@ trait DataCreationHelpers {
   def createQueueData(name: String, defaultVisibilityTimeout: MillisVisibilityTimeout) =
     QueueData(name, defaultVisibilityTimeout, Duration.ZERO, Duration.ZERO, new DateTime(0), new DateTime(0))
 
-  def createMessageData(id: String, content: String, nextDelivery: MillisNextDelivery,
+  def createMessageData(id: String, content: String, messageAttributes: Map[String,String], nextDelivery: MillisNextDelivery,
                         deliveryReceipt: Option[DeliveryReceipt] = None) =
-    MessageData(MessageId(id), deliveryReceipt, content, nextDelivery, new DateTime(0), MessageStatistics(NeverReceived, 0))
+    MessageData(MessageId(id), deliveryReceipt, content, messageAttributes, nextDelivery, new DateTime(0), MessageStatistics(NeverReceived, 0))
 
-  def createNewMessageData(id: String, content: String, nextDelivery: MillisNextDelivery) =
-    NewMessageData(Some(MessageId(id)), content, nextDelivery)
+  def createNewMessageData(id: String, content: String, messageAttributes: Map[String, String], nextDelivery: MillisNextDelivery) =
+    NewMessageData(Some(MessageId(id)), content, messageAttributes, nextDelivery)
 
   def createNewMessageData(messageData: MessageData) =
-    NewMessageData(Some(messageData.id), messageData.content, messageData.nextDelivery)
+    NewMessageData(Some(messageData.id), messageData.content, messageData.messageAttributes, messageData.nextDelivery)
 }

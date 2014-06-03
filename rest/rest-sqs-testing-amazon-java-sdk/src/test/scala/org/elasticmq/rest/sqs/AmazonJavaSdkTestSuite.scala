@@ -152,6 +152,10 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
     doTestSendAndReceiveMessage("Message 1")
   }
 
+  test("should send and receive a simple message with message attributes") {
+    doTestSendAndReceiveMessageWithAttributes("Message 1", Map("red" -> "fish", "blue" -> "cat"))
+  }
+
   test("should send and receive a message with caret return and new line characters") {
     doTestSendAndReceiveMessage("a\rb\r\nc\nd")
   }
@@ -172,16 +176,31 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
     doTestSendAndReceiveMessage(builder.toString())
   }
 
-  def doTestSendAndReceiveMessage(content: String) {
+  def doTestSendAndReceiveMessageWithAttributes(content: String, messageAttributes: Map[String,String]) {
     // Given
     val queueUrl = client.createQueue(new CreateQueueRequest("testQueue1")).getQueueUrl
 
     // When
-    client.sendMessage(new SendMessageRequest(queueUrl, content))
-    val message = receiveSingleMessage(queueUrl)
+    val sendMessage = messageAttributes.foldLeft(new SendMessageRequest(queueUrl, content)){ case (message, (k,v)) =>
+      val attr = new MessageAttributeValue()
+      attr.setDataType("String")
+      attr.setStringValue(v)
+      
+      message.addMessageAttributesEntry(k, attr)
+    }
+
+    client.sendMessage(sendMessage)
+    val message = receiveSingleMessageObject(queueUrl).orNull
 
     // Then
-    message must be (Some(content))
+    message.getBody must be (content)
+    message.getMessageAttributes must be (sendMessage.getMessageAttributes) // Checks they match
+    message.getMessageAttributes.map { case (k,attr) => (k,attr.getStringValue) } must be (messageAttributes) // Checks they match map
+  }
+
+  // Alias for send and receive with no attributes
+  def doTestSendAndReceiveMessage(content: String) {
+    doTestSendAndReceiveMessageWithAttributes(content, Map())
   }
 
   test("should receive two messages in a batch") {
@@ -764,6 +783,15 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
       None
     } else {
       Some(messages.get(0).getBody)
+    }
+  }
+
+  def receiveSingleMessageObject(queueUrl: String) = {
+    val messages = client.receiveMessage(new ReceiveMessageRequest(queueUrl)).getMessages
+    if (messages.size() == 0) {
+      None
+    } else {
+      Some(messages.get(0))
     }
   }
 

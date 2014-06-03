@@ -19,10 +19,11 @@ trait SendMessageDirectives { this: ElasticMQDirectives with SQSLimitsModule =>
     action("SendMessage") {
       queueActorFromRequest { queueActor =>
         anyParamsMap { parameters =>
-          doSendMessage(queueActor, parameters).map { case (message, digest) =>
+          doSendMessage(queueActor, parameters).map { case (message, digest, messageAttributeDigest) =>
             respondWith {
               <SendMessageResponse>
                 <SendMessageResult>
+                  <MD5OfMessageAttributes>{messageAttributeDigest}</MD5OfMessageAttributes>  // TODO: Only include if message attributes
                   <MD5OfMessageBody>{digest}</MD5OfMessageBody>
                   <MessageId>{message.id.id}</MessageId>
                 </SendMessageResult>
@@ -37,8 +38,37 @@ trait SendMessageDirectives { this: ElasticMQDirectives with SQSLimitsModule =>
     }
   }
 
-  def doSendMessage(queueActor: ActorRef, parameters: Map[String, String]): Future[(MessageData, String)] = {
+  def getMessageAttributes(parameters: Map[String, String]): Map[String, String] = {
+    // Determine number of attributes -- there are likely ways to improve this
+    val numAttributes = parameters.map{ case (k,v) => {
+        if (k.startsWith("MessageAttribute.")) {
+          k.split("\\.")(1).toInt
+        } else {
+          0
+        }
+      }
+    }.toList.union(List(0)).max // even if nothing, return 0
+
+    (1 to numAttributes).map{ i =>
+      val name = parameters("MessageAttribute." + i + ".Name")
+      val dataType = parameters("MessageAttribute." + i + ".Value.DataType")
+
+      val value = dataType match {
+        case "String" => {
+          parameters("MessageAttribute." + i + ".Value.StringValue")
+        }
+        case _ => {
+          throw new Exception("Currently only handles String typed attributes")
+        }
+      }
+
+      (name, value)
+    }.toMap
+  }
+
+  def doSendMessage(queueActor: ActorRef, parameters: Map[String, String]): Future[(MessageData, String, String)] = {
     val body = parameters(MessageBodyParameter)
+    val messageAttributes = getMessageAttributes(parameters)
 
     ifStrictLimits(bodyContainsInvalidCharacters(body)) {
       "InvalidMessageContents"
@@ -47,12 +77,13 @@ trait SendMessageDirectives { this: ElasticMQDirectives with SQSLimitsModule =>
     verifyMessageNotTooLong(body.length)
 
     val delaySecondsOption = parameters.parseOptionalLong(DelaySecondsParameter)
-    val messageToSend = createMessage(body, delaySecondsOption)
+    val messageToSend = createMessage(body, messageAttributes, delaySecondsOption)
     val digest = md5Digest(body)
+    val messageAttributeDigest = md5AttributeDigest(messageAttributes)
 
     for {
       message <- queueActor ? SendMessage(messageToSend)
-    } yield (message, digest)
+    } yield (message, digest, messageAttributeDigest)
   }
 
   def verifyMessageNotTooLong(messageLength: Int) {
@@ -84,12 +115,12 @@ trait SendMessageDirectives { this: ElasticMQDirectives with SQSLimitsModule =>
     findInvalidCharacter(0)
   }
 
-  private def createMessage(body: String, delaySecondsOption: Option[Long]) = {
+  private def createMessage(body: String, messageAttributes: Map[String, String], delaySecondsOption: Option[Long]) = {
     val nextDelivery = delaySecondsOption match {
       case None => ImmediateNextDelivery
       case Some(delaySeconds) => AfterMillisNextDelivery(delaySeconds*1000)
     }
 
-    NewMessageData(None, body, nextDelivery)
+    NewMessageData(None, body, messageAttributes, nextDelivery)
   }
 }

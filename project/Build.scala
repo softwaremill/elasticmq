@@ -67,7 +67,7 @@ object Dependencies {
   val mockito       = "org.mockito"               % "mockito-core"          % "1.9.5"
   val awaitility    = "com.jayway.awaitility"     % "awaitility-scala"      % "1.5.0"
 
-  val amazonJavaSdk = "com.amazonaws"             % "aws-java-sdk"          % "1.7.7" exclude ("commons-logging", "commons-logging")
+  val amazonJavaSdk = "com.amazonaws"             % "aws-java-sdk"          % "1.7.11" exclude ("commons-logging", "commons-logging")
 
   val akka2Version          = "2.3.3"
   val akka2Actor            = "com.typesafe.akka" %% "akka-actor"           % akka2Version
