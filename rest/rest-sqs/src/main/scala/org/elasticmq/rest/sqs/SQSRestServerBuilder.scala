@@ -4,7 +4,7 @@ import xml._
 import java.security.MessageDigest
 import org.elasticmq.util.Logging
 import collection.mutable.ArrayBuffer
-import spray.routing.{RejectionHandler, SimpleRoutingApp}
+import spray.routing.SimpleRoutingApp
 import akka.actor.{Props, ActorRef, ActorSystem}
 import spray.can.server.ServerSettings
 import akka.util.Timeout
@@ -24,6 +24,7 @@ import spray.http.MediaTypes
 import java.nio.ByteBuffer
 import java.io.ByteArrayOutputStream
 import scala.collection.immutable.TreeMap
+import java.util.concurrent.TimeUnit
 
 /**
  * By default:
@@ -108,7 +109,7 @@ case class TheSQSRestServerBuilder(providedActorSystem: Option[ActorSystem],
       lazy val queueManagerActor = theQueueManagerActor
       lazy val serverAddress = theServerAddress
       lazy val sqsLimits = theLimits
-      lazy val timeout = Timeout(ServerSettings(actorSystem).requestTimeout.toMillis)
+      lazy val timeout = Timeout(ServerSettings(actorSystem).requestTimeout.toMillis, TimeUnit.MILLISECONDS)
     }
 
     import env._
@@ -141,6 +142,7 @@ case class TheSQSRestServerBuilder(providedActorSystem: Option[ActorSystem],
     val serviceActorName = s"elasticmq-rest-sqs-$port"
 
     val app = new SimpleRoutingApp {}
+    implicit val bindingTimeout = Timeout(10, TimeUnit.SECONDS)
     val appStartFuture = app.startServer(interface, port, serviceActorName) {
       respondWithMediaType(MediaTypes.`text/xml`) {
         handleServerExceptions {
@@ -156,7 +158,7 @@ case class TheSQSRestServerBuilder(providedActorSystem: Option[ActorSystem],
 
     SQSRestServer(appStartFuture, () => {
       import akka.pattern.ask
-      val future = IO(Http).ask(Http.CloseAll)(Timeout(10000L))
+      val future = IO(Http).ask(Http.CloseAll)(Timeout(10, TimeUnit.SECONDS))
       future.map(v => { stopActorSystem(); v })
       future
     })
