@@ -56,7 +56,7 @@ object BatchRequestsModule {
    */
   def subParametersMaps(prefix: String, parameters: Map[String, String]): List[Map[String, String]] = {
     val subParameters = collection.mutable.Map[String, Map[String, String]]()
-    val keyRegexp = (Pattern.quote(prefix) + "\\.(.+)\\.(.+)").r
+    val keyRegexp = (Pattern.quote(prefix) + "\\.([^.]+)\\.(.+)").r
     parameters.foreach{ case (key, value) =>
       keyRegexp.findFirstMatchIn(key).map { keyMatch =>
         val discriminator = keyMatch.group(1)
