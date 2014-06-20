@@ -9,30 +9,24 @@ object BuildSettings {
     version       := "0.8.3-SNAPSHOT",
     scalaVersion  := "2.11.1",
 
-    resolvers += "spray repo" at "http://repo.spray.io", // TODO
+    resolvers += "spray repo" at "http://repo.spray.io",
 
-    // Continuations
     addCompilerPlugin("org.scala-lang.plugins" % "scala-continuations-plugin_2.11.0" % "1.0.1"),
-    libraryDependencies += "org.scala-lang.plugins" %% "scala-continuations-library" % "1.0.1",
+    libraryDependencies += "org.scala-lang.plugins" %% "scala-continuations-library" % "1.0.2",
     scalacOptions += "-P:continuations:enable",
 
-    // XML
-    libraryDependencies += "org.scala-lang.modules" %% "scala-xml" % "1.0.1",
+    libraryDependencies += "org.scala-lang.modules" %% "scala-xml" % "1.0.2",
 
     // Sonatype OSS deployment
-    publishTo <<= version { (v: String) =>
+    publishTo := {
       val nexus = "https://oss.sonatype.org/"
-      if (v.trim.endsWith("SNAPSHOT"))
-        Some("snapshots" at nexus + "content/repositories/snapshots")
-      else {
-        //Some("releases"  at nexus + "service/local/staging/deploy/maven2") // TODO
-        Some("releases"  at "https://nexus.softwaremill.com/content/repositories/releases")
-      }
+      val (name, url) = if (isSnapshot.value) ("snapshots", nexus + "content/repositories/snapshots")
+                        else ("releases", "https://nexus.softwaremill.com/content/repositories/releases")
+      Some(name at url)
     },
-    credentials   += Credentials(Path.userHome / ".ivy2" / ".credentials"),
+    credentials += Credentials(Path.userHome / ".ivy2" / ".credentials"),
     publishMavenStyle := true,
     publishArtifact in Test := false,
-    //pomIncludeRepository := { _ => false }, // TODO
     pomExtra := <scm>
       <url>git@github.com:adamw/elasticmq.git</url>
       <connection>scm:git:git@github.com:adamw/elasticmq.git</connection>
@@ -44,7 +38,6 @@ object BuildSettings {
           <url>http://www.warski.org</url>
         </developer>
       </developers>,
-
     parallelExecution := false,
     // workaround for: https://github.com/sbt/sbt/issues/692
     fork in Test := true,
@@ -57,28 +50,28 @@ object BuildSettings {
 object Dependencies {
   val jodaTime      = "joda-time"                 % "joda-time"             % "2.3"
   val jodaConvert   = "org.joda"                  % "joda-convert"          % "1.6"
-  val config        = "com.typesafe"              % "config"                % "1.2.0"
+  val config        = "com.typesafe"              % "config"                % "1.2.1"
 
   val scalalogging  = "com.typesafe.scala-logging" %% "scala-logging-slf4j" % "2.1.2"
   val logback       = "ch.qos.logback"            % "logback-classic"       % "1.1.2"
   val jclOverSlf4j  = "org.slf4j"                 % "jcl-over-slf4j"        % "1.7.7" // needed form amazon java sdk
 
-  val scalatest     = "org.scalatest"             %% "scalatest"            % "2.1.3"
+  val scalatest     = "org.scalatest"             %% "scalatest"            % "2.2.0"
   val mockito       = "org.mockito"               % "mockito-core"          % "1.9.5"
-  val awaitility    = "com.jayway.awaitility"     % "awaitility-scala"      % "1.5.0"
+  val awaitility    = "com.jayway.awaitility"     % "awaitility-scala"      % "1.6.0"
 
-  val amazonJavaSdk = "com.amazonaws"             % "aws-java-sdk"          % "1.7.11" exclude ("commons-logging", "commons-logging")
+  val amazonJavaSdk = "com.amazonaws"             % "aws-java-sdk"          % "1.8.0" exclude ("commons-logging", "commons-logging")
 
-  val akka2Version          = "2.3.3"
-  val akka2Actor            = "com.typesafe.akka" %% "akka-actor"           % akka2Version
-  val akka2Slf4j            = "com.typesafe.akka" %% "akka-slf4j"           % akka2Version
-  val akka2Dataflow         = "com.typesafe.akka" %% "akka-dataflow"        % akka2Version
-  val akka2Testkit          = "com.typesafe.akka" %% "akka-testkit"         % akka2Version % "test"
+  val akka2Version  = "2.3.3"
+  val akka2Actor    = "com.typesafe.akka" %% "akka-actor"           % akka2Version
+  val akka2Slf4j    = "com.typesafe.akka" %% "akka-slf4j"           % akka2Version
+  val akka2Dataflow = "com.typesafe.akka" %% "akka-dataflow"        % akka2Version
+  val akka2Testkit  = "com.typesafe.akka" %% "akka-testkit"         % akka2Version % "test"
 
-  val sprayVersion          = "1.3.1-20140423" // TODO
-  val sprayCan              = "io.spray"          %% "spray-can"            % sprayVersion
-  val sprayRouting          = "io.spray"          %% "spray-routing"        % sprayVersion
-  val sprayTestkit          = "io.spray"          %% "spray-testkit"        % sprayVersion % "test"
+  val sprayVersion  = "1.3.1-20140423"
+  val sprayCan      = "io.spray"          %% "spray-can"            % sprayVersion
+  val sprayRouting  = "io.spray"          %% "spray-routing"        % sprayVersion
+  val sprayTestkit  = "io.spray"          %% "spray-testkit"        % sprayVersion % "test"
 
   val common = Seq(scalalogging)
 }
@@ -149,10 +142,10 @@ object ElasticMQBuild extends Build {
 
 object CustomTasks {
   val generateVersionFileSettings = Seq(
-    resourceGenerators in Compile <+= (version, resourceManaged in Compile) map { (v, t) =>
-      val targetFile = t / "version"
-      IO.write(targetFile, v.toString)
+    resourceGenerators in Compile += Def.task {
+      val targetFile = (resourceManaged in Compile).value / "version"
+      IO.write(targetFile, version.value.toString)
       Seq(targetFile)
-    }
+    }.taskValue
   )
 }
