@@ -68,7 +68,7 @@ object Dependencies {
   val akka2Dataflow = "com.typesafe.akka" %% "akka-dataflow"        % akka2Version
   val akka2Testkit  = "com.typesafe.akka" %% "akka-testkit"         % akka2Version % "test"
 
-  val sprayVersion  = "1.3.1-20140423"
+  val sprayVersion  = "1.3.1"
   val sprayCan      = "io.spray"          %% "spray-can"            % sprayVersion
   val sprayRouting  = "io.spray"          %% "spray-routing"        % sprayVersion
   val sprayTestkit  = "io.spray"          %% "spray-testkit"        % sprayVersion % "test"
