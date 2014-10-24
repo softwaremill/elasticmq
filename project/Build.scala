@@ -6,7 +6,7 @@ import AssemblyKeys._
 object BuildSettings {
   val buildSettings = Defaults.coreDefaultSettings ++ Seq (
     organization  := "org.elasticmq",
-    version       := "0.8.3",
+    version       := "0.8.4-SNAPSHOT",
     scalaVersion  := "2.11.2",
 
     addCompilerPlugin("org.scala-lang.plugins" % "scala-continuations-plugin_2.11.0" % "1.0.1"),
