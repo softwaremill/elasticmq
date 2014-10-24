@@ -20,10 +20,11 @@ trait SendMessageDirectives { this: ElasticMQDirectives with SQSLimitsModule =>
       queueActorFromRequest { queueActor =>
         anyParamsMap { parameters =>
           doSendMessage(queueActor, parameters).map { case (message, digest, messageAttributeDigest) =>
+            // TODO: Only include MD5OfMessageAttributes if message attributes
             respondWith {
               <SendMessageResponse>
                 <SendMessageResult>
-                  <MD5OfMessageAttributes>{messageAttributeDigest}</MD5OfMessageAttributes>  // TODO: Only include if message attributes
+                  <MD5OfMessageAttributes>{messageAttributeDigest}</MD5OfMessageAttributes>
                   <MD5OfMessageBody>{digest}</MD5OfMessageBody>
                   <MessageId>{message.id.id}</MessageId>
                 </SendMessageResult>

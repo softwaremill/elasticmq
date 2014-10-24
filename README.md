@@ -5,7 +5,7 @@ tl;dr
 -----
 
 * message queue system
-* runs stand-alone ([download](https://s3-eu-west-1.amazonaws.com/softwaremill-public/elasticmq-server-0.8.2.jar)) or embedded
+* runs stand-alone ([download](https://s3-eu-west-1.amazonaws.com/softwaremill-public/elasticmq-server-0.8.3.jar)) or embedded
 * [Amazon SQS](http://aws.amazon.com/sqs/)-compatible interface
 * fully asynchronous implementation, no blocking calls
 
@@ -40,18 +40,18 @@ Installation: stand-alone
 -------------------------
 
 You can download the stand-alone distribution here:
-[https://s3/.../elasticmq-server-0.8.2.jar](https://s3-eu-west-1.amazonaws.com/softwaremill-public/elasticmq-server-0.8.2.jar)
+[https://s3/.../elasticmq-server-0.8.3.jar](https://s3-eu-west-1.amazonaws.com/softwaremill-public/elasticmq-server-0.8.3.jar)
 
 Java 6 or above is required for running the server.
 
 Simply run the jar and you should get a working server, which binds to `localhost:9324`:
 
-    java -jar elasticmq-server-0.8.2.jar
+    java -jar elasticmq-server-0.8.3.jar
 
 ElasticMQ uses [Typesafe Config](https://github.com/typesafehub/config) for configuration. To specify custom
 configuration values, create a file (e.g. `custom.conf`), fill it in with the desired values, and pass it to the server:
 
-    java -Dconfig.file=custom.conf -jar elasticmq-server-0.8.2.jar
+    java -Dconfig.file=custom.conf -jar elasticmq-server-0.8.3.jar
 
 The config file may contain any configuration for Akka, Spray and ElasticMQ. Current ElasticMQ configuration values are:
 
@@ -82,7 +82,7 @@ property.
 You can also provide an alternative [Logback](http://logback.qos.ch/) configuration file (the default is configured to
 log INFO logs and above to the console):
 
-    java -Dlogback.configurationFile=my_logback.xml -jar elasticmq-server-0.8.2.jar
+    java -Dlogback.configurationFile=my_logback.xml -jar elasticmq-server-0.8.3.jar
 
 Starting an embedded ElasticMQ server with an SQS interface
 -----------------------------------------------------------
@@ -119,7 +119,7 @@ ElasticMQ dependencies in SBT
 -----------------------------
 
     // Scala 2.11
-    val elasticmqSqs        = "org.elasticmq" %% "elasticmq-rest-sqs"         % "0.8.2"
+    val elasticmqSqs        = "org.elasticmq" %% "elasticmq-rest-sqs"         % "0.8.3"
 
     // Scala 2.10
     val elasticmqSqs        = "org.elasticmq" %% "elasticmq-rest-sqs"         % "0.7.1"
@@ -127,13 +127,7 @@ ElasticMQ dependencies in SBT
 If you don't want the SQS interface, but just use the actors directly, you can add a dependency only to the `core`
 module:
 
-    val elasticmqCore       = "org.elasticmq" %% "elasticmq-core"             % "0.8.2"
-
-Repository:
-
-    resolvers += "SoftwareMill Releases" at "https://nexus.softwaremill.com/content/repositories/releases"
-
-(ElasticMQ 0.8.2 cannot be deployed to Maven Central as its dependency - Spray - isn't deployed there yet.)
+    val elasticmqCore       = "org.elasticmq" %% "elasticmq-core"             % "0.8.3"
 
 If you want to use a snapshot version, you will need to add the [https://oss.sonatype.org/content/repositories/snapshots/](https://oss.sonatype.org/content/repositories/snapshots/) repository to your configuration.
 
@@ -145,15 +139,8 @@ Dependencies:
     <dependency>
         <groupId>org.elasticmq</groupId>
         <artifactId>elasticmq-rest-sqs_2.11</artifactId>
-        <version>0.8.2</version>
+        <version>0.8.3</version>
     </dependency>
-
-Repository:
-
-    <repository>
-        <id>softwaremill-releases</id>
-        <url>https://nexus.softwaremill.com/content/repositories/releases</url>
-    </repository>
 
 If you want to use a snapshot version, you will need to add the [https://oss.sonatype.org/content/repositories/snapshots/](https://oss.sonatype.org/content/repositories/snapshots/) repository to your configuration.
 
@@ -166,9 +153,9 @@ have not yet been reimplemented using the new Akka core.
 Current versions
 ----------------
 
-*Stable*: 0.8.2
+*Stable*: 0.8.3
 
-*Development*: 0.8.3-SNAPSHOT
+*Development*: 0.8.4-SNAPSHOT
 
 Logging
 -------
@@ -216,6 +203,12 @@ Technology
 
 Change log
 ----------
+
+#### Version 0.8.3 (22 Oct 2014)
+
+* bug fixes
+* updating dependencies
+* publishing to Maven Central
 
 #### Version 0.8.2 (6 Jun 2014)
 
@@ -292,6 +285,3 @@ batch operations (max 10 messages), maximum message size (64KB). Strict by defau
 * initial release
 * DB storage
 * SQS interface support
-
-[![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/adamw/elasticmq/trend.png)](https://bitdeli.com/free "Bitdeli Badge")
-
