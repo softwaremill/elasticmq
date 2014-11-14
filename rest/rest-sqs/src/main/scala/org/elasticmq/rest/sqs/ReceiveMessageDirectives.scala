@@ -13,11 +13,12 @@ trait ReceiveMessageDirectives { this: ElasticMQDirectives with AttributesModule
     val SentTimestampAttribute = "SentTimestamp"
     val ApproximateReceiveCountAttribute = "ApproximateReceiveCount"
     val ApproximateFirstReceiveTimestampAttribute = "ApproximateFirstReceiveTimestamp"
+    val SenderIdAttribute = "SenderId"
     val MaxNumberOfMessagesAttribute = "MaxNumberOfMessages"
     val WaitTimeSecondsAttribute = "WaitTimeSeconds"
 
     val AllAttributeNames = SentTimestampAttribute :: ApproximateReceiveCountAttribute ::
-      ApproximateFirstReceiveTimestampAttribute :: Nil
+      ApproximateFirstReceiveTimestampAttribute :: SenderIdAttribute :: Nil
   }
 
   val receiveMessage = {
@@ -53,6 +54,7 @@ trait ReceiveMessageDirectives { this: ElasticMQDirectives with AttributesModule
               import AttributeValuesCalculator.Rule
               
               attributeValuesCalculator.calculate(attributeNames,
+                Rule(SenderIdAttribute, ()=> "127.0.0.1"),
                 Rule(SentTimestampAttribute, ()=>msg.created.getMillis.toString),
                 Rule(ApproximateReceiveCountAttribute, ()=>msg.statistics.approximateReceiveCount.toString),
                 Rule(ApproximateFirstReceiveTimestampAttribute,
