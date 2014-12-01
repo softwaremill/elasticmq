@@ -79,7 +79,8 @@ By default the maximum SQS message wait time is 20 seconds, and the maximum dura
 To change that (e.g. if you want longer message wait times), adjust the `spray.can.server.request-timeout` configuration
 property.
 
-You can also provide an alternative [Logback](http://logback.qos.ch/) configuration file (the default is configured to
+You can also provide an alternative [Logback](http://logback.qos.ch/) configuration file (the
+[default](server/src/main/resources/logback.xml) is configured to
 log INFO logs and above to the console):
 
     java -Dlogback.configurationFile=my_logback.xml -jar elasticmq-server-0.8.3.jar
