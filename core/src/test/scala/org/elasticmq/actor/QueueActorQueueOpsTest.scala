@@ -103,4 +103,30 @@ class QueueActorQueueOpsTest extends ActorTest with QueueManagerForEachTest with
       stats should be (QueueStatistics(2L, 4L, 3L))
     }
   }
+
+  waitTest("clearing a queue") {
+    // Given
+    val queue = createQueueData("q1", MillisVisibilityTimeout(100L))
+
+    val m1 = createNewMessageData("m1", "123", Map(), MillisNextDelivery(120L))
+    val m2 = createNewMessageData("m2", "123", Map(), MillisNextDelivery(121L))
+
+    nowProvider.mutableNowMillis.set(123L)
+
+    for {
+      Right(queueActor) <- queueManagerActor ? CreateQueue(queue)
+
+      // Invisible messages - received
+      _ <- queueActor ? SendMessage(m1)
+      _ <- queueActor ? ReceiveMessages(DefaultVisibilityTimeout, 1, None)
+      _ <- queueActor ? SendMessage(m2)
+
+      // When
+      _ <- queueActor ? ClearQueue()
+      stats <- queueActor ? GetQueueStatistics(123L)
+    } yield {
+      // Then
+      stats should be (QueueStatistics(0L, 0L, 0L))
+    }
+  }
 }
