@@ -125,7 +125,7 @@ Making a request to:
 
     [queue url]?Action=Clear
 
-will remove all messages (both visibile and invisible from the queue).
+will remove all messages (both visibile and invisible) from the queue.
 
 ElasticMQ dependencies in SBT
 -----------------------------
