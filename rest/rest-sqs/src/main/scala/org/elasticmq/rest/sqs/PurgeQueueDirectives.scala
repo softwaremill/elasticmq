@@ -5,19 +5,19 @@ import org.elasticmq.msg.ClearQueue
 import org.elasticmq.rest.sqs.Constants._
 import org.elasticmq.rest.sqs.directives.ElasticMQDirectives
 
-trait NonSQSDirectives { this: ElasticMQDirectives with QueueURLModule =>
-  val nonSQSDirectives = {
-    queueActorFromRequest { queueActor =>
-      action("Clear") {
+trait PurgeQueueDirectives { this: ElasticMQDirectives with QueueURLModule =>
+  val purgeQueue = {
+    action("PurgeQueue") {
+      queueActorFromRequest { queueActor =>
         for {
           _ <- queueActor ? ClearQueue()
         } yield  {
           respondWith {
-            <ClearQueueResponse>
+            <PurgeQueueResponse>
               <ResponseMetadata>
                 <RequestId>{EmptyRequestId}</RequestId>
               </ResponseMetadata>
-            </ClearQueueResponse>
+            </PurgeQueueResponse>
           }
         }
       }

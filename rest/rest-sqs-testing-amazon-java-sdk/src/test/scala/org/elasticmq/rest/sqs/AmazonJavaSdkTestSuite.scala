@@ -764,6 +764,24 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
     result.isLeft must be (true)
   }
 
+  test("should purge the queue") {
+    // Given
+    val queueUrl = client.createQueue(new CreateQueueRequest("testQueue1")).getQueueUrl
+
+    client.sendMessage(new SendMessageRequest(queueUrl, "Message 1"))
+    client.sendMessage(new SendMessageRequest(queueUrl, "Message 2"))
+    client.receiveMessage(new ReceiveMessageRequest(queueUrl).withMaxNumberOfMessages(1)).getMessages.get(0)
+
+    // When
+    client.purgeQueue(new PurgeQueueRequest().withQueueUrl(queueUrl))
+
+    // Then
+    val attributes = client.getQueueAttributes(new GetQueueAttributesRequest(queueUrl).withAttributeNames("All")).getAttributes
+    attributes.get("ApproximateNumberOfMessages") must be ("0")
+    attributes.get("ApproximateNumberOfMessagesNotVisible") must be ("0")
+    attributes.get("ApproximateNumberOfMessagesDelayed") must be ("0")
+  }
+
   def queueVisibilityTimeout(queueUrl: String) = getQueueLongAttribute(queueUrl, visibilityTimeoutAttribute)
 
   def queueDelay(queueUrl: String) = getQueueLongAttribute(queueUrl, delaySecondsAttribute)

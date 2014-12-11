@@ -40,18 +40,18 @@ Installation: stand-alone
 -------------------------
 
 You can download the stand-alone distribution here:
-[https://s3/.../elasticmq-server-0.8.4.jar](https://s3-eu-west-1.amazonaws.com/softwaremill-public/elasticmq-server-0.8.4.jar)
+[https://s3/.../elasticmq-server-0.8.5.jar](https://s3-eu-west-1.amazonaws.com/softwaremill-public/elasticmq-server-0.8.5.jar)
 
 Java 6 or above is required for running the server.
 
 Simply run the jar and you should get a working server, which binds to `localhost:9324`:
 
-    java -jar elasticmq-server-0.8.4.jar
+    java -jar elasticmq-server-0.8.5.jar
 
 ElasticMQ uses [Typesafe Config](https://github.com/typesafehub/config) for configuration. To specify custom
 configuration values, create a file (e.g. `custom.conf`), fill it in with the desired values, and pass it to the server:
 
-    java -Dconfig.file=custom.conf -jar elasticmq-server-0.8.4.jar
+    java -Dconfig.file=custom.conf -jar elasticmq-server-0.8.5.jar
 
 The config file may contain any configuration for Akka, Spray and ElasticMQ. Current ElasticMQ configuration values are:
 
@@ -83,7 +83,7 @@ You can also provide an alternative [Logback](http://logback.qos.ch/) configurat
 [default](server/src/main/resources/logback.xml) is configured to
 log INFO logs and above to the console):
 
-    java -Dlogback.configurationFile=my_logback.xml -jar elasticmq-server-0.8.4.jar
+    java -Dlogback.configurationFile=my_logback.xml -jar elasticmq-server-0.8.5.jar
 
 Starting an embedded ElasticMQ server with an SQS interface
 -----------------------------------------------------------
@@ -116,22 +116,11 @@ The endpoint value should be the same address as the `NodeAddress` provided as a
 
 The `rest-sqs-testing-amazon-java-sdk` module contains some more usage examples.
 
-Custom extensions
------------------
-
-ElasticMQ implements one additional endpoint, which can be useful during testing, above what is supported by SQS.
-
-Making a request to:
-
-    [queue url]?Action=Clear
-
-will remove all messages (both visibile and invisible) from the queue.
-
 ElasticMQ dependencies in SBT
 -----------------------------
 
     // Scala 2.11
-    val elasticmqSqs        = "org.elasticmq" %% "elasticmq-rest-sqs"         % "0.8.4"
+    val elasticmqSqs        = "org.elasticmq" %% "elasticmq-rest-sqs"         % "0.8.5"
 
     // Scala 2.10
     val elasticmqSqs        = "org.elasticmq" %% "elasticmq-rest-sqs"         % "0.7.1"
@@ -139,7 +128,7 @@ ElasticMQ dependencies in SBT
 If you don't want the SQS interface, but just use the actors directly, you can add a dependency only to the `core`
 module:
 
-    val elasticmqCore       = "org.elasticmq" %% "elasticmq-core"             % "0.8.4"
+    val elasticmqCore       = "org.elasticmq" %% "elasticmq-core"             % "0.8.5"
 
 If you want to use a snapshot version, you will need to add the [https://oss.sonatype.org/content/repositories/snapshots/](https://oss.sonatype.org/content/repositories/snapshots/) repository to your configuration.
 
@@ -151,7 +140,7 @@ Dependencies:
     <dependency>
         <groupId>org.elasticmq</groupId>
         <artifactId>elasticmq-rest-sqs_2.11</artifactId>
-        <version>0.8.4</version>
+        <version>0.8.5</version>
     </dependency>
 
 If you want to use a snapshot version, you will need to add the [https://oss.sonatype.org/content/repositories/snapshots/](https://oss.sonatype.org/content/repositories/snapshots/) repository to your configuration.
@@ -165,9 +154,9 @@ have not yet been reimplemented using the new Akka core.
 Current versions
 ----------------
 
-*Stable*: 0.8.4
+*Stable*: 0.8.5
 
-*Development*: 0.8.5-SNAPSHOT
+*Development*: 0.8.6-SNAPSHOT
 
 Logging
 -------
@@ -215,6 +204,10 @@ Technology
 
 Change log
 ----------
+
+#### Version 0.8.5 (11 Dec 2014)
+
+* supporting `PurgeQueue` action instead of a custom one
 
 #### Version 0.8.4 (2 Dec 2014)
 

@@ -103,7 +103,7 @@ case class TheSQSRestServerBuilder(providedActorSystem: Option[ActorSystem],
       with ChangeMessageVisibilityDirectives
       with ChangeMessageVisibilityBatchDirectives
       with GetQueueUrlDirectives
-      with NonSQSDirectives
+      with PurgeQueueDirectives
       with AttributesModule {
 
       lazy val actorSystem = theActorSystem
@@ -125,14 +125,13 @@ case class TheSQSRestServerBuilder(providedActorSystem: Option[ActorSystem],
         getQueueUrl ~
         createQueue ~
         listQueues ~
+        purgeQueue ~
         // 3. Other
         changeMessageVisibility ~
         changeMessageVisibilityBatch ~
         deleteQueue ~
         getQueueAttributes ~
-        setQueueAttributes ~
-        // 4. Non-SQS
-        nonSQSDirectives
+        setQueueAttributes
 
     val config = new ElasticMQConfig
 
