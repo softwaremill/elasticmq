@@ -50,7 +50,7 @@ object Dependencies {
   val jodaConvert   = "org.joda"                  % "joda-convert"          % "1.7"
   val config        = "com.typesafe"              % "config"                % "1.2.1"
 
-  val scalalogging  = "com.typesafe.scala-logging" %% "scala-logging-slf4j" % "2.1.2"
+  val scalalogging  = "com.typesafe.scala-logging" %% "scala-logging"       % "3.1.0"
   val logback       = "ch.qos.logback"            % "logback-classic"       % "1.1.2"
   val jclOverSlf4j  = "org.slf4j"                 % "jcl-over-slf4j"        % "1.7.7" // needed form amazon java sdk
 
