@@ -197,7 +197,7 @@ Technology
 ----------
 
 * Core: [Scala](http://scala-lang.org) and [Akka](http://akka.io/).
-* Rest server: [Spray](http://http://spray.io/), a high-performance,
+* Rest server: [Spray](http://spray.io/), a high-performance,
   asynchronous, REST/HTTP toolkit.
 * Testing the SQS interface: [Amazon Java SDK](http://aws.amazon.com/sdkforjava/);
   see the `rest-sqs-testing-amazon-java-sdk` module for the testsuite.
