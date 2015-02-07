@@ -201,6 +201,7 @@ object Constants {
   val VisibilityTimeoutParameter = "VisibilityTimeout"
   val DelaySecondsAttribute = "DelaySeconds"
   val ReceiveMessageWaitTimeSecondsAttribute = "ReceiveMessageWaitTimeSeconds"
+  val QueueArnAttribute = "QueueArn"
   val IdSubParameter = "Id"
   val InvalidParameterValueErrorName = "InvalidParameterValue"
   val QueueUrlContext = "queue"
