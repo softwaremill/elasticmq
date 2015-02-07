@@ -7,7 +7,7 @@ object BuildSettings {
   val buildSettings = Defaults.coreDefaultSettings ++ Seq (
     organization  := "org.elasticmq",
     version       := "0.8.6-SNAPSHOT",
-    scalaVersion  := "2.11.4",
+    scalaVersion  := "2.11.5",
 
     addCompilerPlugin("org.scala-lang.plugins" % "scala-continuations-plugin_2.11.0" % "1.0.1"),
     libraryDependencies += "org.scala-lang.plugins" %% "scala-continuations-library" % "1.0.2",
