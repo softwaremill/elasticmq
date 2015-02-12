@@ -420,6 +420,7 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
     attributes must contain key (visibilityTimeoutAttribute)
     attributes must contain key (delaySecondsAttribute)
     attributes must contain key (receiveMessageWaitTimeSecondsAttribute)
+    attributes must contain key ("QueueArn")
   }
 
   test("should return proper queue statistics after receiving, deleting a message") {

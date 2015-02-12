@@ -27,7 +27,8 @@ trait QueueAttributesDirectives { this: ElasticMQDirectives with AttributesModul
         ApproximateNumberOfMessagesNotVisibleAttribute ::
         ApproximateNumberOfMessagesDelayedAttribute ::
         CreatedTimestampAttribute ::
-        LastModifiedTimestampAttribute :: Nil)
+        LastModifiedTimestampAttribute :: 
+        QueueArnAttribute :: Nil)
   }
 
   val getQueueAttributes = {
