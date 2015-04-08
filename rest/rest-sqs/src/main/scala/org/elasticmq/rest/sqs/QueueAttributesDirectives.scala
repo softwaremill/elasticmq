@@ -14,6 +14,16 @@ trait QueueAttributesDirectives { this: ElasticMQDirectives with AttributesModul
     val AllWriteableAttributeNames = VisibilityTimeoutParameter :: DelaySecondsAttribute ::
       ReceiveMessageWaitTimeSecondsAttribute :: Nil
   }
+  
+  object UnsupportedAttributeNames {
+    val PolicyAttribute = "Policy"
+    val MaximumMessageSizeAttribute = "MaximumMessageSize"
+    val MessageRetentionPeriodAttribute = "MessageRetentionPeriodAttribute"
+    val RedrivePolicyAttribute = "RedrivePolicy"
+    
+    val AllUnsupportedAttributeNames = PolicyAttribute :: MaximumMessageSizeAttribute :: 
+      MessageRetentionPeriodAttribute :: RedrivePolicyAttribute :: Nil
+  }
 
   object QueueReadableAttributeNames {
     val ApproximateNumberOfMessagesAttribute = "ApproximateNumberOfMessages"
@@ -94,6 +104,9 @@ trait QueueAttributesDirectives { this: ElasticMQDirectives with AttributesModul
               }
               case ReceiveMessageWaitTimeSecondsAttribute => {
                 queueActor ? UpdateQueueReceiveMessageWait(Duration.standardSeconds(attributeValue.toLong))
+              }
+              case unsupported if UnsupportedAttributeNames.AllUnsupportedAttributeNames.contains(unsupported) => {
+                Future(Nil) // Don't error
               }
               case _ => Future(throw new SQSException("InvalidAttributeName"))
             }
