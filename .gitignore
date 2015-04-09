@@ -1,6 +1,10 @@
 .idea
 *.iml
 *.ipr
+.classpath
+.settings
+.project
 target
 out
 project/boot
+/bin/

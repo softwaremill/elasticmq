@@ -14,6 +14,16 @@ trait QueueAttributesDirectives { this: ElasticMQDirectives with AttributesModul
     val AllWriteableAttributeNames = VisibilityTimeoutParameter :: DelaySecondsAttribute ::
       ReceiveMessageWaitTimeSecondsAttribute :: Nil
   }
+  
+  object UnsupportedAttributeNames {
+    val PolicyAttribute = "Policy"
+    val MaximumMessageSizeAttribute = "MaximumMessageSize"
+    val MessageRetentionPeriodAttribute = "MessageRetentionPeriod"
+    val RedrivePolicyAttribute = "RedrivePolicy"
+    
+    val AllUnsupportedAttributeNames = PolicyAttribute :: MaximumMessageSizeAttribute :: 
+      MessageRetentionPeriodAttribute :: RedrivePolicyAttribute :: Nil
+  }
 
   object QueueReadableAttributeNames {
     val ApproximateNumberOfMessagesAttribute = "ApproximateNumberOfMessages"
@@ -95,7 +105,14 @@ trait QueueAttributesDirectives { this: ElasticMQDirectives with AttributesModul
               case ReceiveMessageWaitTimeSecondsAttribute => {
                 queueActor ? UpdateQueueReceiveMessageWait(Duration.standardSeconds(attributeValue.toLong))
               }
-              case _ => Future(throw new SQSException("InvalidAttributeName"))
+              case _ => { // I'm sure there's a more idiomatic scala way to do this.
+                if (UnsupportedAttributeNames.AllUnsupportedAttributeNames.contains(attributeName)){
+                  logger.warn("Ignored attribute \"" + attributeName + "\" (supported by SQS but not ElasticMQ)")
+                  Future() // Don't error; how to log?
+                } else {
+                  Future(throw new SQSException("InvalidAttributeName"))
+                }
+              }
             }
           })
 
