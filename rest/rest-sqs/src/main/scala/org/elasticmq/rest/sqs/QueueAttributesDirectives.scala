@@ -105,14 +105,11 @@ trait QueueAttributesDirectives { this: ElasticMQDirectives with AttributesModul
               case ReceiveMessageWaitTimeSecondsAttribute => {
                 queueActor ? UpdateQueueReceiveMessageWait(Duration.standardSeconds(attributeValue.toLong))
               }
-              case _ => { // I'm sure there's a more idiomatic scala way to do this.
-                if (UnsupportedAttributeNames.AllUnsupportedAttributeNames.contains(attributeName)){
-                  logger.warn("Ignored attribute \"" + attributeName + "\" (supported by SQS but not ElasticMQ)")
-                  Future() // Don't error; how to log?
-                } else {
-                  Future(throw new SQSException("InvalidAttributeName"))
-                }
+              case a if UnsupportedAttributeNames.AllUnsupportedAttributeNames.contains(attributeName) => {
+                logger.warn("Ignored attribute \"" + attributeName + "\" (supported by SQS but not ElasticMQ)")
+                Future()
               }
+              case _ => Future(throw new SQSException("InvalidAttributeName"))
             }
           })
 
