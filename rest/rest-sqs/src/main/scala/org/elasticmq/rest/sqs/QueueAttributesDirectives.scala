@@ -105,8 +105,8 @@ trait QueueAttributesDirectives { this: ElasticMQDirectives with AttributesModul
               case ReceiveMessageWaitTimeSecondsAttribute => {
                 queueActor ? UpdateQueueReceiveMessageWait(Duration.standardSeconds(attributeValue.toLong))
               }
-              case attributeName if UnsupportedAttributeNames.AllUnsupportedAttributeNames.contains(attributeName) => {
-                logger.warn("Ignored attribute \"" + attributeName + "\" (supported by SQS but not ElasticMQ)")
+              case attr if UnsupportedAttributeNames.AllUnsupportedAttributeNames.contains(attr) => {
+                logger.warn("Ignored attribute \"" + attr + "\" (supported by SQS but not ElasticMQ)")
                 Future()
               }
               case _ => Future(throw new SQSException("InvalidAttributeName"))
