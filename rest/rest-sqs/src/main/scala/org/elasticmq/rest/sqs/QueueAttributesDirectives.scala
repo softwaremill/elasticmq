@@ -107,7 +107,8 @@ trait QueueAttributesDirectives { this: ElasticMQDirectives with AttributesModul
               }
               case _ => { // I'm sure there's a more idiomatic scala way to do this.
                 if (UnsupportedAttributeNames.AllUnsupportedAttributeNames.contains(attributeName)){
-                  Future(Nil) // Don't error
+                  logger.warn("Ignored attribute \"" + attributeName + "\" (supported by SQS but not ElasticMQ)")
+                  Future() // Don't error; how to log?
                 } else {
                   Future(throw new SQSException("InvalidAttributeName"))
                 }
