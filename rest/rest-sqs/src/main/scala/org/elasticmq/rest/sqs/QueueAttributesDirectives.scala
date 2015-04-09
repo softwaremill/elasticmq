@@ -18,7 +18,7 @@ trait QueueAttributesDirectives { this: ElasticMQDirectives with AttributesModul
   object UnsupportedAttributeNames {
     val PolicyAttribute = "Policy"
     val MaximumMessageSizeAttribute = "MaximumMessageSize"
-    val MessageRetentionPeriodAttribute = "MessageRetentionPeriodAttribute"
+    val MessageRetentionPeriodAttribute = "MessageRetentionPeriod"
     val RedrivePolicyAttribute = "RedrivePolicy"
     
     val AllUnsupportedAttributeNames = PolicyAttribute :: MaximumMessageSizeAttribute :: 
@@ -105,10 +105,13 @@ trait QueueAttributesDirectives { this: ElasticMQDirectives with AttributesModul
               case ReceiveMessageWaitTimeSecondsAttribute => {
                 queueActor ? UpdateQueueReceiveMessageWait(Duration.standardSeconds(attributeValue.toLong))
               }
-              case unsupported if UnsupportedAttributeNames.AllUnsupportedAttributeNames.contains(unsupported) => {
-                Future(Nil) // Don't error
+              case _ => { // I'm sure there's a more idiomatic scala way to do this.
+                if (UnsupportedAttributeNames.AllUnsupportedAttributeNames.contains(attributeName)){
+                  Future(Nil) // Don't error
+                } else {
+                  Future(throw new SQSException("InvalidAttributeName"))
+                }
               }
-              case _ => Future(throw new SQSException("InvalidAttributeName"))
             }
           })
 
