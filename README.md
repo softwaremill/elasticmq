@@ -198,7 +198,7 @@ Building, running, and packaging
 
 To build and run with debug (this will listen for a remote debugger on port 5005):  
 ```
-~/workspace/elasticmq $ sbt jvm-debug 5005  
+~/workspace/elasticmq $ sbt -jvm-debug 5005  
 > project elasticmq-server
 > run
 ```
