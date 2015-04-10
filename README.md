@@ -193,6 +193,25 @@ Note that both the client and the server were on the same machine.
 
 Test class: `org.elasticmq.performance.LocalPerformanceTest`.
 
+Building, running, and packaging
+--------------------------------
+
+To build and run with debug (this will listen for a remote debugger on port 5005):  
+```
+~/workspace/elasticmq $ sbt jvm-debug 5005  
+> project elasticmq-server
+> run
+```
+
+To build a jar-with-dependencies:  
+```
+~/workspace/elasticmq $ sbt 
+> project elasticmq-server
+> assembly
+```
+
+
+
 Technology
 ----------
 
