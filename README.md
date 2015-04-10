@@ -224,6 +224,10 @@ Technology
 Change log
 ----------
 
+#### Version 0.8.8 (10 Apr 2015)
+
+* dependency updates, bug fixes
+
 #### Version 0.8.6, 0.8.7 (7 Feb 2015, 13 Feb 2015)
 
 * adding support for the `QueueArn` attribute
