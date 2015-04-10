@@ -6,14 +6,14 @@ import AssemblyKeys._
 object BuildSettings {
   val buildSettings = Defaults.coreDefaultSettings ++ Seq (
     organization  := "org.elasticmq",
-    version       := "0.8.8-SNAPSHOT",
-    scalaVersion  := "2.11.5",
+    version       := "0.8.9-SNAPSHOT",
+    scalaVersion  := "2.11.6",
 
     addCompilerPlugin("org.scala-lang.plugins" % "scala-continuations-plugin_2.11.0" % "1.0.1"),
     libraryDependencies += "org.scala-lang.plugins" %% "scala-continuations-library" % "1.0.2",
     scalacOptions += "-P:continuations:enable",
 
-    libraryDependencies += "org.scala-lang.modules" %% "scala-xml" % "1.0.2",
+    libraryDependencies += "org.scala-lang.modules" %% "scala-xml" % "1.0.3",
 
     // Sonatype OSS deployment
     publishTo := {
@@ -46,27 +46,27 @@ object BuildSettings {
 }
 
 object Dependencies {
-  val jodaTime      = "joda-time"                 % "joda-time"             % "2.5"
+  val jodaTime      = "joda-time"                 % "joda-time"             % "2.7"
   val jodaConvert   = "org.joda"                  % "joda-convert"          % "1.7"
   val config        = "com.typesafe"              % "config"                % "1.2.1"
 
   val scalalogging  = "com.typesafe.scala-logging" %% "scala-logging"       % "3.1.0"
-  val logback       = "ch.qos.logback"            % "logback-classic"       % "1.1.2"
-  val jclOverSlf4j  = "org.slf4j"                 % "jcl-over-slf4j"        % "1.7.7" // needed form amazon java sdk
+  val logback       = "ch.qos.logback"            % "logback-classic"       % "1.1.3"
+  val jclOverSlf4j  = "org.slf4j"                 % "jcl-over-slf4j"        % "1.7.12" // needed form amazon java sdk
 
-  val scalatest     = "org.scalatest"             %% "scalatest"            % "2.2.2"
-  val mockito       = "org.mockito"               % "mockito-core"          % "1.9.5"
-  val awaitility    = "com.jayway.awaitility"     % "awaitility-scala"      % "1.6.0"
+  val scalatest     = "org.scalatest"             %% "scalatest"            % "2.2.4"
+  val mockito       = "org.mockito"               % "mockito-core"          % "1.10.19"
+  val awaitility    = "com.jayway.awaitility"     % "awaitility-scala"      % "1.6.3"
 
-  val amazonJavaSdk = "com.amazonaws"             % "aws-java-sdk"          % "1.9.10" exclude ("commons-logging", "commons-logging")
+  val amazonJavaSdk = "com.amazonaws"             % "aws-java-sdk"          % "1.9.30" exclude ("commons-logging", "commons-logging")
 
-  val akka2Version  = "2.3.6"
+  val akka2Version  = "2.3.9"
   val akka2Actor    = "com.typesafe.akka" %% "akka-actor"           % akka2Version
   val akka2Slf4j    = "com.typesafe.akka" %% "akka-slf4j"           % akka2Version
   val akka2Dataflow = "com.typesafe.akka" %% "akka-dataflow"        % akka2Version
   val akka2Testkit  = "com.typesafe.akka" %% "akka-testkit"         % akka2Version % "test"
 
-  val sprayVersion  = "1.3.2"
+  val sprayVersion  = "1.3.3"
   val sprayCan      = "io.spray"          %% "spray-can"            % sprayVersion
   val sprayRouting  = "io.spray"          %% "spray-routing"        % sprayVersion
   val sprayTestkit  = "io.spray"          %% "spray-testkit"        % sprayVersion % "test"
