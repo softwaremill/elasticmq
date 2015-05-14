@@ -116,6 +116,21 @@ The endpoint value should be the same address as the `NodeAddress` provided as a
 
 The `rest-sqs-testing-amazon-java-sdk` module contains some more usage examples.
 
+Using the Amazon boto (Python) to access an ElasticMQ Server
+-------------------------------------------------------
+
+To use [Amazon boto](http://docs.pythonboto.org/en/latest/) as an interface to an ElasticMQ server you set up the connection using:
+
+    region = boto.sqs.regioninfo.RegionInfo(name='elasticmq',
+                                            endpoint=sqs_endpoint)
+    conn = boto.connect_sqs(aws_access_key_id='x',
+                            aws_secret_access_key='x',
+                            is_secure=False,
+                            port=sqs_port,
+                            region=region)
+
+where `sqs_endpoint` and `sqs_port` are the host and port.
+
 ElasticMQ dependencies in SBT
 -----------------------------
 
@@ -205,7 +220,7 @@ To build and run with debug (this will listen for a remote debugger on port 5005
 
 To build a jar-with-dependencies:  
 ```
-~/workspace/elasticmq $ sbt 
+~/workspace/elasticmq $ sbt
 > project elasticmq-server
 > assembly
 ```
