@@ -1,5 +1,7 @@
 package org.elasticmq.rest.sqs
 
+import java.nio.ByteBuffer
+
 import org.scalatest.matchers.MustMatchers
 import org.scalatest._
 import com.amazonaws.auth.BasicAWSCredentials
@@ -11,7 +13,7 @@ import scala.util.control.Exception._
 import com.amazonaws.AmazonServiceException
 import org.elasticmq.util.Logging
 import spray.can.Http
-import org.elasticmq.NodeAddress
+import org.elasticmq._
 
 class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAfter with Logging {
   val visibilityTimeoutAttribute = "VisibilityTimeout"
@@ -153,7 +155,11 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
   }
 
   test("should send and receive a simple message with message attributes") {
-    doTestSendAndReceiveMessageWithAttributes("Message 1", Map("red" -> "fish", "blue" -> "cat"))
+    doTestSendAndReceiveMessageWithAttributes("Message 1", Map(
+      "red" -> StringMessageAttribute("fish"),
+      "blue" -> StringMessageAttribute("cat"),
+      "green" -> BinaryMessageAttribute("dog".getBytes("UTF-8"))
+    ))
   }
 
   test("should send and receive a message with caret return and new line characters") {
@@ -176,16 +182,20 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
     doTestSendAndReceiveMessage(builder.toString())
   }
 
-  def doTestSendAndReceiveMessageWithAttributes(content: String, messageAttributes: Map[String,String]) {
+  def doTestSendAndReceiveMessageWithAttributes(content: String, messageAttributes: Map[String,MessageAttribute]) {
     // Given
     val queueUrl = client.createQueue(new CreateQueueRequest("testQueue1")).getQueueUrl
 
     // When
     val sendMessage = messageAttributes.foldLeft(new SendMessageRequest(queueUrl, content)){ case (message, (k,v)) =>
       val attr = new MessageAttributeValue()
-      attr.setDataType("String")
-      attr.setStringValue(v)
-      
+      attr.setDataType(v.getDataType())
+
+      v match {
+        case s: StringMessageAttribute => attr.setStringValue(s.stringValue)
+        case b: BinaryMessageAttribute => attr.setBinaryValue(ByteBuffer.wrap(b.binaryValue))
+      }
+
       message.addMessageAttributesEntry(k, attr)
     }
 
@@ -195,7 +205,18 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
     // Then
     message.getBody must be (content)
     message.getMessageAttributes must be (sendMessage.getMessageAttributes) // Checks they match
-    message.getMessageAttributes.map { case (k,attr) => (k,attr.getStringValue) } must be (messageAttributes) // Checks they match map
+    message.getMessageAttributes.map { case (k,attr) =>
+      (k,if (attr.getStringValue != null) {
+        StringMessageAttribute(attr.getStringValue).stringValue
+      } else {
+        BinaryMessageAttribute.fromByteBuffer(attr.getBinaryValue).asBase64
+      })
+    } must be (messageAttributes.map { case (k,attr) =>
+      (k,attr match {
+        case s: StringMessageAttribute => s.stringValue
+        case b: BinaryMessageAttribute => b.asBase64
+      })
+    }) // Checks they match map
   }
 
   // Alias for send and receive with no attributes

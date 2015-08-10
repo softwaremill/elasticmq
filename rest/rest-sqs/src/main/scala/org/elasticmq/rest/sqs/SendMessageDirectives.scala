@@ -3,7 +3,7 @@ package org.elasticmq.rest.sqs
 import Constants._
 import MD5Util._
 import ParametersUtil._
-import org.elasticmq.{NewMessageData, MessageData, ImmediateNextDelivery, AfterMillisNextDelivery}
+import org.elasticmq._
 import annotation.tailrec
 import akka.actor.ActorRef
 import scala.concurrent.Future
@@ -39,7 +39,7 @@ trait SendMessageDirectives { this: ElasticMQDirectives with SQSLimitsModule =>
     }
   }
 
-  def getMessageAttributes(parameters: Map[String, String]): Map[String, String] = {
+  def getMessageAttributes(parameters: Map[String, String]): Map[String, MessageAttribute] = {
     // Determine number of attributes -- there are likely ways to improve this
     val numAttributes = parameters.map{ case (k,v) => {
         if (k.startsWith("MessageAttribute.")) {
@@ -54,12 +54,22 @@ trait SendMessageDirectives { this: ElasticMQDirectives with SQSLimitsModule =>
       val name = parameters("MessageAttribute." + i + ".Name")
       val dataType = parameters("MessageAttribute." + i + ".Value.DataType")
 
-      val value = dataType match {
+      val primaryDataType = dataType.split('.')(0)
+      val customDataType = if (dataType.contains('.')) {
+        Some(dataType.split('.')(1))
+      } else {
+        None
+      }
+
+      val value = primaryDataType match {
         case "String" => {
-          parameters("MessageAttribute." + i + ".Value.StringValue")
+          StringMessageAttribute(parameters("MessageAttribute." + i + ".Value.StringValue"), customDataType)
+        }
+        case "Binary" => {
+          BinaryMessageAttribute.fromBase64(parameters("MessageAttribute." + i + ".Value.BinaryValue"), customDataType)
         }
         case _ => {
-          throw new Exception("Currently only handles String typed attributes")
+          throw new Exception("Currently only handles String and Binary typed attributes")
         }
       }
 
@@ -116,7 +126,7 @@ trait SendMessageDirectives { this: ElasticMQDirectives with SQSLimitsModule =>
     findInvalidCharacter(0)
   }
 
-  private def createMessage(body: String, messageAttributes: Map[String, String], delaySecondsOption: Option[Long]) = {
+  private def createMessage(body: String, messageAttributes: Map[String, MessageAttribute], delaySecondsOption: Option[Long]) = {
     val nextDelivery = delaySecondsOption match {
       case None => ImmediateNextDelivery
       case Some(delaySeconds) => AfterMillisNextDelivery(delaySeconds*1000)
