@@ -1,5 +1,8 @@
 package org.elasticmq.rest.sqs
 
+import org.elasticmq.{BinaryMessageAttribute, StringMessageAttribute, MessageAttribute}
+
+
 trait AttributesModule {
   val attributeNamesReader = new AttributeNamesReader
   val attributesToXmlConverter = new AttributesToXmlConverter
@@ -42,13 +45,18 @@ trait AttributesModule {
   }
 
   class MessageAttributesToXmlConverter {
-    def convert(attributes: List[(String, String)]) = {
+    def convert(attributes: List[(String, MessageAttribute)]) = {
       attributes.map(a =>
         <MessageAttribute>
           <Name>{a._1}</Name>
           <Value>
-            <DataType>String</DataType>
-            <StringValue>{a._2}</StringValue>
+            <DataType>{a._2.getDataType()}</DataType>
+            {
+              a._2 match {
+                case s: StringMessageAttribute => <StringValue>{s.stringValue}</StringValue>
+                case b: BinaryMessageAttribute => <BinaryValue>{b.asBase64}</BinaryValue>
+              }
+            }
           </Value>
         </MessageAttribute>)
     }

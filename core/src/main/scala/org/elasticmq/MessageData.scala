@@ -5,7 +5,7 @@ import org.joda.time.DateTime
 case class MessageData(id: MessageId,
                        deliveryReceipt: Option[DeliveryReceipt],
                        content: String,
-                       messageAttributes: Map[String, String],
+                       messageAttributes: Map[String, MessageAttribute],
                        nextDelivery: MillisNextDelivery,
                        created: DateTime,
                        statistics: MessageStatistics)

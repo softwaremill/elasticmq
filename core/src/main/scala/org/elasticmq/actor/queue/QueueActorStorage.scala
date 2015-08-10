@@ -20,7 +20,7 @@ trait QueueActorStorage {
                              var deliveryReceipt: Option[String],
                              var nextDelivery: Long,
                              content: String,
-                             messageAttributes: Map[String,String],
+                             messageAttributes: Map[String,MessageAttribute],
                              created: DateTime,
                              var firstReceive: Received,
                              var receiveCount: Int)

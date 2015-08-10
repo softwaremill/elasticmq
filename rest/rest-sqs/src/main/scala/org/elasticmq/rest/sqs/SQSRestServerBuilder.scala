@@ -14,8 +14,7 @@ import spray.can.Http
 import akka.io.IO
 import org.elasticmq.rest.sqs.Constants._
 import scala.xml.EntityRef
-import org.elasticmq.QueueData
-import org.elasticmq.NodeAddress
+import org.elasticmq._
 import com.typesafe.config.ConfigFactory
 import org.elasticmq.actor.QueueManagerActor
 import org.elasticmq.util.NowProvider
@@ -228,20 +227,35 @@ object MD5Util {
     md5.digest().map(0xFF & _).map { "%02x".format(_) }.foldLeft(""){_ + _}
   }
 
-  def md5AttributeDigest(attributes: Map[String, String]): String = {
+  def md5AttributeDigest(attributes: Map[String, MessageAttribute]): String = {
     def addEncodedString(b: ByteArrayOutputStream, s: String) = {
       val str = s.getBytes("UTF-8")
       b.write(ByteBuffer.allocate(4).putInt(s.length).array) // Sadly, we'll need ByteBuffer here to get a properly encoded 4-byte int (alternatively, we could encode by hand)
       b.write(str)
     }
 
+    def addEncodedByteArray(b: ByteArrayOutputStream, a: Array[Byte]) = {
+      b.write(ByteBuffer.allocate(4).putInt(a.length).array)
+      b.write(a)
+    }
+
     val byteStream = new ByteArrayOutputStream
 
     TreeMap(attributes.toSeq:_*).foreach{ case (k,v) => { // TreeMap is for sorting, a requirement of algorithm
         addEncodedString(byteStream, k)
-        addEncodedString(byteStream, "String") // Data Type
-        byteStream.write(1) // "String"
-        addEncodedString(byteStream, v)
+        addEncodedString(byteStream, v.getDataType())
+
+        v match {
+          case s: StringMessageAttribute => {
+            byteStream.write(1)
+            addEncodedString(byteStream, s.stringValue)
+          }
+          case b: BinaryMessageAttribute => {
+            byteStream.write(2)
+            addEncodedByteArray(byteStream, b.binaryValue)
+          }
+          case _ => throw new IllegalArgumentException(s"Unsupported message attribute type: ${ v.getClass.getName }")
+        }
       }
     }
 
