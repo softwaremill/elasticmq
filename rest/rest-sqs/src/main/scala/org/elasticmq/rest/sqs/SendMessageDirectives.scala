@@ -56,7 +56,7 @@ trait SendMessageDirectives { this: ElasticMQDirectives with SQSLimitsModule =>
 
       val primaryDataType = dataType.split('.')(0)
       val customDataType = if (dataType.contains('.')) {
-        Some(dataType.split('.')(1))
+        Some(dataType.substring(dataType.indexOf('.') + 1))
       } else {
         None
       }
@@ -65,11 +65,16 @@ trait SendMessageDirectives { this: ElasticMQDirectives with SQSLimitsModule =>
         case "String" => {
           StringMessageAttribute(parameters("MessageAttribute." + i + ".Value.StringValue"), customDataType)
         }
+        case "Number" => {
+          val strValue = parameters("MessageAttribute." + i + ".Value.StringValue")
+          verifyMessageNumberAttribute(strValue)
+          NumberMessageAttribute(strValue, customDataType)
+        }
         case "Binary" => {
           BinaryMessageAttribute.fromBase64(parameters("MessageAttribute." + i + ".Value.BinaryValue"), customDataType)
         }
         case _ => {
-          throw new Exception("Currently only handles String and Binary typed attributes")
+          throw new Exception("Currently only handles String, Number and Binary typed attributes")
         }
       }
 
