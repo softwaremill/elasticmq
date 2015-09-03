@@ -158,7 +158,8 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
     doTestSendAndReceiveMessageWithAttributes("Message 1", Map(
       "red" -> StringMessageAttribute("fish"),
       "blue" -> StringMessageAttribute("cat"),
-      "green" -> BinaryMessageAttribute("dog".getBytes("UTF-8"))
+      "green" -> BinaryMessageAttribute("dog".getBytes("UTF-8")),
+      "yellow" -> NumberMessageAttribute("1234567890")
     ))
   }
 
@@ -193,6 +194,7 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
 
       v match {
         case s: StringMessageAttribute => attr.setStringValue(s.stringValue)
+        case n: NumberMessageAttribute => attr.setStringValue(n.stringValue)
         case b: BinaryMessageAttribute => attr.setBinaryValue(ByteBuffer.wrap(b.binaryValue))
       }
 
@@ -206,14 +208,17 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
     message.getBody must be (content)
     message.getMessageAttributes must be (sendMessage.getMessageAttributes) // Checks they match
     message.getMessageAttributes.map { case (k,attr) =>
-      (k,if (attr.getStringValue != null) {
+      (k,if (attr.getDataType.startsWith("String") && attr.getStringValue != null) {
         StringMessageAttribute(attr.getStringValue).stringValue
-      } else {
+      }else if (attr.getDataType.startsWith("Number") && attr.getStringValue != null) {
+        NumberMessageAttribute(attr.getStringValue).stringValue
+      }else {
         BinaryMessageAttribute.fromByteBuffer(attr.getBinaryValue).asBase64
       })
     } must be (messageAttributes.map { case (k,attr) =>
       (k,attr match {
         case s: StringMessageAttribute => s.stringValue
+        case n: NumberMessageAttribute => n.stringValue
         case b: BinaryMessageAttribute => b.asBase64
       })
     }) // Checks they match map

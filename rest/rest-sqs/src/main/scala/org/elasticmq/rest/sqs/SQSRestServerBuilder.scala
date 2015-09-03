@@ -1,5 +1,6 @@
 package org.elasticmq.rest.sqs
 
+import scala.util.control.Exception._
 import xml._
 import java.security.MessageDigest
 import org.elasticmq.util.Logging
@@ -241,22 +242,27 @@ object MD5Util {
 
     val byteStream = new ByteArrayOutputStream
 
-    TreeMap(attributes.toSeq:_*).foreach{ case (k,v) => { // TreeMap is for sorting, a requirement of algorithm
-        addEncodedString(byteStream, k)
-        addEncodedString(byteStream, v.getDataType())
+    TreeMap(attributes.toSeq: _*).foreach { case (k, v) => {
+      // TreeMap is for sorting, a requirement of algorithm
+      addEncodedString(byteStream, k)
+      addEncodedString(byteStream, v.getDataType())
 
-        v match {
-          case s: StringMessageAttribute => {
-            byteStream.write(1)
-            addEncodedString(byteStream, s.stringValue)
-          }
-          case b: BinaryMessageAttribute => {
-            byteStream.write(2)
-            addEncodedByteArray(byteStream, b.binaryValue)
-          }
-          case _ => throw new IllegalArgumentException(s"Unsupported message attribute type: ${ v.getClass.getName }")
+      v match {
+        case s: StringMessageAttribute => {
+          byteStream.write(1)
+          addEncodedString(byteStream, s.stringValue)
         }
+        case n: NumberMessageAttribute => {
+          byteStream.write(1)
+          addEncodedString(byteStream, n.stringValue.toString)
+        }
+        case b: BinaryMessageAttribute => {
+          byteStream.write(2)
+          addEncodedByteArray(byteStream, b.binaryValue)
+        }
+        case _ => throw new IllegalArgumentException(s"Unsupported message attribute type: ${v.getClass.getName}")
       }
+    }
     }
 
     val md5 = MessageDigest.getInstance("MD5")
@@ -305,10 +311,23 @@ object SQSLimits extends Enumeration {
 }
 
 trait SQSLimitsModule {
+
+  val NUMBER_ATTR_MAX_VALUE = BigDecimal.valueOf(10).pow(126)
+  val NUMBER_ATTR_MIN_VALUE = -BigDecimal.valueOf(10).pow(128)
+
   def sqsLimits: SQSLimits.Value
+
   def ifStrictLimits(condition: => Boolean)(exception: String) {
     if (sqsLimits == SQSLimits.Strict && condition) {
       throw new SQSException(exception)
+    }
+  }
+
+  def verifyMessageNumberAttribute(strValue: String) {
+    ifStrictLimits(!allCatch.opt(BigDecimal(strValue))
+      .filter(v => v >= NUMBER_ATTR_MIN_VALUE )
+      .filter(v => v <= NUMBER_ATTR_MAX_VALUE).isDefined) {
+      s"Number attribute value $strValue should be in range (-10**128..10**126)"
     }
   }
 

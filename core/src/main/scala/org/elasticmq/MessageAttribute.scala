@@ -7,13 +7,17 @@ sealed abstract class MessageAttribute(val customType: Option[String]) {
   protected val primaryDataType: String
 
   def getDataType() = customType match {
-    case Some(t) => s"$primaryDataType.t"
+    case Some(t) => s"$primaryDataType.$t"
     case None    => primaryDataType
   }
 }
 
 case class StringMessageAttribute(stringValue: String, override val customType: Option[String] = None) extends MessageAttribute(customType) {
   protected override val primaryDataType: String = "String"
+}
+
+case class NumberMessageAttribute(stringValue: String, override val customType: Option[String] = None) extends MessageAttribute(customType) {
+  protected override val primaryDataType: String = "Number"
 }
 
 case class BinaryMessageAttribute(binaryValue: Array[Byte], override val customType: Option[String] = None) extends MessageAttribute(customType) {

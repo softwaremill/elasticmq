@@ -1,6 +1,6 @@
 package org.elasticmq.rest.sqs
 
-import org.elasticmq.{BinaryMessageAttribute, StringMessageAttribute, MessageAttribute}
+import org.elasticmq.{NumberMessageAttribute, BinaryMessageAttribute, StringMessageAttribute, MessageAttribute}
 
 
 trait AttributesModule {
@@ -54,6 +54,7 @@ trait AttributesModule {
             {
               a._2 match {
                 case s: StringMessageAttribute => <StringValue>{s.stringValue}</StringValue>
+                case n: NumberMessageAttribute => <StringValue>{n.stringValue}</StringValue>
                 case b: BinaryMessageAttribute => <BinaryValue>{b.asBase64}</BinaryValue>
               }
             }
