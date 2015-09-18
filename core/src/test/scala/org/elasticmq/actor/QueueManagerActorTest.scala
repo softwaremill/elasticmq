@@ -70,6 +70,20 @@ class QueueManagerActorTest extends ActorTest with QueueManagerForEachTest with 
     }
   }
 
+  waitTest("trying to create a queue with long name should throw an exception") {
+    // Given
+    val q1 = createQueueData("q111111111111111111111111111111111111111111111111111111111111111111111111111111111", MillisVisibilityTimeout(1L))
+
+    for {
+      _ <- queueManagerActor ? CreateQueue(q1)
+
+      // When & then
+      result <- queueManagerActor ? CreateQueue(q1)
+    } yield {
+      result should be ('left)
+    }
+  }
+
   waitTest("listing queues") {
     // Given
     val q1 = createQueueData("q1", MillisVisibilityTimeout(1L))
