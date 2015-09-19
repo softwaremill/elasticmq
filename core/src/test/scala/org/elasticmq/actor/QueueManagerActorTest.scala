@@ -77,8 +77,6 @@ class QueueManagerActorTest extends ActorTest with QueueManagerForEachTest with 
     for {
       _ <- queueManagerActor ? CreateQueue(q1)
 
-      // When & then
-      result <- queueManagerActor ? CreateQueue(q1)
     } yield {
       result should be ('left)
     }
