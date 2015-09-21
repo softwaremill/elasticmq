@@ -91,6 +91,12 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
     queueVisibilityTimeout(queueUrls.get(0)) must be (14)
   }
 
+  test("should return an error if strict & queue name is too long") {
+    strictOnlyShouldThrowException { cli =>
+      cli.createQueue(new CreateQueueRequest("x"*81))
+    }
+  }
+
   test("should list created queues") {
     // Given
     client.createQueue(new CreateQueueRequest("testQueue1"))

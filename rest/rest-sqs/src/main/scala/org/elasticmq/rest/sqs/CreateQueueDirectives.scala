@@ -39,7 +39,7 @@ trait CreateQueueDirectives { this: ElasticMQDirectives with QueueURLModule with
             flow {
               if (!queueName.matches("[\\p{Alnum}_-]*")) {
                 throw SQSException.invalidParameterValue
-              } else if (queueName.length() > 80) {
+              } else if (sqsLimits == SQSLimits.Strict && queueName.length() > 80) {
                 throw SQSException.invalidParameterValue
               }
 
