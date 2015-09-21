@@ -75,7 +75,7 @@ class QueueManagerActorTest extends ActorTest with QueueManagerForEachTest with 
     val q1 = createQueueData("q111111111111111111111111111111111111111111111111111111111111111111111111111111111", MillisVisibilityTimeout(1L))
 
     for {
-      _ <- queueManagerActor ? CreateQueue(q1)
+      result <- queueManagerActor ? CreateQueue(q1)
 
     } yield {
       result should be ('left)
