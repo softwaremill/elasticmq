@@ -239,6 +239,10 @@ Technology
 Change log
 ----------
 
+#### Version 0.8.12 (30 Sep 2015)
+
+* checking queue length if limits are strict
+
 #### Version 0.8.11 (3 Sep 2015)
 
 * downgrading typesafe-config to keep Java6 compatibility
