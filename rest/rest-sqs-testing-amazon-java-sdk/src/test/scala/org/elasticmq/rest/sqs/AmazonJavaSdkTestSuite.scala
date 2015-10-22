@@ -722,7 +722,7 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
       val queueUrl = cli.createQueue(new CreateQueueRequest("testQueue1")).getQueueUrl
 
       // When
-      cli.sendMessage(new SendMessageRequest(queueUrl, "x"*65537))
+      cli.sendMessage(new SendMessageRequest(queueUrl, "x"* 262145))
     }
   }
 
@@ -733,8 +733,8 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
 
       // When
       cli.sendMessageBatch(new SendMessageBatchRequest(queueUrl).withEntries(
-        new SendMessageBatchRequestEntry("1", "x"*40000),
-        new SendMessageBatchRequestEntry("2", "x"*40000)
+        new SendMessageBatchRequestEntry("1", "x"*140000),
+        new SendMessageBatchRequestEntry("2", "x"*140000)
       ))
     }
   }
