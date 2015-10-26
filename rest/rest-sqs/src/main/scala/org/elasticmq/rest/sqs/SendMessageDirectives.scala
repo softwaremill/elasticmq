@@ -103,7 +103,7 @@ trait SendMessageDirectives { this: ElasticMQDirectives with SQSLimitsModule =>
   }
 
   def verifyMessageNotTooLong(messageLength: Int) {
-    ifStrictLimits(messageLength > 65536) {
+    ifStrictLimits(messageLength > 262144) {
       "MessageTooLong"
     }
   }

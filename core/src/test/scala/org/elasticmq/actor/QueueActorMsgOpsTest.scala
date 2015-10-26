@@ -42,7 +42,7 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
 
   waitTest("sending msg with maximum size should succeed") {
     // Given
-    val maxMessageContent = "x" * 65535
+    val maxMessageContent = "x" * 262143
 
     val q1 = createQueueData("q1", MillisVisibilityTimeout(1L))
     val m = createNewMessageData("xyz", maxMessageContent, Map(), MillisNextDelivery(123L))
