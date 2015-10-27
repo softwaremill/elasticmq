@@ -85,6 +85,31 @@ log INFO logs and above to the console):
 
     java -Dlogback.configurationFile=my_logback.xml -jar elasticmq-server-0.8.12.jar
 
+Automatically creating queues on startup
+----------------------------------------
+
+Queues can be automatically created on startup by providing appropriate configuration (since 0.9.0):
+
+The queues are specified in a custom configuration file. For example, create a `custom.conf` file with the following:
+
+````
+include classpath("application.conf")
+
+queues {
+    queue1 {
+        defaultVisibilityTimeout = 10 seconds
+        delay = 5 seconds
+        receiveMessageWait = 0 seconds
+    }
+    queue2 { }
+}
+````
+
+All attributes are optional, and if not specified will use the default SQS values.
+When starting the server, pass the custom config on the commandline:
+
+    java -Dconfig.file=custom.conf -jar elasticmq-server-0.8.12.jar
+
 Starting an embedded ElasticMQ server with an SQS interface
 -----------------------------------------------------------
 
@@ -101,6 +126,9 @@ If you need to bind to a different host/port, there are configuration methods on
 You can also provide a custom `ActorSystem`; for details see the javadocs.
 
 Embedded ElasticMQ can be used from any JVM-based language (Java, Scala, etc.).
+
+If you'd like to provide configuration for an embedded instance, simply create a `reference.conf` file on, make sure
+it's on the classpath and put the configuration (queues to create/ports etc.) there.
 
 Using the Amazon Java SDK to access an ElasticMQ Server
 -------------------------------------------------------
@@ -225,19 +253,23 @@ To build a jar-with-dependencies:
 > assembly
 ```
 
-
-
 Technology
 ----------
 
 * Core: [Scala](http://scala-lang.org) and [Akka](http://akka.io/).
-* Rest server: [Spray](http://spray.io/), a high-performance,
+* Rest server: [Akka HTTP](http://akka.io/), a high-performance,
   asynchronous, REST/HTTP toolkit.
 * Testing the SQS interface: [Amazon Java SDK](http://aws.amazon.com/sdkforjava/);
   see the `rest-sqs-testing-amazon-java-sdk` module for the testsuite.
 
 Change log
 ----------
+
+#### Version 0.9.0 (pending)
+
+* replace Spray with Akka
+* increase message body size limits
+* provide an option to create queues on startup
 
 #### Version 0.8.12 (30 Sep 2015)
 

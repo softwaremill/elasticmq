@@ -1,8 +1,10 @@
 package org.elasticmq.server
 
+import java.util.concurrent.TimeUnit
+
+import com.typesafe.config.{ConfigObject, Config}
 import org.elasticmq.NodeAddress
 import org.elasticmq.rest.sqs.SQSLimits
-import com.typesafe.config.Config
 
 class ElasticMQServerConfig(config: Config) {
   // Configure main storage
@@ -49,4 +51,24 @@ class ElasticMQServerConfig(config: Config) {
   }
 
   val restSqs = new RestSqsConfiguration
+
+  case class CreateQueue(name: String,
+    defaultVisibilityTimeoutSeconds: Option[Long],
+    delaySeconds: Option[Long],
+    receiveMessageWaitSeconds: Option[Long])
+
+  val createQueues: List[CreateQueue] = {
+    def getOptionalDuration(c: Config, k: String) = if (c.hasPath(k)) Some(c.getDuration(k, TimeUnit.SECONDS)) else None
+
+    import scala.collection.JavaConversions._
+    config.getObject("queues").map { case (n, v) =>
+      val c = v.asInstanceOf[ConfigObject].toConfig
+      CreateQueue(
+        n,
+        getOptionalDuration(c, "defaultVisibilityTimeout"),
+        getOptionalDuration(c, "delay"),
+        getOptionalDuration(c, "receiveMessageWait")
+      )
+    }.toList
+  }
 }

@@ -1,10 +1,16 @@
 package org.elasticmq.server
 
+import akka.util.Timeout
+import org.elasticmq.{MillisVisibilityTimeout, QueueData}
+import org.elasticmq.msg.CreateQueue
 import org.elasticmq.util.Logging
-import org.elasticmq.rest.sqs.{TheSQSRestServerBuilder, SQSRestServer}
+import org.elasticmq.rest.sqs.{CreateQueueDirectives, TheSQSRestServerBuilder, SQSRestServer}
 import akka.actor.{Props, ActorRef, ActorSystem}
 import org.elasticmq.actor.QueueManagerActor
 import org.elasticmq.util.NowProvider
+import org.elasticmq.actor.reply._
+import org.joda.time.{DateTime, Duration}
+import scala.concurrent.Await
 
 class ElasticMQServer(config: ElasticMQServerConfig) extends Logging {
   val actorSystem = ActorSystem("elasticmq")
@@ -12,6 +18,8 @@ class ElasticMQServer(config: ElasticMQServerConfig) extends Logging {
   def start() = {
     val queueManagerActor = createBase()
     val restServerOpt = optionallyStartRestSqs(queueManagerActor)
+
+    createQueues(queueManagerActor)
 
     () => {
       restServerOpt.map(_.stopAndGetFuture())
@@ -44,5 +52,23 @@ class ElasticMQServer(config: ElasticMQServerConfig) extends Logging {
     } else {
       None
     }
+  }
+
+  private def createQueues(queueManagerActor: ActorRef): Unit = {
+    implicit val timeout = {
+      import scala.concurrent.duration._
+      Timeout(5.seconds)
+    }
+
+    val futures = config.createQueues.map { cq =>
+      queueManagerActor ? CreateQueue(QueueData(cq.name,
+        MillisVisibilityTimeout.fromSeconds(cq.defaultVisibilityTimeoutSeconds.getOrElse(CreateQueueDirectives.DefaultVisibilityTimeout)),
+        Duration.standardSeconds(cq.delaySeconds.getOrElse(CreateQueueDirectives.DefaultDelay)),
+        Duration.standardSeconds(cq.receiveMessageWaitSeconds.getOrElse(CreateQueueDirectives.DefaultReceiveMessageWaitTimeSecondsAttribute)),
+        new DateTime(),
+        new DateTime()))
+    }
+
+    futures.foreach { f => Await.result(f, timeout.duration) }
   }
 }

@@ -9,11 +9,9 @@ import org.elasticmq.actor.reply._
 import scala.async.Async._
 import scala.concurrent.Future
 import org.elasticmq.rest.sqs.directives.ElasticMQDirectives
+import CreateQueueDirectives._
 
 trait CreateQueueDirectives { this: ElasticMQDirectives with QueueURLModule with AttributesModule with SQSLimitsModule =>
-  val DefaultVisibilityTimeout = 30L
-  val DefaultDelay = 0L
-  val DefaultReceiveMessageWaitTimeSecondsAttribute = 0L
 
   def createQueue(p: AnyParams) = {
     p.action("CreateQueue") {
@@ -84,4 +82,10 @@ trait CreateQueueDirectives { this: ElasticMQDirectives with QueueURLModule with
       }
     }
   }
+}
+
+object CreateQueueDirectives {
+  val DefaultVisibilityTimeout = 30L
+  val DefaultDelay = 0L
+  val DefaultReceiveMessageWaitTimeSecondsAttribute = 0L
 }
