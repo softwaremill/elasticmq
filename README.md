@@ -135,7 +135,7 @@ To use [Amazon Java SDK](http://aws.amazon.com/sdkforjava/) as an interface to a
 to change the endpoint:
 
     client = new AmazonSQSClient(new BasicAWSCredentials("x", "x"))
-    client.setEndpoint("http://localhost:9324", "sqs", "")
+    client.setEndpoint("http://localhost:9324")
 
 The endpoint value should be the same address as the `NodeAddress` provided as an argument to
 `SQSRestServerBuilder` or in the configuration file.
