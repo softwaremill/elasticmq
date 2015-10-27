@@ -12,7 +12,6 @@ import com.amazonaws.services.sqs.model._
 import scala.util.control.Exception._
 import com.amazonaws.AmazonServiceException
 import org.elasticmq.util.Logging
-import spray.can.Http
 import org.elasticmq._
 
 class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAfter with Logging {
@@ -43,8 +42,8 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
       .withSQSLimits(SQSLimits.Relaxed)
       .start()
 
-    strictServer.waitUntilStarted().isInstanceOf[Http.Bound] must be (true)
-    relaxedServer.waitUntilStarted().isInstanceOf[Http.Bound] must be (true)
+    strictServer.waitUntilStarted()
+    relaxedServer.waitUntilStarted()
 
     client = new AmazonSQSClient(new BasicAWSCredentials("x", "x"))
     client.setEndpoint("http://localhost:9321")
@@ -57,8 +56,8 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
     client.shutdown()
     relaxedClient.shutdown()
 
-    strictServer.stopAndWait() must be (Http.ClosedAll)
-    relaxedServer.stopAndWait() must be (Http.ClosedAll)
+    strictServer.stopAndWait()
+    relaxedServer.stopAndWait()
 
     logger.info(s"\n---\nTest done: $currentTestName\n---\n")
   }

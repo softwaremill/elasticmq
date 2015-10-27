@@ -1,13 +1,12 @@
 package org.elasticmq.rest.sqs.directives
 
-import spray.testkit.ScalatestRouteTest
-import org.scalatest.matchers.ShouldMatchers
-import org.scalatest.FlatSpec
-import spray.http.FormData
-import spray.routing._
+import akka.http.scaladsl.model.FormData
+import akka.http.scaladsl.server.Directives
+import akka.http.scaladsl.testkit.ScalatestRouteTest
+import org.scalatest.{ShouldMatchers, FlatSpec}
 
-class AnyParamDirectives2Test extends FlatSpec with ShouldMatchers with ScalatestRouteTest
-  with Directives with AnyParamDirectives2 {
+class AnyParamDirectivesTest extends FlatSpec with ShouldMatchers with ScalatestRouteTest
+  with Directives with AnyParamDirectives {
 
   "anyParamsMap" should "extract both query and form parameters" in {
     val route = path("test") {

@@ -2,16 +2,16 @@ package org.elasticmq.rest.sqs
 
 import Constants._
 import org.elasticmq.actor.reply._
-import akka.dataflow._
+import scala.async.Async._
 import org.elasticmq.msg.DeleteQueue
 import org.elasticmq.rest.sqs.directives.ElasticMQDirectives
 
 trait DeleteQueueDirectives { this: ElasticMQDirectives with QueueURLModule =>
-  val deleteQueue = {
-    action("DeleteQueue") {
-      queueActorAndNameFromRequest { (queueActor, queueName) => // We need the queue actor just to check that the queue exists
-        flow {
-          (queueManagerActor ? DeleteQueue(queueName)).apply()
+  def deleteQueue(p: AnyParams) = {
+    p.action("DeleteQueue") {
+      queueActorAndNameFromRequest(p) { (queueActor, queueName) => // We need the queue actor just to check that the queue exists
+        async {
+          await(queueManagerActor ? DeleteQueue(queueName))
 
           respondWith {
             <DeleteQueueResponse>

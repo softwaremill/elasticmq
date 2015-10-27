@@ -8,25 +8,23 @@ import org.elasticmq.msg.UpdateVisibilityTimeout
 import org.elasticmq.rest.sqs.directives.ElasticMQDirectives
 
 trait ChangeMessageVisibilityDirectives { this: ElasticMQDirectives =>
-  val changeMessageVisibility = {
-    action("ChangeMessageVisibility") {
-      queueActorFromRequest { queueActor =>
-        anyParamsMap { parameters =>
-          doChangeMessageVisibility(queueActor, parameters).map { _ =>
-            respondWith {
-              <ChangeMessageVisibilityResponse>
-                <ResponseMetadata>
-                  <RequestId>{EmptyRequestId}</RequestId>
-                </ResponseMetadata>
-              </ChangeMessageVisibilityResponse>
-            }
+  def changeMessageVisibility(p: AnyParams) = {
+    p.action("ChangeMessageVisibility") {
+      queueActorFromRequest(p) { queueActor =>
+        doChangeMessageVisibility(queueActor, p).map { _ =>
+          respondWith {
+            <ChangeMessageVisibilityResponse>
+              <ResponseMetadata>
+                <RequestId>{EmptyRequestId}</RequestId>
+              </ResponseMetadata>
+            </ChangeMessageVisibilityResponse>
           }
         }
       }
     }
   }
 
-  def doChangeMessageVisibility(queueActor: ActorRef, parameters: Map[String, String]) = {
+  def doChangeMessageVisibility(queueActor: ActorRef, parameters: AnyParams) = {
     val visibilityTimeout = MillisVisibilityTimeout.fromSeconds(parameters(VisibilityTimeoutParameter).toLong)
     val msgId = DeliveryReceipt(parameters(ReceiptHandleParameter)).extractId
 

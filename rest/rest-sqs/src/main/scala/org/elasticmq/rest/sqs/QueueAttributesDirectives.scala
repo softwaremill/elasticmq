@@ -14,14 +14,14 @@ trait QueueAttributesDirectives { this: ElasticMQDirectives with AttributesModul
     val AllWriteableAttributeNames = VisibilityTimeoutParameter :: DelaySecondsAttribute ::
       ReceiveMessageWaitTimeSecondsAttribute :: Nil
   }
-  
+
   object UnsupportedAttributeNames {
     val PolicyAttribute = "Policy"
     val MaximumMessageSizeAttribute = "MaximumMessageSize"
     val MessageRetentionPeriodAttribute = "MessageRetentionPeriod"
     val RedrivePolicyAttribute = "RedrivePolicy"
-    
-    val AllUnsupportedAttributeNames = PolicyAttribute :: MaximumMessageSizeAttribute :: 
+
+    val AllUnsupportedAttributeNames = PolicyAttribute :: MaximumMessageSizeAttribute ::
       MessageRetentionPeriodAttribute :: RedrivePolicyAttribute :: Nil
   }
 
@@ -37,90 +37,86 @@ trait QueueAttributesDirectives { this: ElasticMQDirectives with AttributesModul
         ApproximateNumberOfMessagesNotVisibleAttribute ::
         ApproximateNumberOfMessagesDelayedAttribute ::
         CreatedTimestampAttribute ::
-        LastModifiedTimestampAttribute :: 
+        LastModifiedTimestampAttribute ::
         QueueArnAttribute :: Nil)
   }
 
-  val getQueueAttributes = {
-    action("GetQueueAttributes") {
-      queueActorAndDataFromRequest { (queueActor, queueData) =>
-        anyParamsMap { parameters =>
-          import QueueReadableAttributeNames._
+  def getQueueAttributes(p: AnyParams) = {
+    p.action("GetQueueAttributes") {
+      queueActorAndDataFromRequest(p) { (queueActor, queueData) =>
+        import QueueReadableAttributeNames._
 
-          def calculateAttributeValues(attributeNames: List[String]): List[(String, Future[String])] = {
-            lazy val stats = queueActor ? GetQueueStatistics(System.currentTimeMillis())
+        def calculateAttributeValues(attributeNames: List[String]): List[(String, Future[String])] = {
+          lazy val stats = queueActor ? GetQueueStatistics(System.currentTimeMillis())
 
-            import AttributeValuesCalculator.Rule
+          import AttributeValuesCalculator.Rule
 
-            attributeValuesCalculator.calculate(attributeNames,
-              Rule(VisibilityTimeoutParameter, () => Future.successful(queueData.defaultVisibilityTimeout.seconds.toString)),
-              Rule(DelaySecondsAttribute, () => Future.successful(queueData.delay.getStandardSeconds.toString)),
-              Rule(ApproximateNumberOfMessagesAttribute, () => stats.map(_.approximateNumberOfVisibleMessages.toString)),
-              Rule(ApproximateNumberOfMessagesNotVisibleAttribute, () => stats.map(_.approximateNumberOfInvisibleMessages.toString)),
-              Rule(ApproximateNumberOfMessagesDelayedAttribute, () => stats.map(_.approximateNumberOfMessagesDelayed.toString)),
-              Rule(CreatedTimestampAttribute, () => Future.successful((queueData.created.getMillis/1000L).toString)),
-              Rule(LastModifiedTimestampAttribute, () => Future.successful((queueData.lastModified.getMillis/1000L).toString)),
-              Rule(ReceiveMessageWaitTimeSecondsAttribute, () => Future.successful(queueData.receiveMessageWait.getStandardSeconds.toString)),
-              Rule(QueueArnAttribute, () => Future.successful("arn:aws:sqs:elasticmq:000000000000:" + queueData.name)))
-          }
+          attributeValuesCalculator.calculate(attributeNames,
+            Rule(VisibilityTimeoutParameter, () => Future.successful(queueData.defaultVisibilityTimeout.seconds.toString)),
+            Rule(DelaySecondsAttribute, () => Future.successful(queueData.delay.getStandardSeconds.toString)),
+            Rule(ApproximateNumberOfMessagesAttribute, () => stats.map(_.approximateNumberOfVisibleMessages.toString)),
+            Rule(ApproximateNumberOfMessagesNotVisibleAttribute, () => stats.map(_.approximateNumberOfInvisibleMessages.toString)),
+            Rule(ApproximateNumberOfMessagesDelayedAttribute, () => stats.map(_.approximateNumberOfMessagesDelayed.toString)),
+            Rule(CreatedTimestampAttribute, () => Future.successful((queueData.created.getMillis/1000L).toString)),
+            Rule(LastModifiedTimestampAttribute, () => Future.successful((queueData.lastModified.getMillis/1000L).toString)),
+            Rule(ReceiveMessageWaitTimeSecondsAttribute, () => Future.successful(queueData.receiveMessageWait.getStandardSeconds.toString)),
+            Rule(QueueArnAttribute, () => Future.successful("arn:aws:sqs:elasticmq:000000000000:" + queueData.name)))
+        }
 
-          def responseXml(attributes: List[(String, String)]) = {
-            <GetQueueAttributesResponse>
-              <GetQueueAttributesResult>
-                {attributesToXmlConverter.convert(attributes)}
-              </GetQueueAttributesResult>
-              <ResponseMetadata>
-                <RequestId>{EmptyRequestId}</RequestId>
-              </ResponseMetadata>
-            </GetQueueAttributesResponse>
-          }
+        def responseXml(attributes: List[(String, String)]) = {
+          <GetQueueAttributesResponse>
+            <GetQueueAttributesResult>
+              {attributesToXmlConverter.convert(attributes)}
+            </GetQueueAttributesResult>
+            <ResponseMetadata>
+              <RequestId>{EmptyRequestId}</RequestId>
+            </ResponseMetadata>
+          </GetQueueAttributesResponse>
+        }
 
-          val attributeNames = attributeNamesReader.read(parameters, AllAttributeNames)
-          val attributesFuture = Future.sequence(calculateAttributeValues(attributeNames).map(p => p._2.map((p._1, _))))
+        val attributeNames = attributeNamesReader.read(p, AllAttributeNames)
+        val attributesFuture = Future.sequence(calculateAttributeValues(attributeNames).map(p => p._2.map((p._1, _))))
 
-          attributesFuture.map { attributes =>
-            respondWith {
-              responseXml(attributes)
-            }
+        attributesFuture.map { attributes =>
+          respondWith {
+            responseXml(attributes)
           }
         }
       }
     }
   }
 
-  val setQueueAttributes = {
-    action("SetQueueAttributes") {
-      queueActorFromRequest { queueActor =>
-        anyParamsMap { parameters =>
-          val attributes = attributeNameAndValuesReader.read(parameters)
+  def setQueueAttributes(p: AnyParams) = {
+    p.action("SetQueueAttributes") {
+      queueActorFromRequest(p) { queueActor =>
+        val attributes = attributeNameAndValuesReader.read(p)
 
-          val result = attributes.map({ case (attributeName, attributeValue) =>
-            attributeName match {
-              case VisibilityTimeoutParameter => {
-                queueActor ? UpdateQueueDefaultVisibilityTimeout(MillisVisibilityTimeout.fromSeconds(attributeValue.toLong))
-              }
-              case DelaySecondsAttribute => {
-                queueActor ? UpdateQueueDelay(Duration.standardSeconds(attributeValue.toLong))
-              }
-              case ReceiveMessageWaitTimeSecondsAttribute => {
-                queueActor ? UpdateQueueReceiveMessageWait(Duration.standardSeconds(attributeValue.toLong))
-              }
-              case attr if UnsupportedAttributeNames.AllUnsupportedAttributeNames.contains(attr) => {
-                logger.warn("Ignored attribute \"" + attr + "\" (supported by SQS but not ElasticMQ)")
-                Future()
-              }
-              case _ => Future(throw new SQSException("InvalidAttributeName"))
+        val result = attributes.map({ case (attributeName, attributeValue) =>
+          attributeName match {
+            case VisibilityTimeoutParameter => {
+              queueActor ? UpdateQueueDefaultVisibilityTimeout(MillisVisibilityTimeout.fromSeconds(attributeValue.toLong))
             }
-          })
+            case DelaySecondsAttribute => {
+              queueActor ? UpdateQueueDelay(Duration.standardSeconds(attributeValue.toLong))
+            }
+            case ReceiveMessageWaitTimeSecondsAttribute => {
+              queueActor ? UpdateQueueReceiveMessageWait(Duration.standardSeconds(attributeValue.toLong))
+            }
+            case attr if UnsupportedAttributeNames.AllUnsupportedAttributeNames.contains(attr) => {
+              logger.warn("Ignored attribute \"" + attr + "\" (supported by SQS but not ElasticMQ)")
+              Future()
+            }
+            case _ => Future(throw new SQSException("InvalidAttributeName"))
+          }
+        })
 
-          Future.sequence(result).map { _ =>
-            respondWith {
-              <SetQueueAttributesResponse>
-                <ResponseMetadata>
-                  <RequestId>{EmptyRequestId}</RequestId>
-                </ResponseMetadata>
-              </SetQueueAttributesResponse>
-            }
+        Future.sequence(result).map { _ =>
+          respondWith {
+            <SetQueueAttributesResponse>
+              <ResponseMetadata>
+                <RequestId>{EmptyRequestId}</RequestId>
+              </ResponseMetadata>
+            </SetQueueAttributesResponse>
           }
         }
       }

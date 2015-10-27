@@ -15,24 +15,22 @@ trait SendMessageDirectives { this: ElasticMQDirectives with SQSLimitsModule =>
   val MessageBodyParameter = "MessageBody"
   val DelaySecondsParameter = "DelaySeconds"
 
-  val sendMessage = {
-    action("SendMessage") {
-      queueActorFromRequest { queueActor =>
-        anyParamsMap { parameters =>
-          doSendMessage(queueActor, parameters).map { case (message, digest, messageAttributeDigest) =>
-            // TODO: Only include MD5OfMessageAttributes if message attributes
-            respondWith {
-              <SendMessageResponse>
-                <SendMessageResult>
-                  <MD5OfMessageAttributes>{messageAttributeDigest}</MD5OfMessageAttributes>
-                  <MD5OfMessageBody>{digest}</MD5OfMessageBody>
-                  <MessageId>{message.id.id}</MessageId>
-                </SendMessageResult>
-                <ResponseMetadata>
-                  <RequestId>{EmptyRequestId}</RequestId>
-                </ResponseMetadata>
-              </SendMessageResponse>
-            }
+  def sendMessage(p: AnyParams) = {
+    p.action("SendMessage") {
+      queueActorFromRequest(p) { queueActor =>
+        doSendMessage(queueActor, p).map { case (message, digest, messageAttributeDigest) =>
+          // TODO: Only include MD5OfMessageAttributes if message attributes
+          respondWith {
+            <SendMessageResponse>
+              <SendMessageResult>
+                <MD5OfMessageAttributes>{messageAttributeDigest}</MD5OfMessageAttributes>
+                <MD5OfMessageBody>{digest}</MD5OfMessageBody>
+                <MessageId>{message.id.id}</MessageId>
+              </SendMessageResult>
+              <ResponseMetadata>
+                <RequestId>{EmptyRequestId}</RequestId>
+              </ResponseMetadata>
+            </SendMessageResponse>
           }
         }
       }

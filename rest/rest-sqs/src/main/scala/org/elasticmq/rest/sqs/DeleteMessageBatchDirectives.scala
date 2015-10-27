@@ -7,32 +7,30 @@ import org.elasticmq.actor.reply._
 import org.elasticmq.rest.sqs.directives.ElasticMQDirectives
 
 trait DeleteMessageBatchDirectives { this: ElasticMQDirectives with BatchRequestsModule =>
-  val deleteMessageBatch = {
-    action("DeleteMessageBatch") {
-      queueActorFromRequest { queueActor =>
-        anyParamsMap { parameters =>
-          val resultsFuture = batchRequest("DeleteMessageBatchRequestEntry", parameters) { (messageData, id) =>
-            val receiptHandle = messageData(ReceiptHandleParameter)
-            val result = queueActor ? DeleteMessage(DeliveryReceipt(receiptHandle))
+  def deleteMessageBatch(p: AnyParams) = {
+    p.action("DeleteMessageBatch") {
+      queueActorFromRequest(p) { queueActor =>
+        val resultsFuture = batchRequest("DeleteMessageBatchRequestEntry", p) { (messageData, id) =>
+          val receiptHandle = messageData(ReceiptHandleParameter)
+          val result = queueActor ? DeleteMessage(DeliveryReceipt(receiptHandle))
 
-            result.map { _ =>
-              <DeleteMessageBatchResultEntry>
-                <Id>{id}</Id>
-              </DeleteMessageBatchResultEntry>
-            }
+          result.map { _ =>
+            <DeleteMessageBatchResultEntry>
+              <Id>{id}</Id>
+            </DeleteMessageBatchResultEntry>
           }
+        }
 
-          resultsFuture.map { results =>
-            respondWith {
-              <DeleteMessageBatchResponse>
-                <DeleteMessageBatchResult>
-                  {results}
-                </DeleteMessageBatchResult>
-                <ResponseMetadata>
-                  <RequestId>{EmptyRequestId}</RequestId>
-                </ResponseMetadata>
-              </DeleteMessageBatchResponse>
-            }
+        resultsFuture.map { results =>
+          respondWith {
+            <DeleteMessageBatchResponse>
+              <DeleteMessageBatchResult>
+                {results}
+              </DeleteMessageBatchResult>
+              <ResponseMetadata>
+                <RequestId>{EmptyRequestId}</RequestId>
+              </ResponseMetadata>
+            </DeleteMessageBatchResponse>
           }
         }
       }

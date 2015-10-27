@@ -6,9 +6,9 @@ import org.elasticmq.rest.sqs.Constants._
 import org.elasticmq.rest.sqs.directives.ElasticMQDirectives
 
 trait PurgeQueueDirectives { this: ElasticMQDirectives with QueueURLModule =>
-  val purgeQueue = {
-    action("PurgeQueue") {
-      queueActorFromRequest { queueActor =>
+  def purgeQueue(p: AnyParams) = {
+    p.action("PurgeQueue") {
+      queueActorFromRequest(p) { queueActor =>
         for {
           _ <- queueActor ? ClearQueue()
         } yield  {

@@ -6,12 +6,8 @@ import AssemblyKeys._
 object BuildSettings {
   val buildSettings = Defaults.coreDefaultSettings ++ Seq (
     organization  := "org.elasticmq",
-    version       := "0.8.12",
+    version       := "0.9.0",
     scalaVersion  := "2.11.7",
-
-    addCompilerPlugin("org.scala-lang.plugins" % "scala-continuations-plugin_2.11.0" % "1.0.1"),
-    libraryDependencies += "org.scala-lang.plugins" %% "scala-continuations-library" % "1.0.2",
-    scalacOptions += "-P:continuations:enable",
 
     libraryDependencies += "org.scala-lang.modules" %% "scala-xml" % "1.0.5",
 
@@ -46,8 +42,8 @@ object BuildSettings {
 }
 
 object Dependencies {
-  val jodaTime      = "joda-time"                 % "joda-time"             % "2.8.1"
-  val jodaConvert   = "org.joda"                  % "joda-convert"          % "1.7"
+  val jodaTime      = "joda-time"                 % "joda-time"             % "2.9"
+  val jodaConvert   = "org.joda"                  % "joda-convert"          % "1.8.1"
   val config        = "com.typesafe"              % "config"                % "1.2.1"
 
   val scalalogging  = "com.typesafe.scala-logging" %% "scala-logging"       % "3.1.0"
@@ -56,20 +52,18 @@ object Dependencies {
 
   val scalatest     = "org.scalatest"             %% "scalatest"            % "2.2.5"
   val mockito       = "org.mockito"               % "mockito-core"          % "1.10.19"
-  val awaitility    = "com.jayway.awaitility"     % "awaitility-scala"      % "1.6.3"
+  val awaitility    = "com.jayway.awaitility"     % "awaitility-scala"      % "1.6.5"
 
-  val amazonJavaSdk = "com.amazonaws"             % "aws-java-sdk"          % "1.10.9" exclude ("commons-logging", "commons-logging")
+  val amazonJavaSdk = "com.amazonaws"             % "aws-java-sdk"          % "1.10.29" exclude ("commons-logging", "commons-logging")
 
-  val akka2Version  = "2.3.12"
+  val akka2Version  = "2.3.14"
   val akka2Actor    = "com.typesafe.akka" %% "akka-actor"           % akka2Version
   val akka2Slf4j    = "com.typesafe.akka" %% "akka-slf4j"           % akka2Version
-  val akka2Dataflow = "com.typesafe.akka" %% "akka-dataflow"        % akka2Version
   val akka2Testkit  = "com.typesafe.akka" %% "akka-testkit"         % akka2Version % "test"
+  val akka2Http     = "com.typesafe.akka" %% "akka-http-experimental" % "1.0"
+  val akka2HttpTestkit = "com.typesafe.akka" %% "akka-http-testkit-experimental" % "1.0" % "test"
 
-  val sprayVersion  = "1.3.3"
-  val sprayCan      = "io.spray"          %% "spray-can"            % sprayVersion
-  val sprayRouting  = "io.spray"          %% "spray-routing"        % sprayVersion
-  val sprayTestkit  = "io.spray"          %% "spray-testkit"        % sprayVersion % "test"
+  val scalaAsync    = "org.scala-lang.modules" % "scala-async_2.11" % "0.9.5"
 
   val common = Seq(scalalogging)
 }
@@ -108,7 +102,7 @@ object ElasticMQBuild extends Build {
     "elasticmq-rest-sqs",
     file("rest/rest-sqs"),
     settings = buildSettings ++
-      Seq(libraryDependencies ++= Seq(akka2Actor, akka2Dataflow, akka2Slf4j, sprayCan, sprayRouting, sprayTestkit) ++ common)
+      Seq(libraryDependencies ++= Seq(akka2Actor, akka2Slf4j, akka2Http, akka2HttpTestkit, scalaAsync) ++ common)
   ) dependsOn(core, commonTest % "test")
 
   lazy val restSqsTestingAmazonJavaSdk: Project = Project(

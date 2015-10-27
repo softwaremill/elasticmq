@@ -7,10 +7,10 @@ import org.elasticmq.msg.DeleteMessage
 import org.elasticmq.rest.sqs.directives.ElasticMQDirectives
 
 trait DeleteMessageDirectives { this: ElasticMQDirectives =>
-  val deleteMessage = {
-    action("DeleteMessage") {
-      queueActorFromRequest { queueActor =>
-        anyParam(ReceiptHandleParameter) { receipt =>
+  def deleteMessage(p: AnyParams) = {
+    p.action("DeleteMessage") {
+      queueActorFromRequest(p) { queueActor =>
+        p.requiredParam(ReceiptHandleParameter) { receipt =>
           val result = queueActor ? DeleteMessage(DeliveryReceipt(receipt))
 
           result.map { _ =>

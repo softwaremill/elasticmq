@@ -1,7 +1,8 @@
 package org.elasticmq.rest.sqs.directives
 
+import akka.http.scaladsl.server.{Route, Directives, RequestContext}
+
 import scala.xml.{Null, UnprefixedAttribute, Elem}
-import spray.routing._
 import org.elasticmq.rest.sqs.Constants._
 
 trait RespondDirectives {

@@ -21,71 +21,69 @@ trait ReceiveMessageDirectives { this: ElasticMQDirectives with AttributesModule
       ApproximateFirstReceiveTimestampAttribute :: SenderIdAttribute :: Nil
   }
 
-  val receiveMessage = {
+  def receiveMessage(p: AnyParams) = {
     import MessageReadeableAttributeNames._
 
-    action("ReceiveMessage") {
-      queueActorFromRequest { queueActor =>
-        anyParam(VisibilityTimeoutParameter.as[Int]?, MaxNumberOfMessagesAttribute.as[Int]?, WaitTimeSecondsAttribute.as[Long]?) {
-          (visibilityTimeoutParameterOpt, maxNumberOfMessagesAttributeOpt, waitTimeSecondsAttributeOpt) =>
+    p.action("ReceiveMessage") {
+      queueActorFromRequest(p) { queueActor =>
+        val visibilityTimeoutParameterOpt = p.get(VisibilityTimeoutParameter).map(_.toInt)
+        val maxNumberOfMessagesAttributeOpt = p.get(MaxNumberOfMessagesAttribute).map(_.toInt)
+        val waitTimeSecondsAttributeOpt = p.get(WaitTimeSecondsAttribute).map(_.toLong)
 
-          anyParamsMap { parameters =>
-            val visibilityTimeoutFromParameters = visibilityTimeoutParameterOpt
-              .map(MillisVisibilityTimeout.fromSeconds(_))
-              .getOrElse(DefaultVisibilityTimeout)
+        val visibilityTimeoutFromParameters = visibilityTimeoutParameterOpt
+          .map(MillisVisibilityTimeout.fromSeconds(_))
+          .getOrElse(DefaultVisibilityTimeout)
 
-            val maxNumberOfMessagesFromParameters = maxNumberOfMessagesAttributeOpt.getOrElse(1)
+        val maxNumberOfMessagesFromParameters = maxNumberOfMessagesAttributeOpt.getOrElse(1)
 
-            val waitTimeSecondsFromParameters = waitTimeSecondsAttributeOpt.map(Duration.standardSeconds(_))
+        val waitTimeSecondsFromParameters = waitTimeSecondsAttributeOpt.map(Duration.standardSeconds)
 
-            ifStrictLimits(maxNumberOfMessagesFromParameters < 1 || maxNumberOfMessagesFromParameters > 10) {
-              "ReadCountOutOfRange"
-            }
+        ifStrictLimits(maxNumberOfMessagesFromParameters < 1 || maxNumberOfMessagesFromParameters > 10) {
+          "ReadCountOutOfRange"
+        }
 
-            verifyMessageWaitTime(waitTimeSecondsAttributeOpt)
+        verifyMessageWaitTime(waitTimeSecondsAttributeOpt)
 
-            val msgsFuture = queueActor ? ReceiveMessages( visibilityTimeoutFromParameters,
-              maxNumberOfMessagesFromParameters,
-              waitTimeSecondsFromParameters)
+        val msgsFuture = queueActor ? ReceiveMessages( visibilityTimeoutFromParameters,
+          maxNumberOfMessagesFromParameters,
+          waitTimeSecondsFromParameters)
 
-            lazy val attributeNames = attributeNamesReader.read(parameters, AllAttributeNames)
+        lazy val attributeNames = attributeNamesReader.read(p, AllAttributeNames)
 
-            def calculateAttributeValues(msg: MessageData): List[(String, String)] = {
-              import AttributeValuesCalculator.Rule
-              
-              attributeValuesCalculator.calculate(attributeNames,
-                Rule(SenderIdAttribute, ()=> "127.0.0.1"),
-                Rule(SentTimestampAttribute, ()=>msg.created.getMillis.toString),
-                Rule(ApproximateReceiveCountAttribute, ()=>msg.statistics.approximateReceiveCount.toString),
-                Rule(ApproximateFirstReceiveTimestampAttribute,
-                  ()=>(msg.statistics.approximateFirstReceive match {
-                    case NeverReceived => 0
-                    case OnDateTimeReceived(when) => when.getMillis
-                  }).toString))
-            }
+        def calculateAttributeValues(msg: MessageData): List[(String, String)] = {
+          import AttributeValuesCalculator.Rule
 
-            msgsFuture.map { msgs =>
-              respondWith {
-                <ReceiveMessageResponse>
-                  <ReceiveMessageResult>
-                    {msgs.map { msg =>
-                    val receipt = msg.deliveryReceipt.map(_.receipt).getOrElse(throw new RuntimeException("No receipt for a received msg."))
-                    <Message>
-                      <MessageId>{msg.id.id}</MessageId>
-                      <ReceiptHandle>{receipt}</ReceiptHandle>
-                      <MD5OfBody>{md5Digest(msg.content)}</MD5OfBody>
-                      <Body>{XmlUtil.convertTexWithCRToNodeSeq(msg.content)}</Body>
-                      {attributesToXmlConverter.convert(calculateAttributeValues(msg))}
-                      <MD5OfMessageAttributes>{md5AttributeDigest(msg.messageAttributes)}</MD5OfMessageAttributes> // TODO: Only include if message attributes
-                      {messageAttributesToXmlConverter.convert(msg.messageAttributes.toList)} // TODO: Filter to only requested attributes
-                    </Message> }.toList}
-                  </ReceiveMessageResult>
-                  <ResponseMetadata>
-                    <RequestId>{EmptyRequestId}</RequestId>
-                  </ResponseMetadata>
-                </ReceiveMessageResponse>
-              }
-            }
+          attributeValuesCalculator.calculate(attributeNames,
+            Rule(SenderIdAttribute, ()=> "127.0.0.1"),
+            Rule(SentTimestampAttribute, ()=>msg.created.getMillis.toString),
+            Rule(ApproximateReceiveCountAttribute, ()=>msg.statistics.approximateReceiveCount.toString),
+            Rule(ApproximateFirstReceiveTimestampAttribute,
+              ()=>(msg.statistics.approximateFirstReceive match {
+                case NeverReceived => 0
+                case OnDateTimeReceived(when) => when.getMillis
+              }).toString))
+        }
+
+        msgsFuture.map { msgs =>
+          respondWith {
+            <ReceiveMessageResponse>
+              <ReceiveMessageResult>
+                {msgs.map { msg =>
+                val receipt = msg.deliveryReceipt.map(_.receipt).getOrElse(throw new RuntimeException("No receipt for a received msg."))
+                <Message>
+                  <MessageId>{msg.id.id}</MessageId>
+                  <ReceiptHandle>{receipt}</ReceiptHandle>
+                  <MD5OfBody>{md5Digest(msg.content)}</MD5OfBody>
+                  <Body>{XmlUtil.convertTexWithCRToNodeSeq(msg.content)}</Body>
+                  {attributesToXmlConverter.convert(calculateAttributeValues(msg))}
+                  <MD5OfMessageAttributes>{md5AttributeDigest(msg.messageAttributes)}</MD5OfMessageAttributes> // TODO: Only include if message attributes
+                  {messageAttributesToXmlConverter.convert(msg.messageAttributes.toList)} // TODO: Filter to only requested attributes
+                </Message> }}
+              </ReceiveMessageResult>
+              <ResponseMetadata>
+                <RequestId>{EmptyRequestId}</RequestId>
+              </ResponseMetadata>
+            </ReceiveMessageResponse>
           }
         }
       }

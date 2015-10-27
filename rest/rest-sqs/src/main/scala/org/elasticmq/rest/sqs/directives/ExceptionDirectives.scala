@@ -1,9 +1,9 @@
 package org.elasticmq.rest.sqs.directives
 
+import akka.http.scaladsl.model.StatusCodes
+import akka.http.scaladsl.server.{Directives, ExceptionHandler}
 import org.elasticmq.rest.sqs.SQSException
 import org.elasticmq.rest.sqs.Constants._
-import spray.routing.{Directives, ExceptionHandler}
-import spray.http.StatusCodes
 import org.elasticmq.util.Logging
 
 trait ExceptionDirectives extends Logging {
@@ -17,10 +17,9 @@ trait ExceptionDirectives extends Logging {
 
   val exceptionHandlerPF: ExceptionHandler.PF = {
     case e: SQSException => handleSQSException(e)
-    case e: Exception => {
+    case e: Exception =>
       logger.error("Exception when running routes", e)
       _.complete(StatusCodes.InternalServerError)
-    }
   }
 
   val exceptionHandler = ExceptionHandler(exceptionHandlerPF)

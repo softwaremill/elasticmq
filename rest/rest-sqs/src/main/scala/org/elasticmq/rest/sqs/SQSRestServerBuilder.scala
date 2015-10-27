@@ -1,18 +1,17 @@
 package org.elasticmq.rest.sqs
 
+import akka.http.scaladsl.Http
+import akka.stream.ActorMaterializer
+
 import scala.util.control.Exception._
 import xml._
 import java.security.MessageDigest
 import org.elasticmq.util.Logging
 import collection.mutable.ArrayBuffer
-import spray.routing.SimpleRoutingApp
 import akka.actor.{Props, ActorRef, ActorSystem}
-import spray.can.server.ServerSettings
 import akka.util.Timeout
 import scala.concurrent.{Await, Future}
 import org.elasticmq.rest.sqs.directives.ElasticMQDirectives
-import spray.can.Http
-import akka.io.IO
 import org.elasticmq.rest.sqs.Constants._
 import scala.xml.EntityRef
 import org.elasticmq._
@@ -20,7 +19,6 @@ import com.typesafe.config.ConfigFactory
 import org.elasticmq.actor.QueueManagerActor
 import org.elasticmq.util.NowProvider
 import scala.concurrent.duration._
-import spray.http.MediaTypes
 import java.nio.ByteBuffer
 import java.io.ByteArrayOutputStream
 import scala.collection.immutable.TreeMap
@@ -79,12 +77,13 @@ case class TheSQSRestServerBuilder(providedActorSystem: Option[ActorSystem],
   def withSQSLimits(_sqsLimits: SQSLimits.Value) = this.copy(sqsLimits = _sqsLimits)
 
   def start(): SQSRestServer = {
-    val (theActorSystem, stopActorSystem) = getOrCreateActorSystem()
+    val (theActorSystem, stopActorSystem) = getOrCreateActorSystem
     val theQueueManagerActor = getOrCreateQueueManagerActor(theActorSystem)
     val theServerAddress = serverAddress
     val theLimits = sqsLimits
 
-    implicit val implictActorSystem = theActorSystem
+    implicit val implicitActorSystem = theActorSystem
+    implicit val implicitMaterializer = ActorMaterializer()
 
     val env = new QueueManagerActorModule
       with QueueURLModule
@@ -107,66 +106,64 @@ case class TheSQSRestServerBuilder(providedActorSystem: Option[ActorSystem],
       with AttributesModule {
 
       lazy val actorSystem = theActorSystem
+      lazy val materializer = implicitMaterializer
       lazy val queueManagerActor = theQueueManagerActor
       lazy val serverAddress = theServerAddress
       lazy val sqsLimits = theLimits
-      lazy val timeout = Timeout(ServerSettings(actorSystem).requestTimeout.toMillis, TimeUnit.MILLISECONDS)
+      lazy val timeout = Timeout(21, TimeUnit.SECONDS) // see application.conf
     }
 
     import env._
-    val rawRoutes =
+    def rawRoutes(p: AnyParams) =
         // 1. Sending, receiving, deleting messages
-        sendMessage ~
-        sendMessageBatch ~
-        receiveMessage ~
-        deleteMessage ~
-        deleteMessageBatch ~
+        sendMessage(p) ~
+        sendMessageBatch(p) ~
+        receiveMessage(p) ~
+        deleteMessage(p) ~
+        deleteMessageBatch(p) ~
         // 2. Getting, creating queues
-        getQueueUrl ~
-        createQueue ~
-        listQueues ~
-        purgeQueue ~
+        getQueueUrl(p) ~
+        createQueue(p) ~
+        listQueues(p) ~
+        purgeQueue(p) ~
         // 3. Other
-        changeMessageVisibility ~
-        changeMessageVisibilityBatch ~
-        deleteQueue ~
-        getQueueAttributes ~
-        setQueueAttributes
+        changeMessageVisibility(p) ~
+        changeMessageVisibilityBatch(p) ~
+        deleteQueue(p) ~
+        getQueueAttributes(p) ~
+        setQueueAttributes(p)
 
     val config = new ElasticMQConfig
 
-    val routes = if (config.debug) {
-      logRequestResponse("") {
-        rawRoutes
-      }
-    } else rawRoutes
-
-    val serviceActorName = s"elasticmq-rest-sqs-$port"
-
-    val app = new SimpleRoutingApp {}
     implicit val bindingTimeout = Timeout(10, TimeUnit.SECONDS)
-    val appStartFuture = app.startServer(interface, port, serviceActorName) {
-      respondWithMediaType(MediaTypes.`text/xml`) {
-        handleServerExceptions {
-          handleRejectionsWithSQSError {
-            routes
+
+    val routes =
+      handleServerExceptions {
+        handleRejectionsWithSQSError {
+          anyParamsMap { p =>
+            if (config.debug) {
+              logRequestResult("") {
+                rawRoutes(p)
+              }
+            } else rawRoutes(p)
           }
         }
       }
-    }
+
+    val appStartFuture = Http().bindAndHandle(routes, interface, port)
 
     TheSQSRestServerBuilder.this.logger.info("Started SQS rest server, bind address %s:%d, visible server address %s"
       .format(interface, port, theServerAddress.fullAddress))
 
     SQSRestServer(appStartFuture, () => {
-      import akka.pattern.ask
-      val future = IO(Http).ask(Http.CloseAll)(Timeout(10, TimeUnit.SECONDS))
-      future.map(v => { stopActorSystem(); v })
-      future
+      appStartFuture.flatMap { sb =>
+        stopActorSystem()
+        sb.unbind()
+      }
     })
   }
 
-  private def getOrCreateActorSystem() = {
+  private def getOrCreateActorSystem = {
     providedActorSystem
       .map((_, () => ()))
       .getOrElse {
@@ -183,7 +180,7 @@ case class TheSQSRestServerBuilder(providedActorSystem: Option[ActorSystem],
   }
 }
 
-case class SQSRestServer(startFuture: Future[Any], stopAndGetFuture: () => Future[Any]) {
+case class SQSRestServer(startFuture: Future[Http.ServerBinding], stopAndGetFuture: () => Future[Any]) {
   def waitUntilStarted() = {
     Await.result(startFuture, 1.minute)
   }
@@ -324,9 +321,9 @@ trait SQSLimitsModule {
   }
 
   def verifyMessageNumberAttribute(strValue: String) {
-    ifStrictLimits(!allCatch.opt(BigDecimal(strValue))
-      .filter(v => v >= NUMBER_ATTR_MIN_VALUE )
-      .filter(v => v <= NUMBER_ATTR_MAX_VALUE).isDefined) {
+    ifStrictLimits(allCatch.opt(BigDecimal(strValue))
+      .filter(v => v >= NUMBER_ATTR_MIN_VALUE)
+      .filter(v => v <= NUMBER_ATTR_MAX_VALUE).isEmpty) {
       s"Number attribute value $strValue should be in range (-10**128..10**126)"
     }
   }
