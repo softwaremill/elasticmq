@@ -127,9 +127,6 @@ You can also provide a custom `ActorSystem`; for details see the javadocs.
 
 Embedded ElasticMQ can be used from any JVM-based language (Java, Scala, etc.).
 
-If you'd like to provide configuration for an embedded instance, simply create a `reference.conf` file on, make sure
-it's on the classpath and put the configuration (queues to create/ports etc.) there.
-
 Using the Amazon Java SDK to access an ElasticMQ Server
 -------------------------------------------------------
 
