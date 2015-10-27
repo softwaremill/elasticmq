@@ -38,7 +38,7 @@ object BuildSettings {
     scalacOptions ++= List("-unchecked", "-encoding", "UTF8"),
     homepage      := Some(new java.net.URL("http://www.elasticmq.org")),
     licenses      := ("Apache2", new java.net.URL("http://www.apache.org/licenses/LICENSE-2.0.txt")) :: Nil
-  ) ++ net.virtualvoid.sbt.graph.Plugin.graphSettings
+  )
 }
 
 object Dependencies {
