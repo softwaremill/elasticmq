@@ -107,9 +107,6 @@ queues {
 ````
 
 All attributes are optional, and if not specified will use the default SQS values.
-When starting the server, pass the custom config on the commandline:
-
-    java -Dconfig.file=custom.conf -jar elasticmq-server-0.8.12.jar
 
 Starting an embedded ElasticMQ server with an SQS interface
 -----------------------------------------------------------
@@ -190,14 +187,14 @@ Replication, journaling, SQL backend
 ------------------------------------
 
 Until version 0.7.0, ElasticMQ included optional replication, journaling and an SQL message storage. These modules
-have not yet been reimplemented using the new Akka core.
+have been discontinued.
 
 Current versions
 ----------------
 
 *Stable*: 0.8.12
 
-*Development*: 0.8.13-SNAPSHOT
+*Development*: 0.9.0-SNAPSHOT
 
 Logging
 -------
