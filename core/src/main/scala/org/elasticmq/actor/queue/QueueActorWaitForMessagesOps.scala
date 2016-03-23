@@ -25,6 +25,7 @@ trait QueueActorWaitForMessagesOps extends ReplyingActor with QueueActorMessageO
     case TryReply =>
       tryReply()
       tryReplyScheduled = false
+      scheduleTryReplyWhenAvailable()
   }
 
   override def receiveAndReplyMessageMsg[T](msg: QueueMessageMsg[T]): ReplyAction[T] = msg match {
