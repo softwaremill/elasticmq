@@ -18,15 +18,17 @@ trait ListQueuesDirectives { this: ElasticMQDirectives with QueueURLModule =>
             case None => allQueueNames
           }
 
-          respondWith {
-            <ListQueuesResponse>
-              <ListQueuesResult>
-                {queueNames.map(queueName => <QueueUrl>{queueURL(queueName)}</QueueUrl>)}
-              </ListQueuesResult>
-              <ResponseMetadata>
-                <RequestId>{EmptyRequestId}</RequestId>
-              </ResponseMetadata>
-            </ListQueuesResponse>
+          baseQueueURL { baseURL =>
+            respondWith {
+              <ListQueuesResponse>
+                <ListQueuesResult>
+                  {queueNames.map(queueName => <QueueUrl>{baseURL + "/" + queueName}</QueueUrl>)}
+                </ListQueuesResult>
+                <ResponseMetadata>
+                  <RequestId>{EmptyRequestId}</RequestId>
+                </ResponseMetadata>
+              </ListQueuesResponse>
+            }
           }
         }
       }

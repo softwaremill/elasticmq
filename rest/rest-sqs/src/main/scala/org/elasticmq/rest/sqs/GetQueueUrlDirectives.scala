@@ -8,15 +8,17 @@ trait GetQueueUrlDirectives { this: ElasticMQDirectives with QueueURLModule =>
     p.action("GetQueueUrl") {
       rootPath {
         queueDataFromParams(p) { queueData =>
-          respondWith {
-            <GetQueueUrlResponse>
-              <GetQueueUrlResult>
-                <QueueUrl>{queueURL(queueData)}</QueueUrl>
-              </GetQueueUrlResult>
-              <ResponseMetadata>
-                <RequestId>{EmptyRequestId}</RequestId>
-              </ResponseMetadata>
-            </GetQueueUrlResponse>
+          queueURL(queueData) { url =>
+            respondWith {
+              <GetQueueUrlResponse>
+                <GetQueueUrlResult>
+                  <QueueUrl>{url}</QueueUrl>
+                </GetQueueUrlResult>
+                <ResponseMetadata>
+                  <RequestId>{EmptyRequestId}</RequestId>
+                </ResponseMetadata>
+              </GetQueueUrlResponse>
+            }
           }
         }
       }

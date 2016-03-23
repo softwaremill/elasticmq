@@ -86,6 +86,17 @@ log INFO logs and above to the console):
 
     java -Dlogback.configurationFile=my_logback.xml -jar elasticmq-server-0.8.12.jar
 
+How are queue URLs created
+--------------------------
+
+Some of the responses include a queue URL. By default the urls will use `http://localhost:9324` as the base URL.
+To customize, you should properly set the protocol/host/port/context in the `node-address` setting (see above).
+
+You can also set `node-address.host` to a special value, `*`, which will cause any queue URLs created during a request
+to use the path of the incoming request. This might be useful e.g. in containerized (Docker) deployments.
+
+Note that changing the `bind-port` and `bind-hostname` settings does not affect the queue URLs in any way.
+
 Automatically creating queues on startup
 ----------------------------------------
 
@@ -260,11 +271,12 @@ Technology
 Change log
 ----------
 
-#### Version 0.9.0 (pending)
+#### Version 0.9.0 (23 Mar 2016)
 
 * replace Spray with Akka
 * increase message body size limits
 * provide an option to create queues on startup
+* add a special node-address setting: `*`, which uses the incoming request url to create queue urls 
 
 #### Version 0.8.12 (30 Sep 2015)
 

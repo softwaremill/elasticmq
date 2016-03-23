@@ -6,23 +6,31 @@ import akka.stream.ActorMaterializer
 import scala.util.control.Exception._
 import xml._
 import java.security.MessageDigest
+
 import org.elasticmq.util.Logging
+
 import collection.mutable.ArrayBuffer
-import akka.actor.{Props, ActorRef, ActorSystem}
+import akka.actor.{ActorRef, ActorSystem, Props}
 import akka.util.Timeout
+
 import scala.concurrent.{Await, Future}
 import org.elasticmq.rest.sqs.directives.ElasticMQDirectives
 import org.elasticmq.rest.sqs.Constants._
+
 import scala.xml.EntityRef
 import org.elasticmq._
 import com.typesafe.config.ConfigFactory
 import org.elasticmq.actor.QueueManagerActor
 import org.elasticmq.util.NowProvider
+
 import scala.concurrent.duration._
 import java.nio.ByteBuffer
 import java.io.ByteArrayOutputStream
+
 import scala.collection.immutable.TreeMap
 import java.util.concurrent.TimeUnit
+
+import akka.http.scaladsl.server.{Directive1, Directives}
 
 /**
  * By default:
@@ -153,7 +161,7 @@ case class TheSQSRestServerBuilder(providedActorSystem: Option[ActorSystem],
     val appStartFuture = Http().bindAndHandle(routes, interface, port)
 
     TheSQSRestServerBuilder.this.logger.info("Started SQS rest server, bind address %s:%d, visible server address %s"
-      .format(interface, port, theServerAddress.fullAddress))
+      .format(interface, port, if (theServerAddress.isWildcard) "* (depends on incoming request path) "else theServerAddress.fullAddress))
 
     SQSRestServer(appStartFuture, () => {
       appStartFuture.flatMap { sb =>
@@ -298,8 +306,33 @@ trait QueueManagerActorModule {
 trait QueueURLModule {
   def serverAddress: NodeAddress
 
-  def queueURL(queueData: QueueData) = List(serverAddress.fullAddress, QueueUrlContext, queueData.name).mkString("/")
-  def queueURL(queueName: String) = List(serverAddress.fullAddress, QueueUrlContext, queueName).mkString("/")
+  import Directives._
+
+  def baseQueueURL: Directive1[String] = {
+    val baseAddress = if (serverAddress.isWildcard) {
+      extractRequest.map { req =>
+        val incomingAddress = req.uri.copy(rawQueryString = None, fragment = None).toString
+
+        val incomingAddressNoSlash = if (incomingAddress.endsWith("/")) {
+          incomingAddress.substring(0, incomingAddress.length - 1)
+        } else incomingAddress
+
+        // removing the final /queue or /queue/ if present, it will be re-added later
+        if (incomingAddressNoSlash.endsWith(QueueUrlContext)) {
+          incomingAddressNoSlash.substring(0, incomingAddressNoSlash.length - QueueUrlContext.length - 1)
+        } else incomingAddressNoSlash
+      }
+    } else {
+      provide(serverAddress.fullAddress)
+    }
+
+    baseAddress.map(_ + "/" + QueueUrlContext)
+  }
+
+
+  def queueURL(queueData: QueueData): Directive1[String] = {
+    baseQueueURL.map(base => base + "/" + queueData.name)
+  }
 }
 
 object SQSLimits extends Enumeration {

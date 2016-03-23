@@ -51,15 +51,17 @@ trait CreateQueueDirectives { this: ElasticMQDirectives with QueueURLModule with
               throw new SQSException("AWS.SimpleQueueService.QueueNameExists")
             }
 
-            respondWith {
-              <CreateQueueResponse>
-                <CreateQueueResult>
-                  <QueueUrl>{queueURL(queueData)}</QueueUrl>
-                </CreateQueueResult>
-                <ResponseMetadata>
-                  <RequestId>{EmptyRequestId}</RequestId>
-                </ResponseMetadata>
-              </CreateQueueResponse>
+            queueURL(queueData) { url =>
+              respondWith {
+                <CreateQueueResponse>
+                  <CreateQueueResult>
+                    <QueueUrl>{url}</QueueUrl>
+                  </CreateQueueResult>
+                  <ResponseMetadata>
+                    <RequestId>{EmptyRequestId}</RequestId>
+                  </ResponseMetadata>
+                </CreateQueueResponse>
+              }
             }
           }
         }

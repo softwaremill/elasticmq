@@ -23,7 +23,7 @@ class ElasticMQServerConfig(config: Config) {
     }
   }
 
-  // What is the outside visible address of this ElasticMQ node (used by replication and rest-sqs)
+  // What is the outside visible address of this ElasticMQ node (used by rest-sqs)
 
   val nodeAddress = {
     val subConfig = config.getConfig("node-address")
