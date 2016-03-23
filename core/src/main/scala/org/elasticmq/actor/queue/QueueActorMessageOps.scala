@@ -7,7 +7,6 @@ import org.joda.time.DateTime
 import org.elasticmq.util.Logging
 import org.elasticmq.util.NowProvider
 import org.elasticmq.OnDateTimeReceived
-import scala.Some
 import org.elasticmq.NewMessageData
 import org.elasticmq.msg.DeleteMessage
 import org.elasticmq.MessageId
@@ -94,12 +93,12 @@ trait QueueActorMessageOps extends Logging {
 
   @tailrec
   private def receiveMessage(deliveryTime: Long, newNextDelivery: MillisNextDelivery): Option[MessageData] = {
-    if (messageQueue.size == 0) {
+    if (messageQueue.isEmpty) {
       None
     } else {
       val internalMessage = messageQueue.dequeue()
       val id = MessageId(internalMessage.id)
-      if (internalMessage.nextDelivery > deliveryTime) {
+      if (!internalMessage.deliverable(deliveryTime)) {
         // Putting the msg back. That's the youngest msg, so there is no msg that can be received.
         messageQueue += internalMessage
         None
@@ -136,7 +135,7 @@ trait QueueActorMessageOps extends Logging {
     val msgId = deliveryReceipt.extractId.toString
 
     messagesById.get(msgId).foreach { msgData =>
-      if (msgData.deliveryReceipt == Some(deliveryReceipt.receipt)) {
+      if (msgData.deliveryReceipt.contains(deliveryReceipt.receipt)) {
         // Just removing the msg from the map. The msg will be removed from the queue when trying to receive it.
         messagesById.remove(msgId)
       }

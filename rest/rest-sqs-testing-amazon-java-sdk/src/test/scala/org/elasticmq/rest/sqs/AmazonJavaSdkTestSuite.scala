@@ -814,6 +814,19 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
     attributes.get("ApproximateNumberOfMessagesDelayed") must be ("0")
   }
 
+  test("should receive delayed messages when waiting for messages") {
+    // Given
+    val queueUrl = client.createQueue(new CreateQueueRequest("testQueue1")).getQueueUrl
+
+    // When
+    client.sendMessage(new SendMessageRequest(queueUrl, "Message 1").withDelaySeconds(2))
+    val messages = client.receiveMessage(new ReceiveMessageRequest(queueUrl).withMaxNumberOfMessages(1).withWaitTimeSeconds(4))
+      .getMessages
+
+    // Then
+    messages.size must be (1)
+  }
+
   def queueVisibilityTimeout(queueUrl: String) = getQueueLongAttribute(queueUrl, visibilityTimeoutAttribute)
 
   def queueDelay(queueUrl: String) = getQueueLongAttribute(queueUrl, delaySecondsAttribute)

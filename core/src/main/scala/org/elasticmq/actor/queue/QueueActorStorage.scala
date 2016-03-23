@@ -37,6 +37,8 @@ trait QueueActorStorage {
       MillisNextDelivery(nextDelivery),
       created,
       MessageStatistics(firstReceive, receiveCount))
+
+    def deliverable(deliveryTime: Long): Boolean = nextDelivery <= deliveryTime
   }
 
   object InternalMessage {
