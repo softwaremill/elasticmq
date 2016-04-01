@@ -52,7 +52,7 @@ trait QueueDirectives {
   private val lastPathSegment = ("^[^/]*//[^/]*/" + QueueUrlContext + "/([^/]+)$").r
 
   private def queueNameFromRequest(p: AnyParams)(body: String => Route) = {
-    path(QueueUrlContext / Segment) { queueName =>
+    pathPrefix(QueueUrlContext / Segment) { queueName =>
       body(queueName)
     } ~
     queueNameFromParams(p) { queueName =>
