@@ -5,7 +5,7 @@ tl;dr
 -----
 
 * message queue system
-* runs stand-alone ([download](https://s3-eu-west-1.amazonaws.com/softwaremill-public/elasticmq-server-0.9.0.jar)) or embedded
+* runs stand-alone ([download](https://s3-eu-west-1.amazonaws.com/softwaremill-public/elasticmq-server-0.9.1.jar)) or embedded
 * [Amazon SQS](http://aws.amazon.com/sqs/)-compatible interface
 * fully asynchronous implementation, no blocking calls
 
@@ -43,18 +43,18 @@ Installation: stand-alone
 -------------------------
 
 You can download the stand-alone distribution here:
-[https://s3/.../elasticmq-server-0.9.0.jar](https://s3-eu-west-1.amazonaws.com/softwaremill-public/elasticmq-server-0.9.0.jar)
+[https://s3/.../elasticmq-server-0.9.1.jar](https://s3-eu-west-1.amazonaws.com/softwaremill-public/elasticmq-server-0.9.1.jar)
 
 Java 6 or above is required for running the server.
 
 Simply run the jar and you should get a working server, which binds to `localhost:9324`:
 
-    java -jar elasticmq-server-0.9.0.jar
+    java -jar elasticmq-server-0.9.1.jar
 
 ElasticMQ uses [Typesafe Config](https://github.com/typesafehub/config) for configuration. To specify custom
 configuration values, create a file (e.g. `custom.conf`), fill it in with the desired values, and pass it to the server:
 
-    java -Dconfig.file=custom.conf -jar elasticmq-server-0.9.0.jar
+    java -Dconfig.file=custom.conf -jar elasticmq-server-0.9.1.jar
 
 The config file may contain any configuration for Akka and ElasticMQ. Current ElasticMQ configuration values are:
 
@@ -87,7 +87,7 @@ You can also provide an alternative [Logback](http://logback.qos.ch/) configurat
 [default](server/src/main/resources/logback.xml) is configured to
 log INFO logs and above to the console):
 
-    java -Dlogback.configurationFile=my_logback.xml -jar elasticmq-server-0.9.0.jar
+    java -Dlogback.configurationFile=my_logback.xml -jar elasticmq-server-0.9.1.jar
 
 How are queue URLs created
 --------------------------
@@ -103,7 +103,7 @@ Note that changing the `bind-port` and `bind-hostname` settings does not affect 
 Automatically creating queues on startup
 ----------------------------------------
 
-Queues can be automatically created on startup by providing appropriate configuration (since 0.9.0):
+Queues can be automatically created on startup by providing appropriate configuration (since 0.9.1):
 
 The queues are specified in a custom configuration file. For example, create a `custom.conf` file with the following:
 
@@ -172,7 +172,7 @@ ElasticMQ dependencies in SBT
 -----------------------------
 
     // Scala 2.11
-    val elasticmqSqs        = "org.elasticmq" %% "elasticmq-rest-sqs"         % "0.9.0"
+    val elasticmqSqs        = "org.elasticmq" %% "elasticmq-rest-sqs"         % "0.9.1"
 
     // Scala 2.10
     val elasticmqSqs        = "org.elasticmq" %% "elasticmq-rest-sqs"         % "0.7.1"
@@ -180,7 +180,7 @@ ElasticMQ dependencies in SBT
 If you don't want the SQS interface, but just use the actors directly, you can add a dependency only to the `core`
 module:
 
-    val elasticmqCore       = "org.elasticmq" %% "elasticmq-core"             % "0.9.0"
+    val elasticmqCore       = "org.elasticmq" %% "elasticmq-core"             % "0.9.1"
 
 If you want to use a snapshot version, you will need to add the [https://oss.sonatype.org/content/repositories/snapshots/](https://oss.sonatype.org/content/repositories/snapshots/) repository to your configuration.
 
@@ -192,7 +192,7 @@ Dependencies:
     <dependency>
         <groupId>org.elasticmq</groupId>
         <artifactId>elasticmq-rest-sqs_2.11</artifactId>
-        <version>0.9.0</version>
+        <version>0.9.1</version>
     </dependency>
 
 If you want to use a snapshot version, you will need to add the [https://oss.sonatype.org/content/repositories/snapshots/](https://oss.sonatype.org/content/repositories/snapshots/) repository to your configuration.
@@ -206,7 +206,7 @@ have been discontinued.
 Current versions
 ----------------
 
-*Stable*: 0.9.0, 0.8.12
+*Stable*: 0.9.1, 0.8.12
 
 *Development*: 0.9.1-SNAPSHOT
 
@@ -273,6 +273,10 @@ Technology
 
 Change log
 ----------
+
+#### Version 0.9.1 (4 Apr 2016)
+
+* fixed bug to allow connecting using Perl client
 
 #### Version 0.9.0 (23 Mar 2016)
 
