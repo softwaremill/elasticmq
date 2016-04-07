@@ -827,6 +827,22 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
     messages.size must be (1)
   }
 
+  test("should allow 0 as a value for message wait time seconds") {
+    // Given
+    val queueUrl = client.createQueue(new CreateQueueRequest("testQueue1")).getQueueUrl
+    client.sendMessage(new SendMessageRequest(queueUrl, "Message 1"))
+
+    // When
+    val start = System.currentTimeMillis()
+    val messages = client.receiveMessage(new ReceiveMessageRequest(queueUrl).withMaxNumberOfMessages(1).withWaitTimeSeconds(0))
+      .getMessages
+    val end = System.currentTimeMillis()
+
+    // Then
+    messages.size must be (1)
+    (end - start) must be < (1000L)
+  }
+
   def queueVisibilityTimeout(queueUrl: String) = getQueueLongAttribute(queueUrl, visibilityTimeoutAttribute)
 
   def queueDelay(queueUrl: String) = getQueueLongAttribute(queueUrl, delaySecondsAttribute)

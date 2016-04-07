@@ -367,7 +367,7 @@ trait SQSLimitsModule {
         throw SQSException.invalidParameterValue
       }
 
-      ifStrictLimits(messageWaitTime > 20 || messageWaitTime < 1) {
+      ifStrictLimits(messageWaitTime > 20 || messageWaitTime < 0) {
         InvalidParameterValueErrorName
       }
     }
