@@ -843,6 +843,20 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
     (end - start) must be < (1000L)
   }
 
+  test("should send & receive the same message id") {
+    // Given
+    val queueUrl = client.createQueue(new CreateQueueRequest("testQueue1")).getQueueUrl
+
+    // When
+    client.purgeQueue(new PurgeQueueRequest(queueUrl))
+    val msgIdSent = client.sendMessage(new SendMessageRequest(queueUrl, "Message 1")).getMessageId
+    val msgIdReceived = client.receiveMessage(new ReceiveMessageRequest(queueUrl).withMaxNumberOfMessages(1).withWaitTimeSeconds(0))
+      .getMessages.get(0).getMessageId
+
+    // Then
+    msgIdSent must be(msgIdReceived)
+  }
+
   def queueVisibilityTimeout(queueUrl: String) = getQueueLongAttribute(queueUrl, visibilityTimeoutAttribute)
 
   def queueDelay(queueUrl: String) = getQueueLongAttribute(queueUrl, delaySecondsAttribute)
