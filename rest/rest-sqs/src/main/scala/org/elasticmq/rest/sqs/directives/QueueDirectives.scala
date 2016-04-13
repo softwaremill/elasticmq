@@ -1,6 +1,6 @@
 package org.elasticmq.rest.sqs.directives
 
-import akka.http.scaladsl.server.{MissingFormFieldRejection, Directives, Route}
+import akka.http.scaladsl.server.{Directive1, Directives, MissingFormFieldRejection, Route}
 import akka.actor.ActorRef
 import org.elasticmq.msg.{GetQueueData, LookupQueue}
 import org.elasticmq.rest.sqs._
@@ -11,11 +11,7 @@ import org.elasticmq.rest.sqs.Constants._
 trait QueueDirectives {
   this: Directives with QueueManagerActorModule with ActorSystemModule with FutureDirectives with AnyParamDirectives =>
 
-  def queueNameFromParams(p: AnyParams)(body: String => Route) = {
-    p.requiredParam("QueueName") { queueName =>
-      body(queueName)
-    }
-  }
+  def queueNameFromParams(p: AnyParams): Directive1[String] = p.requiredParam("QueueName")
 
   def queueDataFromParams(p: AnyParams)(body: QueueData => Route) = {
     queueNameFromParams(p) { queueName =>
@@ -43,27 +39,22 @@ trait QueueDirectives {
 
   private val queueUrlParameter = "QueueUrl"
 
-  private def queueUrlFromParams(p: AnyParams)(body: String => Route) = {
-    p.requiredParam(queueUrlParameter) { queueUrl =>
-      body(queueUrl)
-    }
-  }
+  private def queueUrlFromParams(p: AnyParams): Directive1[String] = p.requiredParam(queueUrlParameter)
 
   private val lastPathSegment = ("^[^/]*//[^/]*/" + QueueUrlContext + "/([^/]+)$").r
 
-  private def queueNameFromRequest(p: AnyParams)(body: String => Route) = {
-    pathPrefix(QueueUrlContext / Segment) { queueName =>
-      body(queueName)
-    } ~
-    queueNameFromParams(p) { queueName =>
-      body(queueName)
-    } ~
-    queueUrlFromParams(p) { queueUrl =>
-      lastPathSegment.findFirstMatchIn(queueUrl).map(_.group(1)) match {
-        case Some(queueName) => body(queueName)
-        case None => _.reject(MissingFormFieldRejection(queueUrlParameter))
-      }
-    }
+  private def queueNameFromRequest(p: AnyParams)(body: String => Route): Route = {
+    val queueNameDirective =
+      pathPrefix(QueueUrlContext / Segment) |
+        queueNameFromParams(p) |
+        queueUrlFromParams(p).flatMap { queueUrl =>
+          lastPathSegment.findFirstMatchIn(queueUrl).map(_.group(1)) match {
+            case Some(queueName) => provide(queueName)
+            case None => reject(MissingFormFieldRejection(queueUrlParameter)): Directive1[String]
+          }
+        }
+
+    queueNameDirective(body)
   }
 
   private def queueActor(queueName: String, body: ActorRef => Route): Route = {
