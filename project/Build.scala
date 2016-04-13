@@ -42,26 +42,26 @@ object BuildSettings {
 }
 
 object Dependencies {
-  val jodaTime      = "joda-time"                 % "joda-time"             % "2.9"
+  val jodaTime      = "joda-time"                 % "joda-time"             % "2.9.3"
   val jodaConvert   = "org.joda"                  % "joda-convert"          % "1.8.1"
   val config        = "com.typesafe"              % "config"                % "1.2.1"
 
   val scalalogging  = "com.typesafe.scala-logging" %% "scala-logging"       % "3.1.0"
-  val logback       = "ch.qos.logback"            % "logback-classic"       % "1.1.6"
-  val jclOverSlf4j  = "org.slf4j"                 % "jcl-over-slf4j"        % "1.7.19" // needed form amazon java sdk
+  val logback       = "ch.qos.logback"            % "logback-classic"       % "1.1.7"
+  val jclOverSlf4j  = "org.slf4j"                 % "jcl-over-slf4j"        % "1.7.21" // needed form amazon java sdk
 
   val scalatest     = "org.scalatest"             %% "scalatest"            % "2.2.6"
   val mockito       = "org.mockito"               % "mockito-core"          % "1.10.19"
   val awaitility    = "com.jayway.awaitility"     % "awaitility-scala"      % "1.7.0"
 
-  val amazonJavaSdk = "com.amazonaws"             % "aws-java-sdk"          % "1.10.62" exclude ("commons-logging", "commons-logging")
+  val amazonJavaSdk = "com.amazonaws"             % "aws-java-sdk"          % "1.10.69" exclude ("commons-logging", "commons-logging")
 
-  val akka2Version  = "2.3.14"
+  val akka2Version  = "2.3.15"
   val akka2Actor    = "com.typesafe.akka" %% "akka-actor"           % akka2Version
   val akka2Slf4j    = "com.typesafe.akka" %% "akka-slf4j"           % akka2Version
   val akka2Testkit  = "com.typesafe.akka" %% "akka-testkit"         % akka2Version % "test"
-  val akka2Http     = "com.typesafe.akka" %% "akka-http-experimental" % "2.0.3"
-  val akka2HttpTestkit = "com.typesafe.akka" %% "akka-http-testkit-experimental" % "2.0.3" % "test"
+  val akka2Http     = "com.typesafe.akka" %% "akka-http-experimental" % "2.0.4"
+  val akka2HttpTestkit = "com.typesafe.akka" %% "akka-http-testkit-experimental" % "2.0.4" % "test"
 
   val scalaAsync    = "org.scala-lang.modules" % "scala-async_2.11" % "0.9.5"
 
