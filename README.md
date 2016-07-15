@@ -168,6 +168,16 @@ To use [Amazon boto](http://docs.pythonboto.org/en/latest/) as an interface to a
 
 where `sqs_endpoint` and `sqs_port` are the host and port.
 
+The `boto3` interface is different:
+
+    client = boto3.resource('sqs',
+                            endpoint_url='http://localhost:9324',
+                            region_name='elasticmq',
+                            aws_secret_access_key='x',
+                            aws_access_key_id='x',
+                            use_ssl=False)
+    queue = client.get_queue_by_name(QueueName='queue1')
+
 ElasticMQ dependencies in SBT
 -----------------------------
 
