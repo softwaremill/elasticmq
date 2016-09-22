@@ -1,17 +1,21 @@
 package org.elasticmq.performance
 
+import java.util.concurrent.TimeUnit
+
 import com.amazonaws.services.sqs.AmazonSQSClient
 import com.amazonaws.auth.BasicAWSCredentials
 import com.amazonaws.services.sqs.model.{CreateQueueRequest, DeleteMessageRequest, ReceiveMessageRequest, SendMessageRequest}
 import org.elasticmq.rest.sqs.{SQSRestServer, SQSRestServerBuilder}
 import org.elasticmq.test._
+
 import scala.collection.JavaConversions._
-import akka.actor.{Props, ActorSystem, ActorRef}
+import akka.actor.{ActorRef, ActorSystem, Props}
 import org.elasticmq.actor.QueueManagerActor
 import org.elasticmq.util.NowProvider
 import org.elasticmq.actor.reply._
 import org.elasticmq.msg._
 import org.elasticmq._
+
 import scala.concurrent.Await
 import scala.concurrent.duration._
 import org.joda.time.DateTime
@@ -141,8 +145,7 @@ object LocalPerformanceTest extends App {
     }
 
     def stop() {
-      actorSystem.shutdown()
-      actorSystem.awaitTermination()
+      actorSystem.terminate()
     }
 
     def sendMessage(m: String)
@@ -153,7 +156,7 @@ object LocalPerformanceTest extends App {
   trait MQWithQueueManagerActor extends MQ {
     private var currentQueue: ActorRef = _
 
-    implicit val timeout = Timeout(10000L)
+    implicit val timeout = Timeout(10000L, TimeUnit.MILLISECONDS)
 
     override def start() = {
       val queueManagerActor = super.start()
