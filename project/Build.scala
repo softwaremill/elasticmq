@@ -6,7 +6,7 @@ import AssemblyKeys._
 object BuildSettings {
   val buildSettings = Defaults.coreDefaultSettings ++ Seq (
     organization  := "org.elasticmq",
-    version       := "0.9.3",
+    version       := "0.10.0",
     scalaVersion  := "2.11.8",
 
     libraryDependencies += "org.scala-lang.modules" %% "scala-xml" % "1.0.6",
@@ -61,7 +61,7 @@ object Dependencies {
   val akka2Slf4j    = "com.typesafe.akka" %% "akka-slf4j"           % akka2Version
   val akka2Testkit  = "com.typesafe.akka" %% "akka-testkit"         % akka2Version % "test"
   val akka2Http     = "com.typesafe.akka" %% "akka-http-experimental" % akka2Version
-  val akka2HttpTestkit = "com.typesafe.akka" %% "akka-http-testkit-experimental" % "2.4.2-RC3" % "test"
+  val akka2HttpTestkit = "com.typesafe.akka" %% "akka-http-testkit" % akka2Version % "test"
 
   val scalaAsync    = "org.scala-lang.modules" % "scala-async_2.11" % "0.9.5"
 
