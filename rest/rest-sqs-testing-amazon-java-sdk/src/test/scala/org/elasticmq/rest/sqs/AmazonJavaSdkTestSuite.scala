@@ -819,12 +819,15 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
     val queueUrl = client.createQueue(new CreateQueueRequest("testQueue1")).getQueueUrl
 
     // When
+    val start = System.currentTimeMillis()
     client.sendMessage(new SendMessageRequest(queueUrl, "Message 1").withDelaySeconds(2))
     val messages = client.receiveMessage(new ReceiveMessageRequest(queueUrl).withMaxNumberOfMessages(1).withWaitTimeSeconds(4))
       .getMessages
+    val end = System.currentTimeMillis()
 
     // Then
     messages.size must be (1)
+    (end - start) must be < (2500L)
   }
 
   test("should allow 0 as a value for message wait time seconds") {
