@@ -5,7 +5,7 @@ tl;dr
 -----
 
 * message queue system
-* runs stand-alone ([download](https://s3-eu-west-1.amazonaws.com/softwaremill-public/elasticmq-server-0.10.0.jar)) or embedded
+* runs stand-alone ([download](https://s3-eu-west-1.amazonaws.com/softwaremill-public/elasticmq-server-0.10.1.jar)) or embedded
 * [Amazon SQS](http://aws.amazon.com/sqs/)-compatible interface
 * fully asynchronous implementation, no blocking calls
 
@@ -43,18 +43,18 @@ Installation: stand-alone
 -------------------------
 
 You can download the stand-alone distribution here:
-[https://s3/.../elasticmq-server-0.10.0.jar](https://s3-eu-west-1.amazonaws.com/softwaremill-public/elasticmq-server-0.10.0.jar)
+[https://s3/.../elasticmq-server-0.10.1.jar](https://s3-eu-west-1.amazonaws.com/softwaremill-public/elasticmq-server-0.10.1.jar)
 
 Java 6 or above is required for running the server.
 
 Simply run the jar and you should get a working server, which binds to `localhost:9324`:
 
-    java -jar elasticmq-server-0.10.0.jar
+    java -jar elasticmq-server-0.10.1.jar
 
 ElasticMQ uses [Typesafe Config](https://github.com/typesafehub/config) for configuration. To specify custom
 configuration values, create a file (e.g. `custom.conf`), fill it in with the desired values, and pass it to the server:
 
-    java -Dconfig.file=custom.conf -jar elasticmq-server-0.10.0.jar
+    java -Dconfig.file=custom.conf -jar elasticmq-server-0.10.1.jar
 
 The config file may contain any configuration for Akka and ElasticMQ. Current ElasticMQ configuration values are:
 
