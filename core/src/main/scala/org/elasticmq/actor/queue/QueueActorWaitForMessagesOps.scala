@@ -1,17 +1,19 @@
 package org.elasticmq.actor.queue
 
-import org.elasticmq.msg.{ReceiveMessages, SendMessage, QueueMessageMsg}
+import org.elasticmq.msg.{QueueMessageMsg, ReceiveMessages, SendMessage, UpdateVisibilityTimeout}
 import org.elasticmq.actor.reply._
-import akka.actor.ActorRef
-import scala.concurrent.{ duration => scd }
+import akka.actor.{ActorRef, Cancellable}
+
+import scala.concurrent.{duration => scd}
 import org.joda.time.Duration
+
 import scala.annotation.tailrec
 
 trait QueueActorWaitForMessagesOps extends ReplyingActor with QueueActorMessageOps {
   this: QueueActorStorage =>
 
   private var senderSequence = 0L
-  private var tryReplyScheduled = false
+  private var scheduledTryReply: Option[Cancellable] = None
   private val awaitingReply = new collection.mutable.HashMap[Long, AwaitingData]()
 
   override def receive = super.receive orElse {
@@ -23,8 +25,8 @@ trait QueueActorWaitForMessagesOps extends ReplyingActor with QueueActorMessageO
     }
 
     case TryReply =>
+      scheduledTryReply = None
       tryReply()
-      tryReplyScheduled = false
       scheduleTryReplyWhenAvailable()
   }
 
@@ -45,6 +47,12 @@ trait QueueActorWaitForMessagesOps extends ReplyingActor with QueueActorMessageO
         scheduleTryReplyWhenAvailable()
         DoNotReply()
       } else result
+
+    case uvm: UpdateVisibilityTimeout =>
+      val result = super.receiveAndReplyMessageMsg(msg)
+      tryReply()
+      scheduleTryReplyWhenAvailable()
+      result
 
     case _ => super.receiveAndReplyMessageMsg(msg)
   }
@@ -88,22 +96,24 @@ trait QueueActorWaitForMessagesOps extends ReplyingActor with QueueActorMessageO
       }
     }
 
-    if (!tryReplyScheduled && awaitingReply.nonEmpty) {
+    scheduledTryReply.foreach(_.cancel())
+    scheduledTryReply = None
+
+    if (awaitingReply.nonEmpty) {
       dequeueUntilDeleted()
 
       val deliveryTime = nowProvider.nowMillis
 
       messageQueue.headOption match {
         case Some(msg) if !msg.deliverable(deliveryTime) =>
-          schedule(msg.nextDelivery - deliveryTime + 1, TryReply)
-          tryReplyScheduled = true
+          scheduledTryReply = Some(schedule(msg.nextDelivery - deliveryTime + 1, TryReply))
 
         case _ => // there are deliverable messages right now, no need to schedule a try-reply
       }
     }
   }
 
-  private def schedule(afterMillis: Long, msg: Any): Unit = {
+  private def schedule(afterMillis: Long, msg: Any): Cancellable = {
     import context.dispatcher
     context.system.scheduler.scheduleOnce(
       scd.Duration(afterMillis, scd.MILLISECONDS),

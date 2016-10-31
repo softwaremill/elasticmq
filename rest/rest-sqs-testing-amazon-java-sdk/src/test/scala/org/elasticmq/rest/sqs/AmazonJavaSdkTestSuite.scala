@@ -830,6 +830,28 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
     (end - start) must be < (2500L)
   }
 
+  test("if message visibility changes during a long pool, should receive messages as soon as they become available") {
+    // Given
+    val queueUrl = client.createQueue(new CreateQueueRequest("testQueue1")).getQueueUrl
+
+    val handle = client.sendMessage(new SendMessageRequest(queueUrl, "Message 1").withDelaySeconds(4)).getMessageId
+    new Thread {
+      override def run() {
+        Thread.sleep(1000L)
+        client.changeMessageVisibility(new ChangeMessageVisibilityRequest(queueUrl, handle, 1))
+      }
+    }.start()
+
+    val start = System.currentTimeMillis()
+    val messages = client.receiveMessage(new ReceiveMessageRequest(queueUrl).withMaxNumberOfMessages(1).withWaitTimeSeconds(5))
+      .getMessages
+    val end = System.currentTimeMillis()
+
+    // Then
+    messages.size must be (1)
+    (end - start) must be < (2500L) // 1 second waiting with the old visibility, then change to 1 second
+  }
+
   test("should allow 0 as a value for message wait time seconds") {
     // Given
     val queueUrl = client.createQueue(new CreateQueueRequest("testQueue1")).getQueueUrl
