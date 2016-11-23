@@ -284,6 +284,10 @@ Technology
 Change log
 ----------
 
+#### Version 0.11.0 (23 Nov 2016)
+
+* updating dependencies, using Akka HTTP 10, builds for Scala 2.11 and 2.12
+
 #### Version 0.10.1 (31 Oct 2016)
 
 * fixing a bug with changing message visibility and long pooling

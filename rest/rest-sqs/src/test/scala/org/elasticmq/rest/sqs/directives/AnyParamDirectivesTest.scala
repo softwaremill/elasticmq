@@ -3,9 +3,9 @@ package org.elasticmq.rest.sqs.directives
 import akka.http.scaladsl.model.FormData
 import akka.http.scaladsl.server.Directives
 import akka.http.scaladsl.testkit.ScalatestRouteTest
-import org.scalatest.{ShouldMatchers, FlatSpec}
+import org.scalatest.{Matchers, FlatSpec}
 
-class AnyParamDirectivesTest extends FlatSpec with ShouldMatchers with ScalatestRouteTest
+class AnyParamDirectivesTest extends FlatSpec with Matchers with ScalatestRouteTest
   with Directives with AnyParamDirectives {
 
   "anyParamsMap" should "extract both query and form parameters" in {

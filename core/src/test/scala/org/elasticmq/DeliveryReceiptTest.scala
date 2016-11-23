@@ -1,9 +1,9 @@
 package org.elasticmq
 
-import org.scalatest.matchers.MustMatchers
+import org.scalatest.Matchers
 import org.scalatest.FunSuite
 
-class DeliveryReceiptTest extends FunSuite with MustMatchers {
+class DeliveryReceiptTest extends FunSuite with Matchers {
   test("should extract id") {
     // Given
     val id = MessageId("123-781-abc-def")
@@ -12,6 +12,6 @@ class DeliveryReceiptTest extends FunSuite with MustMatchers {
     val receipt = DeliveryReceipt.generate(id)
 
     // Then
-    receipt.extractId must be (id)
+    receipt.extractId should be (id)
   }
 }

@@ -1,9 +1,9 @@
 package org.elasticmq.rest.sqs
 
 import org.scalatest.FunSuite
-import org.scalatest.matchers.MustMatchers
+import org.scalatest.Matchers
 
-class BatchRequestsModuleTest extends FunSuite with MustMatchers {
+class BatchRequestsModuleTest extends FunSuite with Matchers {
   test("should correctly find sub parameters") {
     // Given
     val parameters = Map(
@@ -22,9 +22,9 @@ class BatchRequestsModuleTest extends FunSuite with MustMatchers {
     val subParameters = BatchRequestsModule.subParametersMaps("SomePrefix", parameters)
 
     // Then
-    subParameters must have length (3)
-    subParameters must contain (Map("Key1" -> "Value1", "Key2" -> "Value2", "Key3" -> "Value3"))
-    subParameters must contain (Map("Key21" -> "Value21", "Key22" -> "Value22"))
-    subParameters must contain (Map("Key41" -> "Value41","Multi.Key.1" -> "ValueMulti"))
+    subParameters should have length (3)
+    subParameters should contain (Map("Key1" -> "Value1", "Key2" -> "Value2", "Key3" -> "Value3"))
+    subParameters should contain (Map("Key21" -> "Value21", "Key22" -> "Value22"))
+    subParameters should contain (Map("Key41" -> "Value41","Multi.Key.1" -> "ValueMulti"))
   }
 }

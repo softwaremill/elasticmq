@@ -2,7 +2,7 @@ package org.elasticmq.rest.sqs
 
 import java.nio.ByteBuffer
 
-import org.scalatest.matchers.MustMatchers
+import org.scalatest.Matchers
 import org.scalatest._
 import com.amazonaws.auth.BasicAWSCredentials
 import com.amazonaws.services.sqs.{AmazonSQS, AmazonSQSClient}
@@ -14,7 +14,7 @@ import com.amazonaws.AmazonServiceException
 import org.elasticmq.util.Logging
 import org.elasticmq._
 
-class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAfter with Logging {
+class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter with Logging {
   val visibilityTimeoutAttribute = "VisibilityTimeout"
   val defaultVisibilityTimeoutAttribute = "VisibilityTimeout"
   val delaySecondsAttribute = "DelaySeconds"
@@ -74,7 +74,7 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
     val queueUrl = client.getQueueUrl(new GetQueueUrlRequest("testQueue1")).getQueueUrl
 
     // Then
-    queueUrl must include ("testQueue1")
+    queueUrl should include ("testQueue1")
   }
 
   test("should create a queue with the specified visibility timeout") {
@@ -85,9 +85,9 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
     // Then
     val queueUrls = client.listQueues().getQueueUrls
 
-    queueUrls.size() must be (1)
+    queueUrls.size() should be (1)
 
-    queueVisibilityTimeout(queueUrls.get(0)) must be (14)
+    queueVisibilityTimeout(queueUrls.get(0)) should be (14)
   }
 
   test("should return an error if strict & queue name is too long") {
@@ -105,11 +105,11 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
     val queueUrls = client.listQueues().getQueueUrls
 
     // Then
-    queueUrls.size() must be (2)
+    queueUrls.size() should be (2)
 
     val setOfQueueUrls = Set() ++ queueUrls
-    setOfQueueUrls.find(_.contains("testQueue1")) must be ('defined)
-    setOfQueueUrls.find(_.contains("testQueue2")) must be ('defined)
+    setOfQueueUrls.find(_.contains("testQueue1")) should be ('defined)
+    setOfQueueUrls.find(_.contains("testQueue2")) should be ('defined)
   }
 
   test("should list queues with the specified prefix") {
@@ -121,8 +121,8 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
     val queueUrls = client.listQueues(new ListQueuesRequest().withQueueNamePrefix("aaa")).getQueueUrls
 
     // Then
-    queueUrls.size() must be (1)
-    queueUrls.get(0) must include ("aaaQueue")
+    queueUrls.size() should be (1)
+    queueUrls.get(0) should include ("aaaQueue")
   }
 
   test("should create and delete a queue") {
@@ -133,7 +133,7 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
     client.deleteQueue(new DeleteQueueRequest(queueUrl))
 
     // Then
-    client.listQueues().getQueueUrls.size() must be (0)
+    client.listQueues().getQueueUrls.size() should be (0)
   }
 
   test("should get queue visibility timeout") {
@@ -141,7 +141,7 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
     val queueUrl = client.createQueue(new CreateQueueRequest("testQueue1")).getQueueUrl
 
     // Then
-    queueVisibilityTimeout(queueUrl) must be (30)
+    queueVisibilityTimeout(queueUrl) should be (30)
   }
 
   test("should set queue visibility timeout") {
@@ -152,7 +152,7 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
     client.setQueueAttributes(new SetQueueAttributesRequest(queueUrl, Map(visibilityTimeoutAttribute -> "10")))
 
     // Then
-    queueVisibilityTimeout(queueUrl) must be (10)
+    queueVisibilityTimeout(queueUrl) should be (10)
   }
 
   test("should send and receive a simple message") {
@@ -210,8 +210,8 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
     val message = receiveSingleMessageObject(queueUrl).orNull
 
     // Then
-    message.getBody must be (content)
-    message.getMessageAttributes must be (sendMessage.getMessageAttributes) // Checks they match
+    message.getBody should be (content)
+    message.getMessageAttributes should be (sendMessage.getMessageAttributes) // Checks they match
     message.getMessageAttributes.map { case (k,attr) =>
       (k,if (attr.getDataType.startsWith("String") && attr.getStringValue != null) {
         StringMessageAttribute(attr.getStringValue).stringValue
@@ -220,7 +220,7 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
       }else {
         BinaryMessageAttribute.fromByteBuffer(attr.getBinaryValue).asBase64
       })
-    } must be (messageAttributes.map { case (k,attr) =>
+    } should be (messageAttributes.map { case (k,attr) =>
       (k,attr match {
         case s: StringMessageAttribute => s.stringValue
         case n: NumberMessageAttribute => n.stringValue
@@ -246,7 +246,7 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
 
     // Then
     val bodies = messages.map(_.getBody).toSet
-    bodies must be (Set("Message 1", "Message 2"))
+    bodies should be (Set("Message 1", "Message 2"))
   }
 
   test("should receive no more than the given amount of messages") {
@@ -258,7 +258,7 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
     val messages = client.receiveMessage(new ReceiveMessageRequest(queueUrl).withMaxNumberOfMessages(4)).getMessages
 
     // Then
-    messages must have size (4)
+    messages should have size (4)
   }
 
   test("should receive less messages if no messages are available") {
@@ -270,7 +270,7 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
     val messages = client.receiveMessage(new ReceiveMessageRequest(queueUrl).withMaxNumberOfMessages(10)).getMessages
 
     // Then
-    messages must have size (9)
+    messages should have size (9)
   }
 
   test("should send two messages in a batch") {
@@ -284,15 +284,15 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
     ))
 
     // Then
-    result.getSuccessful must have size (2)
-    result.getSuccessful.map(_.getId).toSet must be (Set("1", "2"))
+    result.getSuccessful should have size (2)
+    result.getSuccessful.map(_.getId).toSet should be (Set("1", "2"))
 
     val messages = client.receiveMessage(new ReceiveMessageRequest(queueUrl).withMaxNumberOfMessages(2)).getMessages
 
     val bodies = messages.map(_.getBody).toSet
-    bodies must be (Set("Message 1", "Message 2"))
+    bodies should be (Set("Message 1", "Message 2"))
 
-    messages.map(_.getMessageId).toSet must be (result.getSuccessful.map(_.getMessageId).toSet)
+    messages.map(_.getMessageId).toSet should be (result.getSuccessful.map(_.getMessageId).toSet)
   }
 
   test("should block message for the visibility timeout duration") {
@@ -308,9 +308,9 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
     val m3 = receiveSingleMessage(queueUrl)
 
     // Then
-    m1 must be (Some("Message 1"))
-    m2 must be (None)
-    m3 must be (Some("Message 1"))
+    m1 should be (Some("Message 1"))
+    m2 should be (None)
+    m3 should be (Some("Message 1"))
   }
 
   test("should block message for the specified non-default visibility timeout duration") {
@@ -327,10 +327,10 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
     val m4 = receiveSingleMessage(queueUrl)
 
     // Then
-    m1 must be ("Message 1")
-    m2 must be (None)
-    m3 must be (None)
-    m4 must be (Some("Message 1"))
+    m1 should be ("Message 1")
+    m2 should be (None)
+    m3 should be (None)
+    m4 should be (Some("Message 1"))
   }
 
   test("should delete a message") {
@@ -346,8 +346,8 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
     val m2 = receiveSingleMessage(queueUrl)
 
     // Then
-    m1.getBody must be ("Message 1")
-    m2 must be (None)
+    m1.getBody should be ("Message 1")
+    m2 should be (None)
   }
 
   test("should delete messages in a batch") {
@@ -372,8 +372,8 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
     val m = receiveSingleMessage(queueUrl)
 
     // Then
-    result.getSuccessful.map(_.getId).toSet must be (Set("1", "2"))
-    m must be (None) // messages deleted
+    result.getSuccessful.map(_.getId).toSet should be (Set("1", "2"))
+    m should be (None) // messages deleted
   }
 
   test("should update message visibility timeout") {
@@ -394,9 +394,9 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
     val m3 = receiveSingleMessage(queueUrl)
 
     // Then
-    m1.getBody must be ("Message 1")
-    m2 must be (None)
-    m3 must be (Some("Message 1"))
+    m1.getBody should be ("Message 1")
+    m2 should be (None)
+    m3 should be (Some("Message 1"))
   }
 
   test("should update message visibility timeout in a batch") {
@@ -423,9 +423,9 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
     val m4 = receiveSingleMessage(queueUrl)
 
     // Then
-    result.getSuccessful.map(_.getId).toSet must be (Set("1", "2"))
+    result.getSuccessful.map(_.getId).toSet should be (Set("1", "2"))
 
-    Set(m3, m4) must be (Set(Some("Message 1"), Some("Message 2")))
+    Set(m3, m4) should be (Set(Some("Message 1"), Some("Message 2")))
   }
 
   test("should read all queue attributes") {
@@ -443,15 +443,15 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
     val attributes = client.getQueueAttributes(new GetQueueAttributesRequest(queueUrl).withAttributeNames("All")).getAttributes
 
     // Then
-    attributes.get("ApproximateNumberOfMessages") must be ("2")
-    attributes.get("ApproximateNumberOfMessagesNotVisible") must be ("1")
-    attributes.get("ApproximateNumberOfMessagesDelayed") must be ("3")
-    attributes must contain key ("CreatedTimestamp")
-    attributes must contain key ("LastModifiedTimestamp")
-    attributes must contain key (visibilityTimeoutAttribute)
-    attributes must contain key (delaySecondsAttribute)
-    attributes must contain key (receiveMessageWaitTimeSecondsAttribute)
-    attributes must contain key ("QueueArn")
+    attributes.get("ApproximateNumberOfMessages") should be ("2")
+    attributes.get("ApproximateNumberOfMessagesNotVisible") should be ("1")
+    attributes.get("ApproximateNumberOfMessagesDelayed") should be ("3")
+    attributes should contain key ("CreatedTimestamp")
+    attributes should contain key ("LastModifiedTimestamp")
+    attributes should contain key (visibilityTimeoutAttribute)
+    attributes should contain key (delaySecondsAttribute)
+    attributes should contain key (receiveMessageWaitTimeSecondsAttribute)
+    attributes should contain key ("QueueArn")
   }
 
   test("should return proper queue statistics after receiving, deleting a message") {
@@ -461,9 +461,9 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
     def verifyQueueAttributes(expectedMsgs: Int, expectedNotVisible: Int, expectedDelayed: Int) {
       val attributes = client.getQueueAttributes(new GetQueueAttributesRequest(queueUrl).withAttributeNames("All")).getAttributes
 
-      attributes.get("ApproximateNumberOfMessages") must be (expectedMsgs.toString)
-      attributes.get("ApproximateNumberOfMessagesNotVisible") must be (expectedNotVisible.toString)
-      attributes.get("ApproximateNumberOfMessagesDelayed") must be (expectedDelayed.toString)
+      attributes.get("ApproximateNumberOfMessages") should be (expectedMsgs.toString)
+      attributes.get("ApproximateNumberOfMessagesNotVisible") should be (expectedNotVisible.toString)
+      attributes.get("ApproximateNumberOfMessagesDelayed") should be (expectedDelayed.toString)
     }
 
     // When
@@ -501,7 +501,7 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
       .toLong
 
     // Then
-    approximateNumberOfMessages must be (1)
+    approximateNumberOfMessages should be (1)
   }
 
   test("should receive message with statistics") {
@@ -527,21 +527,21 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
     val messageArray2 = receiveMessages()
 
     // Then
-    messageArray1.size() must be (1)
+    messageArray1.size() should be (1)
     val sent1 = messageArray1.get(0).getAttributes.get(sentTimestampAttribute).toLong
-    sent1 must be >= (start)
-    messageArray1.get(0).getAttributes.get(approximateReceiveCountAttribute).toInt must be (1)
+    sent1 should be >= (start)
+    messageArray1.get(0).getAttributes.get(approximateReceiveCountAttribute).toInt should be (1)
 
     val approxReceive1 = messageArray1.get(0).getAttributes.get(approximateFirstReceiveTimestampAttribute).toLong
-    approxReceive1 must be >= (start)
+    approxReceive1 should be >= (start)
 
-    messageArray2.size() must be (1)
+    messageArray2.size() should be (1)
     val sent2 = messageArray2.get(0).getAttributes.get(sentTimestampAttribute).toLong
-    sent2 must be >= (start)
-    messageArray2.get(0).getAttributes.get(approximateReceiveCountAttribute).toInt must be (2)
-    messageArray2.get(0).getAttributes.get(approximateFirstReceiveTimestampAttribute).toLong must be >= (approxReceive1)
+    sent2 should be >= (start)
+    messageArray2.get(0).getAttributes.get(approximateReceiveCountAttribute).toInt should be (2)
+    messageArray2.get(0).getAttributes.get(approximateFirstReceiveTimestampAttribute).toLong should be >= (approxReceive1)
 
-    sent1 must be (sent2)
+    sent1 should be (sent2)
   }
 
   test("should send delayed message") {
@@ -557,9 +557,9 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
     val m3 = receiveSingleMessage(queueUrl)
 
     // Then
-    m1 must be (None)
-    m2 must be (Some("Message 1"))
-    m3 must be (None)
+    m1 should be (None)
+    m2 should be (Some("Message 1"))
+    m3 should be (None)
   }
 
   test("should create delayed queue") {
@@ -576,9 +576,9 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
     val m3 = receiveSingleMessage(queueUrl)
 
     // Then
-    m1 must be (None)
-    m2 must be (Some("Message 1"))
-    m3 must be (None)
+    m1 should be (None)
+    m2 should be (Some("Message 1"))
+    m3 should be (None)
   }
 
   test("should get queue delay") {
@@ -586,7 +586,7 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
     val queueUrl = client.createQueue(new CreateQueueRequest("testQueue1")).getQueueUrl
 
     // Then
-    queueDelay(queueUrl) must be (0)
+    queueDelay(queueUrl) should be (0)
   }
 
   test("should set queue delay") {
@@ -597,7 +597,7 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
     client.setQueueAttributes(new SetQueueAttributesRequest(queueUrl, Map(delaySecondsAttribute -> "10")))
 
     // Then
-    queueDelay(queueUrl) must be (10)
+    queueDelay(queueUrl) should be (10)
   }
 
   test("should create queue with message wait") {
@@ -611,8 +611,8 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
     val end = System.currentTimeMillis()
 
     // Then
-    m1 must be (None)
-    (end - start) must be >= (1000L)
+    m1 should be (None)
+    (end - start) should be >= (1000L)
   }
 
   test("should get queue receive message wait") {
@@ -620,7 +620,7 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
     val queueUrl = client.createQueue(new CreateQueueRequest("testQueue1")).getQueueUrl
 
     // Then
-    queueReceiveMessageWaitTimeSeconds(queueUrl) must be (0)
+    queueReceiveMessageWaitTimeSeconds(queueUrl) should be (0)
   }
 
   test("should set queue receive message wait") {
@@ -631,7 +631,7 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
     client.setQueueAttributes(new SetQueueAttributesRequest(queueUrl, Map(receiveMessageWaitTimeSecondsAttribute -> "13")))
 
     // Then
-    queueReceiveMessageWaitTimeSeconds(queueUrl) must be (13)
+    queueReceiveMessageWaitTimeSeconds(queueUrl) should be (13)
   }
 
   test("should receive message sent later when waiting for messages") {
@@ -652,8 +652,8 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
     val end = System.currentTimeMillis()
 
     // Then
-    (end - start) must be >= (500L)
-    messages.size must be (1)
+    (end - start) should be >= (500L)
+    messages.size should be (1)
   }
 
   // Errors
@@ -681,7 +681,7 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
     }
 
     // Then
-    result.isLeft must be (true)
+    result.isLeft should be (true)
   }
 
   test("should return an error if strict & sending too many messages in a batch") {
@@ -703,7 +703,7 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
     }
 
     // Then
-    result.isLeft must be (true)
+    result.isLeft should be (true)
   }
 
   test("should return an error if strict & sending an invalid character") {
@@ -749,16 +749,16 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
     ))
 
     // Then
-    result.getSuccessful must have size (1)
-    result.getSuccessful.get(0).getId must be ("1")
+    result.getSuccessful should have size (1)
+    result.getSuccessful.get(0).getId should be ("1")
 
-    result.getFailed must have size (1)
-    result.getFailed.get(0).getId must be ("2")
+    result.getFailed should have size (1)
+    result.getFailed.get(0).getId should be ("2")
 
     val messages = client.receiveMessage(new ReceiveMessageRequest(queueUrl).withMaxNumberOfMessages(2)).getMessages
 
     val bodies = messages.map(_.getBody).toSet
-    bodies must be (Set("OK"))
+    bodies should be (Set("OK"))
   }
 
   test("should delete a message only if the most recent receipt handle is provided") {
@@ -779,7 +779,7 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
     // Then
     Thread.sleep(1100)
     val m3 = receiveSingleMessage(queueUrl)
-    m3 must be (Some("Message 1"))
+    m3 should be (Some("Message 1"))
   }
 
   test("should return an error if creating an existing queue with a different visibility timeout") {
@@ -793,7 +793,7 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
         .withAttributes(Map(defaultVisibilityTimeoutAttribute -> "14"))).getQueueUrl
     }
 
-    result.isLeft must be (true)
+    result.isLeft should be (true)
   }
 
   test("should purge the queue") {
@@ -809,9 +809,9 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
 
     // Then
     val attributes = client.getQueueAttributes(new GetQueueAttributesRequest(queueUrl).withAttributeNames("All")).getAttributes
-    attributes.get("ApproximateNumberOfMessages") must be ("0")
-    attributes.get("ApproximateNumberOfMessagesNotVisible") must be ("0")
-    attributes.get("ApproximateNumberOfMessagesDelayed") must be ("0")
+    attributes.get("ApproximateNumberOfMessages") should be ("0")
+    attributes.get("ApproximateNumberOfMessagesNotVisible") should be ("0")
+    attributes.get("ApproximateNumberOfMessagesDelayed") should be ("0")
   }
 
   test("should receive delayed messages when waiting for messages") {
@@ -826,8 +826,8 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
     val end = System.currentTimeMillis()
 
     // Then
-    messages.size must be (1)
-    (end - start) must be < (2500L)
+    messages.size should be (1)
+    (end - start) should be < (2500L)
   }
 
   test("if message visibility changes during a long pool, should receive messages as soon as they become available") {
@@ -848,8 +848,8 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
     val end = System.currentTimeMillis()
 
     // Then
-    messages.size must be (1)
-    (end - start) must be < (2500L) // 1 second waiting with the old visibility, then change to 1 second
+    messages.size should be (1)
+    (end - start) should be < (2500L) // 1 second waiting with the old visibility, then change to 1 second
   }
 
   test("should allow 0 as a value for message wait time seconds") {
@@ -864,8 +864,8 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
     val end = System.currentTimeMillis()
 
     // Then
-    messages.size must be (1)
-    (end - start) must be < (1000L)
+    messages.size should be (1)
+    (end - start) should be < (1000L)
   }
 
   test("should send & receive the same message id") {
@@ -879,7 +879,7 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
       .getMessages.get(0).getMessageId
 
     // Then
-    msgIdSent must be(msgIdReceived)
+    msgIdSent should be(msgIdReceived)
   }
 
   def queueVisibilityTimeout(queueUrl: String) = getQueueLongAttribute(queueUrl, visibilityTimeoutAttribute)
@@ -919,8 +919,8 @@ class AmazonJavaSdkTestSuite extends FunSuite with MustMatchers with BeforeAndAf
     val resultRelaxed = catching(classOf[AmazonServiceException]) either body(relaxedClient)
 
     // Then
-    resultStrict.isLeft must be (true)
-    resultRelaxed.isRight must be (true)
+    resultStrict.isLeft should be (true)
+    resultRelaxed.isRight should be (true)
   }
 
   def appendRange(builder: StringBuilder, start: Int, end: Int) {
