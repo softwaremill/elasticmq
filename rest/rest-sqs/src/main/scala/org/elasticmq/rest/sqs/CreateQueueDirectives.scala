@@ -19,11 +19,11 @@ trait CreateQueueDirectives { this: ElasticMQDirectives with QueueURLModule with
         queueNameFromParams(p) { queueName =>
           val attributes = attributeNameAndValuesReader.read(p)
 
-          val secondsVisibilityTimeout = attributes.parseOptionalLong(VisibilityTimeoutParameter)
-            .getOrElse(DefaultVisibilityTimeout)
+          val secondsVisibilityTimeoutOpt = attributes.parseOptionalLong(VisibilityTimeoutParameter)
+          val secondsVisibilityTimeout = secondsVisibilityTimeoutOpt.getOrElse(DefaultVisibilityTimeout)
 
-          val secondsDelay = attributes.parseOptionalLong(DelaySecondsAttribute)
-            .getOrElse(DefaultDelay)
+          val secondsDelayOpt = attributes.parseOptionalLong(DelaySecondsAttribute)
+          val secondsDelay = secondsDelayOpt.getOrElse(DefaultDelay)
 
           val secondsReceiveMessageWaitTimeOpt = attributes.parseOptionalLong(ReceiveMessageWaitTimeSecondsAttribute)
           val secondsReceiveMessageWaitTime = secondsReceiveMessageWaitTimeOpt
@@ -44,9 +44,12 @@ trait CreateQueueDirectives { this: ElasticMQDirectives with QueueURLModule with
 
             val queueData = await(lookupOrCreateQueue(newQueueData))
 
-            if ((queueData.delay.getStandardSeconds != secondsDelay) ||
-              (queueData.receiveMessageWait.getStandardSeconds != secondsReceiveMessageWaitTime) ||
-              (queueData.defaultVisibilityTimeout.seconds != secondsVisibilityTimeout)) {
+            // if the request set the attributes compare them against the queue
+            if ((!secondsDelayOpt.isEmpty && queueData.delay.getStandardSeconds != secondsDelay) ||
+              (!secondsReceiveMessageWaitTimeOpt.isEmpty 
+                  && queueData.receiveMessageWait.getStandardSeconds != secondsReceiveMessageWaitTime) ||
+              (!secondsVisibilityTimeoutOpt.isEmpty 
+                  && queueData.defaultVisibilityTimeout.seconds != secondsVisibilityTimeout)) {
               // Special case: the queue existed, but has different attributes
               throw new SQSException("AWS.SimpleQueueService.QueueNameExists")
             }

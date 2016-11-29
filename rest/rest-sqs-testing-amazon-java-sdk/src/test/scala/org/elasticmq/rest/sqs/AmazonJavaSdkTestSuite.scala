@@ -154,7 +154,7 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
     // Then
     queueVisibilityTimeout(queueUrl) should be (10)
   }
-
+  
   test("should send and receive a simple message") {
     doTestSendAndReceiveMessage("Message 1")
   }
@@ -794,6 +794,18 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
     }
 
     result.isLeft should be (true)
+  }
+  
+  test("should not return an error if creating an existing queue with a non default visibility timeout") {
+    // Given
+    val queueUrl = client.createQueue(new CreateQueueRequest("testQueue1")
+      .withAttributes(Map(defaultVisibilityTimeoutAttribute -> "42"))).getQueueUrl
+
+    // When
+    val queueUrl2 = client.createQueue(new CreateQueueRequest("testQueue1")).getQueueUrl
+    
+
+    queueUrl should equal(queueUrl2)
   }
 
   test("should purge the queue") {
