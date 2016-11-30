@@ -1,12 +1,11 @@
 import sbt._
 import Keys._
-import sbtassembly.Plugin._
-import AssemblyKeys._
+import sbtassembly.AssemblyKeys._
 
 object BuildSettings {
   val buildSettings = Defaults.coreDefaultSettings ++ Seq (
     organization  := "org.elasticmq",
-    version       := "0.11.0",
+    version       := "0.11.1",
     scalaVersion  := "2.11.8",
     crossScalaVersions := Seq(scalaVersion.value, "2.12.0"),
 
@@ -117,7 +116,7 @@ object ElasticMQBuild extends Build {
   lazy val server: Project = Project(
     "elasticmq-server",
     file("server"),
-    settings = buildSettings ++ CustomTasks.generateVersionFileSettings ++ assemblySettings ++ Seq(
+    settings = buildSettings ++ CustomTasks.generateVersionFileSettings ++ Seq(
       libraryDependencies ++= Seq(logback, config),
       mainClass in assembly := Some("org.elasticmq.server.Main")
     )
