@@ -1,36 +1,28 @@
 package org.elasticmq.rest.sqs
 
-import akka.http.scaladsl.Http
-import akka.stream.ActorMaterializer
-
-import scala.util.control.Exception._
-import xml._
-import java.security.MessageDigest
-
-import org.elasticmq.util.Logging
-
-import collection.mutable.ArrayBuffer
-import akka.actor.{ActorRef, ActorSystem, Props}
-import akka.util.Timeout
-
-import scala.concurrent.{Await, Future}
-import org.elasticmq.rest.sqs.directives.ElasticMQDirectives
-import org.elasticmq.rest.sqs.Constants._
-
-import scala.xml.EntityRef
-import org.elasticmq._
-import com.typesafe.config.ConfigFactory
-import org.elasticmq.actor.QueueManagerActor
-import org.elasticmq.util.NowProvider
-
-import scala.concurrent.duration._
-import java.nio.ByteBuffer
 import java.io.ByteArrayOutputStream
-
-import scala.collection.immutable.TreeMap
+import java.nio.ByteBuffer
+import java.security.MessageDigest
 import java.util.concurrent.TimeUnit
 
+import akka.actor.{ActorRef, ActorSystem, Props}
+import akka.http.scaladsl.Http
 import akka.http.scaladsl.server.{Directive1, Directives}
+import akka.stream.ActorMaterializer
+import akka.util.Timeout
+import com.typesafe.config.ConfigFactory
+import org.elasticmq._
+import org.elasticmq.actor.QueueManagerActor
+import org.elasticmq.rest.sqs.Constants._
+import org.elasticmq.rest.sqs.directives.ElasticMQDirectives
+import org.elasticmq.util.{Logging, NowProvider}
+
+import scala.collection.immutable.TreeMap
+import scala.collection.mutable.ArrayBuffer
+import scala.concurrent.duration._
+import scala.concurrent.{Await, Future}
+import scala.util.control.Exception._
+import scala.xml.{EntityRef, _}
 
 /**
  * By default:
@@ -73,6 +65,11 @@ case class TheSQSRestServerBuilder(providedActorSystem: Option[ActorSystem],
   def withPort(_port: Int) = this.copy(port = _port)
 
   /**
+   * Will use port zero for automatic assignment.
+   */
+  def withDynamicPort() = withPort(0)
+
+  /**
    * @param _serverAddress Address which will be returned as the queue address. Requests to this address
    *                       should be routed to this server.
    */
@@ -113,10 +110,10 @@ case class TheSQSRestServerBuilder(providedActorSystem: Option[ActorSystem],
       with PurgeQueueDirectives
       with AttributesModule {
 
+      var serverAddress = theServerAddress
       lazy val actorSystem = theActorSystem
       lazy val materializer = implicitMaterializer
       lazy val queueManagerActor = theQueueManagerActor
-      lazy val serverAddress = theServerAddress
       lazy val sqsLimits = theLimits
       lazy val timeout = Timeout(21, TimeUnit.SECONDS) // see application.conf
     }
@@ -160,8 +157,18 @@ case class TheSQSRestServerBuilder(providedActorSystem: Option[ActorSystem],
 
     val appStartFuture = Http().bindAndHandle(routes, interface, port)
 
-    TheSQSRestServerBuilder.this.logger.info("Started SQS rest server, bind address %s:%d, visible server address %s"
-      .format(interface, port, if (theServerAddress.isWildcard) "* (depends on incoming request path) "else theServerAddress.fullAddress))
+    appStartFuture.onSuccess {
+      case sb: Http.ServerBinding =>
+        env.serverAddress = NodeAddress(
+          env.serverAddress.protocol,
+          env.serverAddress.host,
+          sb.localAddress.getPort,
+          env.serverAddress.contextPath
+        )
+
+        TheSQSRestServerBuilder.this.logger.info("Started SQS rest server, bind address %s:%d, visible server address %s"
+                .format(interface, sb.localAddress.getPort, if (env.serverAddress.isWildcard) "* (depends on incoming request path) " else env.serverAddress.fullAddress))
+    }
 
     SQSRestServer(appStartFuture, () => {
       appStartFuture.flatMap { sb =>
