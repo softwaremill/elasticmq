@@ -4,6 +4,7 @@ import java.io.ByteArrayOutputStream
 import java.nio.ByteBuffer
 import java.security.MessageDigest
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicReference
 
 import akka.actor.{ActorRef, ActorSystem, Props}
 import akka.http.scaladsl.Http
@@ -22,6 +23,7 @@ import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 import scala.util.control.Exception._
+import scala.util.control.NonFatal
 import scala.xml.{EntityRef, _}
 
 /**
@@ -32,13 +34,14 @@ import scala.xml.{EntityRef, _}
  *  <ul>for `sqsLimits`: relaxed
  * </li>
  */
-object SQSRestServerBuilder extends TheSQSRestServerBuilder(None, None, "", 9324, NodeAddress(), SQSLimits.Strict)
+object SQSRestServerBuilder extends TheSQSRestServerBuilder(None, None, "", 9324, NodeAddress(), true, SQSLimits.Strict)
 
 case class TheSQSRestServerBuilder(providedActorSystem: Option[ActorSystem],
                                    providedQueueManagerActor: Option[ActorRef],
                                    interface: String,
                                    port: Int,
                                    serverAddress: NodeAddress,
+                                   generateServerAddress: Boolean,
                                    sqsLimits: SQSLimits.Value) extends Logging {
 
   /**
@@ -65,7 +68,7 @@ case class TheSQSRestServerBuilder(providedActorSystem: Option[ActorSystem],
   def withPort(_port: Int) = this.copy(port = _port)
 
   /**
-   * Will use port zero for automatic assignment.
+   * Will assign port automatically (uses port 0). The port to which the socket binds will be logged on successful startup.
    */
   def withDynamicPort() = withPort(0)
 
@@ -73,7 +76,7 @@ case class TheSQSRestServerBuilder(providedActorSystem: Option[ActorSystem],
    * @param _serverAddress Address which will be returned as the queue address. Requests to this address
    *                       should be routed to this server.
    */
-  def withServerAddress(_serverAddress: NodeAddress) = this.copy(serverAddress = _serverAddress)
+  def withServerAddress(_serverAddress: NodeAddress) = this.copy(serverAddress = _serverAddress, generateServerAddress = false)
 
   /**
    * @param _sqsLimits Should "real" SQS limits be used (strict), or should they be relaxed where possible (regarding
@@ -84,11 +87,13 @@ case class TheSQSRestServerBuilder(providedActorSystem: Option[ActorSystem],
   def start(): SQSRestServer = {
     val (theActorSystem, stopActorSystem) = getOrCreateActorSystem
     val theQueueManagerActor = getOrCreateQueueManagerActor(theActorSystem)
-    val theServerAddress = serverAddress
+    val theServerAddress = if (generateServerAddress) NodeAddress(host = if (interface.isEmpty) "localhost" else interface, port = port) else serverAddress
     val theLimits = sqsLimits
 
     implicit val implicitActorSystem = theActorSystem
     implicit val implicitMaterializer = ActorMaterializer()
+
+    val currentServerAddress = new AtomicReference[NodeAddress](theServerAddress)
 
     val env = new QueueManagerActorModule
       with QueueURLModule
@@ -110,7 +115,7 @@ case class TheSQSRestServerBuilder(providedActorSystem: Option[ActorSystem],
       with PurgeQueueDirectives
       with AttributesModule {
 
-      var serverAddress = theServerAddress
+      def serverAddress = currentServerAddress.get()
       lazy val actorSystem = theActorSystem
       lazy val materializer = implicitMaterializer
       lazy val queueManagerActor = theQueueManagerActor
@@ -159,15 +164,17 @@ case class TheSQSRestServerBuilder(providedActorSystem: Option[ActorSystem],
 
     appStartFuture.onSuccess {
       case sb: Http.ServerBinding =>
-        env.serverAddress = NodeAddress(
-          env.serverAddress.protocol,
-          env.serverAddress.host,
-          sb.localAddress.getPort,
-          env.serverAddress.contextPath
-        )
+        if (generateServerAddress && port != sb.localAddress.getPort) {
+          currentServerAddress.set(theServerAddress.copy(port = sb.localAddress.getPort))
+        }
 
         TheSQSRestServerBuilder.this.logger.info("Started SQS rest server, bind address %s:%d, visible server address %s"
                 .format(interface, sb.localAddress.getPort, if (env.serverAddress.isWildcard) "* (depends on incoming request path) " else env.serverAddress.fullAddress))
+    }
+
+    appStartFuture.onFailure {
+      case NonFatal(e) =>
+        TheSQSRestServerBuilder.this.logger.error("Cannot start SQS rest server, bind address %s:%d".format(interface, port), e)
     }
 
     SQSRestServer(appStartFuture, () => {

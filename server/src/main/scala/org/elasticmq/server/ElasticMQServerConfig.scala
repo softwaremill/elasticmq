@@ -31,6 +31,8 @@ class ElasticMQServerConfig(config: Config) {
       subConfig.getString("context-path"))
   }
 
+  val generateNodeAddress = config.getBoolean("generate-node-address")
+
   // Optionally expose the REST SQS interface
 
   class RestSqsConfiguration {

@@ -5,7 +5,7 @@ tl;dr
 -----
 
 * message queue system
-* runs stand-alone ([download](https://s3-eu-west-1.amazonaws.com/softwaremill-public/elasticmq-server-0.11.1.jar)) or embedded
+* runs stand-alone ([download](https://s3-eu-west-1.amazonaws.com/softwaremill-public/elasticmq-server-0.12.0.jar)) or embedded
 * [Amazon SQS](http://aws.amazon.com/sqs/)-compatible interface
 * fully asynchronous implementation, no blocking calls
 
@@ -43,18 +43,18 @@ Installation: stand-alone
 -------------------------
 
 You can download the stand-alone distribution here:
-[https://s3/.../elasticmq-server-0.11.1.jar](https://s3-eu-west-1.amazonaws.com/softwaremill-public/elasticmq-server-0.11.1.jar)
+[https://s3/.../elasticmq-server-0.12.0.jar](https://s3-eu-west-1.amazonaws.com/softwaremill-public/elasticmq-server-0.12.0.jar)
 
 Java 6 or above is required for running the server.
 
 Simply run the jar and you should get a working server, which binds to `localhost:9324`:
 
-    java -jar elasticmq-server-0.11.1.jar
+    java -jar elasticmq-server-0.12.0.jar
 
 ElasticMQ uses [Typesafe Config](https://github.com/typesafehub/config) for configuration. To specify custom
 configuration values, create a file (e.g. `custom.conf`), fill it in with the desired values, and pass it to the server:
 
-    java -Dconfig.file=custom.conf -jar elasticmq-server-0.11.1.jar
+    java -Dconfig.file=custom.conf -jar elasticmq-server-0.12.0.jar
 
 The config file may contain any configuration for Akka and ElasticMQ. Current ElasticMQ configuration values are:
 
@@ -78,6 +78,10 @@ rest-sqs {
     sqs-limits = strict
 }
 
+// Should the node-address be generated from the bind port/hostname
+// Set this to true e.g. when assigning port automatically by using port 0.
+generate-node-address = false
+
 queues {
     // See next section
 }
@@ -87,7 +91,7 @@ You can also provide an alternative [Logback](http://logback.qos.ch/) configurat
 [default](server/src/main/resources/logback.xml) is configured to
 log INFO logs and above to the console):
 
-    java -Dlogback.configurationFile=my_logback.xml -jar elasticmq-server-0.11.1.jar
+    java -Dlogback.configurationFile=my_logback.xml -jar elasticmq-server-0.12.0.jar
 
 How are queue URLs created
 --------------------------
@@ -98,12 +102,14 @@ To customize, you should properly set the protocol/host/port/context in the `nod
 You can also set `node-address.host` to a special value, `"*"`, which will cause any queue URLs created during a request
 to use the path of the incoming request. This might be useful e.g. in containerized (Docker) deployments.
 
-Note that changing the `bind-port` and `bind-hostname` settings does not affect the queue URLs in any way.
-
+Note that changing the `bind-port` and `bind-hostname` settings does not affect the queue URLs in any way unless
+`generate-node-address` is `true`. In that case, the bind host/port are used to create the node address. This is
+useful when the port should be automatically assigned (use port `0` in such case, the selected port will be
+visible in the logs).
 Automatically creating queues on startup
 ----------------------------------------
 
-Queues can be automatically created on startup by providing appropriate configuration (since 0.9.3):
+Queues can be automatically created on startup by providing appropriate configuration:
 
 The queues are specified in a custom configuration file. For example, create a `custom.conf` file with the following:
 
@@ -182,7 +188,7 @@ ElasticMQ dependencies in SBT
 -----------------------------
 
     // Scala 2.11
-    val elasticmqSqs        = "org.elasticmq" %% "elasticmq-rest-sqs"         % "0.11.1"
+    val elasticmqSqs        = "org.elasticmq" %% "elasticmq-rest-sqs"         % "0.12.0"
 
     // Scala 2.10
     val elasticmqSqs        = "org.elasticmq" %% "elasticmq-rest-sqs"         % "0.7.1"
@@ -190,7 +196,7 @@ ElasticMQ dependencies in SBT
 If you don't want the SQS interface, but just use the actors directly, you can add a dependency only to the `core`
 module:
 
-    val elasticmqCore       = "org.elasticmq" %% "elasticmq-core"             % "0.11.1"
+    val elasticmqCore       = "org.elasticmq" %% "elasticmq-core"             % "0.12.0"
 
 If you want to use a snapshot version, you will need to add the [https://oss.sonatype.org/content/repositories/snapshots/](https://oss.sonatype.org/content/repositories/snapshots/) repository to your configuration.
 
@@ -202,7 +208,7 @@ Dependencies:
     <dependency>
         <groupId>org.elasticmq</groupId>
         <artifactId>elasticmq-rest-sqs_2.11</artifactId>
-        <version>0.11.1</version>
+        <version>0.12.0</version>
     </dependency>
 
 If you want to use a snapshot version, you will need to add the [https://oss.sonatype.org/content/repositories/snapshots/](https://oss.sonatype.org/content/repositories/snapshots/) repository to your configuration.
@@ -216,9 +222,9 @@ have been discontinued.
 Current versions
 ----------------
 
-*Stable*: 0.11.1, 0.8.12
+*Stable*: 0.12.0, 0.8.12
 
-*Development*: 0.11.1-SNAPSHOT
+*Development*: 0.12.0-SNAPSHOT
 
 Logging
 -------
@@ -283,6 +289,11 @@ Technology
 
 Change log
 ----------
+
+#### Version 0.12.0 (7 Dec 2016)
+
+* support for dynamic port allocation
+* node address is generated from bind address if not specified
 
 #### Version 0.11.1 (30 Nov 2016)
 

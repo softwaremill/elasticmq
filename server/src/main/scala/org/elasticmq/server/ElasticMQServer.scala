@@ -30,9 +30,8 @@ class ElasticMQServer(config: ElasticMQServerConfig) extends Logging {
 
   private def createBase(): ActorRef = {
     config.storage match {
-      case config.InMemoryStorage => {
+      case config.InMemoryStorage =>
         actorSystem.actorOf(Props(new QueueManagerActor(new NowProvider())))
-      }
     }
   }
 
@@ -44,6 +43,7 @@ class ElasticMQServer(config: ElasticMQServerConfig) extends Logging {
         config.restSqs.bindHostname,
         config.restSqs.bindPort,
         config.nodeAddress,
+        config.generateNodeAddress,
         config.restSqs.sqsLimits).start()
 
       server.waitUntilStarted()
