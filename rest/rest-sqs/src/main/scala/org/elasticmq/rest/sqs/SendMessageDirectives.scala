@@ -19,7 +19,6 @@ trait SendMessageDirectives { this: ElasticMQDirectives with SQSLimitsModule =>
     p.action("SendMessage") {
       queueActorFromRequest(p) { queueActor =>
         doSendMessage(queueActor, p).map { case (message, digest, messageAttributeDigest) =>
-          // TODO: Only include MD5OfMessageAttributes if message attributes
           respondWith {
             <SendMessageResponse>
               <SendMessageResult>

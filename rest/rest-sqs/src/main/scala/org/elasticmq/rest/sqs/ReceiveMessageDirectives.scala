@@ -76,8 +76,8 @@ trait ReceiveMessageDirectives { this: ElasticMQDirectives with AttributesModule
                   <MD5OfBody>{md5Digest(msg.content)}</MD5OfBody>
                   <Body>{XmlUtil.convertTexWithCRToNodeSeq(msg.content)}</Body>
                   {attributesToXmlConverter.convert(calculateAttributeValues(msg))}
-                  <MD5OfMessageAttributes>{md5AttributeDigest(msg.messageAttributes)}</MD5OfMessageAttributes> // TODO: Only include if message attributes
-                  {messageAttributesToXmlConverter.convert(msg.messageAttributes.toList)} // TODO: Filter to only requested attributes
+                  <MD5OfMessageAttributes>{md5AttributeDigest(msg.messageAttributes)}</MD5OfMessageAttributes>
+                  {messageAttributesToXmlConverter.convert(msg.messageAttributes.toList)}
                 </Message> }}
               </ReceiveMessageResult>
               <ResponseMetadata>

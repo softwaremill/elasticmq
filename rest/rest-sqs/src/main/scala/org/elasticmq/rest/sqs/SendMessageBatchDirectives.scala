@@ -15,7 +15,7 @@ trait SendMessageBatchDirectives { this: ElasticMQDirectives with SendMessageDir
           doSendMessage(queueActor, messageData).map { case (message, digest, messageAttributeDigest) =>
             <SendMessageBatchResultEntry>
               <Id>{id}</Id>
-              <MD5OfMessageAttributes>{messageAttributeDigest}</MD5OfMessageAttributes> // TODO: Only send if message attributes included
+              <MD5OfMessageAttributes>{messageAttributeDigest}</MD5OfMessageAttributes>
               <MD5OfMessageBody>{digest}</MD5OfMessageBody>
               <MessageId>{message.id.id}</MessageId>
             </SendMessageBatchResultEntry>
