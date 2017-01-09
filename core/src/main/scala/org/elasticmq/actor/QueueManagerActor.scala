@@ -44,13 +44,15 @@ class QueueManagerActor(nowProvider: NowProvider) extends ReplyingActor with Log
     case ListQueues() => queues.keySet.toSeq
   }
 
-  private def createQueueActor(nowProvider: NowProvider, queuData: QueueData): ActorRef = {
-    val deadLetterQueueActor = queuData.deadLettersQueue.map { qd =>
-      val actor = context.actorOf(Props(new QueueActor(
-        nowProvider, qd, qd.deadLettersQueue.map(createQueueActor(nowProvider, _)))))
-      queues(qd.name) = actor
-      actor
+  private def createQueueActor(nowProvider: NowProvider, queueData: QueueData): ActorRef = {
+    val deadLetterQueueActor = queueData.deadLettersQueue.map { qd =>
+      queues.getOrElse(qd.name, {
+        val actor = context.actorOf(Props(new QueueActor(
+          nowProvider, qd, qd.deadLettersQueue.map(createQueueActor(nowProvider, _)))))
+        queues(qd.name) = actor
+        actor
+      })
     }
-    context.actorOf(Props(new QueueActor(nowProvider, queuData, deadLetterQueueActor)))
+    context.actorOf(Props(new QueueActor(nowProvider, queueData, deadLetterQueueActor)))
   }
 }
