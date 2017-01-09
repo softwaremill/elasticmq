@@ -116,14 +116,24 @@ The queues are specified in a custom configuration file. For example, create a `
 ````
 include classpath("application.conf")
 
-queues {
-    queue1 {
+queues = [
+    {
+    	name = queue1
         defaultVisibilityTimeout = 10 seconds
         delay = 5 seconds
+        maxReceiveCount = 3
         receiveMessageWait = 0 seconds
-    }
-    queue2 { }
-}
+        deadLettersQueue = {
+        	name = deadletters1
+        	defaultVisibilityTimeout = 10 seconds
+        	delay = 5 seconds
+        	maxReceiveCount = 3
+        	receiveMessageWait = 0 seconds
+        	deadLettersQueue = {...}
+    	}
+    },
+    {...}
+]
 ````
 
 All attributes are optional, and if not specified will use the default SQS values.
