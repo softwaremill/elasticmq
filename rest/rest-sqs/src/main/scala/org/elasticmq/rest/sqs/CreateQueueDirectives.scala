@@ -13,6 +13,7 @@ import CreateQueueDirectives._
 
 trait CreateQueueDirectives { this: ElasticMQDirectives with QueueURLModule with AttributesModule with SQSLimitsModule =>
 
+  // DeadLettersQueue currently not supported via http call due to current API limitations. Consider moving to JSON?
   def createQueue(p: AnyParams) = {
     p.action("CreateQueue") {
       rootPath {
@@ -25,13 +26,16 @@ trait CreateQueueDirectives { this: ElasticMQDirectives with QueueURLModule with
           val secondsDelayOpt = attributes.parseOptionalLong(DelaySecondsAttribute)
           val secondsDelay = secondsDelayOpt.getOrElse(DefaultDelay)
 
+          val maxReceiveCountOpt = attributes.parseOptionalInt(MaxReceiveCountAttribute)
+          val maxReceiveCount = maxReceiveCountOpt.getOrElse(DefaultMaxReceiveCount)
+
           val secondsReceiveMessageWaitTimeOpt = attributes.parseOptionalLong(ReceiveMessageWaitTimeSecondsAttribute)
           val secondsReceiveMessageWaitTime = secondsReceiveMessageWaitTimeOpt
             .getOrElse(DefaultReceiveMessageWaitTimeSecondsAttribute)
 
           val newQueueData = QueueData(queueName, MillisVisibilityTimeout.fromSeconds(secondsVisibilityTimeout),
             Duration.standardSeconds(secondsDelay), Duration.standardSeconds(secondsReceiveMessageWaitTime),
-            new DateTime(), new DateTime())
+            None, maxReceiveCount, new DateTime(), new DateTime())
 
           async {
             if (!queueName.matches("[\\p{Alnum}_-]*")) {
@@ -46,9 +50,9 @@ trait CreateQueueDirectives { this: ElasticMQDirectives with QueueURLModule with
 
             // if the request set the attributes compare them against the queue
             if ((!secondsDelayOpt.isEmpty && queueData.delay.getStandardSeconds != secondsDelay) ||
-              (!secondsReceiveMessageWaitTimeOpt.isEmpty 
+              (!secondsReceiveMessageWaitTimeOpt.isEmpty
                   && queueData.receiveMessageWait.getStandardSeconds != secondsReceiveMessageWaitTime) ||
-              (!secondsVisibilityTimeoutOpt.isEmpty 
+              (!secondsVisibilityTimeoutOpt.isEmpty
                   && queueData.defaultVisibilityTimeout.seconds != secondsVisibilityTimeout)) {
               // Special case: the queue existed, but has different attributes
               throw new SQSException("AWS.SimpleQueueService.QueueNameExists")
@@ -90,6 +94,7 @@ trait CreateQueueDirectives { this: ElasticMQDirectives with QueueURLModule with
 }
 
 object CreateQueueDirectives {
+  val DefaultMaxReceiveCount = 1
   val DefaultVisibilityTimeout = 30L
   val DefaultDelay = 0L
   val DefaultReceiveMessageWaitTimeSecondsAttribute = 0L

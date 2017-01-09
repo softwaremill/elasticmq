@@ -6,11 +6,22 @@ import org.elasticmq.MessageId
 import org.elasticmq.MillisNextDelivery
 
 trait DataCreationHelpers {
-  def createQueueData(name: String, defaultVisibilityTimeout: MillisVisibilityTimeout) =
-    QueueData(name, defaultVisibilityTimeout, Duration.ZERO, Duration.ZERO, new DateTime(0), new DateTime(0))
+  def createQueueData(
+    name: String,
+    defaultVisibilityTimeout: MillisVisibilityTimeout,
+    deadLettersQueue: Option[QueueData] = None
+  ) = QueueData(
+    name,
+    defaultVisibilityTimeout,
+    Duration.ZERO,
+    Duration.ZERO,
+    deadLettersQueue,
+    1,
+    new DateTime(0),
+    new DateTime(0))
 
-  def createMessageData(id: String, content: String, messageAttributes: Map[String,MessageAttribute], nextDelivery: MillisNextDelivery,
-                        deliveryReceipt: Option[DeliveryReceipt] = None) =
+  def createMessageData(id: String, content: String, messageAttributes: Map[String, MessageAttribute], nextDelivery: MillisNextDelivery,
+    deliveryReceipt: Option[DeliveryReceipt] = None) =
     MessageData(MessageId(id), deliveryReceipt, content, messageAttributes, nextDelivery, new DateTime(0), MessageStatistics(NeverReceived, 0))
 
   def createNewMessageData(id: String, content: String, messageAttributes: Map[String, MessageAttribute], nextDelivery: MillisNextDelivery) =

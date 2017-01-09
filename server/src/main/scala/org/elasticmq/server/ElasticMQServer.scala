@@ -61,14 +61,23 @@ class ElasticMQServer(config: ElasticMQServerConfig) extends Logging {
     }
 
     val futures = config.createQueues.map { cq =>
-      queueManagerActor ? CreateQueue(QueueData(cq.name,
-        MillisVisibilityTimeout.fromSeconds(cq.defaultVisibilityTimeoutSeconds.getOrElse(CreateQueueDirectives.DefaultVisibilityTimeout)),
-        Duration.standardSeconds(cq.delaySeconds.getOrElse(CreateQueueDirectives.DefaultDelay)),
-        Duration.standardSeconds(cq.receiveMessageWaitSeconds.getOrElse(CreateQueueDirectives.DefaultReceiveMessageWaitTimeSecondsAttribute)),
-        new DateTime(),
-        new DateTime()))
+      queueManagerActor ? CreateQueue(configToParams(cq, new DateTime))
     }
 
     futures.foreach { f => Await.result(f, timeout.duration) }
+  }
+
+  private def configToParams(cq: config.CreateQueue, now: DateTime): QueueData = {
+    QueueData(
+      name = cq.name,
+      defaultVisibilityTimeout = MillisVisibilityTimeout.fromSeconds(
+        cq.defaultVisibilityTimeoutSeconds.getOrElse(CreateQueueDirectives.DefaultVisibilityTimeout)),
+      delay = Duration.standardSeconds(cq.delaySeconds.getOrElse(CreateQueueDirectives.DefaultDelay)),
+      receiveMessageWait = Duration.standardSeconds(
+        cq.receiveMessageWaitSeconds.getOrElse(CreateQueueDirectives.DefaultReceiveMessageWaitTimeSecondsAttribute)),
+      maxReceiveCount = cq.maxReceiveCount,
+      created = now,
+      lastModified = now,
+      deadLettersQueue = cq.deadLettersQueue.map(configToParams(_, now)))
   }
 }

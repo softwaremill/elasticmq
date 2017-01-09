@@ -57,20 +57,37 @@ class ElasticMQServerConfig(config: Config) {
   case class CreateQueue(name: String,
     defaultVisibilityTimeoutSeconds: Option[Long],
     delaySeconds: Option[Long],
-    receiveMessageWaitSeconds: Option[Long])
+    receiveMessageWaitSeconds: Option[Long],
+    deadLettersQueue: Option[CreateQueue] = None,
+    maxReceiveCount: Int = 1)
+
+  private val maxReceiveCountLimit = 1000
 
   val createQueues: List[CreateQueue] = {
+    import scala.collection.JavaConversions._
+
+    val maxReceiveCountKey = "maxReceiveCount"
+    val deadLettersQueueKey = "deadLettersQueue"
+
     def getOptionalDuration(c: Config, k: String) = if (c.hasPath(k)) Some(c.getDuration(k, TimeUnit.SECONDS)) else None
 
-    import scala.collection.JavaConversions._
-    config.getObject("queues").map { case (n, v) =>
-      val c = v.asInstanceOf[ConfigObject].toConfig
+    def getOptionalString(c: Config, k: String) = if (c.hasPath(k)) Some(c.getString(k)) else None
+
+    def fillQueueObj(c: Config): CreateQueue = {
       CreateQueue(
-        n,
-        getOptionalDuration(c, "defaultVisibilityTimeout"),
-        getOptionalDuration(c, "delay"),
-        getOptionalDuration(c, "receiveMessageWait")
+        name = c.getString("name"),
+        defaultVisibilityTimeoutSeconds = getOptionalDuration(c, "defaultVisibilityTimeout"),
+        delaySeconds = getOptionalDuration(c, "delay"),
+        receiveMessageWaitSeconds = getOptionalDuration(c, "receiveMessageWait"),
+        maxReceiveCount = if (c.hasPath(maxReceiveCountKey))
+          math.min(c.getInt(maxReceiveCountKey), maxReceiveCountLimit) else 1,
+        deadLettersQueue = if (c.hasPath(deadLettersQueueKey))
+          Some(fillQueueObj(c.getConfig(deadLettersQueueKey))) else None
       )
+    }
+
+    config.getObjectList("queues").map { co =>
+      fillQueueObj(co.toConfig)
     }.toList
   }
 }

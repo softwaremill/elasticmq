@@ -219,6 +219,7 @@ object Constants {
   val ReceiptHandleParameter = "ReceiptHandle"
   val VisibilityTimeoutParameter = "VisibilityTimeout"
   val DelaySecondsAttribute = "DelaySeconds"
+  val MaxReceiveCountAttribute = "MaxReceiveCount"
   val ReceiveMessageWaitTimeSecondsAttribute = "ReceiveMessageWaitTimeSeconds"
   val QueueArnAttribute = "QueueArn"
   val IdSubParameter = "Id"
@@ -232,6 +233,15 @@ object ParametersUtil {
       val param = parameters.get(name)
       try {
         param.map(_.toLong)
+      } catch {
+        case e: NumberFormatException => throw SQSException.invalidParameterValue
+      }
+    }
+
+    def parseOptionalInt(name: String) = {
+      val param = parameters.get(name)
+      try {
+        param.map(_.toInt)
       } catch {
         case e: NumberFormatException => throw SQSException.invalidParameterValue
       }

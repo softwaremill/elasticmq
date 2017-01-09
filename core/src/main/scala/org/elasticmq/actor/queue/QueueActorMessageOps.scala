@@ -73,7 +73,7 @@ trait QueueActorMessageOps extends Logging {
   }
 
   protected def receiveMessages(visibilityTimeout: VisibilityTimeout,
-                                count: Int): List[MessageData] = {
+    count: Int): List[MessageData] = {
     val deliveryTime = nowProvider.nowMillis
 
     @tailrec
@@ -103,6 +103,15 @@ trait QueueActorMessageOps extends Logging {
         messageQueue += internalMessage
         None
       } else if (messagesById.contains(id.id)) {
+        // Putting the msg to dead letters queue if exists or delete.
+        if (internalMessage.receiveCount >= queueData.maxReceiveCount) {
+          logger.info(s"send message $internalMessage to dead letters actor $deadLettersActorRef")
+          deadLettersActorRef
+            .map(_ ! SendMessage(internalMessage.toNewMessageData))
+            .getOrElse(internalMessage.deliveryReceipt.foreach(dr => deleteMessage(DeliveryReceipt(dr))))
+          return None
+        }
+
         // Putting the msg again into the queue, with a new next delivery
         internalMessage.deliveryReceipt = Some(DeliveryReceipt.generate(id).receipt)
         internalMessage.nextDelivery = newNextDelivery.millis

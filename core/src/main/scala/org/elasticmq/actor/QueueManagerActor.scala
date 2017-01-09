@@ -1,13 +1,14 @@
 package org.elasticmq.actor
 
 import org.elasticmq.msg._
+
 import scala.reflect._
 import org.elasticmq.msg.DeleteQueue
 import org.elasticmq.msg.CreateQueue
-import akka.actor.{Props, ActorRef}
+import akka.actor.{ActorRef, Props}
 import org.elasticmq.util.{Logging, NowProvider}
 import org.elasticmq.actor.queue.QueueActor
-import org.elasticmq.QueueAlreadyExists
+import org.elasticmq.{QueueAlreadyExists, QueueData}
 import org.elasticmq.actor.reply._
 
 class QueueManagerActor(nowProvider: NowProvider) extends ReplyingActor with Logging {
@@ -23,7 +24,7 @@ class QueueManagerActor(nowProvider: NowProvider) extends ReplyingActor with Log
         Left(new QueueAlreadyExists(queueData.name))
       } else {
         logger.info(s"Creating queue $queueData")
-        val actor = context.actorOf(Props(new QueueActor(nowProvider, queueData)))
+        val actor = createQueueActor(nowProvider, queueData)
         queues(queueData.name) = actor
         Right(actor)
       }
@@ -41,5 +42,15 @@ class QueueManagerActor(nowProvider: NowProvider) extends ReplyingActor with Log
     }
 
     case ListQueues() => queues.keySet.toSeq
+  }
+
+  private def createQueueActor(nowProvider: NowProvider, queuData: QueueData): ActorRef = {
+    val deadLetterQueueActor = queuData.deadLettersQueue.map { qd =>
+      val actor = context.actorOf(Props(new QueueActor(
+        nowProvider, qd, qd.deadLettersQueue.map(createQueueActor(nowProvider, _)))))
+      queues(qd.name) = actor
+      actor
+    }
+    context.actorOf(Props(new QueueActor(nowProvider, queuData, deadLetterQueueActor)))
   }
 }
