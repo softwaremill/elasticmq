@@ -103,12 +103,17 @@ trait QueueActorMessageOps extends Logging {
         messageQueue += internalMessage
         None
       } else if (messagesById.contains(id.id)) {
-        // Putting the msg to dead letters queue if exists or delete.
+        // Putting the msg to dead letters queue if exists
         if (internalMessage.receiveCount >= queueData.maxReceiveCount) {
           logger.info(s"send message $internalMessage to dead letters actor $deadLettersActorRef")
           deadLettersActorRef
             .map(_ ! SendMessage(internalMessage.toNewMessageData))
-            .getOrElse(internalMessage.deliveryReceipt.foreach(dr => deleteMessage(DeliveryReceipt(dr))))
+
+          // delete only if normal queue or if dead letter queue has its own dead letters queue
+          if (!queueData.isDeadLettersQueue || (queueData.isDeadLettersQueue && deadLettersActorRef.isDefined)) {
+            internalMessage.deliveryReceipt.foreach(dr => deleteMessage(DeliveryReceipt(dr)))
+          }
+
           return None
         }
 

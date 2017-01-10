@@ -9,4 +9,5 @@ case class QueueData(name: String,
   deadLettersQueue: Option[QueueData],
   maxReceiveCount: Int,
   created: DateTime,
-  lastModified: DateTime)
+  lastModified: DateTime,
+  isDeadLettersQueue: Boolean = false)

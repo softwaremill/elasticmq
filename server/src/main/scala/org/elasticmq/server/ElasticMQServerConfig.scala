@@ -2,11 +2,12 @@ package org.elasticmq.server
 
 import java.util.concurrent.TimeUnit
 
-import com.typesafe.config.{ConfigObject, Config}
+import com.typesafe.config.Config
 import org.elasticmq.NodeAddress
 import org.elasticmq.rest.sqs.SQSLimits
 
 class ElasticMQServerConfig(config: Config) {
+
   // Configure main storage
 
   sealed trait Storage
@@ -59,7 +60,8 @@ class ElasticMQServerConfig(config: Config) {
     delaySeconds: Option[Long],
     receiveMessageWaitSeconds: Option[Long],
     deadLettersQueue: Option[CreateQueue] = None,
-    maxReceiveCount: Int = 1)
+    maxReceiveCount: Int = 1,
+    isDeadLettersQueue: Boolean = false)
 
   private val maxReceiveCountLimit = 1000
 
@@ -73,7 +75,7 @@ class ElasticMQServerConfig(config: Config) {
 
     def getOptionalString(c: Config, k: String) = if (c.hasPath(k)) Some(c.getString(k)) else None
 
-    def fillQueueObj(c: Config): CreateQueue = {
+    def fillQueueObj(c: Config, isDeadLettersQueue: Boolean = false): CreateQueue = {
       CreateQueue(
         name = c.getString("name"),
         defaultVisibilityTimeoutSeconds = getOptionalDuration(c, "defaultVisibilityTimeout"),
@@ -82,7 +84,8 @@ class ElasticMQServerConfig(config: Config) {
         maxReceiveCount = if (c.hasPath(maxReceiveCountKey))
           math.min(c.getInt(maxReceiveCountKey), maxReceiveCountLimit) else 1,
         deadLettersQueue = if (c.hasPath(deadLettersQueueKey))
-          Some(fillQueueObj(c.getConfig(deadLettersQueueKey))) else None
+          Some(fillQueueObj(c.getConfig(deadLettersQueueKey), isDeadLettersQueue = true)) else None,
+        isDeadLettersQueue = isDeadLettersQueue
       )
     }
 
