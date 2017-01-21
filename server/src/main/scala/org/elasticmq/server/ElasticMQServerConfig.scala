@@ -2,7 +2,7 @@ package org.elasticmq.server
 
 import java.util.concurrent.TimeUnit
 
-import com.typesafe.config.Config
+import com.typesafe.config.{Config, ConfigObject, ConfigValueType}
 import org.elasticmq.NodeAddress
 import org.elasticmq.rest.sqs.SQSLimits
 
@@ -56,41 +56,52 @@ class ElasticMQServerConfig(config: Config) {
   val restSqs = new RestSqsConfiguration
 
   case class CreateQueue(name: String,
-    defaultVisibilityTimeoutSeconds: Option[Long],
-    delaySeconds: Option[Long],
-    receiveMessageWaitSeconds: Option[Long],
+    defaultVisibilityTimeoutSeconds: Option[Long] = None,
+    delaySeconds: Option[Long] = None,
+    receiveMessageWaitSeconds: Option[Long] = None,
     deadLettersQueue: Option[CreateQueue] = None,
-    maxReceiveCount: Int = 1,
+    maxReceiveCount: Option[Int] = None,
     isDeadLettersQueue: Boolean = false)
-
-  private val maxReceiveCountLimit = 1000
 
   val createQueues: List[CreateQueue] = {
     import scala.collection.JavaConversions._
 
     val maxReceiveCountKey = "maxReceiveCount"
     val deadLettersQueueKey = "deadLettersQueue"
+    val defaultVisibilityTimeoutKey = "defaultVisibilityTimeout"
+    val delayKey = "delay"
+    val receiveMessageWaitKey = "receiveMessageWait"
 
-    def getOptionalDuration(c: Config, k: String) = if (c.hasPath(k)) Some(c.getDuration(k, TimeUnit.SECONDS)) else None
+    def fillQueueObj(name: String, co: ConfigObject, isDeadLettersQueue: Boolean = false): CreateQueue = {
+      var createQueue = CreateQueue(name = name, isDeadLettersQueue = isDeadLettersQueue)
+      val c = co.toConfig
+      co.foreach {
+        case (`defaultVisibilityTimeoutKey`, _) =>
+          createQueue = createQueue.copy(defaultVisibilityTimeoutSeconds =
+            Some(c.getDuration(defaultVisibilityTimeoutKey, TimeUnit.SECONDS)))
+        case (`delayKey`, _) =>
+          createQueue = createQueue.copy(delaySeconds =
+            Some(c.getDuration(delayKey, TimeUnit.SECONDS)))
+        case (`receiveMessageWaitKey`, _) =>
+          createQueue = createQueue.copy(receiveMessageWaitSeconds =
+            Some(c.getDuration(receiveMessageWaitKey, TimeUnit.SECONDS)))
+        case (`maxReceiveCountKey`, _) =>
+          createQueue = createQueue.copy(maxReceiveCount = Some(c.getInt(maxReceiveCountKey)))
+        case (deadLettersQueueName, obj) if obj.valueType() == ConfigValueType.OBJECT =>
+          createQueue = createQueue.copy(
+            deadLettersQueue = Some(fillQueueObj(deadLettersQueueName, obj.asInstanceOf[ConfigObject],
+              isDeadLettersQueue = true)))
+      }
 
-    def getOptionalString(c: Config, k: String) = if (c.hasPath(k)) Some(c.getString(k)) else None
+      if (isDeadLettersQueue && createQueue.maxReceiveCount.isEmpty) {
+        throw new IllegalArgumentException("maxReceiveCount not set for dead letters queue " + name)
+      }
 
-    def fillQueueObj(c: Config, isDeadLettersQueue: Boolean = false): CreateQueue = {
-      CreateQueue(
-        name = c.getString("name"),
-        defaultVisibilityTimeoutSeconds = getOptionalDuration(c, "defaultVisibilityTimeout"),
-        delaySeconds = getOptionalDuration(c, "delay"),
-        receiveMessageWaitSeconds = getOptionalDuration(c, "receiveMessageWait"),
-        maxReceiveCount = if (c.hasPath(maxReceiveCountKey))
-          math.min(c.getInt(maxReceiveCountKey), maxReceiveCountLimit) else 1,
-        deadLettersQueue = if (c.hasPath(deadLettersQueueKey))
-          Some(fillQueueObj(c.getConfig(deadLettersQueueKey), isDeadLettersQueue = true)) else None,
-        isDeadLettersQueue = isDeadLettersQueue
-      )
+      createQueue
     }
 
-    config.getObjectList("queues").map { co =>
-      fillQueueObj(co.toConfig)
+    config.getObject("queues").map { case (name, obj) =>
+      fillQueueObj(name, obj.asInstanceOf[ConfigObject])
     }.toList
   }
 }

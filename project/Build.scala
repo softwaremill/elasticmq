@@ -3,10 +3,10 @@ import Keys._
 import sbtassembly.AssemblyKeys._
 
 object BuildSettings {
-  val buildSettings = Defaults.coreDefaultSettings ++ Seq (
-    organization  := "org.elasticmq",
-    version       := "0.12.1",
-    scalaVersion  := "2.11.8",
+  val buildSettings = Defaults.coreDefaultSettings ++ Seq(
+    organization := "org.elasticmq",
+    version := "0.12.1",
+    scalaVersion := "2.11.8",
     crossScalaVersions := Seq(scalaVersion.value, "2.12.0"),
 
     libraryDependencies += "org.scala-lang.modules" %% "scala-xml" % "1.0.6",
@@ -15,7 +15,7 @@ object BuildSettings {
     publishTo := {
       val nexus = "https://oss.sonatype.org/"
       val (name, url) = if (isSnapshot.value) ("snapshots", nexus + "content/repositories/snapshots")
-                        else ("releases", nexus + "service/local/staging/deploy/maven2")
+      else ("releases", nexus + "service/local/staging/deploy/maven2")
       Some(name at url)
     },
     credentials += Credentials(Path.userHome / ".ivy2" / ".credentials"),
@@ -36,8 +36,8 @@ object BuildSettings {
     // workaround for: https://github.com/sbt/sbt/issues/692
     fork in Test := true,
     scalacOptions ++= List("-unchecked", "-encoding", "UTF8"),
-    homepage      := Some(new java.net.URL("http://www.elasticmq.org")),
-    licenses      := ("Apache2", new java.net.URL("http://www.apache.org/licenses/LICENSE-2.0.txt")) :: Nil
+    homepage := Some(new java.net.URL("http://www.elasticmq.org")),
+    licenses := ("Apache2", new java.net.URL("http://www.apache.org/licenses/LICENSE-2.0.txt")) :: Nil
   )
 }
 
@@ -55,15 +55,16 @@ object Dependencies {
 
   val amazonJavaSdk = "com.amazonaws"             % "aws-java-sdk"          % "1.11.59" exclude ("commons-logging", "commons-logging")
 
-  val akkaVersion  = "2.4.14"
-  val akkaHttpVersion = "10.0.0"
-  val akka2Actor    = "com.typesafe.akka" %% "akka-actor"           % akkaVersion
-  val akka2Slf4j    = "com.typesafe.akka" %% "akka-slf4j"           % akkaVersion
-  val akka2Testkit  = "com.typesafe.akka" %% "akka-testkit"         % akkaVersion % "test"
-  val akka2Http     = "com.typesafe.akka" %% "akka-http"            % akkaHttpVersion
-  val akka2HttpTestkit = "com.typesafe.akka" %% "akka-http-testkit" % akkaHttpVersion % "test"
+  val akkaVersion        = "2.4.14"
+  val akkaHttpVersion    = "10.0.0"
+  val akka2Actor         = "com.typesafe.akka" %% "akka-actor"           % akkaVersion
+  val akka2Slf4j         = "com.typesafe.akka" %% "akka-slf4j"           % akkaVersion
+  val akka2Testkit       = "com.typesafe.akka" %% "akka-testkit"         % akkaVersion % "test"
+  val akka2Http          = "com.typesafe.akka" %% "akka-http"            % akkaHttpVersion
+  val akka2HttpSprayJson = "com.typesafe.akka" %% "akka-http-spray-json" % akkaHttpVersion
+  val akka2HttpTestkit   = "com.typesafe.akka" %% "akka-http-testkit" % akkaHttpVersion % "test"
 
-  val scalaAsync    = "org.scala-lang.modules" %% "scala-async" % "0.9.6"
+  val scalaAsync = "org.scala-lang.modules" %% "scala-async" % "0.9.6"
 
   val common = Seq(scalalogging)
 }
@@ -102,7 +103,7 @@ object ElasticMQBuild extends Build {
     "elasticmq-rest-sqs",
     file("rest/rest-sqs"),
     settings = buildSettings ++
-      Seq(libraryDependencies ++= Seq(akka2Actor, akka2Slf4j, akka2Http, akka2HttpTestkit, scalaAsync) ++ common)
+      Seq(libraryDependencies ++= Seq(akka2Actor, akka2Slf4j, akka2Http, akka2HttpSprayJson, akka2HttpTestkit, scalaAsync) ++ common)
   ) dependsOn(core, commonTest % "test")
 
   lazy val restSqsTestingAmazonJavaSdk: Project = Project(

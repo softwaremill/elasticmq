@@ -116,27 +116,24 @@ The queues are specified in a custom configuration file. For example, create a `
 ````
 include classpath("application.conf")
 
-queues = [
-    {
-    	name = queue1
+queues {
+    queue1 {
         defaultVisibilityTimeout = 10 seconds
         delay = 5 seconds
-        maxReceiveCount = 3
         receiveMessageWait = 0 seconds
-        deadLettersQueue = {
-        	name = deadletters1
+        deadLettersQueue1 {
+            maxReceiveCount = 3 // requiredfrom 1 to 1000
+            // below all optional
         	defaultVisibilityTimeout = 10 seconds
         	delay = 5 seconds
-        	maxReceiveCount = 3
         	receiveMessageWait = 0 seconds
-        	deadLettersQueue = {...}
+        	deadLettersQueue2 {...}
     	}
-    },
-    {...}
-]
+    }
+}
 ````
 
-All attributes are optional, and if not specified will use the default SQS values.
+All attributes are optional except `maxReceiveCount` for dead letters queue, and if not specified will use the default SQS values.
 
 Starting an embedded ElasticMQ server with an SQS interface
 -----------------------------------------------------------

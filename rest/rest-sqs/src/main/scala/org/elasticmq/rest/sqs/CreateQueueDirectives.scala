@@ -3,22 +3,26 @@ package org.elasticmq.rest.sqs
 import Constants._
 import ParametersUtil._
 import org.joda.time.{DateTime, Duration}
-import org.elasticmq.{QueueData, MillisVisibilityTimeout}
-import org.elasticmq.msg.{GetQueueData, CreateQueue, LookupQueue}
+import org.elasticmq.{MillisVisibilityTimeout, QueueData}
+import org.elasticmq.msg.{CreateQueue, GetQueueData, LookupQueue}
 import org.elasticmq.actor.reply._
 import scala.async.Async._
 import scala.concurrent.Future
 import org.elasticmq.rest.sqs.directives.ElasticMQDirectives
 import CreateQueueDirectives._
+import spray.json._
 
 trait CreateQueueDirectives { this: ElasticMQDirectives with QueueURLModule with AttributesModule with SQSLimitsModule =>
 
-  // DeadLettersQueue currently not supported via http call due to current API limitations. Consider moving to JSON?
   def createQueue(p: AnyParams) = {
     p.action("CreateQueue") {
       rootPath {
         queueNameFromParams(p) { queueName =>
           val attributes = attributeNameAndValuesReader.read(p)
+
+          import RedrivePolicyJson._
+          val redrivePolicyJSON = attributes.get(RedrivePolicyParameter)
+          val redrivePolicy = redrivePolicyJSON.map(_.parseJson.convertTo[RedrivePolicy])
 
           val secondsVisibilityTimeoutOpt = attributes.parseOptionalLong(VisibilityTimeoutParameter)
           val secondsVisibilityTimeout = secondsVisibilityTimeoutOpt.getOrElse(DefaultVisibilityTimeout)
@@ -26,16 +30,14 @@ trait CreateQueueDirectives { this: ElasticMQDirectives with QueueURLModule with
           val secondsDelayOpt = attributes.parseOptionalLong(DelaySecondsAttribute)
           val secondsDelay = secondsDelayOpt.getOrElse(DefaultDelay)
 
-          val maxReceiveCountOpt = attributes.parseOptionalInt(MaxReceiveCountAttribute)
-          val maxReceiveCount = maxReceiveCountOpt.getOrElse(DefaultMaxReceiveCount)
-
           val secondsReceiveMessageWaitTimeOpt = attributes.parseOptionalLong(ReceiveMessageWaitTimeSecondsAttribute)
           val secondsReceiveMessageWaitTime = secondsReceiveMessageWaitTimeOpt
-            .getOrElse(DefaultReceiveMessageWaitTimeSecondsAttribute)
+            .getOrElse(DefaultReceiveMessageWait)
 
+          val now = new DateTime()
           val newQueueData = QueueData(queueName, MillisVisibilityTimeout.fromSeconds(secondsVisibilityTimeout),
             Duration.standardSeconds(secondsDelay), Duration.standardSeconds(secondsReceiveMessageWaitTime),
-            None, maxReceiveCount, new DateTime(), new DateTime())
+            now, now, redrivePolicy.map(redrivePolicyToQueueData(_, now)))
 
           async {
             if (!queueName.matches("[\\p{Alnum}_-]*")) {
@@ -51,9 +53,9 @@ trait CreateQueueDirectives { this: ElasticMQDirectives with QueueURLModule with
             // if the request set the attributes compare them against the queue
             if ((!secondsDelayOpt.isEmpty && queueData.delay.getStandardSeconds != secondsDelay) ||
               (!secondsReceiveMessageWaitTimeOpt.isEmpty
-                  && queueData.receiveMessageWait.getStandardSeconds != secondsReceiveMessageWaitTime) ||
+                && queueData.receiveMessageWait.getStandardSeconds != secondsReceiveMessageWaitTime) ||
               (!secondsVisibilityTimeoutOpt.isEmpty
-                  && queueData.defaultVisibilityTimeout.seconds != secondsVisibilityTimeout)) {
+                && queueData.defaultVisibilityTimeout.seconds != secondsVisibilityTimeout)) {
               // Special case: the queue existed, but has different attributes
               throw new SQSException("AWS.SimpleQueueService.QueueNameExists")
             }
@@ -91,11 +93,48 @@ trait CreateQueueDirectives { this: ElasticMQDirectives with QueueURLModule with
       }
     }
   }
+
+  private def redrivePolicyToQueueData(rd: RedrivePolicy, now: DateTime): QueueData = {
+    import rd._
+    QueueData(
+      name = queueName,
+      defaultVisibilityTimeout = MillisVisibilityTimeout.fromSeconds(
+        defaultVisibilityTimeout.getOrElse(CreateQueueDirectives.DefaultVisibilityTimeout)),
+      delay = Duration.standardSeconds(delay.getOrElse(CreateQueueDirectives.DefaultDelay)),
+      receiveMessageWait = Duration.standardSeconds(
+        receiveMessageWait.getOrElse(CreateQueueDirectives.DefaultReceiveMessageWait)),
+      created = now,
+      lastModified = now,
+      maxReceiveCount = Some(maxReceiveCount),
+      isDeadLettersQueue = true,
+      deadLettersQueue = deadLettersQueue.map(redrivePolicyToQueueData(_, now))
+    ).adjustLimits()
+  }
 }
 
 object CreateQueueDirectives {
-  val DefaultMaxReceiveCount = 1
   val DefaultVisibilityTimeout = 30L
   val DefaultDelay = 0L
-  val DefaultReceiveMessageWaitTimeSecondsAttribute = 0L
+  val DefaultReceiveMessageWait = 0L
+}
+
+case class RedrivePolicy(
+  queueName: String,
+  maxReceiveCount: Int,
+  defaultVisibilityTimeout: Option[Long] = None,
+  delay: Option[Long] = None,
+  receiveMessageWait: Option[Long] = None,
+  deadLettersQueue: Option[RedrivePolicy] = None
+)
+
+object RedrivePolicyJson extends DefaultJsonProtocol {
+  implicit val format: JsonFormat[RedrivePolicy] =
+    lazyFormat(jsonFormat(
+      RedrivePolicy,
+      "queueName",
+      "defaultVisibilityTimeout",
+      "delay",
+      "receiveMessageWait",
+      "maxReceiveCount",
+      "deadLettersQueue"))
 }

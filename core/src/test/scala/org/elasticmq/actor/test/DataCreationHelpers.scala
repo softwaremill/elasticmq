@@ -15,10 +15,10 @@ trait DataCreationHelpers {
     defaultVisibilityTimeout,
     Duration.ZERO,
     Duration.ZERO,
-    deadLettersQueue,
-    1,
     new DateTime(0),
-    new DateTime(0))
+    new DateTime(0),
+    deadLettersQueue,
+    None)
 
   def createMessageData(id: String, content: String, messageAttributes: Map[String, MessageAttribute], nextDelivery: MillisNextDelivery,
     deliveryReceipt: Option[DeliveryReceipt] = None) =

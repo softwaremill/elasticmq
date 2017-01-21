@@ -104,7 +104,7 @@ trait QueueActorMessageOps extends Logging {
         None
       } else if (messagesById.contains(id.id)) {
         // Putting the msg to dead letters queue if exists
-        if (internalMessage.receiveCount >= queueData.maxReceiveCount) {
+        if (queueData.deadLettersQueue.flatMap(_.maxReceiveCount).exists(_ <= internalMessage.receiveCount)) {
           logger.info(s"send message $internalMessage to dead letters actor $deadLettersActorRef")
           deadLettersActorRef
             .map(_ ! SendMessage(internalMessage.toNewMessageData))

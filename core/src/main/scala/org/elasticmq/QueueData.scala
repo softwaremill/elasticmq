@@ -6,8 +6,13 @@ case class QueueData(name: String,
   defaultVisibilityTimeout: MillisVisibilityTimeout,
   delay: Duration,
   receiveMessageWait: Duration,
-  deadLettersQueue: Option[QueueData],
-  maxReceiveCount: Int,
   created: DateTime,
   lastModified: DateTime,
-  isDeadLettersQueue: Boolean = false)
+  deadLettersQueue: Option[QueueData] = None,
+  maxReceiveCount: Option[Int] = None,
+  isDeadLettersQueue: Boolean = false
+) {
+  def adjustLimits(): QueueData = {
+    this.copy(maxReceiveCount = maxReceiveCount.map(mrc => math.min(math.max(mrc, 1), 1000)))
+  }
+}

@@ -17,7 +17,7 @@ import org.elasticmq._
 class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter with Logging {
   val visibilityTimeoutAttribute = "VisibilityTimeout"
   val defaultVisibilityTimeoutAttribute = "VisibilityTimeout"
-  val defaultMaxReceiveCountAttribute = "MaxReceiveCount"
+  val redrivePolicyAttribute = "RedrivePolicy"
   val delaySecondsAttribute = "DelaySeconds"
   val receiveMessageWaitTimeSecondsAttribute = "ReceiveMessageWaitTimeSeconds"
 
@@ -155,7 +155,7 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
     // Then
     queueVisibilityTimeout(queueUrl) should be (10)
   }
-  
+
   test("should send and receive a simple message") {
     doTestSendAndReceiveMessage("Message 1")
   }
@@ -299,9 +299,7 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
   test("should block message for the visibility timeout duration") {
     // Given
     val queueUrl = client.createQueue(new CreateQueueRequest("testQueue1")
-      .withAttributes(
-        Map(defaultVisibilityTimeoutAttribute -> "1", defaultMaxReceiveCountAttribute -> "3")))
-      .getQueueUrl
+      .withAttributes(Map(defaultVisibilityTimeoutAttribute -> "1"))).getQueueUrl
 
     // When
     client.sendMessage(new SendMessageRequest(queueUrl, "Message 1"))
@@ -318,10 +316,7 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
 
   test("should block message for the specified non-default visibility timeout duration") {
     // Given
-    val queueUrl = client.createQueue(new CreateQueueRequest("testQueue1")
-      .withAttributes(
-        Map(defaultMaxReceiveCountAttribute -> "2")))
-      .getQueueUrl
+    val queueUrl = client.createQueue(new CreateQueueRequest("testQueue1")).getQueueUrl
 
     // When
     client.sendMessage(new SendMessageRequest(queueUrl, "Message 1"))
@@ -385,9 +380,7 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
   test("should update message visibility timeout") {
     // Given
     val queueUrl = client.createQueue(new CreateQueueRequest("testQueue1")
-      .withAttributes(
-        Map(defaultVisibilityTimeoutAttribute -> "1", defaultMaxReceiveCountAttribute -> "3")))
-      .getQueueUrl
+      .withAttributes(Map(defaultVisibilityTimeoutAttribute -> "5"))).getQueueUrl
 
     // When
     client.sendMessage(new SendMessageRequest(queueUrl, "Message 1"))
@@ -410,9 +403,7 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
   test("should update message visibility timeout in a batch") {
     // Given
     val queueUrl = client.createQueue(new CreateQueueRequest("testQueue1")
-      .withAttributes(
-        Map(defaultVisibilityTimeoutAttribute -> "1", defaultMaxReceiveCountAttribute -> "4")))
-      .getQueueUrl
+      .withAttributes(Map(defaultVisibilityTimeoutAttribute -> "5"))).getQueueUrl
 
     // When
     client.sendMessage(new SendMessageRequest(queueUrl, "Message 1")).getMessageId
@@ -423,9 +414,9 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
 
     val result = client.changeMessageVisibilityBatch(new ChangeMessageVisibilityBatchRequest().withQueueUrl(queueUrl)
       .withEntries(
-      new ChangeMessageVisibilityBatchRequestEntry("1", msg1.getReceiptHandle).withVisibilityTimeout(1),
-      new ChangeMessageVisibilityBatchRequestEntry("2", msg2.getReceiptHandle).withVisibilityTimeout(1)
-    ))
+        new ChangeMessageVisibilityBatchRequestEntry("1", msg1.getReceiptHandle).withVisibilityTimeout(1),
+        new ChangeMessageVisibilityBatchRequestEntry("2", msg2.getReceiptHandle).withVisibilityTimeout(1)
+      ))
 
     // Messages should be already visible
     Thread.sleep(1100)
@@ -518,9 +509,7 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
     // Given
     val start = System.currentTimeMillis()
     val queueUrl = client.createQueue(new CreateQueueRequest("testQueue1")
-      .withAttributes(
-        Map(defaultVisibilityTimeoutAttribute -> "1", defaultMaxReceiveCountAttribute -> "3")))
-      .getQueueUrl
+      .withAttributes(Map(defaultVisibilityTimeoutAttribute -> "1"))).getQueueUrl
     client.sendMessage(new SendMessageRequest(queueUrl, "Message 1"))
 
     val sentTimestampAttribute = "SentTimestamp"
@@ -773,13 +762,10 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
     bodies should be (Set("OK"))
   }
 
-  test("should delete a message if the most recent receipt handle is provided") {
+  test("should delete a message only if the most recent receipt handle is provided") {
     // Given
     val queueUrl = client.createQueue(new CreateQueueRequest("testQueue1")
-      .withAttributes(Map(
-        defaultVisibilityTimeoutAttribute -> "1",
-        defaultMaxReceiveCountAttribute -> "4")))
-      .getQueueUrl
+      .withAttributes(Map(defaultVisibilityTimeoutAttribute -> "1"))).getQueueUrl
 
     // When
     client.sendMessage(new SendMessageRequest(queueUrl, "Message 1"))
@@ -797,24 +783,6 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
     m3 should be (Some("Message 1"))
   }
 
-  test("should read a message only one time with default settings") {
-    // Given
-    val queueUrl = client.createQueue(new CreateQueueRequest("testQueue1")
-      .withAttributes(Map(defaultVisibilityTimeoutAttribute -> "1")))
-      .getQueueUrl
-
-    // When
-    client.sendMessage(new SendMessageRequest(queueUrl, "Message 1"))
-
-    val m1 = client.receiveMessage(new ReceiveMessageRequest(queueUrl)).getMessages.get(0)  // 1st receive
-
-    // Then
-    Thread.sleep(1100)
-    client.receiveMessage(new ReceiveMessageRequest(queueUrl)).getMessages.size() should be (0)  // 2nd receive
-
-    client.deleteMessage(new DeleteMessageRequest(queueUrl, m1.getReceiptHandle))           // Shouldn't delete - old receipt
-  }
-
   test("should return an error if creating an existing queue with a different visibility timeout") {
     val result = catching(classOf[AmazonServiceException]) either {
       // Given
@@ -828,7 +796,7 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
 
     result.isLeft should be (true)
   }
-  
+
   test("should not return an error if creating an existing queue with a non default visibility timeout") {
     // Given
     val queueUrl = client.createQueue(new CreateQueueRequest("testQueue1")
@@ -836,7 +804,7 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
 
     // When
     val queueUrl2 = client.createQueue(new CreateQueueRequest("testQueue1")).getQueueUrl
-    
+
 
     queueUrl should equal(queueUrl2)
   }
@@ -927,6 +895,26 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
     msgIdSent should be(msgIdReceived)
   }
 
+  test("should create queue with redrive policy.") {
+    // When
+    val queueUrl = client.createQueue(new CreateQueueRequest("testQueue1")
+      .withAttributes(Map(
+        defaultVisibilityTimeoutAttribute -> "1",
+        redrivePolicyAttribute ->
+          """
+            |{
+            |  "queueName":"dlq1",
+            |  "defaultVisibilityTimeout":1,
+            |  "maxReceiveCount":1
+            |}
+          """.stripMargin
+      ))).getQueueUrl
+
+    // Then
+    val deadLettersQueueUrl = client.getQueueUrl("dlq1").getQueueUrl
+    deadLettersQueueUrl shouldNot be("")
+  }
+
   def queueVisibilityTimeout(queueUrl: String) = getQueueLongAttribute(queueUrl, visibilityTimeoutAttribute)
 
   def queueDelay(queueUrl: String) = getQueueLongAttribute(queueUrl, delaySecondsAttribute)
@@ -939,7 +927,7 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
       .getAttributes.get(attributeName)
       .toLong
   }
-  
+
   def receiveSingleMessage(queueUrl: String) = {
     val messages = client.receiveMessage(new ReceiveMessageRequest(queueUrl)).getMessages
     if (messages.size() == 0) {

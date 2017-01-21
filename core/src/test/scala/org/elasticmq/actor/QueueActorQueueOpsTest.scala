@@ -14,13 +14,13 @@ class QueueActorQueueOpsTest extends ActorTest with QueueManagerForEachTest with
     val lastModified = new DateTime(1316168602L)
 
     for {
-      Right(queueActor) <- queueManagerActor ? CreateQueue(QueueData("q1", MillisVisibilityTimeout(1L), Duration.ZERO, Duration.ZERO, None, 1, created, lastModified))
+      Right(queueActor) <- queueManagerActor ? CreateQueue(QueueData("q1", MillisVisibilityTimeout(1L), Duration.ZERO, Duration.ZERO, created, lastModified))
 
       // When
       queueData <- queueActor ? GetQueueData()
     } yield {
       // Then
-      queueData should be (QueueData("q1", MillisVisibilityTimeout(1L), Duration.ZERO, Duration.ZERO, None, 1, created, lastModified))
+      queueData should be (QueueData("q1", MillisVisibilityTimeout(1L), Duration.ZERO, Duration.ZERO, created, lastModified))
     }
   }
 

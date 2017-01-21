@@ -74,10 +74,11 @@ class ElasticMQServer(config: ElasticMQServerConfig) extends Logging {
         cq.defaultVisibilityTimeoutSeconds.getOrElse(CreateQueueDirectives.DefaultVisibilityTimeout)),
       delay = Duration.standardSeconds(cq.delaySeconds.getOrElse(CreateQueueDirectives.DefaultDelay)),
       receiveMessageWait = Duration.standardSeconds(
-        cq.receiveMessageWaitSeconds.getOrElse(CreateQueueDirectives.DefaultReceiveMessageWaitTimeSecondsAttribute)),
-      maxReceiveCount = cq.maxReceiveCount,
+        cq.receiveMessageWaitSeconds.getOrElse(CreateQueueDirectives.DefaultReceiveMessageWait)),
       created = now,
       lastModified = now,
-      deadLettersQueue = cq.deadLettersQueue.map(configToParams(_, now)))
+      maxReceiveCount = cq.maxReceiveCount,
+      deadLettersQueue = cq.deadLettersQueue.map(configToParams(_, now))
+    ).adjustLimits()
   }
 }
