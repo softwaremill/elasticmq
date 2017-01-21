@@ -103,35 +103,42 @@ trait QueueActorMessageOps extends Logging {
         messageQueue += internalMessage
         None
       } else if (messagesById.contains(id.id)) {
-        // Putting the msg to dead letters queue if exists
-        if (queueData.deadLettersQueue.flatMap(_.maxReceiveCount).exists(_ <= internalMessage.receiveCount)) {
-          logger.info(s"send message $internalMessage to dead letters actor $deadLettersActorRef")
-          deadLettersActorRef.foreach(_ ! SendMessage(internalMessage.toNewMessageData))
-
-          // delete only if normal queue or if dead letter queue has its own dead letters queue
-          if (!queueData.isDeadLettersQueue || (queueData.isDeadLettersQueue && deadLettersActorRef.isDefined)) {
-            internalMessage.deliveryReceipt.foreach(dr => deleteMessage(DeliveryReceipt(dr)))
-          }
-
-          return None
-        }
-
-        // Putting the msg again into the queue, with a new next delivery
-        internalMessage.deliveryReceipt = Some(DeliveryReceipt.generate(id).receipt)
-        internalMessage.nextDelivery = newNextDelivery.millis
-
-        internalMessage.receiveCount += 1
-        internalMessage.firstReceive = OnDateTimeReceived(new DateTime(deliveryTime))
-
-        messageQueue += internalMessage
-
-        logger.debug(s"${queueData.name}: Receiving message $id")
-
-        Some(internalMessage.toMessageData)
+        processInternalMessage(deliveryTime, newNextDelivery, internalMessage)
       } else {
         // Deleted msg - trying again
         receiveMessage(deliveryTime, newNextDelivery)
       }
+    }
+  }
+
+  private def processInternalMessage(
+    deliveryTime: Long, newNextDelivery: MillisNextDelivery, internalMessage: InternalMessage) = {
+    // Putting the msg to dead letters queue if exists
+    if (queueData.deadLettersQueue.flatMap(_.maxReceiveCount).exists(_ <= internalMessage.receiveCount)) {
+      logger.info(s"send message $internalMessage to dead letters actor $deadLettersActorRef")
+      deadLettersActorRef.foreach(_ ! SendMessage(internalMessage.toNewMessageData))
+
+      // delete only if normal queue or if dead letter queue has its own dead letters queue
+      if (!queueData.isDeadLettersQueue || (queueData.isDeadLettersQueue && deadLettersActorRef.isDefined)) {
+        internalMessage.deliveryReceipt.foreach(dr => deleteMessage(DeliveryReceipt(dr)))
+      }
+
+      None
+
+    } else {
+
+      // Putting the msg again into the queue, with a new next delivery
+      internalMessage.deliveryReceipt = Some(DeliveryReceipt.generate(MessageId(internalMessage.id)).receipt)
+      internalMessage.nextDelivery = newNextDelivery.millis
+
+      internalMessage.receiveCount += 1
+      internalMessage.firstReceive = OnDateTimeReceived(new DateTime(deliveryTime))
+
+      messageQueue += internalMessage
+
+      logger.debug(s"${queueData.name}: Receiving message ${internalMessage.id}")
+
+      Some(internalMessage.toMessageData)
     }
   }
 
