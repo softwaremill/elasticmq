@@ -1,14 +1,13 @@
 package org.elasticmq.actor.queue
 
-import scala.collection.mutable
-import org.joda.time.DateTime
-import org.elasticmq._
-import org.elasticmq.MessageId
-import org.elasticmq.MillisNextDelivery
-import org.elasticmq.util.NowProvider
 import java.util.UUID
 
 import akka.actor.ActorRef
+import org.elasticmq.{MessageId, MillisNextDelivery, _}
+import org.elasticmq.util.NowProvider
+import org.joda.time.DateTime
+
+import scala.collection.mutable
 
 trait QueueActorStorage {
   def nowProvider: NowProvider

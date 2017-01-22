@@ -414,8 +414,8 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
 
     val result = client.changeMessageVisibilityBatch(new ChangeMessageVisibilityBatchRequest().withQueueUrl(queueUrl)
       .withEntries(
-        new ChangeMessageVisibilityBatchRequestEntry("1", msg1.getReceiptHandle).withVisibilityTimeout(1),
-        new ChangeMessageVisibilityBatchRequestEntry("2", msg2.getReceiptHandle).withVisibilityTimeout(1)
+      new ChangeMessageVisibilityBatchRequestEntry("1", msg1.getReceiptHandle).withVisibilityTimeout(1),
+      new ChangeMessageVisibilityBatchRequestEntry("2", msg2.getReceiptHandle).withVisibilityTimeout(1)
       ))
 
     // Messages should be already visible

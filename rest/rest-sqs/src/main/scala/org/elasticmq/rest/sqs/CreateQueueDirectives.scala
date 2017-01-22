@@ -1,16 +1,17 @@
 package org.elasticmq.rest.sqs
 
-import Constants._
-import ParametersUtil._
-import org.joda.time.{DateTime, Duration}
-import org.elasticmq.{MillisVisibilityTimeout, QueueData}
-import org.elasticmq.msg.{CreateQueue, GetQueueData, LookupQueue}
 import org.elasticmq.actor.reply._
+import org.elasticmq.msg.{CreateQueue, GetQueueData, LookupQueue}
+import org.elasticmq.rest.sqs.Constants._
+import org.elasticmq.rest.sqs.CreateQueueDirectives._
+import org.elasticmq.rest.sqs.ParametersUtil._
+import org.elasticmq.rest.sqs.directives.ElasticMQDirectives
+import org.elasticmq.{MillisVisibilityTimeout, QueueData}
+import org.joda.time.{DateTime, Duration}
+import spray.json._
+
 import scala.async.Async._
 import scala.concurrent.Future
-import org.elasticmq.rest.sqs.directives.ElasticMQDirectives
-import CreateQueueDirectives._
-import spray.json._
 
 trait CreateQueueDirectives { this: ElasticMQDirectives with QueueURLModule with AttributesModule with SQSLimitsModule =>
 

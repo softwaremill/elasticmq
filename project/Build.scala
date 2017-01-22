@@ -15,7 +15,7 @@ object BuildSettings {
     publishTo := {
       val nexus = "https://oss.sonatype.org/"
       val (name, url) = if (isSnapshot.value) ("snapshots", nexus + "content/repositories/snapshots")
-      else ("releases", nexus + "service/local/staging/deploy/maven2")
+                        else ("releases", nexus + "service/local/staging/deploy/maven2")
       Some(name at url)
     },
     credentials += Credentials(Path.userHome / ".ivy2" / ".credentials"),

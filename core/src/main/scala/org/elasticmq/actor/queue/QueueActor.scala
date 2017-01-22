@@ -1,13 +1,12 @@
 package org.elasticmq.actor.queue
 
 import akka.actor.ActorRef
-import org.elasticmq.util.Logging
+import org.elasticmq.QueueData
 import org.elasticmq.actor.reply.ReplyingActor
 import org.elasticmq.msg._
+import org.elasticmq.util.{Logging, NowProvider}
 
 import scala.reflect._
-import org.elasticmq.util.NowProvider
-import org.elasticmq.QueueData
 
 class QueueActor(
   val nowProvider: NowProvider,

@@ -130,6 +130,7 @@ queues {
         	deadLettersQueue2 {...}
     	}
     }
+    queue2 { }
 }
 ````
 
