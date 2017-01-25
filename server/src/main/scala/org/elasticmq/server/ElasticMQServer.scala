@@ -1,15 +1,15 @@
 package org.elasticmq.server
 
+import akka.actor.{ActorRef, ActorSystem, Props}
 import akka.util.Timeout
-import org.elasticmq.{MillisVisibilityTimeout, QueueData}
-import org.elasticmq.msg.CreateQueue
-import org.elasticmq.util.Logging
-import org.elasticmq.rest.sqs.{CreateQueueDirectives, TheSQSRestServerBuilder, SQSRestServer}
-import akka.actor.{Props, ActorRef, ActorSystem}
 import org.elasticmq.actor.QueueManagerActor
-import org.elasticmq.util.NowProvider
 import org.elasticmq.actor.reply._
+import org.elasticmq.msg.CreateQueue
+import org.elasticmq.rest.sqs.{CreateQueueDirectives, SQSRestServer, TheSQSRestServerBuilder}
+import org.elasticmq.util.{Logging, NowProvider}
+import org.elasticmq.{DeadLettersQueueData, MillisVisibilityTimeout, QueueData}
 import org.joda.time.{DateTime, Duration}
+
 import scala.concurrent.Await
 
 class ElasticMQServer(config: ElasticMQServerConfig) extends Logging {
@@ -61,14 +61,23 @@ class ElasticMQServer(config: ElasticMQServerConfig) extends Logging {
     }
 
     val futures = config.createQueues.map { cq =>
-      queueManagerActor ? CreateQueue(QueueData(cq.name,
-        MillisVisibilityTimeout.fromSeconds(cq.defaultVisibilityTimeoutSeconds.getOrElse(CreateQueueDirectives.DefaultVisibilityTimeout)),
-        Duration.standardSeconds(cq.delaySeconds.getOrElse(CreateQueueDirectives.DefaultDelay)),
-        Duration.standardSeconds(cq.receiveMessageWaitSeconds.getOrElse(CreateQueueDirectives.DefaultReceiveMessageWaitTimeSecondsAttribute)),
-        new DateTime(),
-        new DateTime()))
+      queueManagerActor ? CreateQueue(configToParams(cq, new DateTime))
     }
 
     futures.foreach { f => Await.result(f, timeout.duration) }
+  }
+
+  private def configToParams(cq: config.CreateQueue, now: DateTime): QueueData = {
+    QueueData(
+      name = cq.name,
+      defaultVisibilityTimeout = MillisVisibilityTimeout.fromSeconds(
+        cq.defaultVisibilityTimeoutSeconds.getOrElse(CreateQueueDirectives.DefaultVisibilityTimeout)),
+      delay = Duration.standardSeconds(cq.delaySeconds.getOrElse(CreateQueueDirectives.DefaultDelay)),
+      receiveMessageWait = Duration.standardSeconds(
+        cq.receiveMessageWaitSeconds.getOrElse(CreateQueueDirectives.DefaultReceiveMessageWait)),
+      created = now,
+      lastModified = now,
+      deadLettersQueue = cq.deadLettersQueue.map(dlq => DeadLettersQueueData(dlq.name, dlq.maxReceiveCount))
+    )
   }
 }

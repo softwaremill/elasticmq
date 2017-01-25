@@ -1,33 +1,38 @@
 package org.elasticmq.actor.queue
 
-import scala.collection.mutable
-import org.joda.time.DateTime
-import org.elasticmq._
-import org.elasticmq.MessageId
-import org.elasticmq.MillisNextDelivery
-import org.elasticmq.util.NowProvider
 import java.util.UUID
+
+import akka.actor.ActorRef
+import org.elasticmq.{MessageId, MillisNextDelivery, _}
+import org.elasticmq.util.NowProvider
+import org.joda.time.DateTime
+
+import scala.collection.mutable
 
 trait QueueActorStorage {
   def nowProvider: NowProvider
+
   def initialQueueData: QueueData
+
+  def deadLettersActorRef: Option[ActorRef]
 
   var queueData = initialQueueData
   var messageQueue = mutable.PriorityQueue[InternalMessage]()
   val messagesById = mutable.HashMap[String, InternalMessage]()
+  val deadLettersQueueActor = deadLettersActorRef
 
   case class InternalMessage(id: String,
-                             var deliveryReceipt: Option[String],
-                             var nextDelivery: Long,
-                             content: String,
-                             messageAttributes: Map[String,MessageAttribute],
-                             created: DateTime,
-                             var firstReceive: Received,
-                             var receiveCount: Int)
+    var deliveryReceipt: Option[String],
+    var nextDelivery: Long,
+    content: String,
+    messageAttributes: Map[String, MessageAttribute],
+    created: DateTime,
+    var firstReceive: Received,
+    var receiveCount: Int)
     extends Comparable[InternalMessage] {
 
     // Priority queues have biggest elements first
-    def compareTo(other: InternalMessage) = - nextDelivery.compareTo(other.nextDelivery)
+    def compareTo(other: InternalMessage) = -nextDelivery.compareTo(other.nextDelivery)
 
     def toMessageData = MessageData(
       MessageId(id),
@@ -37,6 +42,12 @@ trait QueueActorStorage {
       MillisNextDelivery(nextDelivery),
       created,
       MessageStatistics(firstReceive, receiveCount))
+
+    def toNewMessageData = NewMessageData(
+      Some(MessageId(id)),
+      content,
+      messageAttributes,
+      MillisNextDelivery(nextDelivery))
 
     def deliverable(deliveryTime: Long): Boolean = nextDelivery <= deliveryTime
   }

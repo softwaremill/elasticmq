@@ -55,15 +55,16 @@ object Dependencies {
 
   val amazonJavaSdk = "com.amazonaws"             % "aws-java-sdk"          % "1.11.59" exclude ("commons-logging", "commons-logging")
 
-  val akkaVersion  = "2.4.14"
-  val akkaHttpVersion = "10.0.0"
-  val akka2Actor    = "com.typesafe.akka" %% "akka-actor"           % akkaVersion
-  val akka2Slf4j    = "com.typesafe.akka" %% "akka-slf4j"           % akkaVersion
-  val akka2Testkit  = "com.typesafe.akka" %% "akka-testkit"         % akkaVersion % "test"
-  val akka2Http     = "com.typesafe.akka" %% "akka-http"            % akkaHttpVersion
+  val akkaVersion      = "2.4.14"
+  val akkaHttpVersion  = "10.0.0"
+  val akka2Actor       = "com.typesafe.akka" %% "akka-actor"           % akkaVersion
+  val akka2Slf4j       = "com.typesafe.akka" %% "akka-slf4j"           % akkaVersion
+  val akka2Testkit     = "com.typesafe.akka" %% "akka-testkit"         % akkaVersion % "test"
+  val akka2Http        = "com.typesafe.akka" %% "akka-http"            % akkaHttpVersion
+  val sprayJson        = "io.spray" %% "spray-json"                    % "1.3.2" // akka http json 10.0.0 depends on this version.
   val akka2HttpTestkit = "com.typesafe.akka" %% "akka-http-testkit" % akkaHttpVersion % "test"
 
-  val scalaAsync    = "org.scala-lang.modules" %% "scala-async" % "0.9.6"
+  val scalaAsync = "org.scala-lang.modules" %% "scala-async" % "0.9.6"
 
   val common = Seq(scalalogging)
 }
@@ -102,7 +103,7 @@ object ElasticMQBuild extends Build {
     "elasticmq-rest-sqs",
     file("rest/rest-sqs"),
     settings = buildSettings ++
-      Seq(libraryDependencies ++= Seq(akka2Actor, akka2Slf4j, akka2Http, akka2HttpTestkit, scalaAsync) ++ common)
+      Seq(libraryDependencies ++= Seq(akka2Actor, akka2Slf4j, akka2Http, sprayJson, akka2HttpTestkit, scalaAsync) ++ common)
   ) dependsOn(core, commonTest % "test")
 
   lazy val restSqsTestingAmazonJavaSdk: Project = Project(

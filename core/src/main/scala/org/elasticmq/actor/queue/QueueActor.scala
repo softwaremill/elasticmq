@@ -1,13 +1,17 @@
 package org.elasticmq.actor.queue
 
-import org.elasticmq.util.Logging
+import akka.actor.ActorRef
+import org.elasticmq.QueueData
 import org.elasticmq.actor.reply.ReplyingActor
 import org.elasticmq.msg._
-import scala.reflect._
-import org.elasticmq.util.NowProvider
-import org.elasticmq.QueueData
+import org.elasticmq.util.{Logging, NowProvider}
 
-class QueueActor(val nowProvider: NowProvider, val initialQueueData: QueueData)
+import scala.reflect._
+
+class QueueActor(
+  val nowProvider: NowProvider,
+  val initialQueueData: QueueData,
+  val deadLettersActorRef: Option[ActorRef])
   extends QueueActorStorage with QueueActorQueueOps with QueueActorWaitForMessagesOps with ReplyingActor with Logging {
 
   type M[X] = QueueMsg[X]

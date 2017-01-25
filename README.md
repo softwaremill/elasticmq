@@ -121,12 +121,15 @@ queues {
         defaultVisibilityTimeout = 10 seconds
         delay = 5 seconds
         receiveMessageWait = 0 seconds
+        deadLettersQueue1 {
+            maxReceiveCount = 3 // from 1 to 1000
+    	}
     }
     queue2 { }
 }
 ````
 
-All attributes are optional, and if not specified will use the default SQS values.
+All attributes are optional except `maxReceiveCount` for dead letters queue.
 
 Starting an embedded ElasticMQ server with an SQS interface
 -----------------------------------------------------------

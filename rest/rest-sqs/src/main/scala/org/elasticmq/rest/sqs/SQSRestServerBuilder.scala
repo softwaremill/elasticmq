@@ -218,6 +218,7 @@ object Constants {
   val SqsDefaultVersion = "2012-11-05"
   val ReceiptHandleParameter = "ReceiptHandle"
   val VisibilityTimeoutParameter = "VisibilityTimeout"
+  val RedrivePolicyParameter = "RedrivePolicy"
   val DelaySecondsAttribute = "DelaySeconds"
   val ReceiveMessageWaitTimeSecondsAttribute = "ReceiveMessageWaitTimeSeconds"
   val QueueArnAttribute = "QueueArn"
