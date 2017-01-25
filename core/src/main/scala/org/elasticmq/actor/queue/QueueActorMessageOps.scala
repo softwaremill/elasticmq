@@ -105,9 +105,8 @@ trait QueueActorMessageOps extends Logging {
     deliveryTime: Long, newNextDelivery: MillisNextDelivery, internalMessage: InternalMessage) = {
     // Putting the msg to dead letters queue if exists
     if (queueData.deadLettersQueue.map(_.maxReceiveCount).exists(_ <= internalMessage.receiveCount)) {
-      logger.info(s"send message $internalMessage to dead letters actor $deadLettersActorRef")
+      logger.debug(s"${queueData.name}: send message $internalMessage to dead letters actor $deadLettersActorRef")
       deadLettersActorRef.foreach(_ ! SendMessage(internalMessage.toNewMessageData))
-      logger.info(s"delete message $internalMessage from original queue ${queueData.name}")
       internalMessage.deliveryReceipt.foreach(dr => deleteMessage(DeliveryReceipt(dr)))
       None
     } else {

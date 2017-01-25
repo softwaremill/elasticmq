@@ -23,31 +23,44 @@ trait CreateQueueDirectives {
         queueNameFromParams(p) { queueName =>
           val attributes = attributeNameAndValuesReader.read(p)
 
-          import RedrivePolicyJson._
-          val redrivePolicyJSON = attributes.get(RedrivePolicyParameter)
-          val redrivePolicy = redrivePolicyJSON.map(_.parseJson.convertTo[RedrivePolicy])
-
-          if (redrivePolicy.isDefined && !isQueueExists(redrivePolicy.get.queueName)) {
-            throw new SQSException("AWS.SimpleQueueService.NonExistentQueue")
-          }
-
-
-          val secondsVisibilityTimeoutOpt = attributes.parseOptionalLong(VisibilityTimeoutParameter)
-          val secondsVisibilityTimeout = secondsVisibilityTimeoutOpt.getOrElse(DefaultVisibilityTimeout)
-
-          val secondsDelayOpt = attributes.parseOptionalLong(DelaySecondsAttribute)
-          val secondsDelay = secondsDelayOpt.getOrElse(DefaultDelay)
-
-          val secondsReceiveMessageWaitTimeOpt = attributes.parseOptionalLong(ReceiveMessageWaitTimeSecondsAttribute)
-          val secondsReceiveMessageWaitTime = secondsReceiveMessageWaitTimeOpt
-            .getOrElse(DefaultReceiveMessageWait)
-
-          val now = new DateTime()
-          val newQueueData = QueueData(queueName, MillisVisibilityTimeout.fromSeconds(secondsVisibilityTimeout),
-            Duration.standardSeconds(secondsDelay), Duration.standardSeconds(secondsReceiveMessageWaitTime),
-            now, now, redrivePolicy.map(rd => DeadLettersQueueData(rd.queueName, rd.maxReceiveCount)))
+          val redrivePolicy =
+            try {
+              import RedrivePolicyJson._
+              attributes.get(RedrivePolicyParameter).map(_.parseJson.convertTo[RedrivePolicy])
+            } catch {
+              case e: DeserializationException =>
+                logger.warn("Cannot deserialize the redrive policy attribute", e)
+                throw new SQSException("MalformedQueryString")
+            }
 
           async {
+            redrivePolicy match {
+              case Some(rd) =>
+                if (await(queueManagerActor ? LookupQueue(rd.queueName)).isEmpty) {
+                  throw SQSException.nonExistentQueue
+                }
+
+                if (rd.maxReceiveCount < 1 || rd.maxReceiveCount > 1000) {
+                  throw SQSException.invalidParameterValue
+                }
+              case None =>
+            }
+
+            val secondsVisibilityTimeoutOpt = attributes.parseOptionalLong(VisibilityTimeoutParameter)
+            val secondsVisibilityTimeout = secondsVisibilityTimeoutOpt.getOrElse(DefaultVisibilityTimeout)
+
+            val secondsDelayOpt = attributes.parseOptionalLong(DelaySecondsAttribute)
+            val secondsDelay = secondsDelayOpt.getOrElse(DefaultDelay)
+
+            val secondsReceiveMessageWaitTimeOpt = attributes.parseOptionalLong(ReceiveMessageWaitTimeSecondsAttribute)
+            val secondsReceiveMessageWaitTime = secondsReceiveMessageWaitTimeOpt
+              .getOrElse(DefaultReceiveMessageWait)
+
+            val now = new DateTime()
+            val newQueueData = QueueData(queueName, MillisVisibilityTimeout.fromSeconds(secondsVisibilityTimeout),
+              Duration.standardSeconds(secondsDelay), Duration.standardSeconds(secondsReceiveMessageWaitTime),
+              now, now, redrivePolicy.map(rd => DeadLettersQueueData(rd.queueName, rd.maxReceiveCount)))
+
             if (!queueName.matches("[\\p{Alnum}_-]*")) {
               throw SQSException.invalidParameterValue
             } else if (sqsLimits == SQSLimits.Strict && queueName.length() > 80) {
@@ -59,10 +72,10 @@ trait CreateQueueDirectives {
             val queueData = await(lookupOrCreateQueue(newQueueData))
 
             // if the request set the attributes compare them against the queue
-            if ((!secondsDelayOpt.isEmpty && queueData.delay.getStandardSeconds != secondsDelay) ||
-              (!secondsReceiveMessageWaitTimeOpt.isEmpty
+            if ((secondsDelayOpt.isDefined && queueData.delay.getStandardSeconds != secondsDelay) ||
+              (secondsReceiveMessageWaitTimeOpt.isDefined
                 && queueData.receiveMessageWait.getStandardSeconds != secondsReceiveMessageWaitTime) ||
-              (!secondsVisibilityTimeoutOpt.isEmpty
+              (secondsVisibilityTimeoutOpt.isDefined
                 && queueData.defaultVisibilityTimeout.seconds != secondsVisibilityTimeout)) {
               // Special case: the queue existed, but has different attributes
               throw new SQSException("AWS.SimpleQueueService.QueueNameExists")
@@ -83,13 +96,6 @@ trait CreateQueueDirectives {
           }
         }
       }
-    }
-  }
-
-  private def isQueueExists(queueName: String): Boolean = {
-    Await.ready(queueManagerActor ? LookupQueue(queueName), scala.concurrent.duration.Duration.Inf).value.get match {
-      case Success(Some(ar)) => true
-      case _ => false
     }
   }
 

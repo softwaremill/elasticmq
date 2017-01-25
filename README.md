@@ -121,7 +121,8 @@ queues {
         defaultVisibilityTimeout = 10 seconds
         delay = 5 seconds
         receiveMessageWait = 0 seconds
-        deadLettersQueue1 {
+        deadLettersQueue {
+            name = "myDLQ"
             maxReceiveCount = 3 // from 1 to 1000
     	}
     }
@@ -129,7 +130,7 @@ queues {
 }
 ````
 
-All attributes are optional except `maxReceiveCount` for dead letters queue.
+All attributes are optional (except `name` and `maxReceiveCount` when a `deadLettersQueue` is defined).
 
 Starting an embedded ElasticMQ server with an SQS interface
 -----------------------------------------------------------

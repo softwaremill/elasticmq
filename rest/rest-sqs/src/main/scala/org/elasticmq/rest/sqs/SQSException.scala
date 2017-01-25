@@ -21,5 +21,6 @@ class SQSException(val code: String,
 
 object SQSException {
   def invalidParameterValue = new SQSException(InvalidParameterValueErrorName)
+  def nonExistentQueue = new SQSException("AWS.SimpleQueueService.NonExistentQueue")
 }
 

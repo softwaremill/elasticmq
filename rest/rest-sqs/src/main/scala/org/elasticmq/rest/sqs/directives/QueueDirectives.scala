@@ -63,7 +63,7 @@ trait QueueDirectives {
     } yield {
       lookupResult match {
         case Some(a) => body(a)
-        case None => throw new SQSException("AWS.SimpleQueueService.NonExistentQueue")
+        case None => throw SQSException.nonExistentQueue
       }
     }
   }

@@ -21,8 +21,7 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
   val delaySecondsAttribute = "DelaySeconds"
   val receiveMessageWaitTimeSecondsAttribute = "ReceiveMessageWaitTimeSeconds"
 
-  var client: AmazonSQS = _
-  // strict server
+  var client: AmazonSQS = _ // strict server
   var relaxedClient: AmazonSQS = _
 
   var currentTestName: String = _
@@ -901,7 +900,7 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
     client.createQueue(new CreateQueueRequest("dlq1"))
 
     // Then
-    val queueUrl = client.createQueue(new CreateQueueRequest("q1")
+    client.createQueue(new CreateQueueRequest("q1")
       .withAttributes(Map(
         defaultVisibilityTimeoutAttribute -> "1",
         redrivePolicyAttribute ->
@@ -911,7 +910,7 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
             |  "maxReceiveCount":1
             |}
           """.stripMargin
-      ))).getQueueUrl
+      )))
   }
 
   def queueVisibilityTimeout(queueUrl: String) = getQueueLongAttribute(queueUrl, visibilityTimeoutAttribute)

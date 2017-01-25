@@ -56,55 +56,34 @@ class ElasticMQServerConfig(config: Config) {
   val restSqs = new RestSqsConfiguration
 
   case class CreateQueue(name: String,
-    defaultVisibilityTimeoutSeconds: Option[Long] = None,
-    delaySeconds: Option[Long] = None,
-    receiveMessageWaitSeconds: Option[Long] = None,
-    deadLettersQueue: Option[DeadLettersQueue] = None)
+    defaultVisibilityTimeoutSeconds: Option[Long],
+    delaySeconds: Option[Long],
+    receiveMessageWaitSeconds: Option[Long],
+    deadLettersQueue: Option[DeadLettersQueue])
 
   case class DeadLettersQueue(name: String, maxReceiveCount: Int)
 
   val createQueues: List[CreateQueue] = {
+    def getOptionalDuration(c: Config, k: String) = if (c.hasPath(k)) Some(c.getDuration(k, TimeUnit.SECONDS)) else None
+
     import scala.collection.JavaConversions._
 
-    val maxReceiveCountKey = "maxReceiveCount"
     val deadLettersQueueKey = "deadLettersQueue"
-    val defaultVisibilityTimeoutKey = "defaultVisibilityTimeout"
-    val delayKey = "delay"
-    val receiveMessageWaitKey = "receiveMessageWait"
 
-    def fillQueueObj(name: String, co: ConfigObject): CreateQueue = {
-      var createQueue = CreateQueue(name = name)
-      val c = co.toConfig
-      co.foreach {
-        case (`defaultVisibilityTimeoutKey`, _) =>
-          createQueue = createQueue.copy(defaultVisibilityTimeoutSeconds =
-            Some(c.getDuration(defaultVisibilityTimeoutKey, TimeUnit.SECONDS)))
-        case (`delayKey`, _) =>
-          createQueue = createQueue.copy(delaySeconds =
-            Some(c.getDuration(delayKey, TimeUnit.SECONDS)))
-        case (`receiveMessageWaitKey`, _) =>
-          createQueue = createQueue.copy(receiveMessageWaitSeconds =
-            Some(c.getDuration(receiveMessageWaitKey, TimeUnit.SECONDS)))
-
-        case (deadLettersQueueName, obj) if obj.valueType() == ConfigValueType.OBJECT =>
-          val co = obj.asInstanceOf[ConfigObject]
-          val maxReceiveCountOpt = co.map { case (`maxReceiveCountKey`, _) =>
-            co.toConfig.getInt(maxReceiveCountKey)
-          }.headOption
-          if (maxReceiveCountOpt.isEmpty) {
-            throw new IllegalArgumentException(
-              "maxReceiveCount not set for dead letters queue " + deadLettersQueueName)
-          }
-
-          createQueue = createQueue.copy(
-            deadLettersQueue = Some(DeadLettersQueue(deadLettersQueueName, maxReceiveCountOpt.get)))
-      }
-
-      createQueue
-    }
-
-    config.getObject("queues").map { case (name, obj) =>
-      fillQueueObj(name, obj.asInstanceOf[ConfigObject])
+    config.getObject("queues").map { case (n, v) =>
+      val c = v.asInstanceOf[ConfigObject].toConfig
+      CreateQueue(
+        n,
+        getOptionalDuration(c, "defaultVisibilityTimeout"),
+        getOptionalDuration(c, "delay"),
+        getOptionalDuration(c, "receiveMessageWait"),
+        if (c.hasPath(deadLettersQueueKey)) {
+          Some(DeadLettersQueue(
+            c.getString(deadLettersQueueKey + ".name"),
+            c.getInt(deadLettersQueueKey + ".maxReceiveCount")
+          ))
+        } else None
+      )
     }.toList
   }
 }
