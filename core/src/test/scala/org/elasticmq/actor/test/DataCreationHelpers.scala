@@ -9,7 +9,7 @@ trait DataCreationHelpers {
   def createQueueData(
     name: String,
     defaultVisibilityTimeout: MillisVisibilityTimeout,
-    deadLettersQueue: Option[QueueData] = None
+    deadLettersQueue: Option[DeadLettersQueueData] = None
   ) = QueueData(
     name,
     defaultVisibilityTimeout,

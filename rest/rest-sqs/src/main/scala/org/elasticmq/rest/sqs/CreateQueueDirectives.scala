@@ -6,14 +6,16 @@ import org.elasticmq.rest.sqs.Constants._
 import org.elasticmq.rest.sqs.CreateQueueDirectives._
 import org.elasticmq.rest.sqs.ParametersUtil._
 import org.elasticmq.rest.sqs.directives.ElasticMQDirectives
-import org.elasticmq.{MillisVisibilityTimeout, QueueData}
+import org.elasticmq.{DeadLettersQueueData, MillisVisibilityTimeout, QueueData}
 import org.joda.time.{DateTime, Duration}
 import spray.json._
 
 import scala.async.Async._
-import scala.concurrent.Future
+import scala.concurrent.{Await, Future}
+import scala.util.Success
 
-trait CreateQueueDirectives { this: ElasticMQDirectives with QueueURLModule with AttributesModule with SQSLimitsModule =>
+trait CreateQueueDirectives {
+  this: ElasticMQDirectives with QueueURLModule with AttributesModule with SQSLimitsModule =>
 
   def createQueue(p: AnyParams) = {
     p.action("CreateQueue") {
@@ -24,6 +26,11 @@ trait CreateQueueDirectives { this: ElasticMQDirectives with QueueURLModule with
           import RedrivePolicyJson._
           val redrivePolicyJSON = attributes.get(RedrivePolicyParameter)
           val redrivePolicy = redrivePolicyJSON.map(_.parseJson.convertTo[RedrivePolicy])
+
+          if (redrivePolicy.isDefined && !isQueueExists(redrivePolicy.get.queueName)) {
+            throw new SQSException("AWS.SimpleQueueService.NonExistentQueue")
+          }
+
 
           val secondsVisibilityTimeoutOpt = attributes.parseOptionalLong(VisibilityTimeoutParameter)
           val secondsVisibilityTimeout = secondsVisibilityTimeoutOpt.getOrElse(DefaultVisibilityTimeout)
@@ -38,7 +45,7 @@ trait CreateQueueDirectives { this: ElasticMQDirectives with QueueURLModule with
           val now = new DateTime()
           val newQueueData = QueueData(queueName, MillisVisibilityTimeout.fromSeconds(secondsVisibilityTimeout),
             Duration.standardSeconds(secondsDelay), Duration.standardSeconds(secondsReceiveMessageWaitTime),
-            now, now, redrivePolicy.map(redrivePolicyToQueueData(_, now)))
+            now, now, redrivePolicy.map(rd => DeadLettersQueueData(rd.queueName, rd.maxReceiveCount)))
 
           async {
             if (!queueName.matches("[\\p{Alnum}_-]*")) {
@@ -79,6 +86,13 @@ trait CreateQueueDirectives { this: ElasticMQDirectives with QueueURLModule with
     }
   }
 
+  private def isQueueExists(queueName: String): Boolean = {
+    Await.ready(queueManagerActor ? LookupQueue(queueName), scala.concurrent.duration.Duration.Inf).value.get match {
+      case Success(Some(ar)) => true
+      case _ => false
+    }
+  }
+
   private def lookupOrCreateQueue[T](newQueueData: QueueData): Future[QueueData] = {
     async {
       val queueActorOption = await(queueManagerActor ? LookupQueue(newQueueData.name))
@@ -94,23 +108,6 @@ trait CreateQueueDirectives { this: ElasticMQDirectives with QueueURLModule with
       }
     }
   }
-
-  private def redrivePolicyToQueueData(rd: RedrivePolicy, now: DateTime): QueueData = {
-    import rd._
-    QueueData(
-      name = queueName,
-      defaultVisibilityTimeout = MillisVisibilityTimeout.fromSeconds(
-        defaultVisibilityTimeout.getOrElse(CreateQueueDirectives.DefaultVisibilityTimeout)),
-      delay = Duration.standardSeconds(delay.getOrElse(CreateQueueDirectives.DefaultDelay)),
-      receiveMessageWait = Duration.standardSeconds(
-        receiveMessageWait.getOrElse(CreateQueueDirectives.DefaultReceiveMessageWait)),
-      created = now,
-      lastModified = now,
-      maxReceiveCount = Some(maxReceiveCount),
-      isDeadLettersQueue = true,
-      deadLettersQueue = deadLettersQueue.map(redrivePolicyToQueueData(_, now))
-    ).adjustLimits()
-  }
 }
 
 object CreateQueueDirectives {
@@ -121,21 +118,10 @@ object CreateQueueDirectives {
 
 case class RedrivePolicy(
   queueName: String,
-  maxReceiveCount: Int,
-  defaultVisibilityTimeout: Option[Long] = None,
-  delay: Option[Long] = None,
-  receiveMessageWait: Option[Long] = None,
-  deadLettersQueue: Option[RedrivePolicy] = None
+  maxReceiveCount: Int
 )
 
 object RedrivePolicyJson extends DefaultJsonProtocol {
   implicit val format: JsonFormat[RedrivePolicy] =
-    lazyFormat(jsonFormat(
-      RedrivePolicy,
-      "queueName",
-      "defaultVisibilityTimeout",
-      "delay",
-      "receiveMessageWait",
-      "maxReceiveCount",
-      "deadLettersQueue"))
+    jsonFormat(RedrivePolicy, "deadLetterTargetArn", "maxReceiveCount")
 }

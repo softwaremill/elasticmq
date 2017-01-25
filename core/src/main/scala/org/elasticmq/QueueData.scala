@@ -8,11 +8,15 @@ case class QueueData(name: String,
   receiveMessageWait: Duration,
   created: DateTime,
   lastModified: DateTime,
-  deadLettersQueue: Option[QueueData] = None,
-  maxReceiveCount: Option[Int] = None,
-  isDeadLettersQueue: Boolean = false
-) {
-  def adjustLimits(): QueueData = {
-    this.copy(maxReceiveCount = maxReceiveCount.map(mrc => math.min(math.max(mrc, 1), 1000)))
+  deadLettersQueue: Option[DeadLettersQueueData] = None,
+  maxReceiveCount: Option[Int] = None
+)
+
+class DeadLettersQueueData(val name: String, val maxReceiveCount: Int)
+
+object DeadLettersQueueData {
+  def apply(name: String, maxReceiveCount: Int): DeadLettersQueueData = {
+    val mrc = math.min(math.max(maxReceiveCount, 1), 1000)
+    new DeadLettersQueueData(name, mrc)
   }
 }

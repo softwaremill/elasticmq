@@ -1,15 +1,15 @@
 package org.elasticmq.server
 
+import akka.actor.{ActorRef, ActorSystem, Props}
 import akka.util.Timeout
-import org.elasticmq.{MillisVisibilityTimeout, QueueData}
-import org.elasticmq.msg.CreateQueue
-import org.elasticmq.util.Logging
-import org.elasticmq.rest.sqs.{CreateQueueDirectives, TheSQSRestServerBuilder, SQSRestServer}
-import akka.actor.{Props, ActorRef, ActorSystem}
 import org.elasticmq.actor.QueueManagerActor
-import org.elasticmq.util.NowProvider
 import org.elasticmq.actor.reply._
+import org.elasticmq.msg.CreateQueue
+import org.elasticmq.rest.sqs.{CreateQueueDirectives, SQSRestServer, TheSQSRestServerBuilder}
+import org.elasticmq.util.{Logging, NowProvider}
+import org.elasticmq.{DeadLettersQueueData, MillisVisibilityTimeout, QueueData}
 import org.joda.time.{DateTime, Duration}
+
 import scala.concurrent.Await
 
 class ElasticMQServer(config: ElasticMQServerConfig) extends Logging {
@@ -77,8 +77,7 @@ class ElasticMQServer(config: ElasticMQServerConfig) extends Logging {
         cq.receiveMessageWaitSeconds.getOrElse(CreateQueueDirectives.DefaultReceiveMessageWait)),
       created = now,
       lastModified = now,
-      maxReceiveCount = cq.maxReceiveCount,
-      deadLettersQueue = cq.deadLettersQueue.map(configToParams(_, now))
-    ).adjustLimits()
+      deadLettersQueue = cq.deadLettersQueue.map(dlq => DeadLettersQueueData(dlq.name, dlq.maxReceiveCount))
+    )
   }
 }

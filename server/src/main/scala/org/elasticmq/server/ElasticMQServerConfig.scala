@@ -59,9 +59,9 @@ class ElasticMQServerConfig(config: Config) {
     defaultVisibilityTimeoutSeconds: Option[Long] = None,
     delaySeconds: Option[Long] = None,
     receiveMessageWaitSeconds: Option[Long] = None,
-    deadLettersQueue: Option[CreateQueue] = None,
-    maxReceiveCount: Option[Int] = None,
-    isDeadLettersQueue: Boolean = false)
+    deadLettersQueue: Option[DeadLettersQueue] = None)
+
+  case class DeadLettersQueue(name: String, maxReceiveCount: Int)
 
   val createQueues: List[CreateQueue] = {
     import scala.collection.JavaConversions._
@@ -72,8 +72,8 @@ class ElasticMQServerConfig(config: Config) {
     val delayKey = "delay"
     val receiveMessageWaitKey = "receiveMessageWait"
 
-    def fillQueueObj(name: String, co: ConfigObject, isDeadLettersQueue: Boolean = false): CreateQueue = {
-      var createQueue = CreateQueue(name = name, isDeadLettersQueue = isDeadLettersQueue)
+    def fillQueueObj(name: String, co: ConfigObject): CreateQueue = {
+      var createQueue = CreateQueue(name = name)
       val c = co.toConfig
       co.foreach {
         case (`defaultVisibilityTimeoutKey`, _) =>
@@ -85,16 +85,19 @@ class ElasticMQServerConfig(config: Config) {
         case (`receiveMessageWaitKey`, _) =>
           createQueue = createQueue.copy(receiveMessageWaitSeconds =
             Some(c.getDuration(receiveMessageWaitKey, TimeUnit.SECONDS)))
-        case (`maxReceiveCountKey`, _) =>
-          createQueue = createQueue.copy(maxReceiveCount = Some(c.getInt(maxReceiveCountKey)))
-        case (deadLettersQueueName, obj) if obj.valueType() == ConfigValueType.OBJECT =>
-          createQueue = createQueue.copy(
-            deadLettersQueue = Some(fillQueueObj(deadLettersQueueName, obj.asInstanceOf[ConfigObject],
-              isDeadLettersQueue = true)))
-      }
 
-      if (isDeadLettersQueue && createQueue.maxReceiveCount.isEmpty) {
-        throw new IllegalArgumentException("maxReceiveCount not set for dead letters queue " + name)
+        case (deadLettersQueueName, obj) if obj.valueType() == ConfigValueType.OBJECT =>
+          val co = obj.asInstanceOf[ConfigObject]
+          val maxReceiveCountOpt = co.map { case (`maxReceiveCountKey`, _) =>
+            co.toConfig.getInt(maxReceiveCountKey)
+          }.headOption
+          if (maxReceiveCountOpt.isEmpty) {
+            throw new IllegalArgumentException(
+              "maxReceiveCount not set for dead letters queue " + deadLettersQueueName)
+          }
+
+          createQueue = createQueue.copy(
+            deadLettersQueue = Some(DeadLettersQueue(deadLettersQueueName, maxReceiveCountOpt.get)))
       }
 
       createQueue

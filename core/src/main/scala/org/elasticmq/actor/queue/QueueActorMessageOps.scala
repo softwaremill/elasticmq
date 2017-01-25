@@ -1,22 +1,12 @@
 package org.elasticmq.actor.queue
 
-import scala.annotation.tailrec
-import org.elasticmq._
-import org.elasticmq.msg._
-import org.joda.time.DateTime
-import org.elasticmq.util.Logging
-import org.elasticmq.util.NowProvider
-import org.elasticmq.OnDateTimeReceived
-import org.elasticmq.NewMessageData
-import org.elasticmq.msg.DeleteMessage
-import org.elasticmq.MessageId
-import org.elasticmq.msg.SendMessage
-import org.elasticmq.MessageData
-import org.elasticmq.MillisNextDelivery
-import org.elasticmq.msg.ReceiveMessages
-import org.elasticmq.msg.UpdateVisibilityTimeout
-import org.elasticmq.msg.LookupMessage
 import org.elasticmq.actor.reply._
+import org.elasticmq.msg.{DeleteMessage, LookupMessage, ReceiveMessages, SendMessage, UpdateVisibilityTimeout, _}
+import org.elasticmq.util.{Logging, NowProvider}
+import org.elasticmq.{MessageData, MessageId, MillisNextDelivery, NewMessageData, OnDateTimeReceived, _}
+import org.joda.time.DateTime
+
+import scala.annotation.tailrec
 
 trait QueueActorMessageOps extends Logging {
   this: QueueActorStorage =>
@@ -114,19 +104,13 @@ trait QueueActorMessageOps extends Logging {
   private def processInternalMessage(
     deliveryTime: Long, newNextDelivery: MillisNextDelivery, internalMessage: InternalMessage) = {
     // Putting the msg to dead letters queue if exists
-    if (queueData.deadLettersQueue.flatMap(_.maxReceiveCount).exists(_ <= internalMessage.receiveCount)) {
+    if (queueData.deadLettersQueue.map(_.maxReceiveCount).exists(_ <= internalMessage.receiveCount)) {
       logger.info(s"send message $internalMessage to dead letters actor $deadLettersActorRef")
       deadLettersActorRef.foreach(_ ! SendMessage(internalMessage.toNewMessageData))
-
-      // delete only if normal queue or if dead letter queue has its own dead letters queue
-      if (!queueData.isDeadLettersQueue || (queueData.isDeadLettersQueue && deadLettersActorRef.isDefined)) {
-        internalMessage.deliveryReceipt.foreach(dr => deleteMessage(DeliveryReceipt(dr)))
-      }
-
+      logger.info(s"delete message $internalMessage from original queue ${queueData.name}")
+      internalMessage.deliveryReceipt.foreach(dr => deleteMessage(DeliveryReceipt(dr)))
       None
-
     } else {
-
       // Putting the msg again into the queue, with a new next delivery
       internalMessage.deliveryReceipt = Some(DeliveryReceipt.generate(MessageId(internalMessage.id)).receipt)
       internalMessage.nextDelivery = newNextDelivery.millis
