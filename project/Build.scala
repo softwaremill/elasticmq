@@ -7,7 +7,7 @@ object BuildSettings {
     organization  := "org.elasticmq",
     version       := "0.12.1",
     scalaVersion  := "2.11.8",
-    crossScalaVersions := Seq(scalaVersion.value, "2.12.0"),
+    crossScalaVersions := Seq(scalaVersion.value, "2.12.1"),
 
     libraryDependencies += "org.scala-lang.modules" %% "scala-xml" % "1.0.6",
 
@@ -42,26 +42,26 @@ object BuildSettings {
 }
 
 object Dependencies {
-  val jodaTime      = "joda-time"                 % "joda-time"             % "2.9.6"
+  val jodaTime      = "joda-time"                 % "joda-time"             % "2.9.7"
   val jodaConvert   = "org.joda"                  % "joda-convert"          % "1.8.1"
   val config        = "com.typesafe"              % "config"                % "1.3.1"
 
   val scalalogging  = "com.typesafe.scala-logging" %% "scala-logging"       % "3.5.0"
-  val logback       = "ch.qos.logback"            % "logback-classic"       % "1.1.7"
-  val jclOverSlf4j  = "org.slf4j"                 % "jcl-over-slf4j"        % "1.7.21" // needed form amazon java sdk
+  val logback       = "ch.qos.logback"            % "logback-classic"       % "1.1.9"
+  val jclOverSlf4j  = "org.slf4j"                 % "jcl-over-slf4j"        % "1.7.22" // needed form amazon java sdk
 
   val scalatest     = "org.scalatest"             %% "scalatest"            % "3.0.1"
   val awaitility    = "com.jayway.awaitility"     % "awaitility-scala"      % "1.7.0"
 
-  val amazonJavaSdk = "com.amazonaws"             % "aws-java-sdk"          % "1.11.59" exclude ("commons-logging", "commons-logging")
+  val amazonJavaSdk = "com.amazonaws"             % "aws-java-sdk"          % "1.11.84" exclude ("commons-logging", "commons-logging")
 
-  val akkaVersion      = "2.4.14"
-  val akkaHttpVersion  = "10.0.0"
+  val akkaVersion      = "2.4.16"
+  val akkaHttpVersion  = "10.0.2"
   val akka2Actor       = "com.typesafe.akka" %% "akka-actor"           % akkaVersion
   val akka2Slf4j       = "com.typesafe.akka" %% "akka-slf4j"           % akkaVersion
   val akka2Testkit     = "com.typesafe.akka" %% "akka-testkit"         % akkaVersion % "test"
   val akka2Http        = "com.typesafe.akka" %% "akka-http"            % akkaHttpVersion
-  val sprayJson        = "io.spray" %% "spray-json"                    % "1.3.2" // akka http json 10.0.0 depends on this version.
+  val sprayJson        = "io.spray" %% "spray-json"                    % "1.3.3"
   val akka2HttpTestkit = "com.typesafe.akka" %% "akka-http-testkit" % akkaHttpVersion % "test"
 
   val scalaAsync = "org.scala-lang.modules" %% "scala-async" % "0.9.6"
