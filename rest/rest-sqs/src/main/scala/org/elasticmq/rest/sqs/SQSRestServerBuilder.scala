@@ -143,7 +143,7 @@ case class TheSQSRestServerBuilder(providedActorSystem: Option[ActorSystem],
         deleteQueue(p) ~
         getQueueAttributes(p) ~
         setQueueAttributes(p) ~
-        addPermissions(p)
+        addPermission(p)
 
     val config = new ElasticMQConfig
 
@@ -216,7 +216,7 @@ case class SQSRestServer(startFuture: Future[Http.ServerBinding], stopAndGetFutu
 }
 
 object Constants {
-  val EmptyRequestId = "15639547-7534-1569-8246-865798464538"
+  val EmptyRequestId = "00000000-0000-0000-0000-000000000000"
   val SqsDefaultVersion = "2012-11-05"
   val ReceiptHandleParameter = "ReceiptHandle"
   val VisibilityTimeoutParameter = "VisibilityTimeout"

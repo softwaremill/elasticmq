@@ -1,7 +1,6 @@
 package org.elasticmq.rest.sqs
 
 import Constants._
-import org.elasticmq.actor.reply._
 import org.elasticmq.rest.sqs.directives.ElasticMQDirectives
 
 trait AddPermissionDirectives { this: ElasticMQDirectives with QueueURLModule =>
