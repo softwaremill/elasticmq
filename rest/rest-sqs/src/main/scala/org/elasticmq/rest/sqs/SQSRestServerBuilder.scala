@@ -113,6 +113,7 @@ case class TheSQSRestServerBuilder(providedActorSystem: Option[ActorSystem],
       with ChangeMessageVisibilityBatchDirectives
       with GetQueueUrlDirectives
       with PurgeQueueDirectives
+      with AddPermissionDirectives
       with AttributesModule {
 
       def serverAddress = currentServerAddress.get()
@@ -141,7 +142,8 @@ case class TheSQSRestServerBuilder(providedActorSystem: Option[ActorSystem],
         changeMessageVisibilityBatch(p) ~
         deleteQueue(p) ~
         getQueueAttributes(p) ~
-        setQueueAttributes(p)
+        setQueueAttributes(p) ~
+        addPermission(p)
 
     val config = new ElasticMQConfig
 
