@@ -246,7 +246,7 @@ object MD5Util {
   def md5Digest(s: String) = {
     val md5 = MessageDigest.getInstance("MD5")
     md5.reset()
-    md5.update(s.getBytes)
+    md5.update(s.getBytes("UTF-8"))
     md5.digest().map(0xFF & _).map { "%02x".format(_) }.foldLeft(""){_ + _}
   }
 
