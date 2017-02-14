@@ -145,6 +145,11 @@ If you need to bind to a different host/port, there are configuration methods on
     // ... use ...
     server.stopAndWait()
 
+You can also set a dynamic port with a port value of `0` or by using the method `withDynamicPort`. To retrieve the port (and other configuration) when using a dynamic port value you can access the server via `waitUntilStarted` for example:
+    
+    val server = SQSRestServerBuilder.withDynamicPort().start()
+    server.waitUntilStarted().localAddress().getPort()
+
 You can also provide a custom `ActorSystem`; for details see the javadocs.
 
 Embedded ElasticMQ can be used from any JVM-based language (Java, Scala, etc.).
