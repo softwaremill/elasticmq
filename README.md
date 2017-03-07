@@ -122,11 +122,11 @@ queues {
         delay = 5 seconds
         receiveMessageWait = 0 seconds
         deadLettersQueue {
-            name = "myDLQ"
+            name = "queue1-dead-letters"
             maxReceiveCount = 3 // from 1 to 1000
     	}
     }
-    queue2 { }
+    queue1-dead-letters { }
 }
 ````
 
