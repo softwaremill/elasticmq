@@ -121,7 +121,7 @@ queues {
         defaultVisibilityTimeout = 10 seconds
         delay = 5 seconds
         receiveMessageWait = 0 seconds
-        deadLetterQueue {
+        deadLettersQueue {
             name = "queue1-dead-letters"
             maxReceiveCount = 3 // from 1 to 1000
     	}
