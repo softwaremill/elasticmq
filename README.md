@@ -130,7 +130,7 @@ queues {
 }
 ````
 
-All attributes are optional (except `name` and `maxReceiveCount` when a `deadLetterQueue` is defined).
+All attributes are optional (except `name` and `maxReceiveCount` when a `deadLettersQueue` is defined).
 
 Starting an embedded ElasticMQ server with an SQS interface
 -----------------------------------------------------------
