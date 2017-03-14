@@ -196,7 +196,7 @@ The `boto3` interface is different:
 ElasticMQ dependencies in SBT
 -----------------------------
 
-    // Scala 2.11
+    // Scala 2.12 and 2.11
     val elasticmqSqs        = "org.elasticmq" %% "elasticmq-rest-sqs"         % "0.13.2"
 
     // Scala 2.10
