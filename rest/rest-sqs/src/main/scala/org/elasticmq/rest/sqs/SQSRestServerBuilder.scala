@@ -193,8 +193,7 @@ case class TheSQSRestServerBuilder(providedActorSystem: Option[ActorSystem],
       .getOrElse {
       val actorSystem = ActorSystem("elasticmq")
       (actorSystem, () => {
-        actorSystem.shutdown()
-        actorSystem.awaitTermination()
+        Await.result(actorSystem.terminate(), 1.minute)
       })
     }
   }

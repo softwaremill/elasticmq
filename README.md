@@ -291,7 +291,7 @@ Technology
 ----------
 
 * Core: [Scala](http://scala-lang.org) and [Akka](http://akka.io/).
-* Rest server: [Akka HTTP](http://doc.akka.io/docs/akka/2.4.7/scala/http/), a high-performance,
+* Rest server: [Akka HTTP](http://doc.akka.io/docs/akka-http/current/), a high-performance,
   asynchronous, REST/HTTP toolkit.
 * Testing the SQS interface: [Amazon Java SDK](http://aws.amazon.com/sdkforjava/);
   see the `rest-sqs-testing-amazon-java-sdk` module for the testsuite.
