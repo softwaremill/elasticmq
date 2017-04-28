@@ -1,5 +1,6 @@
 package org.elasticmq.server
 
+import akka.actor.Terminated
 import org.elasticmq.util.Logging
 import io.Source
 import com.typesafe.config.ConfigFactory
@@ -34,7 +35,7 @@ object Main extends Logging {
     })
   }
 
-  private def addShutdownHook(shutdown: () => Unit) {
+  private def addShutdownHook(shutdown: () => Terminated) {
     Runtime.getRuntime.addShutdownHook(new Thread() {
       override def run() {
         logger.info("ElasticMQ server stopping ...")

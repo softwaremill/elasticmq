@@ -11,6 +11,8 @@ object BuildSettings {
 
     libraryDependencies += "org.scala-lang.modules" %% "scala-xml" % "1.0.6",
 
+    dependencyOverrides := Dependencies.akka25Overrides,
+
     // Sonatype OSS deployment
     publishTo := {
       val nexus = "https://oss.sonatype.org/"
@@ -55,8 +57,8 @@ object Dependencies {
 
   val amazonJavaSdk = "com.amazonaws"             % "aws-java-sdk"          % "1.11.84" exclude ("commons-logging", "commons-logging")
 
-  val akkaVersion      = "2.4.16"
-  val akkaHttpVersion  = "10.0.2"
+  val akkaVersion      = "2.5.0"
+  val akkaHttpVersion  = "10.0.5"
   val akka2Actor       = "com.typesafe.akka" %% "akka-actor"           % akkaVersion
   val akka2Slf4j       = "com.typesafe.akka" %% "akka-slf4j"           % akkaVersion
   val akka2Testkit     = "com.typesafe.akka" %% "akka-testkit"         % akkaVersion % "test"
@@ -67,6 +69,10 @@ object Dependencies {
   val scalaAsync = "org.scala-lang.modules" %% "scala-async" % "0.9.6"
 
   val common = Seq(scalalogging)
+
+  val akka25Overrides = Set( // override the 2.4.x transitive dependency from Akka HTTP
+    "com.typesafe.akka" %% "akka-stream" % akkaVersion,
+    "com.typesafe.akka" %% "akka-stream-testkit" % akkaVersion)
 }
 
 object ElasticMQBuild extends Build {

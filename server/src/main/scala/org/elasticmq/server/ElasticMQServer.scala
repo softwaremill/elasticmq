@@ -11,6 +11,7 @@ import org.elasticmq.{DeadLettersQueueData, MillisVisibilityTimeout, QueueData}
 import org.joda.time.{DateTime, Duration}
 
 import scala.concurrent.Await
+import scala.concurrent.duration.Duration.Inf
 
 class ElasticMQServer(config: ElasticMQServerConfig) extends Logging {
   val actorSystem = ActorSystem("elasticmq")
@@ -23,8 +24,7 @@ class ElasticMQServer(config: ElasticMQServerConfig) extends Logging {
 
     () => {
       restServerOpt.map(_.stopAndGetFuture())
-      actorSystem.shutdown()
-      actorSystem.awaitTermination()
+      Await.result(actorSystem.terminate(), Inf)
     }
   }
 

@@ -14,7 +14,7 @@ abstract class ActorTest extends TestKit(ActorSystem()) with FunSuiteLike with M
   implicit val ec = system.dispatcher
 
   override protected def afterAll() {
-    system.shutdown()
+    waitFor(system.terminate())
     super.afterAll()
   }
 
