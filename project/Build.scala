@@ -57,6 +57,8 @@ object Dependencies {
 
   val amazonJavaSdk = "com.amazonaws"             % "aws-java-sdk"          % "1.11.84" exclude ("commons-logging", "commons-logging")
 
+  val scalaGraph    = "org.scala-graph"           %% "graph-core"           % "1.11.5"
+
   val akkaVersion      = "2.5.0"
   val akkaHttpVersion  = "10.0.5"
   val akka2Actor       = "com.typesafe.akka" %% "akka-actor"           % akkaVersion
@@ -124,7 +126,7 @@ object ElasticMQBuild extends Build {
     "elasticmq-server",
     file("server"),
     settings = buildSettings ++ CustomTasks.generateVersionFileSettings ++ Seq(
-      libraryDependencies ++= Seq(logback, config),
+      libraryDependencies ++= Seq(logback, config, scalaGraph),
       mainClass in assembly := Some("org.elasticmq.server.Main")
     )
   ) dependsOn(core, restSqs, commonTest % "test")

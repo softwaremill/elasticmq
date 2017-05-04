@@ -10,8 +10,12 @@ import org.elasticmq.util.{Logging, NowProvider}
 import org.elasticmq.{DeadLettersQueueData, MillisVisibilityTimeout, QueueData}
 import org.joda.time.{DateTime, Duration}
 
+import scala.collection.mutable.ListBuffer
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration.Inf
+import scalax.collection.Graph
+import scalax.collection.GraphPredef._
+import scalax.collection.GraphEdge._
 
 class ElasticMQServer(config: ElasticMQServerConfig) extends Logging {
   val actorSystem = ActorSystem("elasticmq")
@@ -60,11 +64,10 @@ class ElasticMQServer(config: ElasticMQServerConfig) extends Logging {
       Timeout(5.seconds)
     }
 
-    val futures = config.createQueues.map { cq =>
-      queueManagerActor ? CreateQueue(configToParams(cq, new DateTime))
+    sortCreateQueues(config.createQueues).map { cq =>
+      val f = queueManagerActor ? CreateQueue(configToParams(cq, new DateTime))
+      Await.result(f, timeout.duration)
     }
-
-    futures.foreach { f => Await.result(f, timeout.duration) }
   }
 
   private def configToParams(cq: config.CreateQueue, now: DateTime): QueueData = {
@@ -79,5 +82,41 @@ class ElasticMQServer(config: ElasticMQServerConfig) extends Logging {
       lastModified = now,
       deadLettersQueue = cq.deadLettersQueue.map(dlq => DeadLettersQueueData(dlq.name, dlq.maxReceiveCount))
     )
+  }
+
+  private def sortCreateQueues(cqs: List[config.CreateQueue]): List[config.CreateQueue] = {
+    val nodes = cqs
+    val edges = createDeadLetterQueueEdges(nodes)
+    val sorted = Graph.from(nodes, edges).topologicalSort()
+
+    if (sorted.isLeft) {
+      throw new IllegalArgumentException(s"Circular queue graph, check ${sorted.left.get.value.name}")
+    }
+    sorted.right.get.toList.reverse.map { node => node.value }
+  }
+
+  private def createDeadLetterQueueEdges(nodes: List[config.CreateQueue]): List[DiEdge[config.CreateQueue]] = {
+    var edges = new ListBuffer[DiEdge[config.CreateQueue]]()
+
+    var queueMap = Map[String, config.CreateQueue]()
+    nodes.foreach { cq =>
+      queueMap += (cq.name -> cq)
+    }
+
+    nodes.foreach { cq =>
+      if (cq.deadLettersQueue.nonEmpty) {
+        val dlcqName = cq.deadLettersQueue.get.name
+        val dlcq = queueMap.get(dlcqName)
+
+        if (dlcq.isEmpty) {
+          logger.error("Dead letter queue {} not found", dlcqName)
+        }
+        else {
+          edges += cq ~> dlcq.get
+        }
+      }
+    }
+
+    edges.toList
   }
 }
