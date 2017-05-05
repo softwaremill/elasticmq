@@ -6,8 +6,8 @@ object BuildSettings {
   val buildSettings = Defaults.coreDefaultSettings ++ Seq (
     organization  := "org.elasticmq",
     version       := "0.13.2",
-    scalaVersion  := "2.11.8",
-    crossScalaVersions := Seq(scalaVersion.value, "2.12.1"),
+    scalaVersion  := "2.11.11",
+    crossScalaVersions := Seq(scalaVersion.value, "2.12.2"),
 
     libraryDependencies += "org.scala-lang.modules" %% "scala-xml" % "1.0.6",
 
@@ -49,18 +49,18 @@ object Dependencies {
   val config        = "com.typesafe"              % "config"                % "1.3.1"
 
   val scalalogging  = "com.typesafe.scala-logging" %% "scala-logging"       % "3.5.0"
-  val logback       = "ch.qos.logback"            % "logback-classic"       % "1.1.9"
-  val jclOverSlf4j  = "org.slf4j"                 % "jcl-over-slf4j"        % "1.7.22" // needed form amazon java sdk
+  val logback       = "ch.qos.logback"            % "logback-classic"       % "1.2.3"
+  val jclOverSlf4j  = "org.slf4j"                 % "jcl-over-slf4j"        % "1.7.25" // needed form amazon java sdk
 
-  val scalatest     = "org.scalatest"             %% "scalatest"            % "3.0.1"
+  val scalatest     = "org.scalatest"             %% "scalatest"            % "3.0.3"
   val awaitility    = "com.jayway.awaitility"     % "awaitility-scala"      % "1.7.0"
 
-  val amazonJavaSdk = "com.amazonaws"             % "aws-java-sdk"          % "1.11.84" exclude ("commons-logging", "commons-logging")
+  val amazonJavaSdk = "com.amazonaws"             % "aws-java-sdk"          % "1.11.126" exclude ("commons-logging", "commons-logging")
 
   val scalaGraph    = "org.scala-graph"           %% "graph-core"           % "1.11.5"
 
-  val akkaVersion      = "2.5.0"
-  val akkaHttpVersion  = "10.0.5"
+  val akkaVersion      = "2.5.1"
+  val akkaHttpVersion  = "10.0.6"
   val akka2Actor       = "com.typesafe.akka" %% "akka-actor"           % akkaVersion
   val akka2Slf4j       = "com.typesafe.akka" %% "akka-slf4j"           % akkaVersion
   val akka2Testkit     = "com.typesafe.akka" %% "akka-testkit"         % akkaVersion % "test"
