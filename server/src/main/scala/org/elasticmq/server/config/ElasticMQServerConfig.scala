@@ -1,11 +1,11 @@
-package org.elasticmq.server
+package org.elasticmq.server.config
 
 import java.util.concurrent.TimeUnit
 
-import com.typesafe.config.{Config, ConfigObject, ConfigValueType}
+import com.typesafe.config.{Config, ConfigObject}
 import org.elasticmq.NodeAddress
 import org.elasticmq.rest.sqs.SQSLimits
-import org.elasticmq.server.config.{CreateQueue, DeadLettersQueue}
+import org.elasticmq.server.QueueSorter
 import org.elasticmq.util.Logging
 
 class ElasticMQServerConfig(config: Config) extends Logging {

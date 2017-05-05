@@ -2,8 +2,10 @@ package org.elasticmq.server
 
 import akka.actor.Terminated
 import org.elasticmq.util.Logging
+
 import io.Source
 import com.typesafe.config.ConfigFactory
+import org.elasticmq.server.config.ElasticMQServerConfig
 
 object Main extends Logging {
   def main(args: Array[String]) {

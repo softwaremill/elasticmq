@@ -5,7 +5,7 @@ import akka.util.Timeout
 import org.elasticmq.actor.QueueManagerActor
 import org.elasticmq.actor.reply._
 import org.elasticmq.rest.sqs.{CreateQueueDirectives, SQSRestServer, TheSQSRestServerBuilder}
-import org.elasticmq.server.config.CreateQueue
+import org.elasticmq.server.config.{CreateQueue, ElasticMQServerConfig}
 import org.elasticmq.util.{Logging, NowProvider}
 import org.elasticmq.{DeadLettersQueueData, MillisVisibilityTimeout, QueueData}
 import org.joda.time.{DateTime, Duration}
