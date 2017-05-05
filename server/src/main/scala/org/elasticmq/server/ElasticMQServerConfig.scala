@@ -5,8 +5,10 @@ import java.util.concurrent.TimeUnit
 import com.typesafe.config.{Config, ConfigObject, ConfigValueType}
 import org.elasticmq.NodeAddress
 import org.elasticmq.rest.sqs.SQSLimits
+import org.elasticmq.server.config.{CreateQueue, DeadLettersQueue}
+import org.elasticmq.util.Logging
 
-class ElasticMQServerConfig(config: Config) {
+class ElasticMQServerConfig(config: Config) extends Logging {
 
   // Configure main storage
 
@@ -55,14 +57,6 @@ class ElasticMQServerConfig(config: Config) {
 
   val restSqs = new RestSqsConfiguration
 
-  case class CreateQueue(name: String,
-    defaultVisibilityTimeoutSeconds: Option[Long],
-    delaySeconds: Option[Long],
-    receiveMessageWaitSeconds: Option[Long],
-    deadLettersQueue: Option[DeadLettersQueue])
-
-  case class DeadLettersQueue(name: String, maxReceiveCount: Int)
-
   val createQueues: List[CreateQueue] = {
     def getOptionalDuration(c: Config, k: String) = if (c.hasPath(k)) Some(c.getDuration(k, TimeUnit.SECONDS)) else None
 
@@ -70,7 +64,7 @@ class ElasticMQServerConfig(config: Config) {
 
     val deadLettersQueueKey = "deadLettersQueue"
 
-    config.getObject("queues").map { case (n, v) =>
+    val unsortedCreateQueues = config.getObject("queues").map { case (n, v) =>
       val c = v.asInstanceOf[ConfigObject].toConfig
       CreateQueue(
         n,
@@ -85,5 +79,8 @@ class ElasticMQServerConfig(config: Config) {
         } else None
       )
     }.toList
+
+    QueueSorter.sortCreateQueues(unsortedCreateQueues)
   }
+
 }

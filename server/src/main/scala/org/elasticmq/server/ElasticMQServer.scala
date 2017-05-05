@@ -4,8 +4,8 @@ import akka.actor.{ActorRef, ActorSystem, Props}
 import akka.util.Timeout
 import org.elasticmq.actor.QueueManagerActor
 import org.elasticmq.actor.reply._
-import org.elasticmq.msg.CreateQueue
 import org.elasticmq.rest.sqs.{CreateQueueDirectives, SQSRestServer, TheSQSRestServerBuilder}
+import org.elasticmq.server.config.CreateQueue
 import org.elasticmq.util.{Logging, NowProvider}
 import org.elasticmq.{DeadLettersQueueData, MillisVisibilityTimeout, QueueData}
 import org.joda.time.{DateTime, Duration}
@@ -60,14 +60,14 @@ class ElasticMQServer(config: ElasticMQServerConfig) extends Logging {
       Timeout(5.seconds)
     }
 
-    val futures = config.createQueues.map { cq =>
-      queueManagerActor ? CreateQueue(configToParams(cq, new DateTime))
+    config.createQueues.map { cq =>
+      // Synchronously create queues since order matters
+      val f = queueManagerActor ? org.elasticmq.msg.CreateQueue(configToParams(cq, new DateTime))
+      Await.result(f, timeout.duration)
     }
-
-    futures.foreach { f => Await.result(f, timeout.duration) }
   }
 
-  private def configToParams(cq: config.CreateQueue, now: DateTime): QueueData = {
+  private def configToParams(cq: CreateQueue, now: DateTime): QueueData = {
     QueueData(
       name = cq.name,
       defaultVisibilityTimeout = MillisVisibilityTimeout.fromSeconds(
@@ -80,4 +80,5 @@ class ElasticMQServer(config: ElasticMQServerConfig) extends Logging {
       deadLettersQueue = cq.deadLettersQueue.map(dlq => DeadLettersQueueData(dlq.name, dlq.maxReceiveCount))
     )
   }
+
 }

@@ -21,7 +21,7 @@ class QueueManagerActor(nowProvider: NowProvider) extends ReplyingActor with Log
         logger.debug(s"Cannot create queue, as it already exists: $queueData")
         Left(new QueueAlreadyExists(queueData.name))
       } else if (!queueData.deadLettersQueue.forall(dlq => queues.contains(dlq.name))) {
-        logger.debug(s"Cannot create queue, its dead letters queue doesnt exists: $queueData")
+        logger.error(s"Cannot create queue, its dead letters queue doesn't exists: $queueData")
         Left(new QueueDoesNotExist(queueData.deadLettersQueue.get.name))
       } else {
         logger.info(s"Creating queue $queueData")
