@@ -16,6 +16,7 @@ trait ReceiveMessageDirectives { this: ElasticMQDirectives with AttributesModule
     val SenderIdAttribute = "SenderId"
     val MaxNumberOfMessagesAttribute = "MaxNumberOfMessages"
     val WaitTimeSecondsAttribute = "WaitTimeSeconds"
+    val MessageAttributeNamePattern = "MessageAttributeName\\.\\d".r
 
     val AllAttributeNames = SentTimestampAttribute :: ApproximateReceiveCountAttribute ::
       ApproximateFirstReceiveTimestampAttribute :: SenderIdAttribute :: Nil
@@ -37,6 +38,8 @@ trait ReceiveMessageDirectives { this: ElasticMQDirectives with AttributesModule
         val maxNumberOfMessagesFromParameters = maxNumberOfMessagesAttributeOpt.getOrElse(1)
 
         val waitTimeSecondsFromParameters = waitTimeSecondsAttributeOpt.map(Duration.standardSeconds)
+
+        val messageAttributeNames = getMessageAttributeNames(p)
 
         ifStrictLimits(maxNumberOfMessagesFromParameters < 1 || maxNumberOfMessagesFromParameters > 10) {
           "ReadCountOutOfRange"
@@ -64,20 +67,29 @@ trait ReceiveMessageDirectives { this: ElasticMQDirectives with AttributesModule
               }).toString))
         }
 
+        def getFilteredAttributeNames(messageAttributeNames: Iterable[String], msg: MessageData) = {
+          if (messageAttributeNames.exists(s => s == "All" || s == ".*")) {
+            msg.messageAttributes
+          } else {
+            msg.messageAttributes.filterKeys(k => messageAttributeNames.exists(s => s == k || k.r.findFirstIn(s).isDefined))
+          }
+        }
+
         msgsFuture.map { msgs =>
           respondWith {
             <ReceiveMessageResponse>
               <ReceiveMessageResult>
                 {msgs.map { msg =>
                 val receipt = msg.deliveryReceipt.map(_.receipt).getOrElse(throw new RuntimeException("No receipt for a received msg."))
+                val filteredMessageAttributes = getFilteredAttributeNames(messageAttributeNames, msg)
                 <Message>
                   <MessageId>{msg.id.id}</MessageId>
                   <ReceiptHandle>{receipt}</ReceiptHandle>
                   <MD5OfBody>{md5Digest(msg.content)}</MD5OfBody>
                   <Body>{XmlUtil.convertTexWithCRToNodeSeq(msg.content)}</Body>
                   {attributesToXmlConverter.convert(calculateAttributeValues(msg))}
-                  <MD5OfMessageAttributes>{md5AttributeDigest(msg.messageAttributes)}</MD5OfMessageAttributes>
-                  {messageAttributesToXmlConverter.convert(msg.messageAttributes.toList)}
+                  <MD5OfMessageAttributes>{md5AttributeDigest(filteredMessageAttributes)}</MD5OfMessageAttributes>
+                  {messageAttributesToXmlConverter.convert(filteredMessageAttributes.toList)}
                 </Message> }}
               </ReceiveMessageResult>
               <ResponseMetadata>
@@ -89,4 +101,9 @@ trait ReceiveMessageDirectives { this: ElasticMQDirectives with AttributesModule
       }
     }
   }
+
+  def getMessageAttributeNames(p: AnyParams): Iterable[String] = {
+    p.filterKeys(k => MessageReadeableAttributeNames.MessageAttributeNamePattern.findFirstIn(k).isDefined).values
+  }
+
 }
