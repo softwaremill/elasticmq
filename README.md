@@ -45,7 +45,7 @@ Installation: stand-alone
 You can download the stand-alone distribution here:
 [https://s3/.../elasticmq-server-0.13.3.jar](https://s3-eu-west-1.amazonaws.com/softwaremill-public/elasticmq-server-0.13.3.jar)
 
-Java 6 or above is required for running the server.
+Java 8 or above is required for running the server.
 
 Simply run the jar and you should get a working server, which binds to `localhost:9324`:
 
