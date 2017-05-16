@@ -10,7 +10,7 @@ tl;dr
 * fully asynchronous implementation, no blocking calls
 
 Created and maintained by 
-[<img src="https://softwaremill.com/img/logo2x.png" alt="SoftwareMill logo" height="25">](https://softwaremill.com)
+[<img src="https://softwaremill.com/images/header-main-logo.svg" alt="SoftwareMill logo" height="25">](https://softwaremill.com)
 
 Summary
 -------
