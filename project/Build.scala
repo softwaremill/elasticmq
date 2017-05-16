@@ -5,7 +5,7 @@ import sbtassembly.AssemblyKeys._
 object BuildSettings {
   val buildSettings = Defaults.coreDefaultSettings ++ Seq (
     organization  := "org.elasticmq",
-    version       := "0.13.3",
+    version       := "0.13.4",
     scalaVersion  := "2.12.2",
     crossScalaVersions := Seq(scalaVersion.value, "2.11.11"),
 
