@@ -44,7 +44,7 @@ object BuildSettings {
 }
 
 object Dependencies {
-  val jodaTime      = "joda-time"                 % "joda-time"             % "2.9.7"
+  val jodaTime      = "joda-time"                 % "joda-time"             % "2.9.9"
   val jodaConvert   = "org.joda"                  % "joda-convert"          % "1.8.1"
   val config        = "com.typesafe"              % "config"                % "1.3.1"
 
@@ -55,7 +55,7 @@ object Dependencies {
   val scalatest     = "org.scalatest"             %% "scalatest"            % "3.0.3"
   val awaitility    = "com.jayway.awaitility"     % "awaitility-scala"      % "1.7.0"
 
-  val amazonJavaSdk = "com.amazonaws"             % "aws-java-sdk"          % "1.11.126" exclude ("commons-logging", "commons-logging")
+  val amazonJavaSdk = "com.amazonaws"             % "aws-java-sdk"          % "1.11.129" exclude ("commons-logging", "commons-logging")
 
   val scalaGraph    = "org.scala-graph"           %% "graph-core"           % "1.11.5"
 
@@ -63,6 +63,7 @@ object Dependencies {
   val akkaHttpVersion  = "10.0.6"
   val akka2Actor       = "com.typesafe.akka" %% "akka-actor"           % akkaVersion
   val akka2Slf4j       = "com.typesafe.akka" %% "akka-slf4j"           % akkaVersion
+  val akka2Streams     = "com.typesafe.akka" %% "akka-streams"         % akkaVersion
   val akka2Testkit     = "com.typesafe.akka" %% "akka-testkit"         % akkaVersion % "test"
   val akka2Http        = "com.typesafe.akka" %% "akka-http"            % akkaHttpVersion
   val sprayJson        = "io.spray" %% "spray-json"                    % "1.3.3"
@@ -111,7 +112,7 @@ object ElasticMQBuild extends Build {
     "elasticmq-rest-sqs",
     file("rest/rest-sqs"),
     settings = buildSettings ++
-      Seq(libraryDependencies ++= Seq(akka2Actor, akka2Slf4j, akka2Http, sprayJson, akka2HttpTestkit, scalaAsync) ++ common)
+      Seq(libraryDependencies ++= Seq(akka2Actor, akka2Slf4j, akka2Http, akka2Streams, sprayJson, akka2HttpTestkit, scalaAsync) ++ common)
   ) dependsOn(core, commonTest % "test")
 
   lazy val restSqsTestingAmazonJavaSdk: Project = Project(
