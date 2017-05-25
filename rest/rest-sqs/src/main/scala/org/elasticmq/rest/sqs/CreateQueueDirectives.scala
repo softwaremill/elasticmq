@@ -40,7 +40,7 @@ trait CreateQueueDirectives {
                   throw SQSException.nonExistentQueue
                 }
 
-                if (rd.maxReceiveCount < 1 || rd.maxReceiveCount > 1000) {
+                if (rd.maxReceiveCount.toInt < 1 || rd.maxReceiveCount.toInt > 1000) {
                   throw SQSException.invalidParameterValue
                 }
               case None =>
@@ -59,7 +59,7 @@ trait CreateQueueDirectives {
             val now = new DateTime()
             val newQueueData = QueueData(queueName, MillisVisibilityTimeout.fromSeconds(secondsVisibilityTimeout),
               Duration.standardSeconds(secondsDelay), Duration.standardSeconds(secondsReceiveMessageWaitTime),
-              now, now, redrivePolicy.map(rd => DeadLettersQueueData(rd.queueName, rd.maxReceiveCount)))
+              now, now, redrivePolicy.map(rd => DeadLettersQueueData(rd.queueName, rd.maxReceiveCount.toInt)))
 
             if (!queueName.matches("[\\p{Alnum}_-]*")) {
               throw SQSException.invalidParameterValue
@@ -124,7 +124,7 @@ object CreateQueueDirectives {
 
 case class RedrivePolicy(
   queueName: String,
-  maxReceiveCount: Int
+  maxReceiveCount: String
 )
 
 object RedrivePolicyJson extends DefaultJsonProtocol {

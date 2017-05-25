@@ -953,7 +953,7 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
           """
             |{
             |  "deadLetterTargetArn":"dlq1",
-            |  "maxReceiveCount":1
+            |  "maxReceiveCount":"1"
             |}
           """.stripMargin
       )))
