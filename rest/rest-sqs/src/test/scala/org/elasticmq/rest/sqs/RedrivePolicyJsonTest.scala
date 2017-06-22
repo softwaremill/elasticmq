@@ -20,7 +20,7 @@ class RedrivePolicyJsonTest extends FlatSpec with Matchers with ScalatestRouteTe
 
     rd should be(RedrivePolicy(
       queueName = "dlq1",
-      maxReceiveCount = "4"
+      maxReceiveCount = 4.toInt
     ))
 
   }
