@@ -11,6 +11,26 @@ class RedrivePolicyJsonTest extends FlatSpec with Matchers with ScalatestRouteTe
     val json =
       """
         |{
+        |  "deadLetterTargetArn":"arn:aws:sqs:elasticmq:000000000000:dlq1",
+        |  "maxReceiveCount":"4"
+        |}
+      """.stripMargin
+
+    val rd = json.parseJson.convertTo[RedrivePolicy]
+
+    rd should be(RedrivePolicy(
+      queueName = "dlq1",
+      maxReceiveCount = 4.toInt
+    ))
+
+  }
+
+  "redrive policy json format" should "extract object from wrong but formerly used json" in {
+    import RedrivePolicyJson._
+
+    val json =
+      """
+        |{
         |  "deadLetterTargetArn":"dlq1",
         |  "maxReceiveCount":"4"
         |}
@@ -20,7 +40,7 @@ class RedrivePolicyJsonTest extends FlatSpec with Matchers with ScalatestRouteTe
 
     rd should be(RedrivePolicy(
       queueName = "dlq1",
-      maxReceiveCount = "4"
+      maxReceiveCount = 4.toInt
     ))
 
   }

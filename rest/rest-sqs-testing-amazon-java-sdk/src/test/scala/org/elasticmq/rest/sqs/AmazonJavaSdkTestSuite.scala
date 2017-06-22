@@ -952,7 +952,7 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
         redrivePolicyAttribute ->
           """
             |{
-            |  "deadLetterTargetArn":"dlq1",
+            |  "deadLetterTargetArn":"arn:aws:sqs:elasticmq:000000000000:dlq1",
             |  "maxReceiveCount":"1"
             |}
           """.stripMargin

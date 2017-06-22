@@ -40,7 +40,7 @@ trait CreateQueueDirectives {
                   throw SQSException.nonExistentQueue
                 }
 
-                if (rd.maxReceiveCount.toInt < 1 || rd.maxReceiveCount.toInt > 1000) {
+                if (rd.maxReceiveCount < 1 || rd.maxReceiveCount > 1000) {
                   throw SQSException.invalidParameterValue
                 }
               case None =>
@@ -59,7 +59,7 @@ trait CreateQueueDirectives {
             val now = new DateTime()
             val newQueueData = QueueData(queueName, MillisVisibilityTimeout.fromSeconds(secondsVisibilityTimeout),
               Duration.standardSeconds(secondsDelay), Duration.standardSeconds(secondsReceiveMessageWaitTime),
-              now, now, redrivePolicy.map(rd => DeadLettersQueueData(rd.queueName, rd.maxReceiveCount.toInt)))
+              now, now, redrivePolicy.map(rd => DeadLettersQueueData(rd.queueName, rd.maxReceiveCount)))
 
             if (!queueName.matches("[\\p{Alnum}_-]*")) {
               throw SQSException.invalidParameterValue
@@ -124,10 +124,17 @@ object CreateQueueDirectives {
 
 case class RedrivePolicy(
   queueName: String,
-  maxReceiveCount: String
+  maxReceiveCount: Int
 )
 
 object RedrivePolicyJson extends DefaultJsonProtocol {
-  implicit val format: JsonFormat[RedrivePolicy] =
-    jsonFormat(RedrivePolicy, "deadLetterTargetArn", "maxReceiveCount")
+  implicit val format: JsonFormat[RedrivePolicy] = new RootJsonFormat[RedrivePolicy] {
+    def read(json: JsValue) = {
+      json.asJsObject.getFields("deadLetterTargetArn", "maxReceiveCount") match {
+        case Seq(JsString(deadLetterTargetArn), JsString(maxReceiveCount)) => RedrivePolicy(deadLetterTargetArn.split(":").last, maxReceiveCount.toInt)
+        case _ => deserializationError("Expected fields: 'deadLetterTargetArn' (JSON string) and 'maxReceiveCount' (JSON number)")
+      }
+    }
+    def write(obj: RedrivePolicy) = JsObject("deadLetterTargetArn" -> JsString("arn:aws:sqs:elasticmq:000000000000:" + obj.queueName), "maxReceiveCount" -> JsNumber(obj.maxReceiveCount))
+  }
 }
