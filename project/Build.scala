@@ -5,7 +5,7 @@ import sbtassembly.AssemblyKeys._
 object BuildSettings {
   val buildSettings = Defaults.coreDefaultSettings ++ Seq (
     organization  := "org.elasticmq",
-    version       := "0.13.5",
+    version       := "0.13.6",
     scalaVersion  := "2.12.2",
     crossScalaVersions := Seq(scalaVersion.value, "2.11.11"),
 
@@ -55,12 +55,12 @@ object Dependencies {
   val scalatest     = "org.scalatest"             %% "scalatest"            % "3.0.3"
   val awaitility    = "com.jayway.awaitility"     % "awaitility-scala"      % "1.7.0"
 
-  val amazonJavaSdk = "com.amazonaws"             % "aws-java-sdk"          % "1.11.129" exclude ("commons-logging", "commons-logging")
+  val amazonJavaSdk = "com.amazonaws"             % "aws-java-sdk"          % "1.11.153" exclude ("commons-logging", "commons-logging")
 
   val scalaGraph    = "org.scala-graph"           %% "graph-core"           % "1.11.5"
 
-  val akkaVersion      = "2.5.1"
-  val akkaHttpVersion  = "10.0.6"
+  val akkaVersion      = "2.5.3"
+  val akkaHttpVersion  = "10.0.8"
   val akka2Actor       = "com.typesafe.akka" %% "akka-actor"           % akkaVersion
   val akka2Slf4j       = "com.typesafe.akka" %% "akka-slf4j"           % akkaVersion
   val akka2Streams     = "com.typesafe.akka" %% "akka-stream"          % akkaVersion
