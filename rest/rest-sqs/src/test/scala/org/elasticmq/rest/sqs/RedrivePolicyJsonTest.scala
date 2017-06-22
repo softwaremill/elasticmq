@@ -11,7 +11,7 @@ class RedrivePolicyJsonTest extends FlatSpec with Matchers with ScalatestRouteTe
     val json =
       """
         |{
-        |  "deadLetterTargetArn":"dlq1",
+        |  "deadLetterTargetArn":"arn:aws:sqs:elasticmq:000000000000:dlq1",
         |  "maxReceiveCount":"4"
         |}
       """.stripMargin
