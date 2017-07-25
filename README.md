@@ -106,6 +106,7 @@ Note that changing the `bind-port` and `bind-hostname` settings does not affect 
 `generate-node-address` is `true`. In that case, the bind host/port are used to create the node address. This is
 useful when the port should be automatically assigned (use port `0` in such case, the selected port will be
 visible in the logs).
+
 Automatically creating queues on startup
 ----------------------------------------
 
