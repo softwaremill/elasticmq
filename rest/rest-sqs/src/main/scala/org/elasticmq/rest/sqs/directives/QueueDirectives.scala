@@ -41,14 +41,14 @@ trait QueueDirectives {
 
   private def queueUrlFromParams(p: AnyParams): Directive1[String] = p.requiredParam(queueUrlParameter)
 
-  private val lastPathSegment = ("^[^/]*//[^/]*/" + QueueUrlContext + "/([^/]+)$").r
+  private val lastPathSegment = ("^[^/]*//[^/]*/([0-9]{12}|" + QueueUrlContext + ")/([^/]+)$").r
 
   private def queueNameFromRequest(p: AnyParams)(body: String => Route): Route = {
     val queueNameDirective =
       pathPrefix(QueueUrlContext / Segment) |
         queueNameFromParams(p) |
         queueUrlFromParams(p).flatMap { queueUrl =>
-          lastPathSegment.findFirstMatchIn(queueUrl).map(_.group(1)) match {
+          lastPathSegment.findFirstMatchIn(queueUrl).map(_.group(2)) match {
             case Some(queueName) => provide(queueName)
             case None => reject(MissingFormFieldRejection(queueUrlParameter)): Directive1[String]
           }
