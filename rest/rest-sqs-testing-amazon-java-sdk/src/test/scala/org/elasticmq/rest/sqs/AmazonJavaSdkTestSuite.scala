@@ -304,9 +304,63 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
     result.isLeft should be(true)
   }
 
+  test("FIFO queues should return an error if an invalid message group id parameter is provided") {
+    // Given
+    val fifoQueueUrl = client.createQueue(new CreateQueueRequest("testQueue.fifo")
+        .addAttributesEntry("FifoQueue", "true")
+        .addAttributesEntry("ContentBasedDeduplication", "true")).getQueueUrl
+    val regularQueueUrl = client.createQueue(new CreateQueueRequest("testQueue1")).getQueueUrl
+
+    // An illegal character
+    an[AmazonServiceException] shouldBe thrownBy {
+      client.sendMessage(new SendMessageRequest(fifoQueueUrl, "A body").withMessageGroupId("æ"))
+    }
+
+    // More than 128 characters
+    val id = (for (_ <- 0 to 300) yield "1").mkString("")
+    an[AmazonServiceException] shouldBe thrownBy {
+      client.sendMessage(new SendMessageRequest(fifoQueueUrl, "A body").withMessageGroupId(id))
+    }
+
+    // Message group IDs are required for fifo queues
+    an[AmazonServiceException] shouldBe thrownBy {
+      client.sendMessage(new SendMessageRequest(fifoQueueUrl, "A body"))
+    }
+
+    // Regular queues don't allow message groups
+    an[AmazonServiceException] shouldBe thrownBy {
+      client.sendMessage(new SendMessageRequest(regularQueueUrl, "A body").withMessageGroupId("group-1"))
+    }
+  }
+
+  test("FIFO queues should return an error if an invalid message deduplication id parameter is provided") {
+    // Given
+    val fifoQueueUrl = client.createQueue(new CreateQueueRequest("testQueue.fifo")
+        .addAttributesEntry("FifoQueue", "true")
+        .addAttributesEntry("ContentBasedDeduplication", "true")).getQueueUrl
+    val regularQueueUrl = client.createQueue(new CreateQueueRequest("testQueue1")).getQueueUrl
+
+    // An illegal character
+    an[AmazonServiceException] shouldBe thrownBy {
+      client.sendMessage(new SendMessageRequest(fifoQueueUrl, "A body").withMessageDeduplicationId("æ"))
+    }
+
+    // More than 128 characters
+    val id = (for (_ <- 0 to 300) yield "1").mkString("")
+    an[AmazonServiceException] shouldBe thrownBy {
+      client.sendMessage(new SendMessageRequest(fifoQueueUrl, "A body").withMessageDeduplicationId(id))
+    }
+
+    // Regular queues don't allow message deduplication
+    an[AmazonServiceException] shouldBe thrownBy {
+      client.sendMessage(new SendMessageRequest(regularQueueUrl, "A body").withMessageDeduplicationId("dedup-1"))
+    }
+  }
+
   test("FIFO queues need a content based deduplication strategy when no message deduplication ids are provided") {
     // Given
-    val noStrategyRequest = new CreateQueueRequest("testQueue1.fifo").addAttributesEntry("FifoQueue", "true")
+    val noStrategyRequest = new CreateQueueRequest("testQueue1.fifo")
+        .addAttributesEntry("FifoQueue", "true")
     val noStrategyQueueUrl = client.createQueue(noStrategyRequest).getQueueUrl
     val withStrategyRequest = new CreateQueueRequest("testQueue2.fifo")
         .addAttributesEntry("FifoQueue", "true")
@@ -315,10 +369,10 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
 
     // When
     val result1 = catching(classOf[AmazonServiceException]) either {
-      client.sendMessage(new SendMessageRequest(noStrategyQueueUrl, "No strategy"))
+      client.sendMessage(new SendMessageRequest(noStrategyQueueUrl, "No strategy").withMessageGroupId("g1"))
     }
     val result2 = catching(classOf[AmazonServiceException]) either {
-      client.sendMessage(new SendMessageRequest(withStrategyQueueUrl, "With strategy"))
+      client.sendMessage(new SendMessageRequest(withStrategyQueueUrl, "With strategy").withMessageGroupId("g1"))
     }
 
     // Then
@@ -350,8 +404,8 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
     val queueUrl = createFifoQueue()
 
     // When
-    client.sendMessage(new SendMessageRequest(queueUrl, "Message 1"))
-    client.sendMessage(new SendMessageRequest(queueUrl, "Message 2"))
+    client.sendMessage(new SendMessageRequest(queueUrl, "Message 1").withMessageGroupId("group1"))
+    client.sendMessage(new SendMessageRequest(queueUrl, "Message 2").withMessageGroupId("group1"))
 
     val messages1 = client.receiveMessage(new ReceiveMessageRequest(queueUrl).withMaxNumberOfMessages(1)).getMessages
     val messages2 = client.receiveMessage(new ReceiveMessageRequest(queueUrl).withMaxNumberOfMessages(1)).getMessages
@@ -390,8 +444,8 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
     val queueUrl = createFifoQueue()
 
     // When sending 4 distinct messages (based on dedup id), two for each message group
-    val group1 = "Group 1"
-    val group2 = "Group 2"
+    val group1 = "group1"
+    val group2 = "group2"
     client.sendMessage(new SendMessageRequest(queueUrl, group1).withMessageGroupId(group1).withMessageDeduplicationId("1"))
     client.sendMessage(new SendMessageRequest(queueUrl, group1).withMessageGroupId(group1).withMessageDeduplicationId("2"))
     client.sendMessage(new SendMessageRequest(queueUrl, group2).withMessageGroupId(group2).withMessageDeduplicationId("3"))
@@ -415,7 +469,7 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
 
     // When
     val messageBodies = for (i <- 1 to 10) yield s"Message $i"
-    messageBodies.map(body => client.sendMessage(new SendMessageRequest(queueUrl, body)))
+    messageBodies.map(body => client.sendMessage(new SendMessageRequest(queueUrl, body).withMessageGroupId("group1")))
 
     // Then
     val deliveredMessages = messageBodies.map { _ =>
@@ -431,7 +485,9 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
     val queueUrl = createFifoQueue()
 
     // When
-    val sentMessages = for (_ <- 1 to 10) yield client.sendMessage(new SendMessageRequest(queueUrl, "Message"))
+    val sentMessages = for (_ <- 1 to 10) yield {
+      client.sendMessage(new SendMessageRequest(queueUrl, "Message").withMessageGroupId("1"))
+    }
     val messages1 = client.receiveMessage(new ReceiveMessageRequest(queueUrl).withMaxNumberOfMessages(4)).getMessages
     client.deleteMessage(queueUrl, messages1.head.getReceiptHandle)
     val messages2 = client.receiveMessage(new ReceiveMessageRequest(queueUrl).withMaxNumberOfMessages(4)).getMessages
@@ -449,7 +505,9 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
 
     // When
     for (i <- 1 to 10) {
-      client.sendMessage(new SendMessageRequest(queueUrl, s"Message $i").withMessageDeduplicationId("DedupId"))
+      client.sendMessage(new SendMessageRequest(queueUrl, s"Message $i")
+          .withMessageDeduplicationId("DedupId")
+          .withMessageGroupId("1"))
     }
 
     val m1 = receiveSingleMessageObject(queueUrl)

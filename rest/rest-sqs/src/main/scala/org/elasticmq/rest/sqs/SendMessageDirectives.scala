@@ -22,6 +22,8 @@ trait SendMessageDirectives { this: ElasticMQDirectives with SQSLimitsModule =>
   val MessageGroupIdParameter = "MessageGroupId"
   val MessageDeduplicationIdParameter = "MessageDeduplicationId"
 
+  private val validParameterValueCharsRe = """^[a-zA-Z0-9!"#\$%&'\(\)\*\+,-\./:;<=>?@\[\\\]\^_`\{|\}~]{1,128}$""".r
+
   def sendMessage(p: AnyParams): Route = {
     p.action("SendMessage") {
       queueActorAndDataFromRequest(p) { (queueActor, queueData) =>
@@ -96,25 +98,36 @@ trait SendMessageDirectives { this: ElasticMQDirectives with SQSLimitsModule =>
 
     verifyMessageNotTooLong(body.length)
 
-    // TODO: Validate group id
-    val messageGroupId = parameters.get(MessageGroupIdParameter)
+    val messageGroupId = parameters.get(MessageGroupIdParameter) match {
+      // MessageGroupId is only supported for FIFO queues
+      case Some(_) if !queueData.isFifo => throw SQSException.invalidParameterValue
+
+      // MessageGroupId is required for FIFO queues
+      case None if queueData.isFifo => throw SQSException.invalidParameterValue
+
+      // Ensure the given value is valid
+      case Some(id) if !isValidPropertyValue(id) => throw SQSException.invalidParameterValue
+
+      // This must be a correct value (or this isn't a FIFO queue and no value is required)
+      case m => m
+    }
 
     val messageDeduplicationId = parameters.get(MessageDeduplicationIdParameter) match {
       // MessageDeduplicationId is only supported for FIFO queues
-      case Some(dedupId) if !queueData.isFifo => throw SQSException.invalidParameterValue
+      case Some(_) if !queueData.isFifo => throw SQSException.invalidParameterValue
 
       // MessageDeduplicationId is required for FIFO queues that don't have content based deduplication
       case None if queueData.isFifo && !queueData.hasContentBasedDeduplication =>
         throw SQSException.invalidParameterValue
 
-      // Use the MessageDeduplicationId if one is provided
-      case Some(dedupId) if queueData.isFifo => Some(dedupId)
-
       // If no MessageDeduplicationId was provided and content based deduping is enabled for queue, generate one
-      case None if queueData.hasContentBasedDeduplication =>  Some(sha256Hash(body))
+      case None if queueData.hasContentBasedDeduplication => Some(sha256Hash(body))
 
-      // Regular queues don't need to provide a MessageDeduplicationId
-      case None => None
+      // Ensure the given value is valid
+      case Some(id) if !isValidPropertyValue(id) => throw SQSException.invalidParameterValue
+
+      // This must be a correct value (or this isn't a FIFO queue and no value is required)
+      case m => m
     }
 
     val delaySecondsOption = parameters.parseOptionalLong(DelaySecondsParameter)
@@ -133,6 +146,16 @@ trait SendMessageDirectives { this: ElasticMQDirectives with SQSLimitsModule =>
       "MessageTooLong"
     }
   }
+
+  /**
+   * Valid values are alphanumeric characters and punctuation (!"#$%&'()*+,-./:;<=>?@[\]^_`{|}~). The maximum length is
+   * 128 characters
+   *
+   * @param propValue    The string to validate
+   * @return             `true` if the string is valid, false otherwise
+   */
+  private def isValidPropertyValue(propValue: String): Boolean =
+    validParameterValueCharsRe.findFirstIn(propValue).isDefined
 
   private def bodyContainsInvalidCharacters(body: String) = {
     val bodyLength = body.length
