@@ -87,11 +87,16 @@ trait QueueActorWaitForMessagesOps extends ReplyingActor with QueueActorMessageO
   }
 
   private def scheduleTryReplyWhenAvailable(): Unit = {
+    // Remove the messages from the queue
     @tailrec def dequeueUntilDeleted(): Unit = {
-      messageQueue.headOption match {
-        case Some(msg) if !messagesById.contains(msg.id) =>
-          messageQueue.dequeue()
+      messageQueue.dequeue() match {
+        case Some(msg) if !messageQueue.byId.contains(msg.id) =>
+          // The message has been deleted, keep going until we come upon a message that's available
           dequeueUntilDeleted()
+        case Some(msg) =>
+          // This message is available for delivery. Stop removing messages, put the current message back on the queue
+          // so that the next deque operation will take it off.
+          messageQueue += msg
         case _ => // stop
       }
     }
@@ -104,8 +109,10 @@ trait QueueActorWaitForMessagesOps extends ReplyingActor with QueueActorMessageO
 
       val deliveryTime = nowProvider.nowMillis
 
-      messageQueue.headOption match {
+      messageQueue.dequeue() match {
         case Some(msg) if !msg.deliverable(deliveryTime) =>
+          // The message isn't deliverable yet, schedule the next delivery
+          messageQueue += msg
           scheduledTryReply = Some(schedule(msg.nextDelivery - deliveryTime + 1, TryReply))
 
         case _ => // there are deliverable messages right now, no need to schedule a try-reply

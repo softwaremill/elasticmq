@@ -57,13 +57,19 @@ trait CreateQueueDirectives {
               .getOrElse(DefaultReceiveMessageWait)
 
             val now = new DateTime()
+            val isFifo = attributes.get("FifoQueue").contains("true")
+            val hasContentBasedDeduplication = attributes.get("ContentBasedDeduplication").contains("true")
             val newQueueData = QueueData(queueName, MillisVisibilityTimeout.fromSeconds(secondsVisibilityTimeout),
               Duration.standardSeconds(secondsDelay), Duration.standardSeconds(secondsReceiveMessageWaitTime),
-              now, now, redrivePolicy.map(rd => DeadLettersQueueData(rd.queueName, rd.maxReceiveCount)))
+              now, now, redrivePolicy.map(rd => DeadLettersQueueData(rd.queueName, rd.maxReceiveCount)),
+              isFifo = isFifo, hasContentBasedDeduplication = hasContentBasedDeduplication)
 
-            if (!queueName.matches("[\\p{Alnum}_-]*")) {
+
+            if (!queueName.matches("[\\p{Alnum}\\._-]*")) {
               throw SQSException.invalidParameterValue
             } else if (sqsLimits == SQSLimits.Strict && queueName.length() > 80) {
+              throw SQSException.invalidParameterValue
+            } else if (isFifo && !queueName.endsWith(".fifo")) {
               throw SQSException.invalidParameterValue
             }
 

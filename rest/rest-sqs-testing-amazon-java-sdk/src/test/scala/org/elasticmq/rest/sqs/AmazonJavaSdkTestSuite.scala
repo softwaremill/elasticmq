@@ -280,7 +280,6 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
     doTestSendAndReceiveMessageWithAttributes(content, messageAttributes, List("All"))
   }
 
-
   test("should receive two messages in a batch") {
     // Given
     val queueUrl = client.createQueue(new CreateQueueRequest("testQueue1")).getQueueUrl
@@ -294,6 +293,181 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
     // Then
     val bodies = messages.map(_.getBody).toSet
     bodies should be(Set("Message 1", "Message 2"))
+  }
+
+  test("FIFO queues should return an error if the queue's name does not end in .fifo") {
+    val result = catching(classOf[AmazonServiceException]) either {
+      val createRequest = new CreateQueueRequest("testQueue1").addAttributesEntry("FifoQueue", "true")
+      client.createQueue(createRequest)
+    }
+
+    result.isLeft should be(true)
+  }
+
+  test("FIFO queues need a content based deduplication strategy when no message deduplication ids are provided") {
+    // Given
+    val noStrategyRequest = new CreateQueueRequest("testQueue1.fifo").addAttributesEntry("FifoQueue", "true")
+    val noStrategyQueueUrl = client.createQueue(noStrategyRequest).getQueueUrl
+    val withStrategyRequest = new CreateQueueRequest("testQueue2.fifo")
+        .addAttributesEntry("FifoQueue", "true")
+        .addAttributesEntry("ContentBasedDeduplication", "true")
+    val withStrategyQueueUrl = client.createQueue(withStrategyRequest).getQueueUrl
+
+    // When
+    val result1 = catching(classOf[AmazonServiceException]) either {
+      client.sendMessage(new SendMessageRequest(noStrategyQueueUrl, "No strategy"))
+    }
+    val result2 = catching(classOf[AmazonServiceException]) either {
+      client.sendMessage(new SendMessageRequest(withStrategyQueueUrl, "With strategy"))
+    }
+
+    // Then
+    result1.isLeft should be(true)
+    result2.isLeft should be(false)
+  }
+
+  test("FIFO queues should not return a second message for the same message group if the first has not been deleted yet") {
+    // Given
+    val queueUrl = createFifoQueue()
+
+    // When
+    client.sendMessage(new SendMessageRequest(queueUrl, "Message 1").withMessageGroupId("group-1"))
+    client.sendMessage(new SendMessageRequest(queueUrl, "Message 2").withMessageGroupId("group-1"))
+
+    val messages1 = client.receiveMessage(new ReceiveMessageRequest(queueUrl).withMaxNumberOfMessages(1)).getMessages
+    val messages2 = client.receiveMessage(new ReceiveMessageRequest(queueUrl).withMaxNumberOfMessages(1)).getMessages
+    client.deleteMessage(queueUrl, messages1.head.getReceiptHandle)
+    val messages3 = client.receiveMessage(new ReceiveMessageRequest(queueUrl).withMaxNumberOfMessages(1)).getMessages
+
+    // Then
+    messages1.map(_.getBody).toSet should be(Set("Message 1"))
+    messages2 should have size 0
+    messages3.map(_.getBody).toSet should be(Set("Message 2"))
+  }
+
+  test("FIFO queues should not return a second message for messages without a message group id if the first has not been deleted yet") {
+    // Given
+    val queueUrl = createFifoQueue()
+
+    // When
+    client.sendMessage(new SendMessageRequest(queueUrl, "Message 1"))
+    client.sendMessage(new SendMessageRequest(queueUrl, "Message 2"))
+
+    val messages1 = client.receiveMessage(new ReceiveMessageRequest(queueUrl).withMaxNumberOfMessages(1)).getMessages
+    val messages2 = client.receiveMessage(new ReceiveMessageRequest(queueUrl).withMaxNumberOfMessages(1)).getMessages
+
+    // Then
+    messages1 should have size 1
+    messages2 should have size 0
+  }
+
+
+  test("FIFO queues should block messages for the visibility timeout period within a message group") {
+    // Given
+    val queueUrl = createFifoQueue(attributes = Map(defaultVisibilityTimeoutAttribute -> "1"))
+
+    // When
+    client.sendMessage(new SendMessageRequest(queueUrl, "Message 1").withMessageGroupId("group"))
+    client.sendMessage(new SendMessageRequest(queueUrl, "Message 2").withMessageGroupId("group"))
+    client.sendMessage(new SendMessageRequest(queueUrl, "Message 3").withMessageGroupId("group"))
+    client.sendMessage(new SendMessageRequest(queueUrl, "Message 4").withMessageGroupId("group"))
+
+    val m1 = receiveSingleMessage(queueUrl)
+    val m2 = receiveSingleMessage(queueUrl)
+    Thread.sleep(1100)
+    val m3 = receiveSingleMessage(queueUrl)
+
+    // Then
+    // The message that got delivered in the first request should not reappear in the second, it should become available
+    // after the default visibility timeout has passed however
+    m1 should be(Some("Message 1"))
+    m2 should be(empty)
+    m3 should be(Some("Message 1"))
+  }
+
+  test("FIFO queues should deliver batches of messages from the same message group") {
+    // Given
+    val queueUrl = createFifoQueue()
+
+    // When sending 4 distinct messages (based on dedup id), two for each message group
+    val group1 = "Group 1"
+    val group2 = "Group 2"
+    client.sendMessage(new SendMessageRequest(queueUrl, group1).withMessageGroupId(group1).withMessageDeduplicationId("1"))
+    client.sendMessage(new SendMessageRequest(queueUrl, group1).withMessageGroupId(group1).withMessageDeduplicationId("2"))
+    client.sendMessage(new SendMessageRequest(queueUrl, group2).withMessageGroupId(group2).withMessageDeduplicationId("3"))
+    client.sendMessage(new SendMessageRequest(queueUrl, group2).withMessageGroupId(group2).withMessageDeduplicationId("4"))
+
+    val messages1 = client.receiveMessage(new ReceiveMessageRequest(queueUrl).withMaxNumberOfMessages(2)).getMessages
+    val messages2 = client.receiveMessage(new ReceiveMessageRequest(queueUrl).withMaxNumberOfMessages(2)).getMessages
+
+    // Then
+    // When requesting 2 messages at a time, the first request should return 2 messages from group 1 (resp group 2) and
+    // the second request should return 2 messages from group 2 (resp. group 1).
+    messages1 should have size 2
+    messages1.map(_.getBody).toSet should have size 1
+    messages2 should have size 2
+    messages2.map(_.getBody).toSet should have size 1
+  }
+
+  test("FIFO queues should deliver messages in the same order as they are sent") {
+    // Given
+    val queueUrl = createFifoQueue()
+
+    // When
+    val messageBodies = for (i <- 1 to 10) yield s"Message $i"
+    messageBodies.map(body => client.sendMessage(new SendMessageRequest(queueUrl, body)))
+
+    // Then
+    val deliveredMessages = messageBodies.map { _ =>
+      val messages = client.receiveMessage(new ReceiveMessageRequest(queueUrl)).getMessages
+      client.deleteMessage(queueUrl, messages.head.getReceiptHandle)
+      messages.head
+    }
+    deliveredMessages.map(_.getBody) should be(messageBodies)
+  }
+
+  test("FIFO queues should deduplicate messages based on the message body") {
+    // Given
+    val queueUrl = createFifoQueue()
+
+    // When
+    val sentMessages = for (_ <- 1 to 10) yield client.sendMessage(new SendMessageRequest(queueUrl, "Message"))
+    val messages1 = client.receiveMessage(new ReceiveMessageRequest(queueUrl).withMaxNumberOfMessages(4)).getMessages
+    client.deleteMessage(queueUrl, messages1.head.getReceiptHandle)
+    val messages2 = client.receiveMessage(new ReceiveMessageRequest(queueUrl).withMaxNumberOfMessages(4)).getMessages
+
+
+    // Then
+    sentMessages.map(_.getMessageId).toSet should have size 1
+    messages1.map(_.getBody) should have size 1
+    messages1.map(_.getBody).toSet should be(Set("Message"))
+    messages2 should have size 0
+  }
+
+  test("FIFO queues should deduplicate messages based on the message deduplication attribute") {
+    val queueUrl = createFifoQueue()
+
+    // When
+    for (i <- 1 to 10) {
+      client.sendMessage(new SendMessageRequest(queueUrl, s"Message $i").withMessageDeduplicationId("DedupId"))
+    }
+
+    val m1 = receiveSingleMessageObject(queueUrl)
+    client.deleteMessage(queueUrl, m1.get.getReceiptHandle)
+    val m2 = receiveSingleMessage(queueUrl)
+
+
+    // Then
+    m1.map(_.getBody) should be(Some("Message 1"))
+    m2 should be(empty)
+  }
+
+  private def createFifoQueue(suffix: Int = 1, attributes: Map[String, String] = Map.empty): String = {
+    val createRequest1 = new CreateQueueRequest(s"testFifoQueue$suffix.fifo")
+      .addAttributesEntry("FifoQueue", "true")
+      .addAttributesEntry("ContentBasedDeduplication", "true")
+    val createRequest2 = attributes.foldLeft(createRequest1) { case (acc, (k, v)) => acc.addAttributesEntry(k, v) }
+    client.createQueue(createRequest2).getQueueUrl
   }
 
   test("should receive no more than the given amount of messages") {
@@ -978,11 +1152,7 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
 
   def receiveSingleMessage(queueUrl: String, requestedAttributes: List[String]): Option[String] = {
     val messages = client.receiveMessage(new ReceiveMessageRequest(queueUrl)).getMessages
-    if (messages.size() == 0) {
-      None
-    } else {
-      Some(messages.get(0).getBody)
-    }
+    messages.headOption.map(_.getBody)
   }
 
   def receiveSingleMessageObject(queueUrl: String): Option[Message] = {
@@ -991,11 +1161,7 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
 
   def receiveSingleMessageObject(queueUrl: String, requestedAttributes: List[String]): Option[Message] = {
     val messages = client.receiveMessage(new ReceiveMessageRequest(queueUrl).withMessageAttributeNames(requestedAttributes)).getMessages
-    if (messages.size() == 0) {
-      None
-    } else {
-      Some(messages.get(0))
-    }
+    messages.headOption
   }
 
   def strictOnlyShouldThrowException(body: AmazonSQS => Unit) {
