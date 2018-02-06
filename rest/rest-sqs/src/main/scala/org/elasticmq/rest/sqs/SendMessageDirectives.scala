@@ -116,18 +116,21 @@ trait SendMessageDirectives { this: ElasticMQDirectives with SQSLimitsModule =>
       // MessageDeduplicationId is only supported for FIFO queues
       case Some(_) if !queueData.isFifo => throw SQSException.invalidParameterValue
 
+      // Ensure the given value is valid
+      case Some(id) if !isValidPropertyValue(id) => throw SQSException.invalidParameterValue
+
+      // If a valid message group id is provided, use it, as it takes priority over the queue's content based deduping
+      case Some(id) => Some(id)
+
       // MessageDeduplicationId is required for FIFO queues that don't have content based deduplication
       case None if queueData.isFifo && !queueData.hasContentBasedDeduplication =>
         throw SQSException.invalidParameterValue
 
       // If no MessageDeduplicationId was provided and content based deduping is enabled for queue, generate one
-      case None if queueData.hasContentBasedDeduplication => Some(sha256Hash(body))
+      case None if queueData.isFifo && queueData.hasContentBasedDeduplication => Some(sha256Hash(body))
 
-      // Ensure the given value is valid
-      case Some(id) if !isValidPropertyValue(id) => throw SQSException.invalidParameterValue
-
-      // This must be a correct value (or this isn't a FIFO queue and no value is required)
-      case m => m
+      // This must be a non-FIFO queue that doesn't require a dedup id
+      case None => None
     }
 
     val delaySecondsOption = parameters.parseOptionalLong(DelaySecondsParameter)

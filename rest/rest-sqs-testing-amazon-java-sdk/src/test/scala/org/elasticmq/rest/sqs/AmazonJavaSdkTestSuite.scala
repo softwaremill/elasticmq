@@ -398,18 +398,20 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
     val queueUrl = createFifoQueue()
 
     // When
+    val messages1 = client.receiveMessage(new ReceiveMessageRequest(queueUrl).withMaxNumberOfMessages(1)).getMessages
     client.sendMessage(new SendMessageRequest(queueUrl, "Message 1").withMessageGroupId("group-1"))
     client.sendMessage(new SendMessageRequest(queueUrl, "Message 2").withMessageGroupId("group-1"))
 
-    val messages1 = client.receiveMessage(new ReceiveMessageRequest(queueUrl).withMaxNumberOfMessages(1)).getMessages
     val messages2 = client.receiveMessage(new ReceiveMessageRequest(queueUrl).withMaxNumberOfMessages(1)).getMessages
-    client.deleteMessage(queueUrl, messages1.head.getReceiptHandle)
     val messages3 = client.receiveMessage(new ReceiveMessageRequest(queueUrl).withMaxNumberOfMessages(1)).getMessages
+    client.deleteMessage(queueUrl, messages2.head.getReceiptHandle)
+    val messages4 = client.receiveMessage(new ReceiveMessageRequest(queueUrl).withMaxNumberOfMessages(1)).getMessages
 
     // Then
-    messages1.map(_.getBody).toSet should be(Set("Message 1"))
-    messages2 should have size 0
-    messages3.map(_.getBody).toSet should be(Set("Message 2"))
+    messages1 should have size 0
+    messages2.map(_.getBody).toSet should be(Set("Message 1"))
+    messages3 should have size 0
+    messages4.map(_.getBody).toSet should be(Set("Message 2"))
   }
 
   test("FIFO queues should not return a second message for messages without a message group id if the first has not been deleted yet") {
@@ -481,19 +483,19 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
     val queueUrl = createFifoQueue()
 
     // When
-    val messageBodies = for (i <- 1 to 10) yield s"Message $i"
+    val messageBodies = for (i <- 1 to 20) yield s"Message $i"
     messageBodies.map(body => client.sendMessage(new SendMessageRequest(queueUrl, body).withMessageGroupId("group1")))
 
     // Then
-    val deliveredMessages = messageBodies.map { _ =>
+    val deliveredSingleReceives = messageBodies.take(10).map { _ =>
       val messages = client.receiveMessage(new ReceiveMessageRequest(queueUrl)).getMessages
       client.deleteMessage(queueUrl, messages.head.getReceiptHandle)
       messages.head
     }
+    val batchReceive = client.receiveMessage(new ReceiveMessageRequest(queueUrl).withMaxNumberOfMessages(10)).getMessages
 
-    // TODO: Test in-receive-msg order
-
-    deliveredMessages.map(_.getBody) should be(messageBodies)
+    val allMessages = deliveredSingleReceives ++ batchReceive
+    allMessages.map(_.getBody) should be(messageBodies)
   }
 
   test("FIFO queues should deduplicate messages based on the message body") {
