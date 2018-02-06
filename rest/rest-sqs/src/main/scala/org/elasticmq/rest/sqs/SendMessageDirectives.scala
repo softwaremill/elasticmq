@@ -133,7 +133,11 @@ trait SendMessageDirectives { this: ElasticMQDirectives with SQSLimitsModule =>
       case None => None
     }
 
-    val delaySecondsOption = parameters.parseOptionalLong(DelaySecondsParameter)
+    val delaySecondsOption = parameters.parseOptionalLong(DelaySecondsParameter) match {
+      // FIFO queues don't support delays
+      case Some(_) if queueData.isFifo => throw SQSException.invalidParameterValue
+      case d => d
+    }
     val messageToSend = createMessage(body, messageAttributes, delaySecondsOption, messageGroupId,
       messageDeduplicationId)
     val digest = md5Digest(body)

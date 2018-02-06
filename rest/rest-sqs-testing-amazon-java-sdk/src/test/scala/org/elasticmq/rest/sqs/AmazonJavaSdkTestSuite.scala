@@ -333,6 +333,24 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
     }
   }
 
+  test("FIFO queues do not support delaying individual messages") {
+    val queueUrl = createFifoQueue()
+    an[AmazonSQSException] shouldBe thrownBy {
+      client.sendMessage(new SendMessageRequest(queueUrl, "body")
+          .withMessageDeduplicationId("1")
+          .withMessageGroupId("1")
+          .withDelaySeconds(10)
+      )
+    }
+
+    val result = client.sendMessageBatch(new SendMessageBatchRequest(queueUrl).withEntries(
+      new SendMessageBatchRequestEntry("1", "Message 1").withMessageGroupId("1"),
+      new SendMessageBatchRequestEntry("2", "Message 2").withMessageGroupId("2").withDelaySeconds(10)
+    ))
+    result.getSuccessful should have size 1
+    result.getFailed should have size 1
+  }
+
   test("FIFO provided message group ids should take priority over content based deduplication") {
     // Given
     val queueUrl = createFifoQueue()
