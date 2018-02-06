@@ -556,6 +556,27 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
     m2 should be(empty)
   }
 
+  test("FIFO queues should be purgable") {
+    // Given
+    val queueUrl = createFifoQueue()
+    client.sendMessage(new SendMessageRequest(queueUrl, "Body 1").withMessageGroupId("1"))
+    client.sendMessage(new SendMessageRequest(queueUrl, "Body 2").withMessageGroupId("1"))
+    val attributes1 = client.getQueueAttributes(new GetQueueAttributesRequest(queueUrl).withAttributeNames("All")).getAttributes
+    val m1 = receiveSingleMessage(queueUrl)
+
+    // When
+    client.purgeQueue(new PurgeQueueRequest().withQueueUrl(queueUrl))
+    val attributes2 = client.getQueueAttributes(new GetQueueAttributesRequest(queueUrl).withAttributeNames("All")).getAttributes
+    client.sendMessage(new SendMessageRequest(queueUrl, "Body 3").withMessageGroupId("1"))
+    val m2 = receiveSingleMessage(queueUrl)
+
+    // Then
+    m1 should be(Some("Body 1"))
+    attributes1.get("ApproximateNumberOfMessages") should be("2")
+    attributes2.get("ApproximateNumberOfMessages") should be("0")
+    m2 should be(Some("Body 3"))
+  }
+
   private def createFifoQueue(suffix: Int = 1, attributes: Map[String, String] = Map.empty): String = {
     val createRequest1 = new CreateQueueRequest(s"testFifoQueue$suffix.fifo")
       .addAttributesEntry("FifoQueue", "true")
