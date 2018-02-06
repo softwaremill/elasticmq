@@ -312,23 +312,23 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
     val regularQueueUrl = client.createQueue(new CreateQueueRequest("testQueue1")).getQueueUrl
 
     // An illegal character
-    an[AmazonServiceException] shouldBe thrownBy {
+    an[AmazonSQSException] shouldBe thrownBy {
       client.sendMessage(new SendMessageRequest(fifoQueueUrl, "A body").withMessageGroupId("æ"))
     }
 
     // More than 128 characters
     val id = (for (_ <- 0 to 300) yield "1").mkString("")
-    an[AmazonServiceException] shouldBe thrownBy {
+    an[AmazonSQSException] shouldBe thrownBy {
       client.sendMessage(new SendMessageRequest(fifoQueueUrl, "A body").withMessageGroupId(id))
     }
 
     // Message group IDs are required for fifo queues
-    an[AmazonServiceException] shouldBe thrownBy {
+    an[AmazonSQSException] shouldBe thrownBy {
       client.sendMessage(new SendMessageRequest(fifoQueueUrl, "A body"))
     }
 
     // Regular queues don't allow message groups
-    an[AmazonServiceException] shouldBe thrownBy {
+    an[AmazonSQSException] shouldBe thrownBy {
       client.sendMessage(new SendMessageRequest(regularQueueUrl, "A body").withMessageGroupId("group-1"))
     }
   }
@@ -341,18 +341,18 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
     val regularQueueUrl = client.createQueue(new CreateQueueRequest("testQueue1")).getQueueUrl
 
     // An illegal character
-    an[AmazonServiceException] shouldBe thrownBy {
+    an[AmazonSQSException] shouldBe thrownBy {
       client.sendMessage(new SendMessageRequest(fifoQueueUrl, "A body").withMessageDeduplicationId("æ"))
     }
 
     // More than 128 characters
     val id = (for (_ <- 0 to 300) yield "1").mkString("")
-    an[AmazonServiceException] shouldBe thrownBy {
+    an[AmazonSQSException] shouldBe thrownBy {
       client.sendMessage(new SendMessageRequest(fifoQueueUrl, "A body").withMessageDeduplicationId(id))
     }
 
     // Regular queues don't allow message deduplication
-    an[AmazonServiceException] shouldBe thrownBy {
+    an[AmazonSQSException] shouldBe thrownBy {
       client.sendMessage(new SendMessageRequest(regularQueueUrl, "A body").withMessageDeduplicationId("dedup-1"))
     }
   }
@@ -368,10 +368,10 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
     val withStrategyQueueUrl = client.createQueue(withStrategyRequest).getQueueUrl
 
     // When
-    val result1 = catching(classOf[AmazonServiceException]) either {
+    val result1 = catching(classOf[AmazonSQSException]) either {
       client.sendMessage(new SendMessageRequest(noStrategyQueueUrl, "No strategy").withMessageGroupId("g1"))
     }
-    val result2 = catching(classOf[AmazonServiceException]) either {
+    val result2 = catching(classOf[AmazonSQSException]) either {
       client.sendMessage(new SendMessageRequest(withStrategyQueueUrl, "With strategy").withMessageGroupId("g1"))
     }
 
@@ -477,6 +477,9 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
       client.deleteMessage(queueUrl, messages.head.getReceiptHandle)
       messages.head
     }
+
+    // TODO: Test in-receive-msg order
+
     deliveredMessages.map(_.getBody) should be(messageBodies)
   }
 
@@ -676,6 +679,15 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
     m1.getBody should be("Message 1")
     m2 should be(None)
     m3 should be(Some("Message 1"))
+  }
+
+  test("should return an error when trying to change the visibility timeout of an unknown message") {
+    val queueUrl = client.createQueue(new CreateQueueRequest("testQueue1")
+        .withAttributes(Map(defaultVisibilityTimeoutAttribute -> "5"))).getQueueUrl
+
+    an[AmazonSQSException] shouldBe thrownBy {
+      client.changeMessageVisibility(new ChangeMessageVisibilityRequest(queueUrl, "Unknown receipt handle", 1))
+    }
   }
 
   test("should update message visibility timeout in a batch") {
