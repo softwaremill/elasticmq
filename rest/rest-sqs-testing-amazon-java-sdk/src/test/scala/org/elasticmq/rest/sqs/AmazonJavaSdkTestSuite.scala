@@ -333,6 +333,19 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
     }
   }
 
+  test("FIFO provided message group ids should take priority over content based deduplication") {
+    // Given
+    val queueUrl = createFifoQueue()
+
+    // When
+    client.sendMessage(new SendMessageRequest(queueUrl, "body").withMessageDeduplicationId("1").withMessageGroupId("1"))
+    client.sendMessage(new SendMessageRequest(queueUrl, "body").withMessageDeduplicationId("2").withMessageGroupId("1"))
+    val messages = client.receiveMessage(new ReceiveMessageRequest(queueUrl).withMaxNumberOfMessages(2)).getMessages
+
+    // Then
+    messages should have size 2
+  }
+
   test("FIFO queues should return an error if an invalid message deduplication id parameter is provided") {
     // Given
     val fifoQueueUrl = client.createQueue(new CreateQueueRequest("testQueue.fifo")

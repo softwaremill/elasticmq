@@ -24,14 +24,28 @@ trait QueueActorMessageOps extends Logging {
     if (queueData.isFifo) {
       // Ensure a message with the same deduplication id is not on the queue already. If the message is already on the
       // queue, return that -- don't add it twice
-      // TODO: A message dedup id should be checked up to 5 mins after it has been deleted
-      messageQueue.byId.values.find(_.messageDeduplicationId == message.messageDeduplicationId) match {
+      // TODO: A message dedup id should be checked up to 5 mins after it has been received. If it has been deleted
+      // during that period, it should _still_ be used when deduplicating new messages. If there's a match with a
+      // deleted message (that was sent less than 5 minutes ago, the new message should not be added).
+      messageQueue.byId.values.find(isDuplicate(message, _)) match {
         case Some(messageOnQueue) => messageOnQueue.toMessageData
         case None => addMessage(message)
       }
     } else {
       addMessage(message)
     }
+  }
+
+  /**
+   * Check whether a new message is a duplicate of the message that's on the queue.
+   *
+   * @param newMessage      The message that needs to be added to the queue
+   * @param queueMessage    The message that's already on the queue
+   * @return                Whether the new message counts as a duplicate
+   */
+  private def isDuplicate(newMessage: NewMessageData, queueMessage: InternalMessage): Boolean = {
+    lazy val isWithinDeduplicationWindow = queueMessage.created.plusMinutes(5).isAfter(nowProvider.now)
+    newMessage.messageDeduplicationId == queueMessage.messageDeduplicationId && isWithinDeduplicationWindow
   }
 
   private def addMessage(message: NewMessageData) = {
@@ -82,7 +96,7 @@ trait QueueActorMessageOps extends Logging {
       } else {
         receiveMessage(deliveryTime, computeNextDelivery(visibilityTimeout), acc) match {
           case None => acc
-          case Some(msg) => doReceiveMessages(left - 1, msg :: acc)
+          case Some(msg) => doReceiveMessages(left - 1, acc :+ msg)
         }
       }
     }
