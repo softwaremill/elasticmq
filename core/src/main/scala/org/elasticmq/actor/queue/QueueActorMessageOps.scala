@@ -35,7 +35,7 @@ trait QueueActorMessageOps extends Logging {
   }
 
   private def addMessage(message: NewMessageData) = {
-    val internalMessage = InternalMessage.from(message)
+    val internalMessage = InternalMessage.from(message, queueData)
     messageQueue += internalMessage
     logger.debug(s"${queueData.name}: Sent message with id ${internalMessage.id}")
 
@@ -117,11 +117,6 @@ trait QueueActorMessageOps extends Logging {
       logger.debug(s"${queueData.name}: send message $internalMessage to dead letters actor $deadLettersActorRef")
       deadLettersActorRef.foreach(_ ! SendMessage(internalMessage.toNewMessageData))
       internalMessage.deliveryReceipt.foreach(dr => deleteMessage(DeliveryReceipt(dr)))
-      None
-    } else if (messageQueue.isFifoBoundByOtherMessage(internalMessage, deliveryTime, acc)) {
-      // Don't return the internal message if there's already one being returned for that message group. Similarly, if
-      // a message within that message group is returned (but not acknowledged yet), don't return it either
-      messageQueue += internalMessage
       None
     } else {
       // Putting the msg again into the queue, with a new next delivery
