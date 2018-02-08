@@ -6,11 +6,6 @@ trait ElasticMQError {
   val message: String
 }
 
-class QueueDoesNotExist(val queueName: String) extends ElasticMQError {
-  val code = "QueueDoesNotExist"
-  val message = s"Queue does not exist: $queueName"
-}
-
 class QueueAlreadyExists(val queueName: String) extends ElasticMQError {
   val code = "QueueAlreadyExists"
   val message = s"Queue already exists: $queueName"
