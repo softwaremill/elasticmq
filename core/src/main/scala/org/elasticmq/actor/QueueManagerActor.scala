@@ -5,7 +5,7 @@ import org.elasticmq.actor.queue.QueueActor
 import org.elasticmq.actor.reply._
 import org.elasticmq.msg.{CreateQueue, DeleteQueue, _}
 import org.elasticmq.util.{Logging, NowProvider}
-import org.elasticmq.{QueueAlreadyExists, QueueData, QueueDoesNotExist}
+import org.elasticmq.{QueueAlreadyExists, QueueData}
 
 import scala.reflect._
 
@@ -20,9 +20,6 @@ class QueueManagerActor(nowProvider: NowProvider) extends ReplyingActor with Log
       if (queues.contains(queueData.name)) {
         logger.debug(s"Cannot create queue, as it already exists: $queueData")
         Left(new QueueAlreadyExists(queueData.name))
-      } else if (!queueData.deadLettersQueue.forall(dlq => queues.contains(dlq.name))) {
-        logger.error(s"Cannot create queue, its dead letters queue doesn't exists: $queueData")
-        Left(new QueueDoesNotExist(queueData.deadLettersQueue.get.name))
       } else {
         logger.info(s"Creating queue $queueData")
         val actor = createQueueActor(nowProvider, queueData)

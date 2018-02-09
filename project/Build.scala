@@ -1,6 +1,7 @@
 import sbt._
 import Keys._
 import sbtassembly.AssemblyKeys._
+import scoverage.ScoverageKeys._
 
 object BuildSettings {
   val buildSettings = Defaults.coreDefaultSettings ++ Seq (
@@ -99,7 +100,10 @@ object ElasticMQBuild extends Build {
   lazy val core: Project = Project(
     "elasticmq-core",
     file("core"),
-    settings = buildSettings ++ Seq(libraryDependencies ++= Seq(jodaTime, jodaConvert, akka2Actor, akka2Testkit) ++ common)
+    settings = buildSettings ++ Seq(
+      libraryDependencies ++= Seq(jodaTime, jodaConvert, akka2Actor, akka2Testkit) ++ common,
+      coverageMinimum := 94
+    )
   ) dependsOn(commonTest % "test")
 
   lazy val rest: Project = Project(
@@ -128,7 +132,8 @@ object ElasticMQBuild extends Build {
     file("server"),
     settings = buildSettings ++ CustomTasks.generateVersionFileSettings ++ Seq(
       libraryDependencies ++= Seq(logback, config, scalaGraph),
-      mainClass in assembly := Some("org.elasticmq.server.Main")
+      mainClass in assembly := Some("org.elasticmq.server.Main"),
+      coverageMinimum := 52
     )
   ) dependsOn(core, restSqs, commonTest % "test")
 
