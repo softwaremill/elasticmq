@@ -102,8 +102,7 @@ object ElasticMQBuild extends Build {
     file("core"),
     settings = buildSettings ++ Seq(
       libraryDependencies ++= Seq(jodaTime, jodaConvert, akka2Actor, akka2Testkit) ++ common,
-      coverageMinimum := 94,
-      coverageFailOnMinimum := true
+      coverageMinimum := 94
     )
   ) dependsOn(commonTest % "test")
 
@@ -134,8 +133,7 @@ object ElasticMQBuild extends Build {
     settings = buildSettings ++ CustomTasks.generateVersionFileSettings ++ Seq(
       libraryDependencies ++= Seq(logback, config, scalaGraph),
       mainClass in assembly := Some("org.elasticmq.server.Main"),
-      coverageMinimum := 52,
-      coverageFailOnMinimum := true
+      coverageMinimum := 52
     )
   ) dependsOn(core, restSqs, commonTest % "test")
 
