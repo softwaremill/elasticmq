@@ -9,7 +9,7 @@ tl;dr
 * [Amazon SQS](http://aws.amazon.com/sqs/)-compatible interface
 * fully asynchronous implementation, no blocking calls
 
-Created and maintained by 
+Created and maintained by
 [<img src="https://softwaremill.com/images/header-main-logo.svg" alt="SoftwareMill logo" height="25">](https://softwaremill.com)
 
 Summary
@@ -61,7 +61,7 @@ The config file may contain any configuration for Akka and ElasticMQ. Current El
 ````
 include classpath("application.conf")
 
-// What is the outside visible address of this ElasticMQ node 
+// What is the outside visible address of this ElasticMQ node
 // Used to create the queue URL (may be different from bind address!)
 node-address {
     protocol = http
@@ -147,7 +147,7 @@ If you need to bind to a different host/port, there are configuration methods on
     server.stopAndWait()
 
 You can also set a dynamic port with a port value of `0` or by using the method `withDynamicPort`. To retrieve the port (and other configuration) when using a dynamic port value you can access the server via `waitUntilStarted` for example:
-    
+
     val server = SQSRestServerBuilder.withDynamicPort().start()
     server.waitUntilStarted().localAddress().getPort()
 
@@ -274,19 +274,46 @@ Test class: `org.elasticmq.performance.LocalPerformanceTest`.
 Building, running, and packaging
 --------------------------------
 
-To build and run with debug (this will listen for a remote debugger on port 5005):  
+To build and run with debug (this will listen for a remote debugger on port 5005):
 ```
-~/workspace/elasticmq $ sbt -jvm-debug 5005  
+~/workspace/elasticmq $ sbt -jvm-debug 5005
 > project elasticmq-server
 > run
 ```
 
-To build a jar-with-dependencies:  
+To build a jar-with-dependencies:
 ```
 ~/workspace/elasticmq $ sbt
 > project elasticmq-server
 > assembly
 ```
+
+Tests and coverage
+------------------
+
+To run the tests:
+```
+~/workspace/elasticmq $ sbt test
+```
+
+To check the coverage reports:
+```
+~/workspace/elasticmq $ sbt
+> coverage
+> tests
+> coverageReport
+> coverageAggregate
+```
+
+Although it's mostly only the core project that is relevant for coverage testing, each project's report can be found
+in their target directory:
+
+ * core/target/scala-2.12/scoverage-report/index.html
+ * common-test/target/scala-2.12/scoverage-report/index.html
+ * rest/rest-sqs/target/scala-2.12/scoverage-report/index.html
+ * server/target/scala-2.12/scoverage-report/index.html
+
+The aggregate report can be found at target/scala-2.12/scoverage-report/index.html
 
 Technology
 ----------
@@ -380,7 +407,7 @@ Change log
 * replace Spray with Akka
 * increase message body size limits
 * provide an option to create queues on startup
-* add a special node-address setting: `*`, which uses the incoming request url to create queue urls 
+* add a special node-address setting: `*`, which uses the incoming request url to create queue urls
 
 #### Version 0.8.12 (30 Sep 2015)
 
