@@ -736,8 +736,7 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
   }
 
   test("should return an error when trying to change the visibility timeout of an unknown message") {
-    val queueUrl = client.createQueue(new CreateQueueRequest("testQueue1")
-        .withAttributes(Map(defaultVisibilityTimeoutAttribute -> "5"))).getQueueUrl
+    val queueUrl = client.createQueue(new CreateQueueRequest("testQueue1")).getQueueUrl
 
     an[AmazonSQSException] shouldBe thrownBy {
       client.changeMessageVisibility(new ChangeMessageVisibilityRequest(queueUrl, "Unknown receipt handle", 1))
@@ -1255,6 +1254,21 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
             |}
           """.stripMargin
       )))
+  }
+
+  test("should return an error when the deadletter queue does not exist") {
+    // Given no dead letter queue
+    // Then
+    a[QueueDoesNotExistException] shouldBe thrownBy {
+      client.createQueue(new CreateQueueRequest("q1").withAttributes(Map(redrivePolicyAttribute ->
+          """
+            |{
+            |  "deadLetterTargetArn":"arn:aws:sqs:elasticmq:000000000000:queueDoesNotExist",
+            |  "maxReceiveCount":"1"
+            |}
+          """.stripMargin
+      )))
+    }
   }
 
   def queueVisibilityTimeout(queueUrl: String) = getQueueLongAttribute(queueUrl, visibilityTimeoutAttribute)
