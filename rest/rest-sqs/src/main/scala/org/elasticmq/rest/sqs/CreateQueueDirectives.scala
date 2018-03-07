@@ -9,10 +9,11 @@ import org.elasticmq.rest.sqs.directives.ElasticMQDirectives
 import org.elasticmq.{DeadLettersQueueData, MillisVisibilityTimeout, QueueData}
 import org.joda.time.{DateTime, Duration}
 import spray.json._
-
 import scala.async.Async._
 import scala.concurrent.{Await, Future}
 import scala.util.Success
+
+import org.elasticmq.rest.sqs.model.RedrivePolicy
 
 trait CreateQueueDirectives {
   this: ElasticMQDirectives with QueueURLModule with AttributesModule with SQSLimitsModule =>
@@ -25,7 +26,7 @@ trait CreateQueueDirectives {
 
           val redrivePolicy =
             try {
-              import RedrivePolicyJson._
+              import org.elasticmq.rest.sqs.model.RedrivePolicyJson._
               attributes.get(RedrivePolicyParameter).map(_.parseJson.convertTo[RedrivePolicy])
             } catch {
               case e: DeserializationException =>
@@ -120,21 +121,4 @@ object CreateQueueDirectives {
   val DefaultVisibilityTimeout = 30L
   val DefaultDelay = 0L
   val DefaultReceiveMessageWait = 0L
-}
-
-case class RedrivePolicy(
-  queueName: String,
-  maxReceiveCount: Int
-)
-
-object RedrivePolicyJson extends DefaultJsonProtocol {
-  implicit val format: JsonFormat[RedrivePolicy] = new RootJsonFormat[RedrivePolicy] {
-    def read(json: JsValue) = {
-      json.asJsObject.getFields("deadLetterTargetArn", "maxReceiveCount") match {
-        case Seq(JsString(deadLetterTargetArn), JsString(maxReceiveCount)) => RedrivePolicy(deadLetterTargetArn.split(":").last, maxReceiveCount.toInt)
-        case _ => deserializationError("Expected fields: 'deadLetterTargetArn' (JSON string) and 'maxReceiveCount' (JSON number)")
-      }
-    }
-    def write(obj: RedrivePolicy) = JsObject("deadLetterTargetArn" -> JsString("arn:aws:sqs:elasticmq:000000000000:" + obj.queueName), "maxReceiveCount" -> JsNumber(obj.maxReceiveCount))
-  }
 }

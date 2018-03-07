@@ -6,15 +6,16 @@ import org.scalatest.Matchers
 import org.scalatest._
 import com.amazonaws.auth.BasicAWSCredentials
 import com.amazonaws.services.sqs.{AmazonSQS, AmazonSQSClient}
-
 import scala.collection.JavaConversions._
 import scala.collection.JavaConverters._
 
 import com.amazonaws.services.sqs.model._
 import scala.util.control.Exception._
+
 import com.amazonaws.AmazonServiceException
 import org.elasticmq.util.Logging
 import org.elasticmq._
+import org.elasticmq.rest.sqs.model.RedrivePolicy
 
 class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter with Logging {
   val visibilityTimeoutAttribute = "VisibilityTimeout"
@@ -950,34 +951,34 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
   }
 
   test("should create queue with redrive policy.") {
+    import spray.json._
+    import org.elasticmq.rest.sqs.model.RedrivePolicyJson._
+
     // Given
-    client.createQueue(new CreateQueueRequest("dlq1"))
+    val deadLetterQueueUrl = client.createQueue(new CreateQueueRequest("dlq1")).getQueueUrl
+    val deadLetterQueueAttributes = client.getQueueAttributes(deadLetterQueueUrl, List("All")).getAttributes
+
+    // When
+    val redrivePolicy = RedrivePolicy("dlq1", 1).toJson.toString()
+    val createQueueResult = client.createQueue(new CreateQueueRequest("q1")
+      .withAttributes(Map(defaultVisibilityTimeoutAttribute -> "1", redrivePolicyAttribute -> redrivePolicy)))
+    val newQueueAttributes = client.getQueueAttributes(createQueueResult.getQueueUrl, List("All")).getAttributes
 
     // Then
-    client.createQueue(new CreateQueueRequest("q1")
-      .withAttributes(Map(
-        defaultVisibilityTimeoutAttribute -> "1",
-        redrivePolicyAttribute ->
-          """
-            |{
-            |  "deadLetterTargetArn":"arn:aws:sqs:elasticmq:000000000000:dlq1",
-            |  "maxReceiveCount":"1"
-            |}
-          """.stripMargin
-      )))
+    deadLetterQueueAttributes.keySet() should not contain redrivePolicyAttribute
+    newQueueAttributes.keySet() should contain(redrivePolicyAttribute)
+    newQueueAttributes(redrivePolicyAttribute) should be(redrivePolicy)
   }
 
   test("should return an error when the deadletter queue does not exist") {
+    import spray.json._
+    import org.elasticmq.rest.sqs.model.RedrivePolicyJson._
+
     // Given no dead letter queue
     // Then
     a[QueueDoesNotExistException] shouldBe thrownBy {
-      client.createQueue(new CreateQueueRequest("q1").withAttributes(Map(redrivePolicyAttribute ->
-          """
-            |{
-            |  "deadLetterTargetArn":"arn:aws:sqs:elasticmq:000000000000:queueDoesNotExist",
-            |  "maxReceiveCount":"1"
-            |}
-          """.stripMargin
+      client.createQueue(new CreateQueueRequest("q1").withAttributes(Map(
+        redrivePolicyAttribute -> RedrivePolicy("queueDoesNotExist", 1).toJson.toString()
       )))
     }
   }
