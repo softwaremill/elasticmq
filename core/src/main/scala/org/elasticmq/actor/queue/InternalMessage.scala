@@ -19,10 +19,13 @@ case class InternalMessage(id: String,
     extends Comparable[InternalMessage] {
 
   // Priority queues have biggest elements first
-  def compareTo(other: InternalMessage): Int = {
+  override def compareTo(other: InternalMessage): Int = {
     if (isFifo) {
+      // FIFO messages should be ordered on when they were written to the queue
       -created.getMillis.compareTo(other.created.getMillis)
     } else {
+      // Plain messages are technically not ordered, but AWS seems to offer a loose, non-guaranteed "next delivery"
+      // ordering
       -nextDelivery.compareTo(other.nextDelivery)
     }
   }

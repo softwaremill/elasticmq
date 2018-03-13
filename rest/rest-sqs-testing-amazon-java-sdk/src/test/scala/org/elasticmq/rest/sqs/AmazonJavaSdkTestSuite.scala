@@ -432,23 +432,6 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
     messages4.map(_.getBody).toSet should be(Set("Message 2"))
   }
 
-  test("FIFO queues should not return a second message for messages without a message group id if the first has not been deleted yet") {
-    // Given
-    val queueUrl = createFifoQueue()
-
-    // When
-    client.sendMessage(new SendMessageRequest(queueUrl, "Message 1").withMessageGroupId("group1"))
-    client.sendMessage(new SendMessageRequest(queueUrl, "Message 2").withMessageGroupId("group1"))
-
-    val messages1 = client.receiveMessage(new ReceiveMessageRequest(queueUrl).withMaxNumberOfMessages(1)).getMessages
-    val messages2 = client.receiveMessage(new ReceiveMessageRequest(queueUrl).withMaxNumberOfMessages(1)).getMessages
-
-    // Then
-    messages1 should have size 1
-    messages2 should have size 0
-  }
-
-
   test("FIFO queues should block messages for the visibility timeout period within a message group") {
     // Given
     val queueUrl = createFifoQueue(attributes = Map(defaultVisibilityTimeoutAttribute -> "1"))
@@ -494,6 +477,7 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
     messages1.map(_.getBody).toSet should have size 1
     messages2 should have size 2
     messages2.map(_.getBody).toSet should have size 1
+    messages1.map(_.getBody) should not be messages2.map(_.getBody)
   }
 
   test("FIFO queues should deliver messages in the same order as they are sent") {
@@ -521,8 +505,8 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
     val queueUrl = createFifoQueue()
 
     // When
-    val sentMessages = for (_ <- 1 to 10) yield {
-      client.sendMessage(new SendMessageRequest(queueUrl, "Message").withMessageGroupId("1"))
+    val sentMessages = for (i <- 1 to 10) yield {
+      client.sendMessage(new SendMessageRequest(queueUrl, "Message").withMessageGroupId(s"$i"))
     }
     val messages1 = client.receiveMessage(new ReceiveMessageRequest(queueUrl).withMaxNumberOfMessages(4)).getMessages
     client.deleteMessage(queueUrl, messages1.head.getReceiptHandle)

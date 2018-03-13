@@ -52,10 +52,8 @@ sealed trait MessageQueue {
   /**
    * Dequeue a message from the queue
    *
-   * @param accBatch    The messages that have been dequeued in the current batch
+   * @param accBatch    The messages that have been dequeued in the current operation
    * @return            A message that can be dequeued
-   * @todo              Refactor this so that multiple messages can be asked for and the caller doesn't have to maintain
-   *                    an accumulator
    */
   def dequeue(accBatch: List[MessageData] = List.empty): Option[InternalMessage]
 }
@@ -182,31 +180,55 @@ object MessageQueue {
       }
     }
 
+    /**
+     * Get the next available message on the given queue
+     *
+     * @param priorityQueue    The queue for which to get the next available message. It's assumed the messages on this
+     *                         queue all belong to the same message group.
+     * @param accBatch         An accumulator holding the messages that have already been retrieved.
+     * @param accMessage       An accumulator holding the messages that have been dequeued from the priority queue and
+     *                         cannot be delivered. These messages should be put back on the queue before returning
+     *                         to the caller
+     * @return
+     */
     @tailrec
     private def nextVisibleMessage(priorityQueue: mutable.PriorityQueue[InternalMessage],
         accBatch: List[MessageData], accMessage: Seq[InternalMessage] = Seq.empty): Option[InternalMessage] = {
       if (priorityQueue.nonEmpty) {
         val msg = priorityQueue.dequeue()
         if (msg.deliverable(System.currentTimeMillis())) {
+          // If this message is deliverable, we put all the previously dequeued (but undeliverable) messages back on
+          // the queue and return this message for delivery
           priorityQueue ++= accMessage
           Some(msg)
         } else if (accBatch.exists(_.id.id == msg.id)) {
-          // If the message is invisible, we can only continue is the message is part of the current batch as we don't
-          // want to return any other message in this message group as long as it's not been handled
+          // If the message is undeliverable, we can only continue if the message is part of the current batch as we
+          // don't want to return any other message in this message group as long as the current message has not been
+          // handled
           nextVisibleMessage(priorityQueue, accBatch, accMessage :+ msg)
         } else {
+          // The message is not deliverable and it's not
           priorityQueue += msg
           priorityQueue ++= accMessage
           None
         }
       } else {
+        // If the priority queue is empty, there are no further messages to test. Put any dequeued but unavailable
+        // messages back on the queue and return a None
         priorityQueue ++= accMessage
         None
       }
     }
 
-    private def randomMessageGroup(triedMessageGroups: Set[String]): Option[String] = {
-      val remainingMessageGroupIds = messagesbyMessageGroupId.keySet -- triedMessageGroups
+    /**
+     * Return a message group id that has at least 1 message active on the queue and that is not part of the given set
+     * of `triedMessageGroupIds`
+     *
+     * @param triedMessageGroupIds    The ids of message groups to ignore
+     * @return                      The id of a random message group that is not part of `triedMessageGroupIds`
+     */
+    private def randomMessageGroup(triedMessageGroupIds: Set[String]): Option[String] = {
+      val remainingMessageGroupIds = messagesbyMessageGroupId.keySet -- triedMessageGroupIds
       remainingMessageGroupIds.headOption
     }
 
