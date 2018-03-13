@@ -1,6 +1,3 @@
-/*
- * All right reserved - Fronteer LTD
- */
 package org.elasticmq.actor.queue
 
 import java.util.UUID
