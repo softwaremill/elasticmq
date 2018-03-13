@@ -1,6 +1,3 @@
-/*
- * All right reserved - Fronteer LTD
- */
 package org.elasticmq.rest.sqs.model
 
 import spray.json.{DefaultJsonProtocol, JsNumber, JsObject, JsString, JsValue, JsonFormat, RootJsonFormat, deserializationError}
