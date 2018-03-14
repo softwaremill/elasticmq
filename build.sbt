@@ -8,7 +8,7 @@ val buildSettings = Defaults.coreDefaultSettings ++ Seq (
   scalaVersion  := "2.12.4",
   crossScalaVersions := Seq(scalaVersion.value, "2.11.11"),
 
-  libraryDependencies += "org.scala-lang.modules" %% "scala-xml" % "1.0.6",
+  libraryDependencies += "org.scala-lang.modules" %% "scala-xml" % "1.1.0",
 
   dependencyOverrides := akka25Overrides,
 
@@ -52,12 +52,12 @@ val jclOverSlf4j  = "org.slf4j"                 % "jcl-over-slf4j"        % "1.7
 val scalatest     = "org.scalatest"             %% "scalatest"            % "3.0.3"
 val awaitility    = "com.jayway.awaitility"     % "awaitility-scala"      % "1.7.0"
 
-val amazonJavaSdk = "com.amazonaws"             % "aws-java-sdk"          % "1.11.153" exclude ("commons-logging", "commons-logging")
+val amazonJavaSdk = "com.amazonaws"             % "aws-java-sdk"          % "1.11.295" exclude ("commons-logging", "commons-logging")
 
 val scalaGraph    = "org.scala-graph"           %% "graph-core"           % "1.11.5"
 
-val akkaVersion      = "2.5.3"
-val akkaHttpVersion  = "10.0.9"
+val akkaVersion      = "2.5.11"
+val akkaHttpVersion  = "10.1.0"
 val akka2Actor       = "com.typesafe.akka" %% "akka-actor"           % akkaVersion
 val akka2Slf4j       = "com.typesafe.akka" %% "akka-slf4j"           % akkaVersion
 val akka2Streams     = "com.typesafe.akka" %% "akka-stream"          % akkaVersion
