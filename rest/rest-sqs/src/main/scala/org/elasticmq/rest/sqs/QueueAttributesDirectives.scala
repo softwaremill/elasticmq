@@ -1,18 +1,20 @@
 package org.elasticmq.rest.sqs
 
 import org.elasticmq.MillisVisibilityTimeout
-
 import Constants._
 import org.joda.time.Duration
-import org.elasticmq.msg.{UpdateQueueReceiveMessageWait, UpdateQueueDelay, UpdateQueueDefaultVisibilityTimeout, GetQueueStatistics}
+import org.elasticmq.msg.{GetQueueStatistics, UpdateQueueDefaultVisibilityTimeout, UpdateQueueDelay, UpdateQueueReceiveMessageWait}
 import org.elasticmq.actor.reply._
 import scala.concurrent.Future
+
 import org.elasticmq.rest.sqs.directives.ElasticMQDirectives
+import org.elasticmq.rest.sqs.model.RedrivePolicy
+import spray.json._
 
 trait QueueAttributesDirectives { this: ElasticMQDirectives with AttributesModule =>
   object QueueWriteableAttributeNames {
     val AllWriteableAttributeNames = VisibilityTimeoutParameter :: DelaySecondsAttribute ::
-      ReceiveMessageWaitTimeSecondsAttribute :: Nil
+      ReceiveMessageWaitTimeSecondsAttribute :: RedrivePolicyParameter :: Nil
   }
 
   object UnsupportedAttributeNames {
@@ -45,13 +47,14 @@ trait QueueAttributesDirectives { this: ElasticMQDirectives with AttributesModul
     p.action("GetQueueAttributes") {
       queueActorAndDataFromRequest(p) { (queueActor, queueData) =>
         import QueueReadableAttributeNames._
+        import org.elasticmq.rest.sqs.model.RedrivePolicyJson._
 
         def calculateAttributeValues(attributeNames: List[String]): List[(String, Future[String])] = {
           lazy val stats = queueActor ? GetQueueStatistics(System.currentTimeMillis())
 
           import AttributeValuesCalculator.Rule
 
-          attributeValuesCalculator.calculate(attributeNames,
+          val alwaysAvailableParameterRules = Seq(
             Rule(VisibilityTimeoutParameter, () => Future.successful(queueData.defaultVisibilityTimeout.seconds.toString)),
             Rule(DelaySecondsAttribute, () => Future.successful(queueData.delay.getStandardSeconds.toString)),
             Rule(ApproximateNumberOfMessagesAttribute, () => stats.map(_.approximateNumberOfVisibleMessages.toString)),
@@ -61,6 +64,15 @@ trait QueueAttributesDirectives { this: ElasticMQDirectives with AttributesModul
             Rule(LastModifiedTimestampAttribute, () => Future.successful((queueData.lastModified.getMillis/1000L).toString)),
             Rule(ReceiveMessageWaitTimeSecondsAttribute, () => Future.successful(queueData.receiveMessageWait.getStandardSeconds.toString)),
             Rule(QueueArnAttribute, () => Future.successful("arn:aws:sqs:elasticmq:000000000000:" + queueData.name)))
+
+          val optionalRules = Seq(
+            queueData.deadLettersQueue
+              .map(dlq => RedrivePolicy(dlq.name, dlq.maxReceiveCount))
+              .map(redrivePolicy => Rule(RedrivePolicyParameter, () => Future.successful(redrivePolicy.toJson.toString)))
+          )
+          val rules = alwaysAvailableParameterRules ++ optionalRules.flatten
+
+          attributeValuesCalculator.calculate(attributeNames, rules: _*)
         }
 
         def responseXml(attributes: List[(String, String)]) = {
