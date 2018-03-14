@@ -4,7 +4,7 @@ import scoverage.ScoverageKeys._
 
 val buildSettings = Defaults.coreDefaultSettings ++ Seq (
   organization  := "org.elasticmq",
-  version       := "0.13.8",
+  version       := "0.13.9",
   scalaVersion  := "2.12.4",
   crossScalaVersions := Seq(scalaVersion.value, "2.11.11"),
 

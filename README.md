@@ -327,6 +327,10 @@ Technology
 Change log
 ----------
 
+### Version 0.13.9 (13 March 2018) ###
+
+* bug fixes
+
 ### Version 0.13.8 (25 June 2017) ###
 
 * bug fixes
