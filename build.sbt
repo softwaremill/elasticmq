@@ -75,49 +75,50 @@ val akka25Overrides = Seq( // override the 2.4.x transitive dependency from Akka
   "com.typesafe.akka" %% "akka-stream-testkit" % akkaVersion)
 
 lazy val root: Project = (project in file("."))
-  .settings(name := "elasticmq-root")
   .settings(buildSettings)
+  .settings(name := "elasticmq-root")
   .aggregate(commonTest, core, rest, server)
 
 lazy val commonTest: Project = (project in file("common-test"))
-  .settings(name := "elasticmq-common-test")
   .settings(buildSettings)
+  .settings(name := "elasticmq-common-test")
   .settings(Seq(
     libraryDependencies ++= Seq(scalatest, awaitility, logback),
     publishArtifact := false))
 
 lazy val core: Project = (project in file("core"))
-  .settings(name := "elasticmq-core")
   .settings(buildSettings)
   .settings(Seq(
+    name := "elasticmq-core",
     libraryDependencies ++= Seq(jodaTime, jodaConvert, akka2Actor, akka2Testkit) ++ common,
     coverageMinimum := 94))
   .dependsOn(commonTest % "test")
 
 lazy val rest: Project = (project in file("rest"))
-  .settings(name := "elasticmq-rest")
   .settings(buildSettings)
+  .settings(name := "elasticmq-rest")
   .aggregate(restSqs, restSqsTestingAmazonJavaSdk)
 
 lazy val restSqs: Project = (project in file("rest/rest-sqs"))
-  .settings(name := "elasticmq-rest-sqs")
   .settings(buildSettings)
-  .settings(Seq(libraryDependencies ++= Seq(akka2Actor, akka2Slf4j, akka2Http, akka2Streams, sprayJson, akka2HttpTestkit, scalaAsync) ++ common))
+  .settings(Seq(
+    name := "elasticmq-rest-sqs",
+    libraryDependencies ++= Seq(akka2Actor, akka2Slf4j, akka2Http, akka2Streams, sprayJson, akka2HttpTestkit, scalaAsync) ++ common))
   .dependsOn(core, commonTest % "test")
 
 lazy val restSqsTestingAmazonJavaSdk: Project = (project in file("rest/rest-sqs-testing-amazon-java-sdk"))
-  .settings(name := "elasticmq-rest-sqs-testing-amazon-java-sdk")
   .settings(buildSettings)
   .settings(Seq(
+    name := "elasticmq-rest-sqs-testing-amazon-java-sdk",
     libraryDependencies ++= Seq(amazonJavaSdk, jclOverSlf4j) ++ common,
     publishArtifact := false))
   .dependsOn(restSqs % "test->test")
 
 lazy val server: Project = (project in file("server"))
-  .settings(name := "elasticmq-server")
   .settings(buildSettings)
   .settings(generateVersionFileSettings)
   .settings(Seq(
+    name := "elasticmq-server",
     libraryDependencies ++= Seq(logback, config, scalaGraph),
     mainClass in assembly := Some("org.elasticmq.server.Main"),
     coverageMinimum := 52
@@ -126,9 +127,9 @@ lazy val server: Project = (project in file("server"))
   .dependsOn(core, restSqs, commonTest % "test")
 
 lazy val performanceTests: Project = (project in file("performance-tests"))
-  .settings(name := "elasticmq-performance-tests")
   .settings(buildSettings)
   .settings(Seq(
+    name := "elasticmq-performance-tests",
     libraryDependencies ++= Seq(amazonJavaSdk, jclOverSlf4j, logback) ++ common,
     publishArtifact := false
   ))
