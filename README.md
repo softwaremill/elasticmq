@@ -161,8 +161,14 @@ Using the Amazon Java SDK to access an ElasticMQ Server
 To use [Amazon Java SDK](http://aws.amazon.com/sdkforjava/) as an interface to an ElasticMQ server you just need
 to change the endpoint:
 
-    client = new AmazonSQSClient(new BasicAWSCredentials("x", "x"))
-    client.setEndpoint("http://localhost:9324")
+    String endpoint = "http://localhost:9324";
+    String region = "elasticmq";
+    String accessKey = "x";
+    String secretKey = "x";
+    AmazonSQS client = AmazonSQSClientBuilder.standard()
+        .withCredentials(new AWSStaticCredentialsProvider(new BasicAWSCredentials(accessKey, secretKey)))
+        .withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration(endpoint, region))
+        .build();
 
 The endpoint value should be the same address as the `NodeAddress` provided as an argument to
 `SQSRestServerBuilder` or in the configuration file.
