@@ -104,7 +104,8 @@ trait QueueActorMessageOps extends Logging {
     doReceiveMessages(count, List.empty)
   }
 
-  private def receiveMessage(deliveryTime: Long, newNextDelivery: MillisNextDelivery, acc: List[MessageData]): Option[MessageData] = {
+  private def receiveMessage(deliveryTime: Long, newNextDelivery: MillisNextDelivery,
+    acc: List[MessageData]): Option[MessageData] = {
     if (messageQueue.isEmpty) {
       None
     } else {

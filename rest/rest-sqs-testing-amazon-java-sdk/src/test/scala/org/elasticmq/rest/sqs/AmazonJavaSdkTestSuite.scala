@@ -352,7 +352,7 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
     result.getFailed should have size 1
   }
 
-  test("FIFO provided message group ids should take priority over content based deduplication") {
+  test("FIFO provided message deduplication ids should take priority over content based deduplication") {
     // Given
     val queueUrl = createFifoQueue()
 
@@ -495,6 +495,7 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
       client.deleteMessage(queueUrl, messages.head.getReceiptHandle)
       messages.head
     }
+    // Messages received in a batch should be in order as well
     val batchReceive = client.receiveMessage(new ReceiveMessageRequest(queueUrl).withMaxNumberOfMessages(10)).getMessages
 
     val allMessages = deliveredSingleReceives ++ batchReceive
