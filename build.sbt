@@ -4,11 +4,11 @@ import scoverage.ScoverageKeys._
 
 val buildSettings = Defaults.coreDefaultSettings ++ Seq (
   organization  := "org.elasticmq",
-  version       := "0.13.8",
+  version       := "0.13.9",
   scalaVersion  := "2.12.4",
   crossScalaVersions := Seq(scalaVersion.value, "2.11.11"),
 
-  libraryDependencies += "org.scala-lang.modules" %% "scala-xml" % "1.0.6",
+  libraryDependencies += "org.scala-lang.modules" %% "scala-xml" % "1.1.0",
 
   dependencyOverrides := akka25Overrides,
 
@@ -52,12 +52,12 @@ val jclOverSlf4j  = "org.slf4j"                 % "jcl-over-slf4j"        % "1.7
 val scalatest     = "org.scalatest"             %% "scalatest"            % "3.0.3"
 val awaitility    = "com.jayway.awaitility"     % "awaitility-scala"      % "1.7.0"
 
-val amazonJavaSdk = "com.amazonaws"             % "aws-java-sdk"          % "1.11.153" exclude ("commons-logging", "commons-logging")
+val amazonJavaSdk = "com.amazonaws"             % "aws-java-sdk"          % "1.11.295" exclude ("commons-logging", "commons-logging")
 
 val scalaGraph    = "org.scala-graph"           %% "graph-core"           % "1.11.5"
 
-val akkaVersion      = "2.5.3"
-val akkaHttpVersion  = "10.0.9"
+val akkaVersion      = "2.5.11"
+val akkaHttpVersion  = "10.1.0"
 val akka2Actor       = "com.typesafe.akka" %% "akka-actor"           % akkaVersion
 val akka2Slf4j       = "com.typesafe.akka" %% "akka-slf4j"           % akkaVersion
 val akka2Streams     = "com.typesafe.akka" %% "akka-stream"          % akkaVersion
@@ -76,10 +76,12 @@ val akka25Overrides = Seq( // override the 2.4.x transitive dependency from Akka
 
 lazy val root: Project = (project in file("."))
   .settings(buildSettings)
+  .settings(name := "elasticmq-root")
   .aggregate(commonTest, core, rest, server)
 
 lazy val commonTest: Project = (project in file("common-test"))
   .settings(buildSettings)
+  .settings(name := "elasticmq-common-test")
   .settings(Seq(
     libraryDependencies ++= Seq(scalatest, awaitility, logback),
     publishArtifact := false))
@@ -87,22 +89,27 @@ lazy val commonTest: Project = (project in file("common-test"))
 lazy val core: Project = (project in file("core"))
   .settings(buildSettings)
   .settings(Seq(
+    name := "elasticmq-core",
     libraryDependencies ++= Seq(jodaTime, jodaConvert, akka2Actor, akka2Testkit) ++ common,
     coverageMinimum := 94))
   .dependsOn(commonTest % "test")
 
 lazy val rest: Project = (project in file("rest"))
   .settings(buildSettings)
+  .settings(name := "elasticmq-rest")
   .aggregate(restSqs, restSqsTestingAmazonJavaSdk)
 
 lazy val restSqs: Project = (project in file("rest/rest-sqs"))
   .settings(buildSettings)
-  .settings(Seq(libraryDependencies ++= Seq(akka2Actor, akka2Slf4j, akka2Http, akka2Streams, sprayJson, akka2HttpTestkit, scalaAsync) ++ common))
+  .settings(Seq(
+    name := "elasticmq-rest-sqs",
+    libraryDependencies ++= Seq(akka2Actor, akka2Slf4j, akka2Http, akka2Streams, sprayJson, akka2HttpTestkit, scalaAsync) ++ common))
   .dependsOn(core, commonTest % "test")
 
 lazy val restSqsTestingAmazonJavaSdk: Project = (project in file("rest/rest-sqs-testing-amazon-java-sdk"))
   .settings(buildSettings)
   .settings(Seq(
+    name := "elasticmq-rest-sqs-testing-amazon-java-sdk",
     libraryDependencies ++= Seq(amazonJavaSdk, jclOverSlf4j) ++ common,
     publishArtifact := false))
   .dependsOn(restSqs % "test->test")
@@ -111,6 +118,7 @@ lazy val server: Project = (project in file("server"))
   .settings(buildSettings)
   .settings(generateVersionFileSettings)
   .settings(Seq(
+    name := "elasticmq-server",
     libraryDependencies ++= Seq(logback, config, scalaGraph),
     mainClass in assembly := Some("org.elasticmq.server.Main"),
     coverageMinimum := 52
@@ -121,6 +129,7 @@ lazy val server: Project = (project in file("server"))
 lazy val performanceTests: Project = (project in file("performance-tests"))
   .settings(buildSettings)
   .settings(Seq(
+    name := "elasticmq-performance-tests",
     libraryDependencies ++= Seq(amazonJavaSdk, jclOverSlf4j, logback) ++ common,
     publishArtifact := false
   ))
