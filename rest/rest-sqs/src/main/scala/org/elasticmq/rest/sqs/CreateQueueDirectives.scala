@@ -13,6 +13,7 @@ import scala.async.Async._
 import scala.concurrent.Future
 
 import org.elasticmq.rest.sqs.model.RedrivePolicy
+import spray.json.JsonParser.ParsingException
 
 trait CreateQueueDirectives {
   this: ElasticMQDirectives with QueueURLModule with AttributesModule with SQSLimitsModule =>
@@ -30,6 +31,9 @@ trait CreateQueueDirectives {
             } catch {
               case e: DeserializationException =>
                 logger.warn("Cannot deserialize the redrive policy attribute", e)
+                throw new SQSException("MalformedQueryString")
+              case e: ParsingException =>
+                logger.warn("Cannot parse the redrive policy attribute", e)
                 throw new SQSException("MalformedQueryString")
             }
 

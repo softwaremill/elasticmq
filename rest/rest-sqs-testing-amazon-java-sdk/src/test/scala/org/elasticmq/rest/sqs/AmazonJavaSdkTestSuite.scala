@@ -1257,6 +1257,18 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
     }
   }
 
+  test("should validate redrive policy json") {
+    // Then
+    a[AmazonSQSException] shouldBe thrownBy {
+      client.createQueue(new CreateQueueRequest("q1")
+          .withAttributes(Map(redrivePolicyAttribute -> "not a proper json policy")))
+    }
+    a[AmazonSQSException] shouldBe thrownBy {
+      client.createQueue(new CreateQueueRequest("q1")
+          .withAttributes(Map(redrivePolicyAttribute -> """{"wrong": "json"}""")))
+    }
+  }
+
   def queueVisibilityTimeout(queueUrl: String) = getQueueLongAttribute(queueUrl, visibilityTimeoutAttribute)
 
   def queueDelay(queueUrl: String) = getQueueLongAttribute(queueUrl, delaySecondsAttribute)
