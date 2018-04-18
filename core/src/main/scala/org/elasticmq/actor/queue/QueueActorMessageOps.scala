@@ -15,7 +15,8 @@ trait QueueActorMessageOps extends Logging {
   def receiveAndReplyMessageMsg[T](msg: QueueMessageMsg[T]): ReplyAction[T] = msg match {
     case SendMessage(message) => sendMessage(message)
     case UpdateVisibilityTimeout(messageId, visibilityTimeout) => updateVisibilityTimeout(messageId, visibilityTimeout)
-    case ReceiveMessages(visibilityTimeout, count, waitForMessages) => receiveMessages(visibilityTimeout, count)
+    case ReceiveMessages(visibilityTimeout, count, _, receiveRequestAttemptId) =>
+      receiveMessages(visibilityTimeout, count, receiveRequestAttemptId)
     case DeleteMessage(deliveryReceipt) => deleteMessage(deliveryReceipt)
     case LookupMessage(messageId) => messageQueue.byId.get(messageId.id).map(_.toMessageData)
   }
@@ -86,66 +87,33 @@ trait QueueActorMessageOps extends Logging {
     }
   }
 
-  protected def receiveMessages(visibilityTimeout: VisibilityTimeout, count: Int): List[MessageData] = {
+  protected def receiveMessages(visibilityTimeout: VisibilityTimeout, count: Int,
+    receiveRequestAttemptId: Option[String]): List[MessageData] = {
     val deliveryTime = nowProvider.nowMillis
 
-    @tailrec
-    def doReceiveMessages(left: Int, acc: List[MessageData]): List[MessageData] = {
-      if (left == 0) {
-        acc
+    // TODO Validate receiveRequestAttemptId
+
+    messageQueue.dequeue(count, deliveryTime).flatMap { internalMessage =>
+      if (queueData.deadLettersQueue.map(_.maxReceiveCount).exists(_ <= internalMessage.receiveCount)) {
+        logger.debug(s"${queueData.name}: send message $internalMessage to dead letters actor $deadLettersActorRef")
+        deadLettersActorRef.foreach(_ ! SendMessage(internalMessage.toNewMessageData))
+        internalMessage.deliveryReceipt.foreach(dr => deleteMessage(DeliveryReceipt(dr)))
+        None
       } else {
-        receiveMessage(deliveryTime, computeNextDelivery(visibilityTimeout), acc) match {
-          case None => acc
-          case Some(msg) => doReceiveMessages(left - 1, acc :+ msg)
-        }
+        // Putting the msg again into the queue, with a new next delivery
+        val newNextDelivery = computeNextDelivery(visibilityTimeout)
+        internalMessage.deliveryReceipt = Some(DeliveryReceipt.generate(MessageId(internalMessage.id)).receipt)
+        internalMessage.nextDelivery = newNextDelivery.millis
+
+        internalMessage.receiveCount += 1
+        internalMessage.firstReceive = OnDateTimeReceived(new DateTime(deliveryTime))
+
+        messageQueue += internalMessage
+
+        logger.debug(s"${queueData.name}: Receiving message ${internalMessage.id}")
+
+        Some(internalMessage.toMessageData)
       }
-    }
-
-    doReceiveMessages(count, List.empty)
-  }
-
-  private def receiveMessage(deliveryTime: Long, newNextDelivery: MillisNextDelivery,
-    acc: List[MessageData]): Option[MessageData] = {
-    if (messageQueue.isEmpty) {
-      None
-    } else {
-      messageQueue.dequeue(acc).flatMap { internalMessage =>
-        val id = MessageId(internalMessage.id)
-        if (!internalMessage.deliverable(deliveryTime)) {
-          // Putting the msg back. That's the youngest msg, so there is no msg that can be received.
-          messageQueue += internalMessage
-          None
-        } else if (messageQueue.byId.contains(id.id)) {
-          processInternalMessage(deliveryTime, newNextDelivery, internalMessage, acc)
-        } else {
-          // Deleted msg - trying again
-          receiveMessage(deliveryTime, newNextDelivery, acc)
-        }
-      }
-    }
-  }
-
-  private def processInternalMessage(deliveryTime: Long, newNextDelivery: MillisNextDelivery,
-      internalMessage: InternalMessage, acc: List[MessageData]) = {
-    // Putting the msg to dead letters queue if exists
-    if (queueData.deadLettersQueue.map(_.maxReceiveCount).exists(_ <= internalMessage.receiveCount)) {
-      logger.debug(s"${queueData.name}: send message $internalMessage to dead letters actor $deadLettersActorRef")
-      deadLettersActorRef.foreach(_ ! SendMessage(internalMessage.toNewMessageData))
-      internalMessage.deliveryReceipt.foreach(dr => deleteMessage(DeliveryReceipt(dr)))
-      None
-    } else {
-      // Putting the msg again into the queue, with a new next delivery
-      internalMessage.deliveryReceipt = Some(DeliveryReceipt.generate(MessageId(internalMessage.id)).receipt)
-      internalMessage.nextDelivery = newNextDelivery.millis
-
-      internalMessage.receiveCount += 1
-      internalMessage.firstReceive = OnDateTimeReceived(new DateTime(deliveryTime))
-
-      messageQueue += internalMessage
-
-      logger.debug(s"${queueData.name}: Receiving message ${internalMessage.id}")
-
-      Some(internalMessage.toMessageData)
     }
   }
 

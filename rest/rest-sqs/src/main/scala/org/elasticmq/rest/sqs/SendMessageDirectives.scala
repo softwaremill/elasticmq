@@ -22,8 +22,6 @@ trait SendMessageDirectives { this: ElasticMQDirectives with SQSLimitsModule =>
   val MessageGroupIdParameter = "MessageGroupId"
   val MessageDeduplicationIdParameter = "MessageDeduplicationId"
 
-  private val validParameterValueCharsRe = """^[a-zA-Z0-9!"#\$%&'\(\)\*\+,-\./:;<=>?@\[\\\]\^_`\{|\}~]{1,128}$""".r
-
   def sendMessage(p: AnyParams): Route = {
     p.action("SendMessage") {
       queueActorAndDataFromRequest(p) { (queueActor, queueData) =>
@@ -106,7 +104,7 @@ trait SendMessageDirectives { this: ElasticMQDirectives with SQSLimitsModule =>
       case None if queueData.isFifo => throw SQSException.invalidParameterValue
 
       // Ensure the given value is valid
-      case Some(id) if !isValidPropertyValue(id) => throw SQSException.invalidParameterValue
+      case Some(id) if !isValidFifoPropertyValue(id) => throw SQSException.invalidParameterValue
 
       // This must be a correct value (or this isn't a FIFO queue and no value is required)
       case m => m
@@ -117,7 +115,7 @@ trait SendMessageDirectives { this: ElasticMQDirectives with SQSLimitsModule =>
       case Some(_) if !queueData.isFifo => throw SQSException.invalidParameterValue
 
       // Ensure the given value is valid
-      case Some(id) if !isValidPropertyValue(id) => throw SQSException.invalidParameterValue
+      case Some(id) if !isValidFifoPropertyValue(id) => throw SQSException.invalidParameterValue
 
       // If a valid message group id is provided, use it, as it takes priority over the queue's content based deduping
       case Some(id) => Some(id)
@@ -153,16 +151,6 @@ trait SendMessageDirectives { this: ElasticMQDirectives with SQSLimitsModule =>
       "MessageTooLong"
     }
   }
-
-  /**
-   * Valid values are alphanumeric characters and punctuation (!"#$%&'()*+,-./:;<=>?@[\]^_`{|}~). The maximum length is
-   * 128 characters
-   *
-   * @param propValue    The string to validate
-   * @return             `true` if the string is valid, false otherwise
-   */
-  private def isValidPropertyValue(propValue: String): Boolean =
-    validParameterValueCharsRe.findFirstIn(propValue).isDefined
 
   private def bodyContainsInvalidCharacters(body: String) = {
     val bodyLength = body.length

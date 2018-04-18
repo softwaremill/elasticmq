@@ -37,7 +37,7 @@ trait QueueActorWaitForMessagesOps extends ReplyingActor with QueueActorMessageO
       scheduleTryReplyWhenAvailable()
       result
 
-    case rm@ReceiveMessages(visibilityTimeout, count, waitForMessagesOpt) =>
+    case rm@ReceiveMessages(_, _, waitForMessagesOpt, _) =>
       val result = super.receiveAndReplyMessageMsg(msg)
       val waitForMessages = waitForMessagesOpt.getOrElse(queueData.receiveMessageWait)
       if (result == ReplyWith(Nil) && waitForMessages.getMillis > 0) {
@@ -60,8 +60,8 @@ trait QueueActorWaitForMessagesOps extends ReplyingActor with QueueActorMessageO
   @tailrec
   private def tryReply() {
     awaitingReply.headOption match {
-      case Some((seq, AwaitingData(originalSender, ReceiveMessages(visibilityTimeout, count, _), waitStart))) => {
-        val received = super.receiveMessages(visibilityTimeout, count)
+      case Some((seq, AwaitingData(originalSender, ReceiveMessages(visibilityTimeout, count, _, receiveRequestAttemptId), _))) =>
+        val received = super.receiveMessages(visibilityTimeout, count, receiveRequestAttemptId)
 
         if (received != Nil) {
           originalSender ! received
@@ -70,7 +70,6 @@ trait QueueActorWaitForMessagesOps extends ReplyingActor with QueueActorMessageO
 
           tryReply()
         }
-      }
       case _ => // do nothing
     }
   }
@@ -87,35 +86,17 @@ trait QueueActorWaitForMessagesOps extends ReplyingActor with QueueActorMessageO
   }
 
   private def scheduleTryReplyWhenAvailable(): Unit = {
-    // Remove the messages from the queue
-    @tailrec def dequeueUntilDeleted(): Unit = {
-      messageQueue.dequeue() match {
-        case Some(msg) if !messageQueue.byId.contains(msg.id) =>
-          // The message has been deleted, keep going until we come upon a message that's available
-          dequeueUntilDeleted()
-        case Some(msg) =>
-          // This message is available for delivery. Stop removing messages, put the current message back on the queue
-          // so that the next deque operation will take it off.
-          messageQueue += msg
-        case _ => // stop
-      }
-    }
-
     scheduledTryReply.foreach(_.cancel())
     scheduledTryReply = None
 
-    if (awaitingReply.nonEmpty) {
-      dequeueUntilDeleted()
-
+    // The request needs a reply and there are messages on the queue, we should try to reply. The earliest we can reply
+    // is when the next message becomes available
+    if (awaitingReply.nonEmpty && messageQueue.byId.nonEmpty) {
       val deliveryTime = nowProvider.nowMillis
 
-      messageQueue.dequeue() match {
-        case Some(msg) if !msg.deliverable(deliveryTime) =>
-          // The message isn't deliverable yet, schedule the next delivery
-          messageQueue += msg
-          scheduledTryReply = Some(schedule(msg.nextDelivery - deliveryTime + 1, TryReply))
-
-        case _ => // there are deliverable messages right now, no need to schedule a try-reply
+      messageQueue.byId.values.toList.sortBy(_.nextDelivery).headOption match {
+        case Some(msg) => scheduledTryReply = Some(schedule(msg.nextDelivery - deliveryTime + 1, TryReply))
+        case None =>
       }
     }
   }

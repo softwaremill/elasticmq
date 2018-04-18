@@ -29,11 +29,6 @@ sealed trait MessageQueue {
   def clear(): Unit
 
   /**
-   * @return    Whether there are no messages on the queue
-   */
-  def isEmpty: Boolean
-
-  /**
    * Remove the message with the given id
    *
    * @param messageId    The id of the message to remove
@@ -50,12 +45,60 @@ sealed trait MessageQueue {
   def filterNot(p: InternalMessage => Boolean): MessageQueue
 
   /**
-   * Dequeue a message from the queue
+   * Dequeues `count` messages from the queue
    *
-   * @param accBatch    The messages that have been dequeued in the current operation
-   * @return            A message that can be dequeued
+   * @param count           The number of messages to dequeue from the queue
+   * @param deliveryTime    The timestamp from which messages should be available (usually, this is the current millis
+   *                        since epoch. It is useful to pass in a special value during the tests however.)
+   * @return                The dequeued messages, if any
    */
-  def dequeue(accBatch: List[MessageData] = List.empty): Option[InternalMessage]
+  def dequeue(count: Int, deliveryTime: Long): List[InternalMessage]
+
+  /**
+   * Get the next available message on the given queue
+   *
+   * @param priorityQueue     The queue for which to get the next available message. It's assumed the messages on this
+   *                          queue all belong to the same message group.
+   * @param deliveryTime      The timestamp from which messages should be available
+   * @param accBatch          An accumulator holding the messages that have already been retrieved.
+   * @param accMessage        An accumulator holding the messages that have been dequeued from the priority queue and
+   *                          cannot be delivered. These messages should be put back on the queue before returning
+   *                          to the caller
+   * @return
+   */
+  @tailrec
+  protected final def nextVisibleMessage(priorityQueue: mutable.PriorityQueue[InternalMessage], deliveryTime: Long,
+    accBatch: List[InternalMessage], accMessage: Seq[InternalMessage] = Seq.empty): Option[InternalMessage] = {
+    if (priorityQueue.nonEmpty) {
+      val msg = priorityQueue.dequeue()
+
+      if (byId.get(msg.id).isEmpty) {
+        // A message that's not in the byId map is considered to be deleted and can be dropped
+        nextVisibleMessage(priorityQueue, deliveryTime, accBatch, accMessage)
+      } else {
+
+        lazy val isInBatch = accBatch.exists(_.id == msg.id)
+        lazy val isInLocalAcc = accMessage.exists(_.id == msg.id)
+        if (msg.deliverable(deliveryTime) && !isInLocalAcc && !isInBatch) {
+          // If this message is deliverable, we put all the previously dequeued (but undeliverable) messages back on
+          // the queue and return this message for delivery
+          priorityQueue ++= accMessage
+          Some(msg)
+        } else {
+          // The message is not deliverable. Put it and all the other previously retrieved messages in this batch back
+          // on the priority queue.
+          priorityQueue += msg
+          priorityQueue ++= accMessage
+          None
+        }
+      }
+    } else {
+      // If the priority queue is empty, there are no further messages to test. Put any dequeued but unavailable
+      // messages back on the queue and return a None
+      priorityQueue ++= accMessage
+      None
+    }
+  }
 }
 
 object MessageQueue {
@@ -85,8 +128,6 @@ object MessageQueue {
       messageQueue.clear()
     }
 
-    override def isEmpty: Boolean = messageQueue.isEmpty
-
     override def remove(messageId: String): Unit = messagesById.remove(messageId)
 
     override def filterNot(p: InternalMessage => Boolean): MessageQueue = {
@@ -97,10 +138,20 @@ object MessageQueue {
       newMessageQueue
     }
 
-    override def dequeue(accBatch: List[MessageData]): Option[InternalMessage] = if (!isEmpty) {
-      Some(messageQueue.dequeue())
-    } else {
-      Option.empty
+    def dequeue(count: Int, deliveryTime: Long): List[InternalMessage] = {
+      dequeue0(count, deliveryTime, List.empty)
+    }
+
+    @tailrec
+    private def dequeue0(count: Int, deliveryTime: Long, acc: List[InternalMessage]): List[InternalMessage] = {
+      if (count == 0) {
+        acc
+      } else {
+        nextVisibleMessage(messageQueue, deliveryTime, acc) match {
+          case Some(msg) => dequeue0(count - 1, deliveryTime, acc :+ msg)
+          case None => acc
+        }
+      }
     }
   }
 
@@ -116,8 +167,6 @@ object MessageQueue {
       val groupMessages = messagesbyMessageGroupId.getOrElseUpdate(messageGroupId, mutable.PriorityQueue.empty)
       messagesbyMessageGroupId.put(messageGroupId, groupMessages += message)
     }
-
-    override def isEmpty: Boolean = messagesById.isEmpty
 
     override def clear(): Unit = {
       super.clear()
@@ -144,32 +193,42 @@ object MessageQueue {
       newFifoQueue
     }
 
-    override def dequeue(accBatch: List[MessageData]): Option[InternalMessage] = if (!isEmpty) {
-      dequeueFromFifo(accBatch)
-    } else {
-      Option.empty
+    override def dequeue(count: Int, deliveryTime: Long): List[InternalMessage] = {
+      dequeue0(count, deliveryTime, List.empty)
+    }
+
+    private def dequeue0(count: Int, deliveryTime: Long, acc: List[InternalMessage]): List[InternalMessage] = {
+      if (count == 0) {
+        acc
+      } else {
+        dequeueFromFifo(acc, deliveryTime) match {
+          case Some(msg) => dequeue0(count -1, deliveryTime, acc :+ msg)
+          case None => acc
+        }
+      }
     }
 
     /**
      * Dequeue a message from the fifo queue. Try to dequeue a message from the same message group as the previous
      * message before trying other message groups.
      */
-    private def dequeueFromFifo(accBatch: List[MessageData],
-        triedMessageGroups: Set[String] = Set.empty): Option[InternalMessage] = {
+    private def dequeueFromFifo(accBatch: List[InternalMessage], deliveryTime: Long,
+      triedMessageGroups: Set[String] = Set.empty): Option[InternalMessage] = {
       val messageGroupIdHint = accBatch.lastOption.map(getMessageGroupIdUnsafe).filterNot(triedMessageGroups.contains)
       messageGroupIdHint.orElse(randomMessageGroup(triedMessageGroups)).flatMap { messageGroupId =>
-        dequeueFromMessageGroup(messageGroupId, accBatch)
-          .orElse(dequeueFromFifo(accBatch, triedMessageGroups + messageGroupId))
+        dequeueFromMessageGroup(messageGroupId, deliveryTime, accBatch)
+          .orElse(dequeueFromFifo(accBatch, deliveryTime, triedMessageGroups + messageGroupId))
       }
     }
 
     /**
      * Try to dequeue a message from the given message group
      */
-    private def dequeueFromMessageGroup(messageGroupId: String, accBatch: List[MessageData]): Option[InternalMessage] = {
+    private def dequeueFromMessageGroup(messageGroupId: String, deliveryTime: Long,
+      accBatch: List[InternalMessage]): Option[InternalMessage] = {
       messagesbyMessageGroupId.get(messageGroupId) match {
         case Some(priorityQueue) if priorityQueue.nonEmpty =>
-          val msg = nextVisibleMessage(priorityQueue, accBatch)
+          val msg = nextVisibleMessage(priorityQueue, deliveryTime, accBatch)
           if (priorityQueue.isEmpty) {
             messagesbyMessageGroupId.remove(messageGroupId)
           } else {
@@ -177,46 +236,6 @@ object MessageQueue {
           }
           msg
         case _ => None
-      }
-    }
-
-    /**
-     * Get the next available message on the given queue
-     *
-     * @param priorityQueue    The queue for which to get the next available message. It's assumed the messages on this
-     *                         queue all belong to the same message group.
-     * @param accBatch         An accumulator holding the messages that have already been retrieved.
-     * @param accMessage       An accumulator holding the messages that have been dequeued from the priority queue and
-     *                         cannot be delivered. These messages should be put back on the queue before returning
-     *                         to the caller
-     * @return
-     */
-    @tailrec
-    private def nextVisibleMessage(priorityQueue: mutable.PriorityQueue[InternalMessage],
-        accBatch: List[MessageData], accMessage: Seq[InternalMessage] = Seq.empty): Option[InternalMessage] = {
-      if (priorityQueue.nonEmpty) {
-        val msg = priorityQueue.dequeue()
-        if (msg.deliverable(System.currentTimeMillis())) {
-          // If this message is deliverable, we put all the previously dequeued (but undeliverable) messages back on
-          // the queue and return this message for delivery
-          priorityQueue ++= accMessage
-          Some(msg)
-        } else if (accBatch.exists(_.id.id == msg.id)) {
-          // If the message is undeliverable, we can only continue if the message is part of the current batch as we
-          // don't want to return any other message in this message group as long as the current message has not been
-          // handled
-          nextVisibleMessage(priorityQueue, accBatch, accMessage :+ msg)
-        } else {
-          // The message is not deliverable and it's not
-          priorityQueue += msg
-          priorityQueue ++= accMessage
-          None
-        }
-      } else {
-        // If the priority queue is empty, there are no further messages to test. Put any dequeued but unavailable
-        // messages back on the queue and return a None
-        priorityQueue ++= accMessage
-        None
       }
     }
 
@@ -242,17 +261,6 @@ object MessageQueue {
      */
     private def getMessageGroupIdUnsafe(msg: InternalMessage): String =
       getMessageGroupIdUnsafe(msg.messageGroupId)
-
-    /**
-     * Get the message group id from the given message data. If the message data has no message group id, an
-     * [[IllegalStateException]] will be thrown.
-     *
-     * @param msgData    The message data to get the message group id for
-     * @return           The message group id
-     * @throws           IllegalStateException if the message data has no message group id
-     */
-    private def getMessageGroupIdUnsafe(msgData: MessageData): String =
-      getMessageGroupIdUnsafe(msgData.messageGroupId)
 
     /**
      * Get the message group id from an optional string. If the given optional string is empty, an

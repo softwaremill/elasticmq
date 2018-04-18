@@ -16,6 +16,7 @@ trait ReceiveMessageDirectives { this: ElasticMQDirectives with AttributesModule
     val SenderIdAttribute = "SenderId"
     val MaxNumberOfMessagesAttribute = "MaxNumberOfMessages"
     val WaitTimeSecondsAttribute = "WaitTimeSeconds"
+    val ReceiveRequestAttemptIdAttribute = "ReceiveRequestAttemptId"
     val MessageAttributeNamePattern = "MessageAttributeName\\.\\d".r
 
     val AllAttributeNames = SentTimestampAttribute :: ApproximateReceiveCountAttribute ::
@@ -26,10 +27,24 @@ trait ReceiveMessageDirectives { this: ElasticMQDirectives with AttributesModule
     import MessageReadeableAttributeNames._
 
     p.action("ReceiveMessage") {
-      queueActorFromRequest(p) { queueActor =>
+      queueActorAndDataFromRequest(p) { (queueActor, queueData) =>
         val visibilityTimeoutParameterOpt = p.get(VisibilityTimeoutParameter).map(_.toInt)
         val maxNumberOfMessagesAttributeOpt = p.get(MaxNumberOfMessagesAttribute).map(_.toInt)
         val waitTimeSecondsAttributeOpt = p.get(WaitTimeSecondsAttribute).map(_.toLong)
+
+        val receiveRequestAttemptId = p.get(ReceiveRequestAttemptIdAttribute) match {
+          // ReceiveRequestAttemptIdAttribute is only supported for FIFO queues
+          case Some(_) if !queueData.isFifo => throw SQSException.invalidParameterValue
+
+          // Validate values
+          case Some(attemptId) if !isValidFifoPropertyValue(attemptId) => throw SQSException.invalidParameterValue
+
+          // The docs at https://docs.aws.amazon.com/cli/latest/reference/sqs/receive-message.html quote:
+          //   > If a caller of the receive-message action doesn't provide a ReceiveRequestAttemptId , Amazon SQS
+          //   > generates a ReceiveRequestAttemptId .
+          // That attempt id doesn't seem to be exposed anywhere however. For now, we will not generate an attempt id
+          case a => a
+        }
 
         val visibilityTimeoutFromParameters = visibilityTimeoutParameterOpt
           .map(MillisVisibilityTimeout.fromSeconds(_))
@@ -48,8 +63,7 @@ trait ReceiveMessageDirectives { this: ElasticMQDirectives with AttributesModule
         verifyMessageWaitTime(waitTimeSecondsAttributeOpt)
 
         val msgsFuture = queueActor ? ReceiveMessages( visibilityTimeoutFromParameters,
-          maxNumberOfMessagesFromParameters,
-          waitTimeSecondsFromParameters)
+          maxNumberOfMessagesFromParameters, waitTimeSecondsFromParameters, receiveRequestAttemptId)
 
         lazy val attributeNames = attributeNamesReader.read(p, AllAttributeNames)
 

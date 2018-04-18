@@ -501,6 +501,52 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
     val allMessages = deliveredSingleReceives ++ batchReceive
     allMessages.map(_.getBody) should be(messageBodies)
   }
+/*
+  test("FIFO queues should deliver the same messages for the same request attempt id") {
+    // Given
+    val queueUrl = createFifoQueue()
+
+    // When
+    val messageBodies = for (i <- 1 to 20) yield s"Message $i"
+    messageBodies.map(body => client.sendMessage(new SendMessageRequest(queueUrl, body).withMessageGroupId("group1")))
+
+    // Then
+    val req = new ReceiveMessageRequest(queueUrl).withMaxNumberOfMessages(10).withReceiveRequestAttemptId("attempt1")
+    val batch1 = client.receiveMessage(req).getMessages
+    val batch2 = client.receiveMessage(req).getMessages
+    batch1.map(_.getBody).toVector should be(messageBodies.take(10))
+    batch2.map(_.getBody).toVector should be(messageBodies.take(10))
+
+    // When a message gets modified (deleted or visibility time-out), the attempt id becomes invalid
+    client.deleteMessage(queueUrl, batch1.head.getReceiptHandle)
+    an[AmazonSQSException] shouldBe thrownBy {
+      client.receiveMessage(req).getMessages
+    }
+  }*/
+
+  test("FIFO queues should return an error if an invalid receive request attempt id parameter is provided") {
+    // Given
+    val fifoQueueUrl = client.createQueue(new CreateQueueRequest("testQueue.fifo")
+        .addAttributesEntry("FifoQueue", "true")
+        .addAttributesEntry("ContentBasedDeduplication", "true")).getQueueUrl
+    val regularQueueUrl = client.createQueue(new CreateQueueRequest("testQueue1")).getQueueUrl
+
+    // An illegal character
+    an[AmazonSQSException] shouldBe thrownBy {
+      client.receiveMessage(new ReceiveMessageRequest(fifoQueueUrl).withReceiveRequestAttemptId("æ"))
+    }
+
+    // More than 128 characters
+    val id = (for (_ <- 0 to 300) yield "1").mkString("")
+    an[AmazonSQSException] shouldBe thrownBy {
+      client.receiveMessage(new ReceiveMessageRequest(fifoQueueUrl).withReceiveRequestAttemptId(id))
+    }
+
+    // Regular queues don't allow message deduplication
+    an[AmazonSQSException] shouldBe thrownBy {
+      client.receiveMessage(new ReceiveMessageRequest(regularQueueUrl).withReceiveRequestAttemptId("attempt1"))
+    }
+  }
 
   test("FIFO queues should deduplicate messages based on the message body") {
     // Given
