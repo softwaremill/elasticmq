@@ -204,15 +204,12 @@ ElasticMQ dependencies in SBT
 -----------------------------
 
     // Scala 2.12 and 2.11
-    val elasticmqSqs        = "org.elasticmq" %% "elasticmq-rest-sqs"         % "0.13.9"
-
-    // Scala 2.10
-    val elasticmqSqs        = "org.elasticmq" %% "elasticmq-rest-sqs"         % "0.7.1"
+    val elasticmqSqs        = "org.elasticmq" %% "elasticmq-rest-sqs" % "0.13.9"
 
 If you don't want the SQS interface, but just use the actors directly, you can add a dependency only to the `core`
 module:
 
-    val elasticmqCore       = "org.elasticmq" %% "elasticmq-core"             % "0.13.9"
+    val elasticmqCore       = "org.elasticmq" %% "elasticmq-core" % "0.13.9"
 
 If you want to use a snapshot version, you will need to add the [https://oss.sonatype.org/content/repositories/snapshots/](https://oss.sonatype.org/content/repositories/snapshots/) repository to your configuration.
 
