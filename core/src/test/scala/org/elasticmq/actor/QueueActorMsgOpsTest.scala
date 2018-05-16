@@ -266,7 +266,7 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
   waitTest("should receive at most as much messages as given") {
     // Given
     val q1 = createQueueData("q1", MillisVisibilityTimeout(1L))
-    val msgs = (for { i <- 1 to 5 } yield createNewMessageData("xyz" + i, "123", Map(), MillisNextDelivery(100))).toList
+    val msgs = (for { i <- 1 to 5 } yield createNewMessageData("xyz" + i, "123", Map(), MillisNextDelivery(i))).toList
     val List(m1, m2, m3, m4, m5) = msgs
 
     for {
@@ -285,14 +285,14 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
       receiveResults1.size should be (3)
       receiveResults2.size should be (2)
 
-      (receiveResults1.map(_.id.id).toSet ++ receiveResults2.map(_.id.id).toSet) should be (msgs.map(_.id.get.id).toSet)
+      (receiveResults1.map(_.id.id) ++ receiveResults2.map(_.id.id)) should be (msgs.map(_.id.get.id))
     }
   }
 
   waitTest("should receive as much messages as possible") {
     // Given
     val q1 = createQueueData("q1", MillisVisibilityTimeout(1L))
-    val msgs = (for { i <- 1 to 3 } yield createNewMessageData("xyz" + i, "123", Map(), MillisNextDelivery(100))).toList
+    val msgs = (for { i <- 1 to 3 } yield createNewMessageData("xyz" + i, "123", Map(), MillisNextDelivery(i))).toList
     val List(m1, m2, m3) = msgs
 
     for {
@@ -307,7 +307,7 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
       // Then
       receiveResults.size should be (3)
 
-      receiveResults.map(_.id.id).toSet should be (msgs.map(_.id.get.id).toSet)
+      receiveResults.map(_.id.id) should be (msgs.map(_.id.get.id))
     }
   }
 
