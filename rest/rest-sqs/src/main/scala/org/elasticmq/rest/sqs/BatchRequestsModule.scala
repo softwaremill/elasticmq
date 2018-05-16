@@ -9,7 +9,8 @@ trait BatchRequestsModule {
   this: SQSLimitsModule with ActorSystemModule =>
 
   def batchParametersMap(prefix: String, parameters: Map[String, String]): List[Map[String, String]] = {
-    val subParameters = BatchRequestsModule.subParametersMaps(prefix, parameters)
+    val subParameters =
+      BatchRequestsModule.subParametersMaps(prefix, parameters)
 
     val uniqueIds = subParameters.map(_.get(IdSubParameter)).toSet
     if (uniqueIds.size != subParameters.size) {
@@ -23,8 +24,8 @@ trait BatchRequestsModule {
     subParameters
   }
 
-  def batchRequest(prefix: String, parameters: AnyParams)
-                  (single: (Map[String, String], String) => Future[NodeSeq]): Future[NodeSeq] = {
+  def batchRequest(prefix: String, parameters: AnyParams)(
+      single: (Map[String, String], String) => Future[NodeSeq]): Future[NodeSeq] = {
 
     val messagesData = batchParametersMap(prefix, parameters)
 
@@ -34,14 +35,15 @@ trait BatchRequestsModule {
       try {
         single(messageData, id)
       } catch {
-        case e: SQSException => Future {
-          <BatchResultErrorEntry>
+        case e: SQSException =>
+          Future {
+            <BatchResultErrorEntry>
             <Id>{id}</Id>
             <SenderFault>true</SenderFault>
             <Code>{e.code}</Code>
             <Message>{e.message}</Message>
           </BatchResultErrorEntry>
-        }
+          }
       }
     })
 
@@ -50,21 +52,24 @@ trait BatchRequestsModule {
 }
 
 object BatchRequestsModule {
+
   /**
-   * In the given list of parameters, lookups all parameters of the form: <code>{prefix}.{discriminator}.key=value</code>,
-   * and for each discriminator builds a map of found key-value mappings.
-   */
+    * In the given list of parameters, lookups all parameters of the form: <code>{prefix}.{discriminator}.key=value</code>,
+    * and for each discriminator builds a map of found key-value mappings.
+    */
   def subParametersMaps(prefix: String, parameters: Map[String, String]): List[Map[String, String]] = {
     val subParameters = collection.mutable.Map[String, Map[String, String]]()
     val keyRegexp = (Pattern.quote(prefix) + "\\.([^.]+)\\.(.+)").r
-    parameters.foreach{ case (key, value) =>
-      keyRegexp.findFirstMatchIn(key).map { keyMatch =>
-        val discriminator = keyMatch.group(1)
-        val subKey = keyMatch.group(2)
+    parameters.foreach {
+      case (key, value) =>
+        keyRegexp.findFirstMatchIn(key).map { keyMatch =>
+          val discriminator = keyMatch.group(1)
+          val subKey = keyMatch.group(2)
 
-        val subMap = subParameters.get(discriminator).getOrElse(Map[String, String]())
-        subParameters.put(discriminator, subMap + (subKey -> value))
-      }
+          val subMap =
+            subParameters.get(discriminator).getOrElse(Map[String, String]())
+          subParameters.put(discriminator, subMap + (subKey -> value))
+        }
     }
 
     subParameters.values.map(_.toMap).toList

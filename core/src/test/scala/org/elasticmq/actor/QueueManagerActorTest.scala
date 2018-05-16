@@ -16,7 +16,7 @@ class QueueManagerActorTest extends ActorTest with QueueManagerForEachTest with 
       lookupResult <- queueManagerActor ? LookupQueue("q2")
     } yield {
       // Then
-      lookupResult should be (None)
+      lookupResult should be(None)
     }
   }
 
@@ -31,7 +31,7 @@ class QueueManagerActorTest extends ActorTest with QueueManagerForEachTest with 
       lookupResult <- queueManagerActor ? LookupQueue("q2")
     } yield {
       // Then
-      lookupResult should be ('defined)
+      lookupResult should be('defined)
     }
   }
 
@@ -51,8 +51,8 @@ class QueueManagerActorTest extends ActorTest with QueueManagerForEachTest with 
       r1 <- queueManagerActor ? LookupQueue(q1.name)
       r2 <- queueManagerActor ? LookupQueue(q2.name)
     } yield {
-      r1 should be (None)
-      r2 should be ('defined)
+      r1 should be(None)
+      r2 should be('defined)
     }
   }
 
@@ -66,7 +66,7 @@ class QueueManagerActorTest extends ActorTest with QueueManagerForEachTest with 
       // When & then
       result <- queueManagerActor ? CreateQueue(q1)
     } yield {
-      result should be ('left)
+      result should be('left)
     }
   }
 
@@ -83,7 +83,7 @@ class QueueManagerActorTest extends ActorTest with QueueManagerForEachTest with 
       queues <- queueManagerActor ? ListQueues()
     } yield {
       // Then
-      queues.toSet should be (Set(q1.name, q2.name))
+      queues.toSet should be(Set(q1.name, q2.name))
     }
   }
 }

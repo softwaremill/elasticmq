@@ -12,10 +12,10 @@ trait ListQueuesDirectives { this: ElasticMQDirectives with QueueURLModule =>
         val prefixOption = p.get("QueueNamePrefix")
         for {
           allQueueNames <- queueManagerActor ? ListQueues()
-        } yield  {
+        } yield {
           val queueNames = prefixOption match {
             case Some(prefix) => allQueueNames.filter(_.startsWith(prefix))
-            case None => allQueueNames
+            case None         => allQueueNames
           }
 
           baseQueueURL { baseURL =>

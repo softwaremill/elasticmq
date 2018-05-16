@@ -8,8 +8,11 @@ class SQSStrictLimitsModuleTest extends FunSuite with SQSLimitsModule {
 
   override def sqsLimits: SQSLimits.Value = SQSLimits.Strict
 
-  val correctValues = List(BigDecimal(10).pow(126), -BigDecimal(10).pow(128), BigDecimal(0), BigDecimal(Random.nextDouble())).map(v => v.toString)
-  val incorrectValues = List((BigDecimal(10).pow(126) + 0.1).toString, (-BigDecimal(10).pow(128) - 0.1).toString, "12312312a")
+  val correctValues =
+    List(BigDecimal(10).pow(126), -BigDecimal(10).pow(128), BigDecimal(0), BigDecimal(Random.nextDouble())).map(v =>
+      v.toString)
+  val incorrectValues =
+    List((BigDecimal(10).pow(126) + 0.1).toString, (-BigDecimal(10).pow(128) - 0.1).toString, "12312312a")
 
   for (value <- correctValues) {
     test(s"should verify message number attribute value $value") {

@@ -33,10 +33,11 @@ class RedrivePolicyJsonTest extends FlatSpec with Matchers with ScalatestRouteTe
 
     val rd = json.parseJson.convertTo[RedrivePolicy]
 
-    rd should be(RedrivePolicy(
-      queueName = "dlq1",
-      maxReceiveCount = 4
-    ))
+    rd should be(
+      RedrivePolicy(
+        queueName = "dlq1",
+        maxReceiveCount = 4
+      ))
 
   }
 
@@ -53,10 +54,11 @@ class RedrivePolicyJsonTest extends FlatSpec with Matchers with ScalatestRouteTe
 
     val rd = json.parseJson.convertTo[RedrivePolicy]
 
-    rd should be(RedrivePolicy(
-      queueName = "dlq1",
-      maxReceiveCount = 4
-    ))
+    rd should be(
+      RedrivePolicy(
+        queueName = "dlq1",
+        maxReceiveCount = 4
+      ))
 
   }
 }

@@ -12,32 +12,37 @@ sealed abstract class MessageAttribute(val customType: Option[String]) {
   }
 }
 
-case class StringMessageAttribute(stringValue: String, override val customType: Option[String] = None) extends MessageAttribute(customType) {
+case class StringMessageAttribute(stringValue: String, override val customType: Option[String] = None)
+    extends MessageAttribute(customType) {
   protected override val primaryDataType: String = "String"
 }
 
-case class NumberMessageAttribute(stringValue: String, override val customType: Option[String] = None) extends MessageAttribute(customType) {
+case class NumberMessageAttribute(stringValue: String, override val customType: Option[String] = None)
+    extends MessageAttribute(customType) {
   protected override val primaryDataType: String = "Number"
 }
 
-case class BinaryMessageAttribute(binaryValue: Array[Byte], override val customType: Option[String] = None) extends MessageAttribute(customType) {
+case class BinaryMessageAttribute(binaryValue: Array[Byte], override val customType: Option[String] = None)
+    extends MessageAttribute(customType) {
   protected override val primaryDataType: String = "Binary"
 
   def asBase64 = DatatypeConverter.printBase64Binary(binaryValue)
 }
 object BinaryMessageAttribute {
-  def fromBase64(base64Str: String, customType: Option[String] = None) = BinaryMessageAttribute(
-    binaryValue = DatatypeConverter.parseBase64Binary(base64Str),
-    customType = customType
-  )
+  def fromBase64(base64Str: String, customType: Option[String] = None) =
+    BinaryMessageAttribute(
+      binaryValue = DatatypeConverter.parseBase64Binary(base64Str),
+      customType = customType
+    )
 
-  def fromByteBuffer(byteBuffer: ByteBuffer, customType: Option[String] = None) = BinaryMessageAttribute(
-    binaryValue = {
-      byteBuffer.clear()
-      val value = new Array[Byte](byteBuffer.capacity())
-      byteBuffer.get(value)
-      value
-    },
-    customType = customType
-  )
+  def fromByteBuffer(byteBuffer: ByteBuffer, customType: Option[String] = None) =
+    BinaryMessageAttribute(
+      binaryValue = {
+        byteBuffer.clear()
+        val value = new Array[Byte](byteBuffer.capacity())
+        byteBuffer.get(value)
+        value
+      },
+      customType = customType
+    )
 }

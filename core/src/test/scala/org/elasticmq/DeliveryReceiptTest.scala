@@ -12,6 +12,6 @@ class DeliveryReceiptTest extends FunSuite with Matchers {
     val receipt = DeliveryReceipt.generate(id)
 
     // Then
-    receipt.extractId should be (id)
+    receipt.extractId should be(id)
   }
 }

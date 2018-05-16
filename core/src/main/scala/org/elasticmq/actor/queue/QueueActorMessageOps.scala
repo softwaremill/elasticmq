@@ -13,13 +13,17 @@ trait QueueActorMessageOps extends Logging {
 
   def nowProvider: NowProvider
 
-  def receiveAndReplyMessageMsg[T](msg: QueueMessageMsg[T]): ReplyAction[T] = msg match {
-    case SendMessage(message) => sendMessage(message)
-    case UpdateVisibilityTimeout(messageId, visibilityTimeout) => updateVisibilityTimeout(messageId, visibilityTimeout)
-    case ReceiveMessages(visibilityTimeout, count, waitForMessages) => receiveMessages(visibilityTimeout, count)
-    case DeleteMessage(deliveryReceipt) => deleteMessage(deliveryReceipt)
-    case LookupMessage(messageId) => messagesById.get(messageId.id).map(_.toMessageData)
-  }
+  def receiveAndReplyMessageMsg[T](msg: QueueMessageMsg[T]): ReplyAction[T] =
+    msg match {
+      case SendMessage(message) => sendMessage(message)
+      case UpdateVisibilityTimeout(messageId, visibilityTimeout) =>
+        updateVisibilityTimeout(messageId, visibilityTimeout)
+      case ReceiveMessages(visibilityTimeout, count, waitForMessages) =>
+        receiveMessages(visibilityTimeout, count)
+      case DeleteMessage(deliveryReceipt) => deleteMessage(deliveryReceipt)
+      case LookupMessage(messageId) =>
+        messagesById.get(messageId.id).map(_.toMessageData)
+    }
 
   private def sendMessage(message: NewMessageData) = {
     val internalMessage = InternalMessage.from(message)
@@ -62,8 +66,7 @@ trait QueueActorMessageOps extends Logging {
     }
   }
 
-  protected def receiveMessages(visibilityTimeout: VisibilityTimeout,
-    count: Int): List[MessageData] = {
+  protected def receiveMessages(visibilityTimeout: VisibilityTimeout, count: Int): List[MessageData] = {
     val deliveryTime = nowProvider.nowMillis
 
     @tailrec
@@ -72,7 +75,7 @@ trait QueueActorMessageOps extends Logging {
         acc
       } else {
         receiveMessage(deliveryTime, computeNextDelivery(visibilityTimeout)) match {
-          case None => acc
+          case None      => acc
           case Some(msg) => doReceiveMessages(left - 1, msg :: acc)
         }
       }
@@ -101,10 +104,13 @@ trait QueueActorMessageOps extends Logging {
     }
   }
 
-  private def processInternalMessage(
-    deliveryTime: Long, newNextDelivery: MillisNextDelivery, internalMessage: InternalMessage) = {
+  private def processInternalMessage(deliveryTime: Long,
+                                     newNextDelivery: MillisNextDelivery,
+                                     internalMessage: InternalMessage) = {
     // Putting the msg to dead letters queue if exists
-    if (queueData.deadLettersQueue.map(_.maxReceiveCount).exists(_ <= internalMessage.receiveCount)) {
+    if (queueData.deadLettersQueue
+          .map(_.maxReceiveCount)
+          .exists(_ <= internalMessage.receiveCount)) {
       logger.debug(s"${queueData.name}: send message $internalMessage to dead letters actor $deadLettersActorRef")
       deadLettersActorRef.foreach(_ ! SendMessage(internalMessage.toNewMessageData))
       internalMessage.deliveryReceipt.foreach(dr => deleteMessage(DeliveryReceipt(dr)))
@@ -127,7 +133,7 @@ trait QueueActorMessageOps extends Logging {
 
   private def computeNextDelivery(visibilityTimeout: VisibilityTimeout) = {
     val nextDeliveryDelta = visibilityTimeout match {
-      case DefaultVisibilityTimeout => queueData.defaultVisibilityTimeout.millis
+      case DefaultVisibilityTimeout        => queueData.defaultVisibilityTimeout.millis
       case MillisVisibilityTimeout(millis) => millis
     }
 

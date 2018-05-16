@@ -11,7 +11,7 @@ trait PurgeQueueDirectives { this: ElasticMQDirectives with QueueURLModule =>
       queueActorFromRequest(p) { queueActor =>
         for {
           _ <- queueActor ? ClearQueue()
-        } yield  {
+        } yield {
           respondWith {
             <PurgeQueueResponse>
               <ResponseMetadata>

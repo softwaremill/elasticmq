@@ -18,7 +18,7 @@ package object sqs {
     def requiredParam(n: String): Directive1[String] = {
       p.get(n) match {
         case Some(v) => provide(v)
-        case None => reject(MissingQueryParamRejection(n))
+        case None    => reject(MissingQueryParamRejection(n))
       }
     }
   }

@@ -9,7 +9,7 @@ package object test {
     block
     val end = System.currentTimeMillis()
 
-    end-start
+    end - start
   }
 
   def createTempDir(): File = {

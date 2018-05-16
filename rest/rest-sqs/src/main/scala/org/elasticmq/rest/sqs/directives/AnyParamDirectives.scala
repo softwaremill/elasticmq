@@ -9,7 +9,8 @@ trait AnyParamDirectives {
 
   private def entityOrEmpty = entity(as[FormData]).recoverPF {
     // #68: some clients don't set the body as application/x-www-form-urlencoded, e.g. perl
-    case Seq(UnsupportedRequestContentTypeRejection(_)) => provide(FormData.Empty)
+    case Seq(UnsupportedRequestContentTypeRejection(_)) =>
+      provide(FormData.Empty)
   }
 
   def anyParamsMap(body: Map[String, String] => Route) = {

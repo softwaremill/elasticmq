@@ -18,9 +18,10 @@ trait SendMessageDirectives { this: ElasticMQDirectives with SQSLimitsModule =>
   def sendMessage(p: AnyParams) = {
     p.action("SendMessage") {
       queueActorFromRequest(p) { queueActor =>
-        doSendMessage(queueActor, p).map { case (message, digest, messageAttributeDigest) =>
-          respondWith {
-            <SendMessageResponse>
+        doSendMessage(queueActor, p).map {
+          case (message, digest, messageAttributeDigest) =>
+            respondWith {
+              <SendMessageResponse>
               <SendMessageResult>
                 <MD5OfMessageAttributes>{messageAttributeDigest}</MD5OfMessageAttributes>
                 <MD5OfMessageBody>{digest}</MD5OfMessageBody>
@@ -30,7 +31,7 @@ trait SendMessageDirectives { this: ElasticMQDirectives with SQSLimitsModule =>
                 <RequestId>{EmptyRequestId}</RequestId>
               </ResponseMetadata>
             </SendMessageResponse>
-          }
+            }
         }
       }
     }
@@ -38,16 +39,21 @@ trait SendMessageDirectives { this: ElasticMQDirectives with SQSLimitsModule =>
 
   def getMessageAttributes(parameters: Map[String, String]): Map[String, MessageAttribute] = {
     // Determine number of attributes -- there are likely ways to improve this
-    val numAttributes = parameters.map{ case (k,v) => {
-        if (k.startsWith("MessageAttribute.")) {
-          k.split("\\.")(1).toInt
-        } else {
-          0
+    val numAttributes = parameters
+      .map {
+        case (k, v) => {
+          if (k.startsWith("MessageAttribute.")) {
+            k.split("\\.")(1).toInt
+          } else {
+            0
+          }
         }
       }
-    }.toList.union(List(0)).max // even if nothing, return 0
+      .toList
+      .union(List(0))
+      .max // even if nothing, return 0
 
-    (1 to numAttributes).map{ i =>
+    (1 to numAttributes).map { i =>
       val name = parameters("MessageAttribute." + i + ".Name")
       val dataType = parameters("MessageAttribute." + i + ".Value.DataType")
 
@@ -63,7 +69,8 @@ trait SendMessageDirectives { this: ElasticMQDirectives with SQSLimitsModule =>
           StringMessageAttribute(parameters("MessageAttribute." + i + ".Value.StringValue"), customDataType)
         }
         case "Number" => {
-          val strValue = parameters("MessageAttribute." + i + ".Value.StringValue")
+          val strValue =
+            parameters("MessageAttribute." + i + ".Value.StringValue")
           verifyMessageNumberAttribute(strValue)
           NumberMessageAttribute(strValue, customDataType)
         }
@@ -90,7 +97,8 @@ trait SendMessageDirectives { this: ElasticMQDirectives with SQSLimitsModule =>
     verifyMessageNotTooLong(body.length)
 
     val delaySecondsOption = parameters.parseOptionalLong(DelaySecondsParameter)
-    val messageToSend = createMessage(body, messageAttributes, delaySecondsOption)
+    val messageToSend =
+      createMessage(body, messageAttributes, delaySecondsOption)
     val digest = md5Digest(body)
     val messageAttributeDigest = md5AttributeDigest(messageAttributes)
 
@@ -128,10 +136,12 @@ trait SendMessageDirectives { this: ElasticMQDirectives with SQSLimitsModule =>
     findInvalidCharacter(0)
   }
 
-  private def createMessage(body: String, messageAttributes: Map[String, MessageAttribute], delaySecondsOption: Option[Long]) = {
+  private def createMessage(body: String,
+                            messageAttributes: Map[String, MessageAttribute],
+                            delaySecondsOption: Option[Long]) = {
     val nextDelivery = delaySecondsOption match {
-      case None => ImmediateNextDelivery
-      case Some(delaySeconds) => AfterMillisNextDelivery(delaySeconds*1000)
+      case None               => ImmediateNextDelivery
+      case Some(delaySeconds) => AfterMillisNextDelivery(delaySeconds * 1000)
     }
 
     NewMessageData(None, body, messageAttributes, nextDelivery)
