@@ -54,17 +54,13 @@ lazy val root: Project = (project in file("."))
 lazy val commonTest: Project = (project in file("common-test"))
   .settings(buildSettings)
   .settings(name := "elasticmq-common-test")
-  .settings(Seq(libraryDependencies ++= Seq(scalatest, awaitility, logback),
-                publishArtifact := false))
+  .settings(Seq(libraryDependencies ++= Seq(scalatest, awaitility, logback), publishArtifact := false))
 
 lazy val core: Project = (project in file("core"))
   .settings(buildSettings)
   .settings(
     Seq(name := "elasticmq-core",
-        libraryDependencies ++= Seq(jodaTime,
-                                    jodaConvert,
-                                    akka2Actor,
-                                    akka2Testkit) ++ common,
+        libraryDependencies ++= Seq(jodaTime, jodaConvert, akka2Actor, akka2Testkit) ++ common,
         coverageMinimum := 94))
   .dependsOn(commonTest % "test")
 
@@ -108,11 +104,12 @@ lazy val server: Project = (project in file("server"))
 
 lazy val performanceTests: Project = (project in file("performance-tests"))
   .settings(buildSettings)
-  .settings(Seq(
-    name := "elasticmq-performance-tests",
-    libraryDependencies ++= Seq(amazonJavaSdk, jclOverSlf4j, logback) ++ common,
-    publishArtifact := false
-  ))
+  .settings(
+    Seq(
+      name := "elasticmq-performance-tests",
+      libraryDependencies ++= Seq(amazonJavaSdk, jclOverSlf4j, logback) ++ common,
+      publishArtifact := false
+    ))
   .dependsOn(core, restSqs, commonTest % "test")
 
 val generateVersionFileSettings = Seq(
