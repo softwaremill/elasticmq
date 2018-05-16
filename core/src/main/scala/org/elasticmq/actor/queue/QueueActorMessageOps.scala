@@ -78,7 +78,7 @@ trait QueueActorMessageOps extends Logging {
       }
     }
 
-    doReceiveMessages(count, Nil)
+    doReceiveMessages(count, Nil).reverse
   }
 
   @tailrec
