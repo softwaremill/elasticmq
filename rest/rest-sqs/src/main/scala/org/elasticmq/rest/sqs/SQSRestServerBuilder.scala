@@ -6,7 +6,7 @@ import java.security.MessageDigest
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
 
-import akka.actor.{ActorRef, ActorSystem, Props, Terminated}
+import akka.actor.{ActorRef, ActorSystem, Props}
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.server.{Directive1, Directives}
 import akka.stream.ActorMaterializer
@@ -182,21 +182,16 @@ case class TheSQSRestServerBuilder(providedActorSystem: Option[ActorSystem],
 
     SQSRestServer(
       appStartFuture,
-      () => appStartFuture.flatMap(_.unbind()).map { _ =>
-        stopActorSystem()
-        Terminated
-      }
+      () => appStartFuture.flatMap(_.unbind()).flatMap(_ => stopActorSystem())
     )
   }
 
-  private def getOrCreateActorSystem = {
+  private def getOrCreateActorSystem: (ActorSystem, () => Future[Any]) = {
     providedActorSystem
-      .map((_, () => ()))
+      .map((_, () => Future.successful(())))
       .getOrElse {
         val actorSystem = ActorSystem("elasticmq")
-        (actorSystem, () => {
-          Await.result(actorSystem.terminate(), 1.minute)
-        })
+        (actorSystem, actorSystem.terminate _)
       }
   }
 
