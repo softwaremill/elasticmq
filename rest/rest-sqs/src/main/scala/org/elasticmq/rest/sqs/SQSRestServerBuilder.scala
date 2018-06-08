@@ -6,7 +6,7 @@ import java.security.MessageDigest
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
 
-import akka.actor.{ActorRef, ActorSystem, Props}
+import akka.actor.{ActorRef, ActorSystem, Props, Terminated}
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.server.{Directive1, Directives}
 import akka.stream.ActorMaterializer
@@ -180,12 +180,13 @@ case class TheSQSRestServerBuilder(providedActorSystem: Option[ActorSystem],
           .error("Cannot start SQS rest server, bind address %s:%d".format(interface, port), e)
     }
 
-    SQSRestServer(appStartFuture, () => {
-      appStartFuture.flatMap { sb =>
+    SQSRestServer(
+      appStartFuture,
+      () => appStartFuture.flatMap(_.unbind()).map { _ =>
         stopActorSystem()
-        sb.unbind()
+        Terminated
       }
-    })
+    )
   }
 
   private def getOrCreateActorSystem = {
