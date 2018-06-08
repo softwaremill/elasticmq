@@ -330,6 +330,11 @@ Technology
 Change log
 ----------
 
+### Version 0.13.11 (8 Jun 2018) ###
+
+* bug fixes
+* depedency updates
+
 ### Version 0.13.10 (16 May 2018) ###
 
 * bug fixes
