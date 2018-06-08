@@ -1,4 +1,4 @@
-addSbtPlugin("com.softwaremill.sbt-softwaremill" % "sbt-softwaremill" % "1.3.2")
+addSbtPlugin("com.softwaremill.sbt-softwaremill" % "sbt-softwaremill" % "1.3.3")
 
 addSbtPlugin("com.eed3si9n" % "sbt-assembly" % "0.14.6")
 
