@@ -10,7 +10,23 @@ val buildSettings = commonSmlBuildSettings ++ ossPublishSettings ++ Seq(
   dependencyOverrides := akka25Overrides,
   parallelExecution := false,
   // workaround for: https://github.com/sbt/sbt/issues/692
-  fork in Test := true
+  fork in Test := true,
+  releaseProcess := {
+    val uploadAssembly: ReleaseStep = ReleaseStep(
+      action = { st: State =>
+        val extracted = Project.extract(st)
+        val (st2, _) = extracted.runTask(assembly in server, st)
+        val (st3, _) = extracted.runTask(s3Upload in server, st2)
+        st3
+      }
+    )
+
+    releaseProcess.value.flatMap { s =>
+      if (s == sbtrelease.ReleaseStateTransformations.setReleaseVersion) {
+        Seq(s, uploadAssembly)
+      } else Seq(s)
+    }
+  }
 )
 
 val jodaTime = "joda-time" % "joda-time" % "2.10"
