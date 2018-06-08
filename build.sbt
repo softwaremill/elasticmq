@@ -1,3 +1,5 @@
+import com.amazonaws.services.s3.model.PutObjectResult
+import sbt.Keys.credentials
 import scoverage.ScoverageKeys._
 
 val buildSettings = commonSmlBuildSettings ++ ossPublishSettings ++ Seq(
@@ -45,6 +47,9 @@ val akka25Overrides =
     "com.typesafe.akka" %% "akka-stream" % akkaVersion,
     "com.typesafe.akka" %% "akka-stream-testkit" % akkaVersion
   )
+
+// see https://github.com/scala/scala-dist/pull/181/files
+val s3Upload = TaskKey[PutObjectResult]("s3-upload", "Uploads files to an S3 bucket.")
 
 lazy val root: Project = (project in file("."))
   .settings(buildSettings)
@@ -98,7 +103,41 @@ lazy val server: Project = (project in file("server"))
     name := "elasticmq-server",
     libraryDependencies ++= Seq(logback, config, scalaGraph),
     mainClass in assembly := Some("org.elasticmq.server.Main"),
-    coverageMinimum := 52
+    coverageMinimum := 52,
+    s3Upload := {
+      import com.amazonaws.auth.{AWSStaticCredentialsProvider, DefaultAWSCredentialsProviderChain, BasicAWSCredentials}
+      import com.amazonaws.services.s3.AmazonS3ClientBuilder
+      import com.amazonaws.services.s3.model.{CannedAccessControlList, PutObjectRequest}
+
+      val bucketName = "softwaremill-public"
+      val creds = Credentials.forHost(credentials.value, bucketName + ".s3.amazonaws.com")
+
+      val awsCreds = creds match {
+        case Some(cred) => new AWSStaticCredentialsProvider(new BasicAWSCredentials(cred.userName, cred.passwd))
+        case None       => new DefaultAWSCredentialsProviderChain
+      }
+
+      val client = AmazonS3ClientBuilder.standard().withCredentials(awsCreds).withRegion("eu-west-1").build()
+
+      val log = streams.value.log
+      val v = version.value
+
+      val source = (assemblyOutputPath in assembly).value
+      val targetObjectName = s"elasticmq-server-$v.jar"
+
+      log.info("Uploading " + source.getAbsolutePath + " as " + targetObjectName)
+
+      client.putObject(new PutObjectRequest(bucketName, targetObjectName, source)
+        .withCannedAcl(CannedAccessControlList.PublicRead))
+    },
+    /*
+    Format:
+    realm=Amazon S3
+    host=softwaremill-public.s3.amazonaws.com
+    user=[AWS key id]
+    password=[AWS secret key]
+     */
+    credentials += Credentials(Path.userHome / ".s3_elasticmq_credentials")
   ))
   .dependsOn(core, restSqs, commonTest % "test")
 
