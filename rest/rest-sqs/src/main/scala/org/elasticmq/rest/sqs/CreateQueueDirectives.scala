@@ -76,7 +76,6 @@ trait CreateQueueDirectives {
               now,
               now,
               redrivePolicy.map(rd => DeadLettersQueueData(rd.queueName, rd.maxReceiveCount)),
-              maxReceiveCount = None,
               isFifo,
               hasContentBasedDeduplication
             )

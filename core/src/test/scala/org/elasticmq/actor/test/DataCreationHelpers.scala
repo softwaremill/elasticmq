@@ -17,8 +17,7 @@ trait DataCreationHelpers {
               Duration.ZERO,
               new DateTime(0),
               new DateTime(0),
-              deadLettersQueue,
-              None)
+              deadLettersQueue)
 
   def createMessageData(id: String,
                         content: String,

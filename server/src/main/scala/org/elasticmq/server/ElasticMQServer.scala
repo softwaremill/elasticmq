@@ -80,7 +80,9 @@ class ElasticMQServer(config: ElasticMQServerConfig) extends Logging {
         cq.receiveMessageWaitSeconds.getOrElse(CreateQueueDirectives.DefaultReceiveMessageWait)),
       created = now,
       lastModified = now,
-      deadLettersQueue = cq.deadLettersQueue.map(dlq => DeadLettersQueueData(dlq.name, dlq.maxReceiveCount))
+      deadLettersQueue = cq.deadLettersQueue.map(dlq => DeadLettersQueueData(dlq.name, dlq.maxReceiveCount)),
+      cq.isFifo,
+      cq.hasContentBasedDeduplication
     )
   }
 

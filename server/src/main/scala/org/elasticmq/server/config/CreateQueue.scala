@@ -4,4 +4,6 @@ case class CreateQueue(name: String,
                        defaultVisibilityTimeoutSeconds: Option[Long],
                        delaySeconds: Option[Long],
                        receiveMessageWaitSeconds: Option[Long],
-                       deadLettersQueue: Option[DeadLettersQueue])
+                       deadLettersQueue: Option[DeadLettersQueue],
+                       isFifo: Boolean,
+                       hasContentBasedDeduplication: Boolean)

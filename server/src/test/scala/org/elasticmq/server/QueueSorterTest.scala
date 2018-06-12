@@ -10,7 +10,7 @@ class QueueSorterTest extends FunSuite with Matchers {
   }
 
   test("sorts one queue") {
-    val sortedQueues = QueueSorter.sortCreateQueues(List(CreateQueue("queue1", None, None, None, None)))
+    val sortedQueues = QueueSorter.sortCreateQueues(List(CreateQueue("queue1", None, None, None, None, false, false)))
     sortedQueues should have size (1)
     sortedQueues.head.name should be("queue1")
   }
@@ -18,8 +18,8 @@ class QueueSorterTest extends FunSuite with Matchers {
   test("sorts queue and dead letters queue") {
     val sortedQueues = QueueSorter.sortCreateQueues(
       List(
-        CreateQueue("queue1", None, None, None, Some(DeadLettersQueue("deadletters", 1))),
-        CreateQueue("deadletters", None, None, None, None)
+        CreateQueue("queue1", None, None, None, Some(DeadLettersQueue("deadletters", 1)), false, false),
+        CreateQueue("deadletters", None, None, None, None, false, false)
       ))
     sortedQueues should have size (2)
     sortedQueues.head.name should be("deadletters")
@@ -28,17 +28,17 @@ class QueueSorterTest extends FunSuite with Matchers {
   test("throws exception for circular graphs") {
     an[IllegalArgumentException] should be thrownBy QueueSorter.sortCreateQueues(
       List(
-        CreateQueue("queue1", None, None, None, Some(DeadLettersQueue("deadletters", 1))),
-        CreateQueue("deadletters", None, None, None, Some(DeadLettersQueue("queue1", 1)))
+        CreateQueue("queue1", None, None, None, Some(DeadLettersQueue("deadletters", 1)), false, false),
+        CreateQueue("deadletters", None, None, None, Some(DeadLettersQueue("queue1", 1)), false, false)
       ))
   }
 
   test("sorts two queues that use the same dead letters queue") {
     val sortedQueues = QueueSorter.sortCreateQueues(
       List(
-        CreateQueue("queue1", None, None, None, Some(DeadLettersQueue("deadletters", 1))),
-        CreateQueue("deadletters", None, None, None, None),
-        CreateQueue("queue2", None, None, None, Some(DeadLettersQueue("deadletters", 1)))
+        CreateQueue("queue1", None, None, None, Some(DeadLettersQueue("deadletters", 1)), false, false),
+        CreateQueue("deadletters", None, None, None, None, false, false),
+        CreateQueue("queue2", None, None, None, Some(DeadLettersQueue("deadletters", 1)), false, false)
       ))
     sortedQueues should have size (3)
     sortedQueues.head.name should be("deadletters")
@@ -48,10 +48,10 @@ class QueueSorterTest extends FunSuite with Matchers {
   test("sorts chained dead letters queues") {
     val sortedQueues = QueueSorter.sortCreateQueues(
       List(
-        CreateQueue("queue1", None, None, None, Some(DeadLettersQueue("deadletters1", 1))),
-        CreateQueue("deadletters1", None, None, None, Some(DeadLettersQueue("deadletters2", 1))),
-        CreateQueue("deadletters2", None, None, None, None),
-        CreateQueue("queue2", None, None, None, Some(DeadLettersQueue("deadletters1", 1)))
+        CreateQueue("queue1", None, None, None, Some(DeadLettersQueue("deadletters1", 1)), false, false),
+        CreateQueue("deadletters1", None, None, None, Some(DeadLettersQueue("deadletters2", 1)), false, false),
+        CreateQueue("deadletters2", None, None, None, None, false, false),
+        CreateQueue("queue2", None, None, None, Some(DeadLettersQueue("deadletters1", 1)), false, false)
       ))
     sortedQueues should have size (4)
     sortedQueues.take(2).map(_.name) should contain inOrderOnly ("deadletters2", "deadletters1")
