@@ -74,8 +74,8 @@ object ReceiveRequestAttemptCache {
   object ReceiveFailure {
 
     /**
-		 * Indicates the attempt id has expired
-		 */
+      * Indicates the attempt id has expired
+      */
     case object Expired extends ReceiveFailure
 
     /**

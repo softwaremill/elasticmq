@@ -647,7 +647,8 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
 
     // Specific attributes
     val withMessageGroupIdMessages = client
-      .receiveMessage(new ReceiveMessageRequest(queueUrl).withAttributeNames("MessageGroupId").withMaxNumberOfMessages(2))
+      .receiveMessage(
+        new ReceiveMessageRequest(queueUrl).withAttributeNames("MessageGroupId").withMaxNumberOfMessages(2))
       .getMessages
     withMessageGroupIdMessages should have size 2
     withMessageGroupIdMessages.foreach { message =>
@@ -657,7 +658,8 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
     }
 
     val withDedupIdMessages = client
-      .receiveMessage(new ReceiveMessageRequest(queueUrl).withAttributeNames("MessageDeduplicationId").withMaxNumberOfMessages(2))
+      .receiveMessage(
+        new ReceiveMessageRequest(queueUrl).withAttributeNames("MessageDeduplicationId").withMaxNumberOfMessages(2))
       .getMessages
     withDedupIdMessages should have size 2
     withDedupIdMessages.foreach { message =>
