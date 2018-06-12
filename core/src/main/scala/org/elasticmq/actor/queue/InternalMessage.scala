@@ -2,11 +2,14 @@ package org.elasticmq.actor.queue
 
 import java.util.UUID
 
-import org.elasticmq.{DeliveryReceipt, MessageAttribute, MessageData, MessageId, MessageStatistics, MillisNextDelivery, NeverReceived, NewMessageData, QueueData, Received}
+import scala.collection.mutable
+
+import org.elasticmq.util.NowProvider
+import org.elasticmq.{DeliveryReceipt, MessageAttribute, MessageData, MessageId, MessageStatistics, MillisNextDelivery, NeverReceived, NewMessageData, OnDateTimeReceived, QueueData, Received}
 import org.joda.time.DateTime
 
 case class InternalMessage(id: String,
-    var deliveryReceipt: Option[String],
+    deliveryReceipts: mutable.Buffer[String],
     var nextDelivery: Long,
     content: String,
     messageAttributes: Map[String, MessageAttribute],
@@ -30,9 +33,24 @@ case class InternalMessage(id: String,
     }
   }
 
+  /**
+   * Keep track of delivering this message to a client
+   *
+   * @param nextDeliveryMillis    When this message should become available for its next delivery
+   */
+  def trackDelivery(nextDeliveryMillis: MillisNextDelivery)(implicit nowProvider: NowProvider): Unit = {
+    deliveryReceipts += DeliveryReceipt.generate(MessageId(id)).receipt
+    nextDelivery = nextDeliveryMillis.millis
+    receiveCount += 1
+
+    if (firstReceive == NeverReceived) {
+      firstReceive = OnDateTimeReceived(new DateTime(nowProvider.nowMillis))
+    }
+  }
+
   def toMessageData = MessageData(
     MessageId(id),
-    deliveryReceipt.map(DeliveryReceipt(_)),
+    deliveryReceipts.lastOption.map(DeliveryReceipt(_)),
     content,
     messageAttributes,
     MillisNextDelivery(nextDelivery),
@@ -58,7 +76,7 @@ object InternalMessage {
     val now = System.currentTimeMillis()
     new InternalMessage(
       newMessageData.id.getOrElse(generateId()).id,
-      None,
+      mutable.Buffer.empty,
       newMessageData.nextDelivery.toMillis(now, queueData.delay.getMillis).millis,
       newMessageData.content,
       newMessageData.messageAttributes,

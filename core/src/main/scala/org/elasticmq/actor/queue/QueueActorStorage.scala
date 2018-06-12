@@ -14,4 +14,5 @@ trait QueueActorStorage {
   var queueData: QueueData = initialQueueData
   var messageQueue = MessageQueue(queueData.isFifo)
   val deadLettersQueueActor: Option[ActorRef] = deadLettersActorRef
+  val receiveRequestAttemptCache = new ReceiveRequestAttemptCache
 }

@@ -3,9 +3,9 @@ package org.elasticmq.actor.queue
 import org.elasticmq.actor.reply._
 import org.elasticmq.msg.{DeleteMessage, LookupMessage, ReceiveMessages, SendMessage, UpdateVisibilityTimeout, _}
 import org.elasticmq.util.{Logging, NowProvider}
-import org.elasticmq.{MessageData, MessageId, MillisNextDelivery, NewMessageData, OnDateTimeReceived, _}
-import org.joda.time.DateTime
-import scala.annotation.tailrec
+import org.elasticmq.{MessageData, MessageId, MillisNextDelivery, NewMessageData, _}
+
+import org.elasticmq.actor.queue.ReceiveRequestAttemptCache.ReceiveFailure.{Expired, Invalid}
 
 trait QueueActorMessageOps extends Logging {
   this: QueueActorStorage =>
@@ -89,30 +89,47 @@ trait QueueActorMessageOps extends Logging {
 
   protected def receiveMessages(visibilityTimeout: VisibilityTimeout, count: Int,
     receiveRequestAttemptId: Option[String]): List[MessageData] = {
+    implicit val np = nowProvider
+    val messages = receiveRequestAttemptId
+      .flatMap(getMessagesFromRequestAttemptCache)
+      .getOrElse(getMessagesFromQueue(visibilityTimeout, count))
+      .map { internalMessage =>
+        // Putting the msg again into the queue, with a new next delivery
+        val newNextDelivery = computeNextDelivery(visibilityTimeout)
+        internalMessage.trackDelivery(newNextDelivery)
+        messageQueue += internalMessage
+
+        logger.debug(s"${queueData.name}: Receiving message ${internalMessage.id}")
+        internalMessage
+      }
+
+    receiveRequestAttemptId.foreach { attemptId =>
+      receiveRequestAttemptCache.add(attemptId, messages)
+    }
+
+    messages.map(_.toMessageData)
+  }
+
+  private def getMessagesFromRequestAttemptCache(receiveRequestAttemptId: String)(
+    implicit np: NowProvider): Option[List[InternalMessage]] = {
+    receiveRequestAttemptCache.get(receiveRequestAttemptId, messageQueue) match {
+      case Left(Expired) => throw new RuntimeException("Attempt expired")
+      case Left(Invalid) => throw new RuntimeException("Invalid")
+      case Right(None) => None
+      case Right(Some(messages)) => Some(messages)
+    }
+  }
+
+  private def getMessagesFromQueue(visibilityTimeout: VisibilityTimeout, count: Int) = {
     val deliveryTime = nowProvider.nowMillis
-
-    // TODO Validate receiveRequestAttemptId
-
     messageQueue.dequeue(count, deliveryTime).flatMap { internalMessage =>
       if (queueData.deadLettersQueue.map(_.maxReceiveCount).exists(_ <= internalMessage.receiveCount)) {
         logger.debug(s"${queueData.name}: send message $internalMessage to dead letters actor $deadLettersActorRef")
         deadLettersActorRef.foreach(_ ! SendMessage(internalMessage.toNewMessageData))
-        internalMessage.deliveryReceipt.foreach(dr => deleteMessage(DeliveryReceipt(dr)))
+        internalMessage.deliveryReceipts.foreach(dr => deleteMessage(DeliveryReceipt(dr)))
         None
       } else {
-        // Putting the msg again into the queue, with a new next delivery
-        val newNextDelivery = computeNextDelivery(visibilityTimeout)
-        internalMessage.deliveryReceipt = Some(DeliveryReceipt.generate(MessageId(internalMessage.id)).receipt)
-        internalMessage.nextDelivery = newNextDelivery.millis
-
-        internalMessage.receiveCount += 1
-        internalMessage.firstReceive = OnDateTimeReceived(new DateTime(deliveryTime))
-
-        messageQueue += internalMessage
-
-        logger.debug(s"${queueData.name}: Receiving message ${internalMessage.id}")
-
-        Some(internalMessage.toMessageData)
+        Some(internalMessage)
       }
     }
   }
@@ -131,7 +148,7 @@ trait QueueActorMessageOps extends Logging {
     val msgId = deliveryReceipt.extractId.toString
 
     messageQueue.byId.get(msgId).foreach { msgData =>
-      if (msgData.deliveryReceipt.contains(deliveryReceipt.receipt)) {
+      if (msgData.deliveryReceipts.lastOption.contains(deliveryReceipt.receipt)) {
         // Just removing the msg from the map. The msg will be removed from the queue when trying to receive it.
         messageQueue.remove(msgId)
       }

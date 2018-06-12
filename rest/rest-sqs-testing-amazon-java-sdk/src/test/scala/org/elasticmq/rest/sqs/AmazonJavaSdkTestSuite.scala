@@ -8,6 +8,7 @@ import com.amazonaws.auth.BasicAWSCredentials
 import com.amazonaws.services.sqs.{AmazonSQS, AmazonSQSClient}
 import scala.collection.JavaConversions._
 import scala.collection.JavaConverters._
+import scala.util.Try
 
 import com.amazonaws.services.sqs.model._
 import scala.util.control.Exception._
@@ -60,8 +61,9 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
     client.shutdown()
     relaxedClient.shutdown()
 
-    strictServer.stopAndWait()
-    relaxedServer.stopAndWait()
+    // TODO: Figure out why this intermittently isn't able to unbind cleanly
+    Try(strictServer.stopAndWait())
+    Try(relaxedServer.stopAndWait())
 
     logger.info(s"\n---\nTest done: $currentTestName\n---\n")
   }
@@ -501,7 +503,7 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
     val allMessages = deliveredSingleReceives ++ batchReceive
     allMessages.map(_.getBody) should be(messageBodies)
   }
-/*
+
   test("FIFO queues should deliver the same messages for the same request attempt id") {
     // Given
     val queueUrl = createFifoQueue()
@@ -518,11 +520,11 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
     batch2.map(_.getBody).toVector should be(messageBodies.take(10))
 
     // When a message gets modified (deleted or visibility time-out), the attempt id becomes invalid
-    client.deleteMessage(queueUrl, batch1.head.getReceiptHandle)
+    client.deleteMessage(queueUrl, batch2.head.getReceiptHandle)
     an[AmazonSQSException] shouldBe thrownBy {
       client.receiveMessage(req).getMessages
     }
-  }*/
+  }
 
   test("FIFO queues should return an error if an invalid receive request attempt id parameter is provided") {
     // Given
@@ -1138,6 +1140,9 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
   }
 
   test("should delete a message only if the most recent receipt handle is provided") {
+    // https://docs.aws.amazon.com/AWSSimpleQueueService/latest/APIReference/API_DeleteMessage.html
+    // > When you use the DeleteMessage action, you must provide the most recently received ReceiptHandle for the
+    // > message (otherwise, the request succeeds, but the message might not be deleted).
     // Given
     val queueUrl = client.createQueue(new CreateQueueRequest("testQueue1")
       .withAttributes(Map(defaultVisibilityTimeoutAttribute -> "1"))).getQueueUrl

@@ -3,9 +3,6 @@ package org.elasticmq.actor.queue
 import scala.annotation.tailrec
 import scala.collection.mutable
 
-import org.elasticmq.MessageData
-
-
 sealed trait MessageQueue {
 
   /**
@@ -174,7 +171,7 @@ object MessageQueue {
     }
 
     override def remove(messageId: String): Unit = {
-      messagesById.get(messageId).foreach { msg =>
+      messagesById.remove(messageId).foreach { msg =>
         val messageGroupId = getMessageGroupIdUnsafe(msg)
         messagesbyMessageGroupId.get(messageGroupId).foreach { prioQueue =>
           val newQueue = prioQueue.filterNot(_.id == messageId)
