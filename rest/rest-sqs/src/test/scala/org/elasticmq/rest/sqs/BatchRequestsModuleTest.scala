@@ -23,8 +23,8 @@ class BatchRequestsModuleTest extends FunSuite with Matchers {
 
     // Then
     subParameters should have length (3)
-    subParameters should contain (Map("Key1" -> "Value1", "Key2" -> "Value2", "Key3" -> "Value3"))
-    subParameters should contain (Map("Key21" -> "Value21", "Key22" -> "Value22"))
-    subParameters should contain (Map("Key41" -> "Value41","Multi.Key.1" -> "ValueMulti"))
+    subParameters should contain(Map("Key1" -> "Value1", "Key2" -> "Value2", "Key3" -> "Value3"))
+    subParameters should contain(Map("Key21" -> "Value21", "Key22" -> "Value22"))
+    subParameters should contain(Map("Key41" -> "Value41", "Multi.Key.1" -> "ValueMulti"))
   }
 }

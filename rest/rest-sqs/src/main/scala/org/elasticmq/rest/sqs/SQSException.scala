@@ -2,9 +2,7 @@ package org.elasticmq.rest.sqs
 
 import Constants._
 
-class SQSException(val code: String,
-                   val httpStatusCode: Int = 400,
-                   errorType: String = "Sender") extends Exception {
+class SQSException(val code: String, val httpStatusCode: Int = 400, errorType: String = "Sender") extends Exception {
   val message: String = code + "; see the SQS docs."
 
   def toXml(requestId: String) =
@@ -21,6 +19,6 @@ class SQSException(val code: String,
 
 object SQSException {
   def invalidParameterValue = new SQSException(InvalidParameterValueErrorName)
-  def nonExistentQueue = new SQSException("AWS.SimpleQueueService.NonExistentQueue")
+  def nonExistentQueue =
+    new SQSException("AWS.SimpleQueueService.NonExistentQueue")
 }
-

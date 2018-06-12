@@ -8,11 +8,13 @@ import org.elasticmq.msg.ReceiveMessages
 import org.elasticmq.rest.sqs.directives.ElasticMQDirectives
 import org.joda.time.Duration
 
-trait ReceiveMessageDirectives { this: ElasticMQDirectives with AttributesModule with SQSLimitsModule =>
+trait ReceiveMessageDirectives {
+  this: ElasticMQDirectives with AttributesModule with SQSLimitsModule =>
   object MessageReadeableAttributeNames {
     val SentTimestampAttribute = "SentTimestamp"
     val ApproximateReceiveCountAttribute = "ApproximateReceiveCount"
-    val ApproximateFirstReceiveTimestampAttribute = "ApproximateFirstReceiveTimestamp"
+    val ApproximateFirstReceiveTimestampAttribute =
+      "ApproximateFirstReceiveTimestamp"
     val SenderIdAttribute = "SenderId"
     val MaxNumberOfMessagesAttribute = "MaxNumberOfMessages"
     val WaitTimeSecondsAttribute = "WaitTimeSeconds"
@@ -50,9 +52,11 @@ trait ReceiveMessageDirectives { this: ElasticMQDirectives with AttributesModule
           .map(MillisVisibilityTimeout.fromSeconds(_))
           .getOrElse(DefaultVisibilityTimeout)
 
-        val maxNumberOfMessagesFromParameters = maxNumberOfMessagesAttributeOpt.getOrElse(1)
+        val maxNumberOfMessagesFromParameters =
+          maxNumberOfMessagesAttributeOpt.getOrElse(1)
 
-        val waitTimeSecondsFromParameters = waitTimeSecondsAttributeOpt.map(Duration.standardSeconds)
+        val waitTimeSecondsFromParameters =
+          waitTimeSecondsAttributeOpt.map(Duration.standardSeconds)
 
         val messageAttributeNames = getMessageAttributeNames(p)
 
@@ -62,30 +66,37 @@ trait ReceiveMessageDirectives { this: ElasticMQDirectives with AttributesModule
 
         verifyMessageWaitTime(waitTimeSecondsAttributeOpt)
 
-        val msgsFuture = queueActor ? ReceiveMessages( visibilityTimeoutFromParameters,
+        val msgsFuture = queueActor ? ReceiveMessages(visibilityTimeoutFromParameters,
           maxNumberOfMessagesFromParameters, waitTimeSecondsFromParameters, receiveRequestAttemptId)
 
-        lazy val attributeNames = attributeNamesReader.read(p, AllAttributeNames)
+        lazy val attributeNames =
+          attributeNamesReader.read(p, AllAttributeNames)
 
         def calculateAttributeValues(msg: MessageData): List[(String, String)] = {
           import AttributeValuesCalculator.Rule
 
-          attributeValuesCalculator.calculate(attributeNames,
-            Rule(SenderIdAttribute, ()=> "127.0.0.1"),
-            Rule(SentTimestampAttribute, ()=>msg.created.getMillis.toString),
-            Rule(ApproximateReceiveCountAttribute, ()=>msg.statistics.approximateReceiveCount.toString),
-            Rule(ApproximateFirstReceiveTimestampAttribute,
-              ()=>(msg.statistics.approximateFirstReceive match {
-                case NeverReceived => 0
-                case OnDateTimeReceived(when) => when.getMillis
-              }).toString))
+          attributeValuesCalculator.calculate(
+            attributeNames,
+            Rule(SenderIdAttribute, () => "127.0.0.1"),
+            Rule(SentTimestampAttribute, () => msg.created.getMillis.toString),
+            Rule(ApproximateReceiveCountAttribute, () => msg.statistics.approximateReceiveCount.toString),
+            Rule(
+              ApproximateFirstReceiveTimestampAttribute,
+              () =>
+                (msg.statistics.approximateFirstReceive match {
+                  case NeverReceived            => 0
+                  case OnDateTimeReceived(when) => when.getMillis
+                }).toString
+            )
+          )
         }
 
         def getFilteredAttributeNames(messageAttributeNames: Iterable[String], msg: MessageData) = {
           if (messageAttributeNames.exists(s => s == "All" || s == ".*")) {
             msg.messageAttributes
           } else {
-            msg.messageAttributes.filterKeys(k => messageAttributeNames.exists(s => s == k || k.r.findFirstIn(s).isDefined))
+            msg.messageAttributes.filterKeys(k =>
+              messageAttributeNames.exists(s => s == k || k.r.findFirstIn(s).isDefined))
           }
         }
 
@@ -117,7 +128,12 @@ trait ReceiveMessageDirectives { this: ElasticMQDirectives with AttributesModule
   }
 
   def getMessageAttributeNames(p: AnyParams): Iterable[String] = {
-    p.filterKeys(k => MessageReadeableAttributeNames.MessageAttributeNamePattern.findFirstIn(k).isDefined).values
+    p.filterKeys(
+        k =>
+          MessageReadeableAttributeNames.MessageAttributeNamePattern
+            .findFirstIn(k)
+            .isDefined)
+      .values
   }
 
 }

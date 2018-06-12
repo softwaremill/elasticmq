@@ -22,10 +22,11 @@ class ElasticMQServer(config: ElasticMQServerConfig) extends Logging {
 
     createQueues(queueManagerActor)
 
-    () => {
-      restServerOpt.map(_.stopAndGetFuture())
-      Await.result(actorSystem.terminate(), Inf)
-    }
+    () =>
+      {
+        restServerOpt.map(_.stopAndGetFuture())
+        Await.result(actorSystem.terminate(), Inf)
+      }
   }
 
   private def createBase(): ActorRef = {
@@ -38,13 +39,15 @@ class ElasticMQServer(config: ElasticMQServerConfig) extends Logging {
   private def optionallyStartRestSqs(queueManagerActor: ActorRef): Option[SQSRestServer] = {
     if (config.restSqs.enabled) {
 
-      val server = TheSQSRestServerBuilder(Some(actorSystem),
+      val server = TheSQSRestServerBuilder(
+        Some(actorSystem),
         Some(queueManagerActor),
         config.restSqs.bindHostname,
         config.restSqs.bindPort,
         config.nodeAddress,
         config.generateNodeAddress,
-        config.restSqs.sqsLimits).start()
+        config.restSqs.sqsLimits
+      ).start()
 
       server.waitUntilStarted()
 

@@ -2,7 +2,6 @@ package org.elasticmq.rest.sqs
 
 import org.elasticmq.{NumberMessageAttribute, BinaryMessageAttribute, StringMessageAttribute, MessageAttribute}
 
-
 trait AttributesModule {
   val attributeNamesReader = new AttributeNamesReader
   val attributesToXmlConverter = new AttributesToXmlConverter
@@ -14,8 +13,8 @@ trait AttributesModule {
     def read(parameters: Map[String, String], allAttributeNames: List[String]) = {
       def collect(suffix: Int, acc: List[String]): List[String] = {
         parameters.get("AttributeName." + suffix) match {
-          case None => acc
-          case Some(an) => collect(suffix+1, an :: acc)
+          case None     => acc
+          case Some(an) => collect(suffix + 1, an :: acc)
         }
       }
 
@@ -36,8 +35,7 @@ trait AttributesModule {
 
   class AttributesToXmlConverter {
     def convert(attributes: List[(String, String)]) = {
-      attributes.map(a =>
-        <Attribute>
+      attributes.map(a => <Attribute>
           <Name>{a._1}</Name>
           <Value>{a._2}</Value>
         </Attribute>)
@@ -46,8 +44,7 @@ trait AttributesModule {
 
   class MessageAttributesToXmlConverter {
     def convert(attributes: List[(String, MessageAttribute)]) = {
-      attributes.map(a =>
-        <MessageAttribute>
+      attributes.map(a => <MessageAttribute>
           <Name>{a._1}</Name>
           <Value>
             <DataType>{a._2.getDataType()}</DataType>
@@ -68,24 +65,27 @@ trait AttributesModule {
 
     def calculate[T](attributeNames: List[String], rules: Rule[T]*): List[(String, T)] = {
       attributeNames.flatMap(attribute => {
-        rules.find(rule => rule.attributeName == attribute).map(rule => (rule.attributeName, rule.calculateValue()))
+        rules
+          .find(rule => rule.attributeName == attribute)
+          .map(rule => (rule.attributeName, rule.calculateValue()))
       })
     }
   }
-  
+
   object AttributeValuesCalculator {
     case class Rule[T](attributeName: String, calculateValue: () => T)
   }
-  
+
   class AttributeNameAndValuesReader {
     def read(parameters: Map[String, String]): Map[String, String] = {
       def collect(suffix: Int, acc: Map[String, String]): Map[String, String] = {
-        parameters.get("Attribute."+suffix+".Name") match {
+        parameters.get("Attribute." + suffix + ".Name") match {
           case None => acc
-          case Some(an) => collect(suffix+1, acc + (an -> parameters("Attribute."+suffix+".Value")))
+          case Some(an) =>
+            collect(suffix + 1, acc + (an -> parameters("Attribute." + suffix + ".Value")))
         }
       }
-      
+
       collect(1, Map())
     }
   }

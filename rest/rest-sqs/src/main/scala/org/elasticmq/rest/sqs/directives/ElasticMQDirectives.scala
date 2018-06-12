@@ -4,16 +4,17 @@ import akka.http.scaladsl.server.{Directives, Route}
 import org.elasticmq.rest.sqs.{ActorSystemModule, QueueManagerActorModule}
 import org.elasticmq.util.Logging
 
-trait ElasticMQDirectives extends Directives
-  with RespondDirectives
-  with FutureDirectives
-  with ExceptionDirectives
-  with QueueDirectives
-  with QueueManagerActorModule
-  with ActorSystemModule
-  with AnyParamDirectives
-  with RejectionDirectives
-  with Logging {
+trait ElasticMQDirectives
+    extends Directives
+    with RespondDirectives
+    with FutureDirectives
+    with ExceptionDirectives
+    with QueueDirectives
+    with QueueManagerActorModule
+    with ActorSystemModule
+    with AnyParamDirectives
+    with RejectionDirectives
+    with Logging {
 
   /**
    * A valid FIFO parameter value is at most 128 characters and can contain

@@ -19,14 +19,15 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
       lookupResult <- queueActor ? LookupMessage(MessageId("xyz"))
     } yield {
       // Then
-      lookupResult should be (None)
+      lookupResult should be(None)
     }
   }
 
   waitTest("after persisting a msg it should be found") {
     // Given
     val q1 = createQueueData("q1", MillisVisibilityTimeout(1L))
-    val message = createNewMessageData("xyz", "123", Map(), MillisNextDelivery(123L))
+    val message =
+      createNewMessageData("xyz", "123", Map(), MillisNextDelivery(123L))
 
     for {
       Right(queueActor) <- queueManagerActor ? CreateQueue(q1)
@@ -36,7 +37,7 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
       lookupResult <- queueActor ? LookupMessage(MessageId("xyz"))
     } yield {
       // Then
-      lookupResult.map(createNewMessageData(_)) should be (Some(message))
+      lookupResult.map(createNewMessageData(_)) should be(Some(message))
     }
   }
 
@@ -55,7 +56,7 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
       lookupResult <- queueActor ? LookupMessage(MessageId("xyz"))
     } yield {
       // Then
-      lookupResult.map(createNewMessageData(_)) should be (Some(m))
+      lookupResult.map(createNewMessageData(_)) should be(Some(m))
     }
   }
 
@@ -74,7 +75,7 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
       lookupResult <- queueActor2 ? ReceiveMessages(DefaultVisibilityTimeout, 1, None, None)
     } yield {
       // Then
-      lookupResult should be (Nil)
+      lookupResult should be(Nil)
     }
   }
 
@@ -93,7 +94,8 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
       lookupResult <- queueActor1 ? ReceiveMessages(DefaultVisibilityTimeout, 1, None, None)
     } yield {
       // Then
-      withoutDeliveryReceipt(lookupResult.headOption).map(createNewMessageData(_)) should be (Some(m.copy(nextDelivery = MillisNextDelivery(101L))))
+      withoutDeliveryReceipt(lookupResult.headOption)
+        .map(createNewMessageData(_)) should be(Some(m.copy(nextDelivery = MillisNextDelivery(101L))))
     }
   }
 
@@ -111,7 +113,8 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
       lookupResult <- queueActor ? LookupMessage(MessageId("xyz"))
     } yield {
       // Then
-      withoutDeliveryReceipt(lookupResult).map(createNewMessageData(_)) should be (Some(m.copy(nextDelivery = MillisNextDelivery(101L))))
+      withoutDeliveryReceipt(lookupResult).map(createNewMessageData(_)) should be(
+        Some(m.copy(nextDelivery = MillisNextDelivery(101L))))
     }
   }
 
@@ -130,15 +133,15 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
       lookupAfterReceiving <- queueActor ? LookupMessage(MessageId("xyz"))
     } yield {
       // Then
-      lookupBeforeReceiving.flatMap(_.deliveryReceipt) should be (None)
+      lookupBeforeReceiving.flatMap(_.deliveryReceipt) should be(None)
 
       val receivedReceipt = received.flatMap(_.deliveryReceipt)
       val lookedUpReceipt = lookupAfterReceiving.flatMap(_.deliveryReceipt)
 
-      receivedReceipt.size  should be > (0)
-      lookedUpReceipt should be ('defined)
+      receivedReceipt.size should be > (0)
+      lookedUpReceipt should be('defined)
 
-      receivedReceipt.headOption should be (lookedUpReceipt)
+      receivedReceipt.headOption should be(lookedUpReceipt)
     }
   }
 
@@ -178,7 +181,7 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
       receiveResult <- queueActor ? ReceiveMessages(DefaultVisibilityTimeout, 1, None, None)
     } yield {
       // Then
-      receiveResult should be (Nil)
+      receiveResult should be(Nil)
     }
   }
 
@@ -196,15 +199,18 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
       lookupResult <- queueActor ? LookupMessage(MessageId("xyz"))
     } yield {
       // Then
-      lookupResult.map(createNewMessageData(_)) should be (Some(createNewMessageData("xyz", "1234", Map(), MillisNextDelivery(150L))))
+      lookupResult.map(createNewMessageData(_)) should be(
+        Some(createNewMessageData("xyz", "1234", Map(), MillisNextDelivery(150L))))
     }
   }
 
   waitTest("decreasing next delivery of a msg") {
     // Given
-    val q1 = createQueueData("q1", MillisVisibilityTimeout(1L))   // Initially m2 should be delivered after m1
-    val m1 = createNewMessageData("xyz1", "1234", Map(), MillisNextDelivery(150L))
-    val m2 = createNewMessageData("xyz2", "1234", Map(), MillisNextDelivery(200L))
+    val q1 = createQueueData("q1", MillisVisibilityTimeout(1L)) // Initially m2 should be delivered after m1
+    val m1 =
+      createNewMessageData("xyz1", "1234", Map(), MillisNextDelivery(150L))
+    val m2 =
+      createNewMessageData("xyz2", "1234", Map(), MillisNextDelivery(200L))
 
     for {
       Right(queueActor) <- queueManagerActor ? CreateQueue(q1)
@@ -218,7 +224,7 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
     } yield {
       // Then
       // This should find the first msg, as it has the visibility timeout decreased.
-      receiveResult.headOption.map(_.id) should be (m2.id)
+      receiveResult.headOption.map(_.id) should be(m2.id)
     }
   }
 
@@ -237,7 +243,7 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
       lookupResult <- queueActor ? LookupMessage(MessageId("xyz"))
     } yield {
       // Then
-      lookupResult should be (None)
+      lookupResult should be(None)
     }
   }
 
@@ -266,7 +272,7 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
   waitTest("should receive at most as much messages as given") {
     // Given
     val q1 = createQueueData("q1", MillisVisibilityTimeout(1L))
-    val msgs = (for { i <- 1 to 5 } yield createNewMessageData("xyz" + i, "123", Map(), MillisNextDelivery(100))).toList
+    val msgs = (for { i <- 1 to 5 } yield createNewMessageData("xyz" + i, "123", Map(), MillisNextDelivery(i))).toList
     val List(m1, m2, m3, m4, m5) = msgs
 
     for {
@@ -282,17 +288,17 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
       receiveResults2 <- queueActor ? ReceiveMessages(DefaultVisibilityTimeout, 2, None, None)
     } yield {
       // Then
-      receiveResults1.size should be (3)
-      receiveResults2.size should be (2)
+      receiveResults1.size should be(3)
+      receiveResults2.size should be(2)
 
-      (receiveResults1.map(_.id.id).toSet ++ receiveResults2.map(_.id.id).toSet) should be (msgs.map(_.id.get.id).toSet)
+      (receiveResults1.map(_.id.id) ++ receiveResults2.map(_.id.id)) should be(msgs.map(_.id.get.id))
     }
   }
 
   waitTest("should receive as much messages as possible") {
     // Given
     val q1 = createQueueData("q1", MillisVisibilityTimeout(1L))
-    val msgs = (for { i <- 1 to 3 } yield createNewMessageData("xyz" + i, "123", Map(), MillisNextDelivery(100))).toList
+    val msgs = (for { i <- 1 to 3 } yield createNewMessageData("xyz" + i, "123", Map(), MillisNextDelivery(i))).toList
     val List(m1, m2, m3) = msgs
 
     for {
@@ -305,9 +311,9 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
       receiveResults <- queueActor ? ReceiveMessages(DefaultVisibilityTimeout, 5, None, None)
     } yield {
       // Then
-      receiveResults.size should be (3)
+      receiveResults.size should be(3)
 
-      receiveResults.map(_.id.id).toSet should be (msgs.map(_.id.get.id).toSet)
+      receiveResults.map(_.id.id) should be(msgs.map(_.id.get.id))
     }
   }
 
@@ -326,27 +332,31 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
       val end = System.currentTimeMillis()
       (end - start) should be >= (500L)
 
-      receiveResults should be (Nil)
+      receiveResults should be(Nil)
     }
   }
 
   waitTest("should wait until messages are available") {
     // Given
     val q1 = createQueueData("q1", MillisVisibilityTimeout(1L))
-    val msg = createNewMessageData("xyz", "123", Map(), MillisNextDelivery(200L))
+    val msg =
+      createNewMessageData("xyz", "123", Map(), MillisNextDelivery(200L))
 
     for {
       Right(queueActor) <- queueManagerActor ? CreateQueue(q1)
 
       // When
       receiveResultsFuture = queueActor ? ReceiveMessages(DefaultVisibilityTimeout, 5, Some(Duration.millis(1000L)), None)
-      _ <- { Thread.sleep(500); nowProvider.mutableNowMillis.set(200L); queueActor ? SendMessage(msg) }
+      _ <- {
+        Thread.sleep(500); nowProvider.mutableNowMillis.set(200L);
+        queueActor ? SendMessage(msg)
+      }
 
       receiveResults <- receiveResultsFuture
     } yield {
       // Then
-      receiveResults.size should be (1)
-      receiveResults.map(_.id) should be (msg.id.toList)
+      receiveResults.size should be(1)
+      receiveResults.map(_.id) should be(msg.id.toList)
     }
   }
 
@@ -372,16 +382,18 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
       val end = System.currentTimeMillis()
       (end - start) should be >= (1000L) // no reply for one of the futures
 
-      Set(receiveResults1.size, receiveResults2.size) should be (Set(0, 1))
-      (receiveResults1 ++ receiveResults2).map(_.id) should be (msg.id.toList)
+      Set(receiveResults1.size, receiveResults2.size) should be(Set(0, 1))
+      (receiveResults1 ++ receiveResults2).map(_.id) should be(msg.id.toList)
     }
   }
 
   waitTest("multiple futures should wait until messages are available, and receive all sent messages") {
     // Given
     val q1 = createQueueData("q1", MillisVisibilityTimeout(1L))
-    val msg1 = createNewMessageData("xyz1", "123a", Map(), MillisNextDelivery(100))
-    val msg2 = createNewMessageData("xyz2", "123b", Map(), MillisNextDelivery(100))
+    val msg1 =
+      createNewMessageData("xyz1", "123a", Map(), MillisNextDelivery(100))
+    val msg2 =
+      createNewMessageData("xyz2", "123b", Map(), MillisNextDelivery(100))
 
     for {
       Right(queueActor) <- queueManagerActor ? CreateQueue(q1)
@@ -391,15 +403,20 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
       receiveResults2Future = queueActor ? ReceiveMessages(DefaultVisibilityTimeout, 5, Some(Duration.millis(1000L)), None)
       receiveResults3Future = queueActor ? ReceiveMessages(DefaultVisibilityTimeout, 5, Some(Duration.millis(1000L)), None)
 
-      _ <- { Thread.sleep(500); queueActor ? SendMessage(msg1); queueActor ? SendMessage(msg2) }
+      _ <- {
+        Thread.sleep(500); queueActor ? SendMessage(msg1);
+        queueActor ? SendMessage(msg2)
+      }
 
       receiveResults1 <- receiveResults1Future
       receiveResults2 <- receiveResults2Future
       receiveResults3 <- receiveResults3Future
     } yield {
       // Then
-      List(receiveResults1.size, receiveResults2.size, receiveResults3.size).sum should be (2)
-      (receiveResults1 ++ receiveResults2 ++ receiveResults3).map(_.id).toSet should be ((msg1.id.toList ++ msg2.id.toList).toSet)
+      List(receiveResults1.size, receiveResults2.size, receiveResults3.size).sum should be(2)
+      (receiveResults1 ++ receiveResults2 ++ receiveResults3)
+        .map(_.id)
+        .toSet should be((msg1.id.toList ++ msg2.id.toList).toSet)
     }
   }
 
@@ -407,15 +424,11 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
     // Given
     val deadLettersQueueName = "dlq1"
     val m1ID = "xyz"
-    val dlq1 = createQueueData(
-      deadLettersQueueName,
-      MillisVisibilityTimeout(1L),
-      None)
+    val dlq1 =
+      createQueueData(deadLettersQueueName, MillisVisibilityTimeout(1L), None)
 
-    val q1 = createQueueData(
-      "q1",
-      MillisVisibilityTimeout(1L),
-      Some(DeadLettersQueueData(deadLettersQueueName, 1)))
+    val q1 =
+      createQueueData("q1", MillisVisibilityTimeout(1L), Some(DeadLettersQueueData(deadLettersQueueName, 1)))
     val m1 = createNewMessageData(m1ID, "123", Map(), MillisNextDelivery(100))
 
     for {

@@ -30,8 +30,10 @@ class ElasticMQServerConfig(config: Config) extends Logging {
 
   val nodeAddress = {
     val subConfig = config.getConfig("node-address")
-    NodeAddress(subConfig.getString("protocol"), subConfig.getString("host"), subConfig.getInt("port"),
-      subConfig.getString("context-path"))
+    NodeAddress(subConfig.getString("protocol"),
+                subConfig.getString("host"),
+                subConfig.getInt("port"),
+                subConfig.getString("context-path"))
   }
 
   val generateNodeAddress = config.getBoolean("generate-node-address")
@@ -64,21 +66,26 @@ class ElasticMQServerConfig(config: Config) extends Logging {
 
     val deadLettersQueueKey = "deadLettersQueue"
 
-    val unsortedCreateQueues = config.getObject("queues").map { case (n, v) =>
-      val c = v.asInstanceOf[ConfigObject].toConfig
-      CreateQueue(
-        n,
-        getOptionalDuration(c, "defaultVisibilityTimeout"),
-        getOptionalDuration(c, "delay"),
-        getOptionalDuration(c, "receiveMessageWait"),
-        if (c.hasPath(deadLettersQueueKey)) {
-          Some(DeadLettersQueue(
-            c.getString(deadLettersQueueKey + ".name"),
-            c.getInt(deadLettersQueueKey + ".maxReceiveCount")
-          ))
-        } else None
-      )
-    }.toList
+    val unsortedCreateQueues = config
+      .getObject("queues")
+      .map {
+        case (n, v) =>
+          val c = v.asInstanceOf[ConfigObject].toConfig
+          CreateQueue(
+            n,
+            getOptionalDuration(c, "defaultVisibilityTimeout"),
+            getOptionalDuration(c, "delay"),
+            getOptionalDuration(c, "receiveMessageWait"),
+            if (c.hasPath(deadLettersQueueKey)) {
+              Some(
+                DeadLettersQueue(
+                  c.getString(deadLettersQueueKey + ".name"),
+                  c.getInt(deadLettersQueueKey + ".maxReceiveCount")
+                ))
+            } else None
+          )
+      }
+      .toList
 
     QueueSorter.sortCreateQueues(unsortedCreateQueues)
   }

@@ -5,24 +5,30 @@ import akka.http.scaladsl.server.Directives
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import org.scalatest.{Matchers, FlatSpec}
 
-class AnyParamDirectivesTest extends FlatSpec with Matchers with ScalatestRouteTest
-  with Directives with AnyParamDirectives {
+class AnyParamDirectivesTest
+    extends FlatSpec
+    with Matchers
+    with ScalatestRouteTest
+    with Directives
+    with AnyParamDirectives {
 
   "anyParamsMap" should "extract both query and form parameters" in {
     val route = path("test") {
-      anyParamsMap { map => _.complete(map.toList.sorted.toString()) }
+      anyParamsMap { map =>
+        _.complete(map.toList.sorted.toString())
+      }
     }
 
     Get("/test?x=1&y=2") ~> route ~> check {
-      entityAs[String] should be ("List((x,1), (y,2))")
+      entityAs[String] should be("List((x,1), (y,2))")
     }
 
     Post("/test", FormData(Map("x" -> "1", "y" -> "2"))) ~> route ~> check {
-      entityAs[String] should be ("List((x,1), (y,2))")
+      entityAs[String] should be("List((x,1), (y,2))")
     }
 
     Post("/test?a=10&y=20", FormData(Map("b" -> "1", "x" -> "2"))) ~> route ~> check {
-      entityAs[String] should be ("List((a,10), (b,1), (x,2), (y,20))")
+      entityAs[String] should be("List((a,10), (b,1), (x,2), (y,20))")
     }
   }
 }

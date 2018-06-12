@@ -21,11 +21,10 @@ trait QueueActorQueueOps extends Logging {
       queueData = queueData.copy(receiveMessageWait = newReceiveMessageWait)
     case ClearQueue() =>
       messageQueue.clear()
-
     case GetQueueStatistics(deliveryTime) => getQueueStatistics(deliveryTime)
   }
 
-  def getQueueStatistics(deliveryTime: Long) = {
+  private def getQueueStatistics(deliveryTime: Long) = {
     var visible = 0
     var invisible = 0
     var delayed = 0

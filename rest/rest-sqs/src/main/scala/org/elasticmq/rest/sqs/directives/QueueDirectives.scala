@@ -11,7 +11,8 @@ import org.elasticmq.rest.sqs.Constants._
 trait QueueDirectives {
   this: Directives with QueueManagerActorModule with ActorSystemModule with FutureDirectives with AnyParamDirectives =>
 
-  def queueNameFromParams(p: AnyParams): Directive1[String] = p.requiredParam("QueueName")
+  def queueNameFromParams(p: AnyParams): Directive1[String] =
+    p.requiredParam("QueueName")
 
   def queueDataFromParams(p: AnyParams)(body: QueueData => Route) = {
     queueNameFromParams(p) { queueName =>
@@ -39,9 +40,11 @@ trait QueueDirectives {
 
   private val queueUrlParameter = "QueueUrl"
 
-  private def queueUrlFromParams(p: AnyParams): Directive1[String] = p.requiredParam(queueUrlParameter)
+  private def queueUrlFromParams(p: AnyParams): Directive1[String] =
+    p.requiredParam(queueUrlParameter)
 
-  private val lastPathSegment = ("^[^/]*//[^/]*/" + QueueUrlContext + "/([^/]+)$").r
+  private val lastPathSegment =
+    ("^[^/]*//[^/]*/" + QueueUrlContext + "/([^/]+)$").r
 
   private def queueNameFromRequest(p: AnyParams)(body: String => Route): Route = {
     val queueNameDirective =
@@ -50,7 +53,8 @@ trait QueueDirectives {
         queueUrlFromParams(p).flatMap { queueUrl =>
           lastPathSegment.findFirstMatchIn(queueUrl).map(_.group(1)) match {
             case Some(queueName) => provide(queueName)
-            case None => reject(MissingFormFieldRejection(queueUrlParameter)): Directive1[String]
+            case None =>
+              reject(MissingFormFieldRejection(queueUrlParameter)): Directive1[String]
           }
         }
 
@@ -63,7 +67,7 @@ trait QueueDirectives {
     } yield {
       lookupResult match {
         case Some(a) => body(a)
-        case None => throw SQSException.nonExistentQueue
+        case None    => throw SQSException.nonExistentQueue
       }
     }
   }

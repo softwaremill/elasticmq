@@ -15,4 +15,3 @@ case class QueueData(name: String,
 )
 
 case class DeadLettersQueueData(name: String, maxReceiveCount: Int)
-

@@ -14,13 +14,15 @@ class QueueActorQueueOpsTest extends ActorTest with QueueManagerForEachTest with
     val lastModified = new DateTime(1316168602L)
 
     for {
-      Right(queueActor) <- queueManagerActor ? CreateQueue(QueueData("q1", MillisVisibilityTimeout(1L), Duration.ZERO, Duration.ZERO, created, lastModified))
+      Right(queueActor) <- queueManagerActor ? CreateQueue(
+        QueueData("q1", MillisVisibilityTimeout(1L), Duration.ZERO, Duration.ZERO, created, lastModified))
 
       // When
       queueData <- queueActor ? GetQueueData()
     } yield {
       // Then
-      queueData should be (QueueData("q1", MillisVisibilityTimeout(1L), Duration.ZERO, Duration.ZERO, created, lastModified))
+      queueData should be(
+        QueueData("q1", MillisVisibilityTimeout(1L), Duration.ZERO, Duration.ZERO, created, lastModified))
     }
   }
 
@@ -37,7 +39,7 @@ class QueueActorQueueOpsTest extends ActorTest with QueueManagerForEachTest with
       queueData <- queueActor ? GetQueueData()
     } yield {
       // Then
-      queueData should be (q1Modified)
+      queueData should be(q1Modified)
     }
   }
 
@@ -52,7 +54,7 @@ class QueueActorQueueOpsTest extends ActorTest with QueueManagerForEachTest with
       stats <- queueActor ? GetQueueStatistics(123L)
     } yield {
       // Then
-      stats should be (QueueStatistics(0L, 0L, 0L))
+      stats should be(QueueStatistics(0L, 0L, 0L))
     }
   }
 
@@ -100,7 +102,7 @@ class QueueActorQueueOpsTest extends ActorTest with QueueManagerForEachTest with
       stats <- queueActor ? GetQueueStatistics(123L)
     } yield {
       // Then
-      stats should be (QueueStatistics(2L, 4L, 3L))
+      stats should be(QueueStatistics(2L, 4L, 3L))
     }
   }
 
@@ -126,7 +128,7 @@ class QueueActorQueueOpsTest extends ActorTest with QueueManagerForEachTest with
       stats <- queueActor ? GetQueueStatistics(123L)
     } yield {
       // Then
-      stats should be (QueueStatistics(0L, 0L, 0L))
+      stats should be(QueueStatistics(0L, 0L, 0L))
     }
   }
 }

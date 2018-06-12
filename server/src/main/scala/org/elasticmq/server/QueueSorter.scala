@@ -9,6 +9,7 @@ import scalax.collection.GraphPredef._
 import scalax.collection.GraphEdge._
 
 object QueueSorter extends Logging {
+
   /**
     * Reverse topologically sort CreateQueue collection so that dead letter queues are created first
     * @param cqs
@@ -24,7 +25,9 @@ object QueueSorter extends Logging {
       throw new IllegalArgumentException(s"Circular queue graph, check ${sorted.left.get.value.name}")
     }
 
-    sorted.right.get.toList.reverse.map { node => node.value }
+    sorted.right.get.toList.reverse.map { node =>
+      node.value
+    }
   }
 
   private def createDeadLetterQueueEdges(nodes: List[CreateQueue]): List[DiEdge[CreateQueue]] = {
@@ -44,8 +47,7 @@ object QueueSorter extends Logging {
 
         if (dlcq.isEmpty) {
           logger.error("Dead letter queue {} not found", dlcqName)
-        }
-        else {
+        } else {
           edges += cq ~> dlcq.get
         }
       }

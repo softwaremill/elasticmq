@@ -1,78 +1,72 @@
-import sbt._
-import Keys._
+import com.amazonaws.services.s3.model.PutObjectResult
+import sbt.Keys.credentials
 import scoverage.ScoverageKeys._
 
-val buildSettings = Defaults.coreDefaultSettings ++ Seq (
-  organization  := "org.elasticmq",
-  version       := "0.13.9",
-  scalaVersion  := "2.12.4",
-  crossScalaVersions := Seq(scalaVersion.value, "2.11.11"),
-
+val buildSettings = commonSmlBuildSettings ++ ossPublishSettings ++ Seq(
+  organization := "org.elasticmq",
+  scalaVersion := "2.12.6",
+  crossScalaVersions := Seq(scalaVersion.value, "2.11.12"),
   libraryDependencies += "org.scala-lang.modules" %% "scala-xml" % "1.1.0",
-
   dependencyOverrides := akka25Overrides,
-
-  // Sonatype OSS deployment
-  publishTo := {
-    val nexus = "https://oss.sonatype.org/"
-    val (name, url) = if (isSnapshot.value) ("snapshots", nexus + "content/repositories/snapshots")
-    else ("releases", nexus + "service/local/staging/deploy/maven2")
-    Some(name at url)
-  },
-  credentials += Credentials(Path.userHome / ".ivy2" / ".credentials"),
-  publishMavenStyle := true,
-  publishArtifact in Test := false,
-  pomExtra := <scm>
-    <url>git@github.com:adamw/elasticmq.git</url>
-    <connection>scm:git:git@github.com:adamw/elasticmq.git</connection>
-  </scm>
-    <developers>
-      <developer>
-        <id>adamw</id>
-        <name>Adam Warski</name>
-        <url>http://www.warski.org</url>
-      </developer>
-    </developers>,
   parallelExecution := false,
+  sonatypeProfileName := "org.elasticmq",
   // workaround for: https://github.com/sbt/sbt/issues/692
   fork in Test := true,
-  scalacOptions ++= List("-unchecked", "-encoding", "UTF8"),
-  homepage      := Some(new java.net.URL("http://www.elasticmq.org")),
-  licenses      := ("Apache2", new java.net.URL("http://www.apache.org/licenses/LICENSE-2.0.txt")) :: Nil
+  releaseProcess := {
+    val uploadAssembly: ReleaseStep = ReleaseStep(
+      action = { st: State =>
+        val extracted = Project.extract(st)
+        val (st2, _) = extracted.runTask(assembly in server, st)
+        val (st3, _) = extracted.runTask(s3Upload in server, st2)
+        st3
+      }
+    )
+
+    releaseProcess.value.flatMap { s =>
+      if (s == sbtrelease.ReleaseStateTransformations.setReleaseVersion) {
+        Seq(s, uploadAssembly)
+      } else Seq(s)
+    }
+  }
 )
 
-val jodaTime      = "joda-time"                 % "joda-time"             % "2.9.9"
-val jodaConvert   = "org.joda"                  % "joda-convert"          % "1.8.1"
-val config        = "com.typesafe"              % "config"                % "1.3.1"
+val jodaTime = "joda-time" % "joda-time" % "2.10"
+val jodaConvert = "org.joda" % "joda-convert" % "2.1"
+val config = "com.typesafe" % "config" % "1.3.3"
 
-val scalalogging  = "com.typesafe.scala-logging" %% "scala-logging"       % "3.5.0"
-val logback       = "ch.qos.logback"            % "logback-classic"       % "1.2.3"
-val jclOverSlf4j  = "org.slf4j"                 % "jcl-over-slf4j"        % "1.7.25" // needed form amazon java sdk
+val scalalogging = "com.typesafe.scala-logging" %% "scala-logging" % "3.9.0"
+val logback = "ch.qos.logback" % "logback-classic" % "1.2.3"
+val jclOverSlf4j = "org.slf4j" % "jcl-over-slf4j" % "1.7.25" // needed form amazon java sdk
 
-val scalatest     = "org.scalatest"             %% "scalatest"            % "3.0.3"
-val awaitility    = "com.jayway.awaitility"     % "awaitility-scala"      % "1.7.0"
+val scalatest = "org.scalatest" %% "scalatest" % "3.0.5"
+val awaitility = "com.jayway.awaitility" % "awaitility-scala" % "1.7.0"
 
-val amazonJavaSdk = "com.amazonaws"             % "aws-java-sdk"          % "1.11.295" exclude ("commons-logging", "commons-logging")
+val amazonJavaSdk = "com.amazonaws" % "aws-java-sdk" % "1.11.343" exclude ("commons-logging", "commons-logging")
 
-val scalaGraph    = "org.scala-graph"           %% "graph-core"           % "1.11.5"
+val scalaGraph = "org.scala-graph" %% "graph-core" % "1.12.5"
 
-val akkaVersion      = "2.5.11"
-val akkaHttpVersion  = "10.1.0"
-val akka2Actor       = "com.typesafe.akka" %% "akka-actor"           % akkaVersion
-val akka2Slf4j       = "com.typesafe.akka" %% "akka-slf4j"           % akkaVersion
-val akka2Streams     = "com.typesafe.akka" %% "akka-stream"          % akkaVersion
-val akka2Testkit     = "com.typesafe.akka" %% "akka-testkit"         % akkaVersion % "test"
-val akka2Http        = "com.typesafe.akka" %% "akka-http"            % akkaHttpVersion
-val sprayJson        = "io.spray" %% "spray-json"                    % "1.3.3"
+val akkaVersion = "2.5.13"
+val akkaHttpVersion = "10.1.2"
+val akka2Actor = "com.typesafe.akka" %% "akka-actor" % akkaVersion
+val akka2Slf4j = "com.typesafe.akka" %% "akka-slf4j" % akkaVersion
+val akka2Streams = "com.typesafe.akka" %% "akka-stream" % akkaVersion
+val akka2Testkit = "com.typesafe.akka" %% "akka-testkit" % akkaVersion % "test"
+val akka2Http = "com.typesafe.akka" %% "akka-http" % akkaHttpVersion
+val sprayJson = "io.spray" %% "spray-json" % "1.3.4"
 val akka2HttpTestkit = "com.typesafe.akka" %% "akka-http-testkit" % akkaHttpVersion % "test"
 
-val scalaAsync = "org.scala-lang.modules" %% "scala-async" % "0.9.6"
+val scalaAsync = "org.scala-lang.modules" %% "scala-async" % "0.9.7"
 
 val common = Seq(scalalogging)
 
-val akka25Overrides = Seq( // override the 2.4.x transitive dependency from Akka HTTP
-  "com.typesafe.akka" %% "akka-stream" % akkaVersion,
-  "com.typesafe.akka" %% "akka-stream-testkit" % akkaVersion)
+val akka25Overrides =
+  Seq( // override the 2.4.x transitive dependency from Akka HTTP
+    "com.typesafe.akka" %% "akka-stream" % akkaVersion,
+    "com.typesafe.akka" %% "akka-stream-testkit" % akkaVersion
+  )
+
+// see https://github.com/scala/scala-dist/pull/181/files
+val s3Upload = TaskKey[PutObjectResult]("s3-upload", "Uploads files to an S3 bucket.")
 
 lazy val root: Project = (project in file("."))
   .settings(buildSettings)
@@ -82,16 +76,14 @@ lazy val root: Project = (project in file("."))
 lazy val commonTest: Project = (project in file("common-test"))
   .settings(buildSettings)
   .settings(name := "elasticmq-common-test")
-  .settings(Seq(
-    libraryDependencies ++= Seq(scalatest, awaitility, logback),
-    publishArtifact := false))
+  .settings(Seq(libraryDependencies ++= Seq(scalatest, awaitility, logback), publishArtifact := false))
 
 lazy val core: Project = (project in file("core"))
   .settings(buildSettings)
-  .settings(Seq(
-    name := "elasticmq-core",
-    libraryDependencies ++= Seq(jodaTime, jodaConvert, akka2Actor, akka2Testkit) ++ common,
-    coverageMinimum := 94))
+  .settings(
+    Seq(name := "elasticmq-core",
+        libraryDependencies ++= Seq(jodaTime, jodaConvert, akka2Actor, akka2Testkit) ++ common,
+        coverageMinimum := 94))
   .dependsOn(commonTest % "test")
 
 lazy val rest: Project = (project in file("rest"))
@@ -101,18 +93,25 @@ lazy val rest: Project = (project in file("rest"))
 
 lazy val restSqs: Project = (project in file("rest/rest-sqs"))
   .settings(buildSettings)
-  .settings(Seq(
-    name := "elasticmq-rest-sqs",
-    libraryDependencies ++= Seq(akka2Actor, akka2Slf4j, akka2Http, akka2Streams, sprayJson, akka2HttpTestkit, scalaAsync) ++ common))
+  .settings(
+    Seq(name := "elasticmq-rest-sqs",
+        libraryDependencies ++= Seq(akka2Actor,
+                                    akka2Slf4j,
+                                    akka2Http,
+                                    akka2Streams,
+                                    sprayJson,
+                                    akka2HttpTestkit,
+                                    scalaAsync) ++ common))
   .dependsOn(core, commonTest % "test")
 
-lazy val restSqsTestingAmazonJavaSdk: Project = (project in file("rest/rest-sqs-testing-amazon-java-sdk"))
-  .settings(buildSettings)
-  .settings(Seq(
-    name := "elasticmq-rest-sqs-testing-amazon-java-sdk",
-    libraryDependencies ++= Seq(amazonJavaSdk, jclOverSlf4j) ++ common,
-    publishArtifact := false))
-  .dependsOn(restSqs % "test->test")
+lazy val restSqsTestingAmazonJavaSdk: Project =
+  (project in file("rest/rest-sqs-testing-amazon-java-sdk"))
+    .settings(buildSettings)
+    .settings(
+      Seq(name := "elasticmq-rest-sqs-testing-amazon-java-sdk",
+          libraryDependencies ++= Seq(amazonJavaSdk, jclOverSlf4j) ++ common,
+          publishArtifact := false))
+    .dependsOn(restSqs % "test->test")
 
 lazy val server: Project = (project in file("server"))
   .settings(buildSettings)
@@ -121,18 +120,52 @@ lazy val server: Project = (project in file("server"))
     name := "elasticmq-server",
     libraryDependencies ++= Seq(logback, config, scalaGraph),
     mainClass in assembly := Some("org.elasticmq.server.Main"),
-    coverageMinimum := 52
-  )
-  )
+    coverageMinimum := 52,
+    s3Upload := {
+      import com.amazonaws.auth.{AWSStaticCredentialsProvider, DefaultAWSCredentialsProviderChain, BasicAWSCredentials}
+      import com.amazonaws.services.s3.AmazonS3ClientBuilder
+      import com.amazonaws.services.s3.model.{CannedAccessControlList, PutObjectRequest}
+
+      val bucketName = "softwaremill-public"
+      val creds = Credentials.forHost(credentials.value, bucketName + ".s3.amazonaws.com")
+
+      val awsCreds = creds match {
+        case Some(cred) => new AWSStaticCredentialsProvider(new BasicAWSCredentials(cred.userName, cred.passwd))
+        case None       => new DefaultAWSCredentialsProviderChain
+      }
+
+      val client = AmazonS3ClientBuilder.standard().withCredentials(awsCreds).withRegion("eu-west-1").build()
+
+      val log = streams.value.log
+      val v = version.value
+
+      val source = (assemblyOutputPath in assembly).value
+      val targetObjectName = s"elasticmq-server-$v.jar"
+
+      log.info("Uploading " + source.getAbsolutePath + " as " + targetObjectName)
+
+      client.putObject(new PutObjectRequest(bucketName, targetObjectName, source)
+        .withCannedAcl(CannedAccessControlList.PublicRead))
+    },
+    /*
+    Format:
+    realm=Amazon S3
+    host=softwaremill-public.s3.amazonaws.com
+    user=[AWS key id]
+    password=[AWS secret key]
+     */
+    credentials += Credentials(Path.userHome / ".s3_elasticmq_credentials")
+  ))
   .dependsOn(core, restSqs, commonTest % "test")
 
 lazy val performanceTests: Project = (project in file("performance-tests"))
   .settings(buildSettings)
-  .settings(Seq(
-    name := "elasticmq-performance-tests",
-    libraryDependencies ++= Seq(amazonJavaSdk, jclOverSlf4j, logback) ++ common,
-    publishArtifact := false
-  ))
+  .settings(
+    Seq(
+      name := "elasticmq-performance-tests",
+      libraryDependencies ++= Seq(amazonJavaSdk, jclOverSlf4j, logback) ++ common,
+      publishArtifact := false
+    ))
   .dependsOn(core, restSqs, commonTest % "test")
 
 val generateVersionFileSettings = Seq(

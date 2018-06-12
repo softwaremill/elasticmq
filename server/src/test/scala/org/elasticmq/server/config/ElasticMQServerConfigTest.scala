@@ -12,6 +12,7 @@ class ElasticMQServerConfigTest extends FunSuite with Matchers {
   test("load the test config") {
     val conf = new ElasticMQServerConfig(ConfigFactory.load("test"))
     conf.createQueues should have size (2)
-    conf.createQueues.find(_.deadLettersQueue.isDefined).flatMap(_.deadLettersQueue).map(_.name) should be (Some("myDLQ"))
+    conf.createQueues.find(_.deadLettersQueue.isDefined).flatMap(_.deadLettersQueue).map(_.name) should be(
+      Some("myDLQ"))
   }
 }

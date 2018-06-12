@@ -91,17 +91,17 @@ trait QueueActorMessageOps extends Logging {
     receiveRequestAttemptId: Option[String]): List[MessageData] = {
     implicit val np = nowProvider
     val messages = receiveRequestAttemptId
-      .flatMap(getMessagesFromRequestAttemptCache)
-      .getOrElse(getMessagesFromQueue(visibilityTimeout, count))
-      .map { internalMessage =>
-        // Putting the msg again into the queue, with a new next delivery
-        val newNextDelivery = computeNextDelivery(visibilityTimeout)
-        internalMessage.trackDelivery(newNextDelivery)
-        messageQueue += internalMessage
+        .flatMap(getMessagesFromRequestAttemptCache)
+        .getOrElse(getMessagesFromQueue(visibilityTimeout, count))
+        .map { internalMessage =>
+          // Putting the msg again into the queue, with a new next delivery
+          val newNextDelivery = computeNextDelivery(visibilityTimeout)
+          internalMessage.trackDelivery(newNextDelivery)
+          messageQueue += internalMessage
 
-        logger.debug(s"${queueData.name}: Receiving message ${internalMessage.id}")
-        internalMessage
-      }
+          logger.debug(s"${queueData.name}: Receiving message ${internalMessage.id}")
+          internalMessage
+        }
 
     receiveRequestAttemptId.foreach { attemptId =>
       receiveRequestAttemptCache.add(attemptId, messages)

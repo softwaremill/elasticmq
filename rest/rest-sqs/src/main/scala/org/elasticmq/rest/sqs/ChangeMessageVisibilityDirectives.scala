@@ -32,7 +32,7 @@ trait ChangeMessageVisibilityDirectives { this: ElasticMQDirectives =>
       updateResult <- queueActor ? UpdateVisibilityTimeout(msgId, visibilityTimeout)
     } yield {
       updateResult match {
-        case Left(_) => throw SQSException.invalidParameterValue
+        case Left(_)  => throw SQSException.invalidParameterValue
         case Right(_) => // ok
       }
     }
