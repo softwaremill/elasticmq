@@ -9,6 +9,7 @@ val buildSettings = commonSmlBuildSettings ++ ossPublishSettings ++ Seq(
   libraryDependencies += "org.scala-lang.modules" %% "scala-xml" % "1.1.0",
   dependencyOverrides := akka25Overrides,
   parallelExecution := false,
+  sonatypeProfileName := "org.elasticmq",
   // workaround for: https://github.com/sbt/sbt/issues/692
   fork in Test := true,
   releaseProcess := {
