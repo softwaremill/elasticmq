@@ -20,7 +20,10 @@ case class ClearQueue() extends QueueQueueMsg[Unit]
 case class SendMessage(message: NewMessageData) extends QueueMessageMsg[MessageData]
 case class UpdateVisibilityTimeout(messageId: MessageId, visibilityTimeout: VisibilityTimeout)
     extends QueueMessageMsg[Either[MessageDoesNotExist, Unit]]
-case class ReceiveMessages(visibilityTimeout: VisibilityTimeout, count: Int, waitForMessages: Option[Duration],
-  receiveRequestAttemptId: Option[String]) extends QueueMessageMsg[List[MessageData]]
+case class ReceiveMessages(visibilityTimeout: VisibilityTimeout,
+                           count: Int,
+                           waitForMessages: Option[Duration],
+                           receiveRequestAttemptId: Option[String])
+    extends QueueMessageMsg[List[MessageData]]
 case class DeleteMessage(deliveryReceipt: DeliveryReceipt) extends QueueMessageMsg[Unit]
 case class LookupMessage(messageId: MessageId) extends QueueMessageMsg[Option[MessageData]]

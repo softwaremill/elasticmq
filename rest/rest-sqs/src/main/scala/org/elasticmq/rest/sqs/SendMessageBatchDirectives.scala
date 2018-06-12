@@ -13,8 +13,9 @@ trait SendMessageBatchDirectives {
       queueActorAndDataFromRequest(p) { (queueActor, queueData) =>
         verifyMessagesNotTooLong(p)
         val resultsFuture = batchRequest(SendMessageBatchPrefix, p) { (messageData, id) =>
-          doSendMessage(queueActor, messageData, queueData).map { case (message, digest, messageAttributeDigest) =>
-            <SendMessageBatchResultEntry>
+          doSendMessage(queueActor, messageData, queueData).map {
+            case (message, digest, messageAttributeDigest) =>
+              <SendMessageBatchResultEntry>
               <Id>{id}</Id>
               <MD5OfMessageAttributes>{messageAttributeDigest}</MD5OfMessageAttributes>
               <MD5OfMessageBody>{digest}</MD5OfMessageBody>

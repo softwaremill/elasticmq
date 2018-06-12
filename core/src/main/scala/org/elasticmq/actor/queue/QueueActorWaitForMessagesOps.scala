@@ -39,7 +39,7 @@ trait QueueActorWaitForMessagesOps extends ReplyingActor with QueueActorMessageO
       scheduleTryReplyWhenAvailable()
       result
 
-    case rm@ReceiveMessages(_, _, waitForMessagesOpt, _) =>
+    case rm @ ReceiveMessages(_, _, waitForMessagesOpt, _) =>
       val result = super.receiveAndReplyMessageMsg(msg)
       val waitForMessages =
         waitForMessagesOpt.getOrElse(queueData.receiveMessageWait)
@@ -63,7 +63,9 @@ trait QueueActorWaitForMessagesOps extends ReplyingActor with QueueActorMessageO
   @tailrec
   private def tryReply() {
     awaitingReply.headOption match {
-      case Some((seq, AwaitingData(originalSender, ReceiveMessages(visibilityTimeout, count, _, receiveRequestAttemptId), _))) =>
+      case Some(
+          (seq,
+           AwaitingData(originalSender, ReceiveMessages(visibilityTimeout, count, _, receiveRequestAttemptId), _))) =>
         val received = super.receiveMessages(visibilityTimeout, count, receiveRequestAttemptId)
 
         if (received != Nil) {
@@ -100,7 +102,7 @@ trait QueueActorWaitForMessagesOps extends ReplyingActor with QueueActorMessageO
 
       messageQueue.byId.values.toList.sortBy(_.nextDelivery).headOption match {
         case Some(msg) => scheduledTryReply = Some(schedule(msg.nextDelivery - deliveryTime + 1, TryReply))
-        case None =>
+        case None      =>
       }
     }
   }

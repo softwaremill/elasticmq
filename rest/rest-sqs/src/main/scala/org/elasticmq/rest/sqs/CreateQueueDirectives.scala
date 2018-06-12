@@ -78,7 +78,8 @@ trait CreateQueueDirectives {
               redrivePolicy.map(rd => DeadLettersQueueData(rd.queueName, rd.maxReceiveCount)),
               maxReceiveCount = None,
               isFifo,
-              hasContentBasedDeduplication)
+              hasContentBasedDeduplication
+            )
 
             if (!queueName.matches("[\\p{Alnum}\\._-]*")) {
               throw SQSException.invalidParameterValue

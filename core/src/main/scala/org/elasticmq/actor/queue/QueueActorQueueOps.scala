@@ -33,7 +33,7 @@ trait QueueActorQueueOps extends Logging {
       if (internalMessage.nextDelivery < deliveryTime) {
         visible += 1
       } else if (internalMessage.deliveryReceipts.nonEmpty) {
-        invisible +=1
+        invisible += 1
       } else {
         delayed += 1
       }

@@ -20,9 +20,12 @@ trait ReceiveMessageDirectives {
     val WaitTimeSecondsAttribute = "WaitTimeSeconds"
     val ReceiveRequestAttemptIdAttribute = "ReceiveRequestAttemptId"
     val MessageAttributeNamePattern = "MessageAttributeName\\.\\d".r
+    val MessageDeduplicationIdAttribute = "MessageDeduplicationId"
+    val MessageGroupIdAttribute = "MessageGroupId"
 
     val AllAttributeNames = SentTimestampAttribute :: ApproximateReceiveCountAttribute ::
-      ApproximateFirstReceiveTimestampAttribute :: SenderIdAttribute :: Nil
+      ApproximateFirstReceiveTimestampAttribute :: SenderIdAttribute :: MessageDeduplicationIdAttribute ::
+      MessageGroupIdAttribute :: Nil
   }
 
   def receiveMessage(p: AnyParams) = {
@@ -67,10 +70,12 @@ trait ReceiveMessageDirectives {
         verifyMessageWaitTime(waitTimeSecondsAttributeOpt)
 
         val msgsFuture = queueActor ? ReceiveMessages(visibilityTimeoutFromParameters,
-          maxNumberOfMessagesFromParameters, waitTimeSecondsFromParameters, receiveRequestAttemptId)
+                                                      maxNumberOfMessagesFromParameters,
+                                                      waitTimeSecondsFromParameters,
+                                                      receiveRequestAttemptId)
 
-        lazy val attributeNames =
-          attributeNamesReader.read(p, AllAttributeNames)
+        val attributeNames = attributeNamesReader.read(p, AllAttributeNames)
+        println(attributeNames)
 
         def calculateAttributeValues(msg: MessageData): List[(String, String)] = {
           import AttributeValuesCalculator.Rule
@@ -80,6 +85,8 @@ trait ReceiveMessageDirectives {
             Rule(SenderIdAttribute, () => "127.0.0.1"),
             Rule(SentTimestampAttribute, () => msg.created.getMillis.toString),
             Rule(ApproximateReceiveCountAttribute, () => msg.statistics.approximateReceiveCount.toString),
+            Rule(MessageDeduplicationIdAttribute, () => msg.messageDeduplicationId.getOrElse("")),
+            Rule(MessageGroupIdAttribute, () => msg.messageGroupId.getOrElse("")),
             Rule(
               ApproximateFirstReceiveTimestampAttribute,
               () =>

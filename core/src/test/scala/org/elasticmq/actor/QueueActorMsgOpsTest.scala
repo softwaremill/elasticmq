@@ -263,9 +263,9 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
       List(receiveResult2) <- queueActor ? ReceiveMessages(DefaultVisibilityTimeout, 1, None, None)
     } yield {
       // Then
-      lookupResult.statistics should be (MessageStatistics.empty)
-      receiveResult1.statistics should be (MessageStatistics(OnDateTimeReceived(new DateTime(100L)), 1))
-      receiveResult2.statistics should be (MessageStatistics(OnDateTimeReceived(new DateTime(100L)), 2))
+      lookupResult.statistics should be(MessageStatistics.empty)
+      receiveResult1.statistics should be(MessageStatistics(OnDateTimeReceived(new DateTime(100L)), 1))
+      receiveResult2.statistics should be(MessageStatistics(OnDateTimeReceived(new DateTime(100L)), 2))
     }
   }
 
@@ -346,7 +346,10 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
       Right(queueActor) <- queueManagerActor ? CreateQueue(q1)
 
       // When
-      receiveResultsFuture = queueActor ? ReceiveMessages(DefaultVisibilityTimeout, 5, Some(Duration.millis(1000L)), None)
+      receiveResultsFuture = queueActor ? ReceiveMessages(DefaultVisibilityTimeout,
+                                                          5,
+                                                          Some(Duration.millis(1000L)),
+                                                          None)
       _ <- {
         Thread.sleep(500); nowProvider.mutableNowMillis.set(200L);
         queueActor ? SendMessage(msg)
@@ -370,8 +373,14 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
       Right(queueActor) <- queueManagerActor ? CreateQueue(q1)
 
       // When
-      receiveResults1Future = queueActor ? ReceiveMessages(DefaultVisibilityTimeout, 5, Some(Duration.millis(1000L)), None)
-      receiveResults2Future = queueActor ? ReceiveMessages(DefaultVisibilityTimeout, 5, Some(Duration.millis(1000L)), None)
+      receiveResults1Future = queueActor ? ReceiveMessages(DefaultVisibilityTimeout,
+                                                           5,
+                                                           Some(Duration.millis(1000L)),
+                                                           None)
+      receiveResults2Future = queueActor ? ReceiveMessages(DefaultVisibilityTimeout,
+                                                           5,
+                                                           Some(Duration.millis(1000L)),
+                                                           None)
 
       _ <- { Thread.sleep(500); queueActor ? SendMessage(msg) }
 
@@ -399,9 +408,18 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
       Right(queueActor) <- queueManagerActor ? CreateQueue(q1)
 
       // When
-      receiveResults1Future = queueActor ? ReceiveMessages(DefaultVisibilityTimeout, 5, Some(Duration.millis(1000L)), None)
-      receiveResults2Future = queueActor ? ReceiveMessages(DefaultVisibilityTimeout, 5, Some(Duration.millis(1000L)), None)
-      receiveResults3Future = queueActor ? ReceiveMessages(DefaultVisibilityTimeout, 5, Some(Duration.millis(1000L)), None)
+      receiveResults1Future = queueActor ? ReceiveMessages(DefaultVisibilityTimeout,
+                                                           5,
+                                                           Some(Duration.millis(1000L)),
+                                                           None)
+      receiveResults2Future = queueActor ? ReceiveMessages(DefaultVisibilityTimeout,
+                                                           5,
+                                                           Some(Duration.millis(1000L)),
+                                                           None)
+      receiveResults3Future = queueActor ? ReceiveMessages(DefaultVisibilityTimeout,
+                                                           5,
+                                                           Some(Duration.millis(1000L)),
+                                                           None)
 
       _ <- {
         Thread.sleep(500); queueActor ? SendMessage(msg1);

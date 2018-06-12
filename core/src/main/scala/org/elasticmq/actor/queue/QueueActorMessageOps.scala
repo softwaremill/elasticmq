@@ -13,12 +13,12 @@ trait QueueActorMessageOps extends Logging {
   def nowProvider: NowProvider
 
   def receiveAndReplyMessageMsg[T](msg: QueueMessageMsg[T]): ReplyAction[T] = msg match {
-    case SendMessage(message) => sendMessage(message)
+    case SendMessage(message)                                  => sendMessage(message)
     case UpdateVisibilityTimeout(messageId, visibilityTimeout) => updateVisibilityTimeout(messageId, visibilityTimeout)
     case ReceiveMessages(visibilityTimeout, count, _, receiveRequestAttemptId) =>
       receiveMessages(visibilityTimeout, count, receiveRequestAttemptId)
     case DeleteMessage(deliveryReceipt) => deleteMessage(deliveryReceipt)
-    case LookupMessage(messageId) => messageQueue.byId.get(messageId.id).map(_.toMessageData)
+    case LookupMessage(messageId)       => messageQueue.byId.get(messageId.id).map(_.toMessageData)
   }
 
   private def sendMessage(message: NewMessageData): MessageData = {
@@ -30,7 +30,7 @@ trait QueueActorMessageOps extends Logging {
       // deleted message (that was sent less than 5 minutes ago, the new message should not be added).
       messageQueue.byId.values.find(isDuplicate(message, _)) match {
         case Some(messageOnQueue) => messageOnQueue.toMessageData
-        case None => addMessage(message)
+        case None                 => addMessage(message)
       }
     } else {
       addMessage(message)
@@ -38,12 +38,12 @@ trait QueueActorMessageOps extends Logging {
   }
 
   /**
-   * Check whether a new message is a duplicate of the message that's on the queue.
-   *
-   * @param newMessage      The message that needs to be added to the queue
-   * @param queueMessage    The message that's already on the queue
-   * @return                Whether the new message counts as a duplicate
-   */
+    * Check whether a new message is a duplicate of the message that's on the queue.
+    *
+    * @param newMessage      The message that needs to be added to the queue
+    * @param queueMessage    The message that's already on the queue
+    * @return                Whether the new message counts as a duplicate
+    */
   private def isDuplicate(newMessage: NewMessageData, queueMessage: InternalMessage): Boolean = {
     lazy val isWithinDeduplicationWindow = queueMessage.created.plusMinutes(5).isAfter(nowProvider.now)
     newMessage.messageDeduplicationId == queueMessage.messageDeduplicationId && isWithinDeduplicationWindow
@@ -87,21 +87,22 @@ trait QueueActorMessageOps extends Logging {
     }
   }
 
-  protected def receiveMessages(visibilityTimeout: VisibilityTimeout, count: Int,
-    receiveRequestAttemptId: Option[String]): List[MessageData] = {
+  protected def receiveMessages(visibilityTimeout: VisibilityTimeout,
+                                count: Int,
+                                receiveRequestAttemptId: Option[String]): List[MessageData] = {
     implicit val np = nowProvider
     val messages = receiveRequestAttemptId
-        .flatMap(getMessagesFromRequestAttemptCache)
-        .getOrElse(getMessagesFromQueue(visibilityTimeout, count))
-        .map { internalMessage =>
-          // Putting the msg again into the queue, with a new next delivery
-          val newNextDelivery = computeNextDelivery(visibilityTimeout)
-          internalMessage.trackDelivery(newNextDelivery)
-          messageQueue += internalMessage
+      .flatMap(getMessagesFromRequestAttemptCache)
+      .getOrElse(getMessagesFromQueue(visibilityTimeout, count))
+      .map { internalMessage =>
+        // Putting the msg again into the queue, with a new next delivery
+        val newNextDelivery = computeNextDelivery(visibilityTimeout)
+        internalMessage.trackDelivery(newNextDelivery)
+        messageQueue += internalMessage
 
-          logger.debug(s"${queueData.name}: Receiving message ${internalMessage.id}")
-          internalMessage
-        }
+        logger.debug(s"${queueData.name}: Receiving message ${internalMessage.id}")
+        internalMessage
+      }
 
     receiveRequestAttemptId.foreach { attemptId =>
       receiveRequestAttemptCache.add(attemptId, messages)
@@ -111,11 +112,11 @@ trait QueueActorMessageOps extends Logging {
   }
 
   private def getMessagesFromRequestAttemptCache(receiveRequestAttemptId: String)(
-    implicit np: NowProvider): Option[List[InternalMessage]] = {
+      implicit np: NowProvider): Option[List[InternalMessage]] = {
     receiveRequestAttemptCache.get(receiveRequestAttemptId, messageQueue) match {
-      case Left(Expired) => throw new RuntimeException("Attempt expired")
-      case Left(Invalid) => throw new RuntimeException("Invalid")
-      case Right(None) => None
+      case Left(Expired)         => throw new RuntimeException("Attempt expired")
+      case Left(Invalid)         => throw new RuntimeException("Invalid")
+      case Right(None)           => None
       case Right(Some(messages)) => Some(messages)
     }
   }
@@ -140,7 +141,7 @@ trait QueueActorMessageOps extends Logging {
   }
 
   private def getVisibilityTimeoutMillis(visibilityTimeout: VisibilityTimeout) = visibilityTimeout match {
-    case DefaultVisibilityTimeout => queueData.defaultVisibilityTimeout.millis
+    case DefaultVisibilityTimeout        => queueData.defaultVisibilityTimeout.millis
     case MillisVisibilityTimeout(millis) => millis
   }
 

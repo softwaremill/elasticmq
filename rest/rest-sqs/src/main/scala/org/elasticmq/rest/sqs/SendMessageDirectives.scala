@@ -25,9 +25,10 @@ trait SendMessageDirectives { this: ElasticMQDirectives with SQSLimitsModule =>
   def sendMessage(p: AnyParams): Route = {
     p.action("SendMessage") {
       queueActorAndDataFromRequest(p) { (queueActor, queueData) =>
-        doSendMessage(queueActor, p, queueData).map { case (message, digest, messageAttributeDigest) =>
-          respondWith {
-            <SendMessageResponse>
+        doSendMessage(queueActor, p, queueData).map {
+          case (message, digest, messageAttributeDigest) =>
+            respondWith {
+              <SendMessageResponse>
               <SendMessageResult>
                 <MD5OfMessageAttributes>{messageAttributeDigest}</MD5OfMessageAttributes>
                 <MD5OfMessageBody>{digest}</MD5OfMessageBody>
@@ -92,7 +93,9 @@ trait SendMessageDirectives { this: ElasticMQDirectives with SQSLimitsModule =>
     }.toMap
   }
 
-  def doSendMessage(queueActor: ActorRef, parameters: Map[String, String], queueData: QueueData): Future[(MessageData, String, String)] = {
+  def doSendMessage(queueActor: ActorRef,
+                    parameters: Map[String, String],
+                    queueData: QueueData): Future[(MessageData, String, String)] = {
     val body = parameters(MessageBodyParameter)
     val messageAttributes = getMessageAttributes(parameters)
 
@@ -140,10 +143,10 @@ trait SendMessageDirectives { this: ElasticMQDirectives with SQSLimitsModule =>
     val delaySecondsOption = parameters.parseOptionalLong(DelaySecondsParameter) match {
       // FIFO queues don't support delays
       case Some(_) if queueData.isFifo => throw SQSException.invalidParameterValue
-      case d => d
+      case d                           => d
     }
-    val messageToSend = createMessage(body, messageAttributes, delaySecondsOption, messageGroupId,
-      messageDeduplicationId)
+    val messageToSend =
+      createMessage(body, messageAttributes, delaySecondsOption, messageGroupId, messageDeduplicationId)
     val digest = md5Digest(body)
     val messageAttributeDigest = md5AttributeDigest(messageAttributes)
 
@@ -181,8 +184,11 @@ trait SendMessageDirectives { this: ElasticMQDirectives with SQSLimitsModule =>
     findInvalidCharacter(0)
   }
 
-  private def createMessage(body: String, messageAttributes: Map[String, MessageAttribute],
-      delaySecondsOption: Option[Long], groupId: Option[String], deduplicationId: Option[String]) = {
+  private def createMessage(body: String,
+                            messageAttributes: Map[String, MessageAttribute],
+                            delaySecondsOption: Option[Long],
+                            groupId: Option[String],
+                            deduplicationId: Option[String]) = {
     val nextDelivery = delaySecondsOption match {
       case None               => ImmediateNextDelivery
       case Some(delaySeconds) => AfterMillisNextDelivery(delaySeconds * 1000)
@@ -192,6 +198,7 @@ trait SendMessageDirectives { this: ElasticMQDirectives with SQSLimitsModule =>
   }
 
   private def sha256Hash(text: String): String = {
-    String.format("%064x", new java.math.BigInteger(1, MessageDigest.getInstance("SHA-256").digest(text.getBytes("UTF-8"))))
+    String.format("%064x",
+                  new java.math.BigInteger(1, MessageDigest.getInstance("SHA-256").digest(text.getBytes("UTF-8"))))
   }
 }

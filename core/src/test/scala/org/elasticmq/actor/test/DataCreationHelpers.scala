@@ -20,19 +20,45 @@ trait DataCreationHelpers {
               deadLettersQueue,
               None)
 
-  def createMessageData(id: String, content: String, messageAttributes: Map[String, MessageAttribute],
-    nextDelivery: MillisNextDelivery, deliveryReceipt: Option[DeliveryReceipt] = None,
-    messageGroupId: Option[String] = None, messageDeduplicationId: Option[String] = None) =
-    MessageData(MessageId(id), deliveryReceipt, content, messageAttributes, nextDelivery, new DateTime(0),
-      MessageStatistics(NeverReceived, 0), messageGroupId, messageDeduplicationId)
+  def createMessageData(id: String,
+                        content: String,
+                        messageAttributes: Map[String, MessageAttribute],
+                        nextDelivery: MillisNextDelivery,
+                        deliveryReceipt: Option[DeliveryReceipt] = None,
+                        messageGroupId: Option[String] = None,
+                        messageDeduplicationId: Option[String] = None) =
+    MessageData(
+      MessageId(id),
+      deliveryReceipt,
+      content,
+      messageAttributes,
+      nextDelivery,
+      new DateTime(0),
+      MessageStatistics(NeverReceived, 0),
+      messageGroupId,
+      messageDeduplicationId
+    )
 
-  def createNewMessageData(id: String, content: String, messageAttributes: Map[String, MessageAttribute],
-    nextDelivery: MillisNextDelivery, messageGroupId: Option[String] = None,
-    messageDeduplicationId: Option[String] = None) =
-    NewMessageData(Some(MessageId(id)), content, messageAttributes, nextDelivery, messageGroupId,
-      messageDeduplicationId)
+  def createNewMessageData(id: String,
+                           content: String,
+                           messageAttributes: Map[String, MessageAttribute],
+                           nextDelivery: MillisNextDelivery,
+                           messageGroupId: Option[String] = None,
+                           messageDeduplicationId: Option[String] = None) =
+    NewMessageData(Some(MessageId(id)),
+                   content,
+                   messageAttributes,
+                   nextDelivery,
+                   messageGroupId,
+                   messageDeduplicationId)
 
   def createNewMessageData(messageData: MessageData) =
-    NewMessageData(Some(messageData.id), messageData.content, messageData.messageAttributes, messageData.nextDelivery,
-      messageData.messageGroupId, messageData.messageDeduplicationId)
+    NewMessageData(
+      Some(messageData.id),
+      messageData.content,
+      messageData.messageAttributes,
+      messageData.nextDelivery,
+      messageData.messageGroupId,
+      messageData.messageDeduplicationId
+    )
 }
