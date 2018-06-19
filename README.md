@@ -126,6 +126,8 @@ queues {
             name = "queue1-dead-letters"
             maxReceiveCount = 3 // from 1 to 1000
     	}
+    	fifo = false
+    	contentBasedDeduplication = false
     }
     queue1-dead-letters { }
 }

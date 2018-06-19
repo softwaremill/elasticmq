@@ -60,6 +60,7 @@ class ElasticMQServerConfig(config: Config) extends Logging {
   val restSqs = new RestSqsConfiguration
 
   val createQueues: List[CreateQueue] = {
+    def getOptionalBoolean(c: Config, k: String) = if (c.hasPath(k)) Some(c.getBoolean(k)) else None
     def getOptionalDuration(c: Config, k: String) = if (c.hasPath(k)) Some(c.getDuration(k, TimeUnit.SECONDS)) else None
 
     import scala.collection.JavaConversions._
@@ -82,7 +83,9 @@ class ElasticMQServerConfig(config: Config) extends Logging {
                   c.getString(deadLettersQueueKey + ".name"),
                   c.getInt(deadLettersQueueKey + ".maxReceiveCount")
                 ))
-            } else None
+            } else None,
+            getOptionalBoolean(c, "fifo").getOrElse(false),
+            getOptionalBoolean(c, "contentBasedDeduplication").getOrElse(false)
           )
       }
       .toList

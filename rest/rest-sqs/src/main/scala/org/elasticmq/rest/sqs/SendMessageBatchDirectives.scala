@@ -1,19 +1,19 @@
 package org.elasticmq.rest.sqs
 
 import Constants._
+import akka.http.scaladsl.server.Route
 import org.elasticmq.rest.sqs.directives.ElasticMQDirectives
 
 trait SendMessageBatchDirectives {
   this: ElasticMQDirectives with SendMessageDirectives with BatchRequestsModule =>
   val SendMessageBatchPrefix = "SendMessageBatchRequestEntry"
 
-  def sendMessageBatch(p: AnyParams) = {
+  def sendMessageBatch(p: AnyParams): Route = {
     p.action("SendMessageBatch") {
-      queueActorFromRequest(p) { queueActor =>
+      queueActorAndDataFromRequest(p) { (queueActor, queueData) =>
         verifyMessagesNotTooLong(p)
-
         val resultsFuture = batchRequest(SendMessageBatchPrefix, p) { (messageData, id) =>
-          doSendMessage(queueActor, messageData).map {
+          doSendMessage(queueActor, messageData, queueData).map {
             case (message, digest, messageAttributeDigest) =>
               <SendMessageBatchResultEntry>
               <Id>{id}</Id>

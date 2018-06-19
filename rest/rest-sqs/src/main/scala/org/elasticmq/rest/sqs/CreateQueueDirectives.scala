@@ -10,10 +10,10 @@ import org.elasticmq.{DeadLettersQueueData, MillisVisibilityTimeout, QueueData}
 import org.joda.time.{DateTime, Duration}
 import spray.json._
 import scala.async.Async._
-import scala.concurrent.{Await, Future}
-import scala.util.Success
+import scala.concurrent.Future
 
 import org.elasticmq.rest.sqs.model.RedrivePolicy
+import spray.json.JsonParser.ParsingException
 
 trait CreateQueueDirectives {
   this: ElasticMQDirectives with QueueURLModule with AttributesModule with SQSLimitsModule =>
@@ -33,6 +33,9 @@ trait CreateQueueDirectives {
             } catch {
               case e: DeserializationException =>
                 logger.warn("Cannot deserialize the redrive policy attribute", e)
+                throw new SQSException("MalformedQueryString")
+              case e: ParsingException =>
+                logger.warn("Cannot parse the redrive policy attribute", e)
                 throw new SQSException("MalformedQueryString")
             }
 
@@ -63,6 +66,8 @@ trait CreateQueueDirectives {
               .getOrElse(DefaultReceiveMessageWait)
 
             val now = new DateTime()
+            val isFifo = attributes.get("FifoQueue").contains("true")
+            val hasContentBasedDeduplication = attributes.get("ContentBasedDeduplication").contains("true")
             val newQueueData = QueueData(
               queueName,
               MillisVisibilityTimeout.fromSeconds(secondsVisibilityTimeout),
@@ -70,13 +75,17 @@ trait CreateQueueDirectives {
               Duration.standardSeconds(secondsReceiveMessageWaitTime),
               now,
               now,
-              redrivePolicy.map(rd => DeadLettersQueueData(rd.queueName, rd.maxReceiveCount))
+              redrivePolicy.map(rd => DeadLettersQueueData(rd.queueName, rd.maxReceiveCount)),
+              isFifo,
+              hasContentBasedDeduplication
             )
 
-            if (!queueName.matches("[\\p{Alnum}_-]*")) {
+            if (!queueName.matches("[\\p{Alnum}\\._-]*")) {
               throw SQSException.invalidParameterValue
             } else if (sqsLimits == SQSLimits.Strict && queueName
                          .length() > 80) {
+              throw SQSException.invalidParameterValue
+            } else if (isFifo && !queueName.endsWith(".fifo")) {
               throw SQSException.invalidParameterValue
             }
 

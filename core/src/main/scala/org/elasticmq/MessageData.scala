@@ -8,4 +8,6 @@ case class MessageData(id: MessageId,
                        messageAttributes: Map[String, MessageAttribute],
                        nextDelivery: MillisNextDelivery,
                        created: DateTime,
-                       statistics: MessageStatistics)
+                       statistics: MessageStatistics,
+                       messageGroupId: Option[String],
+                       messageDeduplicationId: Option[String])
