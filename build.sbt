@@ -41,12 +41,12 @@ val jclOverSlf4j = "org.slf4j" % "jcl-over-slf4j" % "1.7.25" // needed form amaz
 val scalatest = "org.scalatest" %% "scalatest" % "3.0.5"
 val awaitility = "com.jayway.awaitility" % "awaitility-scala" % "1.7.0"
 
-val amazonJavaSdk = "com.amazonaws" % "aws-java-sdk" % "1.11.343" exclude ("commons-logging", "commons-logging")
+val amazonJavaSdk = "com.amazonaws" % "aws-java-sdk" % "1.11.349" exclude ("commons-logging", "commons-logging")
 
 val scalaGraph = "org.scala-graph" %% "graph-core" % "1.12.5"
 
 val akkaVersion = "2.5.13"
-val akkaHttpVersion = "10.1.2"
+val akkaHttpVersion = "10.1.3"
 val akka2Actor = "com.typesafe.akka" %% "akka-actor" % akkaVersion
 val akka2Slf4j = "com.typesafe.akka" %% "akka-slf4j" % akkaVersion
 val akka2Streams = "com.typesafe.akka" %% "akka-stream" % akkaVersion
