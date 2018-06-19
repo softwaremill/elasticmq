@@ -332,7 +332,11 @@ Technology
 Change log
 ----------
 
-### Version 0.14.0 (8 Jun 2018) ###
+### Version 0.14.0 (19 Jun 2018) ###
+
+* FIFO queues support by @simong
+
+### Version 0.13.11 (8 Jun 2018) ###
 
 * bug fixes
 * depedency updates
