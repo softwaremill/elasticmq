@@ -75,7 +75,6 @@ trait ReceiveMessageDirectives {
                                                       receiveRequestAttemptId)
 
         val attributeNames = attributeNamesReader.read(p, AllAttributeNames)
-        println(attributeNames)
 
         def calculateAttributeValues(msg: MessageData): List[(String, String)] = {
           import AttributeValuesCalculator.Rule
