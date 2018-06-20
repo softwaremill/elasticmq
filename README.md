@@ -332,7 +332,11 @@ Technology
 Change log
 ----------
 
-### Version 0.14.1 (19 Jun 2018) ###
+### Version 0.14.1 (20 Jun 2018) ###
+
+* remove println-debugging
+
+### Version 0.14.0 (19 Jun 2018) ###
 
 * FIFO queues support by @simong
 
