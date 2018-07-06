@@ -6,14 +6,14 @@ import org.elasticmq.rest.sqs.Constants._
 import org.elasticmq.rest.sqs.CreateQueueDirectives._
 import org.elasticmq.rest.sqs.ParametersUtil._
 import org.elasticmq.rest.sqs.directives.ElasticMQDirectives
+import org.elasticmq.rest.sqs.model.RedrivePolicy
 import org.elasticmq.{DeadLettersQueueData, MillisVisibilityTimeout, QueueData}
 import org.joda.time.{DateTime, Duration}
+import spray.json.JsonParser.ParsingException
 import spray.json._
+
 import scala.async.Async._
 import scala.concurrent.Future
-
-import org.elasticmq.rest.sqs.model.RedrivePolicy
-import spray.json.JsonParser.ParsingException
 
 trait CreateQueueDirectives {
   this: ElasticMQDirectives with QueueURLModule with AttributesModule with SQSLimitsModule =>
@@ -77,13 +77,14 @@ trait CreateQueueDirectives {
               now,
               redrivePolicy.map(rd => DeadLettersQueueData(rd.queueName, rd.maxReceiveCount)),
               isFifo,
-              hasContentBasedDeduplication
+              hasContentBasedDeduplication,
+              Map[String, String]()
             )
 
             if (!queueName.matches("[\\p{Alnum}\\._-]*")) {
               throw SQSException.invalidParameterValue
             } else if (sqsLimits == SQSLimits.Strict && queueName
-                         .length() > 80) {
+              .length() > 80) {
               throw SQSException.invalidParameterValue
             } else if (isFifo && !queueName.endsWith(".fifo")) {
               throw SQSException.invalidParameterValue
@@ -95,9 +96,9 @@ trait CreateQueueDirectives {
 
             // if the request set the attributes compare them against the queue
             if ((secondsDelayOpt.isDefined && queueData.delay.getStandardSeconds != secondsDelay) ||
-                (secondsReceiveMessageWaitTimeOpt.isDefined
+              (secondsReceiveMessageWaitTimeOpt.isDefined
                 && queueData.receiveMessageWait.getStandardSeconds != secondsReceiveMessageWaitTime) ||
-                (secondsVisibilityTimeoutOpt.isDefined
+              (secondsVisibilityTimeoutOpt.isDefined
                 && queueData.defaultVisibilityTimeout.seconds != secondsVisibilityTimeout)) {
               // Special case: the queue existed, but has different attributes
               throw new SQSException("AWS.SimpleQueueService.QueueNameExists")
@@ -107,10 +108,14 @@ trait CreateQueueDirectives {
               respondWith {
                 <CreateQueueResponse>
                   <CreateQueueResult>
-                    <QueueUrl>{url}</QueueUrl>
+                    <QueueUrl>
+                      {url}
+                    </QueueUrl>
                   </CreateQueueResult>
                   <ResponseMetadata>
-                    <RequestId>{EmptyRequestId}</RequestId>
+                    <RequestId>
+                      {EmptyRequestId}
+                    </RequestId>
                   </ResponseMetadata>
                 </CreateQueueResponse>
               }

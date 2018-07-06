@@ -29,9 +29,9 @@ import scala.xml.{EntityRef, _}
 /**
   * By default:
   * <li>
-  *  <ul>for `socketAddress`: when started, the server will bind to `localhost:9324`</ul>
-  *  <ul>for `serverAddress`: returned queue addresses will use `http://localhost:9324` as the base address.</ul>
-  *  <ul>for `sqsLimits`: relaxed
+  * <ul>for `socketAddress`: when started, the server will bind to `localhost:9324`</ul>
+  * <ul>for `serverAddress`: returned queue addresses will use `http://localhost:9324` as the base address.</ul>
+  * <ul>for `sqsLimits`: relaxed
   * </li>
   */
 object SQSRestServerBuilder extends TheSQSRestServerBuilder(None, None, "", 9324, NodeAddress(), true, SQSLimits.Strict)
@@ -109,9 +109,10 @@ case class TheSQSRestServerBuilder(providedActorSystem: Option[ActorSystem],
     with ListQueuesDirectives with SendMessageDirectives with SendMessageBatchDirectives with ReceiveMessageDirectives
     with DeleteMessageDirectives with DeleteMessageBatchDirectives with ChangeMessageVisibilityDirectives
     with ChangeMessageVisibilityBatchDirectives with GetQueueUrlDirectives with PurgeQueueDirectives
-    with AddPermissionDirectives with AttributesModule {
+    with AddPermissionDirectives with AttributesModule with TagQueueDirectives with TagsModule {
 
       def serverAddress = currentServerAddress.get()
+
       lazy val actorSystem = theActorSystem
       lazy val materializer = implicitMaterializer
       lazy val queueManagerActor = theQueueManagerActor
@@ -138,7 +139,10 @@ case class TheSQSRestServerBuilder(providedActorSystem: Option[ActorSystem],
         deleteQueue(p) ~
         getQueueAttributes(p) ~
         setQueueAttributes(p) ~
-        addPermission(p)
+        addPermission(p) ~
+        tagQueue(p) ~
+        untagQueue(p) ~
+        listQueueTags(p)
 
     val config = new ElasticMQConfig
 
@@ -226,6 +230,7 @@ object Constants {
 }
 
 object ParametersUtil {
+
   implicit class ParametersParser(parameters: Map[String, String]) {
     def parseOptionalLong(name: String) = {
       val param = parameters.get(name)
@@ -237,6 +242,7 @@ object ParametersUtil {
       }
     }
   }
+
 }
 
 object MD5Util {
@@ -244,7 +250,15 @@ object MD5Util {
     val md5 = MessageDigest.getInstance("MD5")
     md5.reset()
     md5.update(s.getBytes("UTF-8"))
-    md5.digest().map(0xFF & _).map { "%02x".format(_) }.foldLeft("") { _ + _ }
+    md5
+      .digest()
+      .map(0xFF & _)
+      .map {
+        "%02x".format(_)
+      }
+      .foldLeft("") {
+        _ + _
+      }
   }
 
   def md5AttributeDigest(attributes: Map[String, MessageAttribute]): String = {
@@ -289,7 +303,15 @@ object MD5Util {
     val md5 = MessageDigest.getInstance("MD5")
     md5.reset()
     md5.update(byteStream.toByteArray)
-    md5.digest().map(0xFF & _).map { "%02x".format(_) }.foldLeft("") { _ + _ }
+    md5
+      .digest()
+      .map(0xFF & _)
+      .map {
+        "%02x".format(_)
+      }
+      .foldLeft("") {
+        _ + _
+      }
   }
 }
 
