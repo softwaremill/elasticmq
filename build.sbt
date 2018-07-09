@@ -41,7 +41,50 @@ val jclOverSlf4j = "org.slf4j" % "jcl-over-slf4j" % "1.7.25" // needed form amaz
 val scalatest = "org.scalatest" %% "scalatest" % "3.0.5"
 val awaitility = "com.jayway.awaitility" % "awaitility-scala" % "1.7.0"
 
-val amazonJavaSdk = "com.amazonaws" % "aws-java-sdk" % "1.11.349" exclude ("commons-logging", "commons-logging")
+lazy val server: Project = (project in file("server"))
+  .settings(buildSettings)
+  .settings(generateVersionFileSettings)
+  .settings(Seq(
+    name := "elasticmq-server",
+    libraryDependencies ++= Seq(logback, config, scalaGraph),
+    mainClass in assembly := Some("org.elasticmq.server.Main"),
+    coverageMinimum := 52,
+    s3Upload := {
+      import com.amazonaws.auth.{AWSStaticCredentialsProvider, BasicAWSCredentials, DefaultAWSCredentialsProviderChain}
+      import com.amazonaws.services.s3.AmazonS3ClientBuilder
+      import com.amazonaws.services.s3.model.{CannedAccessControlList, PutObjectRequest}
+
+      val bucketName = "softwaremill-public"
+      val creds = Credentials.forHost(credentials.value, bucketName + ".s3.amazonaws.com")
+
+      val awsCreds = creds match {
+        case Some(cred) => new AWSStaticCredentialsProvider(new BasicAWSCredentials(cred.userName, cred.passwd))
+        case None       => new DefaultAWSCredentialsProviderChain
+      }
+
+      val client = AmazonS3ClientBuilder.standard().withCredentials(awsCreds).withRegion("eu-west-1").build()
+
+      val log = streams.value.log
+      val v = version.value
+
+      val source = (assemblyOutputPath in assembly).value
+      val targetObjectName = s"elasticmq-server-$v.jar"
+
+      log.info("Uploading " + source.getAbsolutePath + " as " + targetObjectName)
+
+      client.putObject(new PutObjectRequest(bucketName, targetObjectName, source)
+        .withCannedAcl(CannedAccessControlList.PublicRead))
+    },
+    /*
+    Format:
+    realm=Amazon S3
+    host=softwaremill-public.s3.amazonaws.com
+    user=[AWS key id]
+    password=[AWS secret key]
+     */
+    credentials += Credentials(Path.userHome / ".s3_elasticmq_credentials")
+  ))
+  .dependsOn(core, restSqs, commonTest % "test")
 
 val scalaGraph = "org.scala-graph" %% "graph-core" % "1.12.5"
 
@@ -112,51 +155,7 @@ lazy val restSqsTestingAmazonJavaSdk: Project =
           libraryDependencies ++= Seq(amazonJavaSdk, jclOverSlf4j) ++ common,
           publishArtifact := false))
     .dependsOn(restSqs % "test->test")
-
-lazy val server: Project = (project in file("server"))
-  .settings(buildSettings)
-  .settings(generateVersionFileSettings)
-  .settings(Seq(
-    name := "elasticmq-server",
-    libraryDependencies ++= Seq(logback, config, scalaGraph),
-    mainClass in assembly := Some("org.elasticmq.server.Main"),
-    coverageMinimum := 52,
-    s3Upload := {
-      import com.amazonaws.auth.{AWSStaticCredentialsProvider, DefaultAWSCredentialsProviderChain, BasicAWSCredentials}
-      import com.amazonaws.services.s3.AmazonS3ClientBuilder
-      import com.amazonaws.services.s3.model.{CannedAccessControlList, PutObjectRequest}
-
-      val bucketName = "softwaremill-public"
-      val creds = Credentials.forHost(credentials.value, bucketName + ".s3.amazonaws.com")
-
-      val awsCreds = creds match {
-        case Some(cred) => new AWSStaticCredentialsProvider(new BasicAWSCredentials(cred.userName, cred.passwd))
-        case None       => new DefaultAWSCredentialsProviderChain
-      }
-
-      val client = AmazonS3ClientBuilder.standard().withCredentials(awsCreds).withRegion("eu-west-1").build()
-
-      val log = streams.value.log
-      val v = version.value
-
-      val source = (assemblyOutputPath in assembly).value
-      val targetObjectName = s"elasticmq-server-$v.jar"
-
-      log.info("Uploading " + source.getAbsolutePath + " as " + targetObjectName)
-
-      client.putObject(new PutObjectRequest(bucketName, targetObjectName, source)
-        .withCannedAcl(CannedAccessControlList.PublicRead))
-    },
-    /*
-    Format:
-    realm=Amazon S3
-    host=softwaremill-public.s3.amazonaws.com
-    user=[AWS key id]
-    password=[AWS secret key]
-     */
-    credentials += Credentials(Path.userHome / ".s3_elasticmq_credentials")
-  ))
-  .dependsOn(core, restSqs, commonTest % "test")
+val amazonJavaSdk = "com.amazonaws" % "aws-java-sdk" % "1.11.361" exclude ("commons-logging", "commons-logging")
 
 lazy val performanceTests: Project = (project in file("performance-tests"))
   .settings(buildSettings)

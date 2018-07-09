@@ -84,7 +84,7 @@ trait CreateQueueDirectives {
             if (!queueName.matches("[\\p{Alnum}\\._-]*")) {
               throw SQSException.invalidParameterValue
             } else if (sqsLimits == SQSLimits.Strict && queueName
-              .length() > 80) {
+                         .length() > 80) {
               throw SQSException.invalidParameterValue
             } else if (isFifo && !queueName.endsWith(".fifo")) {
               throw SQSException.invalidParameterValue
@@ -96,9 +96,9 @@ trait CreateQueueDirectives {
 
             // if the request set the attributes compare them against the queue
             if ((secondsDelayOpt.isDefined && queueData.delay.getStandardSeconds != secondsDelay) ||
-              (secondsReceiveMessageWaitTimeOpt.isDefined
+                (secondsReceiveMessageWaitTimeOpt.isDefined
                 && queueData.receiveMessageWait.getStandardSeconds != secondsReceiveMessageWaitTime) ||
-              (secondsVisibilityTimeoutOpt.isDefined
+                (secondsVisibilityTimeoutOpt.isDefined
                 && queueData.defaultVisibilityTimeout.seconds != secondsVisibilityTimeout)) {
               // Special case: the queue existed, but has different attributes
               throw new SQSException("AWS.SimpleQueueService.QueueNameExists")
@@ -108,14 +108,10 @@ trait CreateQueueDirectives {
               respondWith {
                 <CreateQueueResponse>
                   <CreateQueueResult>
-                    <QueueUrl>
-                      {url}
-                    </QueueUrl>
+                    <QueueUrl>{url}</QueueUrl>
                   </CreateQueueResult>
                   <ResponseMetadata>
-                    <RequestId>
-                      {EmptyRequestId}
-                    </RequestId>
+                    <RequestId>{EmptyRequestId}</RequestId>
                   </ResponseMetadata>
                 </CreateQueueResponse>
               }

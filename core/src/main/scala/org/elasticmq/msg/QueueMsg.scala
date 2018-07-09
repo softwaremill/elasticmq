@@ -15,7 +15,10 @@ case class UpdateQueueDefaultVisibilityTimeout(newDefaultVisibilityTimeout: Mill
     extends QueueQueueMsg[Unit]
 case class UpdateQueueDelay(newDelay: Duration) extends QueueQueueMsg[Unit]
 case class UpdateQueueReceiveMessageWait(newReceiveMessageWait: Duration) extends QueueQueueMsg[Unit]
-case class UpdateQueueDeadLettersQueue(newDeadLettersQueue: Option[DeadLettersQueueData], newDeadLettersQueueActor: Option[ActorRef]) extends QueueQueueMsg[Unit]
+
+case class UpdateQueueDeadLettersQueue(newDeadLettersQueue: Option[DeadLettersQueueData],
+                                       newDeadLettersQueueActor: Option[ActorRef])
+    extends QueueQueueMsg[Unit]
 case class UpdateQueueTags(newQueueTags: Map[String, String]) extends QueueQueueMsg[Unit]
 case class RemoveQueueTags(tagsToRemove: List[String]) extends QueueQueueMsg[Unit]
 case class GetQueueStatistics(deliveryTime: Long) extends QueueQueueMsg[QueueStatistics]

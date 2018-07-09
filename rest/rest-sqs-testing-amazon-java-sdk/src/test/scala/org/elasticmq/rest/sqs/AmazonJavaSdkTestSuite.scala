@@ -2,21 +2,20 @@ package org.elasticmq.rest.sqs
 
 import java.nio.ByteBuffer
 
-import org.scalatest.Matchers
-import org.scalatest._
-import com.amazonaws.auth.BasicAWSCredentials
-import com.amazonaws.services.sqs.{AmazonSQS, AmazonSQSClient}
+import com.amazonaws.AmazonServiceException
+import com.amazonaws.auth.{AWSStaticCredentialsProvider, BasicAWSCredentials}
+import com.amazonaws.client.builder.AwsClientBuilder.EndpointConfiguration
+import com.amazonaws.services.sqs.model._
+import com.amazonaws.services.sqs.{AmazonSQS, AmazonSQSClientBuilder}
+import org.elasticmq._
+import org.elasticmq.rest.sqs.model.RedrivePolicy
+import org.elasticmq.util.Logging
+import org.scalatest.{Matchers, _}
+
 import scala.collection.JavaConversions._
 import scala.collection.JavaConverters._
 import scala.util.Try
-
-import com.amazonaws.services.sqs.model._
 import scala.util.control.Exception._
-
-import com.amazonaws.AmazonServiceException
-import org.elasticmq.util.Logging
-import org.elasticmq._
-import org.elasticmq.rest.sqs.model.RedrivePolicy
 
 class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter with Logging {
   val visibilityTimeoutAttribute = "VisibilityTimeout"
@@ -50,11 +49,17 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
     strictServer.waitUntilStarted()
     relaxedServer.waitUntilStarted()
 
-    client = new AmazonSQSClient(new BasicAWSCredentials("x", "x"))
-    client.setEndpoint("http://localhost:9321")
+    client = AmazonSQSClientBuilder
+      .standard()
+      .withCredentials(new AWSStaticCredentialsProvider(new BasicAWSCredentials("x", "x")))
+      .withEndpointConfiguration(new EndpointConfiguration("http://localhost:9321", "us-east-1"))
+      .build()
 
-    relaxedClient = new AmazonSQSClient(new BasicAWSCredentials("x", "x"))
-    relaxedClient.setEndpoint("http://localhost:9322")
+    relaxedClient = AmazonSQSClientBuilder
+      .standard()
+      .withCredentials(new AWSStaticCredentialsProvider(new BasicAWSCredentials("x", "x")))
+      .withEndpointConfiguration(new EndpointConfiguration("http://localhost:9322", "us-east-1"))
+      .build()
   }
 
   after {
@@ -224,6 +229,16 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
     doTestSendAndReceiveMessage(builder.toString())
   }
 
+  // Alias for send and receive with no attributes
+  def doTestSendAndReceiveMessage(content: String) {
+    doTestSendAndReceiveMessageWithAttributes(content, Map(), List())
+  }
+
+  def doTestSendAndReceiveMessageWithAttributes(content: String,
+                                                messageAttributes: Map[String, MessageAttribute]): Unit = {
+    doTestSendAndReceiveMessageWithAttributes(content, messageAttributes, List("All"))
+  }
+
   def doTestSendAndReceiveMessageWithAttributes(content: String,
                                                 messageAttributes: Map[String, MessageAttribute],
                                                 requestedAttributes: List[String]) {
@@ -288,16 +303,6 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
     } else {
       messageAttributes.filterKeys(k => requestedAttributes.contains(k))
     }
-  }
-
-  // Alias for send and receive with no attributes
-  def doTestSendAndReceiveMessage(content: String) {
-    doTestSendAndReceiveMessageWithAttributes(content, Map(), List())
-  }
-
-  def doTestSendAndReceiveMessageWithAttributes(content: String,
-                                                messageAttributes: Map[String, MessageAttribute]): Unit = {
-    doTestSendAndReceiveMessageWithAttributes(content, messageAttributes, List("All"))
   }
 
   test("should receive two messages in a batch") {
@@ -692,13 +697,7 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
     m2 should be(Some("Body 3"))
   }
 
-  private def createFifoQueue(suffix: Int = 1, attributes: Map[String, String] = Map.empty): String = {
-    val createRequest1 = new CreateQueueRequest(s"testFifoQueue$suffix.fifo")
-      .addAttributesEntry("FifoQueue", "true")
-      .addAttributesEntry("ContentBasedDeduplication", "true")
-    val createRequest2 = attributes.foldLeft(createRequest1) { case (acc, (k, v)) => acc.addAttributesEntry(k, v) }
-    client.createQueue(createRequest2).getQueueUrl
-  }
+  def queueVisibilityTimeout(queueUrl: String) = getQueueLongAttribute(queueUrl, visibilityTimeoutAttribute)
 
   test("should receive no more than the given amount of messages") {
     // Given
@@ -1422,8 +1421,8 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
   }
 
   test("should create queue with redrive policy.") {
-    import spray.json._
     import org.elasticmq.rest.sqs.model.RedrivePolicyJson._
+    import spray.json._
 
     // Given
     val deadLetterQueueUrl = client.createQueue(new CreateQueueRequest("dlq1")).getQueueUrl
@@ -1443,8 +1442,8 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
   }
 
   test("should return an error when the deadletter queue does not exist") {
-    import spray.json._
     import org.elasticmq.rest.sqs.model.RedrivePolicyJson._
+    import spray.json._
 
     // Given no dead letter queue
     // Then
@@ -1470,12 +1469,166 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
     }
   }
 
-  def queueVisibilityTimeout(queueUrl: String) = getQueueLongAttribute(queueUrl, visibilityTimeoutAttribute)
+  test("should throw an error when trying to recreate a queue with different attributes") {
+    client
+      .createQueue(
+        new CreateQueueRequest("attributeTestQueue")
+          .withAttributes(Map(defaultVisibilityTimeoutAttribute -> "3")))
+
+    a[AmazonSQSException] shouldBe thrownBy {
+      client
+        .createQueue(
+          new CreateQueueRequest("attributeTestQueue")
+            .withAttributes(Map(defaultVisibilityTimeoutAttribute -> "2")))
+    }
+  }
+
+  test("should return queue url when trying to recreate a queue with same attributes") {
+    val firstQueueUrl = client
+      .createQueue(
+        new CreateQueueRequest("attributeTestQueue2")
+          .withAttributes(Map(defaultVisibilityTimeoutAttribute -> "3")))
+      .getQueueUrl
+
+    val secondQueueUrl = client
+      .createQueue(
+        new CreateQueueRequest("attributeTestQueue2")
+          .withAttributes(Map(defaultVisibilityTimeoutAttribute -> "3")))
+      .getQueueUrl
+
+    secondQueueUrl shouldBe firstQueueUrl
+  }
+
+  test("should tag the queue") {
+    val tags = Map("tag1" -> "value1", "tag2" -> "value2")
+    val queueUrl = client
+      .createQueue(
+        new CreateQueueRequest("tagTestQueue")
+      )
+      .getQueueUrl
+
+    client.tagQueue(new TagQueueRequest().withQueueUrl(queueUrl).withTags(tags))
+
+    val readTags = client.listQueueTags(queueUrl)
+
+    readTags.getTags.toMap shouldBe tags
+  }
+
+  test("should update and add tags to the queue") {
+    val tags = Map("tag1" -> "value1", "tag2" -> "value2")
+    val queueUrl = client
+      .createQueue(
+        new CreateQueueRequest("tagTestQueue2")
+      )
+      .getQueueUrl
+
+    client.tagQueue(new TagQueueRequest().withQueueUrl(queueUrl).withTags(tags))
+
+    val updatedTags = Map("tag2" -> "newValue2", "tag3" -> "value3")
+
+    client.tagQueue(new TagQueueRequest().withQueueUrl(queueUrl).withTags(updatedTags))
+
+    val allTagsOnQueue = Map("tag1" -> "value1", "tag2" -> "newValue2", "tag3" -> "value3")
+
+    val readUpdatedTags = client.listQueueTags(queueUrl)
+
+    readUpdatedTags.getTags.toMap shouldBe allTagsOnQueue
+  }
+
+  test("should remove tags from the queue") {
+    val tags = Map("tag1" -> "value1", "tag2" -> "newValue2", "tag3" -> "value3")
+    val queueUrl = client
+      .createQueue(
+        new CreateQueueRequest("tagTestQueue3")
+      )
+      .getQueueUrl
+
+    client.tagQueue(new TagQueueRequest().withQueueUrl(queueUrl).withTags(tags))
+
+    client.untagQueue(new UntagQueueRequest().withQueueUrl(queueUrl).withTagKeys("tag1"))
+
+    val readTags = client.listQueueTags(queueUrl)
+
+    val newTags = tags - "tag1"
+
+    readTags.getTags.toMap shouldBe newTags
+  }
+
+  test("should remove multiple tags from the queue") {
+    val tags = Map("tag1" -> "value1", "tag2" -> "newValue2", "tag3" -> "value3")
+    val queueUrl = client
+      .createQueue(
+        new CreateQueueRequest("tagTestQueue3")
+      )
+      .getQueueUrl
+
+    client.tagQueue(new TagQueueRequest().withQueueUrl(queueUrl).withTags(tags))
+
+    client.untagQueue(new UntagQueueRequest().withQueueUrl(queueUrl).withTagKeys(List("tag1", "tag2")))
+
+    val readTags = client.listQueueTags(queueUrl)
+
+    val newTags = tags - "tag1" - "tag2"
+
+    readTags.getTags.toMap shouldBe newTags
+  }
+
+  test("should update queue redrive policy.") {
+    import org.elasticmq.rest.sqs.model.RedrivePolicyJson._
+    import spray.json._
+
+    val deadLetterQueueUrl = client.createQueue(new CreateQueueRequest("dlq2")).getQueueUrl
+    val deadLetterQueueAttributes = client.getQueueAttributes(deadLetterQueueUrl, List("All")).getAttributes
+    val redrivePolicy = RedrivePolicy("dlq2", 1).toJson.toString()
+    val createQueueResult = client.createQueue(
+      new CreateQueueRequest("q2")
+        .withAttributes(Map(defaultVisibilityTimeoutAttribute -> "1", redrivePolicyAttribute -> redrivePolicy)))
+    val newQueueAttributes = client.getQueueAttributes(createQueueResult.getQueueUrl, List("All")).getAttributes
+
+    deadLetterQueueAttributes.keySet() should not contain redrivePolicyAttribute
+    newQueueAttributes.keySet() should contain(redrivePolicyAttribute)
+    newQueueAttributes(redrivePolicyAttribute) should be(redrivePolicy)
+
+    val newDeadLetterQueueUrl = client.createQueue(new CreateQueueRequest("dlq2a")).getQueueUrl
+    val newRedrivePolicy = RedrivePolicy("dlq2a", 1).toJson.toString()
+    val updateQueueResult = client.setQueueAttributes(
+      new SetQueueAttributesRequest()
+        .withQueueUrl(createQueueResult.getQueueUrl)
+        .withAttributes(Map(redrivePolicyAttribute -> newRedrivePolicy)))
+    val updatedQueueAttributes = client.getQueueAttributes(createQueueResult.getQueueUrl, List("All")).getAttributes
+
+    updatedQueueAttributes.keySet() should contain(redrivePolicyAttribute)
+    updatedQueueAttributes(redrivePolicyAttribute) should be(newRedrivePolicy)
+  }
+
+  test("should not create queue with redrive policy if dlq does not exist") {
+    import org.elasticmq.rest.sqs.model.RedrivePolicyJson._
+    import spray.json._
+
+    val redrivePolicy = RedrivePolicy("notaqueue", 1).toJson.toString()
+    a[AmazonSQSException] shouldBe thrownBy {
+      client.createQueue(
+        new CreateQueueRequest("q3")
+          .withAttributes(Map(defaultVisibilityTimeoutAttribute -> "1", redrivePolicyAttribute -> redrivePolicy)))
+    }
+  }
+
+  test("should not update queue redrive policy if dlq does not exist") {
+    import org.elasticmq.rest.sqs.model.RedrivePolicyJson._
+    import spray.json._
+
+    val createQueueResult = client.createQueue(new CreateQueueRequest("q4"))
+
+    val redrivePolicy = RedrivePolicy("notaqueue", 1).toJson.toString()
+    a[AmazonSQSException] shouldBe thrownBy {
+      client.setQueueAttributes(
+        new SetQueueAttributesRequest()
+          .withQueueUrl(createQueueResult.getQueueUrl)
+          .withAttributes(Map(redrivePolicyAttribute -> redrivePolicy)))
+    }
+  }
 
   def queueDelay(queueUrl: String) = getQueueLongAttribute(queueUrl, delaySecondsAttribute)
-
-  def queueReceiveMessageWaitTimeSeconds(queueUrl: String) =
-    getQueueLongAttribute(queueUrl, receiveMessageWaitTimeSecondsAttribute)
 
   def getQueueLongAttribute(queueUrl: String, attributeName: String) = {
     client
@@ -1484,6 +1637,9 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
       .get(attributeName)
       .toLong
   }
+
+  def queueReceiveMessageWaitTimeSeconds(queueUrl: String) =
+    getQueueLongAttribute(queueUrl, receiveMessageWaitTimeSecondsAttribute)
 
   def receiveSingleMessage(queueUrl: String): Option[String] = {
     receiveSingleMessage(queueUrl, List("All"))
@@ -1528,5 +1684,13 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
     val result = super.runTest(testName, args)
     currentTestName = null
     result
+  }
+
+  private def createFifoQueue(suffix: Int = 1, attributes: Map[String, String] = Map.empty): String = {
+    val createRequest1 = new CreateQueueRequest(s"testFifoQueue$suffix.fifo")
+      .addAttributesEntry("FifoQueue", "true")
+      .addAttributesEntry("ContentBasedDeduplication", "true")
+    val createRequest2 = attributes.foldLeft(createRequest1) { case (acc, (k, v)) => acc.addAttributesEntry(k, v) }
+    client.createQueue(createRequest2).getQueueUrl
   }
 }

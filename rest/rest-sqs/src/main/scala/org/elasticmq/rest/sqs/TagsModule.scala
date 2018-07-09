@@ -7,11 +7,16 @@ trait TagsModule {
 
   class TagNameAndValuesReader {
     def read(parameters: Map[String, String]): Map[String, String] = {
+      // Fix for buggy Java library that sends "Tags" instead of "Tag" as per API specification
+      var tagPrefix = "Tag."
+      if (parameters.keySet.contains("Tags.1.Key")) {
+        tagPrefix = "Tags."
+      }
       def collect(suffix: Int, acc: Map[String, String]): Map[String, String] = {
-        parameters.get("Tag." + suffix + ".Key") match {
+        parameters.get(tagPrefix + suffix + ".Key") match {
           case None => acc
           case Some(an) =>
-            collect(suffix + 1, acc + (an -> parameters("Tag." + suffix + ".Value")))
+            collect(suffix + 1, acc + (an -> parameters(tagPrefix + suffix + ".Value")))
         }
       }
 

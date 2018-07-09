@@ -93,9 +93,7 @@ trait QueueAttributesDirectives {
               {attributesToXmlConverter.convert(attributes)}
             </GetQueueAttributesResult>
             <ResponseMetadata>
-              <RequestId>
-                {EmptyRequestId}
-              </RequestId>
+              <RequestId>{EmptyRequestId}</RequestId>
             </ResponseMetadata>
           </GetQueueAttributesResponse>
         }
@@ -154,7 +152,8 @@ trait QueueAttributesDirectives {
                     throw SQSException.invalidParameterValue
                   }
                   queueActor ? UpdateQueueDeadLettersQueue(
-                    Some(DeadLettersQueueData(redrivePolicy.queueName, redrivePolicy.maxReceiveCount)), deadLettersQueueActor)
+                    Some(DeadLettersQueueData(redrivePolicy.queueName, redrivePolicy.maxReceiveCount)),
+                    deadLettersQueueActor)
                 }
               }
               case attr
@@ -171,9 +170,7 @@ trait QueueAttributesDirectives {
           respondWith {
             <SetQueueAttributesResponse>
               <ResponseMetadata>
-                <RequestId>
-                  {EmptyRequestId}
-                </RequestId>
+                <RequestId>{EmptyRequestId}</RequestId>
               </ResponseMetadata>
             </SetQueueAttributesResponse>
           }

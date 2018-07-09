@@ -11,18 +11,13 @@ trait TagQueueDirectives {
   def listQueueTags(p: AnyParams) = {
     p.action("ListQueueTags") {
       queueActorAndDataFromRequest(p) { (queueActor, queueData) =>
-        for ((k, v) <- queueData.tags) {
-          println(s"found $k,$v")
-        }
         respondWith {
           <ListQueueTagsResponse>
             <ListQueueTagsResult>
               {tagsToXmlConverter.convert(queueData.tags)}
             </ListQueueTagsResult>
             <ResponseMetadata>
-              <RequestId>
-                {EmptyRequestId}
-              </RequestId>
+              <RequestId>{EmptyRequestId}</RequestId>
             </ResponseMetadata>
           </ListQueueTagsResponse>
         }
@@ -38,9 +33,7 @@ trait TagQueueDirectives {
         respondWith {
           <UntagQueueResponse>
             <ResponseMetadata>
-              <RequestId>
-                {EmptyRequestId}
-              </RequestId>
+              <RequestId>{EmptyRequestId}</RequestId>
             </ResponseMetadata>
           </UntagQueueResponse>
         }
@@ -56,9 +49,7 @@ trait TagQueueDirectives {
         respondWith(
           <TagQueueResponse>
             <ResponseMetadata>
-              <RequestId>
-                {EmptyRequestId}
-              </RequestId>
+              <RequestId>{EmptyRequestId}</RequestId>
             </ResponseMetadata>
           </TagQueueResponse>
         )

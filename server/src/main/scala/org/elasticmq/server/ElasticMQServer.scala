@@ -22,10 +22,11 @@ class ElasticMQServer(config: ElasticMQServerConfig) extends Logging {
 
     createQueues(queueManagerActor)
 
-    () => {
-      restServerOpt.map(_.stopAndGetFuture())
-      Await.result(actorSystem.terminate(), Inf)
-    }
+    () =>
+      {
+        restServerOpt.map(_.stopAndGetFuture())
+        Await.result(actorSystem.terminate(), Inf)
+      }
   }
 
   private def createBase(): ActorRef = {
