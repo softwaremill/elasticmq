@@ -1,9 +1,8 @@
 package org.elasticmq.actor.test
 
-import org.scalatest.{Suite, BeforeAndAfterEach}
-import akka.actor.{Props, ActorSystem, ActorRef}
+import akka.actor.{ActorRef, ActorSystem, Props}
 import org.elasticmq.actor.QueueManagerActor
-import org.elasticmq.util.NowProvider
+import org.scalatest.{BeforeAndAfterEach, Suite}
 
 trait QueueManagerForEachTest extends BeforeAndAfterEach {
   this: Suite =>
@@ -13,13 +12,13 @@ trait QueueManagerForEachTest extends BeforeAndAfterEach {
   var queueManagerActor: ActorRef = _
   var nowProvider: MutableNowProvider = _
 
-  override protected def beforeEach() {
+  override protected def beforeEach(): Unit = {
     super.beforeEach()
     nowProvider = new MutableNowProvider
     queueManagerActor = system.actorOf(Props(new QueueManagerActor(nowProvider)))
   }
 
-  override protected def afterEach() {
+  override protected def afterEach(): Unit = {
     system.stop(queueManagerActor)
     super.afterEach()
   }

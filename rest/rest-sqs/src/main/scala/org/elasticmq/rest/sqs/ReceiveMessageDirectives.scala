@@ -119,7 +119,7 @@ trait ReceiveMessageDirectives {
                   <MD5OfBody>{md5Digest(msg.content)}</MD5OfBody>
                   <Body>{XmlUtil.convertTexWithCRToNodeSeq(msg.content)}</Body>
                   {attributesToXmlConverter.convert(calculateAttributeValues(msg))}
-                  {if (!filteredMessageAttributes.isEmpty) <MD5OfMessageAttributes>{md5AttributeDigest(filteredMessageAttributes)}</MD5OfMessageAttributes>}
+                  {if (filteredMessageAttributes.nonEmpty) <MD5OfMessageAttributes>{md5AttributeDigest(filteredMessageAttributes)}</MD5OfMessageAttributes>}
                   {messageAttributesToXmlConverter.convert(filteredMessageAttributes.toList)}
                 </Message> }}
               </ReceiveMessageResult>

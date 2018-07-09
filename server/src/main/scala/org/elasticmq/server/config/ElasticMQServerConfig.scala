@@ -64,12 +64,13 @@ class ElasticMQServerConfig(config: Config) extends Logging {
     def getOptionalDuration(c: Config, k: String) = if (c.hasPath(k)) Some(c.getDuration(k, TimeUnit.SECONDS)) else None
     def getOptionalString(c: Config, k: String) = if (c.hasPath(k)) Some(c.getString(k)).filter(_.nonEmpty) else None
 
-    import scala.collection.JavaConversions._
+    import scala.collection.JavaConverters._
 
     val deadLettersQueueKey = "deadLettersQueue"
 
     val unsortedCreateQueues = config
       .getObject("queues")
+      .asScala
       .map {
         case (n, v) =>
           val c = v.asInstanceOf[ConfigObject].toConfig

@@ -4,9 +4,15 @@ import java.util.concurrent.TimeUnit
 
 import akka.actor.{ActorRef, ActorSystem, Props}
 import akka.util.Timeout
-import com.amazonaws.auth.BasicAWSCredentials
-import com.amazonaws.services.sqs.AmazonSQSClient
-import com.amazonaws.services.sqs.model.{CreateQueueRequest, DeleteMessageRequest, ReceiveMessageRequest, SendMessageRequest}
+import com.amazonaws.auth.{AWSStaticCredentialsProvider, BasicAWSCredentials}
+import com.amazonaws.client.builder.AwsClientBuilder.EndpointConfiguration
+import com.amazonaws.services.sqs.{AmazonSQS, AmazonSQSClientBuilder}
+import com.amazonaws.services.sqs.model.{
+  CreateQueueRequest,
+  DeleteMessageRequest,
+  ReceiveMessageRequest,
+  SendMessageRequest
+}
 import org.elasticmq.{NewMessageData, QueueData, _}
 import org.elasticmq.actor.QueueManagerActor
 import org.elasticmq.actor.reply._
@@ -16,14 +22,14 @@ import org.elasticmq.test._
 import org.elasticmq.util.NowProvider
 import org.joda.time.DateTime
 
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 import scala.concurrent.Await
 import scala.concurrent.duration._
 
 object LocalPerformanceTest extends App {
   testAll()
 
-  def testAll() {
+  def testAll(): Unit = {
     val iterations = 10
     val msgsInIteration = 100000
 
@@ -35,7 +41,7 @@ object LocalPerformanceTest extends App {
     testWithMq(new RestSQSMQ, iterations, msgsInIteration, "rest-sqs + in-memory", 1)
   }
 
-  def testWithMq(mq: MQ, iterations: Int, msgsInIteration: Int, name: String, threadCount: Int) {
+  def testWithMq(mq: MQ, iterations: Int, msgsInIteration: Int, name: String, threadCount: Int): Unit = {
     println(
       "Running test for [%s], iterations: %d, msgs in iteration: %d, thread count: %d."
         .format(name, iterations, msgsInIteration, threadCount))
@@ -44,8 +50,8 @@ object LocalPerformanceTest extends App {
 
     val took = timed {
       val threads = for (i <- 1 to threadCount) yield {
-        val t = new Thread(new Runnable() {
-          def run() { runTest(mq, iterations, msgsInIteration, name + " " + i) }
+        val t = new Thread(() => {
+          runTest(mq, iterations, msgsInIteration, name + " " + i)
         })
         t.start()
         t
@@ -55,13 +61,13 @@ object LocalPerformanceTest extends App {
     }
 
     val count = msgsInIteration * iterations * threadCount
-    println("Overall %s throughput: %f".format(name, (count.toDouble / (took.toDouble / 1000.0))))
+    println("Overall %s throughput: %f".format(name, count.toDouble / (took.toDouble / 1000.0)))
     println()
 
     mq.stop()
   }
 
-  private def runTest(mq: MQ, iterations: Int, msgsInIteration: Int, name: String) {
+  private def runTest(mq: MQ, iterations: Int, msgsInIteration: Int, name: String): Unit = {
     var count = 0
 
     val start = System.currentTimeMillis()
@@ -72,7 +78,7 @@ object LocalPerformanceTest extends App {
         mq.sendMessage("Message" + (i * j))
       }
 
-      for (j <- 1 to msgsInIteration) {
+      for (_ <- 1 to msgsInIteration) {
         mq.receiveMessage()
       }
 
@@ -81,7 +87,7 @@ object LocalPerformanceTest extends App {
       val loopEnd = System.currentTimeMillis()
       println(
         "%-20s throughput: %f, %d"
-          .format(name, (count.toDouble / ((loopEnd - start).toDouble / 1000.0)), (loopEnd - loopStart)))
+          .format(name, count.toDouble / ((loopEnd - start).toDouble / 1000.0), loopEnd - loopStart))
     }
   }
 
@@ -99,11 +105,11 @@ object LocalPerformanceTest extends App {
         .result(
           queueManagerActor ? CreateQueue(
             QueueData("testQueue",
-              MillisVisibilityTimeout(1000),
-              org.joda.time.Duration.ZERO,
-              org.joda.time.Duration.ZERO,
-              new DateTime(),
-              new DateTime())),
+                      MillisVisibilityTimeout(1000),
+                      org.joda.time.Duration.ZERO,
+                      org.joda.time.Duration.ZERO,
+                      new DateTime(),
+                      new DateTime())),
           10.seconds
         )
         .right
@@ -112,9 +118,9 @@ object LocalPerformanceTest extends App {
       queueManagerActor
     }
 
-    def sendMessage(m: String) {
+    def sendMessage(m: String): Unit = {
       Await.result(currentQueue ? SendMessage(NewMessageData(None, m, Map.empty, ImmediateNextDelivery, None, None)),
-        10.seconds)
+                   10.seconds)
     }
 
     def receiveMessage() = {
@@ -135,17 +141,17 @@ object LocalPerformanceTest extends App {
       queueManagerActor
     }
 
-    def stop() {
+    def stop(): Unit = {
       actorSystem.terminate()
     }
 
-    def sendMessage(m: String)
+    def sendMessage(m: String): Unit
 
     def receiveMessage(): String
   }
 
   class RestSQSMQ extends MQ {
-    private var currentSQSClient: AmazonSQSClient = _
+    private var currentSQSClient: AmazonSQS = _
     private var currentQueueUrl: String = _
     private var currentRestServer: SQSRestServer = _
 
@@ -157,22 +163,25 @@ object LocalPerformanceTest extends App {
         .withQueueManagerActor(queueManagerActor)
         .start()
 
-      currentSQSClient = new AmazonSQSClient(new BasicAWSCredentials("x", "x"))
-      currentSQSClient.setEndpoint("http://localhost:9324")
+      currentSQSClient = AmazonSQSClientBuilder
+        .standard()
+        .withCredentials(new AWSStaticCredentialsProvider(new BasicAWSCredentials("x", "x")))
+        .withEndpointConfiguration(new EndpointConfiguration("http://localhost:9324", "us-east-1"))
+        .build()
       currentQueueUrl = currentSQSClient
-        .createQueue(new CreateQueueRequest("testQueue").withAttributes(Map("VisibilityTimeout" -> "1")))
+        .createQueue(new CreateQueueRequest("testQueue").withAttributes(Map("VisibilityTimeout" -> "1").asJava))
         .getQueueUrl
 
       queueManagerActor
     }
 
-    override def stop() {
+    override def stop(): Unit = {
       currentRestServer.stopAndGetFuture
       currentSQSClient.shutdown()
       super.stop()
     }
 
-    def sendMessage(m: String) {
+    def sendMessage(m: String): Unit = {
       currentSQSClient.sendMessage(new SendMessageRequest(currentQueueUrl, m))
     }
 

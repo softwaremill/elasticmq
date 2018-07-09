@@ -163,22 +163,21 @@ case class TheSQSRestServerBuilder(providedActorSystem: Option[ActorSystem],
 
     val appStartFuture = Http().bindAndHandle(routes, interface, port)
 
-    appStartFuture.onSuccess {
-      case sb: Http.ServerBinding =>
-        if (generateServerAddress && port != sb.localAddress.getPort) {
-          currentServerAddress.set(theServerAddress.copy(port = sb.localAddress.getPort))
-        }
+    appStartFuture.foreach { sb: Http.ServerBinding =>
+      if (generateServerAddress && port != sb.localAddress.getPort) {
+        currentServerAddress.set(theServerAddress.copy(port = sb.localAddress.getPort))
+      }
 
-        TheSQSRestServerBuilder.this.logger.info(
-          "Started SQS rest server, bind address %s:%d, visible server address %s"
-            .format(interface,
-                    sb.localAddress.getPort,
-                    if (env.serverAddress.isWildcard)
-                      "* (depends on incoming request path) "
-                    else env.serverAddress.fullAddress))
+      TheSQSRestServerBuilder.this.logger.info(
+        "Started SQS rest server, bind address %s:%d, visible server address %s"
+          .format(interface,
+                  sb.localAddress.getPort,
+                  if (env.serverAddress.isWildcard)
+                    "* (depends on incoming request path) "
+                  else env.serverAddress.fullAddress))
     }
 
-    appStartFuture.onFailure {
+    appStartFuture.failed.foreach {
       case NonFatal(e) =>
         TheSQSRestServerBuilder.this.logger
           .error("Cannot start SQS rest server, bind address %s:%d".format(interface, port), e)
@@ -276,28 +275,24 @@ object MD5Util {
     val byteStream = new ByteArrayOutputStream
 
     TreeMap(attributes.toSeq: _*).foreach {
-      case (k, v) => {
+      case (k, v) =>
         // TreeMap is for sorting, a requirement of algorithm
         addEncodedString(byteStream, k)
         addEncodedString(byteStream, v.getDataType())
 
         v match {
-          case s: StringMessageAttribute => {
+          case s: StringMessageAttribute =>
             byteStream.write(1)
             addEncodedString(byteStream, s.stringValue)
-          }
-          case n: NumberMessageAttribute => {
+          case n: NumberMessageAttribute =>
             byteStream.write(1)
             addEncodedString(byteStream, n.stringValue.toString)
-          }
-          case b: BinaryMessageAttribute => {
+          case b: BinaryMessageAttribute =>
             byteStream.write(2)
             addEncodedByteArray(byteStream, b.binaryValue)
-          }
           case _ =>
             throw new IllegalArgumentException(s"Unsupported message attribute type: ${v.getClass.getName}")
         }
-      }
     }
 
     val md5 = MessageDigest.getInstance("MD5")
@@ -385,24 +380,23 @@ trait SQSLimitsModule {
 
   def sqsLimits: SQSLimits.Value
 
-  def ifStrictLimits(condition: => Boolean)(exception: String) {
+  def ifStrictLimits(condition: => Boolean)(exception: String): Unit = {
     if (sqsLimits == SQSLimits.Strict && condition) {
       throw new SQSException(exception)
     }
   }
 
-  def verifyMessageNumberAttribute(strValue: String) {
+  def verifyMessageNumberAttribute(strValue: String): Unit = {
     ifStrictLimits(
-      allCatch
+      !allCatch
         .opt(BigDecimal(strValue))
         .filter(v => v >= NUMBER_ATTR_MIN_VALUE)
-        .filter(v => v <= NUMBER_ATTR_MAX_VALUE)
-        .isEmpty) {
+        .exists(v => v <= NUMBER_ATTR_MAX_VALUE)) {
       s"Number attribute value $strValue should be in range (-10**128..10**126)"
     }
   }
 
-  def verifyMessageWaitTime(messageWaitTimeOpt: Option[Long]) {
+  def verifyMessageWaitTime(messageWaitTimeOpt: Option[Long]): Unit = {
     messageWaitTimeOpt.foreach { messageWaitTime =>
       if (messageWaitTime < 0) {
         throw SQSException.invalidParameterValue

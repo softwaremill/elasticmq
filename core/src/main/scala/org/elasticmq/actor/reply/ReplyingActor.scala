@@ -10,12 +10,11 @@ trait ReplyingActor extends Actor {
   val ev: ClassTag[M[Unit]]
 
   def receive = {
-    case m if ev.runtimeClass.isAssignableFrom(m.getClass) => {
+    case m if ev.runtimeClass.isAssignableFrom(m.getClass) =>
       doReceiveAndReply(m.asInstanceOf[M[Unit]])
-    }
   }
 
-  private def doReceiveAndReply[T](msg: M[T]) {
+  private def doReceiveAndReply[T](msg: M[T]): Unit = {
     try {
       receiveAndReply(msg) match {
         case ReplyWith(t) => sender ! t

@@ -119,17 +119,14 @@ trait QueueAttributesDirectives {
         val result = attributes.map({
           case (attributeName, attributeValue) =>
             attributeName match {
-              case VisibilityTimeoutParameter => {
+              case VisibilityTimeoutParameter =>
                 queueActor ? UpdateQueueDefaultVisibilityTimeout(
                   MillisVisibilityTimeout.fromSeconds(attributeValue.toLong))
-              }
-              case DelaySecondsAttribute => {
+              case DelaySecondsAttribute =>
                 queueActor ? UpdateQueueDelay(Duration.standardSeconds(attributeValue.toLong))
-              }
-              case ReceiveMessageWaitTimeSecondsAttribute => {
+              case ReceiveMessageWaitTimeSecondsAttribute =>
                 queueActor ? UpdateQueueReceiveMessageWait(Duration.standardSeconds(attributeValue.toLong))
-              }
-              case RedrivePolicyParameter => {
+              case RedrivePolicyParameter =>
                 val redrivePolicy =
                   try {
                     import org.elasticmq.rest.sqs.model.RedrivePolicyJson._
@@ -155,13 +152,11 @@ trait QueueAttributesDirectives {
                     Some(DeadLettersQueueData(redrivePolicy.queueName, redrivePolicy.maxReceiveCount)),
                     deadLettersQueueActor)
                 }
-              }
               case attr
                   if UnsupportedAttributeNames.AllUnsupportedAttributeNames
-                    .contains(attr) => {
+                    .contains(attr) =>
                 logger.warn("Ignored attribute \"" + attr + "\" (supported by SQS but not ElasticMQ)")
                 Future.successful(())
-              }
               case _ => Future.failed(new SQSException("InvalidAttributeName"))
             }
         })

@@ -67,7 +67,7 @@ object BatchRequestsModule {
           val subKey = keyMatch.group(2)
 
           val subMap =
-            subParameters.get(discriminator).getOrElse(Map[String, String]())
+            subParameters.getOrElse(discriminator, Map[String, String]())
           subParameters.put(discriminator, subMap + (subKey -> value))
         }
     }

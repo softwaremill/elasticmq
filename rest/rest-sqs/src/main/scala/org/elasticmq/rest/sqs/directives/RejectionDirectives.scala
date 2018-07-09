@@ -8,11 +8,10 @@ trait RejectionDirectives {
 
   val rejectionHandler = RejectionHandler
     .newBuilder()
-    .handleAll[Rejection] {
-      case rejections =>
-        handleServerExceptions { _ =>
-          throw new SQSException("Invalid request: " + rejections.map(_.toString).mkString(", "))
-        }
+    .handleAll[Rejection] { rejections =>
+      handleServerExceptions { _ =>
+        throw new SQSException("Invalid request: " + rejections.map(_.toString).mkString(", "))
+      }
     }
     .result()
 

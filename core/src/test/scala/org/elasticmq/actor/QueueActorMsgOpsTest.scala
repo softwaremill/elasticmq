@@ -37,7 +37,7 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
       lookupResult <- queueActor ? LookupMessage(MessageId("xyz"))
     } yield {
       // Then
-      lookupResult.map(createNewMessageData(_)) should be(Some(message))
+      lookupResult.map(createNewMessageData) should be(Some(message))
     }
   }
 
@@ -56,7 +56,7 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
       lookupResult <- queueActor ? LookupMessage(MessageId("xyz"))
     } yield {
       // Then
-      lookupResult.map(createNewMessageData(_)) should be(Some(m))
+      lookupResult.map(createNewMessageData) should be(Some(m))
     }
   }
 
@@ -95,7 +95,7 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
     } yield {
       // Then
       withoutDeliveryReceipt(lookupResult.headOption)
-        .map(createNewMessageData(_)) should be(Some(m.copy(nextDelivery = MillisNextDelivery(101L))))
+        .map(createNewMessageData) should be(Some(m.copy(nextDelivery = MillisNextDelivery(101L))))
     }
   }
 
@@ -113,7 +113,7 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
       lookupResult <- queueActor ? LookupMessage(MessageId("xyz"))
     } yield {
       // Then
-      withoutDeliveryReceipt(lookupResult).map(createNewMessageData(_)) should be(
+      withoutDeliveryReceipt(lookupResult).map(createNewMessageData) should be(
         Some(m.copy(nextDelivery = MillisNextDelivery(101L))))
     }
   }
@@ -199,7 +199,7 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
       lookupResult <- queueActor ? LookupMessage(MessageId("xyz"))
     } yield {
       // Then
-      lookupResult.map(createNewMessageData(_)) should be(
+      lookupResult.map(createNewMessageData) should be(
         Some(createNewMessageData("xyz", "1234", Map(), MillisNextDelivery(150L))))
     }
   }
@@ -351,7 +351,7 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
                                                           Some(Duration.millis(1000L)),
                                                           None)
       _ <- {
-        Thread.sleep(500); nowProvider.mutableNowMillis.set(200L);
+        Thread.sleep(500); nowProvider.mutableNowMillis.set(200L)
         queueActor ? SendMessage(msg)
       }
 
@@ -422,7 +422,7 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
                                                            None)
 
       _ <- {
-        Thread.sleep(500); queueActor ? SendMessage(msg1);
+        Thread.sleep(500); queueActor ? SendMessage(msg1)
         queueActor ? SendMessage(msg2)
       }
 

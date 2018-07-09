@@ -18,13 +18,12 @@ trait QueueActorWaitForMessagesOps extends ReplyingActor with QueueActorMessageO
     new collection.mutable.HashMap[Long, AwaitingData]()
 
   override def receive = super.receive orElse {
-    case ReplyIfTimeout(seq, replyWith) => {
+    case ReplyIfTimeout(seq, replyWith) =>
       awaitingReply.remove(seq).foreach {
         case AwaitingData(originalSender, _, _) =>
           logger.debug(s"${queueData.name}: Awaiting messages: sequence $seq timed out. Replying with no messages.")
           originalSender ! replyWith
       }
-    }
 
     case TryReply =>
       scheduledTryReply = None
@@ -61,7 +60,7 @@ trait QueueActorWaitForMessagesOps extends ReplyingActor with QueueActorMessageO
   }
 
   @tailrec
-  private def tryReply() {
+  private def tryReply(): Unit = {
     awaitingReply.headOption match {
       case Some(
           (seq,
@@ -87,7 +86,7 @@ trait QueueActorWaitForMessagesOps extends ReplyingActor with QueueActorMessageO
     seq
   }
 
-  private def scheduleTimeoutReply(seq: Long, waitForMessages: Duration) {
+  private def scheduleTimeoutReply(seq: Long, waitForMessages: Duration): Unit = {
     schedule(waitForMessages.getMillis, ReplyIfTimeout(seq, Nil))
   }
 
