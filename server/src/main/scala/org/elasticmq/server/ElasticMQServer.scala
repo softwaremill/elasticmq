@@ -63,7 +63,7 @@ class ElasticMQServer(config: ElasticMQServerConfig) extends Logging {
       Timeout(5.seconds)
     }
 
-    config.createQueues.map { cq =>
+    config.createQueues.foreach { cq =>
       // Synchronously create queues since order matters
       val f = queueManagerActor ? org.elasticmq.msg.CreateQueue(configToParams(cq, new DateTime))
       Await.result(f, timeout.duration)
@@ -81,8 +81,10 @@ class ElasticMQServer(config: ElasticMQServerConfig) extends Logging {
       created = now,
       lastModified = now,
       deadLettersQueue = cq.deadLettersQueue.map(dlq => DeadLettersQueueData(dlq.name, dlq.maxReceiveCount)),
-      cq.isFifo,
-      cq.hasContentBasedDeduplication
+      isFifo = cq.isFifo,
+      hasContentBasedDeduplication = cq.hasContentBasedDeduplication,
+      copyMessagesTo = cq.copyMessagesTo,
+      moveMessagesTo = cq.moveMessagesTo
     )
   }
 
