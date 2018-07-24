@@ -338,7 +338,11 @@ Technology
 Change log
 ----------
 
-### Version 0.14.2 (20 Jun 2018) ###
+### Version 0.14.2 (24 Jul 2018) ###
+
+* move/copy queue support by @sbinq
+
+### Version 0.14.1 (20 Jun 2018) ###
 
 * remove println-debugging
 
