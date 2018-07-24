@@ -10,6 +10,8 @@ case class QueueData(name: String,
                      lastModified: DateTime,
                      deadLettersQueue: Option[DeadLettersQueueData] = None,
                      isFifo: Boolean = false,
-                     hasContentBasedDeduplication: Boolean = false)
+                     hasContentBasedDeduplication: Boolean = false,
+                     copyMessagesTo: Option[String] = None,
+                     moveMessagesTo: Option[String] = None)
 
 case class DeadLettersQueueData(name: String, maxReceiveCount: Int)

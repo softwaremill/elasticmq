@@ -1,24 +1,40 @@
 package org.elasticmq.actor.queue
 
+import akka.actor.ActorRef
 import org.elasticmq.actor.reply._
 import org.elasticmq.msg.{DeleteMessage, LookupMessage, ReceiveMessages, SendMessage, UpdateVisibilityTimeout, _}
 import org.elasticmq.util.{Logging, NowProvider}
 import org.elasticmq.{MessageData, MessageId, MillisNextDelivery, NewMessageData, _}
-
 import org.elasticmq.actor.queue.ReceiveRequestAttemptCache.ReceiveFailure.{Expired, Invalid}
 
 trait QueueActorMessageOps extends Logging {
   this: QueueActorStorage =>
 
   def nowProvider: NowProvider
+  def context: akka.actor.ActorContext
 
   def receiveAndReplyMessageMsg[T](msg: QueueMessageMsg[T]): ReplyAction[T] = msg match {
-    case SendMessage(message)                                  => sendMessage(message)
+    case SendMessage(message)                                  => handleOrRedirectMessage(message)
     case UpdateVisibilityTimeout(messageId, visibilityTimeout) => updateVisibilityTimeout(messageId, visibilityTimeout)
     case ReceiveMessages(visibilityTimeout, count, _, receiveRequestAttemptId) =>
       receiveMessages(visibilityTimeout, count, receiveRequestAttemptId)
     case DeleteMessage(deliveryReceipt) => deleteMessage(deliveryReceipt)
     case LookupMessage(messageId)       => messageQueue.byId.get(messageId.id).map(_.toMessageData)
+  }
+
+  private def handleOrRedirectMessage(message: NewMessageData): ReplyAction[MessageData] = {
+    copyMessagesToActorRef.foreach { _ ! SendMessage(message) }
+
+    moveMessagesToActorRef match {
+      case Some(moveTo) =>
+        // preserve original sender so that reply would be received there from the move-to actor
+        implicit val sender: ActorRef = context.sender()
+        moveTo ! SendMessage(message)
+        DoNotReply()
+
+      case None =>
+        sendMessage(message)
+    }
   }
 
   private def sendMessage(message: NewMessageData): MessageData = {

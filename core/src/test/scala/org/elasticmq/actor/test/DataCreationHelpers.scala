@@ -9,15 +9,21 @@ trait DataCreationHelpers {
   def createQueueData(
       name: String,
       defaultVisibilityTimeout: MillisVisibilityTimeout,
-      deadLettersQueue: Option[DeadLettersQueueData] = None
+      deadLettersQueue: Option[DeadLettersQueueData] = None,
+      copyMessagesToQueue: Option[String] = None,
+      moveMessagesToQueue: Option[String] = None
   ) =
-    QueueData(name,
-              defaultVisibilityTimeout,
-              Duration.ZERO,
-              Duration.ZERO,
-              new DateTime(0),
-              new DateTime(0),
-              deadLettersQueue)
+    QueueData(
+      name = name,
+      defaultVisibilityTimeout = defaultVisibilityTimeout,
+      delay = Duration.ZERO,
+      receiveMessageWait = Duration.ZERO,
+      created = new DateTime(0),
+      lastModified = new DateTime(0),
+      deadLettersQueue = deadLettersQueue,
+      copyMessagesTo = copyMessagesToQueue,
+      moveMessagesTo = moveMessagesToQueue
+    )
 
   def createMessageData(id: String,
                         content: String,

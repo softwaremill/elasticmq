@@ -62,6 +62,7 @@ class ElasticMQServerConfig(config: Config) extends Logging {
   val createQueues: List[CreateQueue] = {
     def getOptionalBoolean(c: Config, k: String) = if (c.hasPath(k)) Some(c.getBoolean(k)) else None
     def getOptionalDuration(c: Config, k: String) = if (c.hasPath(k)) Some(c.getDuration(k, TimeUnit.SECONDS)) else None
+    def getOptionalString(c: Config, k: String) = if (c.hasPath(k)) Some(c.getString(k)).filter(_.nonEmpty) else None
 
     import scala.collection.JavaConversions._
 
@@ -73,19 +74,21 @@ class ElasticMQServerConfig(config: Config) extends Logging {
         case (n, v) =>
           val c = v.asInstanceOf[ConfigObject].toConfig
           CreateQueue(
-            n,
-            getOptionalDuration(c, "defaultVisibilityTimeout"),
-            getOptionalDuration(c, "delay"),
-            getOptionalDuration(c, "receiveMessageWait"),
-            if (c.hasPath(deadLettersQueueKey)) {
+            name = n,
+            defaultVisibilityTimeoutSeconds = getOptionalDuration(c, "defaultVisibilityTimeout"),
+            delaySeconds = getOptionalDuration(c, "delay"),
+            receiveMessageWaitSeconds = getOptionalDuration(c, "receiveMessageWait"),
+            deadLettersQueue = if (c.hasPath(deadLettersQueueKey)) {
               Some(
                 DeadLettersQueue(
                   c.getString(deadLettersQueueKey + ".name"),
                   c.getInt(deadLettersQueueKey + ".maxReceiveCount")
                 ))
             } else None,
-            getOptionalBoolean(c, "fifo").getOrElse(false),
-            getOptionalBoolean(c, "contentBasedDeduplication").getOrElse(false)
+            isFifo = getOptionalBoolean(c, "fifo").getOrElse(false),
+            hasContentBasedDeduplication = getOptionalBoolean(c, "contentBasedDeduplication").getOrElse(false),
+            copyMessagesTo = getOptionalString(c, "copyTo"),
+            moveMessagesTo = getOptionalString(c, "moveTo")
           )
       }
       .toList

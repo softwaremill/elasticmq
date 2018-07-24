@@ -125,15 +125,21 @@ queues {
         deadLettersQueue {
             name = "queue1-dead-letters"
             maxReceiveCount = 3 // from 1 to 1000
-    	}
-    	fifo = false
-    	contentBasedDeduplication = false
+        }
+        fifo = false
+        contentBasedDeduplication = false
+        copyTo = "audit-queue-name"
+        moveTo = "redirect-queue-name"
     }
     queue1-dead-letters { }
+    audit-queue-name { }
+    redirect-queue-name { }
 }
 ````
 
 All attributes are optional (except `name` and `maxReceiveCount` when a `deadLettersQueue` is defined).
+`copyTo` and `moveTo` attributes allow to achieve behavior that might be useful primarily for integration testing scenarios -
+all messages could be either duplicated (using `copyTo` attribute) or redirected (using `moveTo` attribute) to another queue.
 
 Starting an embedded ElasticMQ server with an SQS interface
 -----------------------------------------------------------

@@ -3,8 +3,8 @@ package org.elasticmq.actor
 import org.elasticmq.actor.reply._
 import org.elasticmq._
 import org.elasticmq.msg._
-import org.elasticmq.actor.test.{DataCreationHelpers, QueueManagerForEachTest, ActorTest}
-import org.joda.time.{Duration, DateTime}
+import org.elasticmq.actor.test.{ActorTest, DataCreationHelpers, QueueManagerForEachTest}
+import org.joda.time.{DateTime, Duration}
 
 class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with DataCreationHelpers {
 
@@ -467,6 +467,53 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
 
       receiveResults.head.id.id should be(m1ID)
       receiveResultsDeadLettersQueue.head.id.id should be(m1ID)
+    }
+  }
+
+  waitTest("should move messages to move-to queue when configured") {
+    // Given
+    val redirectToQueue = createQueueData("redirectTo", MillisVisibilityTimeout(1L))
+    val q1 = createQueueData("queue1", MillisVisibilityTimeout(1L), moveMessagesToQueue = Some("redirectTo"))
+    val m1ID = "xyz"
+    val m1 = createNewMessageData(m1ID, "123", Map(), MillisNextDelivery(100))
+
+    for {
+      Right(redirectToActor) <- queueManagerActor ? CreateQueue(redirectToQueue)
+      Right(queueActor) <- queueManagerActor ? CreateQueue(q1)
+
+      // When
+      sendAck <- queueActor ? SendMessage(m1)
+      _ = nowProvider.mutableNowMillis.set(1000L)
+      receiveResultsOriginal <- queueActor ? ReceiveMessages(DefaultVisibilityTimeout, 5, None, None)
+      receiveResultsMoved <- redirectToActor ? ReceiveMessages(DefaultVisibilityTimeout, 5, None, None)
+    } yield {
+      // Then
+      sendAck.id should be(MessageId(m1ID))
+      receiveResultsOriginal.size should be(0)
+      receiveResultsMoved.map(_.id) should be(List(MessageId(m1ID)))
+    }
+  }
+
+  waitTest("should copy messages to copy-to queue when configured") {
+    // Given
+    val copyToQueue = createQueueData("copyTo", MillisVisibilityTimeout(1L))
+    val q1 = createQueueData("queue1", MillisVisibilityTimeout(1L), copyMessagesToQueue = Some("copyTo"))
+    val m1ID = "xyz"
+    val m1 = createNewMessageData(m1ID, "123", Map(), MillisNextDelivery(100))
+
+    for {
+      Right(copyToActor) <- queueManagerActor ? CreateQueue(copyToQueue)
+      Right(queueActor) <- queueManagerActor ? CreateQueue(q1)
+
+      // When
+      _ <- queueActor ? SendMessage(m1)
+      _ = nowProvider.mutableNowMillis.set(1000L)
+      resultsOriginal <- queueActor ? ReceiveMessages(DefaultVisibilityTimeout, 5, None, None)
+      resultsCopied <- copyToActor ? ReceiveMessages(DefaultVisibilityTimeout, 5, Some(Duration.millis(500)), None)
+    } yield {
+      // Then
+      resultsOriginal.map(_.id) should be(List(MessageId(m1ID)))
+      resultsCopied.map(_.id) should be(List(MessageId(m1ID)))
     }
   }
 

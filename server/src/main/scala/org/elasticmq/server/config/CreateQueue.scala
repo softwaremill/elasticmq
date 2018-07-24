@@ -6,4 +6,6 @@ case class CreateQueue(name: String,
                        receiveMessageWaitSeconds: Option[Long],
                        deadLettersQueue: Option[DeadLettersQueue],
                        isFifo: Boolean,
-                       hasContentBasedDeduplication: Boolean)
+                       hasContentBasedDeduplication: Boolean,
+                       copyMessagesTo: Option[String] = None,
+                       moveMessagesTo: Option[String] = None)

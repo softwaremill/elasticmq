@@ -25,6 +25,20 @@ class QueueSorterTest extends FunSuite with Matchers {
     sortedQueues.head.name should be("deadletters")
   }
 
+  test("sorts queue and copyTo/moveTo queues") {
+    val sortedQueues = QueueSorter.sortCreateQueues(
+      List(
+        CreateQueue("queue1", None, None, None, None, false, false, None, Some("redirect")),
+        CreateQueue("redirect", None, None, None, None, false, false, Some("audit"), None),
+        CreateQueue("deadletters", None, None, None, None, false, false),
+        CreateQueue("audit", None, None, None, Some(DeadLettersQueue("deadletters", 1)), false, false, None, None)
+      )
+    )
+    sortedQueues.map(_.name) should be(
+      List("deadletters", "audit", "redirect", "queue1")
+    )
+  }
+
   test("throws exception for circular graphs") {
     an[IllegalArgumentException] should be thrownBy QueueSorter.sortCreateQueues(
       List(

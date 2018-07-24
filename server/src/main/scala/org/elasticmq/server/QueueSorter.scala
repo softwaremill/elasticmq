@@ -11,13 +11,15 @@ import scalax.collection.GraphEdge._
 object QueueSorter extends Logging {
 
   /**
-    * Reverse topologically sort CreateQueue collection so that dead letter queues are created first
+    * Reverse topologically sort CreateQueue collection so that referenced queues are created first
+    * (this includes dead letter, copy-to and move-to queues).
+    *
     * @param cqs
     * @return
     */
   def sortCreateQueues(cqs: List[CreateQueue]): List[CreateQueue] = {
     val nodes = cqs
-    val edges = createDeadLetterQueueEdges(nodes)
+    val edges = createReferencedQueuesEdges(nodes)
     val sorted = Graph.from(nodes, edges).topologicalSort()
 
     // There's a cycle somewhere in the graph
@@ -30,26 +32,32 @@ object QueueSorter extends Logging {
     }
   }
 
-  private def createDeadLetterQueueEdges(nodes: List[CreateQueue]): List[DiEdge[CreateQueue]] = {
-    var edges = new ListBuffer[DiEdge[CreateQueue]]()
+  private def createReferencedQueuesEdges(nodes: List[CreateQueue]): List[DiEdge[CreateQueue]] = {
+    val edges = new ListBuffer[DiEdge[CreateQueue]]()
 
     // create map to look up queues by name
-    var queueMap = Map[String, CreateQueue]()
-    nodes.foreach { cq =>
-      queueMap += (cq.name -> cq)
-    }
+    val queueMap = nodes.map { cq =>
+      cq.name -> cq
+    }.toMap
 
-    // create directed edges from queue -> dead letter queue
+    // create directed edges from queue to referenced queues (dead letter queue, copy-to and move-to queues)
     nodes.foreach { cq =>
-      if (cq.deadLettersQueue.nonEmpty) {
-        val dlcqName = cq.deadLettersQueue.get.name
-        val dlcq = queueMap.get(dlcqName)
-
-        if (dlcq.isEmpty) {
-          logger.error("Dead letter queue {} not found", dlcqName)
-        } else {
-          edges += cq ~> dlcq.get
+      val referencedQueues =
+        Seq(
+          "Dead letter" -> cq.deadLettersQueue.map(_.name),
+          "Copy to" -> cq.copyMessagesTo,
+          "Move to" -> cq.moveMessagesTo
+        ).flatMap {
+          case (label, Some(queue)) => Seq(label -> queue)
+          case (_, None)            => Nil
         }
+
+      referencedQueues.foreach {
+        case (label, queueName) =>
+          queueMap.get(queueName) match {
+            case Some(queue) => edges += cq ~> queue
+            case None        => logger.error("{} queue {} not found", label, queueName)
+          }
       }
     }
 
