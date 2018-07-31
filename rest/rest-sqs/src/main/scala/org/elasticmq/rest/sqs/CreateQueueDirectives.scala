@@ -77,9 +77,9 @@ trait CreateQueueDirectives {
               now,
               redrivePolicy.map(rd => DeadLettersQueueData(rd.queueName, rd.maxReceiveCount)),
               isFifo,
-              hasContentBasedDeduplication,
-              Map[String, String]()
+              hasContentBasedDeduplication
             )
+            //TODO: add tags
 
             if (!queueName.matches("[\\p{Alnum}\\._-]*")) {
               throw SQSException.invalidParameterValue
