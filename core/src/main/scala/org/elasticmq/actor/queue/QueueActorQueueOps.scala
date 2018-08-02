@@ -38,12 +38,8 @@ trait QueueActorQueueOps extends Logging {
       messageQueue.clear()
     case GetQueueStatistics(deliveryTime) => getQueueStatistics(deliveryTime)
     case UpdateQueueTags(newQueueTags) =>
-      logger.info(s"${queueData.name} Adding and Updating tags")
-      var tmpTags = queueData.tags
-      for ((k, v) <- newQueueTags) {
-        tmpTags += (k -> v)
-      }
-      queueData = queueData.copy(tags = tmpTags)
+      logger.info(s"${queueData.name} Adding and Updating tags ${newQueueTags}")
+      queueData = queueData.copy(tags = queueData.tags ++ newQueueTags)
     case RemoveQueueTags(tagsToRemove) =>
       logger.info(s"${queueData.name} Removing tags")
       var tmpTags = queueData.tags
