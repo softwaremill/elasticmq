@@ -130,6 +130,10 @@ queues {
         contentBasedDeduplication = false
         copyTo = "audit-queue-name"
         moveTo = "redirect-queue-name"
+        tags {
+            tag1 = "tagged1"
+            tag2 = "tagged2"
+        }
     }
     queue1-dead-letters { }
     audit-queue-name { }

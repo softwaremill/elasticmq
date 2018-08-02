@@ -1,7 +1,7 @@
 package org.elasticmq.actor.queue
 
-import org.elasticmq._
-import org.elasticmq.actor.reply._
+import org.elasticmq.QueueStatistics
+import org.elasticmq.actor.reply.ReplyAction
 import org.elasticmq.msg._
 import org.elasticmq.util.Logging
 
@@ -20,14 +20,19 @@ trait QueueActorQueueOps extends Logging {
       logger.info(s"${queueData.name}: Updating receive message wait to $newReceiveMessageWait")
       queueData = queueData.copy(receiveMessageWait = newReceiveMessageWait)
     case UpdateQueueDeadLettersQueue(newDeadLettersQueue, newDeadLettersQueueActor) =>
-      if (newDeadLettersQueue.isDefined) {
+      if (newDeadLettersQueue.isDefined && newDeadLettersQueueActor.isDefined) {
         logger.info(
           s"${queueData.name}: Updating Dead Letters Queue to ${newDeadLettersQueue.get.name} with maxReceiveCount ${newDeadLettersQueue.get.maxReceiveCount}")
+        deadLettersActorRef = newDeadLettersQueueActor
+        queueData = queueData.copy(deadLettersQueue = newDeadLettersQueue)
       } else {
+        if (newDeadLettersQueue.isDefined || newDeadLettersQueueActor.isDefined) {
+          logger.warn("Removing DLQ as both settings and actor must be given.")
+        }
         logger.info(s"${queueData.name}: Removing Dead Letters Queue")
+        deadLettersActorRef = None
+        queueData = queueData.copy(deadLettersQueue = None)
       }
-      queueData = queueData.copy(deadLettersQueue = newDeadLettersQueue)
-      deadLettersQueueActor = newDeadLettersQueueActor
     case ClearQueue() =>
       logger.info(s"${queueData.name}: Clearing queue")
       messageQueue.clear()

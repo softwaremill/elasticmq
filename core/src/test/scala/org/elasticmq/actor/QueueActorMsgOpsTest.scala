@@ -470,6 +470,41 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
     }
   }
 
+  waitTest(
+    "should send unprocessed messages to dead letters queue and delete from original when dlq is added after creation") {
+    // Given
+    val deadLettersQueueName = "dlq11"
+    val m1ID = "xyz"
+    val dlq1 =
+      createQueueData(deadLettersQueueName, MillisVisibilityTimeout(1L), None)
+
+    val q1 =
+      createQueueData("q11", MillisVisibilityTimeout(1L))
+    val m1 = createNewMessageData(m1ID, "123", Map(), MillisNextDelivery(100))
+
+    for {
+      Right(deadLettersQueueActor) <- queueManagerActor ? CreateQueue(dlq1)
+      Right(queueActor) <- queueManagerActor ? CreateQueue(q1)
+      _ <- queueActor ? UpdateQueueDeadLettersQueue(Some(DeadLettersQueueData(deadLettersQueueName, 1)),
+                                                    Some(deadLettersQueueActor))
+      _ <- queueActor ? SendMessage(m1)
+
+      // When
+      receiveResults <- queueActor ? ReceiveMessages(DefaultVisibilityTimeout, 5, None, None)
+      _ = nowProvider.mutableNowMillis.set(1000L)
+      receiveResultsEmpty <- queueActor ? ReceiveMessages(DefaultVisibilityTimeout, 5, None, None)
+      receiveResultsDeadLettersQueue <- deadLettersQueueActor ? ReceiveMessages(DefaultVisibilityTimeout, 5, None, None)
+    } yield {
+      // Then
+      receiveResults.size should be(1)
+      receiveResultsEmpty.size should be(0)
+      receiveResultsDeadLettersQueue.size should be(1)
+
+      receiveResults.head.id.id should be(m1ID)
+      receiveResultsDeadLettersQueue.head.id.id should be(m1ID)
+    }
+  }
+
   waitTest("should move messages to move-to queue when configured") {
     // Given
     val redirectToQueue = createQueueData("redirectTo", MillisVisibilityTimeout(1L))

@@ -10,7 +10,7 @@ import scala.reflect._
 
 class QueueActor(val nowProvider: NowProvider,
                  val initialQueueData: QueueData,
-                 val deadLettersActorRef: Option[ActorRef] = None,
+                 var deadLettersActorRef: Option[ActorRef] = None,
                  val copyMessagesToActorRef: Option[ActorRef] = None,
                  val moveMessagesToActorRef: Option[ActorRef] = None)
     extends QueueActorStorage
