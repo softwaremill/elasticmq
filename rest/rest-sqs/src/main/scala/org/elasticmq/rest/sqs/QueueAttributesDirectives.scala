@@ -55,7 +55,7 @@ trait QueueAttributesDirectives {
         ApproximateNumberOfMessagesDelayedAttribute ::
         CreatedTimestampAttribute ::
         LastModifiedTimestampAttribute ::
-        QueueArnAttribute :: Nil)
+        QueueArnAttribute :: Nil) ++ MockedFifoAttributeNames.AllMockedFifoAttributeNames
   }
 
   def getQueueAttributes(p: AnyParams) = {
@@ -93,7 +93,20 @@ trait QueueAttributesDirectives {
                 Rule(RedrivePolicyParameter, () => Future.successful(redrivePolicy.toJson.toString)))
           )
 
-          val rules = alwaysAvailableParameterRules ++ optionalRules.flatten
+          val fifoRules = queueData.isFifo match {
+            case true => {
+              Seq(
+                Rule(MockedFifoAttributeNames.FifoQueue, () => Future.successful(queueData.isFifo.toString())),
+                Rule(
+                  MockedFifoAttributeNames.ContentBasedDeduplication,
+                  () => Future.successful(queueData.hasContentBasedDeduplication.toString())
+                )
+              )
+            }
+            case _ => Seq()
+          }
+
+          val rules = alwaysAvailableParameterRules ++ optionalRules.flatten ++ fifoRules
           attributeValuesCalculator.calculate(attributeNames, rules: _*)
         }
 
