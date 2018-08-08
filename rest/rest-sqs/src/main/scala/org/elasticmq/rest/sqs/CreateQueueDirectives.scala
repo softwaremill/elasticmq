@@ -79,7 +79,6 @@ trait CreateQueueDirectives {
               isFifo,
               hasContentBasedDeduplication
             )
-            //TODO: add tags
 
             if (!queueName.matches("[\\p{Alnum}\\._-]*")) {
               throw SQSException.invalidParameterValue
