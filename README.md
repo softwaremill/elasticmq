@@ -4,8 +4,8 @@ ElasticMQ
 tl;dr
 -----
 
-* message queue system
-* runs stand-alone ([download](https://s3-eu-west-1.amazonaws.com/softwaremill-public/elasticmq-server-0.14.4.jar)) or embedded
+* in-memory message queue system
+* runs stand-alone ([download](https://s3-eu-west-1.amazonaws.com/softwaremill-public/elasticmq-server-0.14.4.jar)), via [Docker](https://hub.docker.com/r/softwaremill/elasticmq/) or embedded
 * [Amazon SQS](http://aws.amazon.com/sqs/)-compatible interface
 * fully asynchronous implementation, no blocking calls
 
@@ -36,8 +36,9 @@ The future will most probably bring even more exciting features :).
 Community
 ---------
 
-* [Blog](http://www.warski.org/blog/category/elasticmq/)
+* [Issues](https://github.com/adamw/elasticmq/issues)
 * Forum (discussions, help): [Google group](https://groups.google.com/forum/?fromgroups#!forum/elasticmq).
+* (old) [blog](http://www.warski.org/blog/category/elasticmq/)
 
 Installation: stand-alone
 -------------------------
@@ -212,6 +213,19 @@ The `boto3` interface is different:
                             use_ssl=False)
     queue = client.get_queue_by_name(QueueName='queue1')
 
+ElasticqMQ via docker
+---------------------
+
+A Docker image is built on each released an pushed as [`softwaremill/elasticmq`](https://hub.docker.com/r/softwaremill/elasticmq/).
+
+The image uses default configuration. Custom configuration can be provided (e.g. to change the port, or create queues on startup) by providing a custom configuration file, as described above.
+
+To use a custom configuration file run:
+
+```
+docker run -v `pwd`/custom.conf:/opt/elasticmq.conf softwaremill/elasticmq
+```
+
 ElasticMQ dependencies in SBT
 -----------------------------
 
@@ -237,12 +251,6 @@ Dependencies:
     </dependency>
 
 If you want to use a snapshot version, you will need to add the [https://oss.sonatype.org/content/repositories/snapshots/](https://oss.sonatype.org/content/repositories/snapshots/) repository to your configuration.
-
-Replication, journaling, SQL backend
-------------------------------------
-
-Until version 0.7.0, ElasticMQ included optional replication, journaling and an SQL message storage. These modules
-have been discontinued.
 
 Current versions
 ----------------
@@ -338,228 +346,3 @@ Technology
   asynchronous, REST/HTTP toolkit.
 * Testing the SQS interface: [Amazon Java SDK](http://aws.amazon.com/sdkforjava/);
   see the `rest-sqs-testing-amazon-java-sdk` module for the testsuite.
-
-Change log
-----------
-
-### Version 0.14.4 (24 Jul 2018) ###
-
-* move/copy queue support by @sbinq
-
-### Version 0.14.1 (20 Jun 2018) ###
-
-* remove println-debugging
-
-### Version 0.14.0 (19 Jun 2018) ###
-
-* FIFO queues support by @simong
-
-### Version 0.13.11 (8 Jun 2018) ###
-
-* bug fixes
-* depedency updates
-
-### Version 0.13.10 (16 May 2018) ###
-
-* bug fixes
-
-### Version 0.13.9 (13 March 2018) ###
-
-* bug fixes
-
-### Version 0.13.8 (25 June 2017) ###
-
-* bug fixes
-
-### Version 0.13.7 (24 June 2017) ###
-
-* bug fixes
-
-### Version 0.13.6 (22 June 2017) ###
-
-* bug fixes
-
-### Version 0.13.5 (26 May 2017) ###
-
-* bug fixes
-
-#### Version 0.13.4 (16 May 2017)
-
-* fix akka dependencies
-* properly returned only requrested attributes
-
-#### Version 0.13.3 (5 May 2017)
-
-* fix queue creation order in presence of DLQs
-* update dependencies, akka & akka-http
-
-#### Version 0.13.2 (7 Feb 2017)
-
-* bug fix
-
-#### Version 0.13.1 (26 Jan 2017)
-
-* add dummy add permission endpoint
-
-#### Version 0.13.0 (25 Jan 2017)
-
-* add dead letter queue support (thx @mkorolyov)
-
-#### Version 0.12.1 (13 Dec 2016)
-
-* remove TODOs which caused problems with .NET client
-
-#### Version 0.12.0 (7 Dec 2016)
-
-* support for dynamic port allocation
-* node address is generated from bind address if not specified
-
-#### Version 0.11.1 (30 Nov 2016)
-
-* bug fix
-
-#### Version 0.11.0 (23 Nov 2016)
-
-* updating dependencies, using Akka HTTP 10, builds for Scala 2.11 and 2.12
-
-#### Version 0.10.1 (31 Oct 2016)
-
-* fixing a bug with changing message visibility and long pooling
-
-#### Version 0.10.0 (22 Sep 2016)
-
-* updating Akka and other dependencies
-
-#### Version 0.9.3 (13 Apr 2016)
-
-* bug fix
-
-#### Version 0.9.2 (8 Apr 2016)
-
-* fixes handling of wait time seconds equal to 0 when receiving messages
-
-#### Version 0.9.1 (4 Apr 2016)
-
-* fixed bug to allow connecting using Perl client
-
-#### Version 0.9.0 (23 Mar 2016)
-
-* replace Spray with Akka
-* increase message body size limits
-* provide an option to create queues on startup
-* add a special node-address setting: `*`, which uses the incoming request url to create queue urls
-
-#### Version 0.8.12 (30 Sep 2015)
-
-* checking queue length if limits are strict
-
-#### Version 0.8.11 (3 Sep 2015)
-
-* downgrading typesafe-config to keep Java6 compatibility
-
-#### Version 0.8.10 (3 Sep 2015)
-
-* numeric attributes support (thx @sf-git)
-
-#### Version 0.8.9 (10 Aug 2015)
-
-* binary attributes support (thx @brainoutsource)
-* dependency updates
-
-#### Version 0.8.8 (10 Apr 2015)
-
-* dependency updates, bug fixes
-
-#### Version 0.8.6, 0.8.7 (7 Feb 2015, 13 Feb 2015)
-
-* adding support for the `QueueArn` attribute
-
-#### Version 0.8.5 (11 Dec 2014)
-
-* supporting `PurgeQueue` action instead of a custom one
-
-#### Version 0.8.4 (2 Dec 2014)
-
-* custom action for clearing all messages from a queue
-
-#### Version 0.8.3 (22 Oct 2014)
-
-* bug fixes
-* updating dependencies
-* publishing to Maven Central
-
-#### Version 0.8.2 (6 Jun 2014)
-
-* increasing the bind timeout
-* initial support for `String`-valued message attributes (thx @hayesgm)
-
-#### Version 0.8.1 (29 May 2014)
-
-* fixing Node.JS compatibility
-* fixing a bug when calculating queue attributes
-* updating to Scala 2.11.1, Akka 2.3.3
-
-#### Version 0.8.0 (29 April 2014)
-
-* updating to Scala 2.11, Akka 2.3.2
-* updating libraries to latest versions
-
-#### Version 0.7.1 (22 August 2013)
-
-* bug fixes
-
-#### Version 0.7.0 (5 June 2013)
-
-* reimplemented using Akka and Spray (actor-based, no blocking)
-* long polling support
-* bug fixes
-
-#### Version 0.6.3 (21 January 2013)
-
-* Scala 2.10 support
-* Changing the way the stand-alone server is configured
-
-#### Version 0.6.2 (13 December 2012)
-
-* bug fixes
-* properly handling SQS receipt handles - message can be deleted only when passing the most recent receipt handle
-
-#### Version 0.6.1 (18 November 2012)
-
-* using Sonatype's OSS repositories for releases
-* library upgrades
-
-#### Version 0.6 (19 October 2012)
-
-* batch operations in SQS (send, receive, delete, change visibility)
-* changed `SQSRestServerFactory` to `SQSRestServerBuilder`
-* "strict" and "relaxed" modes when creating an SQS server: the limits enforced by SQS are optionally checked, e.g. for
-batch operations (max 10 messages), maximum message size (64KB). Strict by default.
-
-#### Version 0.5 (26 May 2012)
-
-* stand-alone distribution ([download](https://github.com/downloads/adamw/elasticmq/elasticmq-0.5.tar.gz))
-* file log for message storage (journal)
-* factoring out `storage-database` module, to decrease the dependencies of the core modules
-
-#### Version 0.4 (27 Mar 2012)
-
-* replication
-
-#### Version 0.3 (6 Feb 2012)
-
-* in-memory storage
-* new native API
-* bug fixes
-
-#### Version 0.2 (12 Jan 2012)
-
-* new SQS functions support
-* testing with Amazon Java SDK
-* bug fixes
-
-#### Version 0.1 (12 Oct 2011)
-
-* initial release
-* DB storage
-* SQS interface support
