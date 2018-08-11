@@ -1,5 +1,7 @@
 import com.amazonaws.services.s3.model.PutObjectResult
 import sbt.Keys.credentials
+import sbtrelease.ReleaseStateTransformations._
+import com.softwaremill.Publish.Release.updateVersionInDocs
 import scoverage.ScoverageKeys._
 
 val buildSettings = commonSmlBuildSettings ++ ossPublishSettings ++ Seq(
@@ -24,11 +26,34 @@ val buildSettings = commonSmlBuildSettings ++ ossPublishSettings ++ Seq(
       }
     )
 
-    releaseProcess.value.flatMap { s =>
-      if (s == sbtrelease.ReleaseStateTransformations.setReleaseVersion) {
-        Seq(s, uploadAssembly)
-      } else Seq(s)
-    }
+    val uploadDocker: ReleaseStep = ReleaseStep(
+      action = { st: State =>
+        val extracted = Project.extract(st)
+        val (st2, _) = extracted.runTask(publish in Docker in server, st)
+        st2
+      }
+    )
+
+    Seq(
+      checkSnapshotDependencies,
+      inquireVersions,
+      // publishing locally so that the pgp password prompt is displayed early
+      // in the process
+      releaseStepCommand("publishLocalSigned"),
+      runClean,
+      runTest,
+      setReleaseVersion,
+      uploadDocker,
+      uploadAssembly,
+      updateVersionInDocs(organization.value),
+      commitReleaseVersion,
+      tagRelease,
+      publishArtifacts,
+      setNextVersion,
+      commitNextVersion,
+      releaseStepCommand("sonatypeReleaseAll"),
+      pushChanges
+    )
   }
 )
 
@@ -116,6 +141,7 @@ lazy val restSqsTestingAmazonJavaSdk: Project =
     .dependsOn(restSqs % "test->test")
 
 lazy val server: Project = (project in file("server"))
+  .enablePlugins(JavaServerAppPackaging, DockerPlugin)
   .settings(buildSettings)
   .settings(generateVersionFileSettings)
   .settings(Seq(
@@ -123,6 +149,7 @@ lazy val server: Project = (project in file("server"))
     libraryDependencies ++= Seq(logback, config, scalaGraph),
     mainClass in assembly := Some("org.elasticmq.server.Main"),
     coverageMinimum := 52,
+    // s3 upload
     s3Upload := {
       import com.amazonaws.auth.{AWSStaticCredentialsProvider, DefaultAWSCredentialsProviderChain, BasicAWSCredentials}
       import com.amazonaws.services.s3.AmazonS3ClientBuilder
@@ -156,7 +183,15 @@ lazy val server: Project = (project in file("server"))
     user=[AWS key id]
     password=[AWS secret key]
      */
-    credentials += Credentials(Path.userHome / ".s3_elasticmq_credentials")
+    credentials += Credentials(Path.userHome / ".s3_elasticmq_credentials"),
+    // docker
+    dockerExposedPorts := Seq(9324),
+    dockerBaseImage := "java:8",
+    packageName in Docker := "elasticmq",
+    dockerUsername := Some("softwaremill"),
+    dockerUpdateLatest := true,
+    javaOptions in Universal ++= Seq("-Dconfig.file=/opt/elasticmq.conf"),
+    mappings in Docker += (baseDirectory.value / "docker" / "elasticmq.conf") -> "/opt/elasticmq.conf"
   ))
   .dependsOn(core, restSqs, commonTest % "test")
 
