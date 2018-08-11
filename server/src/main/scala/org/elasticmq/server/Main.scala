@@ -1,5 +1,7 @@
 package org.elasticmq.server
 
+import java.lang.Thread.UncaughtExceptionHandler
+
 import akka.actor.Terminated
 import com.typesafe.config.ConfigFactory
 import org.elasticmq.server.config.ElasticMQServerConfig
@@ -30,8 +32,9 @@ object Main extends Logging {
   }
 
   private def logUncaughtExceptions(): Unit = {
-    Thread.setDefaultUncaughtExceptionHandler((t: Thread, e: Throwable) => {
-      logger.error("Uncaught exception in thread: " + t.getName, e)
+    Thread.setDefaultUncaughtExceptionHandler(new UncaughtExceptionHandler {
+      override def uncaughtException(t: Thread, e: Throwable): Unit =
+        logger.error("Uncaught exception in thread: " + t.getName, e)
     })
   }
 
