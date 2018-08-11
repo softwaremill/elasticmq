@@ -213,14 +213,12 @@ The `boto3` interface is different:
                             use_ssl=False)
     queue = client.get_queue_by_name(QueueName='queue1')
 
-ElasticqMQ via docker
+ElasticqMQ via Docker
 ---------------------
 
-A Docker image is built on each released an pushed as [`softwaremill/elasticmq`](https://hub.docker.com/r/softwaremill/elasticmq/).
+A Docker image is built on each release an pushed as [`softwaremill/elasticmq`](https://hub.docker.com/r/softwaremill/elasticmq/).
 
-The image uses default configuration. Custom configuration can be provided (e.g. to change the port, or create queues on startup) by providing a custom configuration file, as described above.
-
-To use a custom configuration file run:
+The image uses default configuration. Custom configuration can be provided (e.g. to change the port, or create queues on startup) by creating a custom configuration file (see above) and using it when running the container:
 
 ```
 docker run -v `pwd`/custom.conf:/opt/elasticmq.conf softwaremill/elasticmq
