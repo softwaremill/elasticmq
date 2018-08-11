@@ -84,7 +84,8 @@ class ElasticMQServer(config: ElasticMQServerConfig) extends Logging {
       isFifo = cq.isFifo,
       hasContentBasedDeduplication = cq.hasContentBasedDeduplication,
       copyMessagesTo = cq.copyMessagesTo,
-      moveMessagesTo = cq.moveMessagesTo
+      moveMessagesTo = cq.moveMessagesTo,
+      tags = cq.tags
     )
   }
 

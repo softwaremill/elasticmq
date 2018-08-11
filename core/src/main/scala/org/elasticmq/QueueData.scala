@@ -12,6 +12,7 @@ case class QueueData(name: String,
                      isFifo: Boolean = false,
                      hasContentBasedDeduplication: Boolean = false,
                      copyMessagesTo: Option[String] = None,
-                     moveMessagesTo: Option[String] = None)
+                     moveMessagesTo: Option[String] = None,
+                     tags: Map[String, String] = Map[String, String]())
 
 case class DeadLettersQueueData(name: String, maxReceiveCount: Int)

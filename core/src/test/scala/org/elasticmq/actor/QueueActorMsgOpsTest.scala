@@ -37,7 +37,7 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
       lookupResult <- queueActor ? LookupMessage(MessageId("xyz"))
     } yield {
       // Then
-      lookupResult.map(createNewMessageData(_)) should be(Some(message))
+      lookupResult.map(createNewMessageData) should be(Some(message))
     }
   }
 
@@ -56,7 +56,7 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
       lookupResult <- queueActor ? LookupMessage(MessageId("xyz"))
     } yield {
       // Then
-      lookupResult.map(createNewMessageData(_)) should be(Some(m))
+      lookupResult.map(createNewMessageData) should be(Some(m))
     }
   }
 
@@ -95,7 +95,7 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
     } yield {
       // Then
       withoutDeliveryReceipt(lookupResult.headOption)
-        .map(createNewMessageData(_)) should be(Some(m.copy(nextDelivery = MillisNextDelivery(101L))))
+        .map(createNewMessageData) should be(Some(m.copy(nextDelivery = MillisNextDelivery(101L))))
     }
   }
 
@@ -113,7 +113,7 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
       lookupResult <- queueActor ? LookupMessage(MessageId("xyz"))
     } yield {
       // Then
-      withoutDeliveryReceipt(lookupResult).map(createNewMessageData(_)) should be(
+      withoutDeliveryReceipt(lookupResult).map(createNewMessageData) should be(
         Some(m.copy(nextDelivery = MillisNextDelivery(101L))))
     }
   }
@@ -199,7 +199,7 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
       lookupResult <- queueActor ? LookupMessage(MessageId("xyz"))
     } yield {
       // Then
-      lookupResult.map(createNewMessageData(_)) should be(
+      lookupResult.map(createNewMessageData) should be(
         Some(createNewMessageData("xyz", "1234", Map(), MillisNextDelivery(150L))))
     }
   }
@@ -351,7 +351,7 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
                                                           Some(Duration.millis(1000L)),
                                                           None)
       _ <- {
-        Thread.sleep(500); nowProvider.mutableNowMillis.set(200L);
+        Thread.sleep(500); nowProvider.mutableNowMillis.set(200L)
         queueActor ? SendMessage(msg)
       }
 
@@ -422,7 +422,7 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
                                                            None)
 
       _ <- {
-        Thread.sleep(500); queueActor ? SendMessage(msg1);
+        Thread.sleep(500); queueActor ? SendMessage(msg1)
         queueActor ? SendMessage(msg2)
       }
 
@@ -452,6 +452,41 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
     for {
       Right(deadLettersQueueActor) <- queueManagerActor ? CreateQueue(dlq1)
       Right(queueActor) <- queueManagerActor ? CreateQueue(q1)
+      _ <- queueActor ? SendMessage(m1)
+
+      // When
+      receiveResults <- queueActor ? ReceiveMessages(DefaultVisibilityTimeout, 5, None, None)
+      _ = nowProvider.mutableNowMillis.set(1000L)
+      receiveResultsEmpty <- queueActor ? ReceiveMessages(DefaultVisibilityTimeout, 5, None, None)
+      receiveResultsDeadLettersQueue <- deadLettersQueueActor ? ReceiveMessages(DefaultVisibilityTimeout, 5, None, None)
+    } yield {
+      // Then
+      receiveResults.size should be(1)
+      receiveResultsEmpty.size should be(0)
+      receiveResultsDeadLettersQueue.size should be(1)
+
+      receiveResults.head.id.id should be(m1ID)
+      receiveResultsDeadLettersQueue.head.id.id should be(m1ID)
+    }
+  }
+
+  waitTest(
+    "should send unprocessed messages to dead letters queue and delete from original when dlq is added after creation") {
+    // Given
+    val deadLettersQueueName = "dlq11"
+    val m1ID = "xyz"
+    val dlq1 =
+      createQueueData(deadLettersQueueName, MillisVisibilityTimeout(1L), None)
+
+    val q1 =
+      createQueueData("q11", MillisVisibilityTimeout(1L))
+    val m1 = createNewMessageData(m1ID, "123", Map(), MillisNextDelivery(100))
+
+    for {
+      Right(deadLettersQueueActor) <- queueManagerActor ? CreateQueue(dlq1)
+      Right(queueActor) <- queueManagerActor ? CreateQueue(q1)
+      _ <- queueActor ? UpdateQueueDeadLettersQueue(Some(DeadLettersQueueData(deadLettersQueueName, 1)),
+                                                    Some(deadLettersQueueActor))
       _ <- queueActor ? SendMessage(m1)
 
       // When

@@ -16,7 +16,7 @@ class QueueManagerActor(nowProvider: NowProvider) extends ReplyingActor with Log
   private val queues = collection.mutable.HashMap[String, ActorRef]()
 
   def receiveAndReply[T](msg: QueueManagerMsg[T]): ReplyAction[T] = msg match {
-    case CreateQueue(queueData) => {
+    case CreateQueue(queueData) =>
       if (queues.contains(queueData.name)) {
         logger.debug(s"Cannot create queue, as it already exists: $queueData")
         Left(new QueueAlreadyExists(queueData.name))
@@ -26,18 +26,15 @@ class QueueManagerActor(nowProvider: NowProvider) extends ReplyingActor with Log
         queues(queueData.name) = actor
         Right(actor)
       }
-    }
 
-    case DeleteQueue(queueName) => {
+    case DeleteQueue(queueName) =>
       logger.info(s"Deleting queue $queueName")
-      queues.remove(queueName).foreach(context.stop(_))
-    }
+      queues.remove(queueName).foreach(context.stop)
 
-    case LookupQueue(queueName) => {
+    case LookupQueue(queueName) =>
       val result = queues.get(queueName)
       logger.debug(s"Looking up queue $queueName, found?: ${result.isDefined}")
       result
-    }
 
     case ListQueues() => queues.keySet.toSeq
   }

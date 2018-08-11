@@ -13,14 +13,14 @@ abstract class ActorTest extends TestKit(ActorSystem()) with FunSuiteLike with M
   implicit val timeout: Timeout = maxDuration
   implicit val ec = system.dispatcher
 
-  override protected def afterAll() {
+  override protected def afterAll(): Unit = {
     waitFor(system.terminate())
     super.afterAll()
   }
 
   def waitFor[T](f: Future[T]): T = Await.result(f, maxDuration)
 
-  def waitTest(testName: String)(body: => Future[_]) {
+  def waitTest(testName: String)(body: => Future[_]): Unit = {
     test(testName) {
       waitFor(body)
     }

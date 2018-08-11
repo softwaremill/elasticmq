@@ -8,4 +8,5 @@ case class CreateQueue(name: String,
                        isFifo: Boolean,
                        hasContentBasedDeduplication: Boolean,
                        copyMessagesTo: Option[String] = None,
-                       moveMessagesTo: Option[String] = None)
+                       moveMessagesTo: Option[String] = None,
+                       tags: Map[String, String] = Map[String, String]())

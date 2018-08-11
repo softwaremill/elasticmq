@@ -1,23 +1,21 @@
 package org.elasticmq.rest.sqs
 
-import org.elasticmq.MillisVisibilityTimeout
-import Constants._
-import org.joda.time.Duration
-import org.elasticmq.msg.{
-  GetQueueStatistics,
-  UpdateQueueDefaultVisibilityTimeout,
-  UpdateQueueDelay,
-  UpdateQueueReceiveMessageWait
-}
 import org.elasticmq.actor.reply._
-import scala.concurrent.Future
-
+import org.elasticmq.msg._
+import org.elasticmq.rest.sqs.Constants._
 import org.elasticmq.rest.sqs.directives.ElasticMQDirectives
 import org.elasticmq.rest.sqs.model.RedrivePolicy
+import org.elasticmq.{DeadLettersQueueData, MillisVisibilityTimeout}
+import org.joda.time.Duration
+import spray.json.JsonParser.ParsingException
 import spray.json._
+
+import scala.async.Async.{await, _}
+import scala.concurrent.Future
 
 trait QueueAttributesDirectives {
   this: ElasticMQDirectives with AttributesModule =>
+
   object QueueWriteableAttributeNames {
     val AllWriteableAttributeNames = VisibilityTimeoutParameter :: DelaySecondsAttribute ::
       ReceiveMessageWaitTimeSecondsAttribute :: RedrivePolicyParameter :: Nil
@@ -27,10 +25,9 @@ trait QueueAttributesDirectives {
     val PolicyAttribute = "Policy"
     val MaximumMessageSizeAttribute = "MaximumMessageSize"
     val MessageRetentionPeriodAttribute = "MessageRetentionPeriod"
-    val RedrivePolicyAttribute = "RedrivePolicy"
 
     val AllUnsupportedAttributeNames = PolicyAttribute :: MaximumMessageSizeAttribute ::
-      MessageRetentionPeriodAttribute :: RedrivePolicyAttribute :: Nil
+      MessageRetentionPeriodAttribute :: Nil
   }
 
   object QueueReadableAttributeNames {
@@ -122,22 +119,44 @@ trait QueueAttributesDirectives {
         val result = attributes.map({
           case (attributeName, attributeValue) =>
             attributeName match {
-              case VisibilityTimeoutParameter => {
+              case VisibilityTimeoutParameter =>
                 queueActor ? UpdateQueueDefaultVisibilityTimeout(
                   MillisVisibilityTimeout.fromSeconds(attributeValue.toLong))
-              }
-              case DelaySecondsAttribute => {
+              case DelaySecondsAttribute =>
                 queueActor ? UpdateQueueDelay(Duration.standardSeconds(attributeValue.toLong))
-              }
-              case ReceiveMessageWaitTimeSecondsAttribute => {
+              case ReceiveMessageWaitTimeSecondsAttribute =>
                 queueActor ? UpdateQueueReceiveMessageWait(Duration.standardSeconds(attributeValue.toLong))
-              }
+              case RedrivePolicyParameter =>
+                val redrivePolicy =
+                  try {
+                    import org.elasticmq.rest.sqs.model.RedrivePolicyJson._
+                    attributeValue.parseJson.convertTo[RedrivePolicy]
+                  } catch {
+                    case e: DeserializationException =>
+                      logger.warn("Cannot deserialize the redrive policy attribute", e)
+                      throw new SQSException("MalformedQueryString")
+                    case e: ParsingException =>
+                      logger.warn("Cannot parse the redrive policy attribute", e)
+                      throw new SQSException("MalformedQueryString")
+                  }
+                async {
+                  val deadLettersQueueActor = await(queueManagerActor ? LookupQueue(redrivePolicy.queueName))
+                  if (deadLettersQueueActor.isEmpty) {
+                    throw SQSException.nonExistentQueue
+                  }
+
+                  if (redrivePolicy.maxReceiveCount < 1 || redrivePolicy.maxReceiveCount > 1000) {
+                    throw SQSException.invalidParameterValue
+                  }
+                  queueActor ? UpdateQueueDeadLettersQueue(
+                    Some(DeadLettersQueueData(redrivePolicy.queueName, redrivePolicy.maxReceiveCount)),
+                    deadLettersQueueActor)
+                }
               case attr
                   if UnsupportedAttributeNames.AllUnsupportedAttributeNames
-                    .contains(attr) => {
+                    .contains(attr) =>
                 logger.warn("Ignored attribute \"" + attr + "\" (supported by SQS but not ElasticMQ)")
                 Future.successful(())
-              }
               case _ => Future.failed(new SQSException("InvalidAttributeName"))
             }
         })

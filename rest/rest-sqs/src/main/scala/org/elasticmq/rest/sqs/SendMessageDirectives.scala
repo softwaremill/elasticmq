@@ -48,13 +48,12 @@ trait SendMessageDirectives { this: ElasticMQDirectives with SQSLimitsModule =>
     // Determine number of attributes -- there are likely ways to improve this
     val numAttributes = parameters
       .map {
-        case (k, v) => {
+        case (k, v) =>
           if (k.startsWith("MessageAttribute.")) {
             k.split("\\.")(1).toInt
           } else {
             0
           }
-        }
       }
       .toList
       .union(List(0))
@@ -72,21 +71,17 @@ trait SendMessageDirectives { this: ElasticMQDirectives with SQSLimitsModule =>
       }
 
       val value = primaryDataType match {
-        case "String" => {
+        case "String" =>
           StringMessageAttribute(parameters("MessageAttribute." + i + ".Value.StringValue"), customDataType)
-        }
-        case "Number" => {
+        case "Number" =>
           val strValue =
             parameters("MessageAttribute." + i + ".Value.StringValue")
           verifyMessageNumberAttribute(strValue)
           NumberMessageAttribute(strValue, customDataType)
-        }
-        case "Binary" => {
+        case "Binary" =>
           BinaryMessageAttribute.fromBase64(parameters("MessageAttribute." + i + ".Value.BinaryValue"), customDataType)
-        }
-        case _ => {
+        case _ =>
           throw new Exception("Currently only handles String, Number and Binary typed attributes")
-        }
       }
 
       (name, value)
@@ -155,7 +150,7 @@ trait SendMessageDirectives { this: ElasticMQDirectives with SQSLimitsModule =>
     } yield (message, digest, messageAttributeDigest)
   }
 
-  def verifyMessageNotTooLong(messageLength: Int) {
+  def verifyMessageNotTooLong(messageLength: Int): Unit = {
     ifStrictLimits(messageLength > 262144) {
       "MessageTooLong"
     }

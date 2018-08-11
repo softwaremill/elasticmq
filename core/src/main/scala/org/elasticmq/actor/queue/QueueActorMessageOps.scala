@@ -161,7 +161,7 @@ trait QueueActorMessageOps extends Logging {
     case MillisVisibilityTimeout(millis) => millis
   }
 
-  private def deleteMessage(deliveryReceipt: DeliveryReceipt) {
+  private def deleteMessage(deliveryReceipt: DeliveryReceipt): Unit = {
     val msgId = deliveryReceipt.extractId.toString
 
     messageQueue.byId.get(msgId).foreach { msgData =>

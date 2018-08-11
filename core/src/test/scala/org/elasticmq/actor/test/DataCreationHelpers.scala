@@ -11,7 +11,8 @@ trait DataCreationHelpers {
       defaultVisibilityTimeout: MillisVisibilityTimeout,
       deadLettersQueue: Option[DeadLettersQueueData] = None,
       copyMessagesToQueue: Option[String] = None,
-      moveMessagesToQueue: Option[String] = None
+      moveMessagesToQueue: Option[String] = None,
+      tags: Map[String, String] = Map[String, String]()
   ) =
     QueueData(
       name = name,
@@ -22,7 +23,8 @@ trait DataCreationHelpers {
       lastModified = new DateTime(0),
       deadLettersQueue = deadLettersQueue,
       copyMessagesTo = copyMessagesToQueue,
-      moveMessagesTo = moveMessagesToQueue
+      moveMessagesTo = moveMessagesToQueue,
+      tags = tags
     )
 
   def createMessageData(id: String,

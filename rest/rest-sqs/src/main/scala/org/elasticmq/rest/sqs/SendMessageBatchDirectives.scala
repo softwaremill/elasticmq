@@ -40,7 +40,7 @@ trait SendMessageBatchDirectives {
     }
   }
 
-  def verifyMessagesNotTooLong(parameters: Map[String, String]) {
+  def verifyMessagesNotTooLong(parameters: Map[String, String]): Unit = {
     val messageLengths = for {
       parameterMap <- batchParametersMap(SendMessageBatchPrefix, parameters)
     } yield {

@@ -43,6 +43,59 @@ class QueueActorQueueOpsTest extends ActorTest with QueueManagerForEachTest with
     }
   }
 
+  waitTest("tagging a queue on creation") {
+    val tags = Map("tag1" -> "tagged1", "tag2" -> "tagged2")
+    val q1 = createQueueData("q1", MillisVisibilityTimeout(1L), tags = tags)
+
+    for {
+      Right(queueActor) <- queueManagerActor ? CreateQueue(q1)
+      queueData <- queueActor ? GetQueueData()
+    } yield {
+      queueData.tags should be(tags)
+    }
+  }
+
+  waitTest("tagging a queue after creation") {
+    val tags = Map("tag1" -> "tagged1", "tag2" -> "tagged2")
+    val q1 = createQueueData("q1", MillisVisibilityTimeout(1L))
+
+    for {
+      Right(queueActor) <- queueManagerActor ? CreateQueue(q1)
+      _ <- queueActor ? UpdateQueueTags(tags)
+      queueData <- queueActor ? GetQueueData()
+    } yield {
+      queueData.tags should be(tags)
+    }
+  }
+
+  waitTest("adding a tag to existing tags") {
+    val tags = Map("tag1" -> "tagged1", "tag2" -> "tagged2")
+    val newTag = Map("tag3" -> "tagged3")
+    val q1 = createQueueData("q1", MillisVisibilityTimeout(1L), tags = tags)
+
+    for {
+      Right(queueActor) <- queueManagerActor ? CreateQueue(q1)
+      _ <- queueActor ? UpdateQueueTags(newTag)
+      queueData <- queueActor ? GetQueueData()
+    } yield {
+      queueData.tags should be(tags ++ newTag)
+    }
+  }
+
+  waitTest("updating an existing tag") {
+    val tags = Map("tag1" -> "tagged1", "tag2" -> "tagged2")
+    val newTag = Map("tag1" -> "tagged3")
+    val q1 = createQueueData("q1", MillisVisibilityTimeout(1L), tags = tags)
+
+    for {
+      Right(queueActor) <- queueManagerActor ? CreateQueue(q1)
+      _ <- queueActor ? UpdateQueueTags(newTag)
+      queueData <- queueActor ? GetQueueData()
+    } yield {
+      queueData.tags should be(tags ++ newTag)
+    }
+  }
+
   waitTest("queue statistics without messages") {
     // Given
     val queue = createQueueData("q1", MillisVisibilityTimeout(1L))
