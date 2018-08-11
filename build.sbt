@@ -10,6 +10,8 @@ val buildSettings = commonSmlBuildSettings ++ ossPublishSettings ++ Seq(
   dependencyOverrides := akka25Overrides,
   parallelExecution := false,
   sonatypeProfileName := "org.elasticmq",
+  scalafmtOnCompile := true,
+  scalafmtVersion := "1.4.0",
   // workaround for: https://github.com/sbt/sbt/issues/692
   fork in Test := true,
   releaseProcess := {
@@ -31,7 +33,7 @@ val buildSettings = commonSmlBuildSettings ++ ossPublishSettings ++ Seq(
 )
 
 val jodaTime = "joda-time" % "joda-time" % "2.10"
-val jodaConvert = "org.joda" % "joda-convert" % "2.1"
+val jodaConvert = "org.joda" % "joda-convert" % "2.1.1"
 val config = "com.typesafe" % "config" % "1.3.3"
 
 val scalalogging = "com.typesafe.scala-logging" %% "scala-logging" % "3.9.0"
@@ -39,13 +41,13 @@ val logback = "ch.qos.logback" % "logback-classic" % "1.2.3"
 val jclOverSlf4j = "org.slf4j" % "jcl-over-slf4j" % "1.7.25" // needed form amazon java sdk
 
 val scalatest = "org.scalatest" %% "scalatest" % "3.0.5"
-val awaitility = "org.awaitility" % "awaitility-scala" % "3.1.1"
+val awaitility = "org.awaitility" % "awaitility-scala" % "3.1.2"
 
-val amazonJavaSdk = "com.amazonaws" % "aws-java-sdk" % "1.11.376" exclude ("commons-logging", "commons-logging")
+val amazonJavaSdk = "com.amazonaws" % "aws-java-sdk" % "1.11.385" exclude ("commons-logging", "commons-logging")
 
 val scalaGraph = "org.scala-graph" %% "graph-core" % "1.12.5"
 
-val akkaVersion = "2.5.13"
+val akkaVersion = "2.5.14"
 val akkaHttpVersion = "10.1.3"
 val akka2Actor = "com.typesafe.akka" %% "akka-actor" % akkaVersion
 val akka2Slf4j = "com.typesafe.akka" %% "akka-slf4j" % akkaVersion
