@@ -180,18 +180,9 @@ trait QueueAttributesDirectives {
                     .contains(attr) =>
                 logger.warn("Ignored attribute \"" + attr + "\" (supported by SQS but not ElasticMQ)")
                 Future.successful(())
-              }
-              case attr
-                  if FifoAttributeNames.AllFifoAttributeNames
-                    .contains(attr) => {
-                logger.info("Ignored attribute \"" + attr + "\" (handled separately by ElasticMQ)")
-                Future.successful(())
-              }
-              case attr => {
+              case attr =>
                 logger.warn("Unsupported attribute \"" + attr + "\" (failing on ElasticMQ)")
                 Future.failed(new SQSException("InvalidAttributeName"))
-              }
-              // case _ => Future.failed(new SQSException("InvalidAttributeName"))
             }
         })
 
