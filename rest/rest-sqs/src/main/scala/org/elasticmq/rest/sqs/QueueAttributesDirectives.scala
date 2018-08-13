@@ -30,11 +30,11 @@ trait QueueAttributesDirectives {
       MessageRetentionPeriodAttribute :: Nil
   }
 
-  object MockedFifoAttributeNames {
+  object FifoAttributeNames {
     val ContentBasedDeduplication = "ContentBasedDeduplication"
     val FifoQueue = "FifoQueue"
 
-    val AllMockedFifoAttributeNames = Seq(
+    val AllFifoAttributeNames = Seq(
       ContentBasedDeduplication,
       FifoQueue
     )
@@ -55,7 +55,7 @@ trait QueueAttributesDirectives {
         ApproximateNumberOfMessagesDelayedAttribute ::
         CreatedTimestampAttribute ::
         LastModifiedTimestampAttribute ::
-        QueueArnAttribute :: Nil) ++ MockedFifoAttributeNames.AllMockedFifoAttributeNames
+        QueueArnAttribute :: Nil) ++ FifoAttributeNames.AllFifoAttributeNames
   }
 
   def getQueueAttributes(p: AnyParams) = {
@@ -96,9 +96,9 @@ trait QueueAttributesDirectives {
           val fifoRules = queueData.isFifo match {
             case true => {
               Seq(
-                Rule(MockedFifoAttributeNames.FifoQueue, () => Future.successful(queueData.isFifo.toString())),
+                Rule(FifoAttributeNames.FifoQueue, () => Future.successful(queueData.isFifo.toString())),
                 Rule(
-                  MockedFifoAttributeNames.ContentBasedDeduplication,
+                  FifoAttributeNames.ContentBasedDeduplication,
                   () => Future.successful(queueData.hasContentBasedDeduplication.toString())
                 )
               )
@@ -182,7 +182,7 @@ trait QueueAttributesDirectives {
                 Future.successful(())
               }
               case attr
-                  if MockedFifoAttributeNames.AllMockedFifoAttributeNames
+                  if FifoAttributeNames.AllFifoAttributeNames
                     .contains(attr) => {
                 logger.info("Ignored attribute \"" + attr + "\" (handled separately by ElasticMQ)")
                 Future.successful(())
