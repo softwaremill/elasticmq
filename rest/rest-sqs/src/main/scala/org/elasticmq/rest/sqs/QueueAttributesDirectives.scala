@@ -30,6 +30,16 @@ trait QueueAttributesDirectives {
       MessageRetentionPeriodAttribute :: Nil
   }
 
+  object FifoAttributeNames {
+    val ContentBasedDeduplication = "ContentBasedDeduplication"
+    val FifoQueue = "FifoQueue"
+
+    val AllFifoAttributeNames = Seq(
+      ContentBasedDeduplication,
+      FifoQueue
+    )
+  }
+
   object QueueReadableAttributeNames {
     val ApproximateNumberOfMessagesAttribute = "ApproximateNumberOfMessages"
     val ApproximateNumberOfMessagesNotVisibleAttribute =
@@ -45,7 +55,7 @@ trait QueueAttributesDirectives {
         ApproximateNumberOfMessagesDelayedAttribute ::
         CreatedTimestampAttribute ::
         LastModifiedTimestampAttribute ::
-        QueueArnAttribute :: Nil)
+        QueueArnAttribute :: Nil) ++ FifoAttributeNames.AllFifoAttributeNames
   }
 
   def getQueueAttributes(p: AnyParams) = {
@@ -82,8 +92,21 @@ trait QueueAttributesDirectives {
               .map(redrivePolicy =>
                 Rule(RedrivePolicyParameter, () => Future.successful(redrivePolicy.toJson.toString)))
           )
-          val rules = alwaysAvailableParameterRules ++ optionalRules.flatten
 
+          val fifoRules = queueData.isFifo match {
+            case true => {
+              Seq(
+                Rule(FifoAttributeNames.FifoQueue, () => Future.successful(queueData.isFifo.toString())),
+                Rule(
+                  FifoAttributeNames.ContentBasedDeduplication,
+                  () => Future.successful(queueData.hasContentBasedDeduplication.toString())
+                )
+              )
+            }
+            case _ => Seq()
+          }
+
+          val rules = alwaysAvailableParameterRules ++ optionalRules.flatten ++ fifoRules
           attributeValuesCalculator.calculate(attributeNames, rules: _*)
         }
 
@@ -157,7 +180,18 @@ trait QueueAttributesDirectives {
                     .contains(attr) =>
                 logger.warn("Ignored attribute \"" + attr + "\" (supported by SQS but not ElasticMQ)")
                 Future.successful(())
-              case _ => Future.failed(new SQSException("InvalidAttributeName"))
+              }
+              case attr
+                  if FifoAttributeNames.AllFifoAttributeNames
+                    .contains(attr) => {
+                logger.info("Ignored attribute \"" + attr + "\" (handled separately by ElasticMQ)")
+                Future.successful(())
+              }
+              case attr => {
+                logger.warn("Unsupported attribute \"" + attr + "\" (failing on ElasticMQ)")
+                Future.failed(new SQSException("InvalidAttributeName"))
+              }
+              // case _ => Future.failed(new SQSException("InvalidAttributeName"))
             }
         })
 
