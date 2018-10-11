@@ -1,6 +1,7 @@
 package org.elasticmq.rest.sqs
 
 import java.nio.ByteBuffer
+import java.util.UUID
 
 import com.amazonaws.AmazonServiceException
 import com.amazonaws.auth.{AWSStaticCredentialsProvider, BasicAWSCredentials}
@@ -440,6 +441,59 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
     // Then
     result1.isLeft should be(true)
     result2.isLeft should be(false)
+  }
+
+  test("FIFO queues should respond quickly during long polling") {
+    // Given
+    import org.elasticmq.rest.sqs.model.RedrivePolicyJson._
+    import spray.json._
+
+    val deadLetterQueue = new CreateQueueRequest(s"dead.testFifoQueue-long-poll.fifo")
+      .addAttributesEntry("FifoQueue", "true")
+      .addAttributesEntry("ContentBasedDeduplication", "false")
+
+    val deadLetterUrl = client.createQueue(deadLetterQueue).getQueueUrl
+
+    val redrivePolicy = RedrivePolicy("dead.testFifoQueue-long-poll.fifo", 1).toJson.toString()
+
+    val fifoQueue = new CreateQueueRequest(s"testFifoQueue-long-poll.fifo")
+      .addAttributesEntry("FifoQueue", "true")
+      .addAttributesEntry("ContentBasedDeduplication", "false")
+      .addAttributesEntry(redrivePolicyAttribute, redrivePolicy)
+      .addAttributesEntry(defaultVisibilityTimeoutAttribute, "20")
+      .addAttributesEntry(receiveMessageWaitTimeSecondsAttribute, "0")
+      .addAttributesEntry(delaySecondsAttribute, "0")
+
+    val fifoQueueUrl = client.createQueue(fifoQueue).getQueueUrl
+
+    val messageRequest = new SendMessageRequest(fifoQueueUrl, "Message 1")
+      .withMessageGroupId("group1")
+      .withMessageDeduplicationId(UUID.randomUUID().toString)
+
+    var longPollRequest = new ReceiveMessageRequest(fifoQueueUrl)
+      .withMaxNumberOfMessages(1)
+      .withAttributeNames("All")
+      .withVisibilityTimeout(5)
+      .withWaitTimeSeconds(20)
+      .withReceiveRequestAttemptId(UUID.randomUUID().toString())
+
+    var t = new Thread() {
+      override def run(): Unit = {
+        Thread.sleep(2100L)
+        client.sendMessage(messageRequest)
+      }
+    }
+    t.start()
+
+    // When
+    var start = System.currentTimeMillis()
+    var messages = client.receiveMessage(longPollRequest).getMessages
+    var end = System.currentTimeMillis()
+
+    // Then
+    (end - start) should be >= 2000L
+    (end - start) should be <= 3000L
+    messages.size should be(1)
   }
 
   test(
