@@ -16,9 +16,9 @@ val buildSettings = commonSmlBuildSettings ++ ossPublishSettings ++ Seq(
   scalafmtVersion := "1.4.0",
   ghreleaseRepoOrg := "adamw",
   ghreleaseRepoName := "elasticmq",
-  ghreleaseNotes := (_ = ""),
+  ghreleaseNotes := (_ => ""),
   ghreleaseTitle := (tagName => tagName.toString),
-  ghreleaseIsPrerelease := (tagName => false),
+  ghreleaseIsPrerelease := (_ => false),
   // workaround for: https://github.com/sbt/sbt/issues/692
   fork in Test := true,
   releaseProcess := {
