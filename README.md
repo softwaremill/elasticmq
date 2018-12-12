@@ -97,13 +97,13 @@ log INFO logs and above to the console):
 How are queue URLs created
 --------------------------
 
-Some of the responses include a queue URL. By default the urls will use `http://localhost:9324` as the base URL.
+Some of the responses include a queue URL. By default, the URLs will use `http://localhost:9324` as the base URL.
 To customize, you should properly set the protocol/host/port/context in the `node-address` setting (see above).
 
 You can also set `node-address.host` to a special value, `"*"`, which will cause any queue URLs created during a request
 to use the path of the incoming request. This might be useful e.g. in containerized (Docker) deployments.
 
-Note that changing the `bind-port` and `bind-hostname` settings does not affect the queue URLs in any way unless
+Note that changing the `bind-port` and `bind-hostname` settings do not affect the queue URLs in any way unless
 `generate-node-address` is `true`. In that case, the bind host/port are used to create the node address. This is
 useful when the port should be automatically assigned (use port `0` in such case, the selected port will be
 visible in the logs).
@@ -298,14 +298,14 @@ Building, running, and packaging
 To build and run with debug (this will listen for a remote debugger on port 5005):
 ```
 ~/workspace/elasticmq $ sbt -jvm-debug 5005
-> project elasticmq-server
+> project server
 > run
 ```
 
 To build a jar-with-dependencies:
 ```
 ~/workspace/elasticmq $ sbt
-> project elasticmq-server
+> project server
 > assembly
 ```
 
