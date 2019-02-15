@@ -1,0 +1,22 @@
+language: scala
+jdk:
+  - oraclejdk8
+scala:
+  - 2.12.6
+before_cache:
+  - du -h -d 1 $HOME/.ivy2/
+  - du -h -d 2 $HOME/.sbt/
+  - du -h -d 4 $HOME/.coursier/
+  - find $HOME/.sbt -name "*.lock" -type f -delete
+  - find $HOME/.ivy2/cache -name "ivydata-*.properties" -type f -delete
+  - find $HOME/.coursier/cache -name "*.lock" -type f -delete
+cache:
+  directories:
+    - $HOME/.sbt/1.0
+    - $HOME/.sbt/boot/scala*
+    - $HOME/.sbt/cache
+    - $HOME/.sbt/launchers
+    - $HOME/.ivy2/cache
+    - $HOME/.coursier
+script:
+  - sbt ++$TRAVIS_SCALA_VERSION test
