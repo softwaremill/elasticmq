@@ -13,7 +13,6 @@ val buildSettings = commonSmlBuildSettings ++ ossPublishSettings ++ Seq(
   parallelExecution := false,
   sonatypeProfileName := "org.elasticmq",
   scalafmtOnCompile := true,
-  scalafmtVersion := "1.4.0",
   // github release
   ghreleaseRepoOrg := "adamw",
   ghreleaseRepoName := "elasticmq",
