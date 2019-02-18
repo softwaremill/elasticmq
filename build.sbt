@@ -1,7 +1,7 @@
 import com.amazonaws.services.s3.model.PutObjectResult
+import com.softwaremill.Publish.Release.updateVersionInDocs
 import sbt.Keys.credentials
 import sbtrelease.ReleaseStateTransformations._
-import com.softwaremill.Publish.Release.updateVersionInDocs
 import scoverage.ScoverageKeys._
 
 val buildSettings = commonSmlBuildSettings ++ ossPublishSettings ++ Seq(
@@ -127,15 +127,17 @@ lazy val rest: Project = (project in file("rest"))
 
 lazy val restSqs: Project = (project in file("rest/rest-sqs"))
   .settings(buildSettings)
-  .settings(
-    Seq(name := "elasticmq-rest-sqs",
-        libraryDependencies ++= Seq(akka2Actor,
-                                    akka2Slf4j,
-                                    akka2Http,
-                                    akka2Streams,
-                                    sprayJson,
-                                    akka2HttpTestkit,
-                                    scalaAsync) ++ common))
+  .settings(Seq(
+    name := "elasticmq-rest-sqs",
+    libraryDependencies ++= Seq(akka2Actor,
+                                akka2Slf4j,
+                                akka2Http,
+                                akka2Streams,
+                                sprayJson,
+                                akka2Testkit,
+                                akka2HttpTestkit,
+                                scalaAsync) ++ common
+  ))
   .dependsOn(core, commonTest % "test")
 
 lazy val restSqsTestingAmazonJavaSdk: Project =
@@ -159,7 +161,7 @@ lazy val server: Project = (project in file("server"))
     coverageMinimum := 52,
     // s3 upload
     s3Upload := {
-      import com.amazonaws.auth.{AWSStaticCredentialsProvider, DefaultAWSCredentialsProviderChain, BasicAWSCredentials}
+      import com.amazonaws.auth.{AWSStaticCredentialsProvider, BasicAWSCredentials, DefaultAWSCredentialsProviderChain}
       import com.amazonaws.services.s3.AmazonS3ClientBuilder
       import com.amazonaws.services.s3.model.{CannedAccessControlList, PutObjectRequest}
 
