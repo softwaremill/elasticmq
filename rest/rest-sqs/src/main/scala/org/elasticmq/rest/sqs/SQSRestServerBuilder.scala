@@ -236,7 +236,7 @@ object ParametersUtil {
       try {
         param.map(_.toLong)
       } catch {
-        case e: NumberFormatException =>
+        case _: NumberFormatException =>
           throw SQSException.invalidParameterValue
       }
     }
