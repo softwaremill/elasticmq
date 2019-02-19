@@ -9,4 +9,5 @@ case class CreateQueue(name: String,
                        hasContentBasedDeduplication: Boolean,
                        copyMessagesTo: Option[String] = None,
                        moveMessagesTo: Option[String] = None,
-                       tags: Map[String, String] = Map[String, String]())
+                       tags: Map[String, String] = Map[String, String](),
+                       inflightMessagesLimit: Option[Int] = None)

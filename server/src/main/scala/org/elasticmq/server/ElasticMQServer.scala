@@ -55,6 +55,7 @@ class ElasticMQServer(config: ElasticMQServerConfig) extends Logging {
     } else {
       None
     }
+
   }
 
   private def createQueues(queueManagerActor: ActorRef): Unit = {
@@ -85,8 +86,8 @@ class ElasticMQServer(config: ElasticMQServerConfig) extends Logging {
       hasContentBasedDeduplication = cq.hasContentBasedDeduplication,
       copyMessagesTo = cq.copyMessagesTo,
       moveMessagesTo = cq.moveMessagesTo,
-      tags = cq.tags
+      tags = cq.tags,
+      inflightMessagesLimit = cq.inflightMessagesLimit
     )
   }
-
 }

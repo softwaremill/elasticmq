@@ -94,7 +94,8 @@ class ElasticMQServerConfig(config: Config) extends Logging {
             hasContentBasedDeduplication = getOptionalBoolean(c, "contentBasedDeduplication").getOrElse(false),
             copyMessagesTo = getOptionalString(c, "copyTo"),
             moveMessagesTo = getOptionalString(c, "moveTo"),
-            tags = getOptionalTags(c, "tags")
+            tags = getOptionalTags(c, "tags"),
+            inflightMessagesLimit = None
           )
       }
       .toList

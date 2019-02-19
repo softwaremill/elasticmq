@@ -13,6 +13,7 @@ case class QueueData(name: String,
                      hasContentBasedDeduplication: Boolean = false,
                      copyMessagesTo: Option[String] = None,
                      moveMessagesTo: Option[String] = None,
-                     tags: Map[String, String] = Map[String, String]())
+                     tags: Map[String, String] = Map[String, String](),
+                     inflightMessagesLimit: Option[Int] = None)
 
 case class DeadLettersQueueData(name: String, maxReceiveCount: Int)
