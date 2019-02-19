@@ -3,17 +3,23 @@ package org.elasticmq.rest.sqs
 import java.nio.ByteBuffer
 import java.util.UUID
 
+import akka.actor.{ActorRef, ActorSystem, Props}
+import akka.util.Timeout
 import com.amazonaws.AmazonServiceException
 import com.amazonaws.auth.{AWSStaticCredentialsProvider, BasicAWSCredentials}
 import com.amazonaws.client.builder.AwsClientBuilder.EndpointConfiguration
 import com.amazonaws.services.sqs.model._
 import com.amazonaws.services.sqs.{AmazonSQS, AmazonSQSClientBuilder}
 import org.elasticmq._
+import org.elasticmq.actor.QueueManagerActor
+import org.elasticmq.msg.LookupQueue
 import org.elasticmq.rest.sqs.model.RedrivePolicy
-import org.elasticmq.util.Logging
+import org.elasticmq.util.{Logging, NowProvider}
+import org.joda.time.{DateTime, Duration}
 import org.scalatest.{Matchers, _}
 
 import scala.collection.JavaConverters._
+import scala.concurrent.Await
 import scala.util.Try
 import scala.util.control.Exception._
 
@@ -26,14 +32,22 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
 
   var client: AmazonSQS = _ // strict server
   var relaxedClient: AmazonSQS = _
+  var withQueueClient: AmazonSQS = _ // strict server
 
   var currentTestName: String = _
 
   var strictServer: SQSRestServer = _
   var relaxedServer: SQSRestServer = _
+  var withQueueServer: SQSRestServer = _
+
+  var actorSystem: ActorSystem = _
+  var queueManagerActor: ActorRef = _
 
   before {
     logger.info(s"\n---\nRunning test: $currentTestName\n---\n")
+
+    actorSystem = ActorSystem("AmazonJavaSdkTestSuite")
+    queueManagerActor = createQueueManager(actorSystem)
 
     strictServer = SQSRestServerBuilder
       .withPort(9321)
@@ -44,6 +58,12 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
       .withPort(9322)
       .withServerAddress(NodeAddress(port = 9322))
       .withSQSLimits(SQSLimits.Relaxed)
+      .start()
+
+    withQueueServer = SQSRestServerBuilder
+      .withPort(9323)
+      .withServerAddress(NodeAddress(port = 9323))
+      .withQueueManagerActor(queueManagerActor)
       .start()
 
     strictServer.waitUntilStarted()
@@ -59,6 +79,12 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
       .standard()
       .withCredentials(new AWSStaticCredentialsProvider(new BasicAWSCredentials("x", "x")))
       .withEndpointConfiguration(new EndpointConfiguration("http://localhost:9322", "us-east-1"))
+      .build()
+
+    withQueueClient = AmazonSQSClientBuilder
+      .standard()
+      .withCredentials(new AWSStaticCredentialsProvider(new BasicAWSCredentials("x", "x")))
+      .withEndpointConfiguration(new EndpointConfiguration("http://localhost:9323", "us-east-1"))
       .build()
   }
 
@@ -1696,6 +1722,33 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
     }
   }
 
+  test("should hit inflight messages limit") {
+    import org.elasticmq.actor.reply._
+    implicit val timeout = {
+      import scala.concurrent.duration._
+      Timeout(5.seconds)
+    }
+
+    // crate queue with limit
+    val createQueue = defaultCreateQueueData().copy(name = "test-queue",inflightMessagesLimit = Some(6))
+    val f = queueManagerActor ? org.elasticmq.msg.CreateQueue(createQueue)
+    Await.result(f, timeout.duration)
+    
+    val testQueueUrl = "http://localhost:9323/queue/test-queue"
+
+    (1 to 10).foreach{ i =>
+      withQueueClient.sendMessage(testQueueUrl, s"Message $i")
+    }
+
+    (1 to 5).foreach{ i =>
+      val _ = withQueueClient.receiveMessage(testQueueUrl)
+    }
+
+    assertThrows[OverLimitException]{
+      withQueueClient.receiveMessage(testQueueUrl).getSdkResponseMetadata()
+    }
+  }
+
   def queueDelay(queueUrl: String): Long = getQueueLongAttribute(queueUrl, delaySecondsAttribute)
 
   def getQueueLongAttribute(queueUrl: String, attributeName: String): Long = {
@@ -1761,5 +1814,19 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
       .addAttributesEntry("ContentBasedDeduplication", "true")
     val createRequest2 = attributes.foldLeft(createRequest1) { case (acc, (k, v)) => acc.addAttributesEntry(k, v) }
     client.createQueue(createRequest2).getQueueUrl
+  }
+
+  private def defaultCreateQueueData(): QueueData = {
+    QueueData(
+      name = "test-queue",
+      defaultVisibilityTimeout = MillisVisibilityTimeout(1000 * 60),
+      delay = Duration.standardSeconds(30L),
+      receiveMessageWait = Duration.standardSeconds(30L),
+      created = DateTime.now(),
+      lastModified = DateTime.now())
+  }
+
+  private def createQueueManager(actorSystem: ActorSystem): ActorRef = {
+    actorSystem.actorOf(Props(new QueueManagerActor(new NowProvider())))
   }
 }
