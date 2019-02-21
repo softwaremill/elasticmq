@@ -63,6 +63,7 @@ class ElasticMQServerConfig(config: Config) extends Logging {
     def getOptionalBoolean(c: Config, k: String) = if (c.hasPath(k)) Some(c.getBoolean(k)) else None
     def getOptionalDuration(c: Config, k: String) = if (c.hasPath(k)) Some(c.getDuration(k, TimeUnit.SECONDS)) else None
     def getOptionalString(c: Config, k: String) = if (c.hasPath(k)) Some(c.getString(k)).filter(_.nonEmpty) else None
+    def getOptionalInt(c: Config, k: String) = if (c.hasPath(k)) Some(c.getInt(k)) else None
 
     import scala.collection.JavaConverters._
 
@@ -95,7 +96,7 @@ class ElasticMQServerConfig(config: Config) extends Logging {
             copyMessagesTo = getOptionalString(c, "copyTo"),
             moveMessagesTo = getOptionalString(c, "moveTo"),
             tags = getOptionalTags(c, "tags"),
-            inflightMessagesLimit = None
+            inflightMessagesLimit = getOptionalInt(c, "inflightMessagesLimit")
           )
       }
       .toList
