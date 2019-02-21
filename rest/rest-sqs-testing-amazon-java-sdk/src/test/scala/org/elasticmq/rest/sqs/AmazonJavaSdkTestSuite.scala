@@ -91,10 +91,12 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
   after {
     client.shutdown()
     relaxedClient.shutdown()
+    withQueueClient.shutdown()
 
     // TODO: Figure out why this intermittently isn't able to unbind cleanly
     Try(strictServer.stopAndWait())
     Try(relaxedServer.stopAndWait())
+    Try(withQueueServer.stopAndWait())
 
     logger.info(s"\n---\nTest done: $currentTestName\n---\n")
   }
@@ -1730,21 +1732,21 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
     }
 
     // crate queue with limit
-    val createQueue = defaultCreateQueueData().copy(name = "test-queue",inflightMessagesLimit = Some(6))
+    val createQueue = defaultCreateQueueData().copy(name = "test-queue", inflightMessagesLimit = 5)
     val f = queueManagerActor ? org.elasticmq.msg.CreateQueue(createQueue)
     Await.result(f, timeout.duration)
-    
+
     val testQueueUrl = "http://localhost:9323/queue/test-queue"
 
-    (1 to 10).foreach{ i =>
+    (1 to 10).foreach { i =>
       withQueueClient.sendMessage(testQueueUrl, s"Message $i")
     }
 
-    (1 to 5).foreach{ i =>
+    (1 to 5).foreach { _ =>
       val _ = withQueueClient.receiveMessage(testQueueUrl)
     }
 
-    assertThrows[OverLimitException]{
+    assertThrows[OverLimitException] {
       withQueueClient.receiveMessage(testQueueUrl).getSdkResponseMetadata()
     }
   }
@@ -1820,10 +1822,12 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
     QueueData(
       name = "test-queue",
       defaultVisibilityTimeout = MillisVisibilityTimeout(1000 * 60),
-      delay = Duration.standardSeconds(30L),
-      receiveMessageWait = Duration.standardSeconds(30L),
+      delay = Duration.standardSeconds(1L),
+      receiveMessageWait = Duration.standardSeconds(1L),
       created = DateTime.now(),
-      lastModified = DateTime.now())
+      lastModified = DateTime.now(),
+      inflightMessagesLimit = 1000
+    )
   }
 
   private def createQueueManager(actorSystem: ActorSystem): ActorRef = {
