@@ -148,6 +148,23 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
     client.listQueues().getQueueUrls.size() should be(0)
   }
 
+  test("should refer to queue via both URL formats") {
+    // Given
+    val queueUrl = client.createQueue(new CreateQueueRequest("lol")).getQueueUrl
+
+    // When
+    val attributes2 = client
+      .getQueueAttributes(new GetQueueAttributesRequest("http://localhost:9321/queue/lol").withAttributeNames("All"))
+      .getAttributes
+    val attributes1 = client
+      .getQueueAttributes(
+        new GetQueueAttributesRequest("http://localhost:9321/012345678900/lol").withAttributeNames("All"))
+      .getAttributes
+
+    // Then
+    attributes1 should be(attributes2)
+  }
+
   test("should get queue visibility timeout") {
     // When
     val queueUrl = client.createQueue(new CreateQueueRequest("testQueue1")).getQueueUrl

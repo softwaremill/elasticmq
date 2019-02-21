@@ -11,7 +11,7 @@ import scala.reflect._
 
 class QueueManagerActor(nowProvider: NowProvider) extends ReplyingActor with Logging {
   type M[X] = QueueManagerMsg[X]
-  val ev = classTag[M[Unit]]
+  val ev: ClassTag[QueueManagerMsg[Unit]] = classTag[M[Unit]]
 
   private val queues = collection.mutable.HashMap[String, ActorRef]()
 
@@ -33,6 +33,7 @@ class QueueManagerActor(nowProvider: NowProvider) extends ReplyingActor with Log
 
     case LookupQueue(queueName) =>
       val result = queues.get(queueName)
+
       logger.debug(s"Looking up queue $queueName, found?: ${result.isDefined}")
       result
 
