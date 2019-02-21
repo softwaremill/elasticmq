@@ -4,6 +4,7 @@ import org.elasticmq._
 import org.joda.time.{DateTime, Duration}
 import org.elasticmq.MessageId
 import org.elasticmq.MillisNextDelivery
+import org.elasticmq.actor.queue.QueueActorDefaults
 
 trait DataCreationHelpers {
   def createQueueData(
@@ -24,7 +25,8 @@ trait DataCreationHelpers {
       deadLettersQueue = deadLettersQueue,
       copyMessagesTo = copyMessagesToQueue,
       moveMessagesTo = moveMessagesToQueue,
-      tags = tags
+      tags = tags,
+      inflightMessagesLimit = QueueActorDefaults.defaultInflightMessagesLimit(false)
     )
 
   def createMessageData(id: String,

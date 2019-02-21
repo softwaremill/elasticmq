@@ -3,6 +3,7 @@ package org.elasticmq.server
 import akka.actor.{ActorRef, ActorSystem, Props}
 import akka.util.Timeout
 import org.elasticmq.actor.QueueManagerActor
+import org.elasticmq.actor.queue.QueueActorDefaults
 import org.elasticmq.actor.reply._
 import org.elasticmq.rest.sqs.{CreateQueueDirectives, SQSRestServer, TheSQSRestServerBuilder}
 import org.elasticmq.server.config.{CreateQueue, ElasticMQServerConfig}
@@ -87,7 +88,8 @@ class ElasticMQServer(config: ElasticMQServerConfig) extends Logging {
       copyMessagesTo = cq.copyMessagesTo,
       moveMessagesTo = cq.moveMessagesTo,
       tags = cq.tags,
-      inflightMessagesLimit = cq.inflightMessagesLimit
+      inflightMessagesLimit =
+        cq.inflightMessagesLimit.getOrElse(QueueActorDefaults.defaultInflightMessagesLimit(cq.isFifo))
     )
   }
 }

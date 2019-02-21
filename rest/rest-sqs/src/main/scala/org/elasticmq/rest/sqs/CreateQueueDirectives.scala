@@ -1,5 +1,6 @@
 package org.elasticmq.rest.sqs
 
+import org.elasticmq.actor.queue.QueueActorDefaults
 import org.elasticmq.actor.reply._
 import org.elasticmq.msg.{CreateQueue, GetQueueData, LookupQueue}
 import org.elasticmq.rest.sqs.Constants._
@@ -68,6 +69,7 @@ trait CreateQueueDirectives {
             val now = new DateTime()
             val isFifo = attributes.get("FifoQueue").contains("true")
             val hasContentBasedDeduplication = attributes.get("ContentBasedDeduplication").contains("true")
+            val inflightMessagesLimit = QueueActorDefaults.defaultInflightMessagesLimit(isFifo)
             val newQueueData = QueueData(
               queueName,
               MillisVisibilityTimeout.fromSeconds(secondsVisibilityTimeout),
@@ -75,6 +77,7 @@ trait CreateQueueDirectives {
               Duration.standardSeconds(secondsReceiveMessageWaitTime),
               now,
               now,
+              inflightMessagesLimit,
               redrivePolicy.map(rd => DeadLettersQueueData(rd.queueName, rd.maxReceiveCount)),
               isFifo,
               hasContentBasedDeduplication

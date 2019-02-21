@@ -12,17 +12,30 @@ class QueueActorQueueOpsTest extends ActorTest with QueueManagerForEachTest with
     // Given
     val created = new DateTime(1216168602L)
     val lastModified = new DateTime(1316168602L)
+    val inflightMessagesLimit = 100
 
     for {
       Right(queueActor) <- queueManagerActor ? CreateQueue(
-        QueueData("q1", MillisVisibilityTimeout(1L), Duration.ZERO, Duration.ZERO, created, lastModified))
+        QueueData("q1",
+                  MillisVisibilityTimeout(1L),
+                  Duration.ZERO,
+                  Duration.ZERO,
+                  created,
+                  lastModified,
+                  inflightMessagesLimit))
 
       // When
       queueData <- queueActor ? GetQueueData()
     } yield {
       // Then
       queueData should be(
-        QueueData("q1", MillisVisibilityTimeout(1L), Duration.ZERO, Duration.ZERO, created, lastModified))
+        QueueData("q1",
+                  MillisVisibilityTimeout(1L),
+                  Duration.ZERO,
+                  Duration.ZERO,
+                  created,
+                  lastModified,
+                  inflightMessagesLimit))
     }
   }
 
