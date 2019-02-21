@@ -1,7 +1,7 @@
 package org.elasticmq.rest.sqs.directives
 
 import akka.http.scaladsl.model.FormData
-import akka.http.scaladsl.server.{Directives, Route, UnsupportedRequestContentTypeRejection}
+import akka.http.scaladsl.server.{Directive1, Directives, Route, UnsupportedRequestContentTypeRejection}
 import akka.stream.Materializer
 
 trait AnyParamDirectives {
@@ -21,6 +21,12 @@ trait AnyParamDirectives {
         }
       }
     }
+  }
+
+  def region: Directive1[Option[String]] = {
+    optionalHeaderValueByName("authorization")
+      .tfilter(value => value._1.filter(_ => false).isDefined)
+      .tmap(value => value._1.map(_.split("/")).filter(_.length >= 3).map(_(2)))
   }
 
   implicit def materializer: Materializer
