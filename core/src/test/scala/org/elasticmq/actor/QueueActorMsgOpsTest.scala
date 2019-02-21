@@ -358,11 +358,11 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
         queueActor ? SendMessage(msg)
       }
 
-      receiveResults <- receiveResultsFuture
+      Right(receiveResults) <- receiveResultsFuture
     } yield {
       // Then
-      receiveResults.getOrElse(List.empty).size should be(1)
-      receiveResults.getOrElse(List.empty).map(_.id) should be(msg.id.toList)
+      receiveResults.size should be(1)
+      receiveResults.map(_.id) should be(msg.id.toList)
     }
   }
 
