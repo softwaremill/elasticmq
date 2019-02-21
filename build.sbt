@@ -70,12 +70,12 @@ val config = "com.typesafe" % "config" % "1.3.3"
 
 val scalalogging = "com.typesafe.scala-logging" %% "scala-logging" % "3.9.0"
 val logback = "ch.qos.logback" % "logback-classic" % "1.2.3"
-val jclOverSlf4j = "org.slf4j" % "jcl-over-slf4j" % "1.7.25" // needed form amazon java sdk
+val jclOverSlf4j = "org.slf4j" % "jcl-over-slf4j" % "1.7.26" // needed form amazon java sdk
 
 val scalatest = "org.scalatest" %% "scalatest" % "3.0.5"
 val awaitility = "org.awaitility" % "awaitility-scala" % "3.1.6"
 
-val amazonJavaSdk = "com.amazonaws" % "aws-java-sdk" % "1.11.500" exclude ("commons-logging", "commons-logging")
+val amazonJavaSdk = "com.amazonaws" % "aws-java-sdk" % "1.11.503" exclude ("commons-logging", "commons-logging")
 
 val scalaGraph = "org.scala-graph" %% "graph-core" % "1.12.5"
 
