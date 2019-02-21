@@ -1751,6 +1751,33 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
     }
   }
 
+  test("should not encounter inflight limit exception when deleting messages") {
+    import org.elasticmq.actor.reply._
+    implicit val timeout = {
+      import scala.concurrent.duration._
+      Timeout(5.seconds)
+    }
+
+    // crate queue with limit
+    val createQueue = defaultCreateQueueData().copy(name = "test-queue", inflightMessagesLimit = 5)
+    val f = queueManagerActor ? org.elasticmq.msg.CreateQueue(createQueue)
+    Await.result(f, timeout.duration)
+
+    val testQueueUrl = "http://localhost:9323/queue/test-queue"
+
+    (1 to 40).foreach { i =>
+      withQueueClient.sendMessage(testQueueUrl, s"Message $i")
+    }
+
+    (1 to 40).foreach { _ =>
+      val received = withQueueClient.receiveMessage(testQueueUrl)
+      val messageId = received.getMessages.get(0).getReceiptHandle
+      val _ = withQueueClient.deleteMessage(testQueueUrl, messageId)
+    }
+
+    () shouldBe (())
+  }
+
   def queueDelay(queueUrl: String): Long = getQueueLongAttribute(queueUrl, delaySecondsAttribute)
 
   def getQueueLongAttribute(queueUrl: String, attributeName: String): Long = {
