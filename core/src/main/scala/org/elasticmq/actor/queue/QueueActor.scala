@@ -30,7 +30,7 @@ class QueueActor(val nowProvider: NowProvider,
 
 object QueueActorDefaults {
 
-  private val defaultInflightLimitFifo = 12000
+  private val defaultInflightLimitFifo = 20000
   private val defaultInflightLimitStandard = 120000
 
   def defaultInflightMessagesLimit(isFifo: Boolean): Int =
