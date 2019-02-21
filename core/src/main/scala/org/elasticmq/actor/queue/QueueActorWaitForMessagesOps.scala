@@ -42,7 +42,7 @@ trait QueueActorWaitForMessagesOps extends ReplyingActor with QueueActorMessageO
       val result = super.receiveAndReplyMessageMsg(msg)
       val waitForMessages =
         waitForMessagesOpt.getOrElse(queueData.receiveMessageWait)
-      if (result == ReplyWith(Nil) && waitForMessages.getMillis > 0) {
+      if (result == ReplyWith(Right(Nil)) && waitForMessages.getMillis > 0) {
         val seq = assignSequenceFor(rm)
         logger.debug(s"${queueData.name}: Awaiting messages: start for sequence $seq.")
         scheduleTimeoutReply(seq, waitForMessages)
@@ -67,13 +67,15 @@ trait QueueActorWaitForMessagesOps extends ReplyingActor with QueueActorMessageO
            AwaitingData(originalSender, ReceiveMessages(visibilityTimeout, count, _, receiveRequestAttemptId), _))) =>
         val received = super.receiveMessages(visibilityTimeout, count, receiveRequestAttemptId)
 
-        if (received != Nil) {
-          originalSender ! received
-          logger.debug(
-            s"${queueData.name}: Awaiting messages: replying to sequence $seq with ${received.size} messages.")
-          awaitingReply.remove(seq)
+        received match {
+          case Right(receivedList) if receivedList.nonEmpty =>
+            originalSender ! received
+            logger.debug(
+              s"${queueData.name}: Awaiting messages: replying to sequence $seq with ${receivedList.size} messages.")
+            awaitingReply.remove(seq)
 
-          tryReply()
+            tryReply()
+          case _ => ()
         }
       case _ => // do nothing
     }
@@ -87,7 +89,7 @@ trait QueueActorWaitForMessagesOps extends ReplyingActor with QueueActorMessageO
   }
 
   private def scheduleTimeoutReply(seq: Long, waitForMessages: Duration): Unit = {
-    schedule(waitForMessages.getMillis, ReplyIfTimeout(seq, Nil))
+    schedule(waitForMessages.getMillis, ReplyIfTimeout(seq, Right(Nil)))
   }
 
   private def scheduleTryReplyWhenAvailable(): Unit = {

@@ -27,3 +27,13 @@ class QueueActor(val nowProvider: NowProvider,
     case m: QueueMessageMsg[T] => receiveAndReplyMessageMsg(m)
   }
 }
+
+object QueueActorDefaults {
+
+  private val defaultInflightLimitFifo = 12000
+  private val defaultInflightLimitStandard = 120000
+
+  def defaultInflightMessagesLimit(isFifo: Boolean): Int =
+    if (isFifo) defaultInflightLimitFifo
+    else defaultInflightLimitStandard
+}

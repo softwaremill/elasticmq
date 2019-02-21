@@ -1,6 +1,7 @@
 package org.elasticmq.actor.queue
 
 import akka.actor.ActorRef
+import org.elasticmq.OverLimitLimitError
 import org.elasticmq.actor.reply._
 import org.elasticmq.msg.{DeleteMessage, LookupMessage, ReceiveMessages, SendMessage, UpdateVisibilityTimeout, _}
 import org.elasticmq.util.{Logging, NowProvider}
@@ -17,7 +18,10 @@ trait QueueActorMessageOps extends Logging {
     case SendMessage(message)                                  => handleOrRedirectMessage(message)
     case UpdateVisibilityTimeout(messageId, visibilityTimeout) => updateVisibilityTimeout(messageId, visibilityTimeout)
     case ReceiveMessages(visibilityTimeout, count, _, receiveRequestAttemptId) =>
-      receiveMessages(visibilityTimeout, count, receiveRequestAttemptId)
+      if (inflightMessagesRegisty.size >= queueData.inflightMessagesLimit)
+        Left(new OverLimitLimitError(queueData.name))
+      else
+        receiveMessages(visibilityTimeout, count, receiveRequestAttemptId)
     case DeleteMessage(deliveryReceipt) => deleteMessage(deliveryReceipt)
     case LookupMessage(messageId)       => messageQueue.byId.get(messageId.id).map(_.toMessageData)
   }
@@ -105,7 +109,7 @@ trait QueueActorMessageOps extends Logging {
 
   protected def receiveMessages(visibilityTimeout: VisibilityTimeout,
                                 count: Int,
-                                receiveRequestAttemptId: Option[String]): List[MessageData] = {
+                                receiveRequestAttemptId: Option[String]): Either[ElasticMQError, List[MessageData]] = {
     implicit val np = nowProvider
     val messages = receiveRequestAttemptId
       .flatMap({ attemptId =>
@@ -134,7 +138,11 @@ trait QueueActorMessageOps extends Logging {
       receiveRequestAttemptCache.add(attemptId, messages)
     }
 
-    messages.map(_.toMessageData)
+    messages.foreach { message =>
+      inflightMessagesRegisty += message.id
+    }
+
+    Right(messages.map(_.toMessageData))
   }
 
   private def getMessagesFromRequestAttemptCache(receiveRequestAttemptId: String)(
@@ -177,6 +185,7 @@ trait QueueActorMessageOps extends Logging {
     messageQueue.byId.get(msgId).foreach { msgData =>
       if (msgData.deliveryReceipts.lastOption.contains(deliveryReceipt.receipt)) {
         // Just removing the msg from the map. The msg will be removed from the queue when trying to receive it.
+        inflightMessagesRegisty -= msgId
         messageQueue.remove(msgId)
       }
     }

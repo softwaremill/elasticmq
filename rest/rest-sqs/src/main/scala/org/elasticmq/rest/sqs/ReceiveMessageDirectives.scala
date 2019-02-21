@@ -106,9 +106,10 @@ trait ReceiveMessageDirectives {
           }
         }
 
-        msgsFuture.map { msgs =>
-          respondWith {
-            <ReceiveMessageResponse>
+        msgsFuture.map {
+          case Right(msgs) =>
+            respondWith {
+              <ReceiveMessageResponse>
               <ReceiveMessageResult>
                 {msgs.map { msg =>
                 val receipt = msg.deliveryReceipt.map(_.receipt).getOrElse(throw new RuntimeException("No receipt for a received msg."))
@@ -127,7 +128,11 @@ trait ReceiveMessageDirectives {
                 <RequestId>{EmptyRequestId}</RequestId>
               </ResponseMetadata>
             </ReceiveMessageResponse>
-          }
+            }
+          case Left(sqsError) =>
+            respondWith(400) {
+              new SQSException(sqsError.code, 400, sqsError.code).toXml(EmptyRequestId)
+            }
         }
       }
     }

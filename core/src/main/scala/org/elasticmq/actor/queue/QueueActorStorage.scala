@@ -4,6 +4,8 @@ import akka.actor.ActorRef
 import org.elasticmq.QueueData
 import org.elasticmq.util.NowProvider
 
+import scala.collection.mutable
+
 trait QueueActorStorage {
   def nowProvider: NowProvider
 
@@ -16,4 +18,5 @@ trait QueueActorStorage {
   var queueData: QueueData = initialQueueData
   var messageQueue = MessageQueue(queueData.isFifo)
   val receiveRequestAttemptCache = new ReceiveRequestAttemptCache
+  val inflightMessagesRegisty = new mutable.TreeSet[String]()
 }

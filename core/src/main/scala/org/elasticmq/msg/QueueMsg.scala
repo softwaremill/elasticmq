@@ -30,6 +30,6 @@ case class ReceiveMessages(visibilityTimeout: VisibilityTimeout,
                            count: Int,
                            waitForMessages: Option[Duration],
                            receiveRequestAttemptId: Option[String])
-    extends QueueMessageMsg[List[MessageData]]
+    extends QueueMessageMsg[Either[ElasticMQError, List[MessageData]]]
 case class DeleteMessage(deliveryReceipt: DeliveryReceipt) extends QueueMessageMsg[Unit]
 case class LookupMessage(messageId: MessageId) extends QueueMessageMsg[Option[MessageData]]
