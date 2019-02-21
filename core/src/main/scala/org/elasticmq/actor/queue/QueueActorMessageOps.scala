@@ -18,10 +18,7 @@ trait QueueActorMessageOps extends Logging {
     case SendMessage(message)                                  => handleOrRedirectMessage(message)
     case UpdateVisibilityTimeout(messageId, visibilityTimeout) => updateVisibilityTimeout(messageId, visibilityTimeout)
     case ReceiveMessages(visibilityTimeout, count, _, receiveRequestAttemptId) =>
-      if (inflightMessagesRegisty.size >= queueData.inflightMessagesLimit)
-        Left(new OverLimitLimitError(queueData.name))
-      else
-        receiveMessages(visibilityTimeout, count, receiveRequestAttemptId)
+      receiveMessages(visibilityTimeout, count, receiveRequestAttemptId)
     case DeleteMessage(deliveryReceipt) => deleteMessage(deliveryReceipt)
     case LookupMessage(messageId)       => messageQueue.byId.get(messageId.id).map(_.toMessageData)
   }
@@ -110,39 +107,43 @@ trait QueueActorMessageOps extends Logging {
   protected def receiveMessages(visibilityTimeout: VisibilityTimeout,
                                 count: Int,
                                 receiveRequestAttemptId: Option[String]): Either[ElasticMQError, List[MessageData]] = {
-    implicit val np = nowProvider
-    val messages = receiveRequestAttemptId
-      .flatMap({ attemptId =>
-        // for a given request id, check for any messages we've dequeued and cached
-        val cachedMessages = getMessagesFromRequestAttemptCache(attemptId)
+    if (inflightMessagesRegisty.size >= queueData.inflightMessagesLimit)
+      Left(new OverLimitLimitError(queueData.name))
+    else {
+      implicit val np = nowProvider
+      val messages = receiveRequestAttemptId
+        .flatMap({ attemptId =>
+          // for a given request id, check for any messages we've dequeued and cached
+          val cachedMessages = getMessagesFromRequestAttemptCache(attemptId)
 
-        // if the cache returns an empty list instead of None, we still want to pull messages from
-        // from the queue so return None in that case to properly process down stream
-        cachedMessages.getOrElse(Nil) match {
-          case Nil     => None
-          case default => Some(default)
+          // if the cache returns an empty list instead of None, we still want to pull messages from
+          // from the queue so return None in that case to properly process down stream
+          cachedMessages.getOrElse(Nil) match {
+            case Nil     => None
+            case default => Some(default)
+          }
+        })
+        .getOrElse(getMessagesFromQueue(visibilityTimeout, count))
+        .map { internalMessage =>
+          // Putting the msg again into the queue, with a new next delivery
+          val newNextDelivery = computeNextDelivery(visibilityTimeout)
+          internalMessage.trackDelivery(newNextDelivery)
+          messageQueue += internalMessage
+
+          logger.debug(s"${queueData.name}: Receiving message ${internalMessage.id}")
+          internalMessage
         }
-      })
-      .getOrElse(getMessagesFromQueue(visibilityTimeout, count))
-      .map { internalMessage =>
-        // Putting the msg again into the queue, with a new next delivery
-        val newNextDelivery = computeNextDelivery(visibilityTimeout)
-        internalMessage.trackDelivery(newNextDelivery)
-        messageQueue += internalMessage
 
-        logger.debug(s"${queueData.name}: Receiving message ${internalMessage.id}")
-        internalMessage
+      receiveRequestAttemptId.foreach { attemptId =>
+        receiveRequestAttemptCache.add(attemptId, messages)
       }
 
-    receiveRequestAttemptId.foreach { attemptId =>
-      receiveRequestAttemptCache.add(attemptId, messages)
-    }
+      messages.foreach { message =>
+        inflightMessagesRegisty += message.id
+      }
 
-    messages.foreach { message =>
-      inflightMessagesRegisty += message.id
+      Right(messages.map(_.toMessageData))
     }
-
-    Right(messages.map(_.toMessageData))
   }
 
   private def getMessagesFromRequestAttemptCache(receiveRequestAttemptId: String)(
