@@ -1,7 +1,7 @@
 package org.elasticmq.actor.queue
 
 import akka.actor.ActorRef
-import org.elasticmq.OverLimitLimitError
+import org.elasticmq.OverLimitError
 import org.elasticmq.actor.reply._
 import org.elasticmq.msg.{DeleteMessage, LookupMessage, ReceiveMessages, SendMessage, UpdateVisibilityTimeout, _}
 import org.elasticmq.util.{Logging, NowProvider}
@@ -108,7 +108,7 @@ trait QueueActorMessageOps extends Logging {
                                 count: Int,
                                 receiveRequestAttemptId: Option[String]): Either[ElasticMQError, List[MessageData]] = {
     if (inflightMessagesRegisty.size >= queueData.inflightMessagesLimit)
-      Left(new OverLimitLimitError(queueData.name))
+      Left(new OverLimitError(queueData.name))
     else {
       implicit val np = nowProvider
       val messages = receiveRequestAttemptId

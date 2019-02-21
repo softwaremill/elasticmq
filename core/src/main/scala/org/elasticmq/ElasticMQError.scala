@@ -16,7 +16,7 @@ class MessageDoesNotExist(val queueName: String, messageId: MessageId) extends E
   val message = s"Message does not exist: $messageId in queue: $queueName"
 }
 
-class OverLimitLimitError(val queueName: String) extends ElasticMQError {
+class OverLimitError(val queueName: String) extends ElasticMQError {
   val code = "OverLimit"
   val message = s"Inflight message limit exceeded for queue: $queueName"
 }
