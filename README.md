@@ -1,6 +1,9 @@
 ElasticMQ
 =========
 
+[![Build Status](https://travis-ci.org/softwaremill/elasticmq.svg?branch=master)](https://travis-ci.org/softwaremill/elasticmq)
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/org.elasticmq/elasticmq-rest-sqs_2.11/badge.svg)](https://maven-badges.herokuapp.com/maven-central/org.elasticmq/elasticmq-rest-sqs_2.11/)
+
 tl;dr
 -----
 
