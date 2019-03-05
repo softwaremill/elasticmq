@@ -7,7 +7,7 @@ import org.elasticmq.actor.test.{DataCreationHelpers, QueueManagerForEachTest, A
 
 class QueueManagerActorTest extends ActorTest with QueueManagerForEachTest with DataCreationHelpers {
 
-  waitTest("non-existent queue should not be found") {
+  test("non-existent queue should not be found") {
     for {
       // Given
       _ <- queueManagerActor ? CreateQueue(createQueueData("q1", MillisVisibilityTimeout(10L)))
@@ -20,7 +20,7 @@ class QueueManagerActorTest extends ActorTest with QueueManagerForEachTest with 
     }
   }
 
-  waitTest("after persisting a queue it should be found") {
+  test("after persisting a queue it should be found") {
     for {
       // Given
       _ <- queueManagerActor ? CreateQueue(createQueueData("q1", MillisVisibilityTimeout(1L)))
@@ -35,7 +35,7 @@ class QueueManagerActorTest extends ActorTest with QueueManagerForEachTest with 
     }
   }
 
-  waitTest("queues should be deleted") {
+  test("queues should be deleted") {
     // Given
     val q1 = createQueueData("q1", MillisVisibilityTimeout(1L))
     val q2 = createQueueData("q2", MillisVisibilityTimeout(2L))
@@ -56,7 +56,7 @@ class QueueManagerActorTest extends ActorTest with QueueManagerForEachTest with 
     }
   }
 
-  waitTest("trying to create an existing queue should throw an exception") {
+  test("trying to create an existing queue should throw an exception") {
     // Given
     val q1 = createQueueData("q1", MillisVisibilityTimeout(1L))
 
@@ -70,7 +70,7 @@ class QueueManagerActorTest extends ActorTest with QueueManagerForEachTest with 
     }
   }
 
-  waitTest("listing queues") {
+  test("listing queues") {
     // Given
     val q1 = createQueueData("q1", MillisVisibilityTimeout(1L))
     val q2 = createQueueData("q2", MillisVisibilityTimeout(2L))
