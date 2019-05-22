@@ -1,12 +1,12 @@
 package org.elasticmq.rest.sqs.directives
 
-import akka.http.scaladsl.server.{Directive1, Directives, MissingFormFieldRejection, Route}
 import akka.actor.ActorRef
-import org.elasticmq.msg.{GetQueueData, LookupQueue}
-import org.elasticmq.rest.sqs._
-import org.elasticmq.actor.reply._
+import akka.http.scaladsl.server.{Directive1, Directives, MissingFormFieldRejection, Route}
 import org.elasticmq.QueueData
+import org.elasticmq.actor.reply._
+import org.elasticmq.msg.{GetQueueData, LookupQueue}
 import org.elasticmq.rest.sqs.Constants._
+import org.elasticmq.rest.sqs._
 
 trait QueueDirectives {
   this: Directives with QueueManagerActorModule with ActorSystemModule with FutureDirectives with AnyParamDirectives =>
@@ -14,25 +14,25 @@ trait QueueDirectives {
   def queueNameFromParams(p: AnyParams): Directive1[String] =
     p.requiredParam("QueueName")
 
-  def queueDataFromParams(p: AnyParams)(body: QueueData => Route) = {
+  def queueDataFromParams(p: AnyParams)(body: QueueData => Route): Route = {
     queueNameFromParams(p) { queueName =>
       queueActor(queueName, queueData(_, body))
     }
   }
 
-  def queueActorFromRequest(p: AnyParams)(body: ActorRef => Route) = {
+  def queueActorFromRequest(p: AnyParams)(body: ActorRef => Route): Route = {
     queueNameFromRequest(p) { queueName =>
       queueActor(queueName, body)
     }
   }
 
-  def queueActorAndDataFromRequest(p: AnyParams)(body: (ActorRef, QueueData) => Route) = {
+  def queueActorAndDataFromRequest(p: AnyParams)(body: (ActorRef, QueueData) => Route): Route = {
     queueNameFromRequest(p) { queueName =>
       queueActor(queueName, qa => queueData(qa, qd => body(qa, qd)))
     }
   }
 
-  def queueActorAndNameFromRequest(p: AnyParams)(body: (ActorRef, String) => Route) = {
+  def queueActorAndNameFromRequest(p: AnyParams)(body: (ActorRef, String) => Route): Route = {
     queueNameFromRequest(p) { queueName =>
       queueActor(queueName, qa => body(qa, queueName))
     }
@@ -43,18 +43,19 @@ trait QueueDirectives {
   private def queueUrlFromParams(p: AnyParams): Directive1[String] =
     p.requiredParam(queueUrlParameter)
 
+  private val accountId = "[a-zA-Z0-9]{12}"
   private val lastPathSegment =
-    ("^[^/]*//[^/]*/" + QueueUrlContext + "/([^/]+)$").r
+    ("^[^/]*//[^/]*/(" + accountId + "|" + QueueUrlContext + ")/([^/]+)$").r
 
   private def queueNameFromRequest(p: AnyParams)(body: String => Route): Route = {
     val queueNameDirective =
-      pathPrefix(QueueUrlContext / Segment) |
+      pathPrefix(accountId.r / Segment).tmap(_._2) |
+        pathPrefix(QueueUrlContext / Segment) |
         queueNameFromParams(p) |
         queueUrlFromParams(p).flatMap { queueUrl =>
-          lastPathSegment.findFirstMatchIn(queueUrl).map(_.group(1)) match {
+          lastPathSegment.findFirstMatchIn(queueUrl).map(_.group(2)) match {
             case Some(queueName) => provide(queueName)
-            case None =>
-              reject(MissingFormFieldRejection(queueUrlParameter)): Directive1[String]
+            case None            => reject(MissingFormFieldRejection(queueUrlParameter)): Directive1[String]
           }
         }
 
