@@ -18,5 +18,5 @@ trait QueueActorStorage {
   var queueData: QueueData = initialQueueData
   var messageQueue = MessageQueue(queueData.isFifo)
   val receiveRequestAttemptCache = new ReceiveRequestAttemptCache
-  val inflightMessagesRegisty = new mutable.TreeSet[String]()
+  val inflightMessageIds = new mutable.TreeSet[String]()
 }

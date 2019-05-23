@@ -107,7 +107,7 @@ trait QueueActorMessageOps extends Logging {
   protected def receiveMessages(visibilityTimeout: VisibilityTimeout,
                                 count: Int,
                                 receiveRequestAttemptId: Option[String]): Either[ElasticMQError, List[MessageData]] = {
-    if (inflightMessagesRegisty.size >= queueData.inflightMessagesLimit)
+    if (inflightMessageIds.size >= queueData.inflightMessagesLimit)
       Left(new OverLimitError(queueData.name))
     else {
       val messages = receiveRequestMessages(visibilityTimeout, count, receiveRequestAttemptId)
@@ -117,7 +117,7 @@ trait QueueActorMessageOps extends Logging {
       }
 
       messages.foreach { message =>
-        inflightMessagesRegisty += message.id
+        inflightMessageIds += message.id
       }
 
       Right(messages.map(_.toMessageData))
@@ -192,7 +192,7 @@ trait QueueActorMessageOps extends Logging {
     messageQueue.byId.get(msgId).foreach { msgData =>
       if (msgData.deliveryReceipts.lastOption.contains(deliveryReceipt.receipt)) {
         // Just removing the msg from the map. The msg will be removed from the queue when trying to receive it.
-        inflightMessagesRegisty -= msgId
+        inflightMessageIds -= msgId
         messageQueue.remove(msgId)
       }
     }
