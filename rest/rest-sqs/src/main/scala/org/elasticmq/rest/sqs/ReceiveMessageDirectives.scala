@@ -129,9 +129,9 @@ trait ReceiveMessageDirectives {
               </ResponseMetadata>
             </ReceiveMessageResponse>
             }
-          case Left(sqsError) =>
+          case Left(elasticMQError) =>
             respondWith(400) {
-              new SQSException(sqsError.code, 400, sqsError.code).toXml(EmptyRequestId)
+              new SQSException(elasticMQError.code, 400, elasticMQError.code).toXml(EmptyRequestId)
             }
         }
       }
