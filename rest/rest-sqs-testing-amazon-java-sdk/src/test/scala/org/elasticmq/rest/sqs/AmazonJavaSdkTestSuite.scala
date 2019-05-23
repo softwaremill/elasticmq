@@ -1,19 +1,27 @@
 package org.elasticmq.rest.sqs
 
+import java.net.URI
 import java.nio.ByteBuffer
 import java.util.UUID
 
+import akka.http.scaladsl.model.StatusCodes
 import com.amazonaws.AmazonServiceException
 import com.amazonaws.auth.{AWSStaticCredentialsProvider, BasicAWSCredentials}
 import com.amazonaws.client.builder.AwsClientBuilder.EndpointConfiguration
 import com.amazonaws.services.sqs.model._
 import com.amazonaws.services.sqs.{AmazonSQS, AmazonSQSClientBuilder}
+import org.apache.http.HttpHost
+import org.apache.http.client.entity.UrlEncodedFormEntity
+import org.apache.http.client.methods.HttpPost
+import org.apache.http.impl.client.{CloseableHttpClient, HttpClients}
+import org.apache.http.message.BasicNameValuePair
 import org.elasticmq._
 import org.elasticmq.rest.sqs.model.RedrivePolicy
 import org.elasticmq.util.Logging
 import org.scalatest.{Matchers, _}
 
 import scala.collection.JavaConverters._
+import scala.io.Source
 import scala.util.Try
 import scala.util.control.Exception._
 
@@ -26,6 +34,7 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
 
   var client: AmazonSQS = _ // strict server
   var relaxedClient: AmazonSQS = _
+  var httpClient: CloseableHttpClient = _
 
   var currentTestName: String = _
 
@@ -60,11 +69,14 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
       .withCredentials(new AWSStaticCredentialsProvider(new BasicAWSCredentials("x", "x")))
       .withEndpointConfiguration(new EndpointConfiguration("http://localhost:9322", "us-east-1"))
       .build()
+
+    httpClient = HttpClients.createDefault()
   }
 
   after {
     client.shutdown()
     relaxedClient.shutdown()
+    httpClient.close()
 
     // TODO: Figure out why this intermittently isn't able to unbind cleanly
     Try(strictServer.stopAndWait())
@@ -244,6 +256,52 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
     appendRange(builder, 0x30C9, 0x30FF)
 
     doTestSendAndReceiveMessage(builder.toString())
+  }
+
+  test("should reply with a MissingAction error when no action sent") {
+    // given
+    val httpHost = new HttpHost("localhost", 9321)
+    val req = new HttpPost()
+    req.setURI(new URI("/queue/lol"))
+
+    //when
+    val res = httpClient.execute(httpHost, req)
+
+    //then
+    res.getStatusLine.getStatusCode shouldBe StatusCodes.BadRequest.intValue
+    Source.fromInputStream(res.getEntity.getContent).mkString should include("<Code>MissingAction</Code>")
+  }
+
+  test("should reply with a InvalidAction error when no action attribute not set") {
+    // given
+    val httpHost = new HttpHost("localhost", 9321)
+    val req = new HttpPost()
+    req.setURI(new URI("/queue/lol"))
+    val action = new BasicNameValuePair("Action", "")
+    req.setEntity(new UrlEncodedFormEntity(List(action).asJava))
+
+    //when
+    val res = httpClient.execute(httpHost, req)
+
+    //then
+    res.getStatusLine.getStatusCode shouldBe StatusCodes.BadRequest.intValue
+    Source.fromInputStream(res.getEntity.getContent).mkString should include("<Code>InvalidAction</Code>")
+  }
+
+  test("should reply with a InvalidAction error when uknown action set") {
+    // given
+    val httpHost = new HttpHost("localhost", 9321)
+    val req = new HttpPost()
+    req.setURI(new URI("/queue/lol"))
+    val action = new BasicNameValuePair("Action", "Whatever")
+    req.setEntity(new UrlEncodedFormEntity(List(action).asJava))
+
+    //when
+    val res = httpClient.execute(httpHost, req)
+
+    //then
+    res.getStatusLine.getStatusCode shouldBe StatusCodes.BadRequest.intValue
+    Source.fromInputStream(res.getEntity.getContent).mkString should include("<Code>InvalidAction</Code>")
   }
 
   // Alias for send and receive with no attributes
@@ -492,7 +550,7 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
       .withAttributeNames("All")
       .withVisibilityTimeout(5)
       .withWaitTimeSeconds(20)
-      .withReceiveRequestAttemptId(UUID.randomUUID().toString())
+      .withReceiveRequestAttemptId(UUID.randomUUID().toString)
 
     var t = new Thread() {
       override def run(): Unit = {

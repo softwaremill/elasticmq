@@ -1,12 +1,12 @@
 package org.elasticmq.rest.sqs.directives
 
-import akka.http.scaladsl.server.{Rejection, RejectionHandler, Directives}
+import akka.http.scaladsl.server.{Directive0, Directives, Rejection, RejectionHandler}
 import org.elasticmq.rest.sqs.SQSException
 
 trait RejectionDirectives {
   this: Directives with ExceptionDirectives =>
 
-  val rejectionHandler = RejectionHandler
+  val rejectionHandler: RejectionHandler = RejectionHandler
     .newBuilder()
     .handleAll[Rejection] { rejections =>
       handleServerExceptions { _ =>
@@ -15,5 +15,5 @@ trait RejectionDirectives {
     }
     .result()
 
-  def handleRejectionsWithSQSError = handleRejections(rejectionHandler)
+  def handleRejectionsWithSQSError: Directive0 = handleRejections(rejectionHandler)
 }
