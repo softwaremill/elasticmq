@@ -1,5 +1,6 @@
 package org.elasticmq.rest.sqs
 
+import akka.http.scaladsl.server.Route
 import org.elasticmq.actor.reply._
 import org.elasticmq.msg._
 import org.elasticmq.rest.sqs.Constants._
@@ -17,7 +18,7 @@ trait QueueAttributesDirectives {
   this: ElasticMQDirectives with AttributesModule =>
 
   object QueueWriteableAttributeNames {
-    val AllWriteableAttributeNames = VisibilityTimeoutParameter :: DelaySecondsAttribute ::
+    val AllWriteableAttributeNames: List[String] = VisibilityTimeoutParameter :: DelaySecondsAttribute ::
       ReceiveMessageWaitTimeSecondsAttribute :: RedrivePolicyParameter :: Nil
   }
 
@@ -26,7 +27,7 @@ trait QueueAttributesDirectives {
     val MaximumMessageSizeAttribute = "MaximumMessageSize"
     val MessageRetentionPeriodAttribute = "MessageRetentionPeriod"
 
-    val AllUnsupportedAttributeNames = PolicyAttribute :: MaximumMessageSizeAttribute ::
+    val AllUnsupportedAttributeNames: List[String] = PolicyAttribute :: MaximumMessageSizeAttribute ::
       MessageRetentionPeriodAttribute :: Nil
   }
 
@@ -34,7 +35,7 @@ trait QueueAttributesDirectives {
     val ContentBasedDeduplication = "ContentBasedDeduplication"
     val FifoQueue = "FifoQueue"
 
-    val AllFifoAttributeNames = Seq(
+    val AllFifoAttributeNames: Seq[String] = Seq(
       ContentBasedDeduplication,
       FifoQueue
     )
@@ -49,7 +50,7 @@ trait QueueAttributesDirectives {
     val CreatedTimestampAttribute = "CreatedTimestamp"
     val LastModifiedTimestampAttribute = "LastModifiedTimestamp"
 
-    val AllAttributeNames = QueueWriteableAttributeNames.AllWriteableAttributeNames ++
+    val AllAttributeNames: List[String] = QueueWriteableAttributeNames.AllWriteableAttributeNames ++
       (ApproximateNumberOfMessagesAttribute ::
         ApproximateNumberOfMessagesNotVisibleAttribute ::
         ApproximateNumberOfMessagesDelayedAttribute ::
@@ -58,7 +59,7 @@ trait QueueAttributesDirectives {
         QueueArnAttribute :: Nil) ++ FifoAttributeNames.AllFifoAttributeNames
   }
 
-  def getQueueAttributes(p: AnyParams) = {
+  def getQueueAttributes(p: AnyParams): Route = {
     p.action("GetQueueAttributes") {
       queueActorAndDataFromRequest(p) { (queueActor, queueData) =>
         import QueueReadableAttributeNames._
@@ -93,17 +94,16 @@ trait QueueAttributesDirectives {
                 Rule(RedrivePolicyParameter, () => Future.successful(redrivePolicy.toJson.toString)))
           )
 
-          val fifoRules = queueData.isFifo match {
-            case true => {
-              Seq(
-                Rule(FifoAttributeNames.FifoQueue, () => Future.successful(queueData.isFifo.toString())),
-                Rule(
-                  FifoAttributeNames.ContentBasedDeduplication,
-                  () => Future.successful(queueData.hasContentBasedDeduplication.toString())
-                )
+          val fifoRules = if (queueData.isFifo) {
+            Seq(
+              Rule(FifoAttributeNames.FifoQueue, () => Future.successful(queueData.isFifo.toString)),
+              Rule(
+                FifoAttributeNames.ContentBasedDeduplication,
+                () => Future.successful(queueData.hasContentBasedDeduplication.toString)
               )
-            }
-            case _ => Seq()
+            )
+          } else {
+            Seq()
           }
 
           val rules = alwaysAvailableParameterRules ++ optionalRules.flatten ++ fifoRules
@@ -134,7 +134,7 @@ trait QueueAttributesDirectives {
     }
   }
 
-  def setQueueAttributes(p: AnyParams) = {
+  def setQueueAttributes(p: AnyParams): Route = {
     p.action("SetQueueAttributes") {
       queueActorFromRequest(p) { queueActor =>
         val attributes = attributeNameAndValuesReader.read(p)
