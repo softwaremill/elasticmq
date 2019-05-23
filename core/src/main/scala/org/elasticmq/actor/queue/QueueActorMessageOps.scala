@@ -110,32 +110,10 @@ trait QueueActorMessageOps extends Logging {
     if (inflightMessagesRegisty.size >= queueData.inflightMessagesLimit)
       Left(new OverLimitError(queueData.name))
     else {
-      implicit val np = nowProvider
-      val messages = receiveRequestAttemptId
-        .flatMap({ attemptId =>
-          // for a given request id, check for any messages we've dequeued and cached
-          val cachedMessages = getMessagesFromRequestAttemptCache(attemptId)
-
-          // if the cache returns an empty list instead of None, we still want to pull messages from
-          // from the queue so return None in that case to properly process down stream
-          cachedMessages.getOrElse(Nil) match {
-            case Nil     => None
-            case default => Some(default)
-          }
-        })
-        .getOrElse(getMessagesFromQueue(visibilityTimeout, count))
-        .map { internalMessage =>
-          // Putting the msg again into the queue, with a new next delivery
-          val newNextDelivery = computeNextDelivery(visibilityTimeout)
-          internalMessage.trackDelivery(newNextDelivery)
-          messageQueue += internalMessage
-
-          logger.debug(s"${queueData.name}: Receiving message ${internalMessage.id}")
-          internalMessage
-        }
+      val messages = receiveRequestMessages(visibilityTimeout, count, receiveRequestAttemptId)
 
       receiveRequestAttemptId.foreach { attemptId =>
-        receiveRequestAttemptCache.add(attemptId, messages)
+        receiveRequestAttemptCache.add(attemptId, messages)(nowProvider)
       }
 
       messages.foreach { message =>
@@ -144,6 +122,34 @@ trait QueueActorMessageOps extends Logging {
 
       Right(messages.map(_.toMessageData))
     }
+  }
+
+  private def receiveRequestMessages(visibilityTimeout: VisibilityTimeout,
+                                     count: Int,
+                                     receiveRequestAttemptId: Option[String]): List[InternalMessage] = {
+    implicit val np = nowProvider
+    receiveRequestAttemptId
+      .flatMap({ attemptId =>
+        // for a given request id, check for any messages we've dequeued and cached
+        val cachedMessages = getMessagesFromRequestAttemptCache(attemptId)
+
+        // if the cache returns an empty list instead of None, we still want to pull messages from
+        // from the queue so return None in that case to properly process down stream
+        cachedMessages.getOrElse(Nil) match {
+          case Nil     => None
+          case default => Some(default)
+        }
+      })
+      .getOrElse(getMessagesFromQueue(visibilityTimeout, count))
+      .map { internalMessage =>
+        // Putting the msg again into the queue, with a new next delivery
+        val newNextDelivery = computeNextDelivery(visibilityTimeout)
+        internalMessage.trackDelivery(newNextDelivery)
+        messageQueue += internalMessage
+
+        logger.debug(s"${queueData.name}: Receiving message ${internalMessage.id}")
+        internalMessage
+      }
   }
 
   private def getMessagesFromRequestAttemptCache(receiveRequestAttemptId: String)(
