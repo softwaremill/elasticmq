@@ -23,7 +23,7 @@ trait ElasticMQDirectives
     */
   private val validFifoParameterValueCharsRe = """^[a-zA-Z0-9!"#\$%&'\(\)\*\+,-\./:;<=>?@\[\\\]\^_`\{|\}~]{1,128}$""".r
 
-  def rootPath(body: Route) = {
+  def rootPath(body: Route): Route = {
     path("") {
       body
     }
