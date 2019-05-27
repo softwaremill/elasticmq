@@ -227,6 +227,40 @@ The image uses default configuration. Custom configuration can be provided (e.g.
 docker run -v `pwd`/custom.conf:/opt/elasticmq.conf softwaremill/elasticmq
 ```
 
+To pass additional java system properties (`-D`) you need to prepare an `application.ini` file. For instance, to set custom `logback.xml` configuration, `application.ini` should look as follows:
+
+```
+application.ini:
+-Dconfig.file=/opt/elasticmq.conf
+-Dlogback.configurationFile=/opt/docker/conf/logback.xml
+```
+
+To run container with customized `application.ini` file (and custom `logback.xml` in this particular case) the following command should be used:
+```
+docker run -v `pwd`/application.ini:/opt/docker/conf/application.ini -v `pwd`/logback.xml:/opt/docker/conf/logback.xml -p 9324:9324 softwaremill/elasticmq
+```
+
+Another option is to use custom `Dockerfile`:
+
+```
+FROM openjdk:8-jre-alpine
+
+ARG ELASTICMQ_VERSION
+ENV ELASTICMQ_VERSION ${ELASTICMQ_VERSION:-0.14.6}
+
+RUN apk add --no-cache curl ca-certificates
+RUN mkdir -p /opt/elasticmq/log /opt/elasticmq/lib /opt/elasticmq/config
+RUN curl -sfLo /opt/elasticmq/lib/elasticmq.jar https://s3-eu-west-1.amazonaws.com/softwaremill-public/elasticmq-server-${ELASTICMQ_VERSION}.jar
+
+WORKDIR /opt/elasticmq
+
+EXPOSE 9324
+
+ENTRYPOINT [ "/usr/bin/java", "-jar", "/opt/elasticmq/lib/elasticmq.jar" ]
+```
+
+and override the entrypoint passing the required properties.
+
 ElasticMQ dependencies in SBT
 -----------------------------
 
