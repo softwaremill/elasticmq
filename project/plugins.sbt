@@ -7,7 +7,7 @@ addSbtPlugin("com.eed3si9n" % "sbt-assembly" % "0.14.9")
 
 addSbtPlugin("org.scoverage" % "sbt-scoverage" % "1.5.1")
 
-addSbtPlugin("com.typesafe.sbt" % "sbt-native-packager" % "1.3.18")
+addSbtPlugin("com.typesafe.sbt" % "sbt-native-packager" % "1.3.22")
 
 addSbtPlugin("ohnosequences" % "sbt-github-release" % "0.7.1")
 

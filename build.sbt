@@ -196,12 +196,12 @@ lazy val server: Project = (project in file("server"))
     credentials += Credentials(Path.userHome / ".s3_elasticmq_credentials"),
     // docker
     dockerExposedPorts := Seq(9324),
-    dockerBaseImage := "java:8",
+    dockerBaseImage := "openjdk:8u212-b04-jdk-stretch",
     packageName in Docker := "elasticmq",
     dockerUsername := Some("softwaremill"),
     dockerUpdateLatest := true,
     javaOptions in Universal ++= Seq("-Dconfig.file=/opt/elasticmq.conf"),
-    mappings in Docker += (baseDirectory.value / "docker" / "elasticmq.conf") -> "/opt/elasticmq.conf"
+    mappings in Docker += (baseDirectory.value / "docker" / "elasticmq.conf") -> "/opt/docker/elasticmq.conf"
   ))
   .dependsOn(core, restSqs, commonTest % "test")
 
