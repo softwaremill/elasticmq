@@ -1,5 +1,6 @@
 import com.amazonaws.services.s3.model.PutObjectResult
 import com.softwaremill.Publish.Release.updateVersionInDocs
+import com.typesafe.sbt.packager.docker.Cmd
 import sbt.Keys.credentials
 import sbtrelease.ReleaseStateTransformations._
 import scoverage.ScoverageKeys._
@@ -201,7 +202,8 @@ lazy val server: Project = (project in file("server"))
     dockerUsername := Some("softwaremill"),
     dockerUpdateLatest := true,
     javaOptions in Universal ++= Seq("-Dconfig.file=/opt/elasticmq.conf"),
-    mappings in Docker += (baseDirectory.value / "docker" / "elasticmq.conf") -> "/opt/docker/elasticmq.conf"
+    mappings in Docker += (baseDirectory.value / "docker" / "elasticmq.conf") -> "/opt/elasticmq.conf",
+    dockerCommands += Cmd("COPY", "--from=stage0", s"--chown=${(daemonUser in Docker).value}:root", "/opt/elasticmq.conf", "/opt")
   ))
   .dependsOn(core, restSqs, commonTest % "test")
 

@@ -230,14 +230,14 @@ docker run -p 9324:9324 softwaremill/elasticmq
 The image uses default configuration. Custom configuration can be provided (e.g. to change the port, or create queues on startup) by creating a custom configuration file (see above) and using it when running the container:
 
 ```
-docker run -p 9324:9324 -v `pwd`/custom.conf:/opt/docker/elasticmq.conf softwaremill/elasticmq
+docker run -p 9324:9324 -v `pwd`/custom.conf:/opt/elasticmq.conf softwaremill/elasticmq
 ```
 
 To pass additional java system properties (`-D`) you need to prepare an `application.ini` file. For instance, to set custom `logback.xml` configuration, `application.ini` should look as follows:
 
 ```
 application.ini:
--Dconfig.file=/opt/dokcer/elasticmq.conf
+-Dconfig.file=/opt/elasticmq.conf
 -Dlogback.configurationFile=/opt/docker/conf/logback.xml
 ```
 
