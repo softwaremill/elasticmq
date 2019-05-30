@@ -48,7 +48,7 @@ trait SendMessageDirectives { this: ElasticMQDirectives with SQSLimitsModule =>
     // Determine number of attributes -- there are likely ways to improve this
     val numAttributes = parameters
       .map {
-        case (k, v) =>
+        case (k, _) =>
           if (k.startsWith("MessageAttribute.")) {
             k.split("\\.")(1).toInt
           } else {

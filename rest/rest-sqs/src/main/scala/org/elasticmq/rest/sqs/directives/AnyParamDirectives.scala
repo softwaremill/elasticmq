@@ -15,7 +15,7 @@ trait AnyParamDirectives {
 
   def anyParamsMap(body: Map[String, String] => Route) = {
     parameterMap { queryParameters =>
-      extractRequest { req =>
+      extractRequest { _ =>
         entityOrEmpty { fd =>
           body((fd.fields.toMap ++ queryParameters).filter(_._1 != ""))
         }

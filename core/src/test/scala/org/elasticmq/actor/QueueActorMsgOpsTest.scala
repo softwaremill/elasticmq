@@ -8,7 +8,7 @@ import org.joda.time.{DateTime, Duration}
 
 class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with DataCreationHelpers {
 
-  waitTest("non-existent msg should not be found") {
+  test("non-existent msg should not be found") {
     // Given
     val q1 = createQueueData("q1", MillisVisibilityTimeout(1L))
 
@@ -23,7 +23,7 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
     }
   }
 
-  waitTest("after persisting a msg it should be found") {
+  test("after persisting a msg it should be found") {
     // Given
     val q1 = createQueueData("q1", MillisVisibilityTimeout(1L))
     val message =
@@ -41,7 +41,7 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
     }
   }
 
-  waitTest("sending msg with maximum size should succeed") {
+  test("sending msg with maximum size should succeed") {
     // Given
     val maxMessageContent = "x" * 262143
 
@@ -60,7 +60,7 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
     }
   }
 
-  waitTest("no undelivered msg should not be found in an empty queue") {
+  test("no undelivered msg should not be found in an empty queue") {
     // Given
     val q1 = createQueueData("q1", MillisVisibilityTimeout(1L))
     val q2 = createQueueData("q2", MillisVisibilityTimeout(2L))
@@ -79,7 +79,7 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
     }
   }
 
-  waitTest("undelivered msg should be found in a non-empty queue") {
+  test("undelivered msg should be found in a non-empty queue") {
     // Given
     val q1 = createQueueData("q1", MillisVisibilityTimeout(1L))
     val q2 = createQueueData("q2", MillisVisibilityTimeout(2L))
@@ -99,7 +99,7 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
     }
   }
 
-  waitTest("next delivery should be updated after receiving") {
+  test("next delivery should be updated after receiving") {
     // Given
     val q1 = createQueueData("q1", MillisVisibilityTimeout(1L))
     val m = createNewMessageData("xyz", "123", Map(), MillisNextDelivery(50L))
@@ -118,7 +118,7 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
     }
   }
 
-  waitTest("receipt handle should be filled when receiving") {
+  test("receipt handle should be filled when receiving") {
     // Given
     val q1 = createQueueData("q1", MillisVisibilityTimeout(1L))
 
@@ -145,7 +145,7 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
     }
   }
 
-  waitTest("receipt handle should change on subsequent receives") {
+  test("receipt handle should change on subsequent receives") {
     // Given
     val q1 = createQueueData("q1", MillisVisibilityTimeout(1L))
 
@@ -169,7 +169,7 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
     }
   }
 
-  waitTest("delivered msg should not be found in a non-empty queue when it is not visible") {
+  test("delivered msg should not be found in a non-empty queue when it is not visible") {
     // Given
     val q1 = createQueueData("q1", MillisVisibilityTimeout(100L))
 
@@ -185,7 +185,7 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
     }
   }
 
-  waitTest("increasing next delivery of a msg") {
+  test("increasing next delivery of a msg") {
     // Given
     val q1 = createQueueData("q1", MillisVisibilityTimeout(1L))
     val m = createNewMessageData("xyz", "1234", Map(), MillisNextDelivery(123L))
@@ -204,7 +204,7 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
     }
   }
 
-  waitTest("decreasing next delivery of a msg") {
+  test("decreasing next delivery of a msg") {
     // Given
     val q1 = createQueueData("q1", MillisVisibilityTimeout(1L)) // Initially m2 should be delivered after m1
     val m1 =
@@ -228,7 +228,7 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
     }
   }
 
-  waitTest("msg should be deleted") {
+  test("msg should be deleted") {
     // Given
     val q1 = createQueueData("q1", MillisVisibilityTimeout(1L))
     val m1 = createNewMessageData("xyz", "123", Map(), MillisNextDelivery(50L))
@@ -247,7 +247,7 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
     }
   }
 
-  waitTest("msg statistics should be updated") {
+  test("msg statistics should be updated") {
     // Given
     val q1 = createQueueData("q1", MillisVisibilityTimeout(1L))
     val m1 = createNewMessageData("xyz", "123", Map(), MillisNextDelivery(50L))
@@ -269,7 +269,7 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
     }
   }
 
-  waitTest("should receive at most as much messages as given") {
+  test("should receive at most as much messages as given") {
     // Given
     val q1 = createQueueData("q1", MillisVisibilityTimeout(1L))
     val msgs = (for { i <- 1 to 5 } yield createNewMessageData("xyz" + i, "123", Map(), MillisNextDelivery(i))).toList
@@ -295,7 +295,7 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
     }
   }
 
-  waitTest("should receive as much messages as possible") {
+  test("should receive as much messages as possible") {
     // Given
     val q1 = createQueueData("q1", MillisVisibilityTimeout(1L))
     val msgs = (for { i <- 1 to 3 } yield createNewMessageData("xyz" + i, "123", Map(), MillisNextDelivery(i))).toList
@@ -317,7 +317,7 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
     }
   }
 
-  waitTest("should wait for messages to be received for the specified period of time") {
+  test("should wait for messages to be received for the specified period of time") {
     // Given
     val q1 = createQueueData("q1", MillisVisibilityTimeout(1L))
     val start = System.currentTimeMillis()
@@ -336,7 +336,7 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
     }
   }
 
-  waitTest("should wait until messages are available") {
+  test("should wait until messages are available") {
     // Given
     val q1 = createQueueData("q1", MillisVisibilityTimeout(1L))
     val msg =
@@ -363,7 +363,7 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
     }
   }
 
-  waitTest("multiple futures should wait until messages are available, and receive the message only once") {
+  test("multiple futures should wait until messages are available, and receive the message only once") {
     // Given
     val q1 = createQueueData("q1", MillisVisibilityTimeout(1L))
     val msg = createNewMessageData("xyz", "123", Map(), MillisNextDelivery(100))
@@ -396,7 +396,7 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
     }
   }
 
-  waitTest("multiple futures should wait until messages are available, and receive all sent messages") {
+  test("multiple futures should wait until messages are available, and receive all sent messages") {
     // Given
     val q1 = createQueueData("q1", MillisVisibilityTimeout(1L))
     val msg1 =
@@ -438,7 +438,7 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
     }
   }
 
-  waitTest("should send unprocessed messages to dead letters queue and delete from original") {
+  test("should send unprocessed messages to dead letters queue and delete from original") {
     // Given
     val deadLettersQueueName = "dlq1"
     val m1ID = "xyz"
@@ -470,7 +470,7 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
     }
   }
 
-  waitTest(
+  test(
     "should send unprocessed messages to dead letters queue and delete from original when dlq is added after creation") {
     // Given
     val deadLettersQueueName = "dlq11"
@@ -505,7 +505,7 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
     }
   }
 
-  waitTest("should move messages to move-to queue when configured") {
+  test("should move messages to move-to queue when configured") {
     // Given
     val redirectToQueue = createQueueData("redirectTo", MillisVisibilityTimeout(1L))
     val q1 = createQueueData("queue1", MillisVisibilityTimeout(1L), moveMessagesToQueue = Some("redirectTo"))
@@ -529,7 +529,7 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
     }
   }
 
-  waitTest("should copy messages to copy-to queue when configured") {
+  test("should copy messages to copy-to queue when configured") {
     // Given
     val copyToQueue = createQueueData("copyTo", MillisVisibilityTimeout(1L))
     val q1 = createQueueData("queue1", MillisVisibilityTimeout(1L), copyMessagesToQueue = Some("copyTo"))

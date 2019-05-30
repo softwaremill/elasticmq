@@ -15,7 +15,7 @@ import com.typesafe.config.ConfigFactory
 import org.elasticmq._
 import org.elasticmq.actor.QueueManagerActor
 import org.elasticmq.rest.sqs.Constants._
-import org.elasticmq.rest.sqs.directives.ElasticMQDirectives
+import org.elasticmq.rest.sqs.directives.{ElasticMQDirectives, UnmatchedActionRoutes}
 import org.elasticmq.util.{Logging, NowProvider}
 
 import scala.collection.immutable.TreeMap
@@ -109,7 +109,8 @@ case class TheSQSRestServerBuilder(providedActorSystem: Option[ActorSystem],
     with ListQueuesDirectives with SendMessageDirectives with SendMessageBatchDirectives with ReceiveMessageDirectives
     with DeleteMessageDirectives with DeleteMessageBatchDirectives with ChangeMessageVisibilityDirectives
     with ChangeMessageVisibilityBatchDirectives with GetQueueUrlDirectives with PurgeQueueDirectives
-    with AddPermissionDirectives with AttributesModule with TagQueueDirectives with TagsModule {
+    with AddPermissionDirectives with AttributesModule with TagQueueDirectives with TagsModule
+    with UnmatchedActionRoutes {
 
       def serverAddress = currentServerAddress.get()
 
@@ -142,7 +143,9 @@ case class TheSQSRestServerBuilder(providedActorSystem: Option[ActorSystem],
         addPermission(p) ~
         tagQueue(p) ~
         untagQueue(p) ~
-        listQueueTags(p)
+        listQueueTags(p) ~
+        // 4. Unmatched action
+        unmatchedAction(p)
 
     val config = new ElasticMQConfig
 
@@ -236,7 +239,7 @@ object ParametersUtil {
       try {
         param.map(_.toLong)
       } catch {
-        case e: NumberFormatException =>
+        case _: NumberFormatException =>
           throw SQSException.invalidParameterValue
       }
     }

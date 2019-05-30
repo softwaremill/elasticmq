@@ -10,7 +10,7 @@ trait TagQueueDirectives {
 
   def listQueueTags(p: AnyParams) = {
     p.action("ListQueueTags") {
-      queueActorAndDataFromRequest(p) { (queueActor, queueData) =>
+      queueActorAndDataFromRequest(p) { (_, queueData) =>
         respondWith {
           <ListQueueTagsResponse>
             <ListQueueTagsResult>
