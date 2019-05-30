@@ -145,7 +145,6 @@ lazy val restSqsTestingAmazonJavaSdk: Project =
   (project in file("rest/rest-sqs-testing-amazon-java-sdk"))
     .settings(buildSettings)
     .settings(
-      
       Seq(name := "elasticmq-rest-sqs-testing-amazon-java-sdk",
           libraryDependencies ++= Seq(amazonJavaSdk, jclOverSlf4j) ++ common,
           publishArtifact := false))
@@ -203,7 +202,11 @@ lazy val server: Project = (project in file("server"))
     dockerUpdateLatest := true,
     javaOptions in Universal ++= Seq("-Dconfig.file=/opt/elasticmq.conf"),
     mappings in Docker += (baseDirectory.value / "docker" / "elasticmq.conf") -> "/opt/elasticmq.conf",
-    dockerCommands += Cmd("COPY", "--from=stage0", s"--chown=${(daemonUser in Docker).value}:root", "/opt/elasticmq.conf", "/opt")
+    dockerCommands += Cmd("COPY",
+                          "--from=stage0",
+                          s"--chown=${(daemonUser in Docker).value}:root",
+                          "/opt/elasticmq.conf",
+                          "/opt")
   ))
   .dependsOn(core, restSqs, commonTest % "test")
 
