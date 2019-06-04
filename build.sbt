@@ -69,7 +69,7 @@ val jodaTime = "joda-time" % "joda-time" % "2.10.1"
 val jodaConvert = "org.joda" % "joda-convert" % "2.2.0"
 val config = "com.typesafe" % "config" % "1.3.3"
 
-val scalalogging = "com.typesafe.scala-logging" %% "scala-logging" % "3.9.0"
+val scalalogging = "com.typesafe.scala-logging" %% "scala-logging" % "3.9.2"
 val logback = "ch.qos.logback" % "logback-classic" % "1.2.3"
 val jclOverSlf4j = "org.slf4j" % "jcl-over-slf4j" % "1.7.26" // needed form amazon java sdk
 
