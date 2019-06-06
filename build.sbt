@@ -80,7 +80,7 @@ val amazonJavaSdk = "com.amazonaws" % "aws-java-sdk" % "1.11.566" exclude ("comm
 
 val scalaGraph = "org.scala-graph" %% "graph-core" % "1.12.5"
 
-val akkaVersion = "2.5.21"
+val akkaVersion = "2.5.23"
 val akkaHttpVersion = "10.1.8"
 val akka2Actor = "com.typesafe.akka" %% "akka-actor" % akkaVersion
 val akka2Slf4j = "com.typesafe.akka" %% "akka-slf4j" % akkaVersion
