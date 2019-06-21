@@ -171,6 +171,8 @@ You can also provide a custom `ActorSystem`; for details see the javadocs.
 
 Embedded ElasticMQ can be used from any JVM-based language (Java, Scala, etc.).
 
+(Note that the embedded server does not load any configuration files, so you cannot automatically create queues on startup as described above. You can of course create queues programmatically.)
+
 Using the Amazon Java SDK to access an ElasticMQ Server
 -------------------------------------------------------
 
