@@ -269,6 +269,20 @@ ENTRYPOINT [ "/usr/bin/java", "-jar", "/opt/elasticmq/lib/elasticmq.jar" ]
 
 and override the entrypoint passing the required properties.
 
+Experimental native ElasticqMQ via Docker
+-----------------------------------------
+
+An experimental, dockerized version of ElasticMQ, 
+built using GraalVM's [native-image](https://blog.softwaremill.com/small-fast-docker-images-using-graalvms-native-image-99c0bc92e70b),
+is available as [`softwaremill/elasticmq-native`](https://hub.docker.com/r/softwaremill/elasticmq-native/). To start, run:
+
+```
+docker run -p 9324:9324 --rm -it softwaremill/elasticmq-native
+```
+
+The `native-elasticmq` image is much smaller (30MB vs 240MB) and starts up much faster (milliseconds instead of seconds).
+However, it's an experimental feature, so some things might not work.
+
 ElasticMQ dependencies in SBT
 -----------------------------
 

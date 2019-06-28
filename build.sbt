@@ -1,3 +1,5 @@
+import java.nio.file.{Files, StandardCopyOption}
+
 import com.amazonaws.services.s3.model.PutObjectResult
 import com.softwaremill.Publish.Release.updateVersionInDocs
 import com.typesafe.sbt.packager.docker.Cmd
@@ -106,7 +108,7 @@ val s3Upload = TaskKey[PutObjectResult]("s3-upload", "Uploads files to an S3 buc
 lazy val root: Project = (project in file("."))
   .settings(buildSettings)
   .settings(name := "elasticmq-root")
-  .aggregate(commonTest, core, rest, server)
+  .aggregate(commonTest, core, rest, server, nativeServer)
 
 lazy val commonTest: Project = (project in file("common-test"))
   .settings(buildSettings)
@@ -209,6 +211,110 @@ lazy val server: Project = (project in file("server"))
                           "/opt")
   ))
   .dependsOn(core, restSqs, commonTest % "test")
+
+val dockerGraalvmNative = taskKey[Unit]("Create a docker image containing a binary build with GraalVM's native-image.")
+val dockerGraalvmNativeImageName =
+  settingKey[String]("Name of the generated docker image, containing the native binary.")
+
+lazy val nativeServer: Project = (project in file("native-server"))
+  .enablePlugins(JavaServerAppPackaging, DockerPlugin)
+  .settings(buildSettings)
+  .settings(Seq(
+    name := "elasticmq-native-server",
+    libraryDependencies += "com.oracle.substratevm" % "svm" % "19.0.2" % Provided,
+    mainClass in assembly := Some("org.elasticmq.server.Main"),
+    mappings in Docker += (baseDirectory.value / ".." / "server" / "docker" / "elasticmq.conf") -> "/opt/elasticmq.conf",
+    //
+    dockerGraalvmNativeImageName := "elasticmq-native",
+    dockerGraalvmNative := {
+      val log = streams.value.log
+
+      val stageDir = target.value / "native-docker" / "stage"
+      stageDir.mkdirs()
+
+      // copy all jars to the staging directory
+      val cpDir = stageDir / "cp"
+      cpDir.mkdirs()
+
+      val classpathJars = (mappings in Universal).value.map(_._1).filter(_.name.endsWith(".jar"))
+      classpathJars.foreach(cpJar =>
+        Files.copy(cpJar.toPath, (cpDir / cpJar.name).toPath, StandardCopyOption.REPLACE_EXISTING))
+
+      val resultDir = stageDir / "result"
+      resultDir.mkdirs()
+      val resultName = "out"
+
+      val className = (mainClass in Compile in server).value.getOrElse(sys.error("Could not find a main class."))
+
+      val nativeImageConfDir = baseDirectory.value
+
+      /*
+      Settings based on:
+      https://blog.softwaremill.com/small-fast-docker-images-using-graalvms-native-image-99c0bc92e70b
+      https://github.com/vmencik/akka-graal-native
+      https://github.com/Jotschi/vertx-graalvm-native-image-test/blob/master/build.sh
+      https://github.com/sdeleuze/graal-issues/tree/master/logback
+       */
+      val runNativeImageCommand = Seq(
+        "docker",
+        "run",
+        "--rm",
+        "-v",
+        s"${cpDir.getAbsolutePath}:/opt/cp",
+        "-v",
+        s"${resultDir.getAbsolutePath}:/opt/graalvm",
+        "-v",
+        s"${(nativeImageConfDir / "reflectconf").getAbsolutePath}:/opt/reflectconf",
+        "graalvm-native-image",
+        "-cp",
+        "/opt/cp/*",
+        "--static",
+        // "--report-unsupported-elements-at-runtime",
+        "--allow-incomplete-classpath", // for logback
+        s"-H:Name=$resultName",
+        "-H:ReflectionConfigurationFiles=/opt/reflectconf/logback.json",
+        "-H:ReflectionConfigurationFiles=/opt/reflectconf/akka.json",
+        "-H:IncludeResources=.*conf",
+        "-H:IncludeResources=version",
+        "-H:IncludeResources=.*\\.properties",
+        "-H:IncludeResources='org/joda/time/tz/data/.*'",
+        "--enable-url-protocols=https,http",
+        "--initialize-at-build-time",
+        "--no-fallback",
+        className
+      )
+
+      log.info("Running native-image using the 'graalvm-native-image' docker container")
+      log.info(s"Running: ${runNativeImageCommand.mkString(" ")}")
+
+      sys.process.Process(runNativeImageCommand, resultDir) ! streams.value.log match {
+        case 0 => resultDir / resultName
+        case r => sys.error(s"Failed to run docker, exit status: " + r)
+      }
+
+      val buildContainerCommand = Seq(
+        "docker",
+        "build",
+        "-t",
+        "softwaremill/" + dockerGraalvmNativeImageName.value + ":latest",
+        "-t",
+        "softwaremill/" + dockerGraalvmNativeImageName.value + ":" + version.value,
+        "-f",
+        (nativeImageConfDir / "run-native-image" / "Dockerfile").getAbsolutePath,
+        resultDir.absolutePath
+      )
+      log.info("Building the container with the generated native image")
+      log.info(s"Running: ${buildContainerCommand.mkString(" ")}")
+
+      sys.process.Process(buildContainerCommand, resultDir) ! streams.value.log match {
+        case 0 => resultDir / resultName
+        case r => sys.error(s"Failed to run docker, exit status: " + r)
+      }
+
+      log.info(s"Build image ${dockerGraalvmNativeImageName.value}")
+    }
+  ))
+  .dependsOn(server)
 
 lazy val performanceTests: Project = (project in file("performance-tests"))
   .settings(buildSettings)
