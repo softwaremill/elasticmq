@@ -218,7 +218,7 @@ The `boto3` interface is different:
                             use_ssl=False)
     queue = client.get_queue_by_name(QueueName='queue1')
 
-ElasticqMQ via Docker
+ElasticMQ via Docker
 ---------------------
 
 A Docker image is built on each release an pushed as [`softwaremill/elasticmq`](https://hub.docker.com/r/softwaremill/elasticmq/).
