@@ -4,4 +4,5 @@ FROM alpine:3.10.0
 RUN apk add --no-cache tini
 COPY out /opt/docker/out
 RUN chmod +x /opt/docker/out
+EXPOSE 9324/tcp
 ENTRYPOINT [ "/sbin/tini", "--", "/opt/docker/out" ]
