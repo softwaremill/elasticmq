@@ -1,7 +1,7 @@
 // required for sbt-github-release resolution
 resolvers += "Era7 maven releases" at "https://s3-eu-west-1.amazonaws.com/releases.era7.com" 
 
-addSbtPlugin("com.softwaremill.sbt-softwaremill" % "sbt-softwaremill" % "1.4.2")
+addSbtPlugin("com.softwaremill.sbt-softwaremill" % "sbt-softwaremill" % "1.7.5")
 
 addSbtPlugin("com.eed3si9n" % "sbt-assembly" % "0.14.9")
 
