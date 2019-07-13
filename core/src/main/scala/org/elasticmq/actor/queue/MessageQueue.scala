@@ -64,10 +64,12 @@ sealed trait MessageQueue {
     * @return
     */
   @tailrec
-  protected final def nextVisibleMessage(priorityQueue: mutable.PriorityQueue[InternalMessage],
-                                         deliveryTime: Long,
-                                         accBatch: List[InternalMessage],
-                                         accMessage: Seq[InternalMessage] = Seq.empty): Option[InternalMessage] = {
+  protected final def nextVisibleMessage(
+      priorityQueue: mutable.PriorityQueue[InternalMessage],
+      deliveryTime: Long,
+      accBatch: List[InternalMessage],
+      accMessage: Seq[InternalMessage] = Seq.empty
+  ): Option[InternalMessage] = {
     if (priorityQueue.nonEmpty) {
       val msg = priorityQueue.dequeue()
 
@@ -212,9 +214,11 @@ object MessageQueue {
       * Dequeue a message from the fifo queue. Try to dequeue a message from the same message group as the previous
       * message before trying other message groups.
       */
-    private def dequeueFromFifo(accBatch: List[InternalMessage],
-                                deliveryTime: Long,
-                                triedMessageGroups: Set[String] = Set.empty): Option[InternalMessage] = {
+    private def dequeueFromFifo(
+        accBatch: List[InternalMessage],
+        deliveryTime: Long,
+        triedMessageGroups: Set[String] = Set.empty
+    ): Option[InternalMessage] = {
       val messageGroupIdHint = accBatch.lastOption.map(getMessageGroupIdUnsafe).filterNot(triedMessageGroups.contains)
       messageGroupIdHint.orElse(randomMessageGroup(triedMessageGroups)).flatMap { messageGroupId =>
         dequeueFromMessageGroup(messageGroupId, deliveryTime, accBatch)
@@ -225,9 +229,11 @@ object MessageQueue {
     /**
       * Try to dequeue a message from the given message group
       */
-    private def dequeueFromMessageGroup(messageGroupId: String,
-                                        deliveryTime: Long,
-                                        accBatch: List[InternalMessage]): Option[InternalMessage] = {
+    private def dequeueFromMessageGroup(
+        messageGroupId: String,
+        deliveryTime: Long,
+        accBatch: List[InternalMessage]
+    ): Option[InternalMessage] = {
       messagesbyMessageGroupId.get(messageGroupId) match {
         case Some(priorityQueue) if priorityQueue.nonEmpty =>
           val msg = nextVisibleMessage(priorityQueue, deliveryTime, accBatch)
@@ -274,6 +280,7 @@ object MessageQueue {
       */
     private def getMessageGroupIdUnsafe(messageGroupId: Option[String]) =
       messageGroupId.getOrElse(
-        throw new IllegalStateException("Messages on a FIFO queue are required to have a message group id"))
+        throw new IllegalStateException("Messages on a FIFO queue are required to have a message group id")
+      )
   }
 }

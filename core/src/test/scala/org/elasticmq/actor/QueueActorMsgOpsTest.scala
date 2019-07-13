@@ -114,7 +114,8 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
     } yield {
       // Then
       withoutDeliveryReceipt(lookupResult).map(createNewMessageData) should be(
-        Some(m.copy(nextDelivery = MillisNextDelivery(101L))))
+        Some(m.copy(nextDelivery = MillisNextDelivery(101L)))
+      )
     }
   }
 
@@ -200,7 +201,8 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
     } yield {
       // Then
       lookupResult.map(createNewMessageData) should be(
-        Some(createNewMessageData("xyz", "1234", Map(), MillisNextDelivery(150L))))
+        Some(createNewMessageData("xyz", "1234", Map(), MillisNextDelivery(150L)))
+      )
     }
   }
 
@@ -346,10 +348,12 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
       Right(queueActor) <- queueManagerActor ? CreateQueue(q1)
 
       // When
-      receiveResultsFuture = queueActor ? ReceiveMessages(DefaultVisibilityTimeout,
-                                                          5,
-                                                          Some(Duration.millis(1000L)),
-                                                          None)
+      receiveResultsFuture = queueActor ? ReceiveMessages(
+        DefaultVisibilityTimeout,
+        5,
+        Some(Duration.millis(1000L)),
+        None
+      )
       _ <- {
         Thread.sleep(500); nowProvider.mutableNowMillis.set(200L)
         queueActor ? SendMessage(msg)
@@ -373,14 +377,18 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
       Right(queueActor) <- queueManagerActor ? CreateQueue(q1)
 
       // When
-      receiveResults1Future = queueActor ? ReceiveMessages(DefaultVisibilityTimeout,
-                                                           5,
-                                                           Some(Duration.millis(1000L)),
-                                                           None)
-      receiveResults2Future = queueActor ? ReceiveMessages(DefaultVisibilityTimeout,
-                                                           5,
-                                                           Some(Duration.millis(1000L)),
-                                                           None)
+      receiveResults1Future = queueActor ? ReceiveMessages(
+        DefaultVisibilityTimeout,
+        5,
+        Some(Duration.millis(1000L)),
+        None
+      )
+      receiveResults2Future = queueActor ? ReceiveMessages(
+        DefaultVisibilityTimeout,
+        5,
+        Some(Duration.millis(1000L)),
+        None
+      )
 
       _ <- { Thread.sleep(500); queueActor ? SendMessage(msg) }
 
@@ -408,18 +416,24 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
       Right(queueActor) <- queueManagerActor ? CreateQueue(q1)
 
       // When
-      receiveResults1Future = queueActor ? ReceiveMessages(DefaultVisibilityTimeout,
-                                                           5,
-                                                           Some(Duration.millis(1000L)),
-                                                           None)
-      receiveResults2Future = queueActor ? ReceiveMessages(DefaultVisibilityTimeout,
-                                                           5,
-                                                           Some(Duration.millis(1000L)),
-                                                           None)
-      receiveResults3Future = queueActor ? ReceiveMessages(DefaultVisibilityTimeout,
-                                                           5,
-                                                           Some(Duration.millis(1000L)),
-                                                           None)
+      receiveResults1Future = queueActor ? ReceiveMessages(
+        DefaultVisibilityTimeout,
+        5,
+        Some(Duration.millis(1000L)),
+        None
+      )
+      receiveResults2Future = queueActor ? ReceiveMessages(
+        DefaultVisibilityTimeout,
+        5,
+        Some(Duration.millis(1000L)),
+        None
+      )
+      receiveResults3Future = queueActor ? ReceiveMessages(
+        DefaultVisibilityTimeout,
+        5,
+        Some(Duration.millis(1000L)),
+        None
+      )
 
       _ <- {
         Thread.sleep(500); queueActor ? SendMessage(msg1)
@@ -471,7 +485,8 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
   }
 
   test(
-    "should send unprocessed messages to dead letters queue and delete from original when dlq is added after creation") {
+    "should send unprocessed messages to dead letters queue and delete from original when dlq is added after creation"
+  ) {
     // Given
     val deadLettersQueueName = "dlq11"
     val m1ID = "xyz"
@@ -485,8 +500,10 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
     for {
       Right(deadLettersQueueActor) <- queueManagerActor ? CreateQueue(dlq1)
       Right(queueActor) <- queueManagerActor ? CreateQueue(q1)
-      _ <- queueActor ? UpdateQueueDeadLettersQueue(Some(DeadLettersQueueData(deadLettersQueueName, 1)),
-                                                    Some(deadLettersQueueActor))
+      _ <- queueActor ? UpdateQueueDeadLettersQueue(
+        Some(DeadLettersQueueData(deadLettersQueueName, 1)),
+        Some(deadLettersQueueActor)
+      )
       _ <- queueActor ? SendMessage(m1)
 
       // When

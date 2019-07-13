@@ -22,11 +22,10 @@ class ElasticMQServer(config: ElasticMQServerConfig) extends Logging {
 
     createQueues(queueManagerActor)
 
-    () =>
-      {
-        restServerOpt.map(_.stopAndGetFuture())
-        Await.result(actorSystem.terminate(), Inf)
-      }
+    () => {
+      restServerOpt.map(_.stopAndGetFuture())
+      Await.result(actorSystem.terminate(), Inf)
+    }
   }
 
   private def createBase(): ActorRef = {
@@ -74,10 +73,12 @@ class ElasticMQServer(config: ElasticMQServerConfig) extends Logging {
     QueueData(
       name = cq.name,
       defaultVisibilityTimeout = MillisVisibilityTimeout.fromSeconds(
-        cq.defaultVisibilityTimeoutSeconds.getOrElse(CreateQueueDirectives.DefaultVisibilityTimeout)),
+        cq.defaultVisibilityTimeoutSeconds.getOrElse(CreateQueueDirectives.DefaultVisibilityTimeout)
+      ),
       delay = Duration.standardSeconds(cq.delaySeconds.getOrElse(CreateQueueDirectives.DefaultDelay)),
       receiveMessageWait = Duration.standardSeconds(
-        cq.receiveMessageWaitSeconds.getOrElse(CreateQueueDirectives.DefaultReceiveMessageWait)),
+        cq.receiveMessageWaitSeconds.getOrElse(CreateQueueDirectives.DefaultReceiveMessageWait)
+      ),
       created = now,
       lastModified = now,
       deadLettersQueue = cq.deadLettersQueue.map(dlq => DeadLettersQueueData(dlq.name, dlq.maxReceiveCount)),

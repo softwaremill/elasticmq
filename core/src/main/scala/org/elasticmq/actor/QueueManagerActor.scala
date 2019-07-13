@@ -54,6 +54,7 @@ class QueueManagerActor(nowProvider: NowProvider) extends ReplyingActor with Log
     context.actorOf(
       Props(
         new QueueActor(nowProvider, queueData, deadLetterQueueActor, copyMessagesToQueueActor, moveMessagesToQueueActor)
-      ))
+      )
+    )
   }
 }

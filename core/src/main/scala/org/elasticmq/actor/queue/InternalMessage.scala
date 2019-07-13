@@ -20,18 +20,19 @@ import org.elasticmq.{
 }
 import org.joda.time.DateTime
 
-case class InternalMessage(id: String,
-                           deliveryReceipts: mutable.Buffer[String],
-                           var nextDelivery: Long,
-                           content: String,
-                           messageAttributes: Map[String, MessageAttribute],
-                           created: DateTime,
-                           var firstReceive: Received,
-                           var receiveCount: Int,
-                           isFifo: Boolean,
-                           messageGroupId: Option[String],
-                           messageDeduplicationId: Option[String])
-    extends Comparable[InternalMessage] {
+case class InternalMessage(
+    id: String,
+    deliveryReceipts: mutable.Buffer[String],
+    var nextDelivery: Long,
+    content: String,
+    messageAttributes: Map[String, MessageAttribute],
+    created: DateTime,
+    var firstReceive: Received,
+    var receiveCount: Int,
+    isFifo: Boolean,
+    messageGroupId: Option[String],
+    messageDeduplicationId: Option[String]
+) extends Comparable[InternalMessage] {
 
   // Priority queues have biggest elements first
   override def compareTo(other: InternalMessage): Int = {
@@ -74,12 +75,14 @@ case class InternalMessage(id: String,
     )
 
   def toNewMessageData =
-    NewMessageData(Some(MessageId(id)),
-                   content,
-                   messageAttributes,
-                   MillisNextDelivery(nextDelivery),
-                   messageGroupId,
-                   messageDeduplicationId)
+    NewMessageData(
+      Some(MessageId(id)),
+      content,
+      messageAttributes,
+      MillisNextDelivery(nextDelivery),
+      messageGroupId,
+      messageDeduplicationId
+    )
 
   def deliverable(deliveryTime: Long): Boolean = nextDelivery <= deliveryTime
 }

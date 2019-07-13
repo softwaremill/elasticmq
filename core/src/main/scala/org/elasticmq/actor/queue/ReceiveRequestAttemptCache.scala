@@ -23,7 +23,8 @@ class ReceiveRequestAttemptCache {
   }
 
   def get(attemptId: String, messageQueue: MessageQueue)(
-      implicit nowProvider: NowProvider): Either[ReceiveFailure, Option[List[InternalMessage]]] = {
+      implicit nowProvider: NowProvider
+  ): Either[ReceiveFailure, Option[List[InternalMessage]]] = {
     cache.get(attemptId) match {
       case Some((cacheTime, _)) if cacheTime + FIVE_MINUTES < nowProvider.nowMillis =>
         cache.remove(attemptId)

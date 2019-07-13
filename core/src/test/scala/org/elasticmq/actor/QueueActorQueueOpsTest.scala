@@ -15,14 +15,16 @@ class QueueActorQueueOpsTest extends ActorTest with QueueManagerForEachTest with
 
     for {
       Right(queueActor) <- queueManagerActor ? CreateQueue(
-        QueueData("q1", MillisVisibilityTimeout(1L), Duration.ZERO, Duration.ZERO, created, lastModified))
+        QueueData("q1", MillisVisibilityTimeout(1L), Duration.ZERO, Duration.ZERO, created, lastModified)
+      )
 
       // When
       queueData <- queueActor ? GetQueueData()
     } yield {
       // Then
       queueData should be(
-        QueueData("q1", MillisVisibilityTimeout(1L), Duration.ZERO, Duration.ZERO, created, lastModified))
+        QueueData("q1", MillisVisibilityTimeout(1L), Duration.ZERO, Duration.ZERO, created, lastModified)
+      )
     }
   }
 

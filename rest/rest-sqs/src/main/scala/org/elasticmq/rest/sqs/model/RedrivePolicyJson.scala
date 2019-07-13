@@ -24,11 +24,14 @@ object RedrivePolicyJson extends DefaultJsonProtocol {
             RedrivePolicy(deadLetterTargetArn.split(":").last, maxReceiveCount.toInt)
           case _ =>
             deserializationError(
-              "Expected fields: 'deadLetterTargetArn' (JSON string) and 'maxReceiveCount' (JSON number)")
+              "Expected fields: 'deadLetterTargetArn' (JSON string) and 'maxReceiveCount' (JSON number)"
+            )
         }
       }
       def write(obj: RedrivePolicy) =
-        JsObject("deadLetterTargetArn" -> JsString("arn:aws:sqs:elasticmq:000000000000:" + obj.queueName),
-                 "maxReceiveCount" -> JsNumber(obj.maxReceiveCount))
+        JsObject(
+          "deadLetterTargetArn" -> JsString("arn:aws:sqs:elasticmq:000000000000:" + obj.queueName),
+          "maxReceiveCount" -> JsNumber(obj.maxReceiveCount)
+        )
     }
 }

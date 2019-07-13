@@ -37,7 +37,8 @@ class RedrivePolicyJsonTest extends FlatSpec with Matchers with ScalatestRouteTe
       RedrivePolicy(
         queueName = "dlq1",
         maxReceiveCount = 4
-      ))
+      )
+    )
 
   }
 
@@ -58,7 +59,8 @@ class RedrivePolicyJsonTest extends FlatSpec with Matchers with ScalatestRouteTe
       RedrivePolicy(
         queueName = "dlq1",
         maxReceiveCount = 4
-      ))
+      )
+    )
 
   }
 }
