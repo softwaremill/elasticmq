@@ -4,6 +4,7 @@ jdk:
 scala:
   - 2.12.8
   - 2.11.12
+  - 2.13.0
 before_cache:
   - du -h -d 1 $HOME/.ivy2/
   - du -h -d 2 $HOME/.sbt/
