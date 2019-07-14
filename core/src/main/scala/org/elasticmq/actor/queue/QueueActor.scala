@@ -8,12 +8,13 @@ import org.elasticmq.util.{Logging, NowProvider}
 
 import scala.reflect._
 
-class QueueActor(val nowProvider: NowProvider,
-                 val initialQueueData: QueueData,
-                 var deadLettersActorRef: Option[ActorRef] = None,
-                 val copyMessagesToActorRef: Option[ActorRef] = None,
-                 val moveMessagesToActorRef: Option[ActorRef] = None)
-    extends QueueActorStorage
+class QueueActor(
+    val nowProvider: NowProvider,
+    val initialQueueData: QueueData,
+    var deadLettersActorRef: Option[ActorRef] = None,
+    val copyMessagesToActorRef: Option[ActorRef] = None,
+    val moveMessagesToActorRef: Option[ActorRef] = None
+) extends QueueActorStorage
     with QueueActorQueueOps
     with QueueActorWaitForMessagesOps
     with ReplyingActor

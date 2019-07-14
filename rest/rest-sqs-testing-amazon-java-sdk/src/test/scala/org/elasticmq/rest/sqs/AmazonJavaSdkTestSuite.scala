@@ -104,7 +104,8 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
     // When
     client.createQueue(
       new CreateQueueRequest("testQueue1")
-        .withAttributes(Map(defaultVisibilityTimeoutAttribute -> "14").asJava))
+        .withAttributes(Map(defaultVisibilityTimeoutAttribute -> "14").asJava)
+    )
 
     // Then
     val queueUrls = client.listQueues().getQueueUrls
@@ -170,7 +171,8 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
       .getAttributes
     val attributes1 = client
       .getQueueAttributes(
-        new GetQueueAttributesRequest("http://localhost:9321/012345678900/lol").withAttributeNames("All"))
+        new GetQueueAttributesRequest("http://localhost:9321/012345678900/lol").withAttributeNames("All")
+      )
       .getAttributes
 
     // Then
@@ -309,14 +311,18 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
     doTestSendAndReceiveMessageWithAttributes(content, Map(), List())
   }
 
-  def doTestSendAndReceiveMessageWithAttributes(content: String,
-                                                messageAttributes: Map[String, MessageAttribute]): Unit = {
+  def doTestSendAndReceiveMessageWithAttributes(
+      content: String,
+      messageAttributes: Map[String, MessageAttribute]
+  ): Unit = {
     doTestSendAndReceiveMessageWithAttributes(content, messageAttributes, List("All"))
   }
 
-  def doTestSendAndReceiveMessageWithAttributes(content: String,
-                                                messageAttributes: Map[String, MessageAttribute],
-                                                requestedAttributes: List[String]): Unit = {
+  def doTestSendAndReceiveMessageWithAttributes(
+      content: String,
+      messageAttributes: Map[String, MessageAttribute],
+      requestedAttributes: List[String]
+  ): Unit = {
     // Given
     val queueUrl = client.createQueue(new CreateQueueRequest("testQueue1")).getQueueUrl
 
@@ -343,10 +349,12 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
     checkMessageAttributesMatchRequestedAttributes(messageAttributes, requestedAttributes, sendMessage, message)
   }
 
-  private def checkMessageAttributesMatchRequestedAttributes(messageAttributes: Map[String, MessageAttribute],
-                                                             requestedAttributes: List[String],
-                                                             sendMessage: SendMessageRequest,
-                                                             message: Message) = {
+  private def checkMessageAttributesMatchRequestedAttributes(
+      messageAttributes: Map[String, MessageAttribute],
+      requestedAttributes: List[String],
+      sendMessage: SendMessageRequest,
+      message: Message
+  ) = {
     val filteredSendMessageAttr =
       filterBasedOnRequestedAttributes(requestedAttributes, sendMessage.getMessageAttributes.asScala.toMap).asJava
     val filteredMessageAttributes = filterBasedOnRequestedAttributes(requestedAttributes, messageAttributes)
@@ -371,8 +379,10 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
     }) // Checks they match map
   }
 
-  private def filterBasedOnRequestedAttributes[T](requestedAttributes: List[String],
-                                                  messageAttributes: Map[String, T]): Map[String, T] = {
+  private def filterBasedOnRequestedAttributes[T](
+      requestedAttributes: List[String],
+      messageAttributes: Map[String, T]
+  ): Map[String, T] = {
     if (requestedAttributes.contains("All")) {
       messageAttributes
     } else {
@@ -410,7 +420,8 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
       .createQueue(
         new CreateQueueRequest("testQueue.fifo")
           .addAttributesEntry("FifoQueue", "true")
-          .addAttributesEntry("ContentBasedDeduplication", "true"))
+          .addAttributesEntry("ContentBasedDeduplication", "true")
+      )
       .getQueueUrl
     val regularQueueUrl = client.createQueue(new CreateQueueRequest("testQueue1")).getQueueUrl
 
@@ -443,14 +454,16 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
         new SendMessageRequest(queueUrl, "body")
           .withMessageDeduplicationId("1")
           .withMessageGroupId("1")
-          .withDelaySeconds(10))
+          .withDelaySeconds(10)
+      )
     }
 
     val result = client.sendMessageBatch(
       new SendMessageBatchRequest(queueUrl).withEntries(
         new SendMessageBatchRequestEntry("1", "Message 1").withMessageGroupId("1"),
         new SendMessageBatchRequestEntry("2", "Message 2").withMessageGroupId("2").withDelaySeconds(10)
-      ))
+      )
+    )
     result.getSuccessful should have size 1
     result.getFailed should have size 1
   }
@@ -474,7 +487,8 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
       .createQueue(
         new CreateQueueRequest("testQueue.fifo")
           .addAttributesEntry("FifoQueue", "true")
-          .addAttributesEntry("ContentBasedDeduplication", "true"))
+          .addAttributesEntry("ContentBasedDeduplication", "true")
+      )
       .getQueueUrl
     val regularQueueUrl = client.createQueue(new CreateQueueRequest("testQueue1")).getQueueUrl
 
@@ -572,7 +586,8 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
   }
 
   test(
-    "FIFO queues should not return a second message for the same message group if the first has not been deleted yet") {
+    "FIFO queues should not return a second message for the same message group if the first has not been deleted yet"
+  ) {
     // Given
     val queueUrl = createFifoQueue()
 
@@ -628,13 +643,17 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
     val group1 = "group1"
     val group2 = "group2"
     client.sendMessage(
-      new SendMessageRequest(queueUrl, group1).withMessageGroupId(group1).withMessageDeduplicationId("1"))
+      new SendMessageRequest(queueUrl, group1).withMessageGroupId(group1).withMessageDeduplicationId("1")
+    )
     client.sendMessage(
-      new SendMessageRequest(queueUrl, group1).withMessageGroupId(group1).withMessageDeduplicationId("2"))
+      new SendMessageRequest(queueUrl, group1).withMessageGroupId(group1).withMessageDeduplicationId("2")
+    )
     client.sendMessage(
-      new SendMessageRequest(queueUrl, group2).withMessageGroupId(group2).withMessageDeduplicationId("3"))
+      new SendMessageRequest(queueUrl, group2).withMessageGroupId(group2).withMessageDeduplicationId("3")
+    )
     client.sendMessage(
-      new SendMessageRequest(queueUrl, group2).withMessageGroupId(group2).withMessageDeduplicationId("4"))
+      new SendMessageRequest(queueUrl, group2).withMessageGroupId(group2).withMessageDeduplicationId("4")
+    )
 
     val messages1 =
       client.receiveMessage(new ReceiveMessageRequest(queueUrl).withMaxNumberOfMessages(2)).getMessages.asScala
@@ -701,7 +720,8 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
       .createQueue(
         new CreateQueueRequest("testQueue.fifo")
           .addAttributesEntry("FifoQueue", "true")
-          .addAttributesEntry("ContentBasedDeduplication", "true"))
+          .addAttributesEntry("ContentBasedDeduplication", "true")
+      )
       .getQueueUrl
     val regularQueueUrl = client.createQueue(new CreateQueueRequest("testQueue1")).getQueueUrl
 
@@ -751,7 +771,8 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
       client.sendMessage(
         new SendMessageRequest(queueUrl, s"Message $i")
           .withMessageDeduplicationId("DedupId")
-          .withMessageGroupId("1"))
+          .withMessageGroupId("1")
+      )
     }
 
     val m1 = receiveSingleMessageObject(queueUrl)
@@ -773,7 +794,8 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
       client.sendMessage(
         new SendMessageRequest(queueUrl, s"Message $i")
           .withMessageDeduplicationId(deduplicationId + i)
-          .withMessageGroupId(messageGroupId + i))
+          .withMessageGroupId(messageGroupId + i)
+      )
     }
 
     // Then
@@ -790,7 +812,8 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
     // Specific attributes
     val withMessageGroupIdMessages = client
       .receiveMessage(
-        new ReceiveMessageRequest(queueUrl).withAttributeNames("MessageGroupId").withMaxNumberOfMessages(2))
+        new ReceiveMessageRequest(queueUrl).withAttributeNames("MessageGroupId").withMaxNumberOfMessages(2)
+      )
       .getMessages
       .asScala
     withMessageGroupIdMessages should have size 2
@@ -802,7 +825,8 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
 
     val withDedupIdMessages = client
       .receiveMessage(
-        new ReceiveMessageRequest(queueUrl).withAttributeNames("MessageDeduplicationId").withMaxNumberOfMessages(2))
+        new ReceiveMessageRequest(queueUrl).withAttributeNames("MessageDeduplicationId").withMaxNumberOfMessages(2)
+      )
       .getMessages
       .asScala
     withDedupIdMessages should have size 2
@@ -871,7 +895,8 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
       new SendMessageBatchRequest(queueUrl).withEntries(
         new SendMessageBatchRequestEntry("1", "Message 1"),
         new SendMessageBatchRequestEntry("2", "Message 2")
-      ))
+      )
+    )
 
     // Then
     result.getSuccessful should have size 2
@@ -891,7 +916,8 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
     val queueUrl = client
       .createQueue(
         new CreateQueueRequest("testQueue1")
-          .withAttributes(Map(defaultVisibilityTimeoutAttribute -> "1").asJava))
+          .withAttributes(Map(defaultVisibilityTimeoutAttribute -> "1").asJava)
+      )
       .getQueueUrl
 
     // When
@@ -933,7 +959,8 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
     val queueUrl = client
       .createQueue(
         new CreateQueueRequest("testQueue1")
-          .withAttributes(Map(defaultVisibilityTimeoutAttribute -> "1").asJava))
+          .withAttributes(Map(defaultVisibilityTimeoutAttribute -> "1").asJava)
+      )
       .getQueueUrl
 
     // When
@@ -953,14 +980,16 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
     val queueUrl = client
       .createQueue(
         new CreateQueueRequest("testQueue1")
-          .withAttributes(Map(defaultVisibilityTimeoutAttribute -> "1").asJava))
+          .withAttributes(Map(defaultVisibilityTimeoutAttribute -> "1").asJava)
+      )
       .getQueueUrl
 
     client.sendMessageBatch(
       new SendMessageBatchRequest(queueUrl).withEntries(
         new SendMessageBatchRequestEntry("1", "Message 1"),
         new SendMessageBatchRequestEntry("2", "Message 2")
-      ))
+      )
+    )
 
     val msgReceipts = client
       .receiveMessage(new ReceiveMessageRequest(queueUrl).withMaxNumberOfMessages(2))
@@ -973,7 +1002,8 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
       new DeleteMessageBatchRequest(queueUrl).withEntries(
         new DeleteMessageBatchRequestEntry("1", msgReceipts.head),
         new DeleteMessageBatchRequestEntry("2", msgReceipts(1))
-      ))
+      )
+    )
     Thread.sleep(1100)
 
     val m = receiveSingleMessage(queueUrl)
@@ -988,7 +1018,8 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
     val queueUrl = client
       .createQueue(
         new CreateQueueRequest("testQueue1")
-          .withAttributes(Map(defaultVisibilityTimeoutAttribute -> "5").asJava))
+          .withAttributes(Map(defaultVisibilityTimeoutAttribute -> "5").asJava)
+      )
       .getQueueUrl
 
     // When
@@ -1022,7 +1053,8 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
     val queueUrl = client
       .createQueue(
         new CreateQueueRequest("testQueue1")
-          .withAttributes(Map(defaultVisibilityTimeoutAttribute -> "5").asJava))
+          .withAttributes(Map(defaultVisibilityTimeoutAttribute -> "5").asJava)
+      )
       .getQueueUrl
 
     // When
@@ -1038,7 +1070,8 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
         .withEntries(
           new ChangeMessageVisibilityBatchRequestEntry("1", msg1.getReceiptHandle).withVisibilityTimeout(1),
           new ChangeMessageVisibilityBatchRequestEntry("2", msg2.getReceiptHandle).withVisibilityTimeout(1)
-        ))
+        )
+    )
 
     // Messages should be already visible
     Thread.sleep(1100)
@@ -1121,7 +1154,8 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
     // When
     val approximateNumberOfMessages = client
       .getQueueAttributes(
-        new GetQueueAttributesRequest(queueUrl).withAttributeNames(approximateNumberOfMessagesAttribute))
+        new GetQueueAttributesRequest(queueUrl).withAttributeNames(approximateNumberOfMessagesAttribute)
+      )
       .getAttributes
       .get(approximateNumberOfMessagesAttribute)
       .toLong
@@ -1136,7 +1170,8 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
     val queueUrl = client
       .createQueue(
         new CreateQueueRequest("testQueue1")
-          .withAttributes(Map(defaultVisibilityTimeoutAttribute -> "1").asJava))
+          .withAttributes(Map(defaultVisibilityTimeoutAttribute -> "1").asJava)
+      )
       .getQueueUrl
     client.sendMessage(new SendMessageRequest(queueUrl, "Message 1"))
 
@@ -1148,9 +1183,12 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
       client
         .receiveMessage(
           new ReceiveMessageRequest(queueUrl)
-            .withAttributeNames(sentTimestampAttribute,
-                                approximateReceiveCountAttribute,
-                                approximateFirstReceiveTimestampAttribute))
+            .withAttributeNames(
+              sentTimestampAttribute,
+              approximateReceiveCountAttribute,
+              approximateFirstReceiveTimestampAttribute
+            )
+        )
         .getMessages
     }
 
@@ -1242,7 +1280,8 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
     // Given
     val queueUrl = client
       .createQueue(
-        new CreateQueueRequest("testQueue1").withAttributes(Map(receiveMessageWaitTimeSecondsAttribute -> "1").asJava))
+        new CreateQueueRequest("testQueue1").withAttributes(Map(receiveMessageWaitTimeSecondsAttribute -> "1").asJava)
+      )
       .getQueueUrl
 
     // When
@@ -1269,7 +1308,8 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
 
     // When
     client.setQueueAttributes(
-      new SetQueueAttributesRequest(queueUrl, Map(receiveMessageWaitTimeSecondsAttribute -> "13").asJava))
+      new SetQueueAttributesRequest(queueUrl, Map(receiveMessageWaitTimeSecondsAttribute -> "13").asJava)
+    )
 
     // Then
     queueReceiveMessageWaitTimeSeconds(queueUrl) should be(13)
@@ -1319,7 +1359,8 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
         new SendMessageBatchRequest(queueUrl).withEntries(
           new SendMessageBatchRequestEntry("1", "Message 1"),
           new SendMessageBatchRequestEntry("1", "Message 2")
-        ))
+        )
+      )
     }
 
     // Then
@@ -1335,7 +1376,8 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
       cli.sendMessageBatch(
         new SendMessageBatchRequest(queueUrl).withEntries(
           (for (i <- 1 to 11) yield new SendMessageBatchRequestEntry(i.toString, "Message")): _*
-        ))
+        )
+      )
     }
   }
 
@@ -1378,12 +1420,14 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
         new SendMessageBatchRequest(queueUrl).withEntries(
           new SendMessageBatchRequestEntry("1", "x" * 140000),
           new SendMessageBatchRequestEntry("2", "x" * 140000)
-        ))
+        )
+      )
     }
   }
 
   test(
-    "should return a failure for one message, send another if strict & sending two messages in a batch, one with illegal characters") {
+    "should return a failure for one message, send another if strict & sending two messages in a batch, one with illegal characters"
+  ) {
     // Given
     val queueUrl = client.createQueue(new CreateQueueRequest("testQueue1")).getQueueUrl
 
@@ -1392,7 +1436,8 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
       new SendMessageBatchRequest(queueUrl).withEntries(
         new SendMessageBatchRequestEntry("1", "OK"),
         new SendMessageBatchRequestEntry("2", "\u0000")
-      ))
+      )
+    )
 
     // Then
     result.getSuccessful should have size 1
@@ -1415,7 +1460,8 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
     val queueUrl = client
       .createQueue(
         new CreateQueueRequest("testQueue1")
-          .withAttributes(Map(defaultVisibilityTimeoutAttribute -> "1").asJava))
+          .withAttributes(Map(defaultVisibilityTimeoutAttribute -> "1").asJava)
+      )
       .getQueueUrl
 
     // When
@@ -1440,14 +1486,16 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
       client
         .createQueue(
           new CreateQueueRequest("testQueue1")
-            .withAttributes(Map(defaultVisibilityTimeoutAttribute -> "10").asJava))
+            .withAttributes(Map(defaultVisibilityTimeoutAttribute -> "10").asJava)
+        )
         .getQueueUrl
 
       // When
       client
         .createQueue(
           new CreateQueueRequest("testQueue1")
-            .withAttributes(Map(defaultVisibilityTimeoutAttribute -> "14").asJava))
+            .withAttributes(Map(defaultVisibilityTimeoutAttribute -> "14").asJava)
+        )
         .getQueueUrl
     }
 
@@ -1459,7 +1507,8 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
     val queueUrl = client
       .createQueue(
         new CreateQueueRequest("testQueue1")
-          .withAttributes(Map(defaultVisibilityTimeoutAttribute -> "42").asJava))
+          .withAttributes(Map(defaultVisibilityTimeoutAttribute -> "42").asJava)
+      )
       .getQueueUrl
 
     // When
@@ -1573,7 +1622,8 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
     val redrivePolicy = RedrivePolicy("dlq1", 1).toJson.toString()
     val createQueueResult = client.createQueue(
       new CreateQueueRequest("q1")
-        .withAttributes(Map(defaultVisibilityTimeoutAttribute -> "1", redrivePolicyAttribute -> redrivePolicy).asJava))
+        .withAttributes(Map(defaultVisibilityTimeoutAttribute -> "1", redrivePolicyAttribute -> redrivePolicy).asJava)
+    )
     val newQueueAttributes =
       client.getQueueAttributes(createQueueResult.getQueueUrl, List("All").asJava).getAttributes.asScala
 
@@ -1591,9 +1641,12 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
     // Then
     a[QueueDoesNotExistException] shouldBe thrownBy {
       client.createQueue(
-        new CreateQueueRequest("q1").withAttributes(Map(
-          redrivePolicyAttribute -> RedrivePolicy("queueDoesNotExist", 1).toJson.toString()
-        ).asJava))
+        new CreateQueueRequest("q1").withAttributes(
+          Map(
+            redrivePolicyAttribute -> RedrivePolicy("queueDoesNotExist", 1).toJson.toString()
+          ).asJava
+        )
+      )
     }
   }
 
@@ -1602,12 +1655,14 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
     a[AmazonSQSException] shouldBe thrownBy {
       client.createQueue(
         new CreateQueueRequest("q1")
-          .withAttributes(Map(redrivePolicyAttribute -> "not a proper json policy").asJava))
+          .withAttributes(Map(redrivePolicyAttribute -> "not a proper json policy").asJava)
+      )
     }
     a[AmazonSQSException] shouldBe thrownBy {
       client.createQueue(
         new CreateQueueRequest("q1")
-          .withAttributes(Map(redrivePolicyAttribute -> """{"wrong": "json"}""").asJava))
+          .withAttributes(Map(redrivePolicyAttribute -> """{"wrong": "json"}""").asJava)
+      )
     }
   }
 
@@ -1615,13 +1670,15 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
     client
       .createQueue(
         new CreateQueueRequest("attributeTestQueue")
-          .withAttributes(Map(defaultVisibilityTimeoutAttribute -> "3").asJava))
+          .withAttributes(Map(defaultVisibilityTimeoutAttribute -> "3").asJava)
+      )
 
     a[AmazonSQSException] shouldBe thrownBy {
       client
         .createQueue(
           new CreateQueueRequest("attributeTestQueue")
-            .withAttributes(Map(defaultVisibilityTimeoutAttribute -> "2").asJava))
+            .withAttributes(Map(defaultVisibilityTimeoutAttribute -> "2").asJava)
+        )
     }
   }
 
@@ -1629,13 +1686,15 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
     val firstQueueUrl = client
       .createQueue(
         new CreateQueueRequest("attributeTestQueue2")
-          .withAttributes(Map(defaultVisibilityTimeoutAttribute -> "3").asJava))
+          .withAttributes(Map(defaultVisibilityTimeoutAttribute -> "3").asJava)
+      )
       .getQueueUrl
 
     val secondQueueUrl = client
       .createQueue(
         new CreateQueueRequest("attributeTestQueue2")
-          .withAttributes(Map(defaultVisibilityTimeoutAttribute -> "3").asJava))
+          .withAttributes(Map(defaultVisibilityTimeoutAttribute -> "3").asJava)
+      )
       .getQueueUrl
 
     secondQueueUrl shouldBe firstQueueUrl
@@ -1724,7 +1783,8 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
     val redrivePolicy = RedrivePolicy("dlq2", 1).toJson.toString()
     val createQueueResult = client.createQueue(
       new CreateQueueRequest("q2")
-        .withAttributes(Map(defaultVisibilityTimeoutAttribute -> "1", redrivePolicyAttribute -> redrivePolicy).asJava))
+        .withAttributes(Map(defaultVisibilityTimeoutAttribute -> "1", redrivePolicyAttribute -> redrivePolicy).asJava)
+    )
     val newQueueAttributes =
       client.getQueueAttributes(createQueueResult.getQueueUrl, List("All").asJava).getAttributes.asScala
 
@@ -1737,7 +1797,8 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
     client.setQueueAttributes(
       new SetQueueAttributesRequest()
         .withQueueUrl(createQueueResult.getQueueUrl)
-        .withAttributes(Map(redrivePolicyAttribute -> newRedrivePolicy).asJava))
+        .withAttributes(Map(redrivePolicyAttribute -> newRedrivePolicy).asJava)
+    )
     val updatedQueueAttributes =
       client.getQueueAttributes(createQueueResult.getQueueUrl, List("All").asJava).getAttributes.asScala
 
@@ -1751,8 +1812,10 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
 
     val redrivePolicy = RedrivePolicy("notaqueue", 1).toJson.toString()
     a[AmazonSQSException] shouldBe thrownBy {
-      client.createQueue(new CreateQueueRequest("q3")
-        .withAttributes(Map(defaultVisibilityTimeoutAttribute -> "1", redrivePolicyAttribute -> redrivePolicy).asJava))
+      client.createQueue(
+        new CreateQueueRequest("q3")
+          .withAttributes(Map(defaultVisibilityTimeoutAttribute -> "1", redrivePolicyAttribute -> redrivePolicy).asJava)
+      )
     }
   }
 
@@ -1767,7 +1830,8 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
       client.setQueueAttributes(
         new SetQueueAttributesRequest()
           .withQueueUrl(createQueueResult.getQueueUrl)
-          .withAttributes(Map(redrivePolicyAttribute -> redrivePolicy).asJava))
+          .withAttributes(Map(redrivePolicyAttribute -> redrivePolicy).asJava)
+      )
     }
   }
 

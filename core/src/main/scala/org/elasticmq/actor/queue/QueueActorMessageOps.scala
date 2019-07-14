@@ -103,9 +103,11 @@ trait QueueActorMessageOps extends Logging {
     }
   }
 
-  protected def receiveMessages(visibilityTimeout: VisibilityTimeout,
-                                count: Int,
-                                receiveRequestAttemptId: Option[String]): List[MessageData] = {
+  protected def receiveMessages(
+      visibilityTimeout: VisibilityTimeout,
+      count: Int,
+      receiveRequestAttemptId: Option[String]
+  ): List[MessageData] = {
     implicit val np = nowProvider
     val messages = receiveRequestAttemptId
       .flatMap({ attemptId =>
@@ -137,8 +139,9 @@ trait QueueActorMessageOps extends Logging {
     messages.map(_.toMessageData)
   }
 
-  private def getMessagesFromRequestAttemptCache(receiveRequestAttemptId: String)(
-      implicit np: NowProvider): Option[List[InternalMessage]] = {
+  private def getMessagesFromRequestAttemptCache(
+      receiveRequestAttemptId: String
+  )(implicit np: NowProvider): Option[List[InternalMessage]] = {
     receiveRequestAttemptCache.get(receiveRequestAttemptId, messageQueue) match {
       case Left(Expired)         => throw new RuntimeException("Attempt expired")
       case Left(Invalid)         => throw new RuntimeException("Invalid")

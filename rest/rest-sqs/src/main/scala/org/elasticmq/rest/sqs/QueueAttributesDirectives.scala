@@ -71,27 +71,38 @@ trait QueueAttributesDirectives {
           import AttributeValuesCalculator.Rule
 
           val alwaysAvailableParameterRules = Seq(
-            Rule(VisibilityTimeoutParameter,
-                 () => Future.successful(queueData.defaultVisibilityTimeout.seconds.toString)),
+            Rule(
+              VisibilityTimeoutParameter,
+              () => Future.successful(queueData.defaultVisibilityTimeout.seconds.toString)
+            ),
             Rule(DelaySecondsAttribute, () => Future.successful(queueData.delay.getStandardSeconds.toString)),
             Rule(ApproximateNumberOfMessagesAttribute, () => stats.map(_.approximateNumberOfVisibleMessages.toString)),
-            Rule(ApproximateNumberOfMessagesNotVisibleAttribute,
-                 () => stats.map(_.approximateNumberOfInvisibleMessages.toString)),
-            Rule(ApproximateNumberOfMessagesDelayedAttribute,
-                 () => stats.map(_.approximateNumberOfMessagesDelayed.toString)),
+            Rule(
+              ApproximateNumberOfMessagesNotVisibleAttribute,
+              () => stats.map(_.approximateNumberOfInvisibleMessages.toString)
+            ),
+            Rule(
+              ApproximateNumberOfMessagesDelayedAttribute,
+              () => stats.map(_.approximateNumberOfMessagesDelayed.toString)
+            ),
             Rule(CreatedTimestampAttribute, () => Future.successful((queueData.created.getMillis / 1000L).toString)),
-            Rule(LastModifiedTimestampAttribute,
-                 () => Future.successful((queueData.lastModified.getMillis / 1000L).toString)),
-            Rule(ReceiveMessageWaitTimeSecondsAttribute,
-                 () => Future.successful(queueData.receiveMessageWait.getStandardSeconds.toString)),
+            Rule(
+              LastModifiedTimestampAttribute,
+              () => Future.successful((queueData.lastModified.getMillis / 1000L).toString)
+            ),
+            Rule(
+              ReceiveMessageWaitTimeSecondsAttribute,
+              () => Future.successful(queueData.receiveMessageWait.getStandardSeconds.toString)
+            ),
             Rule(QueueArnAttribute, () => Future.successful("arn:aws:sqs:elasticmq:000000000000:" + queueData.name))
           )
 
           val optionalRules = Seq(
             queueData.deadLettersQueue
               .map(dlq => RedrivePolicy(dlq.name, dlq.maxReceiveCount))
-              .map(redrivePolicy =>
-                Rule(RedrivePolicyParameter, () => Future.successful(redrivePolicy.toJson.toString)))
+              .map(
+                redrivePolicy => Rule(RedrivePolicyParameter, () => Future.successful(redrivePolicy.toJson.toString))
+              )
           )
 
           val fifoRules = if (queueData.isFifo) {
@@ -144,7 +155,8 @@ trait QueueAttributesDirectives {
             attributeName match {
               case VisibilityTimeoutParameter =>
                 queueActor ? UpdateQueueDefaultVisibilityTimeout(
-                  MillisVisibilityTimeout.fromSeconds(attributeValue.toLong))
+                  MillisVisibilityTimeout.fromSeconds(attributeValue.toLong)
+                )
               case DelaySecondsAttribute =>
                 queueActor ? UpdateQueueDelay(Duration.standardSeconds(attributeValue.toLong))
               case ReceiveMessageWaitTimeSecondsAttribute =>
@@ -173,7 +185,8 @@ trait QueueAttributesDirectives {
                   }
                   queueActor ? UpdateQueueDeadLettersQueue(
                     Some(DeadLettersQueueData(redrivePolicy.queueName, redrivePolicy.maxReceiveCount)),
-                    deadLettersQueueActor)
+                    deadLettersQueueActor
+                  )
                 }
               case attr
                   if UnsupportedAttributeNames.AllUnsupportedAttributeNames

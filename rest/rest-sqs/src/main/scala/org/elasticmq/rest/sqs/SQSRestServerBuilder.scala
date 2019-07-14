@@ -36,14 +36,15 @@ import scala.xml.{EntityRef, _}
   */
 object SQSRestServerBuilder extends TheSQSRestServerBuilder(None, None, "", 9324, NodeAddress(), true, SQSLimits.Strict)
 
-case class TheSQSRestServerBuilder(providedActorSystem: Option[ActorSystem],
-                                   providedQueueManagerActor: Option[ActorRef],
-                                   interface: String,
-                                   port: Int,
-                                   serverAddress: NodeAddress,
-                                   generateServerAddress: Boolean,
-                                   sqsLimits: SQSLimits.Value)
-    extends Logging {
+case class TheSQSRestServerBuilder(
+    providedActorSystem: Option[ActorSystem],
+    providedQueueManagerActor: Option[ActorRef],
+    interface: String,
+    port: Int,
+    serverAddress: NodeAddress,
+    generateServerAddress: Boolean,
+    sqsLimits: SQSLimits.Value
+) extends Logging {
 
   /**
     * @param _actorSystem Optional actor system. If one is provided, it will be used to create ElasticMQ and Spray
@@ -173,11 +174,14 @@ case class TheSQSRestServerBuilder(providedActorSystem: Option[ActorSystem],
 
       TheSQSRestServerBuilder.this.logger.info(
         "Started SQS rest server, bind address %s:%d, visible server address %s"
-          .format(interface,
-                  sb.localAddress.getPort,
-                  if (env.serverAddress.isWildcard)
-                    "* (depends on incoming request path) "
-                  else env.serverAddress.fullAddress))
+          .format(
+            interface,
+            sb.localAddress.getPort,
+            if (env.serverAddress.isWildcard)
+              "* (depends on incoming request path) "
+            else env.serverAddress.fullAddress
+          )
+      )
     }
 
     appStartFuture.failed.foreach {
@@ -394,7 +398,8 @@ trait SQSLimitsModule {
       !allCatch
         .opt(BigDecimal(strValue))
         .filter(v => v >= NUMBER_ATTR_MIN_VALUE)
-        .exists(v => v <= NUMBER_ATTR_MAX_VALUE)) {
+        .exists(v => v <= NUMBER_ATTR_MAX_VALUE)
+    ) {
       s"Number attribute value $strValue should be in range (-10**128..10**126)"
     }
   }

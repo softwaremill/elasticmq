@@ -25,7 +25,8 @@ trait BatchRequestsModule {
   }
 
   def batchRequest(prefix: String, parameters: AnyParams)(
-      single: (Map[String, String], String) => Future[NodeSeq]): Future[NodeSeq] = {
+      single: (Map[String, String], String) => Future[NodeSeq]
+  ): Future[NodeSeq] = {
 
     val messagesData = batchParametersMap(prefix, parameters)
 

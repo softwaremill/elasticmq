@@ -27,13 +27,15 @@ trait DataCreationHelpers {
       tags = tags
     )
 
-  def createMessageData(id: String,
-                        content: String,
-                        messageAttributes: Map[String, MessageAttribute],
-                        nextDelivery: MillisNextDelivery,
-                        deliveryReceipt: Option[DeliveryReceipt] = None,
-                        messageGroupId: Option[String] = None,
-                        messageDeduplicationId: Option[String] = None) =
+  def createMessageData(
+      id: String,
+      content: String,
+      messageAttributes: Map[String, MessageAttribute],
+      nextDelivery: MillisNextDelivery,
+      deliveryReceipt: Option[DeliveryReceipt] = None,
+      messageGroupId: Option[String] = None,
+      messageDeduplicationId: Option[String] = None
+  ) =
     MessageData(
       MessageId(id),
       deliveryReceipt,
@@ -46,18 +48,22 @@ trait DataCreationHelpers {
       messageDeduplicationId
     )
 
-  def createNewMessageData(id: String,
-                           content: String,
-                           messageAttributes: Map[String, MessageAttribute],
-                           nextDelivery: MillisNextDelivery,
-                           messageGroupId: Option[String] = None,
-                           messageDeduplicationId: Option[String] = None) =
-    NewMessageData(Some(MessageId(id)),
-                   content,
-                   messageAttributes,
-                   nextDelivery,
-                   messageGroupId,
-                   messageDeduplicationId)
+  def createNewMessageData(
+      id: String,
+      content: String,
+      messageAttributes: Map[String, MessageAttribute],
+      nextDelivery: MillisNextDelivery,
+      messageGroupId: Option[String] = None,
+      messageDeduplicationId: Option[String] = None
+  ) =
+    NewMessageData(
+      Some(MessageId(id)),
+      content,
+      messageAttributes,
+      nextDelivery,
+      messageGroupId,
+      messageDeduplicationId
+    )
 
   def createNewMessageData(messageData: MessageData) =
     NewMessageData(

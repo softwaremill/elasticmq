@@ -88,9 +88,11 @@ trait SendMessageDirectives { this: ElasticMQDirectives with SQSLimitsModule =>
     }.toMap
   }
 
-  def doSendMessage(queueActor: ActorRef,
-                    parameters: Map[String, String],
-                    queueData: QueueData): Future[(MessageData, String, String)] = {
+  def doSendMessage(
+      queueActor: ActorRef,
+      parameters: Map[String, String],
+      queueData: QueueData
+  ): Future[(MessageData, String, String)] = {
     val body = parameters(MessageBodyParameter)
     val messageAttributes = getMessageAttributes(parameters)
 
@@ -179,11 +181,13 @@ trait SendMessageDirectives { this: ElasticMQDirectives with SQSLimitsModule =>
     findInvalidCharacter(0)
   }
 
-  private def createMessage(body: String,
-                            messageAttributes: Map[String, MessageAttribute],
-                            delaySecondsOption: Option[Long],
-                            groupId: Option[String],
-                            deduplicationId: Option[String]) = {
+  private def createMessage(
+      body: String,
+      messageAttributes: Map[String, MessageAttribute],
+      delaySecondsOption: Option[Long],
+      groupId: Option[String],
+      deduplicationId: Option[String]
+  ) = {
     val nextDelivery = delaySecondsOption match {
       case None               => ImmediateNextDelivery
       case Some(delaySeconds) => AfterMillisNextDelivery(delaySeconds * 1000)
@@ -193,7 +197,9 @@ trait SendMessageDirectives { this: ElasticMQDirectives with SQSLimitsModule =>
   }
 
   private def sha256Hash(text: String): String = {
-    String.format("%064x",
-                  new java.math.BigInteger(1, MessageDigest.getInstance("SHA-256").digest(text.getBytes("UTF-8"))))
+    String.format(
+      "%064x",
+      new java.math.BigInteger(1, MessageDigest.getInstance("SHA-256").digest(text.getBytes("UTF-8")))
+    )
   }
 }

@@ -63,14 +63,15 @@ trait QueueActorWaitForMessagesOps extends ReplyingActor with QueueActorMessageO
   private def tryReply(): Unit = {
     awaitingReply.headOption match {
       case Some(
-          (seq,
-           AwaitingData(originalSender, ReceiveMessages(visibilityTimeout, count, _, receiveRequestAttemptId), _))) =>
+          (seq, AwaitingData(originalSender, ReceiveMessages(visibilityTimeout, count, _, receiveRequestAttemptId), _))
+          ) =>
         val received = super.receiveMessages(visibilityTimeout, count, receiveRequestAttemptId)
 
         if (received != Nil) {
           originalSender ! received
           logger.debug(
-            s"${queueData.name}: Awaiting messages: replying to sequence $seq with ${received.size} messages.")
+            s"${queueData.name}: Awaiting messages: replying to sequence $seq with ${received.size} messages."
+          )
           awaitingReply.remove(seq)
 
           tryReply()

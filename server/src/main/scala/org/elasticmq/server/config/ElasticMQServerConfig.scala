@@ -30,10 +30,12 @@ class ElasticMQServerConfig(config: Config) extends Logging {
 
   val nodeAddress = {
     val subConfig = config.getConfig("node-address")
-    NodeAddress(subConfig.getString("protocol"),
-                subConfig.getString("host"),
-                subConfig.getInt("port"),
-                subConfig.getString("context-path"))
+    NodeAddress(
+      subConfig.getString("protocol"),
+      subConfig.getString("host"),
+      subConfig.getInt("port"),
+      subConfig.getString("context-path")
+    )
   }
 
   val generateNodeAddress = config.getBoolean("generate-node-address")
@@ -88,7 +90,8 @@ class ElasticMQServerConfig(config: Config) extends Logging {
                 DeadLettersQueue(
                   c.getString(deadLettersQueueKey + ".name"),
                   c.getInt(deadLettersQueueKey + ".maxReceiveCount")
-                ))
+                )
+              )
             } else None,
             isFifo = getOptionalBoolean(c, "fifo").getOrElse(false),
             hasContentBasedDeduplication = getOptionalBoolean(c, "contentBasedDeduplication").getOrElse(false),

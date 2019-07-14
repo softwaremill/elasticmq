@@ -69,10 +69,12 @@ trait ReceiveMessageDirectives {
 
         verifyMessageWaitTime(waitTimeSecondsAttributeOpt)
 
-        val msgsFuture = queueActor ? ReceiveMessages(visibilityTimeoutFromParameters,
-                                                      maxNumberOfMessagesFromParameters,
-                                                      waitTimeSecondsFromParameters,
-                                                      receiveRequestAttemptId)
+        val msgsFuture = queueActor ? ReceiveMessages(
+          visibilityTimeoutFromParameters,
+          maxNumberOfMessagesFromParameters,
+          waitTimeSecondsFromParameters,
+          receiveRequestAttemptId
+        )
 
         val attributeNames = attributeNamesReader.read(p, AllAttributeNames)
 
@@ -101,8 +103,9 @@ trait ReceiveMessageDirectives {
           if (messageAttributeNames.exists(s => s == "All" || s == ".*")) {
             msg.messageAttributes
           } else {
-            msg.messageAttributes.filterKeys(k =>
-              messageAttributeNames.exists(s => s == k || k.r.findFirstIn(s).isDefined))
+            msg.messageAttributes.filterKeys(
+              k => messageAttributeNames.exists(s => s == k || k.r.findFirstIn(s).isDefined)
+            )
           }
         }
 
@@ -110,8 +113,11 @@ trait ReceiveMessageDirectives {
           respondWith {
             <ReceiveMessageResponse>
               <ReceiveMessageResult>
-                {msgs.map { msg =>
-                val receipt = msg.deliveryReceipt.map(_.receipt).getOrElse(throw new RuntimeException("No receipt for a received msg."))
+                {
+              msgs.map { msg =>
+                val receipt = msg.deliveryReceipt
+                  .map(_.receipt)
+                  .getOrElse(throw new RuntimeException("No receipt for a received msg."))
                 val filteredMessageAttributes = getFilteredAttributeNames(messageAttributeNames, msg)
                 <Message>
                   <MessageId>{msg.id.id}</MessageId>
@@ -119,9 +125,15 @@ trait ReceiveMessageDirectives {
                   <MD5OfBody>{md5Digest(msg.content)}</MD5OfBody>
                   <Body>{XmlUtil.convertTexWithCRToNodeSeq(msg.content)}</Body>
                   {attributesToXmlConverter.convert(calculateAttributeValues(msg))}
-                  {if (filteredMessageAttributes.nonEmpty) <MD5OfMessageAttributes>{md5AttributeDigest(filteredMessageAttributes)}</MD5OfMessageAttributes>}
+                  {
+                  if (filteredMessageAttributes.nonEmpty) <MD5OfMessageAttributes>{
+                    md5AttributeDigest(filteredMessageAttributes)
+                  }</MD5OfMessageAttributes>
+                }
                   {messageAttributesToXmlConverter.convert(filteredMessageAttributes.toList)}
-                </Message> }}
+                </Message>
+              }
+            }
               </ReceiveMessageResult>
               <ResponseMetadata>
                 <RequestId>{EmptyRequestId}</RequestId>
@@ -138,7 +150,8 @@ trait ReceiveMessageDirectives {
         k =>
           MessageReadeableAttributeNames.MessageAttributeNamePattern
             .findFirstIn(k)
-            .isDefined)
+            .isDefined
+      )
       .values
   }
 

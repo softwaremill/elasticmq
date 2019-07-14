@@ -22,7 +22,8 @@ trait QueueActorQueueOps extends Logging {
     case UpdateQueueDeadLettersQueue(newDeadLettersQueue, newDeadLettersQueueActor) =>
       if (newDeadLettersQueue.isDefined && newDeadLettersQueueActor.isDefined) {
         logger.info(
-          s"${queueData.name}: Updating Dead Letters Queue to ${newDeadLettersQueue.get.name} with maxReceiveCount ${newDeadLettersQueue.get.maxReceiveCount}")
+          s"${queueData.name}: Updating Dead Letters Queue to ${newDeadLettersQueue.get.name} with maxReceiveCount ${newDeadLettersQueue.get.maxReceiveCount}"
+        )
         deadLettersActorRef = newDeadLettersQueueActor
         queueData = queueData.copy(deadLettersQueue = newDeadLettersQueue)
       } else {
