@@ -92,7 +92,7 @@ val akka2Http = "com.typesafe.akka" %% "akka-http" % akkaHttpVersion
 val sprayJson = "io.spray" %% "spray-json" % "1.3.5"
 val akka2HttpTestkit = "com.typesafe.akka" %% "akka-http-testkit" % akkaHttpVersion % "test"
 
-val scalaAsync = "org.scala-lang.modules" %% "scala-async" % "0.9.7"
+val scalaAsync = "org.scala-lang.modules" %% "scala-async" % "0.10.0"
 
 val common = Seq(scalalogging)
 
