@@ -11,6 +11,6 @@ addSbtPlugin("com.typesafe.sbt" % "sbt-native-packager" % "1.3.25")
 
 addSbtPlugin("ohnosequences" % "sbt-github-release" % "0.7.1")
 
-libraryDependencies += "com.amazonaws" % "aws-java-sdk-s3" % "1.11.592"
+libraryDependencies += "com.amazonaws" % "aws-java-sdk-s3" % "1.11.599"
 
 scalacOptions in ThisBuild ++= Seq("-unchecked", "-deprecation")
