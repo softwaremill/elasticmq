@@ -17,7 +17,7 @@ val buildSettings = commonSmlBuildSettings ++ ossPublishSettings ++ Seq(
   sonatypeProfileName := "org.elasticmq",
   scalafmtOnCompile := true,
   // github release
-  ghreleaseRepoOrg := "adamw",
+  ghreleaseRepoOrg := "softwaremill",
   ghreleaseRepoName := "elasticmq",
   ghreleaseNotes := (_ => ""),
   ghreleaseTitle := (tagName => tagName.toString),
@@ -78,11 +78,11 @@ val jclOverSlf4j = "org.slf4j" % "jcl-over-slf4j" % "1.7.26" // needed form amaz
 val scalatest = "org.scalatest" %% "scalatest" % "3.0.8"
 val awaitility = "org.awaitility" % "awaitility-scala" % "3.1.6"
 
-val amazonJavaSdk = "com.amazonaws" % "aws-java-sdk" % "1.11.601" exclude ("commons-logging", "commons-logging")
+val amazonJavaSdk = "com.amazonaws" % "aws-java-sdk" % "1.11.613" exclude ("commons-logging", "commons-logging")
 
 val scalaGraph = "org.scala-graph" %% "graph-core" % "1.12.5"
 
-val akkaVersion = "2.5.23"
+val akkaVersion = "2.5.24"
 val akkaHttpVersion = "10.1.9"
 val akka2Actor = "com.typesafe.akka" %% "akka-actor" % akkaVersion
 val akka2Slf4j = "com.typesafe.akka" %% "akka-slf4j" % akkaVersion
