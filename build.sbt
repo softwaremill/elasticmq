@@ -9,7 +9,7 @@ import scoverage.ScoverageKeys._
 
 val buildSettings = commonSmlBuildSettings ++ ossPublishSettings ++ Seq(
   organization := "org.elasticmq",
-  scalaVersion := "2.12.8",
+  scalaVersion := "2.12.9",
   crossScalaVersions := Seq(scalaVersion.value, "2.11.12"),
   libraryDependencies += "org.scala-lang.modules" %% "scala-xml" % "1.2.0",
   dependencyOverrides := akka25Overrides,
