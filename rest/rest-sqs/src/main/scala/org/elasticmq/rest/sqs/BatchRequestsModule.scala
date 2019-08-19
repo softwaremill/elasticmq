@@ -73,6 +73,6 @@ object BatchRequestsModule {
         }
     }
 
-    subParameters.toList.sortBy(_._1).map(_._2)
+    subParameters.toList.sortBy(_._1.toInt).map(_._2)
   }
 }
