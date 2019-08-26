@@ -5,7 +5,6 @@ import org.elasticmq.NeverReceived
 import org.elasticmq.actor.queue.InternalMessage.PreciseDateTime
 import org.elasticmq.actor.queue.ReceiveRequestAttemptCache.ReceiveFailure.Invalid
 import org.elasticmq.actor.test.MutableNowProvider
-import org.joda.time.DateTime
 import org.scalatest.{FunSuite, Matchers}
 
 class ReceiveRequestAttemptCacheTest extends FunSuite with Matchers {
