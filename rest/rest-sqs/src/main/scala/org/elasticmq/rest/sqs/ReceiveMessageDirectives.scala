@@ -39,10 +39,12 @@ trait ReceiveMessageDirectives {
 
         val receiveRequestAttemptId = p.get(ReceiveRequestAttemptIdAttribute) match {
           // ReceiveRequestAttemptIdAttribute is only supported for FIFO queues
-          case Some(_) if !queueData.isFifo => throw SQSException.invalidParameterValue
+          case Some(v) if !queueData.isFifo =>
+            throw SQSException.invalidQueueTypeParameter(v, ReceiveRequestAttemptIdAttribute)
 
           // Validate values
-          case Some(attemptId) if !isValidFifoPropertyValue(attemptId) => throw SQSException.invalidParameterValue
+          case Some(attemptId) if !isValidFifoPropertyValue(attemptId) =>
+            throw SQSException.invalidAlphanumericalPunctualParameterValue(attemptId, ReceiveRequestAttemptIdAttribute)
 
           // The docs at https://docs.aws.amazon.com/cli/latest/reference/sqs/receive-message.html quote:
           //   > If a caller of the receive-message action doesn't provide a ReceiveRequestAttemptId , Amazon SQS
