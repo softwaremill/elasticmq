@@ -5,10 +5,11 @@ import scala.xml.Elem
 import Constants._
 
 class SQSException(
-  val code: String,
-  val httpStatusCode: Int = 400,
-  errorType: String = "Sender",
-  errorMessage: Option[String] = None) extends Exception {
+    val code: String,
+    val httpStatusCode: Int = 400,
+    errorType: String = "Sender",
+    errorMessage: Option[String] = None
+) extends Exception {
   val message: String = errorMessage.getOrElse(code + "; see the SQS docs.")
 
   def toXml(requestId: String): Elem =
@@ -24,10 +25,11 @@ class SQSException(
 }
 
 object SQSException {
+
   /** Indicates that a parameter was sent to a queue whose type does not support it */
   def invalidQueueTypeParameter(
-    value: String,
-    parameterName: String
+      value: String,
+      parameterName: String
   ): SQSException =
     invalidParameter(
       value,
@@ -37,8 +39,8 @@ object SQSException {
 
   /** Indicates that the given value for the given parameter name is not a max 128 alphanumerical (incl punctuation) */
   def invalidAlphanumericalPunctualParameterValue(
-    value: String,
-    parameterName: String
+      value: String,
+      parameterName: String
   ): SQSException =
     invalidParameter(
       value,
@@ -48,9 +50,9 @@ object SQSException {
 
   /** Indicates that the given value for the given parameter name is invalid */
   def invalidParameter(
-    value: String,
-    parameterName: String,
-    reason: Option[String] = None
+      value: String,
+      parameterName: String,
+      reason: Option[String] = None
   ): SQSException = {
     val valueMessage = s"Value $value for parameter $parameterName is invalid."
     val errorMessage = reason.map(r => s"$valueMessage $r").getOrElse(valueMessage)

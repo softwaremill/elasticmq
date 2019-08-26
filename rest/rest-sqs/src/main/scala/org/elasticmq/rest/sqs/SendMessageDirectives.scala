@@ -119,7 +119,8 @@ trait SendMessageDirectives { this: ElasticMQDirectives with SQSLimitsModule =>
 
     val messageDeduplicationId = parameters.get(MessageDeduplicationIdParameter) match {
       // MessageDeduplicationId is only supported for FIFO queues
-      case Some(v) if !queueData.isFifo => throw SQSException.invalidQueueTypeParameter(v, MessageDeduplicationIdParameter)
+      case Some(v) if !queueData.isFifo =>
+        throw SQSException.invalidQueueTypeParameter(v, MessageDeduplicationIdParameter)
 
       // Ensure the given value is valid
       case Some(id) if !isValidFifoPropertyValue(id) =>
@@ -132,7 +133,9 @@ trait SendMessageDirectives { this: ElasticMQDirectives with SQSLimitsModule =>
       case None if queueData.isFifo && !queueData.hasContentBasedDeduplication =>
         throw new SQSException(
           InvalidParameterValueErrorName,
-          errorMessage = Some(s"The queue should either have ContentBasedDeduplication enabled or $MessageDeduplicationIdParameter provided explicitly")
+          errorMessage = Some(
+            s"The queue should either have ContentBasedDeduplication enabled or $MessageDeduplicationIdParameter provided explicitly"
+          )
         )
 
       // If no MessageDeduplicationId was provided and content based deduping is enabled for queue, generate one
@@ -145,7 +148,11 @@ trait SendMessageDirectives { this: ElasticMQDirectives with SQSLimitsModule =>
     val delaySecondsOption = parameters.parseOptionalLong(DelaySecondsParameter) match {
       case Some(v) if v < 0 || v > 900 =>
         // Messages can at most be delayed for 15 minutes
-        throw SQSException.invalidParameter(v.toString, DelaySecondsParameter, Some("DelaySeconds must be >= 0 and <= 900"))
+        throw SQSException.invalidParameter(
+          v.toString,
+          DelaySecondsParameter,
+          Some("DelaySeconds must be >= 0 and <= 900")
+        )
       case Some(v) if v > 0 && queueData.isFifo =>
         // FIFO queues don't support delays
         throw SQSException.invalidQueueTypeParameter(v.toString, DelaySecondsParameter)
