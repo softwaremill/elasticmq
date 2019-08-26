@@ -427,20 +427,24 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
 
     // An illegal character
     assertInvalidParameterException("MessageGroupId")(
-      client.sendMessage(new SendMessageRequest(fifoQueueUrl, "A body").withMessageGroupId("æ")))
+      client.sendMessage(new SendMessageRequest(fifoQueueUrl, "A body").withMessageGroupId("æ"))
+    )
 
     // More than 128 characters
     val id = (for (_ <- 0 to 300) yield "1").mkString("")
     assertInvalidParameterException("MessageGroupId")(
-      client.sendMessage(new SendMessageRequest(fifoQueueUrl, "A body").withMessageGroupId(id)))
+      client.sendMessage(new SendMessageRequest(fifoQueueUrl, "A body").withMessageGroupId(id))
+    )
 
     // Message group IDs are required for fifo queues
     assertMissingParameterException("MessageGroupId")(
-      client.sendMessage(new SendMessageRequest(fifoQueueUrl, "A body")))
+      client.sendMessage(new SendMessageRequest(fifoQueueUrl, "A body"))
+    )
 
     // Regular queues don't allow message groups
     assertInvalidParameterQueueTypeException("MessageGroupId")(
-      client.sendMessage(new SendMessageRequest(regularQueueUrl, "A body").withMessageGroupId("group-1")))
+      client.sendMessage(new SendMessageRequest(regularQueueUrl, "A body").withMessageGroupId("group-1"))
+    )
   }
 
   test("FIFO queues do not support delaying individual messages") {
@@ -498,18 +502,20 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
 
     // An illegal character
     assertInvalidParameterException("MessageDeduplicationId")(
-      client.sendMessage(new SendMessageRequest(fifoQueueUrl, "A body")
-        .withMessageGroupId("groupId1")
-        .withMessageDeduplicationId("æ")
+      client.sendMessage(
+        new SendMessageRequest(fifoQueueUrl, "A body")
+          .withMessageGroupId("groupId1")
+          .withMessageDeduplicationId("æ")
       )
     )
 
     // More than 128 characters
     val id = (for (_ <- 0 to 300) yield "1").mkString("")
     assertInvalidParameterException("MessageDeduplicationId")(
-      client.sendMessage(new SendMessageRequest(fifoQueueUrl, "A body")
-        .withMessageGroupId("groupId1")
-        .withMessageDeduplicationId(id)
+      client.sendMessage(
+        new SendMessageRequest(fifoQueueUrl, "A body")
+          .withMessageGroupId("groupId1")
+          .withMessageDeduplicationId(id)
       )
     )
 
