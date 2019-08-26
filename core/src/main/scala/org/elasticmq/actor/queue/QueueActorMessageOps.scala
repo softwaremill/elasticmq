@@ -1,11 +1,11 @@
 package org.elasticmq.actor.queue
 
 import akka.actor.ActorRef
+import org.elasticmq.actor.queue.ReceiveRequestAttemptCache.ReceiveFailure.{Expired, Invalid}
 import org.elasticmq.actor.reply._
 import org.elasticmq.msg.{DeleteMessage, LookupMessage, ReceiveMessages, SendMessage, UpdateVisibilityTimeout, _}
 import org.elasticmq.util.{Logging, NowProvider}
 import org.elasticmq.{MessageData, MessageId, MillisNextDelivery, NewMessageData, _}
-import org.elasticmq.actor.queue.ReceiveRequestAttemptCache.ReceiveFailure.{Expired, Invalid}
 
 trait QueueActorMessageOps extends Logging {
   this: QueueActorStorage =>
@@ -61,7 +61,7 @@ trait QueueActorMessageOps extends Logging {
     * @return                Whether the new message counts as a duplicate
     */
   private def isDuplicate(newMessage: NewMessageData, queueMessage: InternalMessage): Boolean = {
-    lazy val isWithinDeduplicationWindow = queueMessage.created.plusMinutes(5).isAfter(nowProvider.now)
+    lazy val isWithinDeduplicationWindow = queueMessage.created.dateTime.plusMinutes(5).isAfter(nowProvider.now)
     newMessage.messageDeduplicationId == queueMessage.messageDeduplicationId && isWithinDeduplicationWindow
   }
 
