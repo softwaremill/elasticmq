@@ -222,7 +222,7 @@ lazy val nativeServer: Project = (project in file("native-server"))
   .settings(buildSettings)
   .settings(Seq(
     name := "elasticmq-native-server",
-    libraryDependencies += "com.oracle.substratevm" % "svm" % "19.1.1" % Provided,
+    libraryDependencies += "com.oracle.substratevm" % "svm" % "19.2.0" % Provided,
     mainClass in assembly := Some("org.elasticmq.server.Main"),
     mappings in Docker += (baseDirectory.value / ".." / "server" / "docker" / "elasticmq.conf") -> "/opt/elasticmq.conf",
     //
