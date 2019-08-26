@@ -426,37 +426,33 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
     val regularQueueUrl = client.createQueue(new CreateQueueRequest("testQueue1")).getQueueUrl
 
     // An illegal character
-    an[AmazonSQSException] shouldBe thrownBy {
-      client.sendMessage(new SendMessageRequest(fifoQueueUrl, "A body").withMessageGroupId("æ"))
-    }
+    assertInvalidParameterException("MessageGroupId")(
+      client.sendMessage(new SendMessageRequest(fifoQueueUrl, "A body").withMessageGroupId("æ")))
 
     // More than 128 characters
     val id = (for (_ <- 0 to 300) yield "1").mkString("")
-    an[AmazonSQSException] shouldBe thrownBy {
-      client.sendMessage(new SendMessageRequest(fifoQueueUrl, "A body").withMessageGroupId(id))
-    }
+    assertInvalidParameterException("MessageGroupId")(
+      client.sendMessage(new SendMessageRequest(fifoQueueUrl, "A body").withMessageGroupId(id)))
 
     // Message group IDs are required for fifo queues
-    an[AmazonSQSException] shouldBe thrownBy {
-      client.sendMessage(new SendMessageRequest(fifoQueueUrl, "A body"))
-    }
+    assertMissingParameterException("MessageGroupId")(
+      client.sendMessage(new SendMessageRequest(fifoQueueUrl, "A body")))
 
     // Regular queues don't allow message groups
-    an[AmazonSQSException] shouldBe thrownBy {
-      client.sendMessage(new SendMessageRequest(regularQueueUrl, "A body").withMessageGroupId("group-1"))
-    }
+    assertInvalidParameterQueueTypeException("MessageGroupId")(
+      client.sendMessage(new SendMessageRequest(regularQueueUrl, "A body").withMessageGroupId("group-1")))
   }
 
   test("FIFO queues do not support delaying individual messages") {
     val queueUrl = createFifoQueue()
-    an[AmazonSQSException] shouldBe thrownBy {
+    assertInvalidParameterException("DelaySeconds")(
       client.sendMessage(
         new SendMessageRequest(queueUrl, "body")
           .withMessageDeduplicationId("1")
           .withMessageGroupId("1")
           .withDelaySeconds(10)
       )
-    }
+    )
 
     val result = client.sendMessageBatch(
       new SendMessageBatchRequest(queueUrl).withEntries(
@@ -466,6 +462,14 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
     )
     result.getSuccessful should have size 1
     result.getFailed should have size 1
+
+    // Sanity check that a 0 delay seconds value is accepted
+    client.sendMessage(
+      new SendMessageRequest(queueUrl, "body")
+        .withMessageDeduplicationId("1")
+        .withMessageGroupId("1")
+        .withDelaySeconds(0)
+    )
   }
 
   test("FIFO provided message deduplication ids should take priority over content based deduplication") {
@@ -493,20 +497,26 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
     val regularQueueUrl = client.createQueue(new CreateQueueRequest("testQueue1")).getQueueUrl
 
     // An illegal character
-    an[AmazonSQSException] shouldBe thrownBy {
-      client.sendMessage(new SendMessageRequest(fifoQueueUrl, "A body").withMessageDeduplicationId("æ"))
-    }
+    assertInvalidParameterException("MessageDeduplicationId")(
+      client.sendMessage(new SendMessageRequest(fifoQueueUrl, "A body")
+        .withMessageGroupId("groupId1")
+        .withMessageDeduplicationId("æ")
+      )
+    )
 
     // More than 128 characters
     val id = (for (_ <- 0 to 300) yield "1").mkString("")
-    an[AmazonSQSException] shouldBe thrownBy {
-      client.sendMessage(new SendMessageRequest(fifoQueueUrl, "A body").withMessageDeduplicationId(id))
-    }
+    assertInvalidParameterException("MessageDeduplicationId")(
+      client.sendMessage(new SendMessageRequest(fifoQueueUrl, "A body")
+        .withMessageGroupId("groupId1")
+        .withMessageDeduplicationId(id)
+      )
+    )
 
     // Regular queues don't allow message deduplication
-    an[AmazonSQSException] shouldBe thrownBy {
+    assertInvalidParameterQueueTypeException("MessageDeduplicationId")(
       client.sendMessage(new SendMessageRequest(regularQueueUrl, "A body").withMessageDeduplicationId("dedup-1"))
-    }
+    )
   }
 
   test("FIFO queues need a content based deduplication strategy when no message deduplication ids are provided") {
@@ -1903,6 +1913,25 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
     // Then
     resultStrict.isLeft should be(true)
     resultRelaxed.isRight should be(true)
+  }
+
+  def assertInvalidParameterException(parameterName: String)(f: => Any): Unit = {
+    val ex = the[AmazonSQSException] thrownBy f
+    ex.getErrorCode should be("InvalidParameterValue")
+    ex.getMessage should include(parameterName)
+  }
+
+  def assertInvalidParameterQueueTypeException(parameterName: String)(f: => Any): Unit = {
+    val ex = the[AmazonSQSException] thrownBy f
+    ex.getErrorCode should be("InvalidParameterValue")
+    ex.getMessage should include(parameterName)
+    ex.getMessage should include("The request include parameter that is not valid for this queue type")
+  }
+
+  def assertMissingParameterException(parameterName: String)(f: => Any): Unit = {
+    val ex = the[AmazonSQSException] thrownBy f
+    ex.getErrorCode should be("MissingParameter")
+    ex.getMessage should include(s"The request must contain the parameter $parameterName.")
   }
 
   def appendRange(builder: StringBuilder, start: Int, end: Int): Unit = {

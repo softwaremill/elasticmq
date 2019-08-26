@@ -232,6 +232,7 @@ object Constants {
   val QueueArnAttribute = "QueueArn"
   val IdSubParameter = "Id"
   val InvalidParameterValueErrorName = "InvalidParameterValue"
+  val MissingParameterName = "MissingParameter"
   val QueueUrlContext = "queue"
 }
 
