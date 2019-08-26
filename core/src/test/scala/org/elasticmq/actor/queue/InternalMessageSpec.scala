@@ -39,6 +39,6 @@ class InternalMessageSpec extends FunSuite with Matchers {
       created = PreciseDateTime()
     )
 
-    first.compareTo(second) shouldBe -1
+    first.compareTo(second) shouldBe 1
   }
 }
