@@ -9,7 +9,7 @@ trait ChangeMessageVisibilityBatchDirectives {
     p.action("ChangeMessageVisibilityBatch") {
       queueActorFromRequest(p) { queueActor =>
         val resultsFuture =
-          batchRequest("ChangeMessageVisibilityBatchRequestEntry", p) { (messageData, id) =>
+          batchRequest("ChangeMessageVisibilityBatchRequestEntry", p) { (messageData, id, _) =>
             doChangeMessageVisibility(queueActor, messageData).map { _ =>
               <ChangeMessageVisibilityBatchResultEntry>
               <Id>{id}</Id>

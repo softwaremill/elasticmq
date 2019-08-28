@@ -62,7 +62,8 @@ trait DataCreationHelpers {
       messageAttributes,
       nextDelivery,
       messageGroupId,
-      messageDeduplicationId
+      messageDeduplicationId,
+      orderIndex = 0
     )
 
   def createNewMessageData(messageData: MessageData) =
@@ -72,6 +73,7 @@ trait DataCreationHelpers {
       messageData.messageAttributes,
       messageData.nextDelivery,
       messageData.messageGroupId,
-      messageData.messageDeduplicationId
+      messageData.messageDeduplicationId,
+      orderIndex = 0
     )
 }

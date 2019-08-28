@@ -3,6 +3,7 @@ package org.elasticmq.rest.sqs
 import Constants._
 import akka.http.scaladsl.server.Route
 import org.elasticmq.rest.sqs.directives.ElasticMQDirectives
+import org.joda.time.DateTime
 
 trait SendMessageBatchDirectives {
   this: ElasticMQDirectives with SendMessageDirectives with BatchRequestsModule =>
@@ -12,15 +13,20 @@ trait SendMessageBatchDirectives {
     p.action("SendMessageBatch") {
       queueActorAndDataFromRequest(p) { (queueActor, queueData) =>
         verifyMessagesNotTooLong(p)
-        val resultsFuture = batchRequest(SendMessageBatchPrefix, p) { (messageData, id) =>
-          doSendMessage(queueActor, messageData, queueData).map {
+
+        val baseCreationTime = new DateTime()
+
+        val resultsFuture = batchRequest(SendMessageBatchPrefix, p) { (messageData, id, index) =>
+          val message = createMessage(messageData, queueData, index)
+
+          doSendMessage(queueActor, message).map {
             case (message, digest, messageAttributeDigest) =>
               <SendMessageBatchResultEntry>
-              <Id>{id}</Id>
-              <MD5OfMessageAttributes>{messageAttributeDigest}</MD5OfMessageAttributes>
-              <MD5OfMessageBody>{digest}</MD5OfMessageBody>
-              <MessageId>{message.id.id}</MessageId>
-            </SendMessageBatchResultEntry>
+                <Id>{id}</Id>
+                <MD5OfMessageAttributes>{messageAttributeDigest}</MD5OfMessageAttributes>
+                <MD5OfMessageBody>{digest}</MD5OfMessageBody>
+                <MessageId>{message.id.id}</MessageId>
+              </SendMessageBatchResultEntry>
           }
         }
 

@@ -2,7 +2,6 @@ package org.elasticmq.actor.queue
 
 import scala.collection.mutable
 import org.elasticmq.NeverReceived
-import org.elasticmq.actor.queue.InternalMessage.PreciseDateTime
 import org.elasticmq.actor.queue.ReceiveRequestAttemptCache.ReceiveFailure.Invalid
 import org.elasticmq.actor.test.MutableNowProvider
 import org.scalatest.{FunSuite, Matchers}
@@ -23,7 +22,8 @@ class ReceiveRequestAttemptCacheTest extends FunSuite with Matchers {
       1L,
       "content",
       Map.empty,
-      PreciseDateTime(),
+      nowProvider.now,
+      orderIndex = 0,
       NeverReceived,
       receiveCount = 0,
       isFifo = false,
@@ -70,7 +70,8 @@ class ReceiveRequestAttemptCacheTest extends FunSuite with Matchers {
       1L,
       "content",
       Map.empty,
-      PreciseDateTime(),
+      nowProvider.now,
+      orderIndex = 0,
       NeverReceived,
       receiveCount = 0,
       isFifo = false,

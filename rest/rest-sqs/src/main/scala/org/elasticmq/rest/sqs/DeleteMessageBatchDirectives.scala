@@ -11,7 +11,7 @@ trait DeleteMessageBatchDirectives {
   def deleteMessageBatch(p: AnyParams) = {
     p.action("DeleteMessageBatch") {
       queueActorFromRequest(p) { queueActor =>
-        val resultsFuture = batchRequest("DeleteMessageBatchRequestEntry", p) { (messageData, id) =>
+        val resultsFuture = batchRequest("DeleteMessageBatchRequestEntry", p) { (messageData, id, _) =>
           val receiptHandle = messageData(ReceiptHandleParameter)
           val result = queueActor ? DeleteMessage(DeliveryReceipt(receiptHandle))
 

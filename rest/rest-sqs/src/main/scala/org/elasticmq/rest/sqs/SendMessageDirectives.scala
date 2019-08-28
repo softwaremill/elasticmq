@@ -2,19 +2,19 @@ package org.elasticmq.rest.sqs
 
 import java.security.MessageDigest
 
-import Constants._
-import MD5Util._
-import ParametersUtil._
-import org.elasticmq._
-import annotation.tailrec
-
 import akka.actor.ActorRef
-import scala.concurrent.Future
-
 import akka.http.scaladsl.server.Route
-import org.elasticmq.msg.SendMessage
+import org.elasticmq._
 import org.elasticmq.actor.reply._
+import org.elasticmq.msg.SendMessage
+import org.elasticmq.rest.sqs.Constants._
+import org.elasticmq.rest.sqs.MD5Util._
+import org.elasticmq.rest.sqs.ParametersUtil._
 import org.elasticmq.rest.sqs.directives.ElasticMQDirectives
+import org.joda.time.DateTime
+
+import scala.annotation.tailrec
+import scala.concurrent.Future
 
 trait SendMessageDirectives { this: ElasticMQDirectives with SQSLimitsModule =>
   val MessageBodyParameter = "MessageBody"
@@ -25,19 +25,21 @@ trait SendMessageDirectives { this: ElasticMQDirectives with SQSLimitsModule =>
   def sendMessage(p: AnyParams): Route = {
     p.action("SendMessage") {
       queueActorAndDataFromRequest(p) { (queueActor, queueData) =>
-        doSendMessage(queueActor, p, queueData).map {
+        val message = createMessage(p, queueData, orderIndex = 0)
+
+        doSendMessage(queueActor, message).map {
           case (message, digest, messageAttributeDigest) =>
             respondWith {
               <SendMessageResponse>
-              <SendMessageResult>
-                <MD5OfMessageAttributes>{messageAttributeDigest}</MD5OfMessageAttributes>
-                <MD5OfMessageBody>{digest}</MD5OfMessageBody>
-                <MessageId>{message.id.id}</MessageId>
-              </SendMessageResult>
-              <ResponseMetadata>
-                <RequestId>{EmptyRequestId}</RequestId>
-              </ResponseMetadata>
-            </SendMessageResponse>
+                <SendMessageResult>
+                  <MD5OfMessageAttributes>{messageAttributeDigest}</MD5OfMessageAttributes>
+                  <MD5OfMessageBody>{digest}</MD5OfMessageBody>
+                  <MessageId>{message.id.id}</MessageId>
+                </SendMessageResult>
+                <ResponseMetadata>
+                  <RequestId>{EmptyRequestId}</RequestId>
+                </ResponseMetadata>
+              </SendMessageResponse>
             }
         }
       }
@@ -88,11 +90,7 @@ trait SendMessageDirectives { this: ElasticMQDirectives with SQSLimitsModule =>
     }.toMap
   }
 
-  def doSendMessage(
-      queueActor: ActorRef,
-      parameters: Map[String, String],
-      queueData: QueueData
-  ): Future[(MessageData, String, String)] = {
+  def createMessage(parameters: Map[String, String], queueData: QueueData, orderIndex: Int): NewMessageData = {
     val body = parameters(MessageBodyParameter)
     val messageAttributes = getMessageAttributes(parameters)
 
@@ -119,7 +117,8 @@ trait SendMessageDirectives { this: ElasticMQDirectives with SQSLimitsModule =>
 
     val messageDeduplicationId = parameters.get(MessageDeduplicationIdParameter) match {
       // MessageDeduplicationId is only supported for FIFO queues
-      case Some(v) if !queueData.isFifo => throw SQSException.invalidQueueTypeParameter(v, MessageDeduplicationIdParameter)
+      case Some(v) if !queueData.isFifo =>
+        throw SQSException.invalidQueueTypeParameter(v, MessageDeduplicationIdParameter)
 
       // Ensure the given value is valid
       case Some(id) if !isValidFifoPropertyValue(id) =>
@@ -132,7 +131,9 @@ trait SendMessageDirectives { this: ElasticMQDirectives with SQSLimitsModule =>
       case None if queueData.isFifo && !queueData.hasContentBasedDeduplication =>
         throw new SQSException(
           InvalidParameterValueErrorName,
-          errorMessage = Some(s"The queue should either have ContentBasedDeduplication enabled or $MessageDeduplicationIdParameter provided explicitly")
+          errorMessage = Some(
+            s"The queue should either have ContentBasedDeduplication enabled or $MessageDeduplicationIdParameter provided explicitly"
+          )
         )
 
       // If no MessageDeduplicationId was provided and content based deduping is enabled for queue, generate one
@@ -145,19 +146,34 @@ trait SendMessageDirectives { this: ElasticMQDirectives with SQSLimitsModule =>
     val delaySecondsOption = parameters.parseOptionalLong(DelaySecondsParameter) match {
       case Some(v) if v < 0 || v > 900 =>
         // Messages can at most be delayed for 15 minutes
-        throw SQSException.invalidParameter(v.toString, DelaySecondsParameter, Some("DelaySeconds must be >= 0 and <= 900"))
+        throw SQSException.invalidParameter(
+          v.toString,
+          DelaySecondsParameter,
+          Some("DelaySeconds must be >= 0 and <= 900")
+        )
       case Some(v) if v > 0 && queueData.isFifo =>
         // FIFO queues don't support delays
         throw SQSException.invalidQueueTypeParameter(v.toString, DelaySecondsParameter)
       case d => d
     }
-    val messageToSend =
-      createMessage(body, messageAttributes, delaySecondsOption, messageGroupId, messageDeduplicationId)
-    val digest = md5Digest(body)
-    val messageAttributeDigest = md5AttributeDigest(messageAttributes)
+
+    val nextDelivery = delaySecondsOption match {
+      case None               => ImmediateNextDelivery
+      case Some(delaySeconds) => AfterMillisNextDelivery(delaySeconds * 1000)
+    }
+
+    NewMessageData(None, body, messageAttributes, nextDelivery, messageGroupId, messageDeduplicationId, orderIndex)
+  }
+
+  def doSendMessage(
+      queueActor: ActorRef,
+      message: NewMessageData
+  ): Future[(MessageData, String, String)] = {
+    val digest = md5Digest(message.content)
+    val messageAttributeDigest = md5AttributeDigest(message.messageAttributes)
 
     for {
-      message <- queueActor ? SendMessage(messageToSend)
+      message <- queueActor ? SendMessage(message)
     } yield (message, digest, messageAttributeDigest)
   }
 
@@ -188,21 +204,6 @@ trait SendMessageDirectives { this: ElasticMQDirectives with SQSLimitsModule =>
     }
 
     findInvalidCharacter(0)
-  }
-
-  private def createMessage(
-      body: String,
-      messageAttributes: Map[String, MessageAttribute],
-      delaySecondsOption: Option[Long],
-      groupId: Option[String],
-      deduplicationId: Option[String]
-  ) = {
-    val nextDelivery = delaySecondsOption match {
-      case None               => ImmediateNextDelivery
-      case Some(delaySeconds) => AfterMillisNextDelivery(delaySeconds * 1000)
-    }
-
-    NewMessageData(None, body, messageAttributes, nextDelivery, groupId, deduplicationId)
   }
 
   private def sha256Hash(text: String): String = {

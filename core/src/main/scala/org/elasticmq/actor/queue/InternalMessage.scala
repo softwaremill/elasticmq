@@ -3,7 +3,6 @@ package org.elasticmq.actor.queue
 import java.util.UUID
 
 import org.elasticmq._
-import org.elasticmq.actor.queue.InternalMessage.PreciseDateTime
 import org.elasticmq.util.NowProvider
 import org.joda.time.DateTime
 
@@ -15,7 +14,8 @@ case class InternalMessage(
     var nextDelivery: Long,
     content: String,
     messageAttributes: Map[String, MessageAttribute],
-    created: PreciseDateTime,
+    created: DateTime,
+    orderIndex: Int,
     var firstReceive: Received,
     var receiveCount: Int,
     isFifo: Boolean,
@@ -27,7 +27,10 @@ case class InternalMessage(
   override def compareTo(other: InternalMessage): Int = {
     if (isFifo) {
       // FIFO messages should be ordered on when they were written to the queue
-      -created.compareTo(other.created)
+      val comp = -created.compareTo(other.created)
+      if (comp == 0) {
+        -orderIndex.compareTo(other.orderIndex)
+      } else comp
     } else {
       // Plain messages are technically not ordered, but AWS seems to offer a loose, non-guaranteed "next delivery"
       // ordering
@@ -57,7 +60,7 @@ case class InternalMessage(
       content,
       messageAttributes,
       MillisNextDelivery(nextDelivery),
-      created.dateTime,
+      created,
       MessageStatistics(firstReceive, receiveCount),
       messageGroupId,
       messageDeduplicationId
@@ -70,28 +73,14 @@ case class InternalMessage(
       messageAttributes,
       MillisNextDelivery(nextDelivery),
       messageGroupId,
-      messageDeduplicationId
+      messageDeduplicationId,
+      orderIndex
     )
 
   def deliverable(deliveryTime: Long): Boolean = nextDelivery <= deliveryTime
 }
 
 object InternalMessage {
-
-  case class PreciseDateTime(dateTime: DateTime, nanoSeconds: Long) extends Comparable[PreciseDateTime] {
-    override def compareTo(other: PreciseDateTime): Int = {
-      val comp = dateTime.compareTo(other.dateTime)
-      if (comp == 0) {
-        nanoSeconds.compareTo(other.nanoSeconds)
-      } else {
-        comp
-      }
-    }
-  }
-
-  object PreciseDateTime {
-    def apply(): PreciseDateTime = new PreciseDateTime(new DateTime(), System.nanoTime())
-  }
 
   def from(newMessageData: NewMessageData, queueData: QueueData): InternalMessage = {
     val now = System.currentTimeMillis()
@@ -101,7 +90,8 @@ object InternalMessage {
       newMessageData.nextDelivery.toMillis(now, queueData.delay.getMillis).millis,
       newMessageData.content,
       newMessageData.messageAttributes,
-      PreciseDateTime(),
+      new DateTime(),
+      newMessageData.orderIndex,
       NeverReceived,
       0,
       queueData.isFifo,

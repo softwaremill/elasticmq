@@ -61,7 +61,7 @@ trait QueueActorMessageOps extends Logging {
     * @return                Whether the new message counts as a duplicate
     */
   private def isDuplicate(newMessage: NewMessageData, queueMessage: InternalMessage): Boolean = {
-    lazy val isWithinDeduplicationWindow = queueMessage.created.dateTime.plusMinutes(5).isAfter(nowProvider.now)
+    lazy val isWithinDeduplicationWindow = queueMessage.created.plusMinutes(5).isAfter(nowProvider.now)
     newMessage.messageDeduplicationId == queueMessage.messageDeduplicationId && isWithinDeduplicationWindow
   }
 
