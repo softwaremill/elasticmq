@@ -1,11 +1,11 @@
 package org.elasticmq.actor.queue
 
 import akka.actor.ActorRef
+import org.elasticmq.actor.queue.ReceiveRequestAttemptCache.ReceiveFailure.{Expired, Invalid}
 import org.elasticmq.actor.reply._
 import org.elasticmq.msg.{DeleteMessage, LookupMessage, ReceiveMessages, SendMessage, UpdateVisibilityTimeout, _}
 import org.elasticmq.util.{Logging, NowProvider}
 import org.elasticmq.{MessageData, MessageId, MillisNextDelivery, NewMessageData, _}
-import org.elasticmq.actor.queue.ReceiveRequestAttemptCache.ReceiveFailure.{Expired, Invalid}
 
 trait QueueActorMessageOps extends Logging {
   this: QueueActorStorage =>

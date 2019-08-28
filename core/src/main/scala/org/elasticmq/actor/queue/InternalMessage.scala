@@ -2,23 +2,11 @@ package org.elasticmq.actor.queue
 
 import java.util.UUID
 
-import scala.collection.mutable
-
+import org.elasticmq._
 import org.elasticmq.util.NowProvider
-import org.elasticmq.{
-  DeliveryReceipt,
-  MessageAttribute,
-  MessageData,
-  MessageId,
-  MessageStatistics,
-  MillisNextDelivery,
-  NeverReceived,
-  NewMessageData,
-  OnDateTimeReceived,
-  QueueData,
-  Received
-}
 import org.joda.time.DateTime
+
+import scala.collection.mutable
 
 case class InternalMessage(
     id: String,
@@ -27,6 +15,7 @@ case class InternalMessage(
     content: String,
     messageAttributes: Map[String, MessageAttribute],
     created: DateTime,
+    orderIndex: Int,
     var firstReceive: Received,
     var receiveCount: Int,
     isFifo: Boolean,
@@ -38,7 +27,10 @@ case class InternalMessage(
   override def compareTo(other: InternalMessage): Int = {
     if (isFifo) {
       // FIFO messages should be ordered on when they were written to the queue
-      -created.getMillis.compareTo(other.created.getMillis)
+      val comp = -created.compareTo(other.created)
+      if (comp == 0) {
+        -orderIndex.compareTo(other.orderIndex)
+      } else comp
     } else {
       // Plain messages are technically not ordered, but AWS seems to offer a loose, non-guaranteed "next delivery"
       // ordering
@@ -81,7 +73,8 @@ case class InternalMessage(
       messageAttributes,
       MillisNextDelivery(nextDelivery),
       messageGroupId,
-      messageDeduplicationId
+      messageDeduplicationId,
+      orderIndex
     )
 
   def deliverable(deliveryTime: Long): Boolean = nextDelivery <= deliveryTime
@@ -98,6 +91,7 @@ object InternalMessage {
       newMessageData.content,
       newMessageData.messageAttributes,
       new DateTime(),
+      newMessageData.orderIndex,
       NeverReceived,
       0,
       queueData.isFifo,

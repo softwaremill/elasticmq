@@ -25,28 +25,30 @@ trait BatchRequestsModule {
   }
 
   def batchRequest(prefix: String, parameters: AnyParams)(
-      single: (Map[String, String], String) => Future[NodeSeq]
+      single: (Map[String, String], String, Int) => Future[NodeSeq]
   ): Future[NodeSeq] = {
 
     val messagesData = batchParametersMap(prefix, parameters)
 
-    val futures = messagesData.map(messageData => {
-      val id = messageData(IdSubParameter)
+    val futures = messagesData.zipWithIndex.map {
+      case (messageData, index) => {
+        val id = messageData(IdSubParameter)
 
-      try {
-        single(messageData, id)
-      } catch {
-        case e: SQSException =>
-          Future {
-            <BatchResultErrorEntry>
-            <Id>{id}</Id>
-            <SenderFault>true</SenderFault>
-            <Code>{e.code}</Code>
-            <Message>{e.message}</Message>
-          </BatchResultErrorEntry>
-          }
+        try {
+          single(messageData, id, index)
+        } catch {
+          case e: SQSException =>
+            Future {
+              <BatchResultErrorEntry>
+                <Id>{id}</Id>
+                <SenderFault>true</SenderFault>
+                <Code>{e.code}</Code>
+                <Message>{e.message}</Message>
+              </BatchResultErrorEntry>
+            }
+        }
       }
-    })
+    }
 
     Future.sequence(futures).map(_.flatten)
   }

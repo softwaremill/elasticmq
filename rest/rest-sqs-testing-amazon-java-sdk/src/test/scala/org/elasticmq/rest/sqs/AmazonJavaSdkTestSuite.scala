@@ -708,6 +708,32 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
     allMessages.map(_.getBody) should be(messageBodies)
   }
 
+  test("FIFO queues should deliver messages in the same order as they are sent in a batch") {
+    // Given
+    val queueUrl = createFifoQueue()
+
+    // When
+    val maxValidNumberOfMessagesInABatch = 10
+    val messages = for (i <- 1 to maxValidNumberOfMessagesInABatch) yield {
+      new SendMessageBatchRequestEntry()
+        .withId(s"Id$i")
+        .withMessageBody(s"Body$i")
+        .withMessageDeduplicationId(s"DeduplicationId$i")
+        .withMessageGroupId("messageGroupId")
+    }
+
+    client.sendMessageBatch(new SendMessageBatchRequest(queueUrl, messages.asJava))
+
+    // Then
+    val receivedMessages =
+      client
+        .receiveMessage(new ReceiveMessageRequest(queueUrl).withMaxNumberOfMessages(maxValidNumberOfMessagesInABatch))
+        .getMessages
+        .asScala
+
+    receivedMessages.map(_.getBody) should contain theSameElementsInOrderAs messages.map(_.getMessageBody)
+  }
+
   test("FIFO queues should deliver the same messages for the same request attempt id") {
     // Given
     val queueUrl = createFifoQueue()

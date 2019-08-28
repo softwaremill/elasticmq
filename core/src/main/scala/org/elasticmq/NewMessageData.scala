@@ -6,5 +6,6 @@ case class NewMessageData(
     messageAttributes: Map[String, MessageAttribute],
     nextDelivery: NextDelivery,
     messageGroupId: Option[String],
-    messageDeduplicationId: Option[String]
+    messageDeduplicationId: Option[String],
+    orderIndex: Int
 )
