@@ -1,0 +1,12 @@
+pull_request_rules:
+  - name: delete head branch after merge
+    conditions: []
+    actions:
+      delete_head_branch: {}
+  - name: automatic merge for Scala Steward pull requests
+    conditions:
+      - author=scala-steward
+      - status-success=Travis CI - Pull Request
+    actions:
+      merge:
+        method: merge
