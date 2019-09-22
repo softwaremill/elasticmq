@@ -6,7 +6,7 @@ pull_request_rules:
   - name: automatic merge for Scala Steward pull requests
     conditions:
       - author=scala-steward
-      - status-success=Travis CI - Pull Request
+      - status-success=continuous-integration/travis-ci/pr
     actions:
       merge:
         method: merge
