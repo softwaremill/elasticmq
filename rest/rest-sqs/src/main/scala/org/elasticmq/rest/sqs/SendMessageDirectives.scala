@@ -11,7 +11,6 @@ import org.elasticmq.rest.sqs.Constants._
 import org.elasticmq.rest.sqs.MD5Util._
 import org.elasticmq.rest.sqs.ParametersUtil._
 import org.elasticmq.rest.sqs.directives.ElasticMQDirectives
-import org.joda.time.DateTime
 
 import scala.annotation.tailrec
 import scala.concurrent.Future
@@ -32,11 +31,7 @@ trait SendMessageDirectives { this: ElasticMQDirectives with SQSLimitsModule =>
             respondWith {
               <SendMessageResponse>
                 <SendMessageResult>
-                  {
-                    if (!messageAttributeDigest.isEmpty) <MD5OfMessageAttributes>{
-                      messageAttributeDigest
-                    }</MD5OfMessageAttributes>
-                  }
+                  {messageAttributeDigest.map(d => <MD5OfMessageAttributes>{d}</MD5OfMessageAttributes>).getOrElse(())}
                   <MD5OfMessageBody>{digest}</MD5OfMessageBody>
                   <MessageId>{message.id.id}</MessageId>
                 </SendMessageResult>
@@ -172,12 +167,12 @@ trait SendMessageDirectives { this: ElasticMQDirectives with SQSLimitsModule =>
   def doSendMessage(
       queueActor: ActorRef,
       message: NewMessageData
-  ): Future[(MessageData, String, String)] = {
+  ): Future[(MessageData, String, Option[String])] = {
     val digest = md5Digest(message.content)
     val messageAttributeDigest = if (message.messageAttributes.isEmpty) {
-      ""
+      None
     } else {
-      md5AttributeDigest(message.messageAttributes)
+      Some(md5AttributeDigest(message.messageAttributes))
     }
 
     for {
