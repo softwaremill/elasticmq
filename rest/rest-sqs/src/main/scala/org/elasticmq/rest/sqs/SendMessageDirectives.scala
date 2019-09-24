@@ -32,7 +32,11 @@ trait SendMessageDirectives { this: ElasticMQDirectives with SQSLimitsModule =>
             respondWith {
               <SendMessageResponse>
                 <SendMessageResult>
-                  <MD5OfMessageAttributes>{messageAttributeDigest}</MD5OfMessageAttributes>
+                  {
+                    if (!messageAttributeDigest.isEmpty) <MD5OfMessageAttributes>{
+                      messageAttributeDigest
+                    }</MD5OfMessageAttributes>
+                  }
                   <MD5OfMessageBody>{digest}</MD5OfMessageBody>
                   <MessageId>{message.id.id}</MessageId>
                 </SendMessageResult>
@@ -170,7 +174,11 @@ trait SendMessageDirectives { this: ElasticMQDirectives with SQSLimitsModule =>
       message: NewMessageData
   ): Future[(MessageData, String, String)] = {
     val digest = md5Digest(message.content)
-    val messageAttributeDigest = md5AttributeDigest(message.messageAttributes)
+    val messageAttributeDigest = if (message.messageAttributes.isEmpty) {
+      ""
+    } else {
+      md5AttributeDigest(message.messageAttributes)
+    }
 
     for {
       message <- queueActor ? SendMessage(message)

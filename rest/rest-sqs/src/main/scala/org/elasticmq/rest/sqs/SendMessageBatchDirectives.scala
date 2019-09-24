@@ -23,7 +23,11 @@ trait SendMessageBatchDirectives {
             case (message, digest, messageAttributeDigest) =>
               <SendMessageBatchResultEntry>
                 <Id>{id}</Id>
-                <MD5OfMessageAttributes>{messageAttributeDigest}</MD5OfMessageAttributes>
+                {
+                  if (!messageAttributeDigest.isEmpty) <MD5OfMessageAttributes>{
+                    messageAttributeDigest
+                  }</MD5OfMessageAttributes>
+                }
                 <MD5OfMessageBody>{digest}</MD5OfMessageBody>
                 <MessageId>{message.id.id}</MessageId>
               </SendMessageBatchResultEntry>
