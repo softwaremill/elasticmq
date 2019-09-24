@@ -58,7 +58,7 @@ val buildSettings = commonSmlBuildSettings ++ ossPublishSettings ++ Seq(
       commitReleaseVersion,
       tagRelease,
       publishArtifacts,
-      releaseStepCommand("sonatypeReleaseAll"),
+      releaseStepCommand("sonatypeBundleRelease"),
       pushChanges,
       releaseStepCommand("core/githubRelease"),
       setNextVersion,
