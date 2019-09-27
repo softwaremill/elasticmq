@@ -17,6 +17,9 @@ import scala.concurrent.Future
 trait QueueAttributesDirectives {
   this: ElasticMQDirectives with AttributesModule =>
 
+  val awsRegion: String
+  val awsAccountId: String
+
   object QueueWriteableAttributeNames {
     val AllWriteableAttributeNames: List[String] = VisibilityTimeoutParameter :: DelaySecondsAttribute ::
       ReceiveMessageWaitTimeSecondsAttribute :: RedrivePolicyParameter :: Nil
@@ -94,12 +97,12 @@ trait QueueAttributesDirectives {
               ReceiveMessageWaitTimeSecondsAttribute,
               () => Future.successful(queueData.receiveMessageWait.getStandardSeconds.toString)
             ),
-            Rule(QueueArnAttribute, () => Future.successful("arn:aws:sqs:elasticmq:000000000000:" + queueData.name))
+            Rule(QueueArnAttribute, () => Future.successful(s"arn:aws:sqs:$awsRegion:$awsAccountId:${queueData.name}"))
           )
 
           val optionalRules = Seq(
             queueData.deadLettersQueue
-              .map(dlq => RedrivePolicy(dlq.name, dlq.maxReceiveCount))
+              .map(dlq => RedrivePolicy(dlq.name, Some(awsRegion), Some(awsAccountId), dlq.maxReceiveCount))
               .map(
                 redrivePolicy => Rule(RedrivePolicyParameter, () => Future.successful(redrivePolicy.toJson.toString))
               )
