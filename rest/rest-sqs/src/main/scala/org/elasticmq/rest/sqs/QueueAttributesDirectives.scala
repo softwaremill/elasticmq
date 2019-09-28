@@ -18,8 +18,8 @@ import scala.concurrent.Future
 trait QueueAttributesDirectives {
   this: ElasticMQDirectives with AttributesModule =>
 
-  val awsRegion: String
-  val awsAccountId: String
+  def awsRegion: String
+  def awsAccountId: String
 
   object QueueWriteableAttributeNames {
     val AllWriteableAttributeNames: List[String] = VisibilityTimeoutParameter :: DelaySecondsAttribute ::
