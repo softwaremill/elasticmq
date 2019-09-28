@@ -5,7 +5,8 @@ import org.elasticmq.actor.reply._
 import org.elasticmq.msg._
 import org.elasticmq.rest.sqs.Constants._
 import org.elasticmq.rest.sqs.directives.ElasticMQDirectives
-import org.elasticmq.rest.sqs.model.RedrivePolicy
+import org.elasticmq.rest.sqs.model.RedrivePolicy.BackwardCompatibleRedrivePolicy
+import org.elasticmq.rest.sqs.model.{GenericRedrivePolicy, RedrivePolicy}
 import org.elasticmq.{DeadLettersQueueData, MillisVisibilityTimeout}
 import org.joda.time.Duration
 import spray.json.JsonParser.ParsingException
@@ -16,6 +17,9 @@ import scala.concurrent.Future
 
 trait QueueAttributesDirectives {
   this: ElasticMQDirectives with AttributesModule =>
+
+  def awsRegion: String
+  def awsAccountId: String
 
   object QueueWriteableAttributeNames {
     val AllWriteableAttributeNames: List[String] = VisibilityTimeoutParameter :: DelaySecondsAttribute ::
@@ -94,12 +98,12 @@ trait QueueAttributesDirectives {
               ReceiveMessageWaitTimeSecondsAttribute,
               () => Future.successful(queueData.receiveMessageWait.getStandardSeconds.toString)
             ),
-            Rule(QueueArnAttribute, () => Future.successful("arn:aws:sqs:elasticmq:000000000000:" + queueData.name))
+            Rule(QueueArnAttribute, () => Future.successful(s"arn:aws:sqs:$awsRegion:$awsAccountId:${queueData.name}"))
           )
 
           val optionalRules = Seq(
             queueData.deadLettersQueue
-              .map(dlq => RedrivePolicy(dlq.name, dlq.maxReceiveCount))
+              .map(dlq => RedrivePolicy(dlq.name, awsRegion, awsAccountId, dlq.maxReceiveCount))
               .map(
                 redrivePolicy => Rule(RedrivePolicyParameter, () => Future.successful(redrivePolicy.toJson.toString))
               )
@@ -165,7 +169,7 @@ trait QueueAttributesDirectives {
                 val redrivePolicy =
                   try {
                     import org.elasticmq.rest.sqs.model.RedrivePolicyJson._
-                    attributeValue.parseJson.convertTo[RedrivePolicy]
+                    attributeValue.parseJson.convertTo[BackwardCompatibleRedrivePolicy]
                   } catch {
                     case e: DeserializationException =>
                       logger.warn("Cannot deserialize the redrive policy attribute", e)

@@ -6,7 +6,7 @@ import org.elasticmq.rest.sqs.Constants._
 import org.elasticmq.rest.sqs.CreateQueueDirectives._
 import org.elasticmq.rest.sqs.ParametersUtil._
 import org.elasticmq.rest.sqs.directives.ElasticMQDirectives
-import org.elasticmq.rest.sqs.model.RedrivePolicy
+import org.elasticmq.rest.sqs.model.RedrivePolicy.BackwardCompatibleRedrivePolicy
 import org.elasticmq.{DeadLettersQueueData, MillisVisibilityTimeout, QueueData}
 import org.joda.time.{DateTime, Duration}
 import spray.json.JsonParser.ParsingException
@@ -29,7 +29,7 @@ trait CreateQueueDirectives {
               import org.elasticmq.rest.sqs.model.RedrivePolicyJson._
               attributes
                 .get(RedrivePolicyParameter)
-                .map(_.parseJson.convertTo[RedrivePolicy])
+                .map(_.parseJson.convertTo[BackwardCompatibleRedrivePolicy])
             } catch {
               case e: DeserializationException =>
                 logger.warn("Cannot deserialize the redrive policy attribute", e)

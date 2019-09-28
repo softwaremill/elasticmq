@@ -105,4 +105,8 @@ class ElasticMQServerConfig(config: Config) extends Logging {
     QueueSorter.sortCreateQueues(unsortedCreateQueues)
   }
 
+  private val awsConfig = config.getConfig("aws")
+  val awsRegion: String = awsConfig.getString("region")
+  val awsAccountId: String = awsConfig.getString("accountId")
+
 }

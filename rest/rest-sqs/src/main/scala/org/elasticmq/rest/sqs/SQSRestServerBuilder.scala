@@ -34,7 +34,18 @@ import scala.xml.{EntityRef, _}
   * <ul>for `sqsLimits`: relaxed
   * </li>
   */
-object SQSRestServerBuilder extends TheSQSRestServerBuilder(None, None, "", 9324, NodeAddress(), true, SQSLimits.Strict)
+object SQSRestServerBuilder
+    extends TheSQSRestServerBuilder(
+      None,
+      None,
+      "",
+      9324,
+      NodeAddress(),
+      true,
+      SQSLimits.Strict,
+      "elasticmq",
+      "000000000000"
+    )
 
 case class TheSQSRestServerBuilder(
     providedActorSystem: Option[ActorSystem],
@@ -43,7 +54,9 @@ case class TheSQSRestServerBuilder(
     port: Int,
     serverAddress: NodeAddress,
     generateServerAddress: Boolean,
-    sqsLimits: SQSLimits.Value
+    sqsLimits: SQSLimits.Value,
+    _awsRegion: String,
+    _awsAccountId: String
 ) extends Logging {
 
   /**
@@ -90,6 +103,18 @@ case class TheSQSRestServerBuilder(
   def withSQSLimits(_sqsLimits: SQSLimits.Value) =
     this.copy(sqsLimits = _sqsLimits)
 
+  /**
+    * @param region Region which will be included in ARM resource ids.
+    */
+  def withAWSRegion(region: String) =
+    this.copy(_awsRegion = region)
+
+  /**
+    * @param accountId AccountId which will be included in ARM resource ids.
+    */
+  def withAWSAccountId(accountId: String) =
+    this.copy(_awsAccountId = accountId)
+
   def start(): SQSRestServer = {
     val (theActorSystem, stopActorSystem) = getOrCreateActorSystem
     val theQueueManagerActor = getOrCreateQueueManagerActor(theActorSystem)
@@ -120,6 +145,10 @@ case class TheSQSRestServerBuilder(
       lazy val queueManagerActor = theQueueManagerActor
       lazy val sqsLimits = theLimits
       lazy val timeout = Timeout(21, TimeUnit.SECONDS) // see application.conf
+
+      lazy val awsRegion: String = _awsRegion
+      lazy val awsAccountId: String = _awsAccountId
+
     }
 
     import env._
