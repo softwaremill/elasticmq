@@ -5,7 +5,8 @@ import org.elasticmq.actor.reply._
 import org.elasticmq.msg._
 import org.elasticmq.rest.sqs.Constants._
 import org.elasticmq.rest.sqs.directives.ElasticMQDirectives
-import org.elasticmq.rest.sqs.model.RedrivePolicy
+import org.elasticmq.rest.sqs.model.RedrivePolicy.BackwardCompatibleRedrivePolicy
+import org.elasticmq.rest.sqs.model.{GenericRedrivePolicy, RedrivePolicy}
 import org.elasticmq.{DeadLettersQueueData, MillisVisibilityTimeout}
 import org.joda.time.Duration
 import spray.json.JsonParser.ParsingException
@@ -102,7 +103,7 @@ trait QueueAttributesDirectives {
 
           val optionalRules = Seq(
             queueData.deadLettersQueue
-              .map(dlq => RedrivePolicy(dlq.name, Some(awsRegion), Some(awsAccountId), dlq.maxReceiveCount))
+              .map(dlq => RedrivePolicy(dlq.name, awsRegion, awsAccountId, dlq.maxReceiveCount))
               .map(
                 redrivePolicy => Rule(RedrivePolicyParameter, () => Future.successful(redrivePolicy.toJson.toString))
               )
@@ -168,7 +169,7 @@ trait QueueAttributesDirectives {
                 val redrivePolicy =
                   try {
                     import org.elasticmq.rest.sqs.model.RedrivePolicyJson._
-                    attributeValue.parseJson.convertTo[RedrivePolicy]
+                    attributeValue.parseJson.convertTo[BackwardCompatibleRedrivePolicy]
                   } catch {
                     case e: DeserializationException =>
                       logger.warn("Cannot deserialize the redrive policy attribute", e)

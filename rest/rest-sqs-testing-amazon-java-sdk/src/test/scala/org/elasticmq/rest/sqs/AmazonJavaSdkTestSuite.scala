@@ -564,7 +564,7 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
     val deadLetterUrl = client.createQueue(deadLetterQueue).getQueueUrl
 
     val redrivePolicy =
-      RedrivePolicy("dead.testFifoQueue-long-poll.fifo", Some(awsRegion), Some(awsAccountId), 1).toJson.toString()
+      RedrivePolicy("dead.testFifoQueue-long-poll.fifo", awsRegion, awsAccountId, 1).toJson.toString()
 
     val fifoQueue = new CreateQueueRequest(s"testFifoQueue-long-poll.fifo")
       .addAttributesEntry("FifoQueue", "true")
@@ -1666,7 +1666,7 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
     val deadLetterQueueAttributes = client.getQueueAttributes(deadLetterQueueUrl, List("All").asJava).getAttributes
 
     // When
-    val redrivePolicy = RedrivePolicy("dlq1", Some(awsRegion), Some(awsAccountId), 1).toJson.toString()
+    val redrivePolicy = RedrivePolicy("dlq1", awsRegion, awsAccountId, 1).toJson.toString()
     println(redrivePolicy)
     val createQueueResult = client.createQueue(
       new CreateQueueRequest("q1")
@@ -1691,7 +1691,7 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
       client.createQueue(
         new CreateQueueRequest("q1").withAttributes(
           Map(
-            redrivePolicyAttribute -> RedrivePolicy("queueDoesNotExist", Some(awsRegion), Some(awsAccountId), 1).toJson
+            redrivePolicyAttribute -> RedrivePolicy("queueDoesNotExist", awsRegion, awsAccountId, 1).toJson
               .toString()
           ).asJava
         )
@@ -1829,7 +1829,7 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
 
     val deadLetterQueueUrl = client.createQueue(new CreateQueueRequest("dlq2")).getQueueUrl
     val deadLetterQueueAttributes = client.getQueueAttributes(deadLetterQueueUrl, List("All").asJava).getAttributes
-    val redrivePolicy = RedrivePolicy("dlq2", Some(awsRegion), Some(awsAccountId), 1).toJson.toString()
+    val redrivePolicy = RedrivePolicy("dlq2", awsRegion, awsAccountId, 1).toJson.toString()
     val createQueueResult = client.createQueue(
       new CreateQueueRequest("q2")
         .withAttributes(Map(defaultVisibilityTimeoutAttribute -> "1", redrivePolicyAttribute -> redrivePolicy).asJava)
@@ -1842,7 +1842,7 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
     newQueueAttributes(redrivePolicyAttribute) should be(redrivePolicy)
 
     client.createQueue(new CreateQueueRequest("dlq2a"))
-    val newRedrivePolicy = RedrivePolicy("dlq2a", Some(awsRegion), Some(awsAccountId), 1).toJson.toString()
+    val newRedrivePolicy = RedrivePolicy("dlq2a", awsRegion, awsAccountId, 1).toJson.toString()
     client.setQueueAttributes(
       new SetQueueAttributesRequest()
         .withQueueUrl(createQueueResult.getQueueUrl)
@@ -1859,7 +1859,7 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
     import org.elasticmq.rest.sqs.model.RedrivePolicyJson._
     import spray.json._
 
-    val redrivePolicy = RedrivePolicy("notaqueue", Some(awsRegion), Some(awsAccountId), 1).toJson.toString()
+    val redrivePolicy = RedrivePolicy("notaqueue", awsRegion, awsAccountId, 1).toJson.toString()
     a[AmazonSQSException] shouldBe thrownBy {
       client.createQueue(
         new CreateQueueRequest("q3")
@@ -1874,7 +1874,7 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
 
     val createQueueResult = client.createQueue(new CreateQueueRequest("q4"))
 
-    val redrivePolicy = RedrivePolicy("notaqueue", Some(awsRegion), Some(awsAccountId), 1).toJson.toString()
+    val redrivePolicy = RedrivePolicy("notaqueue", awsRegion, awsAccountId, 1).toJson.toString()
     a[AmazonSQSException] shouldBe thrownBy {
       client.setQueueAttributes(
         new SetQueueAttributesRequest()

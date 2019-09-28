@@ -1,7 +1,8 @@
 package org.elasticmq.rest.sqs
 
 import akka.http.scaladsl.testkit.ScalatestRouteTest
-import org.elasticmq.rest.sqs.model.RedrivePolicy
+import org.elasticmq.rest.sqs.model.{GenericRedrivePolicy, RedrivePolicy}
+import org.elasticmq.rest.sqs.model.RedrivePolicy.{BackwardCompatibleRedrivePolicy, RedrivePolicy}
 import org.scalatest.{FlatSpec, Matchers}
 import spray.json._
 
@@ -10,7 +11,7 @@ class RedrivePolicyJsonTest extends FlatSpec with Matchers with ScalatestRouteTe
     import org.elasticmq.rest.sqs.model.RedrivePolicyJson._
 
     val json = """{"deadLetterTargetArn":"arn:aws:sqs:elasticmq:000000000000:dlq1","maxReceiveCount":4}"""
-    val expectedRedrivePolicy = RedrivePolicy(
+    val expectedRedrivePolicy = GenericRedrivePolicy(
       queueName = "dlq1",
       region = Some("elasticmq"),
       accountId = Some("000000000000"),
@@ -18,11 +19,23 @@ class RedrivePolicyJsonTest extends FlatSpec with Matchers with ScalatestRouteTe
     )
 
     // Verify the policy can be derrived from a JSON string
-    val rd = json.parseJson.convertTo[RedrivePolicy]
+    val rd = json.parseJson.convertTo[BackwardCompatibleRedrivePolicy]
     rd should be(expectedRedrivePolicy)
+  }
+
+  "redrive policy json format" should "serialize to json" in {
+    import org.elasticmq.rest.sqs.model.RedrivePolicyJson._
+
+    val redrivePolicy = RedrivePolicy(
+      queueName = "dlq1",
+      region = "elasticmq",
+      accountId = "000000000000",
+      maxReceiveCount = 4
+    )
+    val expectedJson = """{"deadLetterTargetArn":"arn:aws:sqs:elasticmq:000000000000:dlq1","maxReceiveCount":4}"""
 
     // Verify serializing the policy to JSON results in the expected JSON string
-    rd.toJson.compactPrint should be(json)
+    redrivePolicy.toJson.compactPrint should be(expectedJson)
   }
 
   "redrive policy json format" should "support int receive count" in {
@@ -36,10 +49,10 @@ class RedrivePolicyJsonTest extends FlatSpec with Matchers with ScalatestRouteTe
         |}
       """.stripMargin
 
-    val rd = json.parseJson.convertTo[RedrivePolicy]
+    val rd = json.parseJson.convertTo[BackwardCompatibleRedrivePolicy]
 
     rd should be(
-      RedrivePolicy(
+      GenericRedrivePolicy(
         queueName = "dlq1",
         region = Some("elasticmq"),
         accountId = Some("000000000000"),
@@ -60,10 +73,10 @@ class RedrivePolicyJsonTest extends FlatSpec with Matchers with ScalatestRouteTe
         |}
       """.stripMargin
 
-    val rd = json.parseJson.convertTo[RedrivePolicy]
+    val rd = json.parseJson.convertTo[BackwardCompatibleRedrivePolicy]
 
     rd should be(
-      RedrivePolicy(
+      GenericRedrivePolicy(
         queueName = "dlq1",
         region = None,
         accountId = None,

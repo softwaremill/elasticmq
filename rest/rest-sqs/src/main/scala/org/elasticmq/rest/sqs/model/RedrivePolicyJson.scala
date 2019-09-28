@@ -1,5 +1,6 @@
 package org.elasticmq.rest.sqs.model
 
+import org.elasticmq.rest.sqs.model.RedrivePolicy.{BackwardCompatibleRedrivePolicy, RedrivePolicy}
 import spray.json.{
   DefaultJsonProtocol,
   JsNumber,
@@ -7,7 +8,8 @@ import spray.json.{
   JsString,
   JsValue,
   JsonFormat,
-  RootJsonFormat,
+  JsonReader,
+  JsonWriter,
   deserializationError
 }
 
@@ -20,25 +22,30 @@ object RedrivePolicyJson extends DefaultJsonProtocol {
     */
   private val Arn = "(?:.+:(.+)?:(.+)?:)?(.+)".r
 
-  implicit val format: JsonFormat[RedrivePolicy] =
-    new RootJsonFormat[RedrivePolicy] {
-      def read(json: JsValue): RedrivePolicy = {
+  implicit val backwardCompatibleFormat: JsonFormat[BackwardCompatibleRedrivePolicy] = lift(
+    new JsonReader[BackwardCompatibleRedrivePolicy] {
+      override def read(json: JsValue): BackwardCompatibleRedrivePolicy = {
         json.asJsObject
           .getFields("deadLetterTargetArn", "maxReceiveCount") match {
           case Seq(JsString(Arn(region, accountId, queueName)), JsString(maxReceiveCount)) =>
-            RedrivePolicy(queueName, Option(region), Option(accountId), maxReceiveCount.toInt)
+            GenericRedrivePolicy(queueName, Option(region), Option(accountId), maxReceiveCount.toInt)
           case Seq(JsString(Arn(region, accountId, queueName)), JsNumber(maxReceiveCount)) =>
-            RedrivePolicy(queueName, Option(region), Option(accountId), maxReceiveCount.toInt)
+            GenericRedrivePolicy(queueName, Option(region), Option(accountId), maxReceiveCount.toInt)
           case _ =>
             deserializationError(
               "Expected fields: 'deadLetterTargetArn' (JSON string) and 'maxReceiveCount' (JSON number)"
             )
         }
       }
-      def write(obj: RedrivePolicy) =
-        JsObject(
-          "deadLetterTargetArn" -> JsString(s"arn:aws:sqs:${obj.region.get}:${obj.accountId.get}:${obj.queueName}"),
-          "maxReceiveCount" -> JsNumber(obj.maxReceiveCount)
-        )
     }
+  )
+
+  implicit val format: JsonFormat[RedrivePolicy] = lift(new JsonWriter[RedrivePolicy] {
+    override def write(obj: RedrivePolicy): JsValue = {
+      JsObject(
+        "deadLetterTargetArn" -> JsString(s"arn:aws:sqs:${obj.region}:${obj.accountId}:${obj.queueName}"),
+        "maxReceiveCount" -> JsNumber(obj.maxReceiveCount)
+      )
+    }
+  })
 }
