@@ -91,8 +91,10 @@ queues {
 }
 
 // Region and accountId which will be included in resource ids
-awsRegion = us-west-2
-awsAccountId = 000000000
+aws {
+    region = us-west-2
+    accountId = 000000000
+}
 ````
 
 You can also provide an alternative [Logback](http://logback.qos.ch/) configuration file (the

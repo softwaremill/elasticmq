@@ -24,7 +24,7 @@ class ElasticMQServerConfigTest extends FunSuite with Matchers {
     taggedQueue.tags should contain value "tagged1"
     taggedQueue.tags should contain key "tag2"
     taggedQueue.tags should contain value "tagged2"
-    conf.awsAccountId should be("000000000")
-    conf.awsRegion should be("elasticmq")
+    conf.awsAccountId should be("1111111")
+    conf.awsRegion should be("elastic")
   }
 }
