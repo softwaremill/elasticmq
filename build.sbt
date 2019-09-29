@@ -81,8 +81,6 @@ val awaitility = "org.awaitility" % "awaitility-scala" % "3.1.6"
 
 val amazonJavaSdk = "com.amazonaws" % "aws-java-sdk" % "1.11.613" exclude ("commons-logging", "commons-logging")
 
-val scalaGraph = "org.scala-graph" %% "graph-core" % "1.12.5"
-
 val akkaVersion = "2.5.25"
 val akkaHttpVersion = "10.1.9"
 val akka2Actor = "com.typesafe.akka" %% "akka-actor" % akkaVersion
@@ -159,7 +157,7 @@ lazy val server: Project = (project in file("server"))
   .settings(generateVersionFileSettings)
   .settings(Seq(
     name := "elasticmq-server",
-    libraryDependencies ++= Seq(logback, config, scalaGraph),
+    libraryDependencies ++= Seq(logback, config),
     mainClass in assembly := Some("org.elasticmq.server.Main"),
     coverageMinimum := 52,
     // s3 upload
