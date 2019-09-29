@@ -71,21 +71,21 @@ val buildSettings = commonSmlBuildSettings ++ ossPublishSettings ++ Seq(
   }
 )
 
-val jodaTime = "joda-time" % "joda-time" % "2.10.3"
+val jodaTime = "joda-time" % "joda-time" % "2.10.4"
 val jodaConvert = "org.joda" % "joda-convert" % "2.2.1"
 val config = "com.typesafe" % "config" % "1.3.4"
 
 val scalalogging = "com.typesafe.scala-logging" %% "scala-logging" % "3.9.2"
 val logback = "ch.qos.logback" % "logback-classic" % "1.2.3"
-val jclOverSlf4j = "org.slf4j" % "jcl-over-slf4j" % "1.7.26" // needed form amazon java sdk
+val jclOverSlf4j = "org.slf4j" % "jcl-over-slf4j" % "1.7.28" // needed form amazon java sdk
 
 val scalatest = "org.scalatest" %% "scalatest" % "3.0.8"
-val awaitility = "org.awaitility" % "awaitility-scala" % "3.1.6"
+val awaitility = "org.awaitility" % "awaitility-scala" % "4.0.1"
 
-val amazonJavaSdk = "com.amazonaws" % "aws-java-sdk" % "1.11.613" exclude ("commons-logging", "commons-logging")
+val amazonJavaSdk = "com.amazonaws" % "aws-java-sdk" % "1.11.641" exclude ("commons-logging", "commons-logging")
 
 val akkaVersion = "2.5.25"
-val akkaHttpVersion = "10.1.9"
+val akkaHttpVersion = "10.1.10"
 val akka2Actor = "com.typesafe.akka" %% "akka-actor" % akkaVersion
 val akka2Slf4j = "com.typesafe.akka" %% "akka-slf4j" % akkaVersion
 val akka2Streams = "com.typesafe.akka" %% "akka-stream" % akkaVersion
@@ -223,7 +223,7 @@ lazy val nativeServer: Project = (project in file("native-server"))
   .settings(buildSettings)
   .settings(Seq(
     name := "elasticmq-native-server",
-    libraryDependencies += "com.oracle.substratevm" % "svm" % "19.2.0" % Provided,
+    libraryDependencies += "com.oracle.substratevm" % "svm" % "19.2.0.1" % Provided,
     mainClass in assembly := Some("org.elasticmq.server.Main"),
     mappings in Docker += (baseDirectory.value / ".." / "server" / "docker" / "elasticmq.conf") -> "/opt/elasticmq.conf",
     //
