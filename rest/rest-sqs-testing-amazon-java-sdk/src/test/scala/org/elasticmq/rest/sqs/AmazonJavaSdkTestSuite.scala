@@ -390,7 +390,7 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
     if (requestedAttributes.contains("All")) {
       messageAttributes
     } else {
-      messageAttributes.filterKeys(k => requestedAttributes.contains(k))
+      messageAttributes.filterKeys(k => requestedAttributes.contains(k)).toMap
     }
   }
 

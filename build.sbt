@@ -7,10 +7,13 @@ import sbt.Keys.credentials
 import sbtrelease.ReleaseStateTransformations._
 import scoverage.ScoverageKeys._
 
+val v2_12 = "2.12.9"
+val v2_13 = "2.13.1"
+
 val buildSettings = commonSmlBuildSettings ++ ossPublishSettings ++ Seq(
   organization := "org.elasticmq",
-  scalaVersion := "2.12.9",
-  crossScalaVersions := Seq(scalaVersion.value, "2.11.12"),
+  scalaVersion := v2_12,
+  crossScalaVersions := Seq(v2_12, v2_13),
   libraryDependencies += "org.scala-lang.modules" %% "scala-xml" % "1.2.0",
   dependencyOverrides := akka25Overrides,
   parallelExecution := false,
@@ -81,8 +84,6 @@ val awaitility = "org.awaitility" % "awaitility-scala" % "3.1.6"
 
 val amazonJavaSdk = "com.amazonaws" % "aws-java-sdk" % "1.11.613" exclude ("commons-logging", "commons-logging")
 
-val scalaGraph = "org.scala-graph" %% "graph-core" % "1.12.5"
-
 val akkaVersion = "2.5.25"
 val akkaHttpVersion = "10.1.9"
 val akka2Actor = "com.typesafe.akka" %% "akka-actor" % akkaVersion
@@ -93,7 +94,7 @@ val akka2Http = "com.typesafe.akka" %% "akka-http" % akkaHttpVersion
 val sprayJson = "io.spray" %% "spray-json" % "1.3.5"
 val akka2HttpTestkit = "com.typesafe.akka" %% "akka-http-testkit" % akkaHttpVersion % "test"
 
-val scalaAsync = "org.scala-lang.modules" %% "scala-async" % "0.9.7"
+val scalaAsync = "org.scala-lang.modules" %% "scala-async" % "0.10.0"
 
 val common = Seq(scalalogging)
 
@@ -159,7 +160,7 @@ lazy val server: Project = (project in file("server"))
   .settings(generateVersionFileSettings)
   .settings(Seq(
     name := "elasticmq-server",
-    libraryDependencies ++= Seq(logback, config, scalaGraph),
+    libraryDependencies ++= Seq(logback, config),
     mainClass in assembly := Some("org.elasticmq.server.Main"),
     coverageMinimum := 52,
     // s3 upload
