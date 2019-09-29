@@ -7,7 +7,7 @@ import sbt.Keys.credentials
 import sbtrelease.ReleaseStateTransformations._
 import scoverage.ScoverageKeys._
 
-val v2_12 = "2.12.9"
+val v2_12 = "2.12.10"
 val v2_13 = "2.13.1"
 
 val buildSettings = commonSmlBuildSettings ++ ossPublishSettings ++ Seq(
