@@ -2,7 +2,7 @@ ElasticMQ
 =========
 
 [![Build Status](https://travis-ci.org/softwaremill/elasticmq.svg?branch=master)](https://travis-ci.org/softwaremill/elasticmq)
-[![Maven Central](https://maven-badges.herokuapp.com/maven-central/org.elasticmq/elasticmq-rest-sqs_2.11/badge.svg)](https://maven-badges.herokuapp.com/maven-central/org.elasticmq/elasticmq-rest-sqs_2.11/)
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/org.elasticmq/elasticmq-rest-sqs_2.12/badge.svg)](https://maven-badges.herokuapp.com/maven-central/org.elasticmq/elasticmq-rest-sqs_2.12/)
 
 tl;dr
 -----
@@ -292,7 +292,7 @@ However, it's an experimental feature, so some things might not work.
 ElasticMQ dependencies in SBT
 -----------------------------
 
-    // Scala 2.12 and 2.11
+    // Scala 2.13 and 2.12
     val elasticmqSqs        = "org.elasticmq" %% "elasticmq-rest-sqs" % "0.15.0"
 
 If you don't want the SQS interface, but just use the actors directly, you can add a dependency only to the `core`
@@ -309,7 +309,7 @@ Dependencies:
 
     <dependency>
         <groupId>org.elasticmq</groupId>
-        <artifactId>elasticmq-rest-sqs_2.11</artifactId>
+        <artifactId>elasticmq-rest-sqs_2.12</artifactId>
         <version>0.15.0</version>
     </dependency>
 
@@ -318,9 +318,7 @@ If you want to use a snapshot version, you will need to add the [https://oss.son
 Current versions
 ----------------
 
-*Stable*: 0.15.0, 0.8.12
-
-*Development*: 0.15.0-SNAPSHOT
+*Stable*: 0.15.0
 
 Logging
 -------
