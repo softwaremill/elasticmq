@@ -101,13 +101,18 @@ trait ReceiveMessageDirectives {
           )
         }
 
-        def getFilteredAttributeNames(messageAttributeNames: Iterable[String], msg: MessageData) = {
+        def getFilteredAttributeNames(
+            messageAttributeNames: Iterable[String],
+            msg: MessageData
+        ): Map[String, MessageAttribute] = {
           if (messageAttributeNames.exists(s => s == "All" || s == ".*")) {
             msg.messageAttributes
           } else {
-            msg.messageAttributes.filterKeys(
-              k => messageAttributeNames.exists(s => s == k || k.r.findFirstIn(s).isDefined)
-            )
+            msg.messageAttributes
+              .filterKeys(
+                k => messageAttributeNames.exists(s => s == k || k.r.findFirstIn(s).isDefined)
+              )
+              .toMap
           }
         }
 
