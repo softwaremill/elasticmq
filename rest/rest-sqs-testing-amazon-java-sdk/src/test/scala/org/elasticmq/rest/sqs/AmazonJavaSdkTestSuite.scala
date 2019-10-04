@@ -264,6 +264,15 @@ class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter 
     doTestSendAndReceiveMessage(builder.toString())
   }
 
+  test("should send a simple message with message attributes with multi-byte characters") {
+    doTestSendAndReceiveMessageWithAttributes(
+      "Message 1",
+      Map(
+        "innocent" -> StringMessageAttribute("😇")
+      )
+    )
+  }
+
   test("should reply with a MissingAction error when no action sent") {
     // given
     val httpHost = new HttpHost("localhost", 9321)
