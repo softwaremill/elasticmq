@@ -73,7 +73,7 @@ val buildSettings = commonSmlBuildSettings ++ ossPublishSettings ++ Seq(
 
 val jodaTime = "joda-time" % "joda-time" % "2.10.4"
 val jodaConvert = "org.joda" % "joda-convert" % "2.2.1"
-val config = "com.typesafe" % "config" % "1.3.4"
+val config = "com.typesafe" % "config" % "1.4.0"
 
 val scalalogging = "com.typesafe.scala-logging" %% "scala-logging" % "3.9.2"
 val logback = "ch.qos.logback" % "logback-classic" % "1.2.3"
