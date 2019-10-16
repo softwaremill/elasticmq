@@ -93,7 +93,7 @@ queues {
 // Region and accountId which will be included in resource ids
 aws {
     region = us-west-2
-    accountId = 000000000
+    accountId = 000000000000
 }
 ````
 
