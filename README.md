@@ -1,5 +1,4 @@
-ElasticMQ
-=========
+![ElasticMQ](https://github.com/softwaremill/elasticmq/raw/master/banner.png)
 
 [![Build Status](https://travis-ci.org/softwaremill/elasticmq.svg?branch=master)](https://travis-ci.org/softwaremill/elasticmq)
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/org.elasticmq/elasticmq-rest-sqs_2.12/badge.svg)](https://maven-badges.herokuapp.com/maven-central/org.elasticmq/elasticmq-rest-sqs_2.12/)
@@ -407,3 +406,13 @@ Technology
   asynchronous, REST/HTTP toolkit.
 * Testing the SQS interface: [Amazon Java SDK](http://aws.amazon.com/sdkforjava/);
   see the `rest-sqs-testing-amazon-java-sdk` module for the testsuite.
+
+Commercial Support
+------------------
+
+We offer commercial support for ElasticMQ and related technologies, as well as development services. [Contact us](https://softwaremill.com) to learn more about our offer!
+
+Copyright
+---------
+
+Copyright (C) 2011-2019 SoftwareMill [https://softwaremill.com](https://softwaremill.com).
