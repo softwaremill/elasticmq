@@ -71,7 +71,7 @@ val buildSettings = commonSmlBuildSettings ++ ossPublishSettings ++ Seq(
   }
 )
 
-val jodaTime = "joda-time" % "joda-time" % "2.10.4"
+val jodaTime = "joda-time" % "joda-time" % "2.10.5"
 val jodaConvert = "org.joda" % "joda-convert" % "2.2.1"
 val config = "com.typesafe" % "config" % "1.4.0"
 
