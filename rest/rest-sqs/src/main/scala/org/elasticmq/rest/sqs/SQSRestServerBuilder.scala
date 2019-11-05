@@ -130,13 +130,29 @@ case class TheSQSRestServerBuilder(
     val currentServerAddress =
       new AtomicReference[NodeAddress](theServerAddress)
 
-    val env = new QueueManagerActorModule with QueueURLModule with SQSLimitsModule with BatchRequestsModule
-    with ElasticMQDirectives with CreateQueueDirectives with DeleteQueueDirectives with QueueAttributesDirectives
-    with ListQueuesDirectives with SendMessageDirectives with SendMessageBatchDirectives with ReceiveMessageDirectives
-    with DeleteMessageDirectives with DeleteMessageBatchDirectives with ChangeMessageVisibilityDirectives
-    with ChangeMessageVisibilityBatchDirectives with GetQueueUrlDirectives with PurgeQueueDirectives
-    with AddPermissionDirectives with AttributesModule with TagQueueDirectives with TagsModule
-    with UnmatchedActionRoutes {
+    val env = new QueueManagerActorModule
+      with QueueURLModule
+      with SQSLimitsModule
+      with BatchRequestsModule
+      with ElasticMQDirectives
+      with CreateQueueDirectives
+      with DeleteQueueDirectives
+      with QueueAttributesDirectives
+      with ListQueuesDirectives
+      with SendMessageDirectives
+      with SendMessageBatchDirectives
+      with ReceiveMessageDirectives
+      with DeleteMessageDirectives
+      with DeleteMessageBatchDirectives
+      with ChangeMessageVisibilityDirectives
+      with ChangeMessageVisibilityBatchDirectives
+      with GetQueueUrlDirectives
+      with PurgeQueueDirectives
+      with AddPermissionDirectives
+      with AttributesModule
+      with TagQueueDirectives
+      with TagsModule
+      with UnmatchedActionRoutes {
 
       def serverAddress = currentServerAddress.get()
 
