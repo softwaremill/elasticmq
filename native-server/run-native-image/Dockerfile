@@ -4,5 +4,6 @@ FROM alpine:3.10.0
 RUN apk add --no-cache tini
 COPY out /opt/docker/out
 RUN chmod +x /opt/docker/out
+COPY elasticmq.conf /opt/
 EXPOSE 9324/tcp
-ENTRYPOINT [ "/sbin/tini", "--", "/opt/docker/out" ]
+ENTRYPOINT [ "/sbin/tini", "--", "/opt/docker/out" , "-Dconfig.file=/opt/elasticmq.conf"]

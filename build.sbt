@@ -234,17 +234,21 @@ lazy val nativeServer: Project = (project in file("native-server"))
       val stageDir = target.value / "native-docker" / "stage"
       stageDir.mkdirs()
 
-      // copy all jars to the staging directory
       val cpDir = stageDir / "cp"
       cpDir.mkdirs()
-
-      val classpathJars = (mappings in Universal).value.map(_._1).filter(_.name.endsWith(".jar"))
-      classpathJars.foreach(cpJar =>
-        Files.copy(cpJar.toPath, (cpDir / cpJar.name).toPath, StandardCopyOption.REPLACE_EXISTING))
 
       val resultDir = stageDir / "result"
       resultDir.mkdirs()
       val resultName = "out"
+
+      // copy all jars to the staging directory
+      val classpathJars = (mappings in Universal).value.map(_._1).filter(_.name.endsWith(".jar"))
+      classpathJars.foreach(cpJar =>
+        Files.copy(cpJar.toPath, (cpDir / cpJar.name).toPath, StandardCopyOption.REPLACE_EXISTING))
+
+      // copy default configuration to the staging directory
+      val defaultConfigFile = baseDirectory.value / ".." / "server" / "docker" / "elasticmq.conf"
+      Files.copy(defaultConfigFile.toPath, (resultDir / defaultConfigFile.name).toPath, StandardCopyOption.REPLACE_EXISTING)
 
       val className = (mainClass in Compile in server).value.getOrElse(sys.error("Could not find a main class."))
 
