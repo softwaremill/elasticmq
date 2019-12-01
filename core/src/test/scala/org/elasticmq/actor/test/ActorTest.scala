@@ -4,9 +4,11 @@ import akka.actor.ActorSystem
 import akka.testkit.TestKit
 import akka.util.Timeout
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.{AsyncFunSuiteLike, BeforeAndAfterAll, Matchers}
+import org.scalatest.BeforeAndAfterAll
 
 import scala.concurrent.duration._
+import org.scalatest.funsuite.AsyncFunSuiteLike
+import org.scalatest.matchers.should.Matchers
 
 abstract class ActorTest
     extends TestKit(ActorSystem())

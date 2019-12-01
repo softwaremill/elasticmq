@@ -18,14 +18,16 @@ import org.apache.http.message.BasicNameValuePair
 import org.elasticmq._
 import org.elasticmq.rest.sqs.model.RedrivePolicy
 import org.elasticmq.util.Logging
-import org.scalatest.{Matchers, _}
+import org.scalatest._
 
 import scala.collection.JavaConverters._
 import scala.io.Source
 import scala.util.Try
 import scala.util.control.Exception._
+import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.matchers.should.Matchers
 
-class AmazonJavaSdkTestSuite extends FunSuite with Matchers with BeforeAndAfter with Logging {
+class AmazonJavaSdkTestSuite extends AnyFunSuite with Matchers with BeforeAndAfter with Logging {
   val visibilityTimeoutAttribute = "VisibilityTimeout"
   val defaultVisibilityTimeoutAttribute = "VisibilityTimeout"
   val redrivePolicyAttribute = "RedrivePolicy"

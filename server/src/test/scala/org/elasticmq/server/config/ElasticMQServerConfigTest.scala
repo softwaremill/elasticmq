@@ -1,9 +1,10 @@
 package org.elasticmq.server.config
 
 import com.typesafe.config.ConfigFactory
-import org.scalatest.{FunSuite, Matchers}
+import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.matchers.should.Matchers
 
-class ElasticMQServerConfigTest extends FunSuite with Matchers {
+class ElasticMQServerConfigTest extends AnyFunSuite with Matchers {
   test("load the default config") {
     // No exceptions -> good :)
     new ElasticMQServerConfig(ConfigFactory.load("conf/elasticmq"))

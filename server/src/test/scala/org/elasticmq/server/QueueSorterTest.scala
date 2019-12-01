@@ -1,9 +1,10 @@
 package org.elasticmq.server
 
 import org.elasticmq.server.config.{CreateQueue, DeadLettersQueue}
-import org.scalatest.{FunSuite, Matchers}
+import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.matchers.should.Matchers
 
-class QueueSorterTest extends FunSuite with Matchers {
+class QueueSorterTest extends AnyFunSuite with Matchers {
   test("sorts an empty list") {
     val sortedQueues = QueueSorter.sortCreateQueues(List())
     sortedQueues should have size (0)

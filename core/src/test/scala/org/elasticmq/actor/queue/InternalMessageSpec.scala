@@ -2,11 +2,12 @@ package org.elasticmq.actor.queue
 
 import org.elasticmq.NeverReceived
 import org.joda.time.DateTime
-import org.scalatest.{FunSuite, Matchers}
 
 import scala.collection.mutable
+import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.matchers.should.Matchers
 
-class InternalMessageSpec extends FunSuite with Matchers {
+class InternalMessageSpec extends AnyFunSuite with Matchers {
   test("Internal FIFO message should be ordered by their creation time") {
     val freezedDateTime = new DateTime()
 

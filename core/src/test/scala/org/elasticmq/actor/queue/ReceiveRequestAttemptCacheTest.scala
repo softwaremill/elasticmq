@@ -4,9 +4,10 @@ import scala.collection.mutable
 import org.elasticmq.NeverReceived
 import org.elasticmq.actor.queue.ReceiveRequestAttemptCache.ReceiveFailure.Invalid
 import org.elasticmq.actor.test.MutableNowProvider
-import org.scalatest.{FunSuite, Matchers}
+import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.matchers.should.Matchers
 
-class ReceiveRequestAttemptCacheTest extends FunSuite with Matchers {
+class ReceiveRequestAttemptCacheTest extends AnyFunSuite with Matchers {
 
   test("should retrieve message by attempt id or return the appropriate failure") {
     val cache = new ReceiveRequestAttemptCache
