@@ -1,6 +1,5 @@
 package org.elasticmq.rest.sqs
 
-
 import scala.util.Random
 import org.scalatest.funsuite.AnyFunSuite
 
