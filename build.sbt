@@ -77,15 +77,15 @@ val config = "com.typesafe" % "config" % "1.4.0"
 
 val scalalogging = "com.typesafe.scala-logging" %% "scala-logging" % "3.9.2"
 val logback = "ch.qos.logback" % "logback-classic" % "1.2.3"
-val jclOverSlf4j = "org.slf4j" % "jcl-over-slf4j" % "1.7.29" // needed form amazon java sdk
+val jclOverSlf4j = "org.slf4j" % "jcl-over-slf4j" % "1.7.30" // needed form amazon java sdk
 
-val scalatest = "org.scalatest" %% "scalatest" % "3.1.0"
-val awaitility = "org.awaitility" % "awaitility-scala" % "4.0.1"
+val scalatest = "org.scalatest" %% "scalatest" % "3.0.8"
+val awaitility = "org.awaitility" % "awaitility-scala" % "4.0.2"
 
 val amazonJavaSdk = "com.amazonaws" % "aws-java-sdk" % "1.11.641" exclude ("commons-logging", "commons-logging")
 
-val akkaVersion = "2.6.0"
-val akkaHttpVersion = "10.1.10"
+val akkaVersion = "2.6.1"
+val akkaHttpVersion = "10.1.11"
 val akka2Actor = "com.typesafe.akka" %% "akka-actor" % akkaVersion
 val akka2Slf4j = "com.typesafe.akka" %% "akka-slf4j" % akkaVersion
 val akka2Streams = "com.typesafe.akka" %% "akka-stream" % akkaVersion
