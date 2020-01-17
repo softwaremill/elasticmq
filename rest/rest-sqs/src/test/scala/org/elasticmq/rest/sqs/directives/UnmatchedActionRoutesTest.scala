@@ -3,10 +3,11 @@ package org.elasticmq.rest.sqs.directives
 import akka.http.scaladsl.model.StatusCodes.BadRequest
 import akka.http.scaladsl.server.Directives
 import akka.http.scaladsl.testkit.ScalatestRouteTest
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 class UnmatchedActionRoutesTest
-    extends FlatSpec
+    extends AnyFlatSpec
     with Matchers
     with ScalatestRouteTest
     with Directives

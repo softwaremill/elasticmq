@@ -10,13 +10,14 @@ import org.elasticmq.rest.sqs.{ActorSystemModule, QueueManagerActorModule}
 import org.elasticmq.util.NowProvider
 import org.elasticmq.{MillisVisibilityTimeout, QueueData}
 import org.joda.time.{DateTime, Duration}
-import org.scalatest.{FlatSpec, Matchers}
 
 import scala.concurrent.{Await, ExecutionContextExecutor}
 import scala.concurrent.duration._
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 class QueueDirectivesTest
-    extends FlatSpec
+    extends AnyFlatSpec
     with Matchers
     with ScalatestRouteTest
     with Directives

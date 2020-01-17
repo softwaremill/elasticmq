@@ -1,11 +1,10 @@
 package org.elasticmq.rest.sqs
 
-import org.scalatest.FunSuite
-import org.scalatest.Matchers
-
 import scala.util.Random
+import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.matchers.should.Matchers
 
-class BatchRequestsModuleTest extends FunSuite with Matchers {
+class BatchRequestsModuleTest extends AnyFunSuite with Matchers {
   test("should correctly find sub parameters") {
     // Given
     val parameters = Map(

@@ -1,10 +1,9 @@
 package org.elasticmq.rest.sqs
 
-import org.scalatest.FunSuite
-
 import scala.util.Random
+import org.scalatest.funsuite.AnyFunSuite
 
-class SQSStrictLimitsModuleTest extends FunSuite with SQSLimitsModule {
+class SQSStrictLimitsModuleTest extends AnyFunSuite with SQSLimitsModule {
 
   override def sqsLimits: SQSLimits.Value = SQSLimits.Strict
 

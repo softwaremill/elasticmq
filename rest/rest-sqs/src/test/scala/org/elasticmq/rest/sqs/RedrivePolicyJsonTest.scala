@@ -3,10 +3,11 @@ package org.elasticmq.rest.sqs
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import org.elasticmq.rest.sqs.model.{GenericRedrivePolicy, RedrivePolicy}
 import org.elasticmq.rest.sqs.model.RedrivePolicy.{BackwardCompatibleRedrivePolicy, RedrivePolicy}
-import org.scalatest.{FlatSpec, Matchers}
 import spray.json._
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
-class RedrivePolicyJsonTest extends FlatSpec with Matchers with ScalatestRouteTest {
+class RedrivePolicyJsonTest extends AnyFlatSpec with Matchers with ScalatestRouteTest {
   "redrive policy json format" should "extract from and serialize to json" in {
     import org.elasticmq.rest.sqs.model.RedrivePolicyJson._
 
