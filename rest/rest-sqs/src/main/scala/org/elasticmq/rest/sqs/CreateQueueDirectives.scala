@@ -16,7 +16,7 @@ import scala.async.Async._
 import scala.concurrent.Future
 
 trait CreateQueueDirectives {
-  this: ElasticMQDirectives with QueueURLModule with AttributesModule with SQSLimitsModule =>
+  this: ElasticMQDirectives with QueueURLModule with AttributesModule with TagsModule with SQSLimitsModule =>
 
   def createQueue(p: AnyParams) = {
     p.action("CreateQueue") {
@@ -77,7 +77,8 @@ trait CreateQueueDirectives {
               now,
               redrivePolicy.map(rd => DeadLettersQueueData(rd.queueName, rd.maxReceiveCount)),
               isFifo,
-              hasContentBasedDeduplication
+              hasContentBasedDeduplication,
+              tags = tagNameAndValuesReader.read(p)
             )
 
             if (!queueName.matches("[\\p{Alnum}\\._-]*")) {
