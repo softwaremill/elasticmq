@@ -44,19 +44,18 @@ trait AttributesModule {
 
   class MessageAttributesToXmlConverter {
     def convert(attributes: List[(String, MessageAttribute)]) = {
-      attributes.map(
-        a =>
-          <MessageAttribute>
+      attributes.map(a =>
+        <MessageAttribute>
           <Name>{a._1}</Name>
           <Value>
             <DataType>{a._2.getDataType()}</DataType>
             {
-            a._2 match {
-              case s: StringMessageAttribute => <StringValue>{s.stringValue}</StringValue>
-              case n: NumberMessageAttribute => <StringValue>{n.stringValue}</StringValue>
-              case b: BinaryMessageAttribute => <BinaryValue>{b.asBase64}</BinaryValue>
-            }
+          a._2 match {
+            case s: StringMessageAttribute => <StringValue>{s.stringValue}</StringValue>
+            case n: NumberMessageAttribute => <StringValue>{n.stringValue}</StringValue>
+            case b: BinaryMessageAttribute => <BinaryValue>{b.asBase64}</BinaryValue>
           }
+        }
           </Value>
         </MessageAttribute>
       )

@@ -109,9 +109,7 @@ trait ReceiveMessageDirectives {
             msg.messageAttributes
           } else {
             msg.messageAttributes
-              .filterKeys(
-                k => messageAttributeNames.exists(s => s == k || k.r.findFirstIn(s).isDefined)
-              )
+              .filterKeys(k => messageAttributeNames.exists(s => s == k || k.r.findFirstIn(s).isDefined))
               .toMap
           }
         }
@@ -153,11 +151,10 @@ trait ReceiveMessageDirectives {
   }
 
   def getMessageAttributeNames(p: AnyParams): Iterable[String] = {
-    p.filterKeys(
-        k =>
-          MessageReadeableAttributeNames.MessageAttributeNamePattern
-            .findFirstIn(k)
-            .isDefined
+    p.filterKeys(k =>
+        MessageReadeableAttributeNames.MessageAttributeNamePattern
+          .findFirstIn(k)
+          .isDefined
       )
       .values
   }

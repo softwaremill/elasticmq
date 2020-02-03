@@ -104,8 +104,7 @@ trait QueueAttributesDirectives {
           val optionalRules = Seq(
             queueData.deadLettersQueue
               .map(dlq => RedrivePolicy(dlq.name, awsRegion, awsAccountId, dlq.maxReceiveCount))
-              .map(
-                redrivePolicy => Rule(RedrivePolicyParameter, () => Future.successful(redrivePolicy.toJson.toString))
+              .map(redrivePolicy => Rule(RedrivePolicyParameter, () => Future.successful(redrivePolicy.toJson.toString))
               )
           )
 
