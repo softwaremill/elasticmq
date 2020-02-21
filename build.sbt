@@ -71,7 +71,7 @@ val scalalogging = "com.typesafe.scala-logging" %% "scala-logging" % "3.9.2"
 val logback = "ch.qos.logback" % "logback-classic" % "1.2.3"
 val jclOverSlf4j = "org.slf4j" % "jcl-over-slf4j" % "1.7.30" // needed form amazon java sdk
 
-val scalatest = "org.scalatest" %% "scalatest" % "3.1.0"
+val scalatest = "org.scalatest" %% "scalatest" % "3.1.1"
 val awaitility = "org.awaitility" % "awaitility-scala" % "4.0.2"
 
 val amazonJavaSdk = "com.amazonaws" % "aws-java-sdk" % "1.11.641" exclude ("commons-logging", "commons-logging")
