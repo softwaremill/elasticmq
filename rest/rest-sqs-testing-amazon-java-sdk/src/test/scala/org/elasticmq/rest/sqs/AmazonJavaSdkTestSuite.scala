@@ -1510,6 +1510,51 @@ class AmazonJavaSdkTestSuite extends AnyFunSuite with Matchers with BeforeAndAft
     bodies should be(Set("OK"))
   }
 
+  test(
+    "should return a failure for one message, send another if strict & sending two messages in a batch, one with string attribute containing illegal characters"
+  ) {
+    // Given
+    val queueUrl = client.createQueue(new CreateQueueRequest("testQueue1")).getQueueUrl
+
+    val builder = new StringBuilder
+    builder.append(0x8.asInstanceOf[Char]).append(0xB.asInstanceOf[Char]).append(0xC.asInstanceOf[Char])
+    val invalidString = builder.toString()
+
+    // When
+    val result = client.sendMessageBatch(
+      new SendMessageBatchRequest(queueUrl).withEntries(
+        new SendMessageBatchRequestEntry("1", "OK")
+          .withMessageAttributes(
+            Map(
+              "StringAttributeValue" -> new MessageAttributeValue()
+                .withDataType("String")
+                .withStringValue("valid")
+            ).asJava
+          ),
+        new SendMessageBatchRequestEntry("2", "NG")
+          .withMessageAttributes(
+            Map(
+              "StringAttributeValue" -> new MessageAttributeValue()
+                .withDataType("String")
+                .withStringValue(invalidString)
+            ).asJava
+          )
+      )
+    )
+
+    // Then
+    result.getSuccessful should have size 1
+    result.getSuccessful.get(0).getId should be("1")
+
+    result.getFailed should have size 1
+    result.getFailed.get(0).getId should be("2")
+
+    val messages = client.receiveMessage(new ReceiveMessageRequest(queueUrl).withMaxNumberOfMessages(2)).getMessages
+
+    val bodies = messages.asScala.map(_.getBody).toSet
+    bodies should be(Set("OK"))
+  }
+
   test("should delete a message only if the most recent receipt handle is provided") {
     // https://docs.aws.amazon.com/AWSSimpleQueueService/latest/APIReference/API_DeleteMessage.html
     // > When you use the DeleteMessage action, you must provide the most recently received ReceiptHandle for the
