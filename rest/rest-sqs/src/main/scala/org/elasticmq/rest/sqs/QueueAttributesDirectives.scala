@@ -30,9 +30,10 @@ trait QueueAttributesDirectives {
     val PolicyAttribute = "Policy"
     val MaximumMessageSizeAttribute = "MaximumMessageSize"
     val MessageRetentionPeriodAttribute = "MessageRetentionPeriod"
+    val FifoQueueAttribute = "FifoQueue"
 
     val AllUnsupportedAttributeNames: List[String] = PolicyAttribute :: MaximumMessageSizeAttribute ::
-      MessageRetentionPeriodAttribute :: Nil
+      MessageRetentionPeriodAttribute :: FifoQueueAttribute :: Nil
   }
 
   object FifoAttributeNames {
