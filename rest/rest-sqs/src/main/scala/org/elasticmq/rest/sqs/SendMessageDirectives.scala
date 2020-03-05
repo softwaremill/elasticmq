@@ -12,7 +12,6 @@ import org.elasticmq.rest.sqs.MD5Util._
 import org.elasticmq.rest.sqs.ParametersUtil._
 import org.elasticmq.rest.sqs.directives.ElasticMQDirectives
 
-import scala.annotation.tailrec
 import scala.concurrent.Future
 
 trait SendMessageDirectives { this: ElasticMQDirectives with SQSLimitsModule =>
@@ -73,7 +72,10 @@ trait SendMessageDirectives { this: ElasticMQDirectives with SQSLimitsModule =>
 
       val value = primaryDataType match {
         case "String" =>
-          StringMessageAttribute(parameters("MessageAttribute." + i + ".Value.StringValue"), customDataType)
+          val strValue =
+            parameters("MessageAttribute." + i + ".Value.StringValue")
+          verifyMessageStringAttribute(strValue)
+          StringMessageAttribute(strValue, customDataType)
         case "Number" =>
           val strValue =
             parameters("MessageAttribute." + i + ".Value.StringValue")
@@ -93,11 +95,7 @@ trait SendMessageDirectives { this: ElasticMQDirectives with SQSLimitsModule =>
     val body = parameters(MessageBodyParameter)
     val messageAttributes = getMessageAttributes(parameters)
 
-    ifStrictLimits(bodyContainsInvalidCharacters(body)) {
-      "InvalidMessageContents"
-    }
-
-    verifyMessageNotTooLong(body.length)
+    verifyMessageStringAttribute(body)
 
     val messageGroupId = parameters.get(MessageGroupIdParameter) match {
       // MessageGroupId is only supported for FIFO queues
@@ -180,34 +178,8 @@ trait SendMessageDirectives { this: ElasticMQDirectives with SQSLimitsModule =>
     } yield (message, digest, messageAttributeDigest)
   }
 
-  def verifyMessageNotTooLong(messageLength: Int): Unit = {
-    ifStrictLimits(messageLength > 262144) {
-      "MessageTooLong"
-    }
-  }
-
-  private def bodyContainsInvalidCharacters(body: String) = {
-    val bodyLength = body.length
-
-    @tailrec
-    def findInvalidCharacter(offset: Int): Boolean = {
-      if (offset < bodyLength) {
-        val c = body.codePointAt(offset)
-
-        // Allow chars: #x9 | #xA | #xD | [#x20 to #xD7FF] | [#xE000 to #xFFFD] | [#x10000 to #x10FFFF]
-        if (c == 0x9 || c == 0xA || c == 0xD || (c >= 0x20 && c <= 0xD7FF) || (c >= 0xE000 && c <= 0xFFFD) || (c >= 0x10000 && c <= 0x10FFFF)) {
-          // Current char is valid
-          findInvalidCharacter(offset + Character.charCount(c))
-        } else {
-          true
-        }
-      } else {
-        false
-      }
-    }
-
-    findInvalidCharacter(0)
-  }
+  def verifyMessageNotTooLong(messageLength: Int): Unit =
+    verifyMessageStringNotTooLong(messageLength)
 
   private def sha256Hash(text: String): String = {
     String.format(
