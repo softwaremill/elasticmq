@@ -18,6 +18,7 @@ import org.elasticmq.rest.sqs.Constants._
 import org.elasticmq.rest.sqs.directives.{ElasticMQDirectives, UnmatchedActionRoutes}
 import org.elasticmq.util.{Logging, NowProvider}
 
+import scala.annotation.tailrec
 import scala.collection.immutable.TreeMap
 import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.duration._
@@ -439,6 +440,14 @@ trait SQSLimitsModule {
     }
   }
 
+  def verifyMessageStringAttribute(strValue: String): Unit = {
+    ifStrictLimits(bodyContainsInvalidCharacters(strValue)) {
+      "InvalidMessageContents"
+    }
+
+    verifyMessageStringNotTooLong(strValue.length)
+  }
+
   def verifyMessageNumberAttribute(strValue: String): Unit = {
     ifStrictLimits(
       !allCatch
@@ -460,6 +469,35 @@ trait SQSLimitsModule {
         InvalidParameterValueErrorName
       }
     }
+  }
+
+  def verifyMessageStringNotTooLong(messageLength: Int): Unit = {
+    ifStrictLimits(messageLength > 262144) {
+      "MessageTooLong"
+    }
+  }
+
+  private def bodyContainsInvalidCharacters(body: String) = {
+    val bodyLength = body.length
+
+    @tailrec
+    def findInvalidCharacter(offset: Int): Boolean = {
+      if (offset < bodyLength) {
+        val c = body.codePointAt(offset)
+
+        // Allow chars: #x9 | #xA | #xD | [#x20 to #xD7FF] | [#xE000 to #xFFFD] | [#x10000 to #x10FFFF]
+        if (c == 0x9 || c == 0xA || c == 0xD || (c >= 0x20 && c <= 0xD7FF) || (c >= 0xE000 && c <= 0xFFFD) || (c >= 0x10000 && c <= 0x10FFFF)) {
+          // Current char is valid
+          findInvalidCharacter(offset + Character.charCount(c))
+        } else {
+          true
+        }
+      } else {
+        false
+      }
+    }
+
+    findInvalidCharacter(0)
   }
 }
 
