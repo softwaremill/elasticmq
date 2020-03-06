@@ -43,9 +43,7 @@ class QueueDirectivesTest
     val route = {
       queueActorAndNameFromRequest(
         Map("QueueName" -> "lol", "QueueUrl" -> "https://eu-central-1.queue.amazonaws.com/906175111765/lol")
-      ) { (actor, name) =>
-        _.complete(name)
-      }
+      ) { (actor, name) => _.complete(name) }
     }
 
     Get("/906175111765/lol") ~> route ~> check {

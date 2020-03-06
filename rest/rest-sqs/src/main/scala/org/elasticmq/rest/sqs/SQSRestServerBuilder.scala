@@ -317,7 +317,9 @@ object MD5Util {
   def md5AttributeDigest(attributes: Map[String, MessageAttribute]): String = {
     def addEncodedString(b: ByteArrayOutputStream, s: String) = {
       val str = s.getBytes("UTF-8")
-      b.write(ByteBuffer.allocate(4).putInt(str.length).array) // Sadly, we'll need ByteBuffer here to get a properly encoded 4-byte int (alternatively, we could encode by hand)
+      b.write(
+        ByteBuffer.allocate(4).putInt(str.length).array
+      ) // Sadly, we'll need ByteBuffer here to get a properly encoded 4-byte int (alternatively, we could encode by hand)
       b.write(str)
     }
 

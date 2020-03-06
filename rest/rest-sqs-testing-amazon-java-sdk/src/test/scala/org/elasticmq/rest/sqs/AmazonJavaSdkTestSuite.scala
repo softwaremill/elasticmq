@@ -122,9 +122,7 @@ class AmazonJavaSdkTestSuite extends AnyFunSuite with Matchers with BeforeAndAft
   }
 
   test("should return an error if strict & queue name is too long") {
-    strictOnlyShouldThrowException { cli =>
-      cli.createQueue(new CreateQueueRequest("x" * 81))
-    }
+    strictOnlyShouldThrowException { cli => cli.createQueue(new CreateQueueRequest("x" * 81)) }
   }
 
   test("should list created queues") {

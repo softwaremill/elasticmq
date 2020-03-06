@@ -80,9 +80,7 @@ class BatchRequestsModuleTest extends AnyFunSuite with Matchers {
     // Key2 -> Value1-2
     // sorted by discriminator, whereas the values for a discriminator are not sorted
     for (i <- 1 to 20) {
-      subParameters(i - 1) should contain theSameElementsAs (1 to 4).map { j =>
-        s"Key$j" -> s"Value$i-$j"
-      }
+      subParameters(i - 1) should contain theSameElementsAs (1 to 4).map { j => s"Key$j" -> s"Value$i-$j" }
     }
   }
 }

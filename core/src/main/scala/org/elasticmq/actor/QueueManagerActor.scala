@@ -41,15 +41,9 @@ class QueueManagerActor(nowProvider: NowProvider) extends ReplyingActor with Log
   }
 
   private def createQueueActor(nowProvider: NowProvider, queueData: QueueData): ActorRef = {
-    val deadLetterQueueActor = queueData.deadLettersQueue.flatMap { qd =>
-      queues.get(qd.name)
-    }
-    val copyMessagesToQueueActor = queueData.copyMessagesTo.flatMap { queueName =>
-      queues.get(queueName)
-    }
-    val moveMessagesToQueueActor = queueData.moveMessagesTo.flatMap { queueName =>
-      queues.get(queueName)
-    }
+    val deadLetterQueueActor = queueData.deadLettersQueue.flatMap { qd => queues.get(qd.name) }
+    val copyMessagesToQueueActor = queueData.copyMessagesTo.flatMap { queueName => queues.get(queueName) }
+    val moveMessagesToQueueActor = queueData.moveMessagesTo.flatMap { queueName => queues.get(queueName) }
 
     context.actorOf(
       Props(

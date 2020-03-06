@@ -15,9 +15,7 @@ class AnyParamDirectivesTest
 
   "anyParamsMap" should "extract both query and form parameters" in {
     val route = path("test") {
-      anyParamsMap { map =>
-        _.complete(map.toList.sorted.toString())
-      }
+      anyParamsMap { map => _.complete(map.toList.sorted.toString()) }
     }
 
     Get("/test?x=1&y=2") ~> route ~> check {
