@@ -485,17 +485,17 @@ trait SQSLimitsModule {
       if (offset < bodyLength) {
         val c = body.codePointAt(offset)
 
-        // Allow chars: #x9 | #xA | #xD | [#x20 to #xD7FF] | [#xE000 to #xFFFD] | [#x10000 to #x10FFFF]
-        if (c == 0x9 || c == 0xA || c == 0xD || (c >= 0x20 && c <= 0xD7FF) || (c >= 0xE000 && c <= 0xFFFD) || (c >= 0x10000 && c <= 0x10FFFF)) {
-          // Current char is valid
+        if (isAllowedCharacter(c))
           findInvalidCharacter(offset + Character.charCount(c))
-        } else {
-          true
-        }
+        else true
       } else {
         false
       }
     }
+
+    // Allow chars: #x9 | #xA | #xD | [#x20 to #xD7FF] | [#xE000 to #xFFFD] | [#x10000 to #x10FFFF]
+    def isAllowedCharacter(c: Int): Boolean =
+      c == 0x9 || c == 0xA || c == 0xD || (c >= 0x20 && c <= 0xD7FF) || (c >= 0xE000 && c <= 0xFFFD) || (c >= 0x10000 && c <= 0x10FFFF)
 
     findInvalidCharacter(0)
   }
