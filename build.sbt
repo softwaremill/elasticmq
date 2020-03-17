@@ -209,15 +209,12 @@ val dockerGraalvmNativeImageName =
   settingKey[String]("Name of the generated docker image, containing the native binary.")
 
 lazy val nativeServer: Project = (project in file("native-server"))
-  .enablePlugins(GraalVMNativeImagePlugin, JavaAppPackaging, DockerPlugin)
+  .enablePlugins(GraalVMNativeImagePlugin)
   .settings(buildSettings)
   .settings(Seq(
     name := "elasticmq-native-server",
     libraryDependencies += "com.oracle.substratevm" % "svm" % "19.2.1" % Provided,
-    mappings in Docker ++= Seq(
-      (baseDirectory.value / ".." / "server" / "docker" / "elasticmq.conf") -> "/opt/elasticmq.conf",
-      (baseDirectory.value / "reflectconf") -> "/opt/reflectconf"
-    ),
+    mappings in Docker += (baseDirectory.value / ".." / "server" / "docker" / "elasticmq.conf") -> "/opt/elasticmq.conf",
     graalVMNativeImageGraalVersion := Some("19.1.1"),
     mainClass in Compile := Some("org.elasticmq.server.Main"),
     graalVMNativeImageOptions ++= Seq(
