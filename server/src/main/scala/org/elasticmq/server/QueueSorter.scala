@@ -25,9 +25,7 @@ object QueueSorter extends Logging {
     val edges = new mutable.ListMap[CreateQueue, Set[CreateQueue]]
 
     // create map to look up queues by name
-    val queueMap = nodes.map { cq =>
-      cq.name -> cq
-    }.toMap
+    val queueMap = nodes.map { cq => cq.name -> cq }.toMap
 
     // create directed edges from queue to referenced queues (dead letter queue, copy-to and move-to queues)
     nodes.foreach { cq =>

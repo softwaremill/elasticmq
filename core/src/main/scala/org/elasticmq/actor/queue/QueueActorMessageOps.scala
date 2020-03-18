@@ -132,9 +132,7 @@ trait QueueActorMessageOps extends Logging {
         internalMessage
       }
 
-    receiveRequestAttemptId.foreach { attemptId =>
-      receiveRequestAttemptCache.add(attemptId, messages)
-    }
+    receiveRequestAttemptId.foreach { attemptId => receiveRequestAttemptCache.add(attemptId, messages) }
 
     messages.map(_.toMessageData)
   }
