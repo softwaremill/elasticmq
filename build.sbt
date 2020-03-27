@@ -214,13 +214,14 @@ lazy val nativeServer: Project = (project in file("native-server"))
   .settings(Seq(
     name := "elasticmq-native-server",
     libraryDependencies += "com.oracle.substratevm" % "svm" % "19.2.1" % Provided,
-    mappings in Docker += (baseDirectory.value / ".." / "server" / "docker" / "elasticmq.conf") -> "/opt/elasticmq.conf",
+    libraryDependencies += "com.typesafe" %% "ssl-config-core" % "0.4.1",
     graalVMNativeImageGraalVersion := Some("19.1.1"),
     mainClass in Compile := Some("org.elasticmq.server.Main"),
     graalVMNativeImageOptions ++= Seq(
       "--static",
       "-H:ReflectionConfigurationFiles=" + "/opt/graalvm/stage/resources/reflectconf/logback.json",
       "-H:ReflectionConfigurationFiles=" + "/opt/graalvm/stage/resources/reflectconf/akka.json",
+      "-H:ReflectionConfigurationFiles=" + "/opt/graalvm/stage/resources/reflectconf/typesafe-config.json",
       "-H:IncludeResources=.*conf",
       "-H:IncludeResources=version",
       "-H:IncludeResources=.*\\.properties",
@@ -228,9 +229,43 @@ lazy val nativeServer: Project = (project in file("native-server"))
       "-H:+ReportExceptionStackTraces",
       "--enable-url-protocols=https,http",
       "--initialize-at-build-time",
-      "--allow-incomplete-classpath",
       "--no-fallback"
-    )
+    ),
+    dockerGraalvmNativeImageName := "elasticmq-native",
+    dockerGraalvmNative := {
+      val log = streams.value.log
+
+      val stageDir = target.value / "native-docker" / "stage"
+      stageDir.mkdirs()
+
+      val resultDir = stageDir / "result"
+      resultDir.mkdirs()
+
+      val nativeImageConfDir = baseDirectory.value
+
+      val resultName = "out"
+
+      val buildContainerCommand = Seq(
+        "docker",
+        "build",
+        "-t",
+        "softwaremill/" + dockerGraalvmNativeImageName.value + ":latest",
+        "-t",
+        "softwaremill/" + dockerGraalvmNativeImageName.value + ":" + version.value,
+        "-f",
+        (nativeImageConfDir / "run-native-image" / "Dockerfile").getAbsolutePath,
+        resultDir.absolutePath
+      )
+      log.info("Building the container with the generated native image")
+      log.info(s"Running: ${buildContainerCommand.mkString(" ")}")
+
+      sys.process.Process(buildContainerCommand, resultDir) ! streams.value.log match {
+        case 0 => resultDir / resultName
+        case r => sys.error(s"Failed to run docker, exit status: " + r)
+      }
+
+      log.info(s"Build image ${dockerGraalvmNativeImageName.value}")
+    }
   ))
   .dependsOn(server)
 
