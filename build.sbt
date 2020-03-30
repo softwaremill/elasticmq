@@ -209,7 +209,7 @@ val dockerGraalvmNativeImageName =
   settingKey[String]("Name of the generated docker image, containing the native binary.")
 
 lazy val nativeServer: Project = (project in file("native-server"))
-  .enablePlugins(GraalVMNativeImagePlugin)
+  .enablePlugins(GraalVMNativeImagePlugin, DockerPlugin)
   .settings(buildSettings)
   .settings(Seq(
     name := "elasticmq-native-server",
@@ -231,6 +231,14 @@ lazy val nativeServer: Project = (project in file("native-server"))
       "--initialize-at-build-time",
       "--no-fallback"
     ),
+    dockerBaseImage := "alpine:3.11",
+    mappings in Docker := Seq(
+      (baseDirectory.value / ".." / "server" / "docker" / "elasticmq.conf") -> "/opt/docker/elasticmq.conf",
+      ((target in GraalVMNativeImage).value / "elasticmq-native-server") -> "/opt/docker/bin/elasticmq-native-server"
+    ),
+    dockerEntrypoint := Seq("/opt/docker/bin/elasticmq-native-server", "-Dconfig.file=/opt/docker/elasticmq.conf"),
+    dockerUpdateLatest := true,
+    dockerExposedPorts := Seq(9324),
     dockerGraalvmNativeImageName := "elasticmq-native",
     dockerGraalvmNative := {
       val log = streams.value.log
@@ -238,12 +246,14 @@ lazy val nativeServer: Project = (project in file("native-server"))
       val stageDir = target.value / "native-docker" / "stage"
       stageDir.mkdirs()
 
-      val resultDir = stageDir / "result"
-      resultDir.mkdirs()
+      val resultDir = (target in GraalVMNativeImage).value
 
       val nativeImageConfDir = baseDirectory.value
+      log.info(s"nativeImageConfDir: $nativeImageConfDir")
 
-      val resultName = "out"
+      val resultName = "elasticmq-native-server"
+
+      log.info(s"targetdir: ${(target in GraalVMNativeImage).value.absolutePath}")
 
       val buildContainerCommand = Seq(
         "docker",
