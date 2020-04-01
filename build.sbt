@@ -1,6 +1,6 @@
 import com.amazonaws.services.s3.model.PutObjectResult
 import com.softwaremill.Publish.Release.updateVersionInDocs
-import com.typesafe.sbt.packager.docker.Cmd
+import com.typesafe.sbt.packager.docker.{Cmd, ExecCmd}
 import sbt.Keys.credentials
 import sbtrelease.ReleaseStateTransformations._
 import scoverage.ScoverageKeys._
@@ -210,7 +210,6 @@ lazy val nativeServer: Project = (project in file("native-server"))
   .settings(Seq(
     name := "elasticmq-native-server",
     libraryDependencies += "com.oracle.substratevm" % "svm" % "19.2.1" % Provided,
-//    libraryDependencies += "com.typesafe" %% "ssl-config-core" % "0.4.1",
     mainClass in Compile := Some("org.elasticmq.server.Main"),
     //configures sbt-native-packager to build app using dockerized graalvm
     graalVMNativeImageGraalVersion := Some("19.1.1"),
@@ -219,7 +218,6 @@ lazy val nativeServer: Project = (project in file("native-server"))
       "-H:ReflectionConfigurationFiles=" + "/opt/graalvm/stage/resources/reflectconf/logback.json",
       "-H:ReflectionConfigurationFiles=" + "/opt/graalvm/stage/resources/reflectconf/akka.json",
       "-H:ReflectionConfigurationFiles=" + "/opt/graalvm/stage/resources/reflectconf/typesafe-config.json",
-//      "-H:ReflectionConfigurationFiles=" + "/opt/graalvm/stage/resources/reflectconf/amazon.json",
       "-H:IncludeResources=.*conf",
       "-H:IncludeResources=version",
       "-H:IncludeResources=.*\\.properties",
@@ -239,9 +237,19 @@ lazy val nativeServer: Project = (project in file("native-server"))
       (baseDirectory.value / ".." / "server" / "docker" / "elasticmq.conf") -> "/opt/docker/elasticmq.conf",
       ((target in GraalVMNativeImage).value / "elasticmq-native-server") -> "/opt/docker/bin/elasticmq-native-server"
     ),
-    dockerEntrypoint := Seq("/opt/docker/bin/elasticmq-native-server", "-Dconfig.file=/opt/docker/elasticmq.conf"),
+    dockerEntrypoint := Seq("/sbin/tini", "--", "/opt/docker/bin/elasticmq-native-server", "-Dconfig.file=/opt/docker/elasticmq.conf"),
     dockerUpdateLatest := true,
-    dockerExposedPorts := Seq(9324)
+    dockerExposedPorts := Seq(9324),
+    dockerCommands := {
+      val commands = dockerCommands.value
+      val index = commands.indexWhere {
+        case Cmd("FROM", args@_*) => args.size == 1
+        case _ => false
+      }
+      val (front, back) = commands.splitAt(index + 1)
+      val tiniCommand = ExecCmd("RUN", "apk", "add", "--no-cache", "tini")
+      front ++ Seq(tiniCommand) ++ back
+    }
   ))
   .dependsOn(server)
 
