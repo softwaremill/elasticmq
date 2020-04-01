@@ -204,33 +204,36 @@ lazy val server: Project = (project in file("server"))
   ))
   .dependsOn(core, restSqs, commonTest % "test")
 
-val dockerGraalvmNative = taskKey[Unit]("Create a docker image containing a binary build with GraalVM's native-image.")
-val dockerGraalvmNativeImageName =
-  settingKey[String]("Name of the generated docker image, containing the native binary.")
-
 lazy val nativeServer: Project = (project in file("native-server"))
   .enablePlugins(GraalVMNativeImagePlugin, DockerPlugin)
   .settings(buildSettings)
   .settings(Seq(
     name := "elasticmq-native-server",
     libraryDependencies += "com.oracle.substratevm" % "svm" % "19.2.1" % Provided,
-    libraryDependencies += "com.typesafe" %% "ssl-config-core" % "0.4.1",
-    graalVMNativeImageGraalVersion := Some("19.1.1"),
+//    libraryDependencies += "com.typesafe" %% "ssl-config-core" % "0.4.1",
     mainClass in Compile := Some("org.elasticmq.server.Main"),
+    //configures sbt-native-packager to build app using dockerized graalvm
+    graalVMNativeImageGraalVersion := Some("19.1.1"),
     graalVMNativeImageOptions ++= Seq(
       "--static",
       "-H:ReflectionConfigurationFiles=" + "/opt/graalvm/stage/resources/reflectconf/logback.json",
       "-H:ReflectionConfigurationFiles=" + "/opt/graalvm/stage/resources/reflectconf/akka.json",
       "-H:ReflectionConfigurationFiles=" + "/opt/graalvm/stage/resources/reflectconf/typesafe-config.json",
+//      "-H:ReflectionConfigurationFiles=" + "/opt/graalvm/stage/resources/reflectconf/amazon.json",
       "-H:IncludeResources=.*conf",
       "-H:IncludeResources=version",
       "-H:IncludeResources=.*\\.properties",
       "-H:IncludeResources='org/joda/time/tz/data/.*'",
       "-H:+ReportExceptionStackTraces",
+      "--enable-http",
+      "--enable-https",
       "--enable-url-protocols=https,http",
       "--initialize-at-build-time",
+      "--report-unsupported-elements-at-runtime",
+      "--allow-incomplete-classpath",
       "--no-fallback"
     ),
+    //configures sbt-native-packager to build docker image with generated executable
     dockerBaseImage := "alpine:3.11",
     mappings in Docker := Seq(
       (baseDirectory.value / ".." / "server" / "docker" / "elasticmq.conf") -> "/opt/docker/elasticmq.conf",
@@ -238,44 +241,7 @@ lazy val nativeServer: Project = (project in file("native-server"))
     ),
     dockerEntrypoint := Seq("/opt/docker/bin/elasticmq-native-server", "-Dconfig.file=/opt/docker/elasticmq.conf"),
     dockerUpdateLatest := true,
-    dockerExposedPorts := Seq(9324),
-    dockerGraalvmNativeImageName := "elasticmq-native",
-    dockerGraalvmNative := {
-      val log = streams.value.log
-
-      val stageDir = target.value / "native-docker" / "stage"
-      stageDir.mkdirs()
-
-      val resultDir = (target in GraalVMNativeImage).value
-
-      val nativeImageConfDir = baseDirectory.value
-      log.info(s"nativeImageConfDir: $nativeImageConfDir")
-
-      val resultName = "elasticmq-native-server"
-
-      log.info(s"targetdir: ${(target in GraalVMNativeImage).value.absolutePath}")
-
-      val buildContainerCommand = Seq(
-        "docker",
-        "build",
-        "-t",
-        "softwaremill/" + dockerGraalvmNativeImageName.value + ":latest",
-        "-t",
-        "softwaremill/" + dockerGraalvmNativeImageName.value + ":" + version.value,
-        "-f",
-        (nativeImageConfDir / "run-native-image" / "Dockerfile").getAbsolutePath,
-        resultDir.absolutePath
-      )
-      log.info("Building the container with the generated native image")
-      log.info(s"Running: ${buildContainerCommand.mkString(" ")}")
-
-      sys.process.Process(buildContainerCommand, resultDir) ! streams.value.log match {
-        case 0 => resultDir / resultName
-        case r => sys.error(s"Failed to run docker, exit status: " + r)
-      }
-
-      log.info(s"Build image ${dockerGraalvmNativeImageName.value}")
-    }
+    dockerExposedPorts := Seq(9324)
   ))
   .dependsOn(server)
 
