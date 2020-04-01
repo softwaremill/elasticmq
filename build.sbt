@@ -212,7 +212,7 @@ lazy val nativeServer: Project = (project in file("native-server"))
     libraryDependencies += "com.oracle.substratevm" % "svm" % "19.2.1" % Provided,
     mainClass in Compile := Some("org.elasticmq.server.Main"),
     //configures sbt-native-packager to build app using dockerized graalvm
-    graalVMNativeImageGraalVersion := Some("19.1.1"),
+    graalVMNativeImageGraalVersion := Some("20.0.0"),
     graalVMNativeImageOptions ++= Seq(
       "--static",
       "-H:ReflectionConfigurationFiles=" + "/opt/graalvm/stage/resources/reflectconf/logback.json",
