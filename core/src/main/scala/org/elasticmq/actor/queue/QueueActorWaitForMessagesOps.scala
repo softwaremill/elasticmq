@@ -2,6 +2,7 @@ package org.elasticmq.actor.queue
 
 import org.elasticmq.msg.{QueueMessageMsg, ReceiveMessages, SendMessage, UpdateVisibilityTimeout}
 import org.elasticmq.actor.reply._
+import org.elasticmq.{MessageData}
 import akka.actor.{ActorRef, Cancellable}
 
 import scala.concurrent.{duration => scd}
@@ -65,19 +66,22 @@ trait QueueActorWaitForMessagesOps extends ReplyingActor with QueueActorMessageO
       case Some(
           (seq, AwaitingData(originalSender, ReceiveMessages(visibilityTimeout, count, _, receiveRequestAttemptId), _))
           ) =>
-        val received = super.receiveMessages(visibilityTimeout, count, receiveRequestAttemptId)
+        val received = receiveMessages(visibilityTimeout, count, receiveRequestAttemptId)
 
         if (received != Nil) {
-          originalSender ! received
-          logger.debug(
-            s"${queueData.name}: Awaiting messages: replying to sequence $seq with ${received.size} messages."
-          )
+          sendReply(seq, originalSender, received)
           awaitingReply.remove(seq)
-
           tryReply()
         }
       case _ => // do nothing
     }
+  }
+
+  protected def sendReply(seq: Long, recipient: ActorRef, messages: List[MessageData]): Unit = {
+    recipient ! messages
+    logger.debug(
+      s"${queueData.name}: Awaiting messages: replying to sequence $seq with ${messages.size} messages."
+    )
   }
 
   private def assignSequenceFor(receiveMessages: ReceiveMessages): Long = {
