@@ -271,11 +271,6 @@
     "allPublicConstructors": true
   },
   {
-    "name": "akka.stream.impl.io.FileSubscriber",
-    "allDeclaredConstructors": true,
-    "allPublicConstructors": true
-  },
-  {
     "name": "akka.stream.impl.fusing.ActorGraphInterpreter",
     "allDeclaredConstructors": true,
     "allPublicConstructors": true,
