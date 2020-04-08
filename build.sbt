@@ -5,7 +5,7 @@ import sbt.Keys.credentials
 import sbtrelease.ReleaseStateTransformations._
 import scoverage.ScoverageKeys._
 
-val v2_12 = "2.12.10"
+val v2_12 = "2.12.11"
 val v2_13 = "2.13.1"
 
 val buildSettings = commonSmlBuildSettings ++ ossPublishSettings ++ Seq(
@@ -72,7 +72,7 @@ val jclOverSlf4j = "org.slf4j" % "jcl-over-slf4j" % "1.7.30" // needed form amaz
 val scalatest = "org.scalatest" %% "scalatest" % "3.1.1"
 val awaitility = "org.awaitility" % "awaitility-scala" % "4.0.2"
 
-val amazonJavaSdk = "com.amazonaws" % "aws-java-sdk" % "1.11.738" exclude ("commons-logging", "commons-logging")
+val amazonJavaSdk = "com.amazonaws" % "aws-java-sdk" % "1.11.761" exclude ("commons-logging", "commons-logging")
 
 val akkaVersion = "2.6.4"
 val akkaHttpVersion = "10.1.11"
