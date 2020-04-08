@@ -204,15 +204,17 @@ lazy val server: Project = (project in file("server"))
   ))
   .dependsOn(core, restSqs, commonTest % "test")
 
+val graalVmVersion = "19.2.1"
+
 lazy val nativeServer: Project = (project in file("native-server"))
   .enablePlugins(GraalVMNativeImagePlugin, DockerPlugin)
   .settings(buildSettings)
   .settings(Seq(
     name := "elasticmq-native-server",
-    libraryDependencies += "com.oracle.substratevm" % "svm" % "19.2.1" % Provided,
+    libraryDependencies += "com.oracle.substratevm" % "svm" % graalVmVersion % Provided,
     mainClass in Compile := Some("org.elasticmq.server.Main"),
     //configures sbt-native-packager to build app using dockerized graalvm
-    graalVMNativeImageGraalVersion := Some("20.0.0"),
+    graalVMNativeImageGraalVersion := Some(graalVmVersion),
     graalVMNativeImageOptions ++= Seq(
       "--static",
       "-H:ReflectionConfigurationFiles=" + "/opt/graalvm/stage/resources/reflectconf/logback.json",
