@@ -37,6 +37,15 @@ val buildSettings = commonSmlBuildSettings ++ ossPublishSettings ++ Seq(
       }
     )
 
+    val uploadNativeDocker: ReleaseStep = ReleaseStep(
+      action = { st: State =>
+        val extracted = Project.extract(st)
+        val (st2, _) = extracted.runTask(packageBin in GraalVMNativeImage in nativeServer, st)
+        val (st3, _) = extracted.runTask(publish in Docker in nativeServer, st2)
+        st3
+      }
+    )
+
     Seq(
       checkSnapshotDependencies,
       inquireVersions,
@@ -47,6 +56,7 @@ val buildSettings = commonSmlBuildSettings ++ ossPublishSettings ++ Seq(
       runTest,
       setReleaseVersion,
       uploadDocker,
+      uploadNativeDocker,
       uploadAssembly,
       updateVersionInDocs(organization.value),
       commitReleaseVersion,
