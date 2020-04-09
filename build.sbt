@@ -251,7 +251,10 @@ lazy val nativeServer: Project = (project in file("native-server"))
       val (front, back) = commands.splitAt(index + 1)
       val tiniCommand = ExecCmd("RUN", "apk", "add", "--no-cache", "tini")
       front ++ Seq(tiniCommand) ++ back
-    }
+    },
+    packageName in Docker := "elasticmq-native",
+    dockerUsername := Some("softwaremill"),
+    dockerUpdateLatest := true,
   ))
   .dependsOn(server)
 
