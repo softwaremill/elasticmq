@@ -3,7 +3,7 @@ jdk:
   - openjdk8
 scala:
   - 2.12.10
-  - 2.13.1
+  - 2.13.3
 before_cache:
   - du -h -d 1 $HOME/.ivy2/
   - du -h -d 2 $HOME/.sbt/
