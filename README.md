@@ -265,11 +265,13 @@ RUN apk add --no-cache curl ca-certificates
 RUN mkdir -p /opt/elasticmq/log /opt/elasticmq/lib /opt/elasticmq/config
 RUN curl -sfLo /opt/elasticmq/lib/elasticmq.jar https://s3-eu-west-1.amazonaws.com/softwaremill-public/elasticmq-server-${ELASTICMQ_VERSION}.jar
 
+COPY ${PWD}/elasticmq.conf /opt/elasticmq/config/elasticmq.conf
+
 WORKDIR /opt/elasticmq
 
 EXPOSE 9324
 
-ENTRYPOINT [ "/usr/bin/java", "-jar", "/opt/elasticmq/lib/elasticmq.jar" ]
+ENTRYPOINT [ "/usr/bin/java", "-Dconfig.file=/opt/elasticmq/conf/elasticmq.conf", "-jar", "/opt/elasticmq/lib/elasticmq.jar" ]
 ```
 
 and override the entrypoint passing the required properties.
@@ -277,7 +279,7 @@ and override the entrypoint passing the required properties.
 Experimental native ElasticqMQ via Docker
 -----------------------------------------
 
-An experimental, dockerized version of ElasticMQ, 
+An experimental, dockerized version of ElasticMQ,
 built using GraalVM's [native-image](https://blog.softwaremill.com/small-fast-docker-images-using-graalvms-native-image-99c0bc92e70b),
 is available as [`softwaremill/elasticmq-native`](https://hub.docker.com/r/softwaremill/elasticmq-native/). To start, run:
 
