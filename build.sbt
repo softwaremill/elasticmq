@@ -247,8 +247,8 @@ lazy val nativeServer: Project = (project in file("native-server"))
       "--no-fallback",
       "--verbose",
       "-J-Xss512m",
-      "-J-Xms16g",
-      "-J-Xmx24g"
+      "-J-Xms8g",
+      "-J-Xmx8g"
     ),
     mainClass in Compile := Some("org.elasticmq.server.Main"),
     //configures sbt-native-packager to build docker image with generated executable
