@@ -13,14 +13,16 @@ trait QueueActorMessageOps extends Logging {
   def nowProvider: NowProvider
   def context: akka.actor.ActorContext
 
-  def receiveAndReplyMessageMsg[T](msg: QueueMessageMsg[T]): ReplyAction[T] = msg match {
-    case SendMessage(message)                                  => handleOrRedirectMessage(message)
-    case UpdateVisibilityTimeout(messageId, visibilityTimeout) => updateVisibilityTimeout(messageId, visibilityTimeout)
-    case ReceiveMessages(visibilityTimeout, count, _, receiveRequestAttemptId) =>
-      receiveMessages(visibilityTimeout, count, receiveRequestAttemptId)
-    case DeleteMessage(deliveryReceipt) => deleteMessage(deliveryReceipt)
-    case LookupMessage(messageId)       => messageQueue.byId.get(messageId.id).map(_.toMessageData)
-  }
+  def receiveAndReplyMessageMsg[T](msg: QueueMessageMsg[T]): ReplyAction[T] =
+    msg match {
+      case SendMessage(message) => handleOrRedirectMessage(message)
+      case UpdateVisibilityTimeout(messageId, visibilityTimeout) =>
+        updateVisibilityTimeout(messageId, visibilityTimeout)
+      case ReceiveMessages(visibilityTimeout, count, _, receiveRequestAttemptId) =>
+        receiveMessages(visibilityTimeout, count, receiveRequestAttemptId)
+      case DeleteMessage(deliveryReceipt) => deleteMessage(deliveryReceipt)
+      case LookupMessage(messageId)       => messageQueue.byId.get(messageId.id).map(_.toMessageData)
+    }
 
   private def handleOrRedirectMessage(message: NewMessageData): ReplyAction[MessageData] = {
     copyMessagesToActorRef.foreach { _ ! SendMessage(message) }
@@ -167,10 +169,11 @@ trait QueueActorMessageOps extends Logging {
     MillisNextDelivery(nowProvider.nowMillis + nextDeliveryDelta)
   }
 
-  private def getVisibilityTimeoutMillis(visibilityTimeout: VisibilityTimeout) = visibilityTimeout match {
-    case DefaultVisibilityTimeout        => queueData.defaultVisibilityTimeout.millis
-    case MillisVisibilityTimeout(millis) => millis
-  }
+  private def getVisibilityTimeoutMillis(visibilityTimeout: VisibilityTimeout) =
+    visibilityTimeout match {
+      case DefaultVisibilityTimeout        => queueData.defaultVisibilityTimeout.millis
+      case MillisVisibilityTimeout(millis) => millis
+    }
 
   private def deleteMessage(deliveryReceipt: DeliveryReceipt): Unit = {
     val msgId = deliveryReceipt.extractId.toString

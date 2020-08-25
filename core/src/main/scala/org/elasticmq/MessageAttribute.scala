@@ -1,15 +1,16 @@
 package org.elasticmq
 
 import java.nio.ByteBuffer
-import javax.xml.bind.DatatypeConverter
+import java.util.Base64
 
 sealed abstract class MessageAttribute(val customType: Option[String]) {
   protected val primaryDataType: String
 
-  def getDataType() = customType match {
-    case Some(t) => s"$primaryDataType.$t"
-    case None    => primaryDataType
-  }
+  def getDataType(): String =
+    customType match {
+      case Some(t) => s"$primaryDataType.$t"
+      case None    => primaryDataType
+    }
 }
 
 case class StringMessageAttribute(stringValue: String, override val customType: Option[String] = None)
@@ -26,12 +27,12 @@ case class BinaryMessageAttribute(binaryValue: Array[Byte], override val customT
     extends MessageAttribute(customType) {
   protected override val primaryDataType: String = "Binary"
 
-  def asBase64 = DatatypeConverter.printBase64Binary(binaryValue)
+  def asBase64: String = Base64.getEncoder.encodeToString(binaryValue)
 }
 object BinaryMessageAttribute {
-  def fromBase64(base64Str: String, customType: Option[String] = None) =
+  def fromBase64(base64Str: String, customType: Option[String] = None): BinaryMessageAttribute =
     BinaryMessageAttribute(
-      binaryValue = DatatypeConverter.parseBase64Binary(base64Str),
+      binaryValue = Base64.getDecoder.decode(base64Str),
       customType = customType
     )
 

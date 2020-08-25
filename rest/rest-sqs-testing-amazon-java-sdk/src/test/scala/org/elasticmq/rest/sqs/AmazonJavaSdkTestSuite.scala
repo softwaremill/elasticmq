@@ -250,16 +250,16 @@ class AmazonJavaSdkTestSuite extends AnyFunSuite with Matchers with BeforeAndAft
 
   test("should send and receive a message with all allowed 1-byte sqs characters") {
     val builder = new StringBuilder
-    builder.append(0x9).append(0xA).append(0xD)
-    appendRange(builder, 0x20, 0xFF)
+    builder.append(0x9).append(0xa).append(0xd)
+    appendRange(builder, 0x20, 0xff)
 
     doTestSendAndReceiveMessage(builder.toString())
   }
 
   test("should send and receive a message with some 2-byte characters") {
     val builder = new StringBuilder
-    appendRange(builder, 0x51F9, 0x5210)
-    appendRange(builder, 0x30C9, 0x30FF)
+    appendRange(builder, 0x51f9, 0x5210)
+    appendRange(builder, 0x30c9, 0x30ff)
 
     doTestSendAndReceiveMessage(builder.toString())
   }
@@ -375,20 +375,26 @@ class AmazonJavaSdkTestSuite extends AnyFunSuite with Matchers with BeforeAndAft
     message.getMessageAttributes should be(filteredSendMessageAttr) // Checks they match
     message.getMessageAttributes.asScala.map {
       case (k, attr) =>
-        (k, if (attr.getDataType.startsWith("String") && attr.getStringValue != null) {
-          StringMessageAttribute(attr.getStringValue).stringValue
-        } else if (attr.getDataType.startsWith("Number") && attr.getStringValue != null) {
-          NumberMessageAttribute(attr.getStringValue).stringValue
-        } else {
-          BinaryMessageAttribute.fromByteBuffer(attr.getBinaryValue).asBase64
-        })
+        (
+          k,
+          if (attr.getDataType.startsWith("String") && attr.getStringValue != null) {
+            StringMessageAttribute(attr.getStringValue).stringValue
+          } else if (attr.getDataType.startsWith("Number") && attr.getStringValue != null) {
+            NumberMessageAttribute(attr.getStringValue).stringValue
+          } else {
+            BinaryMessageAttribute.fromByteBuffer(attr.getBinaryValue).asBase64
+          }
+        )
     } should be(filteredMessageAttributes.map {
       case (k, attr) =>
-        (k, attr match {
-          case s: StringMessageAttribute => s.stringValue
-          case n: NumberMessageAttribute => n.stringValue
-          case b: BinaryMessageAttribute => b.asBase64
-        })
+        (
+          k,
+          attr match {
+            case s: StringMessageAttribute => s.stringValue
+            case n: NumberMessageAttribute => n.stringValue
+            case b: BinaryMessageAttribute => b.asBase64
+          }
+        )
     }) // Checks they match map
   }
 
@@ -1515,7 +1521,7 @@ class AmazonJavaSdkTestSuite extends AnyFunSuite with Matchers with BeforeAndAft
     val queueUrl = client.createQueue(new CreateQueueRequest("testQueue1")).getQueueUrl
 
     val builder = new StringBuilder
-    builder.append(0x8.asInstanceOf[Char]).append(0xB.asInstanceOf[Char]).append(0xC.asInstanceOf[Char])
+    builder.append(0x8.asInstanceOf[Char]).append(0xb.asInstanceOf[Char]).append(0xc.asInstanceOf[Char])
     val invalidString = builder.toString()
 
     // When

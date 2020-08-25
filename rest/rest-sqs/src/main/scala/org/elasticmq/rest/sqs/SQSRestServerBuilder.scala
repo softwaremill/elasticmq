@@ -211,7 +211,7 @@ case class TheSQSRestServerBuilder(
         }
       }
 
-    val appStartFuture = Http().bindAndHandle(routes, interface, port)
+    val appStartFuture = Http().newServerAt(interface, port).bindFlow(routes)
 
     appStartFuture.foreach { sb: Http.ServerBinding =>
       if (generateServerAddress && port != sb.localAddress.getPort) {
@@ -305,7 +305,7 @@ object MD5Util {
     md5.update(s.getBytes("UTF-8"))
     md5
       .digest()
-      .map(0xFF & _)
+      .map(0xff & _)
       .map {
         "%02x".format(_)
       }
@@ -356,7 +356,7 @@ object MD5Util {
     md5.update(byteStream.toByteArray)
     md5
       .digest()
-      .map(0xFF & _)
+      .map(0xff & _)
       .map {
         "%02x".format(_)
       }
@@ -497,7 +497,7 @@ trait SQSLimitsModule {
 
     // Allow chars: #x9 | #xA | #xD | [#x20 to #xD7FF] | [#xE000 to #xFFFD] | [#x10000 to #x10FFFF]
     def isAllowedCharacter(c: Int): Boolean =
-      c == 0x9 || c == 0xA || c == 0xD || (c >= 0x20 && c <= 0xD7FF) || (c >= 0xE000 && c <= 0xFFFD) || (c >= 0x10000 && c <= 0x10FFFF)
+      c == 0x9 || c == 0xa || c == 0xd || (c >= 0x20 && c <= 0xd7ff) || (c >= 0xe000 && c <= 0xfffd) || (c >= 0x10000 && c <= 0x10ffff)
 
     findInvalidCharacter(0)
   }

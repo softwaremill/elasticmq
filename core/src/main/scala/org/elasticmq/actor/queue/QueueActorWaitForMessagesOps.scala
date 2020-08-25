@@ -18,53 +18,58 @@ trait QueueActorWaitForMessagesOps extends ReplyingActor with QueueActorMessageO
   private val awaitingReply =
     new collection.mutable.HashMap[Long, AwaitingData]()
 
-  override def receive = super.receive orElse {
-    case ReplyIfTimeout(seq, replyWith) =>
-      awaitingReply.remove(seq).foreach {
-        case AwaitingData(originalSender, _, _) =>
-          logger.debug(s"${queueData.name}: Awaiting messages: sequence $seq timed out. Replying with no messages.")
-          originalSender ! replyWith
-      }
+  override def receive =
+    super.receive orElse {
+      case ReplyIfTimeout(seq, replyWith) =>
+        awaitingReply.remove(seq).foreach {
+          case AwaitingData(originalSender, _, _) =>
+            logger.debug(s"${queueData.name}: Awaiting messages: sequence $seq timed out. Replying with no messages.")
+            originalSender ! replyWith
+        }
 
-    case TryReply =>
-      scheduledTryReply = None
-      tryReply()
-      scheduleTryReplyWhenAvailable()
-  }
-
-  override def receiveAndReplyMessageMsg[T](msg: QueueMessageMsg[T]): ReplyAction[T] = msg match {
-    case SendMessage(message) =>
-      val result = super.receiveAndReplyMessageMsg(msg)
-      tryReply()
-      scheduleTryReplyWhenAvailable()
-      result
-
-    case rm @ ReceiveMessages(_, _, waitForMessagesOpt, _) =>
-      val result = super.receiveAndReplyMessageMsg(msg)
-      val waitForMessages =
-        waitForMessagesOpt.getOrElse(queueData.receiveMessageWait)
-      if (result == ReplyWith(Nil) && waitForMessages.getMillis > 0) {
-        val seq = assignSequenceFor(rm)
-        logger.debug(s"${queueData.name}: Awaiting messages: start for sequence $seq.")
-        scheduleTimeoutReply(seq, waitForMessages)
+      case TryReply =>
+        scheduledTryReply = None
+        tryReply()
         scheduleTryReplyWhenAvailable()
-        DoNotReply()
-      } else result
+    }
 
-    case uvm: UpdateVisibilityTimeout =>
-      val result = super.receiveAndReplyMessageMsg(msg)
-      tryReply()
-      scheduleTryReplyWhenAvailable()
-      result
+  override def receiveAndReplyMessageMsg[T](msg: QueueMessageMsg[T]): ReplyAction[T] =
+    msg match {
+      case SendMessage(message) =>
+        val result = super.receiveAndReplyMessageMsg(msg)
+        tryReply()
+        scheduleTryReplyWhenAvailable()
+        result
 
-    case _ => super.receiveAndReplyMessageMsg(msg)
-  }
+      case rm @ ReceiveMessages(_, _, waitForMessagesOpt, _) =>
+        val result = super.receiveAndReplyMessageMsg(msg)
+        val waitForMessages =
+          waitForMessagesOpt.getOrElse(queueData.receiveMessageWait)
+        if (result == ReplyWith(Nil) && waitForMessages.getMillis > 0) {
+          val seq = assignSequenceFor(rm)
+          logger.debug(s"${queueData.name}: Awaiting messages: start for sequence $seq.")
+          scheduleTimeoutReply(seq, waitForMessages)
+          scheduleTryReplyWhenAvailable()
+          DoNotReply()
+        } else result
+
+      case uvm: UpdateVisibilityTimeout =>
+        val result = super.receiveAndReplyMessageMsg(msg)
+        tryReply()
+        scheduleTryReplyWhenAvailable()
+        result
+
+      case _ => super.receiveAndReplyMessageMsg(msg)
+    }
 
   @tailrec
   private def tryReply(): Unit = {
     awaitingReply.headOption match {
       case Some(
-          (seq, AwaitingData(originalSender, ReceiveMessages(visibilityTimeout, count, _, receiveRequestAttemptId), _))
+            (
+              seq,
+              AwaitingData(originalSender, ReceiveMessages(visibilityTimeout, count, _, receiveRequestAttemptId), _)
+            )
           ) =>
         val received = receiveMessages(visibilityTimeout, count, receiveRequestAttemptId)
 
