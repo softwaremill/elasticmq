@@ -221,8 +221,10 @@ lazy val nativeServer: Project = (project in file("native-server"))
   .settings(buildSettings)
   .settings(Seq(
     name := "elasticmq-native-server",
-    libraryDependencies += "org.graalvm.nativeimage" % "svm" % graalVmVersion % Provided,
-    mainClass in Compile := Some("org.elasticmq.server.Main"),
+    libraryDependencies ++= Seq(
+      "org.graalvm.nativeimage" % "svm" % graalVmVersion,
+      "org.graalvm.nativeimage" % "pointsto" % graalVmVersion
+    ),
     //configures sbt-native-packager to build app using dockerized graalvm
     graalVMNativeImageGraalVersion := Some(graalVmVersion),
     graalVMNativeImageOptions ++= Seq(
@@ -235,14 +237,20 @@ lazy val nativeServer: Project = (project in file("native-server"))
       "-H:IncludeResources=.*\\.properties",
       "-H:IncludeResources='org/joda/time/tz/data/.*'",
       "-H:+ReportExceptionStackTraces",
+      "-H:-ThrowUnsafeOffsetErrors",
       "--enable-http",
       "--enable-https",
       "--enable-url-protocols=https,http",
       "--initialize-at-build-time",
       "--report-unsupported-elements-at-runtime",
       "--allow-incomplete-classpath",
-      "--no-fallback"
+      "--no-fallback",
+      "--verbose",
+      "-J-Xss512m",
+      "-J-Xms16g",
+      "-J-Xmx24g"
     ),
+    mainClass in Compile := Some("org.elasticmq.server.Main"),
     //configures sbt-native-packager to build docker image with generated executable
     dockerBaseImage := "alpine:3.11",
     mappings in Docker := Seq(
