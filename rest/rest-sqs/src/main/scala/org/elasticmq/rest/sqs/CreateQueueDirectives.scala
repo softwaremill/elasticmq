@@ -83,8 +83,10 @@ trait CreateQueueDirectives {
 
             if (!queueName.matches("[\\p{Alnum}\\._-]*")) {
               throw SQSException.invalidParameterValue
-            } else if (sqsLimits == SQSLimits.Strict && queueName
-                         .length() > 80) {
+            } else if (
+              sqsLimits == SQSLimits.Strict && queueName
+                .length() > 80
+            ) {
               throw SQSException.invalidParameterValue
             } else if (isFifo && !queueName.endsWith(".fifo")) {
               throw SQSException.invalidParameterValue
@@ -95,11 +97,13 @@ trait CreateQueueDirectives {
             val queueData = await(lookupOrCreateQueue(newQueueData))
 
             // if the request set the attributes compare them against the queue
-            if ((secondsDelayOpt.isDefined && queueData.delay.getStandardSeconds != secondsDelay) ||
-                (secondsReceiveMessageWaitTimeOpt.isDefined
-                && queueData.receiveMessageWait.getStandardSeconds != secondsReceiveMessageWaitTime) ||
-                (secondsVisibilityTimeoutOpt.isDefined
-                && queueData.defaultVisibilityTimeout.seconds != secondsVisibilityTimeout)) {
+            if (
+              (secondsDelayOpt.isDefined && queueData.delay.getStandardSeconds != secondsDelay) ||
+              (secondsReceiveMessageWaitTimeOpt.isDefined
+              && queueData.receiveMessageWait.getStandardSeconds != secondsReceiveMessageWaitTime) ||
+              (secondsVisibilityTimeoutOpt.isDefined
+              && queueData.defaultVisibilityTimeout.seconds != secondsVisibilityTimeout)
+            ) {
               // Special case: the queue existed, but has different attributes
               throw new SQSException("AWS.SimpleQueueService.QueueNameExists")
             }

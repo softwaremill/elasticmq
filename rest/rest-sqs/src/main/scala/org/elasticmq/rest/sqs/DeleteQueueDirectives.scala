@@ -9,18 +9,19 @@ import org.elasticmq.rest.sqs.directives.ElasticMQDirectives
 trait DeleteQueueDirectives { this: ElasticMQDirectives with QueueURLModule =>
   def deleteQueue(p: AnyParams) = {
     p.action("DeleteQueue") {
-      queueActorAndNameFromRequest(p) { (queueActor, queueName) => // We need the queue actor just to check that the queue exists
-        async {
-          await(queueManagerActor ? DeleteQueue(queueName))
+      queueActorAndNameFromRequest(p) {
+        (queueActor, queueName) => // We need the queue actor just to check that the queue exists
+          async {
+            await(queueManagerActor ? DeleteQueue(queueName))
 
-          respondWith {
-            <DeleteQueueResponse>
+            respondWith {
+              <DeleteQueueResponse>
               <ResponseMetadata>
                 <RequestId>{EmptyRequestId}</RequestId>
               </ResponseMetadata>
             </DeleteQueueResponse>
+            }
           }
-        }
       }
     }
   }

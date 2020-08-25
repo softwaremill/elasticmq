@@ -152,11 +152,10 @@ trait ReceiveMessageDirectives {
 
   def getMessageAttributeNames(p: AnyParams): Iterable[String] = {
     p.filterKeys(k =>
-        MessageReadeableAttributeNames.MessageAttributeNamePattern
-          .findFirstIn(k)
-          .isDefined
-      )
-      .values
+      MessageReadeableAttributeNames.MessageAttributeNamePattern
+        .findFirstIn(k)
+        .isDefined
+    ).values
   }
 
 }
