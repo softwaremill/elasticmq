@@ -290,6 +290,8 @@ docker run -p 9324:9324 --rm -it softwaremill/elasticmq-native
 The `native-elasticmq` image is much smaller (30MB vs 240MB) and starts up much faster (milliseconds instead of seconds).
 However, it's an experimental feature, so some things might not work.
 
+When building native image, do not forget to adjust the CPU and memory settings for the Docker process. It was checked with 6CPUs, 8GB of memory and 2GB of swap.
+
 ElasticMQ dependencies in SBT
 -----------------------------
 
