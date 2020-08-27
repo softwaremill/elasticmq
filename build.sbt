@@ -222,9 +222,11 @@ lazy val nativeServer: Project = (project in file("native-server"))
   .settings(Seq(
     name := "elasticmq-native-server",
     libraryDependencies ++= Seq(
-      "org.graalvm.nativeimage" % "svm" % graalVmVersion,
       "org.graalvm.nativeimage" % "pointsto" % graalVmVersion
-    ),
+    ) ++ (CrossVersion.partialVersion(scalaVersion.value) match {
+      case Some((2, 13)) => Seq("org.graalvm.nativeimage" % "svm" % graalVmVersion % "compile-internal")
+      case _ => Seq()
+    }),
     //configures sbt-native-packager to build app using dockerized graalvm
     graalVMNativeImageGraalVersion := Some(graalVmVersion),
     graalVMNativeImageOptions ++= Seq(
@@ -238,6 +240,7 @@ lazy val nativeServer: Project = (project in file("native-server"))
       "-H:IncludeResources='org/joda/time/tz/data/.*'",
       "-H:+ReportExceptionStackTraces",
       "-H:-ThrowUnsafeOffsetErrors",
+      "-H:+PrintClassInitialization",
       "--enable-http",
       "--enable-https",
       "--enable-url-protocols=https,http",
@@ -263,7 +266,8 @@ lazy val nativeServer: Project = (project in file("native-server"))
     dockerCommands := {
       val commands = dockerCommands.value
       val index = commands.indexWhere {
-        case Cmd("FROM", args@_*) => args.size == 1
+        case Cmd("FROM", args@_*) =>
+          args.head == "alpine:3.11" && args.last == "mainstage"
         case _ => false
       }
       val (front, back) = commands.splitAt(index + 1)
