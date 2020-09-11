@@ -10,8 +10,8 @@ val v2_13 = "2.13.3"
 
 val buildSettings = commonSmlBuildSettings ++ ossPublishSettings ++ Seq(
   organization := "org.elasticmq",
-  scalaVersion := v2_12,
-  crossScalaVersions := Seq(v2_12, v2_13),
+  scalaVersion := v2_13,
+  crossScalaVersions := Seq(v2_13, v2_12),
   libraryDependencies += "org.scala-lang.modules" %% "scala-xml" % "1.3.0",
   dependencyOverrides := akka25Overrides,
   parallelExecution := false,
@@ -222,18 +222,12 @@ lazy val nativeServer: Project = (project in file("native-server"))
   .settings(Seq(
     name := "elasticmq-native-server",
     libraryDependencies ++= Seq(
-      "org.graalvm.nativeimage" % "pointsto" % graalVmVersion
-    ) ++ (CrossVersion.partialVersion(scalaVersion.value) match {
-      case Some((2, 13)) => Seq("org.graalvm.nativeimage" % "svm" % graalVmVersion % "compile-internal")
-      case _ => Seq()
-    }),
+      "org.graalvm.nativeimage" % "svm" % graalVmVersion % "compile-internal"
+    ),
     //configures sbt-native-packager to build app using dockerized graalvm
-    graalVMNativeImageGraalVersion := Some(graalVmVersion),
+    graalVMNativeImageGraalVersion := Some(graalVmVersion + "-java11"),
     graalVMNativeImageOptions ++= Seq(
       "--static",
-      "-H:ReflectionConfigurationFiles=" + "/opt/graalvm/stage/resources/reflectconf/logback.json",
-      "-H:ReflectionConfigurationFiles=" + "/opt/graalvm/stage/resources/reflectconf/akka.json",
-      "-H:ReflectionConfigurationFiles=" + "/opt/graalvm/stage/resources/reflectconf/typesafe-config.json",
       "-H:IncludeResources=.*conf",
       "-H:IncludeResources=version",
       "-H:IncludeResources=.*\\.properties",
@@ -248,10 +242,7 @@ lazy val nativeServer: Project = (project in file("native-server"))
       "--report-unsupported-elements-at-runtime",
       "--allow-incomplete-classpath",
       "--no-fallback",
-      "--verbose",
-      "-J-Xss512m",
-      "-J-Xms8g",
-      "-J-Xmx8g"
+      "--verbose"
     ),
     mainClass in Compile := Some("org.elasticmq.server.Main"),
     //configures sbt-native-packager to build docker image with generated executable

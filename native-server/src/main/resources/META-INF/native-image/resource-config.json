@@ -1,0 +1,15 @@
+{
+  "resources":[
+    {"pattern":"\\QMETA-INF/MANIFEST.MF\\E"}, 
+    {"pattern":"\\Qakka-http-version.conf\\E"}, 
+    {"pattern":"\\Qapplication.conf\\E"}, 
+    {"pattern":"\\Qlogback.xml\\E"}, 
+    {"pattern":"\\Qorg/joda/time/tz/data/Europe/Warsaw\\E"}, 
+    {"pattern":"\\Qorg/joda/time/tz/data/ZoneInfoMap\\E"}, 
+    {"pattern":"\\Qorg/slf4j/impl/StaticLoggerBinder.class\\E"}, 
+    {"pattern":"\\Qreference.conf\\E"}, 
+    {"pattern":"\\Qversion.conf\\E"}, 
+    {"pattern":"\\Qversion\\E"}
+  ],
+  "bundles":[]
+}
