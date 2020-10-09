@@ -30,6 +30,12 @@ class ElasticMQServerConfigTest extends AnyFunSuite with Matchers with OptionVal
     conf.awsRegion should be("elastic")
   }
 
+  test("Normal queues should not have appended .fifo suffix") {
+    val conf = new ElasticMQServerConfig(ConfigFactory.load("test"))
+    val normalQueues = conf.createQueues.filter(!_.isFifo)
+    normalQueues.foreach(_.name should not endWith ".fifo")
+  }
+
   test("FIFO queue should have appended .fifo suffix") {
     val conf = new ElasticMQServerConfig(ConfigFactory.load("test"))
     val fifoQueue = conf.createQueues.find(_.isFifo).value
