@@ -78,8 +78,9 @@ class ElasticMQServerConfig(config: Config) extends Logging {
       .map {
         case (n, v) =>
           val c = v.asInstanceOf[ConfigObject].toConfig
+          val isFifo = getOptionalBoolean(c, "fifo").getOrElse(false)
           CreateQueue(
-            name = n,
+            name = addSuffixWhenFifoQueue(n, isFifo),
             defaultVisibilityTimeoutSeconds = getOptionalDuration(c, "defaultVisibilityTimeout"),
             delaySeconds = getOptionalDuration(c, "delay"),
             receiveMessageWaitSeconds = getOptionalDuration(c, "receiveMessageWait"),
@@ -91,7 +92,7 @@ class ElasticMQServerConfig(config: Config) extends Logging {
                 )
               )
             } else None,
-            isFifo = getOptionalBoolean(c, "fifo").getOrElse(false),
+            isFifo = isFifo,
             hasContentBasedDeduplication = getOptionalBoolean(c, "contentBasedDeduplication").getOrElse(false),
             copyMessagesTo = getOptionalString(c, "copyTo"),
             moveMessagesTo = getOptionalString(c, "moveTo"),
@@ -106,5 +107,10 @@ class ElasticMQServerConfig(config: Config) extends Logging {
   private val awsConfig = config.getConfig("aws")
   val awsRegion: String = awsConfig.getString("region")
   val awsAccountId: String = awsConfig.getString("accountId")
+
+  private def addSuffixWhenFifoQueue(queueName: String, isFifo: Boolean): String = {
+    if (isFifo && !queueName.endsWith(".fifo")) queueName + ".fifo"
+    else queueName
+  }
 
 }

@@ -424,14 +424,13 @@ class AmazonJavaSdkTestSuite extends AnyFunSuite with Matchers with BeforeAndAft
     bodies should be(Set("Message 1", "Message 2"))
   }
 
-  test("FIFO queues should append .fifo suffix if the queue's name does not have it") {
-    val createRequest = new CreateQueueRequest("testQueue1").addAttributesEntry("FifoQueue", "true")
-    client.createQueue(createRequest)
+  test("FIFO queues should return an error if the queue's name does not end in .fifo") {
+    val result = catching(classOf[AmazonServiceException]) either {
+      val createRequest = new CreateQueueRequest("testQueue1").addAttributesEntry("FifoQueue", "true")
+      client.createQueue(createRequest)
+    }
 
-    val queueUrls = client.listQueues().getQueueUrls
-
-    queueUrls.size() should be(1)
-    queueUrls.get(0) should endWith("testQueue1.fifo")
+    result.isLeft should be(true)
   }
 
   test("FIFO queues should return an error if an invalid message group id parameter is provided") {

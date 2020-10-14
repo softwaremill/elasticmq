@@ -106,20 +106,15 @@ object SQSLimits {
     )
   }
 
-  def verifyQueueName(queueName: String, isFifo: Boolean, sqsLimit: SQSLimits): Either[String, String] = {
-    def addSuffixWhenFifoQueue(queueName: String, isFifo: Boolean): String =
-      if (isFifo && !queueName.endsWith(".fifo")) queueName + ".fifo"
-      else queueName
-
-    val fixedQueueName = addSuffixWhenFifoQueue(queueName, isFifo)
-
+  def verifyQueueName(queueName: String, isFifo: Boolean, sqsLimit: SQSLimits): Either[String, Unit] = {
     for {
-      _ <- if (!fixedQueueName.matches("[\\p{Alnum}\\._-]*")) Left("InvalidParameterValue") else Right(())
+      _ <- if (!queueName.matches("[\\p{Alnum}\\._-]*")) Left("InvalidParameterValue") else Right(())
+      _ <- if (isFifo && !queueName.endsWith(".fifo")) Left("InvalidParameterValue") else Right(())
       _ <- validateWhenLimitAvailable(sqsLimit.queueNameLengthLimit)(
-        limit => fixedQueueName.length <= limit,
+        limit => queueName.length <= limit,
         "InvalidParameterValue"
       )
-    } yield fixedQueueName
+    } yield ()
   }
 
   private def validateWhenLimitAvailable[LimitValue](

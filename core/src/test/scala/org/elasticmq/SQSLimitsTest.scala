@@ -190,17 +190,7 @@ class SQSLimitsTest extends AnyWordSpec with Matchers with EitherValues {
 
   "Validation of queue name in strict mode" should {
     "pass if queue name is made of alphanumeric characters and has length smaller than 80" in {
-      SQSLimits.verifyQueueName("abc123.-_", isFifo = false, StrictSQSLimits) shouldBe Right("abc123.-_")
-    }
-
-    "add the .fifo suffix if the queue is FIFO and does not have such one" in {
-      val newQueueName = SQSLimits.verifyQueueName("fifoQueue", isFifo = true, StrictSQSLimits)
-      newQueueName shouldBe Right("fifoQueue.fifo")
-    }
-
-    "not add the .fifo suffix if the queue is FIFO and already has such" in {
-      val newQueueName = SQSLimits.verifyQueueName("fifoQueue.fifo", isFifo = true, StrictSQSLimits)
-      newQueueName shouldBe Right("fifoQueue.fifo")
+      SQSLimits.verifyQueueName("abc123.-_", isFifo = false, StrictSQSLimits) shouldBe Right(())
     }
 
     "fail if queue name contains invalid characters" in {
@@ -219,23 +209,11 @@ class SQSLimitsTest extends AnyWordSpec with Matchers with EitherValues {
         .value
       error shouldBe "InvalidParameterValue"
     }
-
-    "fail if after adding .fifo suffix, queue name exceeds 80 characters" in {
-      val error = SQSLimits
-        .verifyQueueName(
-          "fifoQueueOver80FifoQueueOver80FifoQueueOver80FifoQueueOver80FifoQueueOver80F",
-          isFifo = true,
-          StrictSQSLimits
-        )
-        .left
-        .value
-      error shouldBe "InvalidParameterValue"
-    }
   }
 
   "Validation of queue name in relaxed mode" should {
     "pass when queue name is made of alphanumeric characters" in {
-      SQSLimits.verifyQueueName("abc123.-_", isFifo = false, RelaxedSQSLimits) shouldBe Right("abc123.-_")
+      SQSLimits.verifyQueueName("abc123.-_", isFifo = false, RelaxedSQSLimits) shouldBe Right(())
     }
 
     "pass when normal queue name exceeds 80 characters limit cap" in {
@@ -243,20 +221,7 @@ class SQSLimitsTest extends AnyWordSpec with Matchers with EitherValues {
         "over80CharactersOver80CharactersOver80CharactersOver80CharactersOver80Characterss",
         isFifo = false,
         RelaxedSQSLimits
-      ) shouldBe Right("over80CharactersOver80CharactersOver80CharactersOver80CharactersOver80Characterss")
-    }
-
-    "pass when after adding .fifo suffix, queue name exceeds 80 characters" in {
-      SQSLimits.verifyQueueName(
-        "fifoQueueOver80FifoQueueOver80FifoQueueOver80FifoQueueOver80FifoQueueOver80F",
-        isFifo = true,
-        RelaxedSQSLimits
-      ) shouldBe Right("fifoQueueOver80FifoQueueOver80FifoQueueOver80FifoQueueOver80FifoQueueOver80F.fifo")
-    }
-
-    "not add the .fifo suffix if the queue is FIFO and already has such" in {
-      val newQueueName = SQSLimits.verifyQueueName("fifoQueue.fifo", isFifo = true, RelaxedSQSLimits)
-      newQueueName shouldBe Right("fifoQueue.fifo")
+      ) shouldBe Right(())
     }
 
     "fail if queue name contains invalid characters" in {

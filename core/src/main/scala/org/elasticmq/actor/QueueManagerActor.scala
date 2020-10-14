@@ -25,17 +25,16 @@ class QueueManagerActor(nowProvider: NowProvider, sqsLimit: SQSLimits) extends R
         } else {
           logger.info(s"Creating queue $queueData")
           for {
-            fixedQueueName <-
+            _ <-
               SQSLimits
                 .verifyQueueName(queueData.name, queueData.isFifo, sqsLimit)
-                .fold[Either[ElasticMQError, String]](
+                .fold[Either[ElasticMQError, Unit]](
                   error => Left(QueueCreationError(queueData.name, error)),
-                  name => Right(name)
+                  _ => Right(())
                 )
           } yield {
-            val queueDataWithFixedName = queueData.copy(name = fixedQueueName)
-            val actor = createQueueActor(nowProvider, queueDataWithFixedName)
-            queues(queueDataWithFixedName.name) = actor
+            val actor = createQueueActor(nowProvider, queueData)
+            queues(queueData.name) = actor
             actor
           }
         }
