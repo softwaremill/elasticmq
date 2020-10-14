@@ -8,7 +8,7 @@ import org.elasticmq.actor.reply._
 import org.elasticmq.msg.CreateQueue
 import org.elasticmq.rest.sqs.{ActorSystemModule, QueueManagerActorModule}
 import org.elasticmq.util.NowProvider
-import org.elasticmq.{MillisVisibilityTimeout, QueueData}
+import org.elasticmq.{MillisVisibilityTimeout, QueueData, StrictSQSLimits}
 import org.joda.time.{DateTime, Duration}
 
 import scala.concurrent.{Await, ExecutionContextExecutor}
@@ -33,7 +33,8 @@ class QueueDirectivesTest
   implicit val timeout: Timeout = maxDuration
   implicit val ec: ExecutionContextExecutor = actorSystem.dispatcher
   implicit lazy val actorSystem: ActorSystem = ActorSystem("lol")
-  lazy val queueManagerActor: ActorRef = actorSystem.actorOf(Props(new QueueManagerActor(new NowProvider())))
+  lazy val queueManagerActor: ActorRef =
+    actorSystem.actorOf(Props(new QueueManagerActor(new NowProvider(), StrictSQSLimits)))
 
   "queueActorAndNameFromRequest" should "return correct queue name" in {
     val future = queueManagerActor ? CreateQueue(

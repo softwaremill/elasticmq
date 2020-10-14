@@ -3,14 +3,11 @@ package org.elasticmq.server.config
 import java.util.concurrent.TimeUnit
 
 import com.typesafe.config.{Config, ConfigObject}
-import org.elasticmq.NodeAddress
-import org.elasticmq.rest.sqs.SQSLimits
+import org.elasticmq.{NodeAddress, RelaxedSQSLimits, StrictSQSLimits}
 import org.elasticmq.server.QueueSorter
 import org.elasticmq.util.Logging
 
 class ElasticMQServerConfig(config: Config) extends Logging {
-  val MaximumQueueNameLength = 80
-
   // Configure main storage
 
   sealed trait Storage
@@ -51,9 +48,9 @@ class ElasticMQServerConfig(config: Config) extends Logging {
     val sqsLimits = {
       val name = subConfig.getString("sqs-limits")
       if ("relaxed".equalsIgnoreCase(name)) {
-        SQSLimits.Relaxed
+        RelaxedSQSLimits
       } else if ("strict".equalsIgnoreCase(name)) {
-        SQSLimits.Strict
+        StrictSQSLimits
       } else {
         throw new IllegalArgumentException("Unknown sqs-limits name: " + name)
       }
@@ -81,9 +78,8 @@ class ElasticMQServerConfig(config: Config) extends Logging {
       .map {
         case (n, v) =>
           val c = v.asInstanceOf[ConfigObject].toConfig
-          val isFifo = getOptionalBoolean(c, "fifo").getOrElse(false)
           CreateQueue(
-            name = resolveQueryName(n, isFifo),
+            name = n,
             defaultVisibilityTimeoutSeconds = getOptionalDuration(c, "defaultVisibilityTimeout"),
             delaySeconds = getOptionalDuration(c, "delay"),
             receiveMessageWaitSeconds = getOptionalDuration(c, "receiveMessageWait"),
@@ -95,7 +91,7 @@ class ElasticMQServerConfig(config: Config) extends Logging {
                 )
               )
             } else None,
-            isFifo = isFifo,
+            isFifo = getOptionalBoolean(c, "fifo").getOrElse(false),
             hasContentBasedDeduplication = getOptionalBoolean(c, "contentBasedDeduplication").getOrElse(false),
             copyMessagesTo = getOptionalString(c, "copyTo"),
             moveMessagesTo = getOptionalString(c, "moveTo"),
@@ -105,20 +101,6 @@ class ElasticMQServerConfig(config: Config) extends Logging {
       .toList
 
     QueueSorter.sortCreateQueues(unsortedCreateQueues)
-  }
-
-  private def resolveQueryName(nameFromConfig: String, isFifo: Boolean): String = {
-    if (isFifo) {
-      ensureLengthSmallerThan(nameFromConfig + ".fifo", MaximumQueueNameLength)
-    } else {
-      ensureLengthSmallerThan(nameFromConfig, MaximumQueueNameLength)
-    }
-  }
-
-  private def ensureLengthSmallerThan(value: String, lengthLimit: Int): String = {
-    if (value.length > lengthLimit)
-      throw new IllegalArgumentException(s"Queue name $value exceeds maximum length of $lengthLimit characters")
-    else value
   }
 
   private val awsConfig = config.getConfig("aws")

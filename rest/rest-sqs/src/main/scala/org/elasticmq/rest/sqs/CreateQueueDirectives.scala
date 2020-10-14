@@ -7,7 +7,7 @@ import org.elasticmq.rest.sqs.CreateQueueDirectives._
 import org.elasticmq.rest.sqs.ParametersUtil._
 import org.elasticmq.rest.sqs.directives.ElasticMQDirectives
 import org.elasticmq.rest.sqs.model.RedrivePolicy.BackwardCompatibleRedrivePolicy
-import org.elasticmq.{DeadLettersQueueData, MillisVisibilityTimeout, QueueData}
+import org.elasticmq.{DeadLettersQueueData, MillisVisibilityTimeout, QueueData, SQSLimits}
 import org.joda.time.{DateTime, Duration}
 import spray.json.JsonParser.ParsingException
 import spray.json._
@@ -68,6 +68,7 @@ trait CreateQueueDirectives {
             val now = new DateTime()
             val isFifo = attributes.get("FifoQueue").contains("true")
             val hasContentBasedDeduplication = attributes.get("ContentBasedDeduplication").contains("true")
+
             val newQueueData = QueueData(
               queueName,
               MillisVisibilityTimeout.fromSeconds(secondsVisibilityTimeout),
@@ -81,18 +82,11 @@ trait CreateQueueDirectives {
               tags = tagNameAndValuesReader.read(p)
             )
 
-            if (!queueName.matches("[\\p{Alnum}\\._-]*")) {
-              throw SQSException.invalidParameterValue
-            } else if (
-              sqsLimits == SQSLimits.Strict && queueName
-                .length() > 80
-            ) {
-              throw SQSException.invalidParameterValue
-            } else if (isFifo && !queueName.endsWith(".fifo")) {
-              throw SQSException.invalidParameterValue
-            }
-
-            verifyMessageWaitTime(secondsReceiveMessageWaitTimeOpt)
+            secondsReceiveMessageWaitTimeOpt.foreach(messageWaitTime =>
+              SQSLimits
+                .verifyMessageWaitTime(messageWaitTime, sqsLimits)
+                .fold(error => throw new SQSException(error), identity)
+            )
 
             val queueData = await(lookupOrCreateQueue(newQueueData))
 

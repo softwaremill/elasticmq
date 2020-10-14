@@ -154,6 +154,8 @@ All attributes are optional (except `name` and `maxReceiveCount` when a `deadLet
 `copyTo` and `moveTo` attributes allow to achieve behavior that might be useful primarily for integration testing scenarios -
 all messages could be either duplicated (using `copyTo` attribute) or redirected (using `moveTo` attribute) to another queue.
 
+While creating the FIFO queue, .fifo suffix will be added automatically to queue name.
+
 Starting an embedded ElasticMQ server with an SQS interface
 -----------------------------------------------------------
 
