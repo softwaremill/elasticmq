@@ -23,18 +23,13 @@ class QueueManagerActor(nowProvider: NowProvider, limits: Limits) extends Replyi
           Left(new QueueAlreadyExists(queueData.name))
         } else {
           logger.info(s"Creating queue $queueData")
-          for {
-            _ <-
-              Limits
-                .verifyQueueName(queueData.name, queueData.isFifo, limits)
-                .fold[Either[ElasticMQError, Unit]](
-                  error => Left(QueueCreationError(queueData.name, error)),
-                  _ => Right(())
-                )
-          } yield {
-            val actor = createQueueActor(nowProvider, queueData)
-            queues(queueData.name) = actor
-            actor
+          Limits.verifyQueueName(queueData.name, queueData.isFifo, limits) match {
+            case Left(error) =>
+              Left(QueueCreationError(queueData.name, error))
+            case Right(_) =>
+              val actor = createQueueActor(nowProvider, queueData)
+              queues(queueData.name) = actor
+              Right(actor)
           }
         }
 
