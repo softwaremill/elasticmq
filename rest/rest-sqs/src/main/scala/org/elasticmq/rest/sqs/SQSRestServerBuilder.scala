@@ -47,15 +47,15 @@ object SQSRestServerBuilder
     )
 
 case class TheSQSRestServerBuilder(
-                                    providedActorSystem: Option[ActorSystem],
-                                    providedQueueManagerActor: Option[ActorRef],
-                                    interface: String,
-                                    port: Int,
-                                    serverAddress: NodeAddress,
-                                    generateServerAddress: Boolean,
-                                    sqsLimits: Limits,
-                                    _awsRegion: String,
-                                    _awsAccountId: String
+    providedActorSystem: Option[ActorSystem],
+    providedQueueManagerActor: Option[ActorRef],
+    interface: String,
+    port: Int,
+    serverAddress: NodeAddress,
+    generateServerAddress: Boolean,
+    sqsLimits: Limits,
+    _awsRegion: String,
+    _awsAccountId: String
 ) extends Logging {
 
   /**
