@@ -74,14 +74,14 @@ trait SendMessageDirectives { this: ElasticMQDirectives with SQSLimitsModule =>
         case "String" =>
           val strValue =
             parameters("MessageAttribute." + i + ".Value.StringValue")
-          SQSLimits
+          Limits
             .verifyMessageStringAttribute(strValue, sqsLimits)
             .fold(error => throw new SQSException(error), identity)
           StringMessageAttribute(strValue, customDataType)
         case "Number" =>
           val strValue =
             parameters("MessageAttribute." + i + ".Value.StringValue")
-          SQSLimits
+          Limits
             .verifyMessageNumberAttribute(strValue, sqsLimits)
             .fold(error => throw new SQSException(error), identity)
           NumberMessageAttribute(strValue, customDataType)
@@ -99,7 +99,7 @@ trait SendMessageDirectives { this: ElasticMQDirectives with SQSLimitsModule =>
     val body = parameters(MessageBodyParameter)
     val messageAttributes = getMessageAttributes(parameters)
 
-    SQSLimits.verifyMessageStringAttribute(body, sqsLimits).fold(error => throw new SQSException(error), identity)
+    Limits.verifyMessageStringAttribute(body, sqsLimits).fold(error => throw new SQSException(error), identity)
 
     val messageGroupId = parameters.get(MessageGroupIdParameter) match {
       // MessageGroupId is only supported for FIFO queues
@@ -183,7 +183,7 @@ trait SendMessageDirectives { this: ElasticMQDirectives with SQSLimitsModule =>
   }
 
   def verifyMessageNotTooLong(messageLength: Int): Unit =
-    SQSLimits.verifyMessageLength(messageLength, sqsLimits).fold(error => throw new SQSException(error), identity)
+    Limits.verifyMessageLength(messageLength, sqsLimits).fold(error => throw new SQSException(error), identity)
 
   private def sha256Hash(text: String): String = {
     String.format(

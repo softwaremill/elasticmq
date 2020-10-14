@@ -4,7 +4,7 @@ import xml.NodeSeq
 import Constants.IdSubParameter
 import java.util.regex.Pattern
 
-import org.elasticmq.SQSLimits
+import org.elasticmq.Limits
 
 import scala.concurrent.Future
 
@@ -20,7 +20,7 @@ trait BatchRequestsModule {
       throw new SQSException("AWS.SimpleQueueService.BatchEntryIdsNotDistinct")
     }
 
-    SQSLimits.verifyBatchSize(uniqueIds.size, sqsLimits).fold(error => throw new SQSException(error), identity)
+    Limits.verifyBatchSize(uniqueIds.size, sqsLimits).fold(error => throw new SQSException(error), identity)
 
     subParameters
   }

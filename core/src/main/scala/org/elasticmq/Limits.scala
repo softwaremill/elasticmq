@@ -3,7 +3,7 @@ package org.elasticmq
 import scala.collection.JavaConverters._
 import scala.util.Try
 
-sealed trait SQSLimits {
+trait Limits {
   def queueNameLengthLimit: Limit[Int]
   def batchSizeLimit: Limit[Int]
   def numberOfMessagesLimit: Limit[RangeLimit[Int]]
@@ -13,7 +13,7 @@ sealed trait SQSLimits {
   def maxMessageLength: Limit[Int]
 }
 
-case object StrictSQSLimits extends SQSLimits {
+case object StrictSQSLimits extends Limits {
   override val queueNameLengthLimit: Limit[Int] = LimitedValue(80)
   override val batchSizeLimit: Limit[Int] = LimitedValue(10)
   override val numberOfMessagesLimit: Limit[RangeLimit[Int]] = LimitedValue(RangeLimit(1, 10))
@@ -33,7 +33,7 @@ case object StrictSQSLimits extends SQSLimits {
   override val messageWaitTimeLimit: Limit[RangeLimit[Long]] = LimitedValue(RangeLimit(0L, 20L))
   override val maxMessageLength: Limit[Int] = LimitedValue(262144)
 }
-case object RelaxedSQSLimits extends SQSLimits {
+case object RelaxedSQSLimits extends Limits {
   override val queueNameLengthLimit: Limit[Int] = NoLimit
   override val batchSizeLimit: Limit[Int] = NoLimit
   override val numberOfMessagesLimit: Limit[RangeLimit[Int]] = NoLimit
@@ -51,26 +51,26 @@ case class RangeLimit[A](from: A, to: A)(implicit ord: Ordering[A]) {
   def isBetween(value: A): Boolean = ord.gteq(value, from) && ord.lteq(value, to)
 }
 
-object SQSLimits {
+object Limits {
 
-  def verifyBatchSize(batchSize: Int, sqsLimit: SQSLimits): Either[String, Unit] =
-    validateWhenLimitAvailable(sqsLimit.batchSizeLimit)(
+  def verifyBatchSize(batchSize: Int, limits: Limits): Either[String, Unit] =
+    validateWhenLimitAvailable(limits.batchSizeLimit)(
       limit => batchSize <= limit,
       "AWS.SimpleQueueService.TooManyEntriesInBatchRequest"
     )
 
   def verifyNumberOfMessagesFromParameters(
       numberOfMessagesFromParameters: Int,
-      sqsLimit: SQSLimits
+      limits: Limits
   ): Either[String, Unit] =
-    validateWhenLimitAvailable(sqsLimit.numberOfMessagesLimit)(
+    validateWhenLimitAvailable(limits.numberOfMessagesLimit)(
       limit => limit.isBetween(numberOfMessagesFromParameters),
       "ReadCountOutOfRange"
     )
 
-  def verifyMessageStringAttribute(stringAttribute: String, sqsLimit: SQSLimits): Either[String, Unit] =
+  def verifyMessageStringAttribute(stringAttribute: String, limits: Limits): Either[String, Unit] =
     for {
-      _ <- validateWhenLimitAvailable(sqsLimit.bodyValidCharactersLimit)(
+      _ <- validateWhenLimitAvailable(limits.bodyValidCharactersLimit)(
         rangeLimits =>
           stringAttribute
             .codePoints()
@@ -79,38 +79,38 @@ object SQSLimits {
             .forall(codePoint => rangeLimits.exists(range => range.isBetween(codePoint))),
         "InvalidMessageContents"
       )
-      _ <- verifyMessageLength(stringAttribute.length, sqsLimit)
+      _ <- verifyMessageLength(stringAttribute.length, limits)
     } yield ()
 
-  def verifyMessageNumberAttribute(stringNumberValue: String, sqsLimit: SQSLimits): Either[String, Unit] = {
-    validateWhenLimitAvailable(sqsLimit.numberAttributeValueLimit)(
+  def verifyMessageNumberAttribute(stringNumberValue: String, limits: Limits): Either[String, Unit] = {
+    validateWhenLimitAvailable(limits.numberAttributeValueLimit)(
       limit => Try(BigDecimal(stringNumberValue)).toOption.exists(value => limit.isBetween(value)),
       s"Number attribute value $stringNumberValue should be in range (-10**128..10**126)"
     )
   }
 
-  def verifyMessageWaitTime(messageWaitTime: Long, sqsLimit: SQSLimits): Either[String, Unit] = {
+  def verifyMessageWaitTime(messageWaitTime: Long, limits: Limits): Either[String, Unit] = {
     for {
       _ <- if (messageWaitTime < 0) Left("InvalidParameterValue") else Right(())
-      _ <- validateWhenLimitAvailable(sqsLimit.messageWaitTimeLimit)(
+      _ <- validateWhenLimitAvailable(limits.messageWaitTimeLimit)(
         limit => limit.isBetween(messageWaitTime),
         "InvalidParameterValue"
       )
     } yield ()
   }
 
-  def verifyMessageLength(messageLength: Int, sqsLimit: SQSLimits): Either[String, Unit] = {
-    validateWhenLimitAvailable(sqsLimit.maxMessageLength)(
+  def verifyMessageLength(messageLength: Int, limits: Limits): Either[String, Unit] = {
+    validateWhenLimitAvailable(limits.maxMessageLength)(
       limit => messageLength <= limit,
       "MessageTooLong"
     )
   }
 
-  def verifyQueueName(queueName: String, isFifo: Boolean, sqsLimit: SQSLimits): Either[String, Unit] = {
+  def verifyQueueName(queueName: String, isFifo: Boolean, limits: Limits): Either[String, Unit] = {
     for {
       _ <- if (!queueName.matches("[\\p{Alnum}\\._-]*")) Left("InvalidParameterValue") else Right(())
       _ <- if (isFifo && !queueName.endsWith(".fifo")) Left("InvalidParameterValue") else Right(())
-      _ <- validateWhenLimitAvailable(sqsLimit.queueNameLengthLimit)(
+      _ <- validateWhenLimitAvailable(limits.queueNameLengthLimit)(
         limit => queueName.length <= limit,
         "InvalidParameterValue"
       )

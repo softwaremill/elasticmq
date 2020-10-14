@@ -98,7 +98,7 @@ object LocalPerformanceTest extends App {
 
     implicit val timeout = Timeout(10000L, TimeUnit.MILLISECONDS)
 
-    override def start(sqsLimits: SQSLimits) = {
+    override def start(sqsLimits: Limits) = {
       val queueManagerActor = super.start(sqsLimits)
 
       currentQueue = Await
@@ -134,7 +134,7 @@ object LocalPerformanceTest extends App {
   trait MQ {
     var actorSystem: ActorSystem = _
 
-    def start(sqsLimits: SQSLimits): ActorRef = {
+    def start(sqsLimits: Limits): ActorRef = {
       actorSystem = ActorSystem("performance-tests")
       val queueManagerActor = actorSystem.actorOf(Props(new QueueManagerActor(new NowProvider(), sqsLimits)))
 
@@ -155,7 +155,7 @@ object LocalPerformanceTest extends App {
     private var currentQueueUrl: String = _
     private var currentRestServer: SQSRestServer = _
 
-    override def start(sqsLimits: SQSLimits) = {
+    override def start(sqsLimits: Limits) = {
       val queueManagerActor = super.start(sqsLimits)
 
       currentRestServer = SQSRestServerBuilder

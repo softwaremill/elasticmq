@@ -47,15 +47,15 @@ object SQSRestServerBuilder
     )
 
 case class TheSQSRestServerBuilder(
-    providedActorSystem: Option[ActorSystem],
-    providedQueueManagerActor: Option[ActorRef],
-    interface: String,
-    port: Int,
-    serverAddress: NodeAddress,
-    generateServerAddress: Boolean,
-    sqsLimits: SQSLimits,
-    _awsRegion: String,
-    _awsAccountId: String
+                                    providedActorSystem: Option[ActorSystem],
+                                    providedQueueManagerActor: Option[ActorRef],
+                                    interface: String,
+                                    port: Int,
+                                    serverAddress: NodeAddress,
+                                    generateServerAddress: Boolean,
+                                    sqsLimits: Limits,
+                                    _awsRegion: String,
+                                    _awsAccountId: String
 ) extends Logging {
 
   /**
@@ -99,7 +99,7 @@ case class TheSQSRestServerBuilder(
     * @param _sqsLimits Should "real" SQS limits be used (strict), or should they be relaxed where possible (regarding
     *                   e.g. message size).
     */
-  def withSQSLimits(_sqsLimits: SQSLimits) =
+  def withSQSLimits(_sqsLimits: Limits) =
     this.copy(sqsLimits = _sqsLimits)
 
   /**
@@ -423,7 +423,7 @@ trait QueueURLModule {
 }
 
 trait SQSLimitsModule {
-  def sqsLimits: SQSLimits
+  def sqsLimits: Limits
 }
 
 class ElasticMQConfig {

@@ -7,7 +7,7 @@ import org.elasticmq.rest.sqs.CreateQueueDirectives._
 import org.elasticmq.rest.sqs.ParametersUtil._
 import org.elasticmq.rest.sqs.directives.ElasticMQDirectives
 import org.elasticmq.rest.sqs.model.RedrivePolicy.BackwardCompatibleRedrivePolicy
-import org.elasticmq.{DeadLettersQueueData, MillisVisibilityTimeout, QueueData, SQSLimits}
+import org.elasticmq.{DeadLettersQueueData, MillisVisibilityTimeout, QueueData, Limits}
 import org.joda.time.{DateTime, Duration}
 import spray.json.JsonParser.ParsingException
 import spray.json._
@@ -83,7 +83,7 @@ trait CreateQueueDirectives {
             )
 
             secondsReceiveMessageWaitTimeOpt.foreach(messageWaitTime =>
-              SQSLimits
+              Limits
                 .verifyMessageWaitTime(messageWaitTime, sqsLimits)
                 .fold(error => throw new SQSException(error), identity)
             )

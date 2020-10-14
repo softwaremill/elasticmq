@@ -9,10 +9,9 @@ import org.elasticmq._
 
 import scala.reflect._
 
-class QueueManagerActor(nowProvider: NowProvider, sqsLimit: SQSLimits) extends ReplyingActor with Logging {
+class QueueManagerActor(nowProvider: NowProvider, limits: Limits) extends ReplyingActor with Logging {
   type M[X] = QueueManagerMsg[X]
   val ev: ClassTag[QueueManagerMsg[Unit]] = classTag[M[Unit]]
-  val MaximumQueueNameLength = 80
 
   private val queues = collection.mutable.HashMap[String, ActorRef]()
 
@@ -26,8 +25,8 @@ class QueueManagerActor(nowProvider: NowProvider, sqsLimit: SQSLimits) extends R
           logger.info(s"Creating queue $queueData")
           for {
             _ <-
-              SQSLimits
-                .verifyQueueName(queueData.name, queueData.isFifo, sqsLimit)
+              Limits
+                .verifyQueueName(queueData.name, queueData.isFifo, limits)
                 .fold[Either[ElasticMQError, Unit]](
                   error => Left(QueueCreationError(queueData.name, error)),
                   _ => Right(())

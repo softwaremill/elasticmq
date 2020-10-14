@@ -65,12 +65,12 @@ trait ReceiveMessageDirectives {
 
         val messageAttributeNames = getMessageAttributeNames(p)
 
-        SQSLimits
+        Limits
           .verifyNumberOfMessagesFromParameters(maxNumberOfMessagesFromParameters, sqsLimits)
           .fold(error => throw new SQSException(error), identity)
 
         waitTimeSecondsAttributeOpt.foreach(messageWaitTime =>
-          SQSLimits
+          Limits
             .verifyMessageWaitTime(messageWaitTime, sqsLimits)
             .fold(error => throw new SQSException(error), identity)
         )
