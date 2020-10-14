@@ -102,15 +102,15 @@ class LimitsTest extends AnyWordSpec with Matchers with EitherValues {
 
     "fail if the number is bigger than the upper bound" in {
       val overUpperBound = BigDecimal(10).pow(126) + BigDecimal(0.1)
-      val error = Limits.verifyMessageNumberAttribute(overUpperBound.toString, StrictSQSLimits).left.value
-      error shouldBe s"Number attribute value $overUpperBound should be in range (-10**128..10**126)"
+      val error = Limits.verifyMessageNumberAttribute(overUpperBound.toString, StrictSQSLimits)
+      error shouldBe Left(s"Number attribute value $overUpperBound should be in range (-10**128..10**126)")
     }
 
     "fail if the number is below the lower bound" in {
       val belowLowerBound = -BigDecimal(10).pow(128) - BigDecimal(0.1)
       val error =
-        Limits.verifyMessageNumberAttribute(belowLowerBound.toString, StrictSQSLimits).left.value
-      error shouldBe s"Number attribute value $belowLowerBound should be in range (-10**128..10**126)"
+        Limits.verifyMessageNumberAttribute(belowLowerBound.toString, StrictSQSLimits)
+      error shouldBe Left(s"Number attribute value $belowLowerBound should be in range (-10**128..10**126)")
     }
 
     "fail if the number can't be parsed" in {
