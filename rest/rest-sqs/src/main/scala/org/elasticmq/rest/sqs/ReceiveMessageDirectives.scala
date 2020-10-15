@@ -65,11 +65,15 @@ trait ReceiveMessageDirectives {
 
         val messageAttributeNames = getMessageAttributeNames(p)
 
-        ifStrictLimits(maxNumberOfMessagesFromParameters < 1 || maxNumberOfMessagesFromParameters > 10) {
-          "ReadCountOutOfRange"
-        }
+        Limits
+          .verifyNumberOfMessagesFromParameters(maxNumberOfMessagesFromParameters, sqsLimits)
+          .fold(error => throw new SQSException(error), identity)
 
-        verifyMessageWaitTime(waitTimeSecondsAttributeOpt)
+        waitTimeSecondsAttributeOpt.foreach(messageWaitTime =>
+          Limits
+            .verifyMessageWaitTime(messageWaitTime, sqsLimits)
+            .fold(error => throw new SQSException(error), identity)
+        )
 
         val msgsFuture = queueActor ? ReceiveMessages(
           visibilityTimeoutFromParameters,

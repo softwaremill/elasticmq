@@ -58,7 +58,7 @@ class AmazonJavaSdkTestSuite extends AnyFunSuite with Matchers with BeforeAndAft
     relaxedServer = SQSRestServerBuilder
       .withPort(9322)
       .withServerAddress(NodeAddress(port = 9322))
-      .withSQSLimits(SQSLimits.Relaxed)
+      .withSQSLimits(RelaxedSQSLimits)
       .start()
 
     strictServer.waitUntilStarted()

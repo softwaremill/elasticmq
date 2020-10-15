@@ -18,12 +18,10 @@ import org.elasticmq.rest.sqs.Constants._
 import org.elasticmq.rest.sqs.directives.{ElasticMQDirectives, UnmatchedActionRoutes}
 import org.elasticmq.util.{Logging, NowProvider}
 
-import scala.annotation.tailrec
 import scala.collection.immutable.TreeMap
 import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
-import scala.util.control.Exception._
 import scala.util.control.NonFatal
 import scala.xml.{EntityRef, _}
 
@@ -43,7 +41,7 @@ object SQSRestServerBuilder
       9324,
       NodeAddress(),
       true,
-      SQSLimits.Strict,
+      StrictSQSLimits,
       "elasticmq",
       "000000000000"
     )
@@ -55,7 +53,7 @@ case class TheSQSRestServerBuilder(
     port: Int,
     serverAddress: NodeAddress,
     generateServerAddress: Boolean,
-    sqsLimits: SQSLimits.Value,
+    sqsLimits: Limits,
     _awsRegion: String,
     _awsAccountId: String
 ) extends Logging {
@@ -101,7 +99,7 @@ case class TheSQSRestServerBuilder(
     * @param _sqsLimits Should "real" SQS limits be used (strict), or should they be relaxed where possible (regarding
     *                   e.g. message size).
     */
-  def withSQSLimits(_sqsLimits: SQSLimits.Value) =
+  def withSQSLimits(_sqsLimits: Limits) =
     this.copy(sqsLimits = _sqsLimits)
 
   /**
@@ -252,7 +250,7 @@ case class TheSQSRestServerBuilder(
   }
 
   private def getOrCreateQueueManagerActor(actorSystem: ActorSystem) = {
-    providedQueueManagerActor.getOrElse(actorSystem.actorOf(Props(new QueueManagerActor(new NowProvider()))))
+    providedQueueManagerActor.getOrElse(actorSystem.actorOf(Props(new QueueManagerActor(new NowProvider(), sqsLimits))))
   }
 }
 
@@ -424,83 +422,8 @@ trait QueueURLModule {
   }
 }
 
-object SQSLimits extends Enumeration {
-  val Strict = Value
-  val Relaxed = Value
-}
-
 trait SQSLimitsModule {
-
-  val NUMBER_ATTR_MAX_VALUE = BigDecimal.valueOf(10).pow(126)
-  val NUMBER_ATTR_MIN_VALUE = -BigDecimal.valueOf(10).pow(128)
-
-  def sqsLimits: SQSLimits.Value
-
-  def ifStrictLimits(condition: => Boolean)(exception: String): Unit = {
-    if (sqsLimits == SQSLimits.Strict && condition) {
-      throw new SQSException(exception)
-    }
-  }
-
-  def verifyMessageStringAttribute(strValue: String): Unit = {
-    ifStrictLimits(bodyContainsInvalidCharacters(strValue)) {
-      "InvalidMessageContents"
-    }
-
-    verifyMessageStringNotTooLong(strValue.length)
-  }
-
-  def verifyMessageNumberAttribute(strValue: String): Unit = {
-    ifStrictLimits(
-      !allCatch
-        .opt(BigDecimal(strValue))
-        .filter(v => v >= NUMBER_ATTR_MIN_VALUE)
-        .exists(v => v <= NUMBER_ATTR_MAX_VALUE)
-    ) {
-      s"Number attribute value $strValue should be in range (-10**128..10**126)"
-    }
-  }
-
-  def verifyMessageWaitTime(messageWaitTimeOpt: Option[Long]): Unit = {
-    messageWaitTimeOpt.foreach { messageWaitTime =>
-      if (messageWaitTime < 0) {
-        throw SQSException.invalidParameterValue
-      }
-
-      ifStrictLimits(messageWaitTime > 20 || messageWaitTime < 0) {
-        InvalidParameterValueErrorName
-      }
-    }
-  }
-
-  def verifyMessageStringNotTooLong(messageLength: Int): Unit = {
-    ifStrictLimits(messageLength > 262144) {
-      "MessageTooLong"
-    }
-  }
-
-  private def bodyContainsInvalidCharacters(body: String) = {
-    val bodyLength = body.length
-
-    @tailrec
-    def findInvalidCharacter(offset: Int): Boolean = {
-      if (offset < bodyLength) {
-        val c = body.codePointAt(offset)
-
-        if (isAllowedCharacter(c))
-          findInvalidCharacter(offset + Character.charCount(c))
-        else true
-      } else {
-        false
-      }
-    }
-
-    // Allow chars: #x9 | #xA | #xD | [#x20 to #xD7FF] | [#xE000 to #xFFFD] | [#x10000 to #x10FFFF]
-    def isAllowedCharacter(c: Int): Boolean =
-      c == 0x9 || c == 0xa || c == 0xd || (c >= 0x20 && c <= 0xd7ff) || (c >= 0xe000 && c <= 0xfffd) || (c >= 0x10000 && c <= 0x10ffff)
-
-    findInvalidCharacter(0)
-  }
+  def sqsLimits: Limits
 }
 
 class ElasticMQConfig {
