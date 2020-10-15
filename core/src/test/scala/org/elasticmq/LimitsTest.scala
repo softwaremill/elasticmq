@@ -1,5 +1,7 @@
 package org.elasticmq
 
+import java.math.MathContext
+
 import org.scalatest.EitherValues
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
@@ -101,13 +103,13 @@ class LimitsTest extends AnyWordSpec with Matchers with EitherValues {
     }
 
     "fail if the number is bigger than the upper bound" in {
-      val overUpperBound = BigDecimal(10).pow(126) + BigDecimal(0.1)
+      val overUpperBound = BigDecimal(10, MathContext.UNLIMITED).pow(126) + BigDecimal(0.1)
       val error = Limits.verifyMessageNumberAttribute(overUpperBound.toString, StrictSQSLimits)
       error shouldBe Left(s"Number attribute value $overUpperBound should be in range (-10**128..10**126)")
     }
 
     "fail if the number is below the lower bound" in {
-      val belowLowerBound = -BigDecimal(10).pow(128) - BigDecimal(0.1)
+      val belowLowerBound = -BigDecimal(10, MathContext.UNLIMITED).pow(128) - BigDecimal(0.1)
       val error =
         Limits.verifyMessageNumberAttribute(belowLowerBound.toString, StrictSQSLimits)
       error shouldBe Left(s"Number attribute value $belowLowerBound should be in range (-10**128..10**126)")
