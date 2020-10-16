@@ -22,7 +22,7 @@ trait QueueActorMessageOps extends Logging {
         receiveMessages(visibilityTimeout, count, receiveRequestAttemptId)
       case DeleteMessage(deliveryReceipt) => deleteMessage(deliveryReceipt)
       case LookupMessage(messageId)       => messageQueue.byId.get(messageId.id).map(_.toMessageData)
-      case MoveMessageToDLQ(message)      => moveToDeadLetterQueue(message)
+      case MoveMessage(message)           => moveMessage(message)
     }
 
   private def handleOrRedirectMessage(message: NewMessageData): ReplyAction[MessageData] = {
@@ -156,7 +156,7 @@ trait QueueActorMessageOps extends Logging {
     messageQueue.dequeue(count, deliveryTime).flatMap { internalMessage =>
       if (queueData.deadLettersQueue.map(_.maxReceiveCount).exists(_ <= internalMessage.receiveCount)) {
         logger.debug(s"${queueData.name}: send message $internalMessage to dead letters actor $deadLettersActorRef")
-        deadLettersActorRef.foreach(_ ! MoveMessageToDLQ(internalMessage))
+        deadLettersActorRef.foreach(_ ! MoveMessage(internalMessage))
         internalMessage.deliveryReceipts.foreach(dr => deleteMessage(DeliveryReceipt(dr)))
         None
       } else {
@@ -187,8 +187,8 @@ trait QueueActorMessageOps extends Logging {
     }
   }
 
-  private def moveToDeadLetterQueue(message: InternalMessage): Unit = {
-    def moveMessageToDLQ(internalMessage: InternalMessage): Unit = {
+  private def moveMessage(message: InternalMessage): Unit = {
+    def moveMessageToQueue(internalMessage: InternalMessage): Unit = {
       messageQueue += internalMessage
       logger.debug(s"Moved message with id ${internalMessage.id} to DLQ ${queueData.name}")
     }
@@ -203,10 +203,10 @@ trait QueueActorMessageOps extends Logging {
       // deleted message (that was sent less than 5 minutes ago, the new message should not be added).
       messageQueue.byId.values.find(isDuplicate(message.toNewMessageData, _)) match {
         case Some(_) => ()
-        case None    => moveMessageToDLQ(message)
+        case None    => moveMessageToQueue(message)
       }
     } else {
-      moveMessageToDLQ(message)
+      moveMessageToQueue(message)
     }
   }
 }
