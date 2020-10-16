@@ -1741,6 +1741,66 @@ class AmazonJavaSdkTestSuite extends AnyFunSuite with Matchers with BeforeAndAft
     newQueueAttributes(redrivePolicyAttribute) should be(redrivePolicy)
   }
 
+  test(
+    "When message is moved to dead letter queue, its SentTimestamp and ApproximateFirstReceiveTimestamp attributes should not be changed"
+  ) {
+    import org.elasticmq.rest.sqs.model.RedrivePolicyJson._
+    import spray.json._
+
+    def getOneMessage(queueUrl: String) = {
+      client
+        .receiveMessage(new ReceiveMessageRequest(queueUrl).withWaitTimeSeconds(2).withAttributeNames("All"))
+        .getMessages
+        .asScala
+        .headOption
+        .orNull
+    }
+
+    // Given
+    val deadLetterQueueUrl = client.createQueue(new CreateQueueRequest("dlq1")).getQueueUrl
+    val redrivePolicy = RedrivePolicy("dlq1", awsRegion, awsAccountId, 2).toJson.toString()
+    val createQueueResult = client.createQueue(
+      new CreateQueueRequest("q1")
+        .withAttributes(Map(defaultVisibilityTimeoutAttribute -> "1", redrivePolicyAttribute -> redrivePolicy).asJava)
+    )
+
+    // When
+
+    client.sendMessage(new SendMessageRequest(createQueueResult.getQueueUrl, "test message"))
+
+    val msg1 = getOneMessage(createQueueResult.getQueueUrl)
+    val msg2 = getOneMessage(createQueueResult.getQueueUrl)
+    val emptyMsg = getOneMessage(createQueueResult.getQueueUrl)
+
+    val msgFromDeadLetterQueue = getOneMessage(deadLetterQueueUrl)
+
+    // Then
+    val msg1SentTimestamp = msg1.getAttributes.get("SentTimestamp")
+    val msg1ApproximateReceiveCount = msg1.getAttributes.get("ApproximateReceiveCount")
+    val msg1ApproximateFirstReceiveTimestamp = msg1.getAttributes.get("SentTimestamp")
+
+    val msg2SentTimestamp = msg2.getAttributes.get("SentTimestamp")
+    val msg2ApproximateReceiveCount = msg2.getAttributes.get("ApproximateReceiveCount")
+    val msg2ApproximateFirstReceiveTimestamp = msg2.getAttributes.get("SentTimestamp")
+
+    val msgFromDeadLetterQueueSentTimestamp = msgFromDeadLetterQueue.getAttributes.get("SentTimestamp")
+    val msgFromDeadLetterQueueApproximateReceiveCount =
+      msgFromDeadLetterQueue.getAttributes.get("ApproximateReceiveCount")
+    val msgFromDeadLetterQueueApproximateFirstReceiveTimestamp =
+      msgFromDeadLetterQueue.getAttributes.get("SentTimestamp")
+
+    msg1SentTimestamp shouldBe msg2SentTimestamp
+    msg2SentTimestamp shouldBe msgFromDeadLetterQueueSentTimestamp
+
+    msg2ApproximateReceiveCount.toInt shouldBe (msg1ApproximateReceiveCount.toInt + 1)
+    msgFromDeadLetterQueueApproximateReceiveCount.toInt shouldBe (msg2ApproximateReceiveCount.toInt + 1)
+
+    msg1ApproximateFirstReceiveTimestamp shouldBe msg2ApproximateFirstReceiveTimestamp
+    msg2ApproximateFirstReceiveTimestamp shouldBe msgFromDeadLetterQueueApproximateFirstReceiveTimestamp
+
+    emptyMsg shouldBe null
+  }
+
   test("should return an error when the deadletter queue does not exist") {
     import org.elasticmq.rest.sqs.model.RedrivePolicyJson._
     import spray.json._

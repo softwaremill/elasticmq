@@ -2,6 +2,7 @@ package org.elasticmq.msg
 
 import akka.actor.ActorRef
 import org.elasticmq._
+import org.elasticmq.actor.queue.InternalMessage
 import org.elasticmq.actor.reply.Replyable
 import org.joda.time.Duration
 
@@ -25,6 +26,7 @@ case class GetQueueStatistics(deliveryTime: Long) extends QueueQueueMsg[QueueSta
 case class ClearQueue() extends QueueQueueMsg[Unit]
 
 case class SendMessage(message: NewMessageData) extends QueueMessageMsg[MessageData]
+case class MoveMessage(message: InternalMessage) extends QueueMessageMsg[Unit]
 case class UpdateVisibilityTimeout(messageId: MessageId, visibilityTimeout: VisibilityTimeout)
     extends QueueMessageMsg[Either[MessageDoesNotExist, Unit]]
 case class ReceiveMessages(

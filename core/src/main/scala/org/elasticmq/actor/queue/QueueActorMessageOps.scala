@@ -22,6 +22,7 @@ trait QueueActorMessageOps extends Logging {
         receiveMessages(visibilityTimeout, count, receiveRequestAttemptId)
       case DeleteMessage(deliveryReceipt) => deleteMessage(deliveryReceipt)
       case LookupMessage(messageId)       => messageQueue.byId.get(messageId.id).map(_.toMessageData)
+      case MoveMessage(message)           => moveMessage(message)
     }
 
   private def handleOrRedirectMessage(message: NewMessageData): ReplyAction[MessageData] = {
@@ -123,7 +124,7 @@ trait QueueActorMessageOps extends Logging {
           case default => Some(default)
         }
       })
-      .getOrElse(getMessagesFromQueue(visibilityTimeout, count))
+      .getOrElse(getMessagesFromQueue(count))
       .map { internalMessage =>
         // Putting the msg again into the queue, with a new next delivery
         val newNextDelivery = computeNextDelivery(visibilityTimeout)
@@ -150,12 +151,12 @@ trait QueueActorMessageOps extends Logging {
     }
   }
 
-  private def getMessagesFromQueue(visibilityTimeout: VisibilityTimeout, count: Int) = {
+  private def getMessagesFromQueue(count: Int) = {
     val deliveryTime = nowProvider.nowMillis
     messageQueue.dequeue(count, deliveryTime).flatMap { internalMessage =>
       if (queueData.deadLettersQueue.map(_.maxReceiveCount).exists(_ <= internalMessage.receiveCount)) {
         logger.debug(s"${queueData.name}: send message $internalMessage to dead letters actor $deadLettersActorRef")
-        deadLettersActorRef.foreach(_ ! SendMessage(internalMessage.toNewMessageData))
+        deadLettersActorRef.foreach(_ ! MoveMessage(internalMessage))
         internalMessage.deliveryReceipts.foreach(dr => deleteMessage(DeliveryReceipt(dr)))
         None
       } else {
@@ -183,6 +184,29 @@ trait QueueActorMessageOps extends Logging {
         // Just removing the msg from the map. The msg will be removed from the queue when trying to receive it.
         messageQueue.remove(msgId)
       }
+    }
+  }
+
+  private def moveMessage(message: InternalMessage): Unit = {
+    def moveMessageToQueue(internalMessage: InternalMessage): Unit = {
+      messageQueue += internalMessage
+      logger.debug(s"Moved message with id ${internalMessage.id} to DLQ ${queueData.name}")
+    }
+
+    copyMessagesToActorRef.foreach { _ ! SendMessage(message.toNewMessageData) }
+
+    if (queueData.isFifo) {
+      // Ensure a message with the same deduplication id is not on the queue already. If the message is already on the
+      // queue do nothing.
+      // TODO: A message dedup id should be checked up to 5 mins after it has been received. If it has been deleted
+      // during that period, it should _still_ be used when deduplicating new messages. If there's a match with a
+      // deleted message (that was sent less than 5 minutes ago, the new message should not be added).
+      messageQueue.byId.values.find(isDuplicate(message.toNewMessageData, _)) match {
+        case Some(_) => ()
+        case None    => moveMessageToQueue(message)
+      }
+    } else {
+      moveMessageToQueue(message)
     }
   }
 }
