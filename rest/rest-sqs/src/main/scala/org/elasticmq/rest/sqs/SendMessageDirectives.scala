@@ -1,6 +1,7 @@
 package org.elasticmq.rest.sqs
 
 import java.security.MessageDigest
+import java.util.Base64
 
 import akka.actor.ActorRef
 import akka.http.scaladsl.server.Route
@@ -13,12 +14,16 @@ import org.elasticmq.rest.sqs.ParametersUtil._
 import org.elasticmq.rest.sqs.directives.ElasticMQDirectives
 
 import scala.concurrent.Future
+import scala.util.matching.Regex
 
 trait SendMessageDirectives { this: ElasticMQDirectives with SQSLimitsModule =>
+  private val messageSystemAttributeNamePattern = """(MessageSystemAttribute\.(\d+)\.Name)""".r
   val MessageBodyParameter = "MessageBody"
   val DelaySecondsParameter = "DelaySeconds"
   val MessageGroupIdParameter = "MessageGroupId"
   val MessageDeduplicationIdParameter = "MessageDeduplicationId"
+  val AwsTraceHeaderSystemAttribute = "AWSTraceHeader"
+  val AwsTraceIdHeaderName = "X-Amzn-Trace-Id"
 
   def sendMessage(p: AnyParams): Route = {
     p.action("SendMessage") {
@@ -95,9 +100,25 @@ trait SendMessageDirectives { this: ElasticMQDirectives with SQSLimitsModule =>
     }.toMap
   }
 
+  def getMessageSystemAttributes(parameters: Map[String, String]): Map[String, MessageSystemAttribute] = {
+    parameters.flatMap {
+      case (messageSystemAttributeNamePattern(index), parameterName) =>
+        val parameterDataType = parameters(s"MessageSystemAttribute.$index.Value.DataType")
+        val parameterValue = parameterDataType match {
+          case "String" => StringMessageSystemAttribute(parameters(s"MessageSystemAttribute.$index.Value.StringValue"))
+          case "Number" => NumberMessageSystemAttribute(parameters(s"MessageSystemAttribute.$index.Value.StringValue"))
+          case "Binary" =>
+            BinaryMessageSystemAttribute.fromString(parameters(s"MessageAttribute.$index.Value.BinaryValue"))
+        }
+        Some((parameterName, parameterValue))
+      case _ => None
+    }
+  }
+
   def createMessage(parameters: Map[String, String], queueData: QueueData, orderIndex: Int): NewMessageData = {
     val body = parameters(MessageBodyParameter)
     val messageAttributes = getMessageAttributes(parameters)
+    val messageSystemAttributes = getMessageSystemAttributes(parameters)
 
     Limits.verifyMessageStringAttribute(body, sqsLimits).fold(error => throw new SQSException(error), identity)
 
@@ -163,7 +184,22 @@ trait SendMessageDirectives { this: ElasticMQDirectives with SQSLimitsModule =>
       case Some(delaySeconds) => AfterMillisNextDelivery(delaySeconds * 1000)
     }
 
-    NewMessageData(None, body, messageAttributes, nextDelivery, messageGroupId, messageDeduplicationId, orderIndex)
+    val maybeAwsXRayTracing = messageSystemAttributes
+      .get(AwsTraceHeaderSystemAttribute)
+      .map {
+        case StringMessageSystemAttribute(value) => TracingId(value)
+        case NumberMessageSystemAttribute(_) => throw new SQSException(
+          InvalidParameterValueErrorName,
+          errorMessage = Some(s"$AwsTraceHeaderSystemAttribute should be declared as a String, instead it was recognized as a Number")
+        )
+        case BinaryMessageSystemAttribute(_) => throw new SQSException(
+          InvalidParameterValueErrorName,
+          errorMessage = Some(s"$AwsTraceHeaderSystemAttribute should be declared as a String, instead it was recognized as a Binary value")
+        )
+      }
+      .orElse(parameters.get(AwsTraceIdHeaderName).map(TracingId.apply))
+
+    NewMessageData(None, body, messageAttributes, nextDelivery, messageGroupId, messageDeduplicationId, orderIndex, maybeAwsXRayTracing)
   }
 
   def doSendMessage(

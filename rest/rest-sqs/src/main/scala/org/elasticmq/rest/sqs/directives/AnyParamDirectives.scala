@@ -1,6 +1,6 @@
 package org.elasticmq.rest.sqs.directives
 
-import akka.http.scaladsl.model.FormData
+import akka.http.scaladsl.model.{FormData, HttpRequest}
 import akka.http.scaladsl.server.{Directives, Route, UnsupportedRequestContentTypeRejection}
 import akka.stream.Materializer
 
@@ -14,9 +14,15 @@ trait AnyParamDirectives {
         provide(FormData.Empty)
     }
 
+  private def extractAwsXRayTracingHeader(request: HttpRequest): Map[String, String] = {
+    request.headers.find(_.name() == "X-Amzn-Trace-Id").map(header => header.name() -> header.value()).toMap
+  }
+
   def anyParamsMap(body: Map[String, String] => Route) = {
     parameterMap { queryParameters =>
-      extractRequest { _ => entityOrEmpty { fd => body((fd.fields.toMap ++ queryParameters).filter(_._1 != "")) } }
+      extractRequest { request =>
+        entityOrEmpty { fd => body((fd.fields.toMap ++ queryParameters ++ extractAwsXRayTracingHeader(request)).filter(_._1 != "")) }
+      }
     }
   }
 

@@ -34,7 +34,8 @@ trait DataCreationHelpers {
       nextDelivery: MillisNextDelivery,
       deliveryReceipt: Option[DeliveryReceipt] = None,
       messageGroupId: Option[String] = None,
-      messageDeduplicationId: Option[String] = None
+      messageDeduplicationId: Option[String] = None,
+      tracingId: Option[TracingId] = None
   ) =
     MessageData(
       MessageId(id),
@@ -45,7 +46,8 @@ trait DataCreationHelpers {
       new DateTime(0),
       MessageStatistics(NeverReceived, 0),
       messageGroupId,
-      messageDeduplicationId
+      messageDeduplicationId,
+      tracingId
     )
 
   def createNewMessageData(
@@ -54,7 +56,8 @@ trait DataCreationHelpers {
       messageAttributes: Map[String, MessageAttribute],
       nextDelivery: MillisNextDelivery,
       messageGroupId: Option[String] = None,
-      messageDeduplicationId: Option[String] = None
+      messageDeduplicationId: Option[String] = None,
+      tracingId: Option[TracingId] = None
   ) =
     NewMessageData(
       Some(MessageId(id)),
@@ -63,7 +66,8 @@ trait DataCreationHelpers {
       nextDelivery,
       messageGroupId,
       messageDeduplicationId,
-      orderIndex = 0
+      orderIndex = 0,
+      tracingId
     )
 
   def createNewMessageData(messageData: MessageData) =
@@ -74,6 +78,7 @@ trait DataCreationHelpers {
       messageData.nextDelivery,
       messageData.messageGroupId,
       messageData.messageDeduplicationId,
-      orderIndex = 0
+      orderIndex = 0,
+      messageData.tracingId
     )
 }
