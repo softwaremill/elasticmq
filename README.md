@@ -430,4 +430,4 @@ We offer commercial support for ElasticMQ and related technologies, as well as d
 Copyright
 ---------
 
-Copyright (C) 2011-2019 SoftwareMill [https://softwaremill.com](https://softwaremill.com).
+Copyright (C) 2011-2020 SoftwareMill [https://softwaremill.com](https://softwaremill.com).
