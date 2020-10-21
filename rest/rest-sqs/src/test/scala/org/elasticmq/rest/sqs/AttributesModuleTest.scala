@@ -44,7 +44,7 @@ class AttributesModuleTest extends AnyWordSpec with AttributesModule with Matche
       result shouldBe List()
     }
 
-    "Return values only for asked rules" in {
+    "Return values only for mentioned rules" in {
       val rule1 = AttributeValuesCalculator.Rule("rule1", () => Option.empty[String])
       val rule2 = AttributeValuesCalculator.Rule("rule2", () => Option("value2"))
       val rule3 = AttributeValuesCalculator.Rule("rule3", () => Option.empty[String])

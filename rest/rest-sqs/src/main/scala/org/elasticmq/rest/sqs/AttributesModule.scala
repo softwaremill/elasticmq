@@ -81,10 +81,12 @@ trait AttributesModule {
       attributeNames.flatMap(attribute => {
         rules
           .find(rule => rule.attributeName == attribute)
-          .flatMap(rule => rule.calculateValue() match {
-            case Some(value) => Some((rule.attributeName, value))
-            case None => None
-          })
+          .flatMap(rule =>
+            rule.calculateValue() match {
+              case Some(value) => Some((rule.attributeName, value))
+              case None        => None
+            }
+          )
       })
     }
   }

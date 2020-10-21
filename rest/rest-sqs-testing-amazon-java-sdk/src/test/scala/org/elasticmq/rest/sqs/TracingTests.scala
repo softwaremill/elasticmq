@@ -1,29 +1,14 @@
 package org.elasticmq.rest.sqs
 
-import com.amazonaws.services.sqs.model.{
-  CreateQueueRequest,
-  MessageAttributeValue,
-  MessageSystemAttributeValue,
-  ReceiveMessageRequest,
-  SendMessageBatchRequest,
-  SendMessageBatchRequestEntry,
-  SendMessageRequest
-}
+import com.amazonaws.services.sqs.model._
 import org.scalatest.OptionValues
 import org.scalatest.matchers.should.Matchers
 
-import scala.collection.JavaConverters.{
-  iterableAsScalaIterableConverter,
-  mapAsScalaMapConverter,
-  seqAsJavaListConverter
-}
+import scala.collection.JavaConverters.{iterableAsScalaIterableConverter, mapAsScalaMapConverter, seqAsJavaListConverter}
 
 class TracingTests extends SqsClientServerCommunication with Matchers with OptionValues {
 
   val AWSTraceHeaderAttribute = "AWSTraceHeader"
-  def systemAttributeValue(index: Int) = s"MessageSystemAttribute.$index.Value"
-  def systemAttributeName(index: Int) = s"MessageSystemAttribute.$index.Name"
-  def systemAttributeDataType(index: Int) = s"MessageSystemAttribute.$index.Value.DataType"
 
   test("Message should not have assigned trace if such one was not provided") {
     val queueUrl = client.createQueue(new CreateQueueRequest("testQueue1")).getQueueUrl
@@ -39,7 +24,7 @@ class TracingTests extends SqsClientServerCommunication with Matchers with Optio
     message.getAttributes.asScala.get(AWSTraceHeaderAttribute) shouldBe None
   }
 
-  test("While sending message it should have assigned trace ID if it was provided as a system attribute") {
+  test("Trace ID should be returned if it was assigned to message (via message system attribute)") {
     val queueUrl = client
       .createQueue(new CreateQueueRequest("testQueue1"))
       .getQueueUrl
@@ -60,7 +45,7 @@ class TracingTests extends SqsClientServerCommunication with Matchers with Optio
     message.getAttributes.asScala.get(AWSTraceHeaderAttribute) shouldBe Some("123456789")
   }
 
-  test("While sending message it should have assigned trace if it was provided in a request header") {
+  test("Trace ID should be returned if it was assigned to message (via sendMessage request header)") {
     val queueUrl = client
       .createQueue(new CreateQueueRequest("testQueue1"))
       .getQueueUrl
@@ -172,7 +157,7 @@ class TracingTests extends SqsClientServerCommunication with Matchers with Optio
     message.getAttributes.asScala.get(AWSTraceHeaderAttribute) shouldBe Some("123456789")
   }
 
-  test("Client should be able to ask only for Trace ID attribute while retrieving message") {
+  test("Client should be able to ask for Trace ID attribute") {
     val queueUrl = client
       .createQueue(new CreateQueueRequest("testQueue1"))
       .getQueueUrl
