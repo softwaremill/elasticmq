@@ -21,7 +21,9 @@ trait AnyParamDirectives {
   def anyParamsMap(body: Map[String, String] => Route) = {
     parameterMap { queryParameters =>
       extractRequest { request =>
-        entityOrEmpty { fd => body((fd.fields.toMap ++ queryParameters ++ extractAwsXRayTracingHeader(request)).filter(_._1 != "")) }
+        entityOrEmpty { fd =>
+          body((fd.fields.toMap ++ queryParameters ++ extractAwsXRayTracingHeader(request)).filter(_._1 != ""))
+        }
       }
     }
   }

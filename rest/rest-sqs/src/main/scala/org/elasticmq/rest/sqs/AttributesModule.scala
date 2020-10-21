@@ -6,7 +6,7 @@ trait AttributesModule {
   val attributeNamesReader = new AttributeNamesReader
   val attributesToXmlConverter = new AttributesToXmlConverter
   val messageAttributesToXmlConverter = new MessageAttributesToXmlConverter
-  val attributeValuesCalculator = new AttributeValuesCalculator
+  val possiblyEmptyAttributeValuesCalculator = new PossiblyEmptyAttributeValuesCalculator
   val attributeNameAndValuesReader = new AttributeNameAndValuesReader
 
   class AttributeNamesReader {
@@ -70,6 +70,21 @@ trait AttributesModule {
         rules
           .find(rule => rule.attributeName == attribute)
           .map(rule => (rule.attributeName, rule.calculateValue()))
+      })
+    }
+  }
+
+  class PossiblyEmptyAttributeValuesCalculator {
+    import AttributeValuesCalculator.Rule
+
+    def calculate[T](attributeNames: List[String], rules: Rule[Option[T]]*): List[(String, T)] = {
+      attributeNames.flatMap(attribute => {
+        rules
+          .find(rule => rule.attributeName == attribute)
+          .flatMap(rule => rule.calculateValue() match {
+            case Some(value) => Some((rule.attributeName, value))
+            case None => None
+          })
       })
     }
   }

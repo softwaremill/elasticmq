@@ -9,7 +9,6 @@ case class NumberMessageSystemAttribute(value: String) extends MessageSystemAttr
 case class BinaryMessageSystemAttribute(value: Array[Byte]) extends MessageSystemAttribute
 
 object BinaryMessageSystemAttribute {
-  def fromString(value: String): BinaryMessageSystemAttribute = BinaryMessageSystemAttribute(Base64.getDecoder.decode(value))
+  def fromString(value: String): BinaryMessageSystemAttribute =
+    BinaryMessageSystemAttribute(Base64.getDecoder.decode(value))
 }
-
-case class TracingId(value: String)

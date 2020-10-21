@@ -6,90 +6,27 @@ import java.util.UUID
 
 import akka.http.scaladsl.model.StatusCodes
 import com.amazonaws.AmazonServiceException
-import com.amazonaws.auth.{AWSStaticCredentialsProvider, BasicAWSCredentials}
-import com.amazonaws.client.builder.AwsClientBuilder.EndpointConfiguration
+import com.amazonaws.services.sqs.AmazonSQS
 import com.amazonaws.services.sqs.model._
-import com.amazonaws.services.sqs.{AmazonSQS, AmazonSQSClientBuilder}
 import org.apache.http.HttpHost
 import org.apache.http.client.entity.UrlEncodedFormEntity
 import org.apache.http.client.methods.HttpPost
-import org.apache.http.impl.client.{CloseableHttpClient, HttpClients}
 import org.apache.http.message.BasicNameValuePair
 import org.elasticmq._
 import org.elasticmq.rest.sqs.model.RedrivePolicy
-import org.elasticmq.util.Logging
 import org.scalatest._
+import org.scalatest.matchers.should.Matchers
 
 import scala.collection.JavaConverters._
 import scala.io.Source
-import scala.util.Try
 import scala.util.control.Exception._
-import org.scalatest.funsuite.AnyFunSuite
-import org.scalatest.matchers.should.Matchers
 
-class AmazonJavaSdkTestSuite extends AnyFunSuite with Matchers with BeforeAndAfter with Logging {
+class AmazonJavaSdkTestSuite extends SqsClientServerCommunication with Matchers {
   val visibilityTimeoutAttribute = "VisibilityTimeout"
   val defaultVisibilityTimeoutAttribute = "VisibilityTimeout"
   val redrivePolicyAttribute = "RedrivePolicy"
   val delaySecondsAttribute = "DelaySeconds"
   val receiveMessageWaitTimeSecondsAttribute = "ReceiveMessageWaitTimeSeconds"
-  val awsAccountId = "123456789"
-  val awsRegion = "elasticmq"
-
-  var client: AmazonSQS = _ // strict server
-  var relaxedClient: AmazonSQS = _
-  var httpClient: CloseableHttpClient = _
-
-  var currentTestName: String = _
-
-  var strictServer: SQSRestServer = _
-  var relaxedServer: SQSRestServer = _
-
-  before {
-    logger.info(s"\n---\nRunning test: $currentTestName\n---\n")
-
-    strictServer = SQSRestServerBuilder
-      .withPort(9321)
-      .withServerAddress(NodeAddress(port = 9321))
-      .withAWSAccountId(awsAccountId)
-      .withAWSRegion(awsRegion)
-      .start()
-
-    relaxedServer = SQSRestServerBuilder
-      .withPort(9322)
-      .withServerAddress(NodeAddress(port = 9322))
-      .withSQSLimits(RelaxedSQSLimits)
-      .start()
-
-    strictServer.waitUntilStarted()
-    relaxedServer.waitUntilStarted()
-
-    client = AmazonSQSClientBuilder
-      .standard()
-      .withCredentials(new AWSStaticCredentialsProvider(new BasicAWSCredentials("x", "x")))
-      .withEndpointConfiguration(new EndpointConfiguration("http://localhost:9321", "us-east-1"))
-      .build()
-
-    relaxedClient = AmazonSQSClientBuilder
-      .standard()
-      .withCredentials(new AWSStaticCredentialsProvider(new BasicAWSCredentials("x", "x")))
-      .withEndpointConfiguration(new EndpointConfiguration("http://localhost:9322", "us-east-1"))
-      .build()
-
-    httpClient = HttpClients.createDefault()
-  }
-
-  after {
-    client.shutdown()
-    relaxedClient.shutdown()
-    httpClient.close()
-
-    // TODO: Figure out why this intermittently isn't able to unbind cleanly
-    Try(strictServer.stopAndWait())
-    Try(relaxedServer.stopAndWait())
-
-    logger.info(s"\n---\nTest done: $currentTestName\n---\n")
-  }
 
   test("should create a queue") {
     client.createQueue(new CreateQueueRequest("testQueue1"))
@@ -2073,13 +2010,6 @@ class AmazonJavaSdkTestSuite extends AnyFunSuite with Matchers with BeforeAndAft
       builder.appendAll(Character.toChars(current))
       current += 1
     }
-  }
-
-  override protected def runTest(testName: String, args: Args): Status = {
-    currentTestName = testName
-    val result = super.runTest(testName, args)
-    currentTestName = null
-    result
   }
 
   private def createFifoQueue(suffix: Int = 1, attributes: Map[String, String] = Map.empty): String = {

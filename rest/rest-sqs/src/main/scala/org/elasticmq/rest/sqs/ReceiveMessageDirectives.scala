@@ -22,10 +22,11 @@ trait ReceiveMessageDirectives {
     val MessageAttributeNamePattern = "MessageAttributeName\\.\\d".r
     val MessageDeduplicationIdAttribute = "MessageDeduplicationId"
     val MessageGroupIdAttribute = "MessageGroupId"
+    val AWSTraceHeaderAttribute = "AWSTraceHeader"
 
     val AllAttributeNames = SentTimestampAttribute :: ApproximateReceiveCountAttribute ::
       ApproximateFirstReceiveTimestampAttribute :: SenderIdAttribute :: MessageDeduplicationIdAttribute ::
-      MessageGroupIdAttribute :: Nil
+      MessageGroupIdAttribute :: AWSTraceHeaderAttribute :: Nil
   }
 
   def receiveMessage(p: AnyParams) = {
@@ -87,21 +88,22 @@ trait ReceiveMessageDirectives {
         def calculateAttributeValues(msg: MessageData): List[(String, String)] = {
           import AttributeValuesCalculator.Rule
 
-          attributeValuesCalculator.calculate(
+          possiblyEmptyAttributeValuesCalculator.calculate[String](
             attributeNames,
-            Rule(SenderIdAttribute, () => "127.0.0.1"),
-            Rule(SentTimestampAttribute, () => msg.created.getMillis.toString),
-            Rule(ApproximateReceiveCountAttribute, () => msg.statistics.approximateReceiveCount.toString),
-            Rule(MessageDeduplicationIdAttribute, () => msg.messageDeduplicationId.getOrElse("")),
-            Rule(MessageGroupIdAttribute, () => msg.messageGroupId.getOrElse("")),
+            Rule(SenderIdAttribute, () => Some("127.0.0.1")),
+            Rule(SentTimestampAttribute, () => Some(msg.created.getMillis.toString)),
+            Rule(ApproximateReceiveCountAttribute, () => Some(msg.statistics.approximateReceiveCount.toString)),
+            Rule(MessageDeduplicationIdAttribute, () => msg.messageDeduplicationId.orElse(Some(""))),
+            Rule(MessageGroupIdAttribute, () => msg.messageGroupId.orElse(Some(""))),
             Rule(
               ApproximateFirstReceiveTimestampAttribute,
               () =>
-                (msg.statistics.approximateFirstReceive match {
+                Some((msg.statistics.approximateFirstReceive match {
                   case NeverReceived            => 0
                   case OnDateTimeReceived(when) => when.getMillis
-                }).toString
-            )
+                }).toString)
+            ),
+            Rule(AWSTraceHeaderAttribute, () => msg.tracingId.map(_.id))
           )
         }
 

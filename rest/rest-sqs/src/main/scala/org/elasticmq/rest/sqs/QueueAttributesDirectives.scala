@@ -6,7 +6,7 @@ import org.elasticmq.msg._
 import org.elasticmq.rest.sqs.Constants._
 import org.elasticmq.rest.sqs.directives.ElasticMQDirectives
 import org.elasticmq.rest.sqs.model.RedrivePolicy.BackwardCompatibleRedrivePolicy
-import org.elasticmq.rest.sqs.model.{GenericRedrivePolicy, RedrivePolicy}
+import org.elasticmq.rest.sqs.model.RedrivePolicy
 import org.elasticmq.{DeadLettersQueueData, MillisVisibilityTimeout}
 import org.joda.time.Duration
 import spray.json.JsonParser.ParsingException
@@ -20,6 +20,8 @@ trait QueueAttributesDirectives {
 
   def awsRegion: String
   def awsAccountId: String
+
+  val attributeValuesCalculator = new AttributeValuesCalculator
 
   object QueueWriteableAttributeNames {
     val AllWriteableAttributeNames: List[String] = VisibilityTimeoutParameter :: DelaySecondsAttribute ::
