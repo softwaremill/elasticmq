@@ -7,5 +7,6 @@ case class NewMessageData(
     nextDelivery: NextDelivery,
     messageGroupId: Option[String],
     messageDeduplicationId: Option[String],
-    orderIndex: Int
+    orderIndex: Int,
+    tracingId: Option[TracingId]
 )

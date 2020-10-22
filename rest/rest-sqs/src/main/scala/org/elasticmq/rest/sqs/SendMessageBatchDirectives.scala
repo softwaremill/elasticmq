@@ -14,7 +14,10 @@ trait SendMessageBatchDirectives {
         verifyMessagesNotTooLong(p)
 
         val resultsFuture = batchRequest(SendMessageBatchPrefix, p) { (messageData, id, index) =>
-          val message = createMessage(messageData, queueData, index)
+          val maybeTraceId = p.find {
+            case (key, _) => key.equalsIgnoreCase(AwsTraceIdHeaderName)
+          }.toMap
+          val message = createMessage(messageData ++ maybeTraceId, queueData, index)
 
           doSendMessage(queueActor, message).map {
             case (message, digest, messageAttributeDigest) =>

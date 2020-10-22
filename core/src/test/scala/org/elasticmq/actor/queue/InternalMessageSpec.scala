@@ -23,7 +23,8 @@ class InternalMessageSpec extends AnyFunSuite with Matchers {
       receiveCount = 0,
       isFifo = true,
       messageGroupId = None,
-      messageDeduplicationId = None
+      messageDeduplicationId = None,
+      tracingId = None
     )
 
     val second = first.copy(
@@ -48,7 +49,8 @@ class InternalMessageSpec extends AnyFunSuite with Matchers {
       receiveCount = 0,
       isFifo = true,
       messageGroupId = None,
-      messageDeduplicationId = None
+      messageDeduplicationId = None,
+      tracingId = None
     )
 
     val second = first.copy(
