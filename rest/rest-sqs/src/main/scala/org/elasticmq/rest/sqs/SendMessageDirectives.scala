@@ -84,18 +84,20 @@ trait SendMessageDirectives { this: ElasticMQDirectives with SQSLimitsModule =>
           val strValue =
             parameters("MessageAttribute." + i + ".Value.StringValue")
           Limits
-            .verifyMessageStringAttribute(strValue, sqsLimits)
+            .verifyMessageStringAttribute(strValue, name, sqsLimits)
             .fold(error => throw new SQSException(error), identity)
           StringMessageAttribute(strValue, customDataType)
         case "Number" =>
           val strValue =
             parameters("MessageAttribute." + i + ".Value.StringValue")
           Limits
-            .verifyMessageNumberAttribute(strValue, sqsLimits)
+            .verifyMessageNumberAttribute(strValue, name, sqsLimits)
             .fold(error => throw new SQSException(error), identity)
           NumberMessageAttribute(strValue, customDataType)
         case "Binary" =>
           BinaryMessageAttribute.fromBase64(parameters("MessageAttribute." + i + ".Value.BinaryValue"), customDataType)
+        case "" =>
+          throw new SQSException(s"Attribute '$name' must contain a non-empty attribute type")
         case _ =>
           throw new Exception("Currently only handles String, Number and Binary typed attributes")
       }
@@ -124,7 +126,7 @@ trait SendMessageDirectives { this: ElasticMQDirectives with SQSLimitsModule =>
     val messageAttributes = getMessageAttributes(parameters)
     val messageSystemAttributes = getMessageSystemAttributes(parameters)
 
-    Limits.verifyMessageStringAttribute(body, sqsLimits).fold(error => throw new SQSException(error), identity)
+    Limits.verifyMessageBody(body, sqsLimits).fold(error => throw new SQSException(error), identity)
 
     val messageGroupId = parameters.get(MessageGroupIdParameter) match {
       // MessageGroupId is only supported for FIFO queues

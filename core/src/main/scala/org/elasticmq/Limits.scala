@@ -7,6 +7,7 @@ trait Limits {
   def queueNameLengthLimit: Limit[Int]
   def batchSizeLimit: Limit[Int]
   def numberOfMessagesLimit: Limit[RangeLimit[Int]]
+  def nonEmptyAttributesLimit: Limit[Boolean]
   def bodyValidCharactersLimit: Limit[List[RangeLimit[Int]]]
   def numberAttributeValueLimit: Limit[RangeLimit[BigDecimal]]
   def messageWaitTimeLimit: Limit[RangeLimit[Long]]
@@ -17,6 +18,7 @@ case object StrictSQSLimits extends Limits {
   override val queueNameLengthLimit: Limit[Int] = LimitedValue(80)
   override val batchSizeLimit: Limit[Int] = LimitedValue(10)
   override val numberOfMessagesLimit: Limit[RangeLimit[Int]] = LimitedValue(RangeLimit(1, 10))
+  override val nonEmptyAttributesLimit: Limit[Boolean] = LimitedValue(true)
   override val bodyValidCharactersLimit: Limit[List[RangeLimit[Int]]] = LimitedValue(
     List(
       RangeLimit(0x9, 0x9),
@@ -37,6 +39,7 @@ case object RelaxedSQSLimits extends Limits {
   override val queueNameLengthLimit: Limit[Int] = NoLimit
   override val batchSizeLimit: Limit[Int] = NoLimit
   override val numberOfMessagesLimit: Limit[RangeLimit[Int]] = NoLimit
+  override val nonEmptyAttributesLimit: Limit[Boolean] = NoLimit
   override val bodyValidCharactersLimit: Limit[List[RangeLimit[Int]]] = NoLimit
   override val numberAttributeValueLimit: Limit[RangeLimit[BigDecimal]] = NoLimit
   override val messageWaitTimeLimit: Limit[RangeLimit[Long]] = NoLimit
@@ -68,25 +71,57 @@ object Limits {
       "ReadCountOutOfRange"
     )
 
-  def verifyMessageStringAttribute(stringAttribute: String, limits: Limits): Either[String, Unit] =
+  def verifyMessageStringAttribute(
+      attributeValue: String,
+      attributeName: String,
+      limits: Limits
+  ): Either[String, Unit] =
+    for {
+      _ <- validateWhenLimitAvailable(limits.nonEmptyAttributesLimit)(
+        shouldValidate => if (shouldValidate) attributeValue.nonEmpty else true,
+        s"Attribute '$attributeName' must contain a non-empty value of type 'String'"
+      )
+      _ <- validateCharactersAndLength(attributeValue, limits)
+    } yield ()
+
+  def verifyMessageBody(body: String, limits: Limits): Either[String, Unit] =
+    for {
+      _ <- validateWhenLimitAvailable(limits.nonEmptyAttributesLimit)(
+        shouldValidate => if (shouldValidate) body.nonEmpty else true,
+        "The request must contain the parameter MessageBody."
+      )
+      _ <- validateCharactersAndLength(body, limits)
+    } yield ()
+
+  private def validateCharactersAndLength(stringValue: String, limits: Limits): Either[String, Unit] =
     for {
       _ <- validateWhenLimitAvailable(limits.bodyValidCharactersLimit)(
         rangeLimits =>
-          stringAttribute
+          stringValue
             .codePoints()
             .iterator
             .asScala
             .forall(codePoint => rangeLimits.exists(range => range.isBetween(codePoint))),
         "InvalidMessageContents"
       )
-      _ <- verifyMessageLength(stringAttribute.length, limits)
+      _ <- verifyMessageLength(stringValue.length, limits)
     } yield ()
 
-  def verifyMessageNumberAttribute(stringNumberValue: String, limits: Limits): Either[String, Unit] = {
-    validateWhenLimitAvailable(limits.numberAttributeValueLimit)(
-      limit => Try(BigDecimal(stringNumberValue)).toOption.exists(value => limit.isBetween(value)),
-      s"Number attribute value $stringNumberValue should be in range (-10**128..10**126)"
-    )
+  def verifyMessageNumberAttribute(
+      stringNumberValue: String,
+      attributeName: String,
+      limits: Limits
+  ): Either[String, Unit] = {
+    for {
+      _ <- validateWhenLimitAvailable(limits.nonEmptyAttributesLimit)(
+        shouldValidate => if (shouldValidate) stringNumberValue.nonEmpty else true,
+        s"Attribute '$attributeName' must contain a non-empty value of type 'Number'"
+      )
+      _ <- validateWhenLimitAvailable(limits.numberAttributeValueLimit)(
+        limit => Try(BigDecimal(stringNumberValue)).toOption.exists(value => limit.isBetween(value)),
+        s"Number attribute value $stringNumberValue should be in range (-10**128..10**126)"
+      )
+    } yield ()
   }
 
   def verifyMessageWaitTime(messageWaitTime: Long, limits: Limits): Either[String, Unit] = {
