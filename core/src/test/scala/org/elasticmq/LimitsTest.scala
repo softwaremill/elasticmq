@@ -62,7 +62,7 @@ class LimitsTest extends AnyWordSpec with Matchers with EitherValues {
       Limits.verifyMessageStringAttribute(testString, "attribute1", StrictSQSLimits) shouldBe Right(())
     }
 
-    "pass if the string is empty" in {
+    "fail if the string is empty" in {
       Limits.verifyMessageStringAttribute("", "attribute1", StrictSQSLimits) shouldBe Left(
         "Attribute 'attribute1' must contain a non-empty value of type 'String'"
       )
@@ -255,6 +255,41 @@ class LimitsTest extends AnyWordSpec with Matchers with EitherValues {
       val error =
         Limits.verifyQueueName("invalid#characters&.fifo", isFifo = true, RelaxedSQSLimits).left.value
       error shouldBe "InvalidParameterValue"
+    }
+  }
+
+  "Validation of message body in strict mode" should {
+    "pass if string attribute contains only allowed characters" in {
+      val testString = List(0x9, 0xa, 0xd, 0x21, 0xe005, 0x10efff).map(_.toChar).mkString
+      Limits.verifyMessageBody(testString, StrictSQSLimits) shouldBe Right(())
+    }
+
+    "fail if the string is empty" in {
+      Limits.verifyMessageBody("", StrictSQSLimits) shouldBe Left(
+        "The request must contain the parameter MessageBody."
+      )
+    }
+
+    "fail if string contains any not allowed character" in {
+      val testString = List(0x9, 0xa, 0xd, 0x21, 0xe005, 0x19, 0x10efff).map(_.toChar).mkString
+      val error = Limits.verifyMessageBody(testString, StrictSQSLimits).left.value
+      error shouldBe "InvalidMessageContents"
+    }
+  }
+
+  "Validation of message body in relaxed mode" should {
+    "pass if string attribute contains only allowed characters" in {
+      val testString = List(0x9, 0xa, 0xd, 0x21, 0xe005, 0x10efff).map(_.toChar).mkString
+      Limits.verifyMessageBody(testString, RelaxedSQSLimits) shouldBe Right(())
+    }
+
+    "pass if the string is empty" in {
+      Limits.verifyMessageBody("", RelaxedSQSLimits) shouldBe Right(())
+    }
+
+    "pass if string contains any not allowed character" in {
+      val testString = List(0x9, 0xa, 0xd, 0x21, 0xe005, 0x19, 0x10efff).map(_.toChar).mkString
+      Limits.verifyMessageBody(testString, RelaxedSQSLimits) shouldBe Right(())
     }
   }
 }

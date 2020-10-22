@@ -1390,6 +1390,14 @@ class AmazonJavaSdkTestSuite extends SqsClientServerCommunication with Matchers 
     result.isLeft should be(true)
   }
 
+  test("should return an error if strict & message body is empty") {
+    strictOnlyShouldThrowException { cli =>
+      val queueUrl = cli.createQueue(new CreateQueueRequest("testQueue1")).getQueueUrl
+
+      cli.sendMessage(new SendMessageRequest(queueUrl, ""))
+    }
+  }
+
   test("should return an error if strict & sending an invalid character") {
     strictOnlyShouldThrowException { cli =>
       // Given

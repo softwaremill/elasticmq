@@ -1,6 +1,6 @@
 package org.elasticmq.rest.sqs
 
-import com.amazonaws.services.sqs.model.{AmazonSQSException, CreateQueueRequest, MessageAttributeValue, ReceiveMessageRequest, SendMessageBatchRequest, SendMessageBatchRequestEntry, SendMessageRequest}
+import com.amazonaws.services.sqs.model._
 import org.scalatest.OptionValues
 import org.scalatest.matchers.should.Matchers
 
