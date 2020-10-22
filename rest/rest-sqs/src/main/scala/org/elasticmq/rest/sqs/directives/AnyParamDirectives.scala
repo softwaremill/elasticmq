@@ -15,7 +15,10 @@ trait AnyParamDirectives {
     }
 
   private def extractAwsXRayTracingHeader(request: HttpRequest): Map[String, String] = {
-    request.headers.find(_.name() == "X-Amzn-Trace-Id").map(header => header.name() -> header.value()).toMap
+    request.headers
+      .find(_.name().equalsIgnoreCase("X-Amzn-Trace-Id"))
+      .map(header => header.name() -> header.value())
+      .toMap
   }
 
   def anyParamsMap(body: Map[String, String] => Route) = {

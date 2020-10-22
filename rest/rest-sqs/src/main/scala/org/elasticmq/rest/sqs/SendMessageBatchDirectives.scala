@@ -15,7 +15,7 @@ trait SendMessageBatchDirectives {
 
         val resultsFuture = batchRequest(SendMessageBatchPrefix, p) { (messageData, id, index) =>
           val maybeTraceId = p.find {
-            case (key, _) => key == AwsTraceIdHeaderName
+            case (key, _) => key.equalsIgnoreCase(AwsTraceIdHeaderName)
           }.toMap
           val message = createMessage(messageData ++ maybeTraceId, queueData, index)
 

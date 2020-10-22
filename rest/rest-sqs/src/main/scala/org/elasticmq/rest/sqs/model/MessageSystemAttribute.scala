@@ -1,4 +1,4 @@
-package org.elasticmq
+package org.elasticmq.rest.sqs.model
 
 import java.util.Base64
 

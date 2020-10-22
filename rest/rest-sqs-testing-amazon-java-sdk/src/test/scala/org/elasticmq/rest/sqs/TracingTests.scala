@@ -4,7 +4,11 @@ import com.amazonaws.services.sqs.model._
 import org.scalatest.OptionValues
 import org.scalatest.matchers.should.Matchers
 
-import scala.collection.JavaConverters.{iterableAsScalaIterableConverter, mapAsScalaMapConverter, seqAsJavaListConverter}
+import scala.collection.JavaConverters.{
+  iterableAsScalaIterableConverter,
+  mapAsScalaMapConverter,
+  seqAsJavaListConverter
+}
 
 class TracingTests extends SqsClientServerCommunication with Matchers with OptionValues {
 
