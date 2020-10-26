@@ -84,7 +84,7 @@ trait SendMessageDirectives { this: ElasticMQDirectives with SQSLimitsModule =>
           val strValue =
             parameters("MessageAttribute." + i + ".Value.StringValue")
           Limits
-            .verifyMessageStringAttribute(strValue, name, sqsLimits)
+            .verifyMessageStringAttribute(name, strValue, sqsLimits)
             .fold(error => throw new SQSException(error), identity)
           StringMessageAttribute(strValue, customDataType)
         case "Number" =>

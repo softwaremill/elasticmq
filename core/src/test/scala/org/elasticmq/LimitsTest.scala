@@ -59,18 +59,18 @@ class LimitsTest extends AnyWordSpec with Matchers with EitherValues {
   "Validation of message string attribute in strict mode" should {
     "pass if string attribute contains only allowed characters" in {
       val testString = List(0x9, 0xa, 0xd, 0x21, 0xe005, 0x10efff).map(_.toChar).mkString
-      Limits.verifyMessageStringAttribute(testString, "attribute1", StrictSQSLimits) shouldBe Right(())
+      Limits.verifyMessageStringAttribute("attribute1", testString, StrictSQSLimits) shouldBe Right(())
     }
 
     "fail if the string is empty" in {
-      Limits.verifyMessageStringAttribute("", "attribute1", StrictSQSLimits) shouldBe Left(
+      Limits.verifyMessageStringAttribute("attribute1", "", StrictSQSLimits) shouldBe Left(
         "Attribute 'attribute1' must contain a non-empty value of type 'String'"
       )
     }
 
     "fail if string contains any not allowed character" in {
       val testString = List(0x9, 0xa, 0xd, 0x21, 0xe005, 0x19, 0x10efff).map(_.toChar).mkString
-      val error = Limits.verifyMessageStringAttribute(testString, "attribute1", StrictSQSLimits).left.value
+      val error = Limits.verifyMessageStringAttribute("attribute1", testString, StrictSQSLimits).left.value
       error shouldBe "InvalidMessageContents"
     }
   }
@@ -78,16 +78,16 @@ class LimitsTest extends AnyWordSpec with Matchers with EitherValues {
   "Validation of message string attribute in relaxed mode" should {
     "pass if string attribute contains only allowed characters" in {
       val testString = List(0x9, 0xa, 0xd, 0x21, 0xe005, 0x10efff).map(_.toChar).mkString
-      Limits.verifyMessageStringAttribute(testString, "attribute1", RelaxedSQSLimits) shouldBe Right(())
+      Limits.verifyMessageStringAttribute("attribute1", testString, RelaxedSQSLimits) shouldBe Right(())
     }
 
     "pass if the string is empty" in {
-      Limits.verifyMessageStringAttribute("", "attribute1", RelaxedSQSLimits) shouldBe Right(())
+      Limits.verifyMessageStringAttribute("attribute1", "", RelaxedSQSLimits) shouldBe Right(())
     }
 
     "pass if string contains any not allowed character" in {
       val testString = List(0x9, 0xa, 0xd, 0x21, 0xe005, 0x19, 0x10efff).map(_.toChar).mkString
-      Limits.verifyMessageStringAttribute(testString, "attribute1", RelaxedSQSLimits) shouldBe Right(())
+      Limits.verifyMessageStringAttribute("attribute1", testString, RelaxedSQSLimits) shouldBe Right(())
     }
   }
 

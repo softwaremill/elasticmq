@@ -72,8 +72,8 @@ object Limits {
     )
 
   def verifyMessageStringAttribute(
-      attributeValue: String,
       attributeName: String,
+      attributeValue: String,
       limits: Limits
   ): Either[String, Unit] =
     for {
