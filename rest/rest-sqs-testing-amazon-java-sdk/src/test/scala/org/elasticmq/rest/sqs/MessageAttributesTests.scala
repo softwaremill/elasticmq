@@ -4,7 +4,7 @@ import com.amazonaws.services.sqs.model._
 import org.scalatest.OptionValues
 import org.scalatest.matchers.should.Matchers
 
-import scala.jdk.CollectionConverters.{ListHasAsScala, MapHasAsJava}
+import scala.collection.JavaConverters.{collectionAsScalaIterableConverter, mapAsJavaMapConverter}
 
 class MessageAttributesTests extends SqsClientServerCommunication with Matchers with OptionValues {
 
