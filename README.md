@@ -3,8 +3,7 @@
 [![Build Status](https://travis-ci.org/softwaremill/elasticmq.svg?branch=master)](https://travis-ci.org/softwaremill/elasticmq)
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/org.elasticmq/elasticmq-rest-sqs_2.12/badge.svg)](https://maven-badges.herokuapp.com/maven-central/org.elasticmq/elasticmq-rest-sqs_2.12/)
 
-tl;dr
------
+# tl;dr
 
 * in-memory message queue system
 * runs stand-alone ([download](https://s3-eu-west-1.amazonaws.com/softwaremill-public/elasticmq-server-0.15.7.jar)), via [Docker](https://hub.docker.com/r/softwaremill/elasticmq/) or embedded
@@ -14,8 +13,7 @@ tl;dr
 Created and maintained by
 [<img src="https://softwaremill.com/images/header-main-logo.svg" alt="SoftwareMill logo" height="25">](https://softwaremill.com)
 
-Summary
--------
+# Summary
 
 ElasticMQ is a message queue system, offering an actor-based Scala and an [SQS](http://aws.amazon.com/sqs/)-compatible
 REST (query) interface.
@@ -35,15 +33,13 @@ and outside of the Amazon infrastructure.
 
 The future will most probably bring even more exciting features :).
 
-Community
----------
+# Community
 
 * [Issues](https://github.com/adamw/elasticmq/issues)
 * Forum (discussions, help): [Google group](https://groups.google.com/forum/?fromgroups#!forum/elasticmq).
 * (old) [blog](http://www.warski.org/blog/category/elasticmq/)
 
-Installation: stand-alone
--------------------------
+# Installation: stand-alone
 
 You can download the stand-alone distribution here:
 [https://s3/.../elasticmq-server-0.15.7.jar](https://s3-eu-west-1.amazonaws.com/softwaremill-public/elasticmq-server-0.15.7.jar)
@@ -102,8 +98,7 @@ log INFO logs and above to the console):
 
     java -Dlogback.configurationFile=my_logback.xml -jar elasticmq-server-0.15.7.jar
 
-How are queue URLs created
---------------------------
+# How are queue URLs created
 
 Some of the responses include a queue URL. By default, the URLs will use `http://localhost:9324` as the base URL.
 To customize, you should properly set the protocol/host/port/context in the `node-address` setting (see above).
@@ -116,8 +111,7 @@ Note that changing the `bind-port` and `bind-hostname` settings do not affect th
 useful when the port should be automatically assigned (use port `0` in such case, the selected port will be
 visible in the logs).
 
-Automatically creating queues on startup
-----------------------------------------
+# Automatically creating queues on startup
 
 Queues can be automatically created on startup by providing appropriate configuration:
 
@@ -156,8 +150,7 @@ all messages could be either duplicated (using `copyTo` attribute) or redirected
 
 While creating the FIFO queue, .fifo suffix will be added automatically to queue name.
 
-Starting an embedded ElasticMQ server with an SQS interface
------------------------------------------------------------
+# Starting an embedded ElasticMQ server with an SQS interface
 
     val server = SQSRestServerBuilder.start()
     // ... use ...
@@ -180,8 +173,7 @@ Embedded ElasticMQ can be used from any JVM-based language (Java, Scala, etc.).
 
 (Note that the embedded server does not load any configuration files, so you cannot automatically create queues on startup as described above. You can of course create queues programmatically.)
 
-Using the Amazon Java SDK to access an ElasticMQ Server
--------------------------------------------------------
+# Using the Amazon Java SDK to access an ElasticMQ Server
 
 To use [Amazon Java SDK](http://aws.amazon.com/sdkforjava/) as an interface to an ElasticMQ server you just need
 to change the endpoint:
@@ -200,8 +192,7 @@ The endpoint value should be the same address as the `NodeAddress` provided as a
 
 The `rest-sqs-testing-amazon-java-sdk` module contains some more usage examples.
 
-Using the Amazon boto (Python) to access an ElasticMQ Server
--------------------------------------------------------
+# Using the Amazon boto (Python) to access an ElasticMQ Server
 
 To use [Amazon boto](http://docs.pythonboto.org/en/latest/) as an interface to an ElasticMQ server you set up the connection using:
 
@@ -225,8 +216,7 @@ The `boto3` interface is different:
                             use_ssl=False)
     queue = client.get_queue_by_name(QueueName='queue1')
 
-ElasticMQ via Docker
----------------------
+# ElasticMQ via Docker
 
 A Docker image is built on each release an pushed as [`softwaremill/elasticmq`](https://hub.docker.com/r/softwaremill/elasticmq/).
 
@@ -278,8 +268,7 @@ ENTRYPOINT [ "/usr/bin/java", "-Dconfig.file=/opt/elasticmq/conf/elasticmq.conf"
 
 and override the entrypoint passing the required properties.
 
-Experimental native ElasticqMQ via Docker
------------------------------------------
+# Experimental native ElasticqMQ via Docker
 
 An experimental, dockerized version of ElasticMQ,
 built using GraalVM's [native-image](https://blog.softwaremill.com/small-fast-docker-images-using-graalvms-native-image-99c0bc92e70b),
@@ -307,8 +296,7 @@ Generating GraalVM config files is a manual process currently. You need to run t
 
 These files should be placed in `native-server/src/main/resources/META-INF/native-image` and are automatically used by the native-image process.
 
-ElasticMQ dependencies in SBT
------------------------------
+# ElasticMQ dependencies in SBT
 
     // Scala 2.13 and 2.12
     val elasticmqSqs        = "org.elasticmq" %% "elasticmq-rest-sqs" % "0.15.7"
@@ -320,8 +308,7 @@ module:
 
 If you want to use a snapshot version, you will need to add the [https://oss.sonatype.org/content/repositories/snapshots/](https://oss.sonatype.org/content/repositories/snapshots/) repository to your configuration.
 
-ElasticMQ dependencies in Maven
--------------------------------
+# ElasticMQ dependencies in Maven
 
 Dependencies:
 
@@ -333,19 +320,16 @@ Dependencies:
 
 If you want to use a snapshot version, you will need to add the [https://oss.sonatype.org/content/repositories/snapshots/](https://oss.sonatype.org/content/repositories/snapshots/) repository to your configuration.
 
-Current versions
-----------------
+# Current versions
 
 *Stable*: 0.15.7
 
-Logging
--------
+# Logging
 
 ElasticMQ uses [Slf4j](http://www.slf4j.org/) for logging. By default no logger backend is included as a dependency,
 however [Logback](http://logback.qos.ch/) is recommended.
 
-Performance
------------
+# Performance
 
 Tests done on a 2012 MBP, 2.6GHz, 16GB RAM, no replication. Throughput is in messages per second (messages are
 small).
@@ -373,8 +357,7 @@ Note that both the client and the server were on the same machine.
 
 Test class: `org.elasticmq.performance.LocalPerformanceTest`.
 
-Building, running, and packaging
---------------------------------
+# Building, running, and packaging
 
 To build and run with debug (this will listen for a remote debugger on port 5005):
 ```
@@ -390,8 +373,7 @@ To build a jar-with-dependencies:
 > assembly
 ```
 
-Tests and coverage
-------------------
+# Tests and coverage
 
 To run the tests:
 ```
@@ -417,8 +399,7 @@ in their target directory:
 
 The aggregate report can be found at target/scala-2.12/scoverage-report/index.html
 
-Technology
-----------
+# Technology
 
 * Core: [Scala](http://scala-lang.org) and [Akka](http://akka.io/).
 * Rest server: [Akka HTTP](http://doc.akka.io/docs/akka-http/current/), a high-performance,
@@ -426,12 +407,10 @@ Technology
 * Testing the SQS interface: [Amazon Java SDK](http://aws.amazon.com/sdkforjava/);
   see the `rest-sqs-testing-amazon-java-sdk` module for the testsuite.
 
-Commercial Support
-------------------
+# Commercial Support
 
 We offer commercial support for ElasticMQ and related technologies, as well as development services. [Contact us](https://softwaremill.com) to learn more about our offer!
 
-Copyright
----------
+# Copyright
 
 Copyright (C) 2011-2020 SoftwareMill [https://softwaremill.com](https://softwaremill.com).
