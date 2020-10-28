@@ -268,7 +268,7 @@ ENTRYPOINT [ "/usr/bin/java", "-Dconfig.file=/opt/elasticmq/conf/elasticmq.conf"
 
 and override the entrypoint passing the required properties.
 
-# Experimental native ElasticqMQ via Docker
+# ElasticMQ-native via Docker: smaller, faster & experimental
 
 An experimental, dockerized version of ElasticMQ,
 built using GraalVM's [native-image](https://blog.softwaremill.com/small-fast-docker-images-using-graalvms-native-image-99c0bc92e70b),
@@ -278,8 +278,13 @@ is available as [`softwaremill/elasticmq-native`](https://hub.docker.com/r/softw
 docker run -p 9324:9324 --rm -it softwaremill/elasticmq-native
 ```
 
-The `native-elasticmq` image is much smaller (30MB vs 240MB) and starts up much faster (milliseconds instead of seconds).
-However, it's an experimental feature, so some things might not work.
+The `elasticmq-native` image is much smaller (30MB vs 240MB) and starts up much faster (milliseconds instead of seconds).
+It should work exactly the same as the "normal" version. Custom configuration can be provided by creating a custom 
+configuration file (see above) and using it when running the container:
+
+```
+docker run -p 9324:9324 -v `pwd`/custom.conf:/opt/elasticmq.conf softwaremill/elasticmq-native
+```
 
 ## Building the native image
 
