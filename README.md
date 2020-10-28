@@ -11,7 +11,7 @@
 * fully asynchronous implementation, no blocking calls
 
 Created and maintained by
-[<img src="https://softwaremill.com/images/header-main-logo.svg" alt="SoftwareMill logo" height="25">](https://softwaremill.com)
+[<img src="https://files.softwaremill.com/logo/logo.png" alt="SoftwareMill logo" height="25">](https://softwaremill.com)
 
 # Summary
 
