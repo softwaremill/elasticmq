@@ -292,7 +292,9 @@ docker run -p 9324:9324 --rm -it softwaremill/elasticmq-native
 The `native-elasticmq` image is much smaller (30MB vs 240MB) and starts up much faster (milliseconds instead of seconds).
 However, it's an experimental feature, so some things might not work.
 
-When building native image, do not forget to adjust the CPU and memory settings for the Docker process. It was checked with 6CPUs, 8GB of memory and 2GB of swap. To rebuild the native image, run:
+## Building the native image
+
+Do not forget to adjust the CPU and memory settings for the Docker process. It was checked with 6CPUs, 8GB of memory and 2GB of swap. Also, make sure that you are running sbt with the graalvm java, as the way the jars are composed seem to differ from other java implementations, and affect the native-image process that is run later! To rebuild the native image, run:
 
 ```
 sbt "project nativeServer; clean; graalvm-native-image:packageBin; docker:publishLocal"

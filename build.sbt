@@ -244,7 +244,7 @@ lazy val nativeServer: Project = (project in file("native-server"))
     //configures sbt-native-packager to build docker image with generated executable
     dockerBaseImage := "alpine:3.11",
     mappings in Docker := Seq(
-      (baseDirectory.value / ".." / "server" / "docker" / "elasticmq.conf") -> "/opt/docker/elasticmq.conf",
+      (baseDirectory.value / ".." / "server" / "docker" / "elasticmq.conf") -> "/opt/elasticmq.conf",
       ((target in GraalVMNativeImage).value / "elasticmq-native-server") -> "/opt/docker/bin/elasticmq-native-server"
     ),
     dockerEntrypoint := Seq("/sbin/tini", "--", "/opt/docker/bin/elasticmq-native-server", "-Dconfig.file=/opt/elasticmq.conf"),
@@ -258,7 +258,12 @@ lazy val nativeServer: Project = (project in file("native-server"))
         case _ => false
       }
       val (front, back) = commands.splitAt(index + 1)
-      val copyConfig = ExecCmd("COPY", "/opt/docker/elasticmq.conf", "/opt/elasticmq.conf")
+      // sbt-native-packager by default copies stage0:/opt/docker to the target container; we need to additionally
+      // copy the configuration file
+      val copyConfig = Cmd("COPY",
+        "--from=stage0",
+        "/opt/elasticmq.conf",
+        "/opt")
       val tiniCommand = ExecCmd("RUN", "apk", "add", "--no-cache", "tini")
       front ++ Seq(tiniCommand, copyConfig) ++ back
     },
