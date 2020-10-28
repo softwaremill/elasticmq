@@ -21,10 +21,9 @@ trait QueueActorWaitForMessagesOps extends ReplyingActor with QueueActorMessageO
   override def receive =
     super.receive orElse {
       case ReplyIfTimeout(seq, replyWith) =>
-        awaitingReply.remove(seq).foreach {
-          case AwaitingData(originalSender, _, _) =>
-            logger.debug(s"${queueData.name}: Awaiting messages: sequence $seq timed out. Replying with no messages.")
-            originalSender ! replyWith
+        awaitingReply.remove(seq).foreach { case AwaitingData(originalSender, _, _) =>
+          logger.debug(s"${queueData.name}: Awaiting messages: sequence $seq timed out. Replying with no messages.")
+          originalSender ! replyWith
         }
 
       case TryReply =>

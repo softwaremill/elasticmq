@@ -14,14 +14,13 @@ trait SendMessageBatchDirectives {
         verifyMessagesNotTooLong(p)
 
         val resultsFuture = batchRequest(SendMessageBatchPrefix, p) { (messageData, id, index) =>
-          val maybeTraceId = p.find {
-            case (key, _) => key.equalsIgnoreCase(AwsTraceIdHeaderName)
+          val maybeTraceId = p.find { case (key, _) =>
+            key.equalsIgnoreCase(AwsTraceIdHeaderName)
           }.toMap
           val message = createMessage(messageData ++ maybeTraceId, queueData, index)
 
-          doSendMessage(queueActor, message).map {
-            case (message, digest, messageAttributeDigest) =>
-              <SendMessageBatchResultEntry>
+          doSendMessage(queueActor, message).map { case (message, digest, messageAttributeDigest) =>
+            <SendMessageBatchResultEntry>
                 <Id>{id}</Id>
                 {messageAttributeDigest.map(d => <MD5OfMessageAttributes>{d}</MD5OfMessageAttributes>).getOrElse(())}
                 <MD5OfMessageBody>{digest}</MD5OfMessageBody>

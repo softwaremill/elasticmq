@@ -56,8 +56,7 @@ trait QueueActorMessageOps extends Logging {
     }
   }
 
-  /**
-    * Check whether a new message is a duplicate of the message that's on the queue.
+  /** Check whether a new message is a duplicate of the message that's on the queue.
     *
     * @param newMessage      The message that needs to be added to the queue
     * @param queueMessage    The message that's already on the queue

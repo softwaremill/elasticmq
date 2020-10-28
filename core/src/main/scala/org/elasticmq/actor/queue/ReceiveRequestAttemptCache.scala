@@ -38,8 +38,7 @@ class ReceiveRequestAttemptCache {
     }
   }
 
-  /**
-    * Ensure that all the given messages are still valid on the queue
+  /** Ensure that all the given messages are still valid on the queue
     *
     * @param messages        The messages to check
     * @param messageQueue    The queue that should contain the messages
@@ -58,8 +57,7 @@ class ReceiveRequestAttemptCache {
     }
   }
 
-  /**
-    * Remove any keys that are older than fifteen minutes
+  /** Remove any keys that are older than fifteen minutes
     */
   private def clean()(implicit nowProvider: NowProvider): Unit = {
     val expiredKeys = cache.collect {
@@ -74,13 +72,11 @@ object ReceiveRequestAttemptCache {
   sealed trait ReceiveFailure
   object ReceiveFailure {
 
-    /**
-      * Indicates the attempt id has expired
+    /** Indicates the attempt id has expired
       */
     case object Expired extends ReceiveFailure
 
-    /**
-      * Indicates the attempt cannot be retried as a message has been deleted from the queue
+    /** Indicates the attempt cannot be retried as a message has been deleted from the queue
       */
     case object Invalid extends ReceiveFailure
   }

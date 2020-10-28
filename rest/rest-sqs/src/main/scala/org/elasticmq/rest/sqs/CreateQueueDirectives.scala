@@ -94,9 +94,9 @@ trait CreateQueueDirectives {
             if (
               (secondsDelayOpt.isDefined && queueData.delay.getStandardSeconds != secondsDelay) ||
               (secondsReceiveMessageWaitTimeOpt.isDefined
-              && queueData.receiveMessageWait.getStandardSeconds != secondsReceiveMessageWaitTime) ||
+                && queueData.receiveMessageWait.getStandardSeconds != secondsReceiveMessageWaitTime) ||
               (secondsVisibilityTimeoutOpt.isDefined
-              && queueData.defaultVisibilityTimeout.seconds != secondsVisibilityTimeout)
+                && queueData.defaultVisibilityTimeout.seconds != secondsVisibilityTimeout)
             ) {
               // Special case: the queue existed, but has different attributes
               throw new SQSException("AWS.SimpleQueueService.QueueNameExists")

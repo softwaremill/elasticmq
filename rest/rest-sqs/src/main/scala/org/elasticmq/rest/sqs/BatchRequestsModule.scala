@@ -57,23 +57,21 @@ trait BatchRequestsModule {
 
 object BatchRequestsModule {
 
-  /**
-    * In the given list of parameters, lookups all parameters of the form: <code>{prefix}.{discriminator}.key=value</code>,
+  /** In the given list of parameters, lookups all parameters of the form: <code>{prefix}.{discriminator}.key=value</code>,
     * and for each discriminator builds a map of found key-value mappings.
     */
   def subParametersMaps(prefix: String, parameters: Map[String, String]): List[Map[String, String]] = {
     val subParameters = collection.mutable.Map[String, Map[String, String]]()
     val keyRegexp = (Pattern.quote(prefix) + "\\.([^.]+)\\.(.+)").r
-    parameters.foreach {
-      case (key, value) =>
-        keyRegexp.findFirstMatchIn(key).map { keyMatch =>
-          val discriminator = keyMatch.group(1)
-          val subKey = keyMatch.group(2)
+    parameters.foreach { case (key, value) =>
+      keyRegexp.findFirstMatchIn(key).map { keyMatch =>
+        val discriminator = keyMatch.group(1)
+        val subKey = keyMatch.group(2)
 
-          val subMap =
-            subParameters.getOrElse(discriminator, Map[String, String]())
-          subParameters.put(discriminator, subMap + (subKey -> value))
-        }
+        val subMap =
+          subParameters.getOrElse(discriminator, Map[String, String]())
+        subParameters.put(discriminator, subMap + (subKey -> value))
+      }
     }
 
     subParameters.toList.sortBy(_._1.toInt).map(_._2)

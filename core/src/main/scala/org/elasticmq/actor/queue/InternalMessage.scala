@@ -39,8 +39,7 @@ case class InternalMessage(
     }
   }
 
-  /**
-    * Keep track of delivering this message to a client
+  /** Keep track of delivering this message to a client
     *
     * @param nextDeliveryMillis    When this message should become available for its next delivery
     */

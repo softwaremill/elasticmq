@@ -75,29 +75,28 @@ class ElasticMQServerConfig(config: Config) extends Logging {
     val unsortedCreateQueues = config
       .getObject("queues")
       .asScala
-      .map {
-        case (n, v) =>
-          val c = v.asInstanceOf[ConfigObject].toConfig
-          val isFifo = getOptionalBoolean(c, "fifo").getOrElse(false)
-          CreateQueue(
-            name = addSuffixWhenFifoQueue(n, isFifo),
-            defaultVisibilityTimeoutSeconds = getOptionalDuration(c, "defaultVisibilityTimeout"),
-            delaySeconds = getOptionalDuration(c, "delay"),
-            receiveMessageWaitSeconds = getOptionalDuration(c, "receiveMessageWait"),
-            deadLettersQueue = if (c.hasPath(deadLettersQueueKey)) {
-              Some(
-                DeadLettersQueue(
-                  c.getString(deadLettersQueueKey + ".name"),
-                  c.getInt(deadLettersQueueKey + ".maxReceiveCount")
-                )
+      .map { case (n, v) =>
+        val c = v.asInstanceOf[ConfigObject].toConfig
+        val isFifo = getOptionalBoolean(c, "fifo").getOrElse(false)
+        CreateQueue(
+          name = addSuffixWhenFifoQueue(n, isFifo),
+          defaultVisibilityTimeoutSeconds = getOptionalDuration(c, "defaultVisibilityTimeout"),
+          delaySeconds = getOptionalDuration(c, "delay"),
+          receiveMessageWaitSeconds = getOptionalDuration(c, "receiveMessageWait"),
+          deadLettersQueue = if (c.hasPath(deadLettersQueueKey)) {
+            Some(
+              DeadLettersQueue(
+                c.getString(deadLettersQueueKey + ".name"),
+                c.getInt(deadLettersQueueKey + ".maxReceiveCount")
               )
-            } else None,
-            isFifo = isFifo,
-            hasContentBasedDeduplication = getOptionalBoolean(c, "contentBasedDeduplication").getOrElse(false),
-            copyMessagesTo = getOptionalString(c, "copyTo"),
-            moveMessagesTo = getOptionalString(c, "moveTo"),
-            tags = getOptionalTags(c, "tags")
-          )
+            )
+          } else None,
+          isFifo = isFifo,
+          hasContentBasedDeduplication = getOptionalBoolean(c, "contentBasedDeduplication").getOrElse(false),
+          copyMessagesTo = getOptionalString(c, "copyTo"),
+          moveMessagesTo = getOptionalString(c, "moveTo"),
+          tags = getOptionalTags(c, "tags")
+        )
       }
       .toList
 

@@ -157,53 +157,52 @@ trait QueueAttributesDirectives {
       queueActorFromRequest(p) { queueActor =>
         val attributes = attributeNameAndValuesReader.read(p)
 
-        val result = attributes.map({
-          case (attributeName, attributeValue) =>
-            attributeName match {
-              case VisibilityTimeoutParameter =>
-                queueActor ? UpdateQueueDefaultVisibilityTimeout(
-                  MillisVisibilityTimeout.fromSeconds(attributeValue.toLong)
-                )
-              case DelaySecondsAttribute =>
-                queueActor ? UpdateQueueDelay(Duration.standardSeconds(attributeValue.toLong))
-              case ReceiveMessageWaitTimeSecondsAttribute =>
-                queueActor ? UpdateQueueReceiveMessageWait(Duration.standardSeconds(attributeValue.toLong))
-              case RedrivePolicyParameter =>
-                val redrivePolicy =
-                  try {
-                    import org.elasticmq.rest.sqs.model.RedrivePolicyJson._
-                    attributeValue.parseJson.convertTo[BackwardCompatibleRedrivePolicy]
-                  } catch {
-                    case e: DeserializationException =>
-                      logger.warn("Cannot deserialize the redrive policy attribute", e)
-                      throw new SQSException("MalformedQueryString")
-                    case e: ParsingException =>
-                      logger.warn("Cannot parse the redrive policy attribute", e)
-                      throw new SQSException("MalformedQueryString")
-                  }
-                async {
-                  val deadLettersQueueActor = await(queueManagerActor ? LookupQueue(redrivePolicy.queueName))
-                  if (deadLettersQueueActor.isEmpty) {
-                    throw SQSException.nonExistentQueue
-                  }
-
-                  if (redrivePolicy.maxReceiveCount < 1 || redrivePolicy.maxReceiveCount > 1000) {
-                    throw SQSException.invalidParameterValue
-                  }
-                  queueActor ? UpdateQueueDeadLettersQueue(
-                    Some(DeadLettersQueueData(redrivePolicy.queueName, redrivePolicy.maxReceiveCount)),
-                    deadLettersQueueActor
-                  )
+        val result = attributes.map({ case (attributeName, attributeValue) =>
+          attributeName match {
+            case VisibilityTimeoutParameter =>
+              queueActor ? UpdateQueueDefaultVisibilityTimeout(
+                MillisVisibilityTimeout.fromSeconds(attributeValue.toLong)
+              )
+            case DelaySecondsAttribute =>
+              queueActor ? UpdateQueueDelay(Duration.standardSeconds(attributeValue.toLong))
+            case ReceiveMessageWaitTimeSecondsAttribute =>
+              queueActor ? UpdateQueueReceiveMessageWait(Duration.standardSeconds(attributeValue.toLong))
+            case RedrivePolicyParameter =>
+              val redrivePolicy =
+                try {
+                  import org.elasticmq.rest.sqs.model.RedrivePolicyJson._
+                  attributeValue.parseJson.convertTo[BackwardCompatibleRedrivePolicy]
+                } catch {
+                  case e: DeserializationException =>
+                    logger.warn("Cannot deserialize the redrive policy attribute", e)
+                    throw new SQSException("MalformedQueryString")
+                  case e: ParsingException =>
+                    logger.warn("Cannot parse the redrive policy attribute", e)
+                    throw new SQSException("MalformedQueryString")
                 }
-              case attr
-                  if UnsupportedAttributeNames.AllUnsupportedAttributeNames
-                    .contains(attr) =>
-                logger.warn("Ignored attribute \"" + attr + "\" (supported by SQS but not ElasticMQ)")
-                Future.successful(())
-              case attr =>
-                logger.warn("Unsupported attribute \"" + attr + "\" (failing on ElasticMQ)")
-                Future.failed(new SQSException("InvalidAttributeName"))
-            }
+              async {
+                val deadLettersQueueActor = await(queueManagerActor ? LookupQueue(redrivePolicy.queueName))
+                if (deadLettersQueueActor.isEmpty) {
+                  throw SQSException.nonExistentQueue
+                }
+
+                if (redrivePolicy.maxReceiveCount < 1 || redrivePolicy.maxReceiveCount > 1000) {
+                  throw SQSException.invalidParameterValue
+                }
+                queueActor ? UpdateQueueDeadLettersQueue(
+                  Some(DeadLettersQueueData(redrivePolicy.queueName, redrivePolicy.maxReceiveCount)),
+                  deadLettersQueueActor
+                )
+              }
+            case attr
+                if UnsupportedAttributeNames.AllUnsupportedAttributeNames
+                  .contains(attr) =>
+              logger.warn("Ignored attribute \"" + attr + "\" (supported by SQS but not ElasticMQ)")
+              Future.successful(())
+            case attr =>
+              logger.warn("Unsupported attribute \"" + attr + "\" (failing on ElasticMQ)")
+              Future.failed(new SQSException("InvalidAttributeName"))
+          }
         })
 
         Future.sequence(result).map { _ =>

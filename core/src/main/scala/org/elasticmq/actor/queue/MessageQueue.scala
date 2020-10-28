@@ -5,35 +5,30 @@ import scala.collection.mutable
 
 sealed trait MessageQueue {
 
-  /**
-    * Add a message onto the queue. Note that this doesn't do any deduplication, that should've happened in an earlier
+  /** Add a message onto the queue. Note that this doesn't do any deduplication, that should've happened in an earlier
     * step.
     *
     * @param message    The message to add onto the queue
     */
   def +=(message: InternalMessage): Unit
 
-  /**
-    * Get the messages indexed by their unique id
+  /** Get the messages indexed by their unique id
     *
     * @return    The messages indexed by their id
     */
   def byId: Map[String, InternalMessage]
 
-  /**
-    * Drop all messages on the queue
+  /** Drop all messages on the queue
     */
   def clear(): Unit
 
-  /**
-    * Remove the message with the given id
+  /** Remove the message with the given id
     *
     * @param messageId    The id of the message to remove
     */
   def remove(messageId: String): Unit
 
-  /**
-    * Return a message queue where all the messages on the queue do not match the given predicate function
+  /** Return a message queue where all the messages on the queue do not match the given predicate function
     *
     * @param p    The predicate function to filter the message by. Any message that does not match the predicate will be
     *             retained on the new queue
@@ -41,8 +36,7 @@ sealed trait MessageQueue {
     */
   def filterNot(p: InternalMessage => Boolean): MessageQueue
 
-  /**
-    * Dequeues `count` messages from the queue
+  /** Dequeues `count` messages from the queue
     *
     * @param count           The number of messages to dequeue from the queue
     * @param deliveryTime    The timestamp from which messages should be available (usually, this is the current millis
@@ -51,8 +45,7 @@ sealed trait MessageQueue {
     */
   def dequeue(count: Int, deliveryTime: Long): List[InternalMessage]
 
-  /**
-    * Get the next available message on the given queue
+  /** Get the next available message on the given queue
     *
     * @param priorityQueue     The queue for which to get the next available message. It's assumed the messages on this
     *                          queue all belong to the same message group.
@@ -111,8 +104,7 @@ object MessageQueue {
       new SimpleMessageQueue
     }
 
-  /**
-    * A "simple" straightforward message queue. The queue represents the common SQS behaviour
+  /** A "simple" straightforward message queue. The queue represents the common SQS behaviour
     */
   class SimpleMessageQueue extends MessageQueue {
     protected val messagesById: mutable.HashMap[String, InternalMessage] = mutable.HashMap.empty
@@ -157,8 +149,7 @@ object MessageQueue {
     }
   }
 
-  /**
-    * A FIFO queue that mimics SQS' FIFO queue implementation
+  /** A FIFO queue that mimics SQS' FIFO queue implementation
     */
   class FifoMessageQueue extends SimpleMessageQueue {
     private val messagesbyMessageGroupId = mutable.HashMap.empty[String, mutable.PriorityQueue[InternalMessage]]
@@ -210,8 +201,7 @@ object MessageQueue {
       }
     }
 
-    /**
-      * Dequeue a message from the fifo queue. Try to dequeue a message from the same message group as the previous
+    /** Dequeue a message from the fifo queue. Try to dequeue a message from the same message group as the previous
       * message before trying other message groups.
       */
     private def dequeueFromFifo(
@@ -226,8 +216,7 @@ object MessageQueue {
       }
     }
 
-    /**
-      * Try to dequeue a message from the given message group
+    /** Try to dequeue a message from the given message group
       */
     private def dequeueFromMessageGroup(
         messageGroupId: String,
@@ -247,8 +236,7 @@ object MessageQueue {
       }
     }
 
-    /**
-      * Return a message group id that has at least 1 message active on the queue and that is not part of the given set
+    /** Return a message group id that has at least 1 message active on the queue and that is not part of the given set
       * of `triedMessageGroupIds`
       *
       * @param triedMessageGroupIds    The ids of message groups to ignore
@@ -259,8 +247,7 @@ object MessageQueue {
       remainingMessageGroupIds.headOption
     }
 
-    /**
-      * Get the message group id from a given message. If the message has no message group id, an
+    /** Get the message group id from a given message. If the message has no message group id, an
       * [[IllegalStateException]] will be thrown.
       *
       * @param msg    The message to get the message group id for
@@ -270,8 +257,7 @@ object MessageQueue {
     private def getMessageGroupIdUnsafe(msg: InternalMessage): String =
       getMessageGroupIdUnsafe(msg.messageGroupId)
 
-    /**
-      * Get the message group id from an optional string. If the given optional string is empty, an
+    /** Get the message group id from an optional string. If the given optional string is empty, an
       * [[IllegalStateException]] will be thrown
       *
       * @param messageGroupId    The optional string

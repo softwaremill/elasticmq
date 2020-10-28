@@ -16,8 +16,7 @@ trait ElasticMQDirectives
     with RejectionDirectives
     with Logging {
 
-  /**
-    * A valid FIFO parameter value is at most 128 characters and can contain
+  /** A valid FIFO parameter value is at most 128 characters and can contain
     *  - alphanumeric characters (a-z , A-Z , 0-9 ) and
     *  - punctuation (!"#$%'()*+,-./:;=?@[\]^_`{|}~ ).
     */
@@ -29,8 +28,7 @@ trait ElasticMQDirectives
     }
   }
 
-  /**
-    * Valid values are alphanumeric characters and punctuation (!"#$%&'()*+,-./:;<=>?@[\]^_`{|}~). The maximum length is
+  /** Valid values are alphanumeric characters and punctuation (!"#$%&'()*+,-./:;<=>?@[\]^_`{|}~). The maximum length is
     * 128 characters
     *
     * @param propValue    The string to validate
