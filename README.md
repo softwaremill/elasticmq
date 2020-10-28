@@ -9,9 +9,11 @@
 * runs stand-alone ([download](https://s3-eu-west-1.amazonaws.com/softwaremill-public/elasticmq-server-0.15.8.jar)), via [Docker](https://hub.docker.com/r/softwaremill/elasticmq/) or embedded
 * [Amazon SQS](http://aws.amazon.com/sqs/)-compatible interface
 * fully asynchronous implementation, no blocking calls
+* created and maintained by:
 
-Created and maintained by
-[<img src="https://files.softwaremill.com/logo/logo.png" alt="SoftwareMill logo" height="25">](https://softwaremill.com)
+<p align="center">
+  <a href="https://softwaremill.com"><img src="https://files.softwaremill.com/logo/logo.png" alt="SoftwareMill logo" height="100"></a>
+</p>
 
 # Summary
 
