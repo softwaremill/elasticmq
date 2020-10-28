@@ -251,7 +251,7 @@ lazy val nativeServer: Project = (project in file("native-server"))
       (baseDirectory.value / ".." / "server" / "docker" / "elasticmq.conf") -> "/opt/docker/elasticmq.conf",
       ((target in GraalVMNativeImage).value / "elasticmq-native-server") -> "/opt/docker/bin/elasticmq-native-server"
     ),
-    dockerEntrypoint := Seq("/sbin/tini", "--", "/opt/docker/bin/elasticmq-native-server", "-Dconfig.file=/opt/docker/elasticmq.conf"),
+    dockerEntrypoint := Seq("/sbin/tini", "--", "/opt/docker/bin/elasticmq-native-server", "-Dconfig.file=/opt/elasticmq.conf"),
     dockerUpdateLatest := true,
     dockerExposedPorts := Seq(9324),
     dockerCommands := {
@@ -262,8 +262,9 @@ lazy val nativeServer: Project = (project in file("native-server"))
         case _ => false
       }
       val (front, back) = commands.splitAt(index + 1)
+      val copyConfig = ExecCmd("COPY", "/opt/docker/elasticmq.conf", "/opt/elasticmq.conf")
       val tiniCommand = ExecCmd("RUN", "apk", "add", "--no-cache", "tini")
-      front ++ Seq(tiniCommand) ++ back
+      front ++ Seq(tiniCommand, copyConfig) ++ back
     },
     packageName in Docker := "elasticmq-native",
     dockerUsername := Some("softwaremill"),

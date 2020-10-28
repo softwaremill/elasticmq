@@ -104,6 +104,11 @@
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
 {
+  "name": "akka.event.DefaultLoggingFilter",
+  "allDeclaredConstructors": true,
+  "allPublicConstructors": true
+},
+{
   "name":"akka.event.EventStreamUnsubscriber",
   "allDeclaredConstructors":true
 },
@@ -113,6 +118,16 @@
 },
 {
   "name":"akka.event.LoggerMessageQueueSemantics"
+},
+{
+  "name": "akka.event.Logging$DefaultLogger",
+  "allDeclaredConstructors": true,
+  "allPublicConstructors": true
+},
+{
+  "name": "akka.event.Logging$StdOutLogger",
+  "allDeclaredConstructors": true,
+  "allPublicConstructors": true
 },
 {
   "name":"akka.event.slf4j.Slf4jLogger",
@@ -450,5 +465,8 @@
 {
   "name":"sun.security.x509.SubjectKeyIdentifierExtension",
   "methods":[{"name":"<init>","parameterTypes":["java.lang.Boolean","java.lang.Object"] }]
+},
+{
+  "name":"[B"
 }
 ]
