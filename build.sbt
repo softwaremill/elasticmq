@@ -16,7 +16,6 @@ val buildSettings = commonSmlBuildSettings ++ ossPublishSettings ++ Seq(
   dependencyOverrides := akka25Overrides,
   parallelExecution := false,
   sonatypeProfileName := "org.elasticmq",
-  scalafmtOnCompile := true,
   // workaround for: https://github.com/sbt/sbt/issues/692
   fork in Test := true,
   releaseProcess := {
