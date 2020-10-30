@@ -34,7 +34,7 @@ trait DataCreationHelpers {
       nextDelivery: MillisNextDelivery,
       deliveryReceipt: Option[DeliveryReceipt] = None,
       messageGroupId: Option[String] = None,
-      messageDeduplicationId: Option[String] = None,
+      messageDeduplicationId: Option[DeduplicationId] = None,
       tracingId: Option[TracingId] = None
   ) =
     MessageData(
@@ -56,7 +56,7 @@ trait DataCreationHelpers {
       messageAttributes: Map[String, MessageAttribute],
       nextDelivery: MillisNextDelivery,
       messageGroupId: Option[String] = None,
-      messageDeduplicationId: Option[String] = None,
+      messageDeduplicationId: Option[DeduplicationId] = None,
       tracingId: Option[TracingId] = None
   ) =
     NewMessageData(

@@ -32,7 +32,7 @@ trait SendMessageOp extends Logging {
       // TODO: A message dedup id should be checked up to 5 mins after it has been received. If it has been deleted
       // during that period, it should _still_ be used when deduplicating new messages. If there's a match with a
       // deleted message (that was sent less than 5 minutes ago, the new message should not be added).
-      messageQueue.byId.values.find(CommonOperations.isDuplicate(message, _, , nowProvider)) match {
+      messageQueue.byId.values.find(CommonOperations.isDuplicate(message, _, nowProvider)) match {
         case Some(messageOnQueue) => messageOnQueue.toMessageData
         case None                 => addMessage(message)
       }

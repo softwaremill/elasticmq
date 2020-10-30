@@ -20,7 +20,7 @@ case class InternalMessage(
     var receiveCount: Int,
     isFifo: Boolean,
     messageGroupId: Option[String],
-    messageDeduplicationId: Option[String],
+    messageDeduplicationId: Option[DeduplicationId],
     tracingId: Option[TracingId]
 ) extends Comparable[InternalMessage] {
 

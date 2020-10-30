@@ -8,10 +8,6 @@ trait MoveMessageOps extends Logging {
   this: QueueActorStorage =>
 
   def moveMessage(message: InternalMessage): Unit = {
-    def moveMessageToQueue(internalMessage: InternalMessage): Unit = {
-      messageQueue += internalMessage
-      logger.debug(s"Moved message with id ${internalMessage.id} to ${queueData.name}")
-    }
 
     copyMessagesToActorRef.foreach { _ ! SendMessage(message.toNewMessageData) }
 
@@ -28,5 +24,10 @@ trait MoveMessageOps extends Logging {
     } else {
       moveMessageToQueue(message)
     }
+  }
+
+  private def moveMessageToQueue(internalMessage: InternalMessage): Unit = {
+    messageQueue += internalMessage
+    logger.debug(s"Moved message with id ${internalMessage.id} to ${queueData.name}")
   }
 }

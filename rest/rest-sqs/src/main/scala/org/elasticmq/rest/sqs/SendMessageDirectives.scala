@@ -151,7 +151,7 @@ trait SendMessageDirectives { this: ElasticMQDirectives with SQSLimitsModule =>
         throw SQSException.invalidAlphanumericalPunctualParameterValue(id, MessageDeduplicationIdParameter)
 
       // If a valid message group id is provided, use it, as it takes priority over the queue's content based deduping
-      case Some(id) => Some(id)
+      case Some(id) => Some(DeduplicationId(id))
 
       // MessageDeduplicationId is required for FIFO queues that don't have content based deduplication
       case None if queueData.isFifo && !queueData.hasContentBasedDeduplication =>
@@ -163,7 +163,8 @@ trait SendMessageDirectives { this: ElasticMQDirectives with SQSLimitsModule =>
         )
 
       // If no MessageDeduplicationId was provided and content based deduping is enabled for queue, generate one
-      case None if queueData.isFifo && queueData.hasContentBasedDeduplication => Some(sha256Hash(body))
+      case None if queueData.isFifo && queueData.hasContentBasedDeduplication =>
+        Some(DeduplicationId.fromMessageBody(body))
 
       // This must be a non-FIFO queue that doesn't require a dedup id
       case None => None
@@ -239,11 +240,4 @@ trait SendMessageDirectives { this: ElasticMQDirectives with SQSLimitsModule =>
 
   def verifyMessageNotTooLong(messageLength: Int): Unit =
     Limits.verifyMessageLength(messageLength, sqsLimits).fold(error => throw new SQSException(error), identity)
-
-  private def sha256Hash(text: String): String = {
-    String.format(
-      "%064x",
-      new java.math.BigInteger(1, MessageDigest.getInstance("SHA-256").digest(text.getBytes("UTF-8")))
-    )
-  }
 }
