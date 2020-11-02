@@ -12,12 +12,7 @@ trait MoveMessageOps extends Logging {
     copyMessagesToActorRef.foreach { _ ! SendMessage(message.toNewMessageData) }
 
     if (queueData.isFifo) {
-      // Ensure a message with the same deduplication id is not on the queue already. If the message is already on the
-      // queue do nothing.
-      // TODO: A message dedup id should be checked up to 5 mins after it has been received. If it has been deleted
-      // during that period, it should _still_ be used when deduplicating new messages. If there's a match with a
-      // deleted message (that was sent less than 5 minutes ago, the new message should not be added).
-      messageQueue.byId.values.find(CommonOperations.isDuplicate(message.toNewMessageData, _, nowProvider)) match {
+      CommonOperations.wasRegistered(message.toNewMessageData, fifoMessagesHistory) match {
         case Some(_) => ()
         case None    => moveMessageToQueue(message)
       }

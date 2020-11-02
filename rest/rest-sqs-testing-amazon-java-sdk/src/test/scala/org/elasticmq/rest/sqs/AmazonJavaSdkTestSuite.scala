@@ -741,48 +741,6 @@ class AmazonJavaSdkTestSuite extends SqsClientServerCommunication with Matchers 
     }
   }
 
-  test("FIFO queues should deduplicate messages based on the message body") {
-    // Given
-    val queueUrl = createFifoQueue()
-
-    // When
-    val sentMessages = for (i <- 1 to 10) yield {
-      client.sendMessage(new SendMessageRequest(queueUrl, "Message").withMessageGroupId(s"$i"))
-    }
-    val messages1 =
-      client.receiveMessage(new ReceiveMessageRequest(queueUrl).withMaxNumberOfMessages(4)).getMessages.asScala
-    client.deleteMessage(queueUrl, messages1.head.getReceiptHandle)
-    val messages2 =
-      client.receiveMessage(new ReceiveMessageRequest(queueUrl).withMaxNumberOfMessages(4)).getMessages.asScala
-
-    // Then
-    sentMessages.map(_.getMessageId).toSet should have size 1
-    messages1.map(_.getBody) should have size 1
-    messages1.map(_.getBody).toSet should be(Set("Message"))
-    messages2 should have size 0
-  }
-
-  test("FIFO queues should deduplicate messages based on the message deduplication attribute") {
-    val queueUrl = createFifoQueue()
-
-    // When
-    for (i <- 1 to 10) {
-      client.sendMessage(
-        new SendMessageRequest(queueUrl, s"Message $i")
-          .withMessageDeduplicationId("DedupId")
-          .withMessageGroupId("1")
-      )
-    }
-
-    val m1 = receiveSingleMessageObject(queueUrl)
-    client.deleteMessage(queueUrl, m1.get.getReceiptHandle)
-    val m2 = receiveSingleMessage(queueUrl)
-
-    // Then
-    m1.map(_.getBody) should be(Some("Message 1"))
-    m2 should be(empty)
-  }
-
   test("FIFO queue messages should return FIFO attribute names") {
     val queueUrl = createFifoQueue()
 
@@ -1961,27 +1919,6 @@ class AmazonJavaSdkTestSuite extends SqsClientServerCommunication with Matchers 
 
   def queueReceiveMessageWaitTimeSeconds(queueUrl: String): Long =
     getQueueLongAttribute(queueUrl, receiveMessageWaitTimeSecondsAttribute)
-
-  def receiveSingleMessage(queueUrl: String): Option[String] = {
-    receiveSingleMessage(queueUrl, List("All"))
-  }
-
-  def receiveSingleMessage(queueUrl: String, requestedAttributes: List[String]): Option[String] = {
-    val messages = client.receiveMessage(new ReceiveMessageRequest(queueUrl)).getMessages.asScala
-    messages.headOption.map(_.getBody)
-  }
-
-  def receiveSingleMessageObject(queueUrl: String): Option[Message] = {
-    receiveSingleMessageObject(queueUrl, List("All"))
-  }
-
-  def receiveSingleMessageObject(queueUrl: String, requestedAttributes: List[String]): Option[Message] = {
-    client
-      .receiveMessage(new ReceiveMessageRequest(queueUrl).withMessageAttributeNames(requestedAttributes.asJava))
-      .getMessages
-      .asScala
-      .headOption
-  }
 
   def strictOnlyShouldThrowException(body: AmazonSQS => Unit): Unit = {
     // When

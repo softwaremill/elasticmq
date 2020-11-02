@@ -27,12 +27,7 @@ trait SendMessageOp extends Logging {
 
   private def sendMessage(message: NewMessageData): MessageData = {
     if (queueData.isFifo) {
-      // Ensure a message with the same deduplication id is not on the queue already. If the message is already on the
-      // queue, return that -- don't add it twice
-      // TODO: A message dedup id should be checked up to 5 mins after it has been received. If it has been deleted
-      // during that period, it should _still_ be used when deduplicating new messages. If there's a match with a
-      // deleted message (that was sent less than 5 minutes ago, the new message should not be added).
-      messageQueue.byId.values.find(CommonOperations.isDuplicate(message, _, nowProvider)) match {
+      CommonOperations.wasRegistered(message, fifoMessagesHistory) match {
         case Some(messageOnQueue) => messageOnQueue.toMessageData
         case None                 => addMessage(message)
       }
@@ -44,6 +39,7 @@ trait SendMessageOp extends Logging {
   private def addMessage(message: NewMessageData) = {
     val internalMessage = InternalMessage.from(message, queueData)
     messageQueue += internalMessage
+    fifoMessagesHistory = fifoMessagesHistory.addNew(internalMessage)
     logger.debug(s"${queueData.name}: Sent message with id ${internalMessage.id}")
 
     internalMessage.toMessageData
