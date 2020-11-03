@@ -30,9 +30,9 @@ trait QueueActorMessageOps
         updateVisibilityTimeout(messageId, visibilityTimeout)
       case ReceiveMessages(visibilityTimeout, count, _, receiveRequestAttemptId) =>
         receiveMessages(visibilityTimeout, count, receiveRequestAttemptId)
-      case DeleteMessage(deliveryReceipt) => deleteMessage(deliveryReceipt)
-      case LookupMessage(messageId)       => messageQueue.byId.get(messageId.id).map(_.toMessageData)
-      case MoveMessage(message)           => moveMessage(message)
+      case DeleteMessage(deliveryReceipt)    => deleteMessage(deliveryReceipt)
+      case LookupMessage(messageId)          => messageQueue.byId.get(messageId.id).map(_.toMessageData)
+      case MoveMessage(message, destination) => moveMessage(message, destination)
       case DeduplicationIdsCleanup =>
         fifoMessagesHistory = fifoMessagesHistory.cleanOutdatedMessages(nowProvider)
         DoNotReply()
