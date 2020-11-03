@@ -1,8 +1,8 @@
 package org.elasticmq.actor.queue
 
 import akka.actor.ActorRef
-import org.elasticmq.QueueData
 import org.elasticmq.util.NowProvider
+import org.elasticmq.{FifoDeduplicationIdsHistory, QueueData}
 
 trait QueueActorStorage {
   def nowProvider: NowProvider
@@ -14,6 +14,7 @@ trait QueueActorStorage {
   def moveMessagesToActorRef: Option[ActorRef]
 
   var queueData: QueueData = initialQueueData
-  var messageQueue = MessageQueue(queueData.isFifo)
+  var messageQueue: MessageQueue = MessageQueue(queueData.isFifo)
+  var fifoMessagesHistory: FifoDeduplicationIdsHistory = FifoDeduplicationIdsHistory.newHistory()
   val receiveRequestAttemptCache = new ReceiveRequestAttemptCache
 }

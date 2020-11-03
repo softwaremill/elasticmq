@@ -26,7 +26,7 @@ case class GetQueueStatistics(deliveryTime: Long) extends QueueQueueMsg[QueueSta
 case class ClearQueue() extends QueueQueueMsg[Unit]
 
 case class SendMessage(message: NewMessageData) extends QueueMessageMsg[MessageData]
-case class MoveMessage(message: InternalMessage) extends QueueMessageMsg[Unit]
+case class MoveMessage(message: InternalMessage, moveDestination: MoveDestination) extends QueueMessageMsg[Unit]
 case class UpdateVisibilityTimeout(messageId: MessageId, visibilityTimeout: VisibilityTimeout)
     extends QueueMessageMsg[Either[MessageDoesNotExist, Unit]]
 case class ReceiveMessages(
@@ -37,3 +37,4 @@ case class ReceiveMessages(
 ) extends QueueMessageMsg[List[MessageData]]
 case class DeleteMessage(deliveryReceipt: DeliveryReceipt) extends QueueMessageMsg[Unit]
 case class LookupMessage(messageId: MessageId) extends QueueMessageMsg[Option[MessageData]]
+case object DeduplicationIdsCleanup extends QueueMessageMsg[Unit]

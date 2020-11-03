@@ -12,7 +12,9 @@ trait DataCreationHelpers {
       deadLettersQueue: Option[DeadLettersQueueData] = None,
       copyMessagesToQueue: Option[String] = None,
       moveMessagesToQueue: Option[String] = None,
-      tags: Map[String, String] = Map[String, String]()
+      tags: Map[String, String] = Map[String, String](),
+      isFifo: Boolean = false,
+      hasContentBasedDeduplication: Boolean = false
   ) =
     QueueData(
       name = name,
@@ -24,7 +26,9 @@ trait DataCreationHelpers {
       deadLettersQueue = deadLettersQueue,
       copyMessagesTo = copyMessagesToQueue,
       moveMessagesTo = moveMessagesToQueue,
-      tags = tags
+      tags = tags,
+      isFifo = isFifo,
+      hasContentBasedDeduplication = hasContentBasedDeduplication
     )
 
   def createMessageData(
@@ -34,7 +38,7 @@ trait DataCreationHelpers {
       nextDelivery: MillisNextDelivery,
       deliveryReceipt: Option[DeliveryReceipt] = None,
       messageGroupId: Option[String] = None,
-      messageDeduplicationId: Option[String] = None,
+      messageDeduplicationId: Option[DeduplicationId] = None,
       tracingId: Option[TracingId] = None
   ) =
     MessageData(
@@ -56,7 +60,7 @@ trait DataCreationHelpers {
       messageAttributes: Map[String, MessageAttribute],
       nextDelivery: MillisNextDelivery,
       messageGroupId: Option[String] = None,
-      messageDeduplicationId: Option[String] = None,
+      messageDeduplicationId: Option[DeduplicationId] = None,
       tracingId: Option[TracingId] = None
   ) =
     NewMessageData(

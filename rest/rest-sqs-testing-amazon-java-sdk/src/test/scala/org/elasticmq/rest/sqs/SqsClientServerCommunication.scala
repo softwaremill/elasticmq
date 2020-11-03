@@ -2,6 +2,7 @@ package org.elasticmq.rest.sqs
 
 import com.amazonaws.auth.{AWSStaticCredentialsProvider, BasicAWSCredentials}
 import com.amazonaws.client.builder.AwsClientBuilder.EndpointConfiguration
+import com.amazonaws.services.sqs.model.{Message, ReceiveMessageRequest}
 import com.amazonaws.services.sqs.{AmazonSQS, AmazonSQSClientBuilder}
 import org.apache.http.impl.client.{CloseableHttpClient, HttpClients}
 import org.elasticmq.util.Logging
@@ -9,6 +10,7 @@ import org.elasticmq.{NodeAddress, RelaxedSQSLimits}
 import org.scalatest.{Args, BeforeAndAfter, Status}
 import org.scalatest.funsuite.AnyFunSuite
 
+import scala.collection.JavaConverters._
 import scala.util.Try
 
 trait SqsClientServerCommunication extends AnyFunSuite with BeforeAndAfter with Logging {
@@ -77,4 +79,24 @@ trait SqsClientServerCommunication extends AnyFunSuite with BeforeAndAfter with 
     result
   }
 
+  def receiveSingleMessageObject(queueUrl: String): Option[Message] = {
+    receiveSingleMessageObject(queueUrl, List("All"))
+  }
+
+  def receiveSingleMessageObject(queueUrl: String, requestedAttributes: List[String]): Option[Message] = {
+    client
+      .receiveMessage(new ReceiveMessageRequest(queueUrl).withMessageAttributeNames(requestedAttributes.asJava))
+      .getMessages
+      .asScala
+      .headOption
+  }
+
+  def receiveSingleMessage(queueUrl: String): Option[String] = {
+    receiveSingleMessage(queueUrl, List("All"))
+  }
+
+  def receiveSingleMessage(queueUrl: String, requestedAttributes: List[String]): Option[String] = {
+    val messages = client.receiveMessage(new ReceiveMessageRequest(queueUrl)).getMessages.asScala
+    messages.headOption.map(_.getBody)
+  }
 }
