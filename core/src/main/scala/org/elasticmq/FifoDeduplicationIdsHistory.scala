@@ -30,10 +30,8 @@ case class FifoDeduplicationIdsHistory(
     }
   }
 
-  def wasRegistered(deduplicationId: Option[DeduplicationId]): Option[InternalMessage] = deduplicationId match {
-    case Some(deduplicationId) => messagesByDeduplicationId.get(deduplicationId)
-    case _                     => None
-  }
+  def wasRegistered(maybeDeduplicationId: Option[DeduplicationId]): Option[InternalMessage] =
+    maybeDeduplicationId.flatMap(deduplicationId => messagesByDeduplicationId.get(deduplicationId))
 
   def cleanOutdatedMessages(nowProvider: NowProvider): FifoDeduplicationIdsHistory = {
     val (idsToRemove, notTerminatedMessages) =

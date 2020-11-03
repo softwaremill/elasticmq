@@ -43,7 +43,7 @@ class FifoDeduplicationIdsHistoryTest extends AnyFunSuite with Matchers {
     )
   }
 
-  test("History should return if given deduplication ID was already used or not") {
+  test("History should show if given deduplication ID was already used or not") {
     val history = FifoDeduplicationIdsHistory.newHistory()
     val updatedHistory = history
       .addNew(newInternalMessage(Some(DeduplicationId("1")), DateTime.now()))
