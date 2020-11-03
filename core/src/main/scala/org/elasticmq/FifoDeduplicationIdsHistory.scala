@@ -1,7 +1,7 @@
 package org.elasticmq
 
 import com.typesafe.scalalogging.LazyLogging
-import org.elasticmq.FifoDeduplicationIdsHistory.deduplicationInterval
+import org.elasticmq.FifoDeduplicationIdsHistory.DeduplicationIntervalMinutes
 import org.elasticmq.actor.queue.InternalMessage
 import org.elasticmq.util.NowProvider
 import org.joda.time.DateTime
@@ -34,10 +34,11 @@ case class FifoDeduplicationIdsHistory(
     maybeDeduplicationId.flatMap(deduplicationId => messagesByDeduplicationId.get(deduplicationId))
 
   def cleanOutdatedMessages(nowProvider: NowProvider): FifoDeduplicationIdsHistory = {
+    val now = nowProvider.now
     val (idsToRemove, notTerminatedMessages) =
       partitionMapUntil(deduplicationIdsByCreationDate)(
         map = _.id,
-        cond = _.creationDate.plusMinutes(deduplicationInterval).isBefore(nowProvider.now)
+        cond = _.creationDate.plusMinutes(DeduplicationIntervalMinutes).isBefore(now)
       )
 
     if (idsToRemove.nonEmpty) {
@@ -61,7 +62,7 @@ case class FifoDeduplicationIdsHistory(
 }
 
 object FifoDeduplicationIdsHistory {
-  val deduplicationInterval = 5
+  val DeduplicationIntervalMinutes = 5
 
   private def apply(
       messagesByDeduplicationId: Map[DeduplicationId, InternalMessage],
