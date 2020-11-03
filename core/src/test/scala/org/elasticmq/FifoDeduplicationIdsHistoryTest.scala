@@ -63,7 +63,7 @@ class FifoDeduplicationIdsHistoryTest extends AnyFunSuite with Matchers {
     val updatedHistory = history
       .addNew(newInternalMessage(Some(DeduplicationId("1")), now.minusMinutes(20)))
       .addNew(newInternalMessage(Some(DeduplicationId("2")), now.minusMinutes(10)))
-      .addNew(newInternalMessage(Some(DeduplicationId("3")), now.minusMinutes(5)))
+      .addNew(newInternalMessage(Some(DeduplicationId("3")), now.minusMinutes(5).minusSeconds(1)))
       .addNew(newInternalMessage(Some(DeduplicationId("4")), now.minusMinutes(4).minusSeconds(59)))
       .addNew(newInternalMessage(Some(DeduplicationId("5")), now))
       .cleanOutdatedMessages(new NowProvider)

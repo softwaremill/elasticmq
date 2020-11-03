@@ -12,8 +12,7 @@ import org.scalatest.OptionValues
 import org.scalatest.matchers.should.Matchers
 import spray.json.enrichAny
 
-import scala.collection.JavaConverters.mapAsJavaMapConverter
-import scala.jdk.CollectionConverters.CollectionHasAsScala
+import scala.collection.JavaConverters._
 
 class FifoDeduplicationTests extends SqsClientServerCommunication with Matchers with OptionValues {
 

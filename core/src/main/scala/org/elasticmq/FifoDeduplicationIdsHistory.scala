@@ -45,7 +45,7 @@ case class FifoDeduplicationIdsHistory(
       logger.debug(s"Removing messages from FIFO history store: $idsToRemove")
     }
     new FifoDeduplicationIdsHistory(
-      messagesByDeduplicationId.removedAll(idsToRemove),
+      messagesByDeduplicationId -- idsToRemove,
       notTerminatedMessages
     )
   }
