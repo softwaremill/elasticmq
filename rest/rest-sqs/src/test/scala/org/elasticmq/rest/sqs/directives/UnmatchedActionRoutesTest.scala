@@ -24,7 +24,7 @@ class UnmatchedActionRoutesTest
 
     Get("/") ~> route ~> check {
       status shouldBe BadRequest
-      responseAs[String] should include("<Code>InvalidActionOrRequestPath</Code>")
+      responseAs[String] should include("<Code>InvalidAction</Code>")
     }
   }
 
@@ -37,20 +37,7 @@ class UnmatchedActionRoutesTest
 
     Get("/") ~> route ~> check {
       status shouldBe BadRequest
-      responseAs[String] should include("<Code>InvalidActionOrRequestPath</Code>")
-    }
-  }
-
-  it should "return invalid request path if an path is not known" in {
-    val route = {
-      handleServerExceptions {
-        unmatchedAction(Map("Action" -> "ReceiveMessage"))
-      }
-    }
-
-    Get("/unknown-route") ~> route ~> check {
-      status shouldBe BadRequest
-      responseAs[String] should include("<Code>InvalidActionOrRequestPath</Code>")
+      responseAs[String] should include("<Code>InvalidAction</Code>")
     }
   }
 
