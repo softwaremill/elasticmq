@@ -8,12 +8,15 @@ trait UnmatchedActionRoutes {
   this: Logging with Directives =>
 
   def unmatchedAction(p: AnyParams): Route = {
-    extractRequestContext { _ =>
+    extractUri { uri =>
       p.get("Action") match {
         case Some(action) =>
-          logger.warn(s"Unknown action: $action")
-          throw new SQSException("InvalidAction")
-        case None => throw new SQSException("MissingAction")
+          logger.warn(
+            s"Could not match request path ($uri) and associated action ($action) with any known route in ElasticMQ. Verify that given URI is a correct one."
+          )
+          throw new SQSException("InvalidActionOrRequestPath")
+        case None =>
+          throw new SQSException("MissingAction")
       }
     }
   }
