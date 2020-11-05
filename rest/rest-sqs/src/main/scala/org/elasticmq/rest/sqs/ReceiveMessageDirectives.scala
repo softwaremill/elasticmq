@@ -93,8 +93,8 @@ trait ReceiveMessageDirectives {
             Rule(SenderIdAttribute, () => Some("127.0.0.1")),
             Rule(SentTimestampAttribute, () => Some(msg.created.getMillis.toString)),
             Rule(ApproximateReceiveCountAttribute, () => Some(msg.statistics.approximateReceiveCount.toString)),
-            Rule(MessageDeduplicationIdAttribute, () => msg.messageDeduplicationId.map(_.id).orElse(Some(""))),
-            Rule(MessageGroupIdAttribute, () => msg.messageGroupId.orElse(Some(""))),
+            Rule(MessageDeduplicationIdAttribute, () => msg.messageDeduplicationId.map(_.id)),
+            Rule(MessageGroupIdAttribute, () => msg.messageGroupId),
             Rule(
               ApproximateFirstReceiveTimestampAttribute,
               () =>
