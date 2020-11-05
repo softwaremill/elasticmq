@@ -5,6 +5,7 @@ import org.elasticmq._
 import org.elasticmq.rest.sqs.MD5Util._
 import org.elasticmq.actor.reply._
 import org.elasticmq.msg.ReceiveMessages
+import org.elasticmq.rest.sqs.Action.ReceiveMessage
 import org.elasticmq.rest.sqs.directives.ElasticMQDirectives
 import org.joda.time.Duration
 
@@ -32,7 +33,7 @@ trait ReceiveMessageDirectives {
   def receiveMessage(p: AnyParams) = {
     import MessageReadeableAttributeNames._
 
-    p.action("ReceiveMessage") {
+    p.action(ReceiveMessage) {
       queueActorAndDataFromRequest(p) { (queueActor, queueData) =>
         val visibilityTimeoutParameterOpt = p.get(VisibilityTimeoutParameter).map(_.toInt)
         val maxNumberOfMessagesAttributeOpt = p.get(MaxNumberOfMessagesAttribute).map(_.toInt)

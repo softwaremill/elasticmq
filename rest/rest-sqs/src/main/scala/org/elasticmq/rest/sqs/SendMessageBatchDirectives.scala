@@ -2,6 +2,7 @@ package org.elasticmq.rest.sqs
 
 import Constants._
 import akka.http.scaladsl.server.Route
+import org.elasticmq.rest.sqs.Action.SendMessageBatch
 import org.elasticmq.rest.sqs.directives.ElasticMQDirectives
 
 trait SendMessageBatchDirectives {
@@ -9,7 +10,7 @@ trait SendMessageBatchDirectives {
   val SendMessageBatchPrefix = "SendMessageBatchRequestEntry"
 
   def sendMessageBatch(p: AnyParams): Route = {
-    p.action("SendMessageBatch") {
+    p.action(SendMessageBatch) {
       queueActorAndDataFromRequest(p) { (queueActor, queueData) =>
         verifyMessagesNotTooLong(p)
 

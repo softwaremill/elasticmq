@@ -1,12 +1,13 @@
 package org.elasticmq.rest.sqs
 
 import Constants._
+import org.elasticmq.rest.sqs.Action.ChangeMessageVisibilityBatch
 import org.elasticmq.rest.sqs.directives.ElasticMQDirectives
 
 trait ChangeMessageVisibilityBatchDirectives {
   this: ElasticMQDirectives with ChangeMessageVisibilityDirectives with BatchRequestsModule =>
   def changeMessageVisibilityBatch(p: AnyParams) = {
-    p.action("ChangeMessageVisibilityBatch") {
+    p.action(ChangeMessageVisibilityBatch) {
       queueActorFromRequest(p) { queueActor =>
         val resultsFuture =
           batchRequest("ChangeMessageVisibilityBatchRequestEntry", p) { (messageData, id, _) =>
