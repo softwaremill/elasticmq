@@ -1,13 +1,14 @@
 package org.elasticmq.rest.sqs
 
 import org.elasticmq.actor.reply._
-import org.elasticmq.msg.{CreateQueue, GetQueueData, LookupQueue}
+import org.elasticmq.msg.{GetQueueData, LookupQueue, CreateQueue => CreateQueueMsg}
+import org.elasticmq.rest.sqs.Action.CreateQueue
 import org.elasticmq.rest.sqs.Constants._
 import org.elasticmq.rest.sqs.CreateQueueDirectives._
 import org.elasticmq.rest.sqs.ParametersUtil._
 import org.elasticmq.rest.sqs.directives.ElasticMQDirectives
 import org.elasticmq.rest.sqs.model.RedrivePolicy.BackwardCompatibleRedrivePolicy
-import org.elasticmq.{DeadLettersQueueData, MillisVisibilityTimeout, QueueData, Limits}
+import org.elasticmq.{DeadLettersQueueData, Limits, MillisVisibilityTimeout, QueueData}
 import org.joda.time.{DateTime, Duration}
 import spray.json.JsonParser.ParsingException
 import spray.json._
@@ -19,7 +20,7 @@ trait CreateQueueDirectives {
   this: ElasticMQDirectives with QueueURLModule with AttributesModule with TagsModule with SQSLimitsModule =>
 
   def createQueue(p: AnyParams) = {
-    p.action("CreateQueue") {
+    p.action(CreateQueue) {
       rootPath {
         queueNameFromParams(p) { queueName =>
           val attributes = attributeNameAndValuesReader.read(p)
@@ -127,7 +128,7 @@ trait CreateQueueDirectives {
       queueActorOption match {
         case None =>
           val createResult =
-            await(queueManagerActor ? CreateQueue(newQueueData))
+            await(queueManagerActor ? CreateQueueMsg(newQueueData))
           createResult match {
             case Left(e) =>
               throw new SQSException("Concurrent access: " + e.message)

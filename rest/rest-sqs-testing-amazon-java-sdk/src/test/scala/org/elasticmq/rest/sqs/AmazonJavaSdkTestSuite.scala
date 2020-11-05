@@ -240,6 +240,23 @@ class AmazonJavaSdkTestSuite extends SqsClientServerCommunication with Matchers 
     Source.fromInputStream(res.getEntity.getContent).mkString should include("<Code>InvalidAction</Code>")
   }
 
+  test("should reply with 404 if request can't be recognized as any known route") {
+    // given
+    val httpHost = new HttpHost("localhost", 9321)
+    val req = new HttpPost()
+    req.setURI(new URI("/wrong-path"))
+    val action = new BasicNameValuePair("Action", "ReceiveMessage")
+    req.setEntity(new UrlEncodedFormEntity(List(action).asJava))
+
+    //when
+    val res = httpClient.execute(httpHost, req)
+
+    //then
+    res.getStatusLine.getStatusCode shouldBe StatusCodes.BadRequest.intValue
+    Source.fromInputStream(res.getEntity.getContent).mkString should include("<Code>Invalid request")
+
+  }
+
   test("should reply with a InvalidAction error when uknown action set") {
     // given
     val httpHost = new HttpHost("localhost", 9321)

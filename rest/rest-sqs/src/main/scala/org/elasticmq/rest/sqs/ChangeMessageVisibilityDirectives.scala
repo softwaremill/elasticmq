@@ -5,11 +5,12 @@ import org.elasticmq.{DeliveryReceipt, MillisVisibilityTimeout}
 import akka.actor.ActorRef
 import org.elasticmq.actor.reply._
 import org.elasticmq.msg.UpdateVisibilityTimeout
+import org.elasticmq.rest.sqs.Action.ChangeMessageVisibility
 import org.elasticmq.rest.sqs.directives.ElasticMQDirectives
 
 trait ChangeMessageVisibilityDirectives { this: ElasticMQDirectives =>
   def changeMessageVisibility(p: AnyParams) = {
-    p.action("ChangeMessageVisibility") {
+    p.action(ChangeMessageVisibility) {
       queueActorFromRequest(p) { queueActor =>
         doChangeMessageVisibility(queueActor, p).map { _ =>
           respondWith {

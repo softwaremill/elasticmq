@@ -3,11 +3,12 @@ package org.elasticmq.rest.sqs
 import Constants._
 import org.elasticmq.actor.reply._
 import org.elasticmq.msg.ListQueues
+import org.elasticmq.rest.sqs.Action.{ListQueues => ListQueuesAction}
 import org.elasticmq.rest.sqs.directives.ElasticMQDirectives
 
 trait ListQueuesDirectives { this: ElasticMQDirectives with QueueURLModule =>
   def listQueues(p: AnyParams) = {
-    p.action("ListQueues") {
+    p.action(ListQueuesAction) {
       rootPath {
         val prefixOption = p.get("QueueNamePrefix")
         for {

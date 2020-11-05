@@ -2,6 +2,7 @@ package org.elasticmq.rest.sqs
 
 import org.elasticmq.actor.reply._
 import org.elasticmq.msg._
+import org.elasticmq.rest.sqs.Action.{ListQueueTags, TagQueue, UntagQueue}
 import org.elasticmq.rest.sqs.Constants._
 import org.elasticmq.rest.sqs.directives.ElasticMQDirectives
 
@@ -9,7 +10,7 @@ trait TagQueueDirectives {
   this: ElasticMQDirectives with TagsModule =>
 
   def listQueueTags(p: AnyParams) = {
-    p.action("ListQueueTags") {
+    p.action(ListQueueTags) {
       queueActorAndDataFromRequest(p) { (_, queueData) =>
         respondWith {
           <ListQueueTagsResponse>
@@ -26,7 +27,7 @@ trait TagQueueDirectives {
   }
 
   def untagQueue(p: AnyParams) = {
-    p.action("UntagQueue") {
+    p.action(UntagQueue) {
       queueActorFromRequest(p) { queueActor =>
         val tags = tagNamesReader.read(p)
         queueActor ? RemoveQueueTags(tags)
@@ -42,7 +43,7 @@ trait TagQueueDirectives {
   }
 
   def tagQueue(p: AnyParams) = {
-    p.action("TagQueue") {
+    p.action(TagQueue) {
       queueActorFromRequest(p) { queueActor =>
         val tags = tagNameAndValuesReader.read(p)
         queueActor ? UpdateQueueTags(tags)

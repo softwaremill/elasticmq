@@ -1,22 +1,16 @@
 package org.elasticmq.rest.sqs
 
-import java.security.MessageDigest
-
 import akka.actor.ActorRef
 import akka.http.scaladsl.server.Route
 import org.elasticmq._
 import org.elasticmq.actor.reply._
 import org.elasticmq.msg.SendMessage
+import org.elasticmq.rest.sqs.Action.{SendMessage => SendMessageAction}
 import org.elasticmq.rest.sqs.Constants._
 import org.elasticmq.rest.sqs.MD5Util._
 import org.elasticmq.rest.sqs.ParametersUtil._
 import org.elasticmq.rest.sqs.directives.ElasticMQDirectives
-import org.elasticmq.rest.sqs.model.{
-  BinaryMessageSystemAttribute,
-  MessageSystemAttribute,
-  NumberMessageSystemAttribute,
-  StringMessageSystemAttribute
-}
+import org.elasticmq.rest.sqs.model.{BinaryMessageSystemAttribute, MessageSystemAttribute, NumberMessageSystemAttribute, StringMessageSystemAttribute}
 
 import scala.concurrent.Future
 
@@ -30,7 +24,7 @@ trait SendMessageDirectives { this: ElasticMQDirectives with SQSLimitsModule =>
   val AwsTraceIdHeaderName = "X-Amzn-Trace-Id"
 
   def sendMessage(p: AnyParams): Route = {
-    p.action("SendMessage") {
+    p.action(SendMessageAction) {
       queueActorAndDataFromRequest(p) { (queueActor, queueData) =>
         val message = createMessage(p, queueData, orderIndex = 0)
 

@@ -7,8 +7,9 @@ package object sqs {
   type AnyParams = Map[String, String]
 
   implicit class RichAnyParam(p: AnyParams) {
-    def action(requiredActionName: String): Directive0 = {
-      if (p.get("Action").contains(requiredActionName)) {
+
+    def action(requiredAction: Action.Value): Directive0 = {
+      if (p.get("Action").contains(requiredAction.toString)) {
         pass
       } else {
         reject

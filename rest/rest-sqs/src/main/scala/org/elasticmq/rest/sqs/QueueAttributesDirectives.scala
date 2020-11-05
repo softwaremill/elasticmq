@@ -3,6 +3,7 @@ package org.elasticmq.rest.sqs
 import akka.http.scaladsl.server.Route
 import org.elasticmq.actor.reply._
 import org.elasticmq.msg._
+import org.elasticmq.rest.sqs.Action.{GetQueueAttributes, SetQueueAttributes}
 import org.elasticmq.rest.sqs.Constants._
 import org.elasticmq.rest.sqs.directives.ElasticMQDirectives
 import org.elasticmq.rest.sqs.model.RedrivePolicy.BackwardCompatibleRedrivePolicy
@@ -67,7 +68,7 @@ trait QueueAttributesDirectives {
   }
 
   def getQueueAttributes(p: AnyParams): Route = {
-    p.action("GetQueueAttributes") {
+    p.action(GetQueueAttributes) {
       queueActorAndDataFromRequest(p) { (queueActor, queueData) =>
         import QueueReadableAttributeNames._
         import org.elasticmq.rest.sqs.model.RedrivePolicyJson._
@@ -153,7 +154,7 @@ trait QueueAttributesDirectives {
   }
 
   def setQueueAttributes(p: AnyParams): Route = {
-    p.action("SetQueueAttributes") {
+    p.action(SetQueueAttributes) {
       queueActorFromRequest(p) { queueActor =>
         val attributes = attributeNameAndValuesReader.read(p)
 
