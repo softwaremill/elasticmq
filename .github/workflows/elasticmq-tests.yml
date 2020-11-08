@@ -1,0 +1,50 @@
+name: ElasticMQ tests
+
+on: [push, pull_request]
+
+jobs:
+  scala-lint:
+    name: Scala linting
+    runs-on: ubuntu-18.04
+    steps:
+    - name: Check-out repository
+      id: repo-checkout
+      uses: actions/checkout@v2
+
+    - name: Run scalafmt
+      id: run-scalafmt
+      uses: openlawteam/scalafmt-ci@v2
+      with:
+        args: "--exclude=third_party --list"
+
+  scala-tests:
+  # needs: scala-lint
+    name: Scala testing
+    strategy:
+      matrix:
+        scala: [2.12.10, 2.13.3]
+    runs-on: ubuntu-18.04
+    steps:
+    - name: Check-out repository
+      id: repo-checkout
+      uses: actions/checkout@v2
+
+    - name: Set up JDK 8
+      id: jdk-setup
+      uses: actions/setup-java@v1
+      with:
+        java-version: 8
+
+    - name: Cache SBT
+      id: cache-sbt
+      uses: actions/cache@v2
+      with:
+        path: |
+          ~/.sbt
+          ~/.ivy2/cache
+          ~/.coursier
+        key: ${{ runner.os }}-sbt-${{ hashFiles('**/build.sbt') }}
+
+    - name: Run tests
+      id: run-tests
+      run: sbt ++${{ matrix.scala }} test
