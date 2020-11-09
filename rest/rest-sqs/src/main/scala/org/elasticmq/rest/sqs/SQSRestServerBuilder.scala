@@ -16,7 +16,7 @@ import com.typesafe.config.ConfigFactory
 import javax.management.ObjectName
 import org.elasticmq._
 import org.elasticmq.actor.QueueManagerActor
-import org.elasticmq.metrics.{QueueMetrics, QueuesMetrics}
+import org.elasticmq.metrics.QueuesMetrics
 import org.elasticmq.rest.sqs.Constants._
 import org.elasticmq.rest.sqs.directives.{ElasticMQDirectives, UnmatchedActionRoutes}
 import org.elasticmq.util.{Logging, NowProvider}
@@ -228,13 +228,8 @@ case class TheSQSRestServerBuilder(
 
     val queuesMetricsBean = new QueuesMetrics(theQueueManagerActor)
     val platformMBeanServer = ManagementFactory.getPlatformMBeanServer
-    val objectName = new ObjectName("org.elasticmq:name=Queues,type=Queue")
-
-    val queueMetricsBean = new QueueMetrics(theQueueManagerActor)
-    val objectName2 = new ObjectName("org.elasticmq:name=Queue,type=Queue")
-
+    val objectName = new ObjectName("org.elasticmq:name=Queues")
     platformMBeanServer.registerMBean(queuesMetricsBean, objectName)
-    platformMBeanServer.registerMBean(queueMetricsBean, objectName2)
 
     SQSRestServer(
       appStartFuture,
