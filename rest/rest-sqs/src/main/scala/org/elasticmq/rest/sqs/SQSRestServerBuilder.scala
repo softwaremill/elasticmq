@@ -1,6 +1,7 @@
 package org.elasticmq.rest.sqs
 
 import java.io.ByteArrayOutputStream
+import java.lang.management.ManagementFactory
 import java.nio.ByteBuffer
 import java.security.MessageDigest
 import java.util.concurrent.TimeUnit
@@ -12,8 +13,10 @@ import akka.http.scaladsl.server.{Directive1, Directives}
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
 import com.typesafe.config.ConfigFactory
+import javax.management.ObjectName
 import org.elasticmq._
 import org.elasticmq.actor.QueueManagerActor
+import org.elasticmq.metrics.{QueueMetrics, QueuesMetrics}
 import org.elasticmq.rest.sqs.Constants._
 import org.elasticmq.rest.sqs.directives.{ElasticMQDirectives, UnmatchedActionRoutes}
 import org.elasticmq.util.{Logging, NowProvider}
@@ -222,6 +225,16 @@ case class TheSQSRestServerBuilder(
       TheSQSRestServerBuilder.this.logger
         .error("Cannot start SQS rest server, bind address %s:%d".format(interface, port), e)
     }
+
+    val queuesMetricsBean = new QueuesMetrics(theQueueManagerActor)
+    val platformMBeanServer = ManagementFactory.getPlatformMBeanServer
+    val objectName = new ObjectName("org.elasticmq:name=Queues,type=Queue")
+
+    val queueMetricsBean = new QueueMetrics(theQueueManagerActor)
+    val objectName2 = new ObjectName("org.elasticmq:name=Queue,type=Queue")
+
+    platformMBeanServer.registerMBean(queuesMetricsBean, objectName)
+    platformMBeanServer.registerMBean(queueMetricsBean, objectName2)
 
     SQSRestServer(
       appStartFuture,
