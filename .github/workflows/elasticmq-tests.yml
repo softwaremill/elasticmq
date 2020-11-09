@@ -2,8 +2,12 @@ name: ElasticMQ tests
 
 on: [push, pull_request]
 
+env:
+  SCALAFMT_ENABLE: false
+
 jobs:
   scala-lint:
+    if: (env.SCALAFMT_ENABLE == 'true') && (github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository)
     name: Scala linting
     runs-on: ubuntu-18.04
     steps:
@@ -18,7 +22,8 @@ jobs:
         args: "--exclude=third_party --list"
 
   scala-tests:
-  # needs: scala-lint
+    # run on external PRs, but not on internal PRs since those will be run by push to branch
+    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
     name: Scala testing
     strategy:
       matrix:
@@ -43,7 +48,7 @@ jobs:
           ~/.sbt
           ~/.ivy2/cache
           ~/.coursier
-        key: ${{ runner.os }}-sbt-${{ hashFiles('**/build.sbt') }}
+        key: ${{ runner.os }}-sbt-${{ matrix.scala }}-${{ hashFiles('**/build.sbt') }}
 
     - name: Run tests
       id: run-tests
