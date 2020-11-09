@@ -1,0 +1,57 @@
+name: ElasticMQ tests
+
+on: [push, pull_request]
+
+env:
+  SCALAFMT_ENABLE: false
+
+jobs:
+  scala-lint:
+    # using environment variables as condition on job level does not work yet in GitHub Actions (see e.g. https://github.com/actions/runner/issues/480)
+    #if: (env.SCALAFMT_ENABLE == 'true') && (github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository)
+    if: false
+    name: Scala linting
+    runs-on: ubuntu-18.04
+    steps:
+    - name: Check-out repository
+      id: repo-checkout
+      uses: actions/checkout@v2
+
+    - name: Run scalafmt
+      id: run-scalafmt
+      uses: openlawteam/scalafmt-ci@v2
+      with:
+        args: "--exclude=third_party --list"
+
+  scala-tests:
+    # run on external PRs, but not on internal PRs since those will be run by push to branch
+    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
+    name: Scala testing
+    strategy:
+      matrix:
+        scala: [2.12.10, 2.13.3]
+    runs-on: ubuntu-18.04
+    steps:
+    - name: Check-out repository
+      id: repo-checkout
+      uses: actions/checkout@v2
+
+    - name: Set up JDK 8
+      id: jdk-setup
+      uses: actions/setup-java@v1
+      with:
+        java-version: 8
+
+    - name: Cache SBT
+      id: cache-sbt
+      uses: actions/cache@v2
+      with:
+        path: |
+          ~/.sbt
+          ~/.ivy2/cache
+          ~/.coursier
+        key: ${{ runner.os }}-sbt-${{ matrix.scala }}-${{ hashFiles('**/build.sbt') }}
+
+    - name: Run tests
+      id: run-tests
+      run: sbt ++${{ matrix.scala }} test
