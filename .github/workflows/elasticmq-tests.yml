@@ -7,7 +7,9 @@ env:
 
 jobs:
   scala-lint:
-    if: (env.SCALAFMT_ENABLE == 'true') && (github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository)
+    # using environment variables as condition on job level does not work yet in GitHub Actions (see e.g. https://github.com/actions/runner/issues/480)
+    #if: (env.SCALAFMT_ENABLE == 'true') && (github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository)
+    if: false
     name: Scala linting
     runs-on: ubuntu-18.04
     steps:
