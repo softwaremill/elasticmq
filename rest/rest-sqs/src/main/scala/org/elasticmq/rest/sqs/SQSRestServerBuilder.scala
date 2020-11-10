@@ -229,7 +229,9 @@ case class TheSQSRestServerBuilder(
     val queuesMetricsBean = new QueuesMetrics(theQueueManagerActor)
     val platformMBeanServer = ManagementFactory.getPlatformMBeanServer
     val objectName = new ObjectName("org.elasticmq:name=Queues")
-    platformMBeanServer.registerMBean(queuesMetricsBean, objectName)
+    if (!platformMBeanServer.isRegistered(objectName)) {
+      platformMBeanServer.registerMBean(queuesMetricsBean, objectName)
+    }
 
     SQSRestServer(
       appStartFuture,
