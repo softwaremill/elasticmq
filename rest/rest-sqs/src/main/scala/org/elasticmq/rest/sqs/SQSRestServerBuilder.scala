@@ -144,7 +144,8 @@ case class TheSQSRestServerBuilder(
       with AttributesModule
       with TagQueueDirectives
       with TagsModule
-      with UnmatchedActionRoutes {
+      with UnmatchedActionRoutes
+      with StatisticsDirectives {
 
       def serverAddress = currentServerAddress.get()
 
@@ -191,6 +192,7 @@ case class TheSQSRestServerBuilder(
 
     val routes =
       handleServerExceptions {
+        statistics ~
         handleRejectionsWithSQSError {
           anyParamsMap { p =>
             if (config.debug) {
