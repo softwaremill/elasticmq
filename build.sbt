@@ -88,6 +88,7 @@ val akka2Streams = "com.typesafe.akka" %% "akka-stream" % akkaVersion
 val akka2Testkit = "com.typesafe.akka" %% "akka-testkit" % akkaVersion % "test"
 val akka2Http = "com.typesafe.akka" %% "akka-http" % akkaHttpVersion
 val sprayJson = "io.spray" %% "spray-json" % "1.3.5"
+val akkaHttpSprayJson = "com.typesafe.akka" %% "akka-http-spray-json" % akkaHttpVersion
 val akka2HttpTestkit = "com.typesafe.akka" %% "akka-http-testkit" % akkaHttpVersion % "test"
 
 val scalaAsync = "org.scala-lang.modules" %% "scala-async" % "0.10.0"
@@ -135,6 +136,7 @@ lazy val restSqs: Project = (project in file("rest/rest-sqs"))
                                 akka2Http,
                                 akka2Streams,
                                 sprayJson,
+                                akkaHttpSprayJson,
                                 akka2Testkit,
                                 akka2HttpTestkit,
                                 scalaAsync) ++ common
