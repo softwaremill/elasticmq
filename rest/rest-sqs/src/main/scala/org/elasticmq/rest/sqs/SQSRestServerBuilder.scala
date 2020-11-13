@@ -145,7 +145,9 @@ case class TheSQSRestServerBuilder(
       with TagQueueDirectives
       with TagsModule
       with UnmatchedActionRoutes
-      with StatisticsDirectives {
+      with StatisticsDirectives
+      with QueueAttributesOps
+    {
 
       def serverAddress = currentServerAddress.get()
 
