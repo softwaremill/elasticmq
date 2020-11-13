@@ -3,6 +3,7 @@ package org.elasticmq.rest.sqs
 import java.util.concurrent.Executors
 
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
+import akka.http.scaladsl.model.StatusCodes.{InternalServerError, NotFound}
 import org.elasticmq.QueueStatistics
 import org.elasticmq.metrics.QueueMetricsOps
 import org.elasticmq.rest.sqs.directives.ElasticMQDirectives
@@ -10,10 +11,11 @@ import org.elasticmq.util.NowProvider
 import spray.json._
 
 import scala.concurrent.{Await, ExecutionContext}
+import scala.util.{Failure, Success}
 
 final case class QueueResponse(
                                 name: String,
-                                statistics: QueueStatisticsResponse
+                                statistics: Option[QueueStatisticsResponse]
                               )
 
 final case class QueueStatisticsResponse(
@@ -22,7 +24,6 @@ final case class QueueStatisticsResponse(
                                           approximateNumberOfMessagesDelayed: Long
                                         )
 
-//type QueueAttributesRest Map[String, String]
 
 trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val queueStatisticsFormat = jsonFormat3(QueueStatisticsResponse)
@@ -32,7 +33,7 @@ trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
 trait StatisticsDirectives extends JsonSupport {
   this: ElasticMQDirectives =>
 
-  lazy val np = new NowProvider
+  lazy val nowProvider = new NowProvider
   lazy val ec: ExecutionContext = ExecutionContext.fromExecutorService(Executors.newFixedThreadPool(2))
   implicit val duration = timeout.duration
 
@@ -45,8 +46,9 @@ trait StatisticsDirectives extends JsonSupport {
           }
         },
         path(Segment) { queueName =>
-          complete {
-            gatherSpecificQueueWithStats(queueName)
+          onComplete(gatherSpecificQueueWithStats(queueName)) {
+            case Success(value) => complete(value)
+            case Failure(ex) => complete(NotFound, s"Can't load data for queue ${queueName}. Error ${ex.getMessage}")
           }
         }
       )
@@ -55,26 +57,23 @@ trait StatisticsDirectives extends JsonSupport {
 
   def gatherAllQueuesWithStats = {
 
-    Await.result(
-      QueueMetricsOps.getQueuesStatistics(queueManagerActor, np), duration)
-      .map { case (name, stats) => mapToRest(name, stats) }
-      .toList
+    QueueMetricsOps.getQueuesStatistics(queueManagerActor, nowProvider)
+      .map { x => x.map { case (name, stats) => mapToRest(name, Some(stats)) } }
   }
 
   def gatherSpecificQueueWithStats(queueName: String) = {
+    //TODO gather attribs
 
-    val eventualResponse = QueueMetricsOps.getQueueStatistics(queueName, queueManagerActor, np)
-      .map(stats => mapToRest(queueName, stats))
-
-    Await.result(eventualResponse, duration)
+    QueueMetricsOps.getQueueStatistics(queueName, queueManagerActor, nowProvider)
+      .map(_ => mapToRest(queueName, None))
 
   }
 
-  private def mapToRest(queueName: String, stats: QueueStatistics) = {
-    QueueResponse(queueName, QueueStatisticsResponse(
+  private def mapToRest(queueName: String, maybeStatistics: Option[QueueStatistics]) = {
+    QueueResponse(queueName, maybeStatistics.map(stats => QueueStatisticsResponse(
       approximateNumberOfInvisibleMessages = stats.approximateNumberOfInvisibleMessages,
       approximateNumberOfMessagesDelayed = stats.approximateNumberOfMessagesDelayed,
       approximateNumberOfVisibleMessages = stats.approximateNumberOfVisibleMessages
-    ))
+    )))
   }
 }
