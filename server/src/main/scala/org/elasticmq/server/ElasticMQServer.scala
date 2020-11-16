@@ -4,7 +4,8 @@ import akka.actor.{ActorRef, ActorSystem, Props}
 import akka.util.Timeout
 import org.elasticmq.actor.QueueManagerActor
 import org.elasticmq.actor.reply._
-import org.elasticmq.rest.sqs.{CreateQueueDirectives, SQSRestServer, StatisticsRestServer, TheSQSRestServerBuilder, TheStatisticsRestServerBuilder}
+import org.elasticmq.rest.sqs.{CreateQueueDirectives, SQSRestServer, TheSQSRestServerBuilder}
+import org.elasticmq.rest.stats.{StatisticsRestServer, TheStatisticsRestServerBuilder}
 import org.elasticmq.server.config.{CreateQueue, ElasticMQServerConfig}
 import org.elasticmq.util.{Logging, NowProvider}
 import org.elasticmq.{DeadLettersQueueData, ElasticMQError, MillisVisibilityTimeout, QueueData}

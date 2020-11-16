@@ -1,22 +1,29 @@
-package org.elasticmq.rest.sqs
+package org.elasticmq.rest.stats
 
 import java.util.concurrent.Executors
 
+import akka.actor.ActorRef
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.model.StatusCodes.NotFound
 import akka.http.scaladsl.server.Route
-import org.elasticmq.QueueStatistics
 import org.elasticmq.metrics.QueueMetricsOps
+import org.elasticmq.rest.sqs.QueueAttributesOps
 import org.elasticmq.rest.sqs.directives.ElasticMQDirectives
-import org.elasticmq.util.NowProvider
+import org.elasticmq.util.{NowProvider, NowProviderHolder}
+import org.elasticmq.{QueueData, QueueStatistics}
 import spray.json._
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
+
+final case class QueuesResponse(
+                                 name: String,
+                                 statistics: QueueStatisticsResponse
+                               )
 
 final case class QueueResponse(
                                 name: String,
-                                statistics: Option[QueueStatisticsResponse]
+                                attributes: Attributes
                               )
 
 final case class QueueStatisticsResponse(
@@ -28,15 +35,17 @@ final case class QueueStatisticsResponse(
 
 trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val queueStatisticsFormat = jsonFormat3(QueueStatisticsResponse)
+  implicit val queuesFormat = jsonFormat2(QueuesResponse)
   implicit val queueFormat = jsonFormat2(QueueResponse)
 }
 
 trait StatisticsDirectives extends JsonSupport {
-  this: ElasticMQDirectives with QueueAttributesOps =>
+  this: ElasticMQDirectives with QueueAttributesOps with NowProviderHolder =>
 
-  lazy val nowProvider = new NowProvider
   lazy val ec: ExecutionContext = ExecutionContext.fromExecutorService(Executors.newFixedThreadPool(2))
   implicit val duration = timeout.duration
+
+  val np: NowProvider = nowProvider
 
   def statistics = {
     pathPrefix("statistics" / "queues") {
@@ -47,22 +56,22 @@ trait StatisticsDirectives extends JsonSupport {
           }
         },
         path(Segment) { queueName =>
-          gatherSpecificQueueWithStats(queueName)
+          gatherSpecificQueueWithAttributesRoute(queueName)
         }
       )
     }
   }
 
-  def gatherAllQueuesWithStats = {
+  def gatherAllQueuesWithStats: Future[Iterable[QueuesResponse]] = {
 
-    QueueMetricsOps.getQueuesStatistics(queueManagerActor, nowProvider)
-      .map { x => x.map { case (name, stats) => mapToRest(name, Some(stats)) } }
+    QueueMetricsOps.getQueuesStatistics(queueManagerActor, np)
+      .map { x => x.map { case (name, stats) => mapToRestQueuesResponse(name, stats) } }
   }
 
-  def gatherSpecificQueueWithStats(queueName: String): Route = {
+  def gatherSpecificQueueWithAttributesRoute(queueName: String): Route = {
     val map = Map("QueueName" -> queueName)
     queueActorAndDataFromRequest(map) { (queueActor, queueData) =>
-      onComplete(getAllQueueAttributes(map, queueActor, queueData)) {
+      onComplete(asQueryResponse(queueName, map, queueActor, queueData)) {
         case Success(value) => complete(value)
         case Failure(ex) =>
           logger.error(s"Error while loading statistics for queue ${queueName}", ex)
@@ -71,11 +80,18 @@ trait StatisticsDirectives extends JsonSupport {
     }
   }
 
-  private def mapToRest(queueName: String, maybeStatistics: Option[QueueStatistics]) = {
-    QueueResponse(queueName, maybeStatistics.map(stats => QueueStatisticsResponse(
-      approximateNumberOfInvisibleMessages = stats.approximateNumberOfInvisibleMessages,
-      approximateNumberOfMessagesDelayed = stats.approximateNumberOfMessagesDelayed,
-      approximateNumberOfVisibleMessages = stats.approximateNumberOfVisibleMessages
-    )))
+  private def asQueryResponse(name: String, map: Map[String, String], queueActor: ActorRef, queueData: QueueData): Future[QueueResponse] = {
+    getAllQueueAttributes(map, queueActor, queueData)
+      .map(list => QueueResponse(name = name, list.toMap))
+  }
+
+  private def mapToRestQueuesResponse(queueName: String, statistics: QueueStatistics): QueuesResponse = {
+    QueuesResponse(queueName,
+      QueueStatisticsResponse(
+        approximateNumberOfInvisibleMessages = statistics.approximateNumberOfInvisibleMessages,
+        approximateNumberOfMessagesDelayed = statistics.approximateNumberOfMessagesDelayed,
+        approximateNumberOfVisibleMessages = statistics.approximateNumberOfVisibleMessages
+      )
+    )
   }
 }

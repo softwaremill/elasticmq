@@ -1,4 +1,4 @@
-package org.elasticmq.rest.sqs
+package org.elasticmq.rest.stats
 
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
@@ -9,8 +9,9 @@ import akka.stream.ActorMaterializer
 import akka.util.Timeout
 import org.elasticmq._
 import org.elasticmq.actor.QueueManagerActor
+import org.elasticmq.rest.sqs.QueueAttributesOps
 import org.elasticmq.rest.sqs.directives.ElasticMQDirectives
-import org.elasticmq.util.{Logging, NowProvider}
+import org.elasticmq.util.{ Logging, NowProvider, NowProviderHolder}
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
@@ -104,7 +105,7 @@ case class TheStatisticsRestServerBuilder(
     val env = new StatisticsDirectives
       with QueueAttributesOps
       with ElasticMQDirectives
-    {
+      with NowProviderHolder {
 
       def serverAddress = currentServerAddress.get()
 
