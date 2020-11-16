@@ -13,10 +13,10 @@ import org.elasticmq.util.MutableNowProviderHolder
 import org.elasticmq.{MillisVisibilityTimeout, QueueData, StrictSQSLimits}
 import org.joda.time.Duration
 import org.scalatest._
+import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-import scala.concurrent.Await
 import scala.concurrent.duration.DurationInt
 
 class StatisticsDirectivesTest extends AnyFlatSpec
@@ -34,7 +34,9 @@ class StatisticsDirectivesTest extends AnyFlatSpec
   with StatisticsDirectives
   with ElasticMQDirectives
   with QueueAttributesOps
-  with BeforeAndAfter {
+  with BeforeAndAfter
+  with ScalaFutures
+  with IntegrationPatience {
 
   def awsAccountId: String = "id"
 
@@ -95,16 +97,13 @@ class StatisticsDirectivesTest extends AnyFlatSpec
 
 
   private def createQueueWithName(name: String) = {
-    val future = queueManagerActor ? CreateQueue(
+    (queueManagerActor ? CreateQueue(
       QueueData(name, MillisVisibilityTimeout(1L), Duration.ZERO, Duration.ZERO, nowProvider.now, nowProvider.now)
-    )
-
-    Await.result(future, timeout.duration)
+    )).futureValue
   }
 
   private def deleteQueueWithName(name: String) = {
-    val future = queueManagerActor ? DeleteQueue(name)
+    (queueManagerActor ? DeleteQueue(name)).futureValue
 
-    Await.result(future, timeout.duration)
   }
 }
