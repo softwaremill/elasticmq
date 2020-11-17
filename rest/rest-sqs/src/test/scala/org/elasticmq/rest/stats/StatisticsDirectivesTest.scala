@@ -73,20 +73,21 @@ class StatisticsDirectivesTest extends AnyFlatSpec
 
     Get("/statistics/queues/firstQueue") ~> route ~> check {
       val queueResponse = responseAs[QueueResponse]
+      val expectedNowTimeInMillis = (nowProvider.nowMillis/1000L).toString
       queueResponse.name shouldEqual "firstQueue"
       queueResponse.attributes should contain theSameElementsAs Map("ApproximateNumberOfMessagesDelayed" -> "0",
         "VisibilityTimeout" -> "0",
         "ApproximateNumberOfMessagesNotVisible" -> "0",
-        "LastModifiedTimestamp" -> "1577833200",
+        "LastModifiedTimestamp" -> expectedNowTimeInMillis,
         "QueueArn" -> "arn:aws:sqs:region:id:firstQueue",
-        "CreatedTimestamp" -> "1577833200",
+        "CreatedTimestamp" -> expectedNowTimeInMillis,
         "ApproximateNumberOfMessages" -> "0",
         "ReceiveMessageWaitTimeSeconds" -> "0",
         "DelaySeconds" -> "0"
       )
     }
   }
-
+  
   before {
     createQueueWithName("firstQueue")
     createQueueWithName("secondQueue")
