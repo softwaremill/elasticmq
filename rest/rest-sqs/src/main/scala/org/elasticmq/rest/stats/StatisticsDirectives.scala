@@ -9,7 +9,7 @@ import akka.http.scaladsl.server.Route
 import org.elasticmq.metrics.QueueMetricsOps
 import org.elasticmq.rest.sqs.QueueAttributesOps
 import org.elasticmq.rest.sqs.directives.ElasticMQDirectives
-import org.elasticmq.util.{NowProvider, NowProviderHolder}
+import org.elasticmq.util.NowProvider
 import org.elasticmq.{QueueData, QueueStatistics}
 import spray.json._
 
@@ -40,14 +40,12 @@ trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
 }
 
 trait StatisticsDirectives extends JsonSupport {
-  this: ElasticMQDirectives with QueueAttributesOps with NowProviderHolder =>
+  this: ElasticMQDirectives with QueueAttributesOps  =>
 
   lazy val ec: ExecutionContext = ExecutionContext.fromExecutorService(Executors.newFixedThreadPool(2))
   implicit val duration = timeout.duration
 
-  val np: NowProvider = nowProvider
-
-  def statistics = {
+  def statistics(implicit np: NowProvider) = {
     pathPrefix("statistics" / "queues") {
       concat(
         pathEndOrSingleSlash {
@@ -62,7 +60,7 @@ trait StatisticsDirectives extends JsonSupport {
     }
   }
 
-  def gatherAllQueuesWithStats: Future[Iterable[QueuesResponse]] = {
+  def gatherAllQueuesWithStats(implicit np: NowProvider): Future[Iterable[QueuesResponse]] = {
 
     QueueMetricsOps.getQueuesStatistics(queueManagerActor, np)
       .map { x => x.map { case (name, stats) => mapToRestQueuesResponse(name, stats) } }

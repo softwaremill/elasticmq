@@ -11,7 +11,7 @@ import org.elasticmq._
 import org.elasticmq.actor.QueueManagerActor
 import org.elasticmq.rest.sqs.QueueAttributesOps
 import org.elasticmq.rest.sqs.directives.ElasticMQDirectives
-import org.elasticmq.util.{ Logging, NowProvider, NowProviderHolder}
+import org.elasticmq.util.{Logging, NowProvider}
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
@@ -89,6 +89,9 @@ case class TheStatisticsRestServerBuilder(
     this.copy(_awsAccountId = accountId)
 
   def start(): StatisticsRestServer = {
+
+    implicit val nowProvider = new NowProvider()
+
     val (theActorSystem, stopActorSystem) = getOrCreateActorSystem
     val theQueueManagerActor = getOrCreateQueueManagerActor(theActorSystem)
     val theServerAddress =
@@ -104,8 +107,7 @@ case class TheStatisticsRestServerBuilder(
 
     val env = new StatisticsDirectives
       with QueueAttributesOps
-      with ElasticMQDirectives
-      with NowProviderHolder {
+      with ElasticMQDirectives {
 
       def serverAddress = currentServerAddress.get()
 
@@ -167,8 +169,9 @@ case class TheStatisticsRestServerBuilder(
       }
   }
 
-  private def getOrCreateQueueManagerActor(actorSystem: ActorSystem) = {
-    providedQueueManagerActor.getOrElse(actorSystem.actorOf(Props(new QueueManagerActor(new NowProvider(), StrictSQSLimits))))
+  private def getOrCreateQueueManagerActor(actorSystem: ActorSystem)(implicit nowProvider: NowProvider) = {
+
+    providedQueueManagerActor.getOrElse(actorSystem.actorOf(Props(new QueueManagerActor(nowProvider, StrictSQSLimits))))
   }
 }
 

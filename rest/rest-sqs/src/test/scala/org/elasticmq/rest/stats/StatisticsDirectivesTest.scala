@@ -9,9 +9,9 @@ import org.elasticmq.actor.reply.ReplyActorRef
 import org.elasticmq.msg.{CreateQueue, DeleteQueue}
 import org.elasticmq.rest.sqs.directives._
 import org.elasticmq.rest.sqs.{ActorSystemModule, QueueAttributesOps, QueueManagerActorModule}
-import org.elasticmq.util.MutableNowProviderHolder
+import org.elasticmq.util.MutableNowProvider
 import org.elasticmq.{MillisVisibilityTimeout, QueueData, StrictSQSLimits}
-import org.joda.time.Duration
+import org.joda.time.{DateTime, Duration}
 import org.scalatest._
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.flatspec.AnyFlatSpec
@@ -30,7 +30,6 @@ class StatisticsDirectivesTest extends AnyFlatSpec
   with ActorSystemModule
   with ExceptionDirectives
   with RespondDirectives
-  with MutableNowProviderHolder
   with StatisticsDirectives
   with ElasticMQDirectives
   with QueueAttributesOps
@@ -44,6 +43,10 @@ class StatisticsDirectivesTest extends AnyFlatSpec
 
   implicit lazy val timeout: Timeout = 1.minute
   implicit lazy val actorSystem: ActorSystem = ActorSystem("test-actor-system")
+
+  implicit val nowProvider = new MutableNowProvider(
+    new DateTime().withDate(2020, 1, 1).withTimeAtStartOfDay().getMillis)
+
   lazy val queueManagerActor: ActorRef =
     actorSystem.actorOf(Props(new QueueManagerActor(nowProvider, StrictSQSLimits)))
 
