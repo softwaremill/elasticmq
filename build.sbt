@@ -141,7 +141,7 @@ lazy val restSqs: Project = (project in file("rest/rest-sqs"))
                                 akka2HttpTestkit,
                                 scalaAsync) ++ common
   ))
-  .dependsOn(core, commonTest % "test")
+  .dependsOn(core % "compile->compile;test->test", commonTest % "test")
 
 lazy val restSqsTestingAmazonJavaSdk: Project =
   (project in file("rest/rest-sqs-testing-amazon-java-sdk"))
