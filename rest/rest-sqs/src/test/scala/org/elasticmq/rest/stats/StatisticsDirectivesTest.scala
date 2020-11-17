@@ -65,7 +65,7 @@ class StatisticsDirectivesTest extends AnyFlatSpec
     }
   }
 
-  "statisticsRequestForCertainQueue" should "return all queues statistics" in {
+  "statisticsRequestForCertainQueue" should "return statistics for specified queue" in {
 
     val route = {
       statistics
