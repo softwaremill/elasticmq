@@ -1,7 +1,5 @@
 package org.elasticmq.rest.stats
 
-import java.util.concurrent.Executors
-
 import akka.actor.ActorRef
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.model.StatusCodes.NotFound
@@ -42,7 +40,7 @@ trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
 trait StatisticsDirectives extends JsonSupport {
   this: ElasticMQDirectives with QueueAttributesOps  =>
 
-  lazy val ec: ExecutionContext = ExecutionContext.fromExecutorService(Executors.newFixedThreadPool(2))
+  lazy val ec: ExecutionContext = actorSystem.dispatcher
   implicit val duration = timeout.duration
 
   def statistics(implicit np: NowProvider) = {
