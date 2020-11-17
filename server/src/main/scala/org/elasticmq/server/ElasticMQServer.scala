@@ -11,8 +11,8 @@ import org.elasticmq.util.{Logging, NowProvider}
 import org.elasticmq.{DeadLettersQueueData, ElasticMQError, MillisVisibilityTimeout, QueueData}
 import org.joda.time.{DateTime, Duration}
 
-import scala.concurrent.Await
 import scala.concurrent.duration.Duration.Inf
+import scala.concurrent.{Await, ExecutionContextExecutor, Future}
 
 class ElasticMQServer(config: ElasticMQServerConfig) extends Logging {
   val actorSystem = ActorSystem("elasticmq")
@@ -23,9 +23,17 @@ class ElasticMQServer(config: ElasticMQServerConfig) extends Logging {
     val restStatisticsServerOpt = optionallyStartRestStatistics(queueManagerActor)
 
     val shutdown = () => {
-      restServerOpt.map(_.stopAndGetFuture())
-      restStatisticsServerOpt.map(_.stopAndGetFuture())
-      Await.result(actorSystem.terminate(), Inf)
+      implicit val ec: ExecutionContextExecutor = actorSystem.dispatcher
+
+      val futureTerminationRestSQS = restServerOpt.map(_.stopAndGetFuture()).getOrElse(Future.unit)
+      val futureTerminationRestStats = restStatisticsServerOpt.map(_.stopAndGetFuture()).getOrElse(Future.unit)
+      val eventualTerminated = for {
+        _ <- futureTerminationRestSQS
+        _ <- futureTerminationRestStats
+        ac <- actorSystem.terminate()
+      } yield ac
+      Await.result(eventualTerminated, Inf)
+
     }
 
     createQueues(queueManagerActor) match {
@@ -72,7 +80,7 @@ class ElasticMQServer(config: ElasticMQServerConfig) extends Logging {
     if (config.restStatisticsConfiguration.enabled) {
 
       val server = TheStatisticsRestServerBuilder(
-        Some(actorSystem),
+        actorSystem,
         Some(queueManagerActor),
         config.restStatisticsConfiguration.bindHostname,
         config.restStatisticsConfiguration.bindPort,

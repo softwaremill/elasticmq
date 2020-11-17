@@ -236,7 +236,7 @@ case class TheSQSRestServerBuilder(
 
     SQSRestServer(
       appStartFuture,
-      () => appStartFuture.flatMap(_.unbind()).flatMap(_ => stopActorSystem())
+      () => appStartFuture.flatMap(_.terminate(1.minute))
     )
   }
 

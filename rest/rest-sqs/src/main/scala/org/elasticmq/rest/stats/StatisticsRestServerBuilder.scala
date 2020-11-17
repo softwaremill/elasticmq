@@ -17,27 +17,8 @@ import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 import scala.util.control.NonFatal
 
-/** By default:
-  * <li>
-  * <ul>for `socketAddress`: when started, the server will bind to `localhost:9325`</ul>
-  * <ul>for `serverAddress`: returned queue addresses will use `http://localhost:9325` as the base address.</ul>
-  * <ul>for `sqsLimits`: relaxed
-  * </li>
-  */
-object StatisticsRestServerBuilder
-  extends TheStatisticsRestServerBuilder(
-    None,
-    None,
-    "",
-    9325,
-    NodeAddress().copy(port = 9325),
-    true,
-    "elasticmq",
-    "000000000000"
-  )
-
 case class TheStatisticsRestServerBuilder(
-                                           providedActorSystem: Option[ActorSystem],
+                                           providedActorSystem: ActorSystem,
                                            providedQueueManagerActor: Option[ActorRef],
                                            interface: String,
                                            port: Int,
@@ -53,7 +34,7 @@ case class TheStatisticsRestServerBuilder(
     *                     lifecycle.
     */
   def withActorSystem(_actorSystem: ActorSystem) =
-    this.copy(providedActorSystem = Some(_actorSystem))
+    this.copy(providedActorSystem = _actorSystem)
 
   /** @param _queueManagerActor Optional "main" ElasticMQ actor.
     */
@@ -92,14 +73,13 @@ case class TheStatisticsRestServerBuilder(
 
     implicit val nowProvider = new NowProvider()
 
-    val (theActorSystem, stopActorSystem) = getOrCreateActorSystem
-    val theQueueManagerActor = getOrCreateQueueManagerActor(theActorSystem)
+    val theQueueManagerActor = getOrCreateQueueManagerActor(providedActorSystem)
     val theServerAddress =
       if (generateServerAddress)
         NodeAddress(host = if (interface.isEmpty) "localhost" else interface, port = port)
       else serverAddress
 
-    implicit val implicitActorSystem = theActorSystem
+    implicit val implicitActorSystem = providedActorSystem
     implicit val implicitMaterializer = ActorMaterializer()
 
     val currentServerAddress =
@@ -111,7 +91,7 @@ case class TheStatisticsRestServerBuilder(
 
       def serverAddress = currentServerAddress.get()
 
-      lazy val actorSystem = theActorSystem
+      lazy val actorSystem = providedActorSystem
       lazy val materializer = implicitMaterializer
       lazy val queueManagerActor = theQueueManagerActor
       lazy val timeout = Timeout(21, TimeUnit.SECONDS) // see application.conf
@@ -156,17 +136,8 @@ case class TheStatisticsRestServerBuilder(
 
     StatisticsRestServer(
       appStartFuture,
-      () => appStartFuture.flatMap(_.unbind()).flatMap(_ => stopActorSystem())
+      () => appStartFuture.flatMap(_.terminate(1.minute))
     )
-  }
-
-  private def getOrCreateActorSystem: (ActorSystem, () => Future[Any]) = {
-    providedActorSystem
-      .map((_, () => Future.successful(())))
-      .getOrElse {
-        val actorSystem = ActorSystem("elasticmq")
-        (actorSystem, actorSystem.terminate _)
-      }
   }
 
   private def getOrCreateQueueManagerActor(actorSystem: ActorSystem)(implicit nowProvider: NowProvider) = {
