@@ -11,7 +11,7 @@ import org.elasticmq.util.NowProvider
 import org.elasticmq.{QueueData, QueueStatistics}
 import spray.json._
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.{Future}
 import scala.util.{Failure, Success}
 
 final case class QueuesResponse(
@@ -40,7 +40,6 @@ trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
 trait StatisticsDirectives extends JsonSupport {
   this: ElasticMQDirectives with QueueAttributesOps  =>
 
-  lazy val ec: ExecutionContext = actorSystem.dispatcher
   implicit val duration = timeout.duration
 
   def statistics(implicit np: NowProvider) = {
