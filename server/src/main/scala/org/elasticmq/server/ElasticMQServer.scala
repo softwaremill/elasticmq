@@ -81,7 +81,7 @@ class ElasticMQServer(config: ElasticMQServerConfig) extends Logging {
 
       val server = TheStatisticsRestServerBuilder(
         actorSystem,
-        Some(queueManagerActor),
+        queueManagerActor,
         config.restStatisticsConfiguration.bindHostname,
         config.restStatisticsConfiguration.bindPort,
         config.nodeAddress,

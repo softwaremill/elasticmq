@@ -3,12 +3,11 @@ package org.elasticmq.rest.stats
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
 
-import akka.actor.{ActorRef, ActorSystem, Props}
+import akka.actor.{ActorRef, ActorSystem}
 import akka.http.scaladsl.Http
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
 import org.elasticmq._
-import org.elasticmq.actor.QueueManagerActor
 import org.elasticmq.rest.sqs.QueueAttributesOps
 import org.elasticmq.rest.sqs.directives.ElasticMQDirectives
 import org.elasticmq.util.{Logging, NowProvider}
@@ -19,7 +18,7 @@ import scala.util.control.NonFatal
 
 case class TheStatisticsRestServerBuilder(
                                            providedActorSystem: ActorSystem,
-                                           providedQueueManagerActor: Option[ActorRef],
+                                           providedQueueManagerActor: ActorRef,
                                            interface: String,
                                            port: Int,
                                            serverAddress: NodeAddress,
@@ -39,7 +38,7 @@ case class TheStatisticsRestServerBuilder(
   /** @param _queueManagerActor Optional "main" ElasticMQ actor.
     */
   def withQueueManagerActor(_queueManagerActor: ActorRef) =
-    this.copy(providedQueueManagerActor = Some(_queueManagerActor))
+    this.copy(providedQueueManagerActor = _queueManagerActor)
 
   /** @param _interface Hostname to which the server will bind.
     */
@@ -73,7 +72,6 @@ case class TheStatisticsRestServerBuilder(
 
     implicit val nowProvider = new NowProvider()
 
-    val theQueueManagerActor = getOrCreateQueueManagerActor(providedActorSystem)
     val theServerAddress =
       if (generateServerAddress)
         NodeAddress(host = if (interface.isEmpty) "localhost" else interface, port = port)
@@ -93,7 +91,7 @@ case class TheStatisticsRestServerBuilder(
 
       lazy val actorSystem = providedActorSystem
       lazy val materializer = implicitMaterializer
-      lazy val queueManagerActor = theQueueManagerActor
+      lazy val queueManagerActor = providedQueueManagerActor
       lazy val timeout = Timeout(21, TimeUnit.SECONDS) // see application.conf
 
       lazy val awsRegion: String = _awsRegion
@@ -102,8 +100,6 @@ case class TheStatisticsRestServerBuilder(
     }
 
     import env._
-
-    implicit val bindingTimeout = Timeout(10, TimeUnit.SECONDS)
 
     val routes =
       handleServerExceptions {
@@ -139,11 +135,11 @@ case class TheStatisticsRestServerBuilder(
       () => appStartFuture.flatMap(_.terminate(1.minute))
     )
   }
-
-  private def getOrCreateQueueManagerActor(actorSystem: ActorSystem)(implicit nowProvider: NowProvider) = {
-
-    providedQueueManagerActor.getOrElse(actorSystem.actorOf(Props(new QueueManagerActor(nowProvider, StrictSQSLimits))))
-  }
+//
+//  private def getOrCreateQueueManagerActor(actorSystem: ActorSystem)(implicit nowProvider: NowProvider) = {
+//
+//    providedQueueManagerActor.getOrElse(actorSystem.actorOf(Props(new QueueManagerActor(nowProvider, StrictSQSLimits))))
+//  }
 }
 
 case class StatisticsRestServer(startFuture: Future[Http.ServerBinding], stopAndGetFuture: () => Future[Any]) {
