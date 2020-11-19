@@ -64,9 +64,8 @@ trait StatisticsDirectives extends JsonSupport {
   }
 
   def gatherSpecificQueueWithAttributesRoute(queueName: String): Route = {
-    val map = Map("QueueName" -> queueName)
-    queueActorAndDataFromRequest(map) { (queueActor, queueData) =>
-      onComplete(asQueryResponse(queueName, map, queueActor, queueData)) {
+    queueActorAndDataFromQueueName(queueName) { (queueActor, queueData) =>
+      onComplete(getQueryResponseWithAttributesFuture(queueName, queueActor, queueData)) {
         case Success(value) => complete(value)
         case Failure(ex) =>
           logger.error(s"Error while loading statistics for queue ${queueName}", ex)
@@ -75,8 +74,8 @@ trait StatisticsDirectives extends JsonSupport {
     }
   }
 
-  private def asQueryResponse(name: String, map: Map[String, String], queueActor: ActorRef, queueData: QueueData): Future[QueueResponse] = {
-    getAllQueueAttributes(map, queueActor, queueData)
+  private def getQueryResponseWithAttributesFuture(name: String, queueActor: ActorRef, queueData: QueueData): Future[QueueResponse] = {
+    getAllQueueAttributes(queueActor, queueData)
       .map(list => QueueResponse(name = name, list.toMap))
   }
 

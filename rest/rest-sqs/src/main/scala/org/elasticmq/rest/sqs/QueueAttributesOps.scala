@@ -69,13 +69,9 @@ trait QueueAttributesOps extends AttributesModule {
         QueueArnAttribute :: Nil) ++ FifoAttributeNames.AllFifoAttributeNames
   }
 
-  def getAllQueueAttributes(p: AnyParams, queueActor: ActorRef, queueData: QueueData)(implicit timeout: Timeout, executionContext: ExecutionContext): Future[List[(String, String)]] = {
-    val attributesParams = QueueReadableAttributeNames.AllAttributeNames.zipWithIndex
-      .map { case (item, index) => (s"AttributeName.${index + 1}", item) }
-      .toMap
-
-    val fullParamsMap = attributesParams ++ p
-    getQueueAttributes(fullParamsMap, queueActor, queueData)
+  def getAllQueueAttributes(queueActor: ActorRef, queueData: QueueData)(implicit timeout: Timeout, executionContext: ExecutionContext): Future[List[(String, String)]] = {
+    val attributesParams = attributeNamesReader.prepareParametersForRead(QueueReadableAttributeNames.AllAttributeNames)
+    getQueueAttributes(attributesParams, queueActor, queueData)
   }
 
   def getQueueAttributes(p: AnyParams, queueActor: ActorRef, queueData: QueueData)(implicit timeout: Timeout, executionContext: ExecutionContext): Future[List[(String, String)]] = {
