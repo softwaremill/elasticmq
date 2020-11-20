@@ -1,8 +1,14 @@
 package org.elasticmq.rest.stats
 
+import java.io.File
+import java.nio.file.{Files, Paths}
+import java.util.concurrent.Executors
+
 import akka.actor.ActorRef
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
+import akka.http.scaladsl.model._
 import akka.http.scaladsl.model.StatusCodes.NotFound
+import akka.http.scaladsl.model.headers.`Access-Control-Allow-Origin`
 import akka.http.scaladsl.server.Route
 import org.elasticmq.metrics.QueueMetricsOps
 import org.elasticmq.rest.sqs.QueueAttributesOps
@@ -15,21 +21,20 @@ import scala.concurrent.{Future}
 import scala.util.{Failure, Success}
 
 final case class QueuesResponse(
-                                 name: String,
-                                 statistics: QueueStatisticsResponse
-                               )
+    name: String,
+    statistics: QueueStatisticsResponse
+)
 
 final case class QueueResponse(
-                                name: String,
-                                attributes: Attributes
-                              )
+    name: String,
+    attributes: Attributes
+)
 
 final case class QueueStatisticsResponse(
-                                          approximateNumberOfVisibleMessages: Long,
-                                          approximateNumberOfInvisibleMessages: Long,
-                                          approximateNumberOfMessagesDelayed: Long
-                                        )
-
+    approximateNumberOfVisibleMessages: Long,
+    approximateNumberOfInvisibleMessages: Long,
+    approximateNumberOfMessagesDelayed: Long
+)
 
 trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val queueStatisticsFormat = jsonFormat3(QueueStatisticsResponse)
@@ -46,20 +51,24 @@ trait StatisticsDirectives extends JsonSupport {
     pathPrefix("statistics" / "queues") {
       concat(
         pathEndOrSingleSlash {
-          complete {
-            gatherAllQueuesWithStats
+          respondWithHeader(`Access-Control-Allow-Origin`.*) {
+            complete(gatherAllQueuesWithStats)
           }
         },
         path(Segment) { queueName =>
-          gatherSpecificQueueWithAttributesRoute(queueName)
+          respondWithHeader(`Access-Control-Allow-Origin`.*) {
+            gatherSpecificQueueWithAttributesRoute(queueName)
+          }
         }
       )
-    }
+    } ~
+      serveUI
   }
 
   def gatherAllQueuesWithStats(implicit np: NowProvider): Future[Iterable[QueuesResponse]] = {
 
-    QueueMetricsOps.getQueuesStatistics(queueManagerActor, np)
+    QueueMetricsOps
+      .getQueuesStatistics(queueManagerActor, np)
       .map { x => x.map { case (name, stats) => mapToRestQueuesResponse(name, stats) } }
   }
 
@@ -74,13 +83,26 @@ trait StatisticsDirectives extends JsonSupport {
     }
   }
 
+  def serveUI = {
+    get {
+      entity(as[HttpRequest]) { requestData =>
+        requestData.uri.path.toString match {
+          case "/" => getFromResource("webapp/index.html")
+          case ""  => getFromResource("webapp/index.html")
+          case path   => getFromResource("webapp" + path)
+        }
+      }
+    }
+  }
+
   private def getQueryResponseWithAttributesFuture(name: String, queueActor: ActorRef, queueData: QueueData): Future[QueueResponse] = {
     getAllQueueAttributes(queueActor, queueData)
       .map(list => QueueResponse(name = name, list.toMap))
   }
 
   private def mapToRestQueuesResponse(queueName: String, statistics: QueueStatistics): QueuesResponse = {
-    QueuesResponse(queueName,
+    QueuesResponse(
+      queueName,
       QueueStatisticsResponse(
         approximateNumberOfInvisibleMessages = statistics.approximateNumberOfInvisibleMessages,
         approximateNumberOfMessagesDelayed = statistics.approximateNumberOfMessagesDelayed,
