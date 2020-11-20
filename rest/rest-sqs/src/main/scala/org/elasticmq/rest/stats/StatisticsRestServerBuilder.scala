@@ -135,11 +135,6 @@ case class TheStatisticsRestServerBuilder(
       () => appStartFuture.flatMap(_.terminate(1.minute))
     )
   }
-//
-//  private def getOrCreateQueueManagerActor(actorSystem: ActorSystem)(implicit nowProvider: NowProvider) = {
-//
-//    providedQueueManagerActor.getOrElse(actorSystem.actorOf(Props(new QueueManagerActor(nowProvider, StrictSQSLimits))))
-//  }
 }
 
 case class StatisticsRestServer(startFuture: Future[Http.ServerBinding], stopAndGetFuture: () => Future[Any]) {
