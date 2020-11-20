@@ -7,7 +7,7 @@ afterEach(() => {
     jest.clearAllMocks();
 })
 
-test("Get queues statistics should return basic information about messages in queues", async () => {
+test("Get queue list with correlated messages should return basic information about messages in queues", async () => {
     const data =
         [
             {
@@ -30,20 +30,20 @@ test("Get queues statistics should return basic information about messages in qu
 
     (axios.get as jest.Mock).mockResolvedValueOnce({data})
 
-    await expect(QueueService.getQueuesBasicInformation()).resolves.toEqual(data)
+    await expect(QueueService.getQueueListWithCorrelatedMessages()).resolves.toEqual(data)
     expect(axios.get).toBeCalledWith("statistics/queues")
 })
 
-test("Get queue statistics should return empty array if no queues are defined", async () => {
+test("Get queue list with correlated messages should return empty array if response does not contain queue info", async () => {
     const data: Array<any> = [];
 
     (axios.get as jest.Mock).mockResolvedValueOnce({data});
 
-    await expect(QueueService.getQueuesBasicInformation()).resolves.toEqual(data);
+    await expect(QueueService.getQueueListWithCorrelatedMessages()).resolves.toEqual(data);
     expect(axios.get).toBeCalledWith("statistics/queues")
 })
 
-test("Get queue statistics should return validation error if queue is missing name property", async () => {
+test("Get queue list with correlated messages should return validation error if queue is missing name property", async () => {
     expect.assertions(2);
 
     const data =
@@ -59,7 +59,7 @@ test("Get queue statistics should return validation error if queue is missing na
     (axios.get as jest.Mock).mockResolvedValueOnce({data});
 
     try {
-        await QueueService.getQueuesBasicInformation();
+        await QueueService.getQueueListWithCorrelatedMessages();
     } catch (e) {
         expect(e.errors).toEqual([
             "Required queueName"
@@ -68,7 +68,7 @@ test("Get queue statistics should return validation error if queue is missing na
     expect(axios.get).toBeCalledWith("statistics/queues")
 })
 
-test("Get queue statistics should return validation error if queue is missing approximate number of visible messages property", async () => {
+test("Get queue list with correlated messages should return validation error if queue is missing approximate number of visible messages property", async () => {
     expect.assertions(2);
 
     const data =
@@ -84,7 +84,7 @@ test("Get queue statistics should return validation error if queue is missing ap
     (axios.get as jest.Mock).mockResolvedValueOnce({data});
 
     try {
-        await QueueService.getQueuesBasicInformation();
+        await QueueService.getQueueListWithCorrelatedMessages();
     } catch (e) {
         expect(e.errors).toEqual([
             "Required approximateNumberOfVisibleMessages"
@@ -93,7 +93,7 @@ test("Get queue statistics should return validation error if queue is missing ap
     expect(axios.get).toBeCalledWith("statistics/queues")
 })
 
-test("Get queue statistics should return validation error if queue is missing approximate number of delayed messages property", async () => {
+test("Get queue list with correlated messages should return validation error if queue is missing approximate number of delayed messages property", async () => {
     expect.assertions(2);
 
     const data =
@@ -109,7 +109,7 @@ test("Get queue statistics should return validation error if queue is missing ap
     (axios.get as jest.Mock).mockResolvedValueOnce({data});
 
     try {
-        await QueueService.getQueuesBasicInformation();
+        await QueueService.getQueueListWithCorrelatedMessages();
     } catch (e) {
         expect(e.errors).toEqual([
             "Required approximateNumberOfMessagesDelayed"
@@ -118,7 +118,7 @@ test("Get queue statistics should return validation error if queue is missing ap
     expect(axios.get).toBeCalledWith("statistics/queues")
 })
 
-test("Get queue statistics should return validation error if queue is missing approximate number of invisible messages property", async () => {
+test("Get queue list with correlated messages should return validation error if queue is missing approximate number of invisible messages property", async () => {
     expect.assertions(2);
 
     const data =
@@ -134,7 +134,7 @@ test("Get queue statistics should return validation error if queue is missing ap
     (axios.get as jest.Mock).mockResolvedValueOnce({data});
 
     try {
-        await QueueService.getQueuesBasicInformation();
+        await QueueService.getQueueListWithCorrelatedMessages();
     } catch (e) {
         expect(e.errors).toEqual([
             "Required approximateNumberOfInvisibleMessages"

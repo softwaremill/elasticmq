@@ -23,15 +23,15 @@ function useRefreshedQueueStatistics(): QueuesStatisticsDataControl {
     }
 
     async function getInitialStatistics() {
-        return QueueService.getQueuesBasicInformation().then(QueuesStatistics => {
+        return QueueService.getQueueListWithCorrelatedMessages().then(QueuesStatistics => {
             return QueuesStatistics.map(queueStatistics => convertQueueStatisticsToNewQueueData(queueStatistics));
         });
     }
 
     const [queuesOverallData, setQueuesOverallData] = useState<QueueMessagesData[]>([]);
     useEffect(() => {
-        function getQueueBasicInformation() {
-            QueueService.getQueuesBasicInformation()
+        function getQueuesListWithMessages() {
+            QueueService.getQueueListWithCorrelatedMessages()
                 .then(statistics => {
                     setQueuesOverallData((prevState) => {
                         return statistics.map(queueStatistics => {
@@ -46,7 +46,7 @@ function useRefreshedQueueStatistics(): QueuesStatisticsDataControl {
                 })
         }
         const interval = setInterval(() => {
-            getQueueBasicInformation()
+            getQueuesListWithMessages()
         }, 1000);
         return () => {
             clearInterval(interval);

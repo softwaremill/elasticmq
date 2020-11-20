@@ -11,15 +11,15 @@ interface QueueStatistic {
     statistics: Statistics;
 }
 
-interface QueueRedrivePolicyAttribute {
-    deadLetterTargetArn: string,
-    maxReceiveCount: number
-}
-
 interface Statistics {
     approximateNumberOfVisibleMessages: number;
     approximateNumberOfMessagesDelayed: number;
     approximateNumberOfInvisibleMessages: number;
+}
+
+interface QueueRedrivePolicyAttribute {
+    deadLetterTargetArn: string,
+    maxReceiveCount: number
 }
 
 export type {QueueMessagesData, QueueStatistic, QueueRedrivePolicyAttribute}

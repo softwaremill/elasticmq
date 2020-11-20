@@ -1,7 +1,7 @@
 import React from "react";
 import axios from "axios";
 import {act, fireEvent, render, screen} from "@testing-library/react";
-import Row from "./QueueRow";
+import QueueTableRow from "./QueueRow";
 import {TableBody} from "@material-ui/core";
 import Table from "@material-ui/core/Table";
 
@@ -24,7 +24,7 @@ describe("<QueueRow />", () => {
         render(
             <Table>
                 <TableBody>
-                    <Row row={queue1}/>
+                    <QueueTableRow row={queue1}/>
                 </TableBody>
             </Table>
         )
@@ -49,7 +49,7 @@ describe("<QueueRow />", () => {
         render(
             <Table>
                 <TableBody>
-                    <Row row={queue1}/>
+                    <QueueTableRow row={queue1}/>
                 </TableBody>
             </Table>
         )

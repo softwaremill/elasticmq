@@ -6,14 +6,14 @@ import React, {useState} from "react";
 import {QueueMessagesData} from "./QueueMessageData";
 import RowDetails from "./QueueRowDetails";
 
-function Row(props: { row: QueueMessagesData }) {
+function QueueTableRow(props: { row: QueueMessagesData }) {
 
-    const [isOpened, setIsOpened] = useState<boolean>(false);
+    const [isExpanded, setIsExpanded] = useState<boolean>(false);
 
-    function ExpandableArrowButton(props: { isOpened: boolean }) {
+    function ExpandableArrowButton(props: { isExpanded: boolean }) {
         return <IconButton aria-label="open-details" size="small"
-                           onClick={() => setIsOpened(prevState => !prevState)}>
-            {props.isOpened ? <KeyboardArrowRight/> : <KeyboardArrowDown/>}
+                           onClick={() => setIsExpanded(prevState => !prevState)}>
+            {props.isExpanded ? <KeyboardArrowRight/> : <KeyboardArrowDown/>}
         </IconButton>
     }
 
@@ -22,16 +22,16 @@ function Row(props: { row: QueueMessagesData }) {
         <>
             <TableRow key={row.queueName} className={`queue-row`}>
                 <TableCell>
-                    <ExpandableArrowButton isOpened={isOpened}/>
+                    <ExpandableArrowButton isExpanded={isExpanded}/>
                 </TableCell>
                 <TableCell component="th" scope="row">{row.queueName}</TableCell>
                 <TableCell align="right">{row.currentMessagesNumber}</TableCell>
                 <TableCell align="right">{row.delayedMessagesNumber}</TableCell>
                 <TableCell align="right">{row.notVisibleMessagesNumber}</TableCell>
             </TableRow>
-            <RowDetails props={{isOpen: isOpened, queueName: row.queueName}}/>
+            <RowDetails props={{isExpanded: isExpanded, queueName: row.queueName}}/>
         </>
     )
 }
 
-export default Row
+export default QueueTableRow

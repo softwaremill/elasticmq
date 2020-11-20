@@ -7,13 +7,14 @@ import TableRow from "@material-ui/core/TableRow";
 import TableCell from "@material-ui/core/TableCell";
 import {TableBody} from "@material-ui/core";
 import "../styles/queue.css";
-import Row from "./QueueRow";
+import QueueTableRow from "./QueueRow";
 import RefreshQueuesData from "./RefreshQueuesData";
-import useMountEffect from "./UseMountEffect";
+import useEffectOnce from "./UseEffectOnce";
 
 const QueuesTable: React.FC = () => {
     const queuesOverallData = RefreshQueuesData.useRefreshQueueData()
-    useMountEffect(() => {
+
+    useEffectOnce(() => {
         const fetchInitialStatistics = async () => {
             const initialStatistics = await queuesOverallData.obtainInitialStatistics()
             queuesOverallData.setQueuesOverallData((prevState) => {
@@ -41,7 +42,7 @@ const QueuesTable: React.FC = () => {
                 </TableHead>
                 <TableBody>
                     {queuesOverallData.queuesOverallData.map((row) => (
-                        <Row key={row.queueName} row={row}/>
+                        <QueueTableRow key={row.queueName} row={row}/>
                     ))}
                 </TableBody>
             </Table>

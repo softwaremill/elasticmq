@@ -9,24 +9,24 @@ import {TableBody} from "@material-ui/core";
 import React, {useState} from "react";
 import QueueService from "../services/QueueService";
 
-const RowDetails: React.FC<{ props: { isOpen: boolean, queueName: string } }> = ({props}) => {
+const RowDetails: React.FC<{ props: { isExpanded: boolean, queueName: string } }> = ({props}) => {
 
     const [attributes, setAttributes] = useState<Array<Array<string>>>([]);
 
-    function getAttributes() {
+    function getQueueAttributes() {
         QueueService.getQueueAttributes(props.queueName).then(attributes => setAttributes(() => attributes))
     }
 
     return (
         <TableRow key={props.queueName + "-details"} style={{backgroundColor: "#f5f5f5"}}>
             <TableCell style={{paddingBottom: 0, paddingTop: 0}} colSpan={6}>
-                <Collapse in={props.isOpen} timeout="auto" unmountOnExit onEnter={() => getAttributes()}>
+                <Collapse in={props.isExpanded} timeout="auto" unmountOnExit onEnter={() => getQueueAttributes()}>
                     <Box margin={1}>
                         <Typography variant="h6" gutterBottom component="div">
                             Queue attributes
                         </Typography>
                     </Box>
-                    <Table size="small" aria-label="purchases">
+                    <Table size="small" aria-label="queue attributes">
                         <TableHead>
                             <TableRow>
                                 <TableCell>Attribute Name</TableCell>

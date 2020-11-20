@@ -13,13 +13,13 @@ const queuesBasicInformationSchema: Yup.NotRequiredArraySchema<QueueStatistic> =
     })
 );
 
-async function getQueuesBasicInformation(): Promise<QueueStatistic[]> {
+async function getQueueListWithCorrelatedMessages(): Promise<QueueStatistic[]> {
     const response = await axios.get(`statistics/queues`)
     const result = queuesBasicInformationSchema.validateSync(response.data)
     return result === undefined ? [] : result;
 }
 
-const messageRelatedAttributes = [
+const numberOfMessagesRelatedAttributes = [
     "ApproximateNumberOfMessages",
     "ApproximateNumberOfMessagesNotVisible",
     "ApproximateNumberOfMessagesDelayed",
@@ -41,7 +41,7 @@ async function getQueueAttributes(queueName: string) {
         return [];
     }
     const data: QueueAttributes = response.data as QueueAttributes
-    return Object.keys(data.attributes).filter(attributeKey => !messageRelatedAttributes.includes(attributeKey)).map(attributeKey => {
+    return Object.keys(data.attributes).filter(attributeKey => !numberOfMessagesRelatedAttributes.includes(attributeKey)).map(attributeKey => {
         const attributeValue = data.attributes[attributeKey];
         return [
             attributeKey,
@@ -66,4 +66,4 @@ function trimAttributeValue(attributeName: string, attributeValue: string) {
     }
 }
 
-export default {getQueuesBasicInformation, getQueueAttributes}
+export default {getQueueListWithCorrelatedMessages, getQueueAttributes}
