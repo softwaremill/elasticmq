@@ -144,7 +144,8 @@ case class TheSQSRestServerBuilder(
       with AttributesModule
       with TagQueueDirectives
       with TagsModule
-      with UnmatchedActionRoutes {
+      with UnmatchedActionRoutes
+      with QueueAttributesOps {
 
       def serverAddress = currentServerAddress.get()
 
@@ -235,7 +236,7 @@ case class TheSQSRestServerBuilder(
 
     SQSRestServer(
       appStartFuture,
-      () => appStartFuture.flatMap(_.unbind()).flatMap(_ => stopActorSystem())
+      () => appStartFuture.flatMap(_.terminate(1.minute))
     )
   }
 

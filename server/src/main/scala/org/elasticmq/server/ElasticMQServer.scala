@@ -5,13 +5,14 @@ import akka.util.Timeout
 import org.elasticmq.actor.QueueManagerActor
 import org.elasticmq.actor.reply._
 import org.elasticmq.rest.sqs.{CreateQueueDirectives, SQSRestServer, TheSQSRestServerBuilder}
+import org.elasticmq.rest.stats.{StatisticsRestServer, TheStatisticsRestServerBuilder}
 import org.elasticmq.server.config.{CreateQueue, ElasticMQServerConfig}
 import org.elasticmq.util.{Logging, NowProvider}
 import org.elasticmq.{DeadLettersQueueData, ElasticMQError, MillisVisibilityTimeout, QueueData}
 import org.joda.time.{DateTime, Duration}
 
-import scala.concurrent.Await
 import scala.concurrent.duration.Duration.Inf
+import scala.concurrent.{Await, ExecutionContextExecutor, Future}
 
 class ElasticMQServer(config: ElasticMQServerConfig) extends Logging {
   val actorSystem = ActorSystem("elasticmq")
@@ -19,10 +20,20 @@ class ElasticMQServer(config: ElasticMQServerConfig) extends Logging {
   def start() = {
     val queueManagerActor = createBase()
     val restServerOpt = optionallyStartRestSqs(queueManagerActor)
+    val restStatisticsServerOpt = optionallyStartRestStatistics(queueManagerActor)
 
     val shutdown = () => {
-      restServerOpt.map(_.stopAndGetFuture())
-      Await.result(actorSystem.terminate(), Inf)
+      implicit val ec: ExecutionContextExecutor = actorSystem.dispatcher
+
+      val futureTerminationRestSQS = restServerOpt.map(_.stopAndGetFuture()).getOrElse(Future.unit)
+      val futureTerminationRestStats = restStatisticsServerOpt.map(_.stopAndGetFuture()).getOrElse(Future.unit)
+      val eventualTerminated = for {
+        _ <- futureTerminationRestSQS
+        _ <- futureTerminationRestStats
+        ac <- actorSystem.terminate()
+      } yield ac
+      Await.result(eventualTerminated, Inf)
+
     }
 
     createQueues(queueManagerActor) match {
@@ -53,6 +64,28 @@ class ElasticMQServer(config: ElasticMQServerConfig) extends Logging {
         config.nodeAddress,
         config.generateNodeAddress,
         config.restSqs.sqsLimits,
+        config.awsRegion,
+        config.awsAccountId
+      ).start()
+
+      server.waitUntilStarted()
+
+      Some(server)
+    } else {
+      None
+    }
+  }
+
+  private def optionallyStartRestStatistics(queueManagerActor: ActorRef): Option[StatisticsRestServer] = {
+    if (config.restStatisticsConfiguration.enabled) {
+
+      val server = TheStatisticsRestServerBuilder(
+        actorSystem,
+        queueManagerActor,
+        config.restStatisticsConfiguration.bindHostname,
+        config.restStatisticsConfiguration.bindPort,
+        config.nodeAddress,
+        config.generateNodeAddress,
         config.awsRegion,
         config.awsAccountId
       ).start()

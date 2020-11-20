@@ -88,6 +88,7 @@ val akka2Streams = "com.typesafe.akka" %% "akka-stream" % akkaVersion
 val akka2Testkit = "com.typesafe.akka" %% "akka-testkit" % akkaVersion % "test"
 val akka2Http = "com.typesafe.akka" %% "akka-http" % akkaHttpVersion
 val sprayJson = "io.spray" %% "spray-json" % "1.3.5"
+val akkaHttpSprayJson = "com.typesafe.akka" %% "akka-http-spray-json" % akkaHttpVersion
 val akka2HttpTestkit = "com.typesafe.akka" %% "akka-http-testkit" % akkaHttpVersion % "test"
 
 val scalaAsync = "org.scala-lang.modules" %% "scala-async" % "0.10.0"
@@ -135,11 +136,12 @@ lazy val restSqs: Project = (project in file("rest/rest-sqs"))
                                 akka2Http,
                                 akka2Streams,
                                 sprayJson,
+                                akkaHttpSprayJson,
                                 akka2Testkit,
                                 akka2HttpTestkit,
                                 scalaAsync) ++ common
   ))
-  .dependsOn(core, commonTest % "test")
+  .dependsOn(core % "compile->compile;test->test", commonTest % "test")
 
 lazy val restSqsTestingAmazonJavaSdk: Project =
   (project in file("rest/rest-sqs-testing-amazon-java-sdk"))
@@ -195,7 +197,7 @@ lazy val server: Project = (project in file("server"))
      */
     credentials += Credentials(Path.userHome / ".s3_elasticmq_credentials"),
     // docker
-    dockerExposedPorts := Seq(9324),
+    dockerExposedPorts := Seq(9324,9325),
     dockerBaseImage := "openjdk:8u212-b04-jdk-stretch",
     packageName in Docker := "elasticmq",
     dockerUsername := Some("softwaremill"),
@@ -249,7 +251,7 @@ lazy val nativeServer: Project = (project in file("native-server"))
     ),
     dockerEntrypoint := Seq("/sbin/tini", "--", "/opt/docker/bin/elasticmq-native-server", "-Dconfig.file=/opt/elasticmq.conf"),
     dockerUpdateLatest := true,
-    dockerExposedPorts := Seq(9324),
+    dockerExposedPorts := Seq(9324,9325),
     dockerCommands := {
       val commands = dockerCommands.value
       val index = commands.indexWhere {
