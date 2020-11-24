@@ -14,7 +14,6 @@ val v2_13 = "2.13.3"
 lazy val uiDirectory = settingKey[File]("Path to the ui project directory")
 lazy val updateYarn = taskKey[Unit]("Update yarn")
 lazy val yarnTask = inputKey[Unit]("Run yarn with arguments")
-lazy val copyWebapp = taskKey[Unit]("Copy webapp")
 
 val buildSettings = commonSmlBuildSettings ++ ossPublishSettings ++ Seq(
   organization := "org.elasticmq",
@@ -215,14 +214,21 @@ lazy val server: Project = (project in file("server"))
       dockerUsername := Some("softwaremill"),
       dockerUpdateLatest := true,
       javaOptions in Universal ++= Seq("-Dconfig.file=/opt/elasticmq.conf"),
-      mappings in Docker += (baseDirectory.value / "docker" / "elasticmq.conf") -> "/opt/elasticmq.conf",
-      publishLocal in Docker := (publishLocal in Docker).dependsOn(copyWebapp).value,
+      mappings in Docker ++= Seq(
+        (baseDirectory.value / "docker" / "elasticmq.conf") -> "/opt/elasticmq.conf"
+      ) ++ sbt.Path.directory(baseDirectory.value / ".." / "ui" / "build"),
+      publishLocal in Docker := (publishLocal in Docker).dependsOn(yarnTask.toTask(" build")).value,
       dockerCommands += Cmd(
         "COPY",
         "--from=stage0",
         s"--chown=${(daemonUser in Docker).value}:root",
         "/opt/elasticmq.conf",
         "/opt"
+      ),
+      dockerCommands += Cmd(
+        "COPY",
+        "/build/",
+        "/opt/webapp"
       )
     )
   )
@@ -234,6 +240,7 @@ val graalVmVersion = "20.2.0"
 lazy val nativeServer: Project = (project in file("native-server"))
   .enablePlugins(GraalVMNativeImagePlugin, DockerPlugin)
   .settings(buildSettings)
+  .settings(uiSettings)
   .settings(Seq(
     name := "elasticmq-native-server",
     libraryDependencies ++= Seq(
@@ -265,7 +272,7 @@ lazy val nativeServer: Project = (project in file("native-server"))
     mappings in Docker := Seq(
       (baseDirectory.value / ".." / "server" / "docker" / "elasticmq.conf") -> "/opt/elasticmq.conf",
       ((target in GraalVMNativeImage).value / "elasticmq-native-server") -> "/opt/docker/bin/elasticmq-native-server"
-    ),
+    ) ++ sbt.Path.directory(baseDirectory.value / ".." / "ui" / "build"),
     dockerEntrypoint := Seq("/sbin/tini", "--", "/opt/docker/bin/elasticmq-native-server", "-Dconfig.file=/opt/elasticmq.conf"),
     dockerUpdateLatest := true,
     dockerExposedPorts := Seq(9324,9325),
@@ -283,11 +290,17 @@ lazy val nativeServer: Project = (project in file("native-server"))
         "--from=stage0",
         "/opt/elasticmq.conf",
         "/opt")
+      val copyUI = Cmd(
+        "COPY",
+        "/build/",
+        "/opt/webapp"
+      )
       val tiniCommand = ExecCmd("RUN", "apk", "add", "--no-cache", "tini")
-      front ++ Seq(tiniCommand, copyConfig) ++ back
+      front ++ Seq(tiniCommand, copyConfig, copyUI) ++ back
     },
     packageName in Docker := "elasticmq-native",
     dockerUsername := Some("softwaremill"),
+    packageBin in GraalVMNativeImage := (packageBin in GraalVMNativeImage).dependsOn(yarnTask.toTask(" build")).value,
     dockerUpdateLatest := true,
   ))
   .dependsOn(server)
@@ -323,12 +336,7 @@ lazy val uiSettings = Seq(
     def runYarnTask() = Process(localYarnCommand, uiDirectory.value).!
     streams.value.log("Running yarn task: " + taskName)
     haltOnCmdResultError(runYarnTask())
-  },
-  copyWebapp := {
-    streams.value.log.info(s"Copying the webapp resources to ${(classDirectory in Compile).value}")
-    IO.copyDirectory(uiDirectory.value / "build", (classDirectory in Compile).value / "webapp")
-  },
-  copyWebapp := copyWebapp.dependsOn(yarnTask.toTask(" build")).value
+  }
 )
 
 lazy val ui = (project in file("ui"))

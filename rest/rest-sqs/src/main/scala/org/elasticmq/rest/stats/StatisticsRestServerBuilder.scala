@@ -114,13 +114,10 @@ case class TheStatisticsRestServerBuilder(
       }
 
       TheStatisticsRestServerBuilder.this.logger.info(
-        "Started statistics rest server, bind address %s:%d, visible server address %s"
+        "Started statistics rest server, bind address %s:%d, visible server address"
           .format(
             interface,
-            sb.localAddress.getPort,
-            if (env.serverAddress.isWildcard)
-              "* (depends on incoming request path) "
-            else env.serverAddress.fullAddress
+            sb.localAddress.getPort
           )
       )
     }

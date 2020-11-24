@@ -1,13 +1,8 @@
 package org.elasticmq.rest.stats
 
-import java.io.File
-import java.nio.file.{Files, Paths}
-import java.util.concurrent.Executors
-
 import akka.actor.ActorRef
-import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
-import akka.http.scaladsl.model._
 import akka.http.scaladsl.model.StatusCodes.NotFound
+import akka.http.scaladsl.model._
 import akka.http.scaladsl.model.headers.`Access-Control-Allow-Origin`
 import akka.http.scaladsl.server.Route
 import org.elasticmq.metrics.QueueMetricsOps
@@ -15,9 +10,8 @@ import org.elasticmq.rest.sqs.QueueAttributesOps
 import org.elasticmq.rest.sqs.directives.ElasticMQDirectives
 import org.elasticmq.util.NowProvider
 import org.elasticmq.{QueueData, QueueStatistics}
-import spray.json._
 
-import scala.concurrent.{Future}
+import scala.concurrent.Future
 import scala.util.{Failure, Success}
 
 final case class QueuesResponse(
@@ -36,14 +30,8 @@ final case class QueueStatisticsResponse(
     approximateNumberOfMessagesDelayed: Long
 )
 
-trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
-  implicit val queueStatisticsFormat = jsonFormat3(QueueStatisticsResponse)
-  implicit val queuesFormat = jsonFormat2(QueuesResponse)
-  implicit val queueFormat = jsonFormat2(QueueResponse)
-}
-
-trait StatisticsDirectives extends JsonSupport {
-  this: ElasticMQDirectives with QueueAttributesOps  =>
+trait StatisticsDirectives extends StatisticsJsonFormat {
+  this: ElasticMQDirectives with QueueAttributesOps =>
 
   implicit val duration = timeout.duration
 
@@ -87,15 +75,22 @@ trait StatisticsDirectives extends JsonSupport {
     get {
       entity(as[HttpRequest]) { requestData =>
         requestData.uri.path.toString match {
-          case "/" => getFromResource("webapp/index.html")
-          case ""  => getFromResource("webapp/index.html")
-          case path   => getFromResource("webapp" + path)
+          case "/" =>
+            getFromFile("/opt/webapp/index.html")
+          case "" =>
+            getFromFile("/opt/webapp/index.html")
+          case path =>
+            getFromFile("/opt/webapp" + path)
         }
       }
     }
   }
 
-  private def getQueryResponseWithAttributesFuture(name: String, queueActor: ActorRef, queueData: QueueData): Future[QueueResponse] = {
+  private def getQueryResponseWithAttributesFuture(
+      name: String,
+      queueActor: ActorRef,
+      queueData: QueueData
+  ): Future[QueueResponse] = {
     getAllQueueAttributes(queueActor, queueData)
       .map(list => QueueResponse(name = name, list.toMap))
   }
