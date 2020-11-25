@@ -422,6 +422,13 @@ In order to turn it off, You have to switch it off via rest-stats.enabled flag.
 
 You can start UI via `yarn start` command which will run UI on 3000 port.
 
+# MBeans
+
+ElasticMQ exposes `Queues` MBean. It contains three operations:
+* `QueueNames` - returns array of names of queues
+* `NumberOfMessagesForAllQueues` - returns tabular data that contains information about number of messages per queue
+* `getNumberOfMessagesInQueue` - returns information about number of messages in specified queue
+
 # Technology
 
 * Core: [Scala](http://scala-lang.org) and [Akka](http://akka.io/).
