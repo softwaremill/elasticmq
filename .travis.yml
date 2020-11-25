@@ -1,6 +1,5 @@
 language: scala
-node_js:
-  - 10
+node_js: "10"
 jdk:
   - openjdk8
 scala:
@@ -14,6 +13,7 @@ before_cache:
   - find $HOME/.ivy2/cache -name "ivydata-*.properties" -type f -delete
   - find $HOME/.coursier/cache -name "*.lock" -type f -delete
 cache:
+  yarn: true
   directories:
     - $HOME/.sbt/1.0
     - $HOME/.sbt/boot/scala*
@@ -21,5 +21,19 @@ cache:
     - $HOME/.sbt/launchers
     - $HOME/.ivy2/cache
     - $HOME/.coursier
+    - ui/node_modules
+
+sudo: required
+before_install: # if "install" is overridden
+  # Repo for Yarn
+  - sudo apt-key adv --fetch-keys http://dl.yarnpkg.com/debian/pubkey.gpg
+  - echo "deb http://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/sources.list.d/yarn.list
+  - sudo apt-get update -qq
+  - nvm install 12.19.0
+  - sudo apt-get install -y -qq yarn
+
+install:
+  - (cd ui;yarn install)
+
 script:
   - sbt ++$TRAVIS_SCALA_VERSION test
