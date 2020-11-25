@@ -22,10 +22,10 @@ function useRefreshedQueueStatistics(): QueuesStatisticsDataControl {
         }
     }
 
-    async function getInitialStatistics() {
-        return QueueService.getQueueListWithCorrelatedMessages().then(QueuesStatistics => {
-            return QueuesStatistics.map(queueStatistics => convertQueueStatisticsToNewQueueData(queueStatistics));
-        });
+    function obtainInitialStatistics() {
+        return QueueService.getQueueListWithCorrelatedMessages().then(queuesStatistics =>
+            queuesStatistics.map(convertQueueStatisticsToNewQueueData)
+        );
     }
 
     const [queuesOverallData, setQueuesOverallData] = useState<QueueMessagesData[]>([]);
@@ -45,6 +45,7 @@ function useRefreshedQueueStatistics(): QueuesStatisticsDataControl {
                     })
                 })
         }
+
         const interval = setInterval(() => {
             getQueuesListWithMessages()
         }, 1000);
@@ -54,9 +55,9 @@ function useRefreshedQueueStatistics(): QueuesStatisticsDataControl {
     }, []);
 
     return {
-        queuesOverallData: queuesOverallData,
-        setQueuesOverallData: setQueuesOverallData,
-        obtainInitialStatistics: getInitialStatistics
+        queuesOverallData,
+        setQueuesOverallData,
+        obtainInitialStatistics
     } as QueuesStatisticsDataControl
 }
 

@@ -43,13 +43,12 @@ async function getQueueAttributes(queueName: string) {
         return [];
     }
     const data: QueueAttributes = response.data as QueueAttributes
-    return Object.keys(data.attributes).filter(attributeKey => !numberOfMessagesRelatedAttributes.includes(attributeKey)).map(attributeKey => {
-        const attributeValue = data.attributes[attributeKey];
-        return [
+    return Object.entries(data.attributes)
+        .filter(([attributeKey, _]) => !numberOfMessagesRelatedAttributes.includes(attributeKey))
+        .map(([attributeKey, attributeValue]) => [
             attributeKey,
             trimAttributeValue(attributeKey, attributeValue)
-        ]
-    })
+        ]);
 }
 
 function trimAttributeValue(attributeName: string, attributeValue: string) {

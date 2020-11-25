@@ -14,7 +14,7 @@ const RowDetails: React.FC<{ props: { isExpanded: boolean, queueName: string } }
     const [attributes, setAttributes] = useState<Array<Array<string>>>([]);
 
     function getQueueAttributes() {
-        QueueService.getQueueAttributes(props.queueName).then(attributes => setAttributes(() => attributes))
+        QueueService.getQueueAttributes(props.queueName).then(attributes => setAttributes(attributes))
     }
 
     return (
