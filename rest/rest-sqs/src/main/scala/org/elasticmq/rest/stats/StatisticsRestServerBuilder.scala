@@ -1,13 +1,11 @@
 package org.elasticmq.rest.stats
 
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicReference
 
 import akka.actor.{ActorRef, ActorSystem}
 import akka.http.scaladsl.Http
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
-import org.elasticmq._
 import org.elasticmq.rest.sqs.QueueAttributesOps
 import org.elasticmq.rest.sqs.directives.ElasticMQDirectives
 import org.elasticmq.util.{Logging, NowProvider}
@@ -21,8 +19,6 @@ case class TheStatisticsRestServerBuilder(
                                            providedQueueManagerActor: ActorRef,
                                            interface: String,
                                            port: Int,
-                                           serverAddress: NodeAddress,
-                                           generateServerAddress: Boolean,
                                            _awsRegion: String,
                                            _awsAccountId: String
                                          ) extends Logging {
@@ -52,12 +48,6 @@ case class TheStatisticsRestServerBuilder(
     */
   def withDynamicPort() = withPort(0)
 
-  /** @param _serverAddress Address which will be returned as the queue address. Requests to this address
-    *                       should be routed to this server.
-    */
-  def withServerAddress(_serverAddress: NodeAddress) =
-    this.copy(serverAddress = _serverAddress, generateServerAddress = false)
-
   /** @param region Region which will be included in ARM resource ids.
     */
   def withAWSRegion(region: String) =
@@ -72,22 +62,12 @@ case class TheStatisticsRestServerBuilder(
 
     implicit val nowProvider = new NowProvider()
 
-    val theServerAddress =
-      if (generateServerAddress)
-        NodeAddress(host = if (interface.isEmpty) "localhost" else interface, port = port)
-      else serverAddress
-
     implicit val implicitActorSystem = providedActorSystem
     implicit val implicitMaterializer = ActorMaterializer()
-
-    val currentServerAddress =
-      new AtomicReference[NodeAddress](theServerAddress)
 
     val env = new StatisticsDirectives
       with QueueAttributesOps
       with ElasticMQDirectives {
-
-      def serverAddress = currentServerAddress.get()
 
       lazy val actorSystem = providedActorSystem
       lazy val materializer = implicitMaterializer
@@ -109,12 +89,9 @@ case class TheStatisticsRestServerBuilder(
     val appStartFuture = Http().newServerAt(interface, port).bindFlow(routes)
 
     appStartFuture.foreach { sb: Http.ServerBinding =>
-      if (generateServerAddress && port != sb.localAddress.getPort) {
-        currentServerAddress.set(theServerAddress.copy(port = sb.localAddress.getPort))
-      }
 
       TheStatisticsRestServerBuilder.this.logger.info(
-        "Started statistics rest server, bind address %s:%d, visible server address"
+        "Started statistics rest server, bind address %s:%d"
           .format(
             interface,
             sb.localAddress.getPort

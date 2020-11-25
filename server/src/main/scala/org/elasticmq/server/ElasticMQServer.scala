@@ -84,8 +84,6 @@ class ElasticMQServer(config: ElasticMQServerConfig) extends Logging {
         queueManagerActor,
         config.restStatisticsConfiguration.bindHostname,
         config.restStatisticsConfiguration.bindPort,
-        config.nodeAddress,
-        config.generateNodeAddress,
         config.awsRegion,
         config.awsAccountId
       ).start()
