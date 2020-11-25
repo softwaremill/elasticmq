@@ -22,7 +22,7 @@ trait QueuesMetricsMBean {
 class QueuesMetrics(queueManagerActor: ActorRef) extends QueuesMetricsMBean {
 
   implicit val timeout: Timeout = Timeout(21, TimeUnit.SECONDS)
-  implicit val ec: ExecutionContext = ExecutionContext.fromExecutorService(Executors.newFixedThreadPool(2))
+  implicit val ec: ExecutionContext = ExecutionContext.fromExecutorService(Executors.newCachedThreadPool())
 
   override def getQueueNames: Array[String] = {
     Await.result(QueueMetricsOps.getQueueNames(queueManagerActor), timeout.duration).toArray
