@@ -8,25 +8,10 @@ import TableCell from "@material-ui/core/TableCell";
 import {TableBody} from "@material-ui/core";
 import "../styles/queue.css";
 import QueueTableRow from "./QueueRow";
-import RefreshQueuesData from "./RefreshQueuesData";
-import useEffectOnce from "./UseEffectOnce";
+import useQueueData from "./UseQueueData";
 
 const QueuesTable: React.FC = () => {
-    const queuesOverallData = RefreshQueuesData.useRefreshQueueData()
-
-    useEffectOnce(() => {
-        const fetchInitialStatistics = async () => {
-            const initialStatistics = await queuesOverallData.obtainInitialStatistics()
-            queuesOverallData.setQueuesOverallData((prevState) => {
-                if (prevState.length === 0) {
-                    return initialStatistics
-                } else {
-                    return prevState;
-                }
-            })
-        }
-        fetchInitialStatistics();
-    });
+    const queuesOverallData = useQueueData();
 
     return (
         <TableContainer component={Paper} elevation={2}>
@@ -41,7 +26,7 @@ const QueuesTable: React.FC = () => {
                     </TableRow>
                 </TableHead>
                 <TableBody>
-                    {queuesOverallData.queuesOverallData.map((row) => (
+                    {queuesOverallData.map((row) => (
                         <QueueTableRow key={row.queueName} row={row}/>
                     ))}
                 </TableBody>
