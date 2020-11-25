@@ -342,7 +342,7 @@ lazy val uiSettings = Seq(
 lazy val ui = (project in file("ui"))
   .settings(organization := "com.softwaremill.elasticmq")
   .settings(uiSettings)
-  .settings(test in Test := (test in Test).dependsOn(yarnTask.toTask(" test:ci")).value)
+  .settings(test in Test := (test in Test).dependsOn(yarnTask.toTask(" test")).value)
   .settings(cleanFiles += baseDirectory.value / "build")
 
 def haltOnCmdResultError(result: Int) {

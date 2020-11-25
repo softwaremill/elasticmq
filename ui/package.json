@@ -25,7 +25,6 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test --env=jest-environment-jsdom-sixteen",
-    "test:ci": "CI=true react-scripts test --env=jest-environment-jsdom-sixteen --maxWorkers 2",
     "eject": "react-scripts eject"
   },
   "eslintConfig": {
