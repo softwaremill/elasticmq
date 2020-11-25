@@ -2,6 +2,8 @@ import * as Yup from "yup";
 import {QueueRedrivePolicyAttribute, QueueStatistic} from "../Queues/QueueMessageData";
 import axios from "axios";
 
+const instance = (!process.env.NODE_ENV || process.env.NODE_ENV === 'development') ? axios.create({baseURL: "http://localhost:9325/"}) : axios;
+
 const queuesBasicInformationSchema: Yup.NotRequiredArraySchema<QueueStatistic> = Yup.array().of(
     Yup.object().required().shape({
         name: Yup.string().required("Required queueName"),
@@ -14,7 +16,7 @@ const queuesBasicInformationSchema: Yup.NotRequiredArraySchema<QueueStatistic> =
 );
 
 async function getQueueListWithCorrelatedMessages(): Promise<QueueStatistic[]> {
-    const response = await axios.get(`statistics/queues`)
+    const response = await instance.get(`statistics/queues`)
     const result = queuesBasicInformationSchema.validateSync(response.data)
     return result === undefined ? [] : result;
 }
@@ -35,7 +37,7 @@ interface AttributeNameValue {
 }
 
 async function getQueueAttributes(queueName: string) {
-    const response = await axios.get(`statistics/queues/${queueName}`)
+    const response = await instance.get(`statistics/queues/${queueName}`)
     if (response.status !== 200) {
         console.log("Can't obtain attributes of " + queueName + " queue because of " + response.statusText)
         return [];
