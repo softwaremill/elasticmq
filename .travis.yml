@@ -1,4 +1,6 @@
 language: scala
+node_js:
+  - 10
 jdk:
   - openjdk8
 scala:
