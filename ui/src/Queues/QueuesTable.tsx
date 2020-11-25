@@ -8,10 +8,10 @@ import TableCell from "@material-ui/core/TableCell";
 import {TableBody} from "@material-ui/core";
 import "../styles/queue.css";
 import QueueTableRow from "./QueueRow";
-import useQueueData from "./UseQueueData";
+import useRefreshedQueueStatistics from "./RefreshQueuesData";
 
 const QueuesTable: React.FC = () => {
-    const queuesOverallData = useQueueData();
+    const queuesOverallData = useRefreshedQueueStatistics();
 
     return (
         <TableContainer component={Paper} elevation={2}>

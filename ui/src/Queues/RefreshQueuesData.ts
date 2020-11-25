@@ -1,8 +1,8 @@
-import {Dispatch, SetStateAction, useEffect, useState} from "react";
+import {useEffect, useState} from "react";
 import QueueService from "../services/QueueService";
 import {QueueMessagesData, QueueStatistic} from "./QueueMessageData";
 
-function useRefreshedQueueStatistics(): QueuesStatisticsDataControl {
+function useRefreshedQueueStatistics(): QueueMessagesData[] {
     function convertQueueStatisticsToNewQueueData(newQuery: QueueStatistic) {
         return {
             queueName: newQuery.name,
@@ -22,14 +22,14 @@ function useRefreshedQueueStatistics(): QueuesStatisticsDataControl {
         }
     }
 
-    function obtainInitialStatistics() {
-        return QueueService.getQueueListWithCorrelatedMessages().then(queuesStatistics =>
-            queuesStatistics.map(convertQueueStatisticsToNewQueueData)
-        );
-    }
-
     const [queuesOverallData, setQueuesOverallData] = useState<QueueMessagesData[]>([]);
     useEffect(() => {
+        function obtainInitialStatistics() {
+            return QueueService.getQueueListWithCorrelatedMessages().then(queuesStatistics =>
+                queuesStatistics.map(convertQueueStatisticsToNewQueueData)
+            );
+        }
+
         function getQueuesListWithMessages() {
             QueueService.getQueueListWithCorrelatedMessages()
                 .then(statistics => {
@@ -46,6 +46,19 @@ function useRefreshedQueueStatistics(): QueuesStatisticsDataControl {
                 })
         }
 
+        const fetchInitialStatistics = async () => {
+            const initialStatistics = await obtainInitialStatistics()
+            setQueuesOverallData((prevState) => {
+                if (prevState.length === 0) {
+                    return initialStatistics
+                } else {
+                    return prevState;
+                }
+            })
+        }
+
+        fetchInitialStatistics()
+
         const interval = setInterval(() => {
             getQueuesListWithMessages()
         }, 1000);
@@ -54,18 +67,7 @@ function useRefreshedQueueStatistics(): QueuesStatisticsDataControl {
         };
     }, []);
 
-    return {
-        queuesOverallData,
-        setQueuesOverallData,
-        obtainInitialStatistics
-    } as QueuesStatisticsDataControl
+    return queuesOverallData;
 }
 
-interface QueuesStatisticsDataControl {
-    queuesOverallData: QueueMessagesData[]
-    setQueuesOverallData: Dispatch<SetStateAction<QueueMessagesData[]>>
-    obtainInitialStatistics: () => Promise<QueueMessagesData[]>
-}
-
-export default {useRefreshQueueData: useRefreshedQueueStatistics}
-export type {QueuesStatisticsDataControl}
+export default useRefreshedQueueStatistics;
