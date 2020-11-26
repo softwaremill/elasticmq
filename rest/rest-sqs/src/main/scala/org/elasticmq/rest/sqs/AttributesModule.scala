@@ -10,9 +10,11 @@ trait AttributesModule {
   val attributeNameAndValuesReader = new AttributeNameAndValuesReader
 
   class AttributeNamesReader {
+    private val attributeNameKey = "AttributeName"
+
     def read(parameters: Map[String, String], allAttributeNames: List[String]) = {
       def collect(suffix: Int, acc: List[String]): List[String] = {
-        parameters.get("AttributeName." + suffix) match {
+        parameters.get(makeAttributeMapKeyAtPosition(suffix)) match {
           case None     => acc
           case Some(an) => collect(suffix + 1, an :: acc)
         }
@@ -26,10 +28,20 @@ trait AttributesModule {
         }
       }
 
-      val rawAttributeNames = collect(1, parameters.get("AttributeName").toList)
+      val rawAttributeNames = collect(1, parameters.get(attributeNameKey).toList)
       val attributeNames = unfoldAllAttributeIfRequested(rawAttributeNames)
 
       attributeNames
+    }
+
+    def prepareParametersForRead(attributesToRead: List[String]): Map[String, String] = {
+      attributesToRead.zipWithIndex
+        .map { case (item, index) => (makeAttributeMapKeyAtPosition(index + 1), item) }
+        .toMap
+    }
+
+    private def makeAttributeMapKeyAtPosition(position: Int): String = {
+      s"$attributeNameKey.${position}"
     }
   }
 

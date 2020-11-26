@@ -59,6 +59,16 @@ class ElasticMQServerConfig(config: Config) extends Logging {
 
   val restSqs = new RestSqsConfiguration
 
+  class RestStatisticsConfiguration {
+    private val subConfig = config.getConfig("rest-stats")
+    val enabled = subConfig.getBoolean("enabled")
+    val bindPort = subConfig.getInt("bind-port")
+    val bindHostname = subConfig.getString("bind-hostname")
+  }
+
+  val restStatisticsConfiguration = new RestStatisticsConfiguration
+
+
   val createQueues: List[CreateQueue] = {
     def getOptionalBoolean(c: Config, k: String) = if (c.hasPath(k)) Some(c.getBoolean(k)) else None
     def getOptionalDuration(c: Config, k: String) = if (c.hasPath(k)) Some(c.getDuration(k, TimeUnit.SECONDS)) else None

@@ -3,7 +3,7 @@ package org.elasticmq.actor.queue
 import scala.collection.mutable
 import org.elasticmq.NeverReceived
 import org.elasticmq.actor.queue.ReceiveRequestAttemptCache.ReceiveFailure.Invalid
-import org.elasticmq.actor.test.MutableNowProvider
+import org.elasticmq.util.MutableNowProvider
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 

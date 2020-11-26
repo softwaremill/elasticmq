@@ -2,11 +2,18 @@ import com.amazonaws.services.s3.model.PutObjectResult
 import com.softwaremill.Publish.Release.updateVersionInDocs
 import com.typesafe.sbt.packager.docker.{Cmd, ExecCmd}
 import sbt.Keys.credentials
+import sbt.internal.util.complete.Parsers.spaceDelimited
 import sbtrelease.ReleaseStateTransformations._
 import scoverage.ScoverageKeys._
 
+import scala.sys.process.Process
+
 val v2_12 = "2.12.12"
 val v2_13 = "2.13.3"
+
+lazy val uiDirectory = settingKey[File]("Path to the ui project directory")
+lazy val updateYarn = taskKey[Unit]("Update yarn")
+lazy val yarnTask = inputKey[Unit]("Run yarn with arguments")
 
 val buildSettings = commonSmlBuildSettings ++ ossPublishSettings ++ Seq(
   organization := "org.elasticmq",
@@ -87,7 +94,8 @@ val akka2Slf4j = "com.typesafe.akka" %% "akka-slf4j" % akkaVersion
 val akka2Streams = "com.typesafe.akka" %% "akka-stream" % akkaVersion
 val akka2Testkit = "com.typesafe.akka" %% "akka-testkit" % akkaVersion % "test"
 val akka2Http = "com.typesafe.akka" %% "akka-http" % akkaHttpVersion
-val sprayJson = "io.spray" %% "spray-json" % "1.3.6"
+val sprayJson = "io.spray" %% "spray-json" % "1.3.5"
+val akkaHttpSprayJson = "com.typesafe.akka" %% "akka-http-spray-json" % akkaHttpVersion
 val akka2HttpTestkit = "com.typesafe.akka" %% "akka-http-testkit" % akkaHttpVersion % "test"
 
 val scalaAsync = "org.scala-lang.modules" %% "scala-async" % "0.10.0"
@@ -106,7 +114,7 @@ val s3Upload = TaskKey[PutObjectResult]("s3-upload", "Uploads files to an S3 buc
 lazy val root: Project = (project in file("."))
   .settings(buildSettings)
   .settings(name := "elasticmq-root")
-  .aggregate(commonTest, core, rest, server, nativeServer)
+  .aggregate(commonTest, core, rest, server, nativeServer, ui)
 
 lazy val commonTest: Project = (project in file("common-test"))
   .settings(buildSettings)
@@ -135,25 +143,30 @@ lazy val restSqs: Project = (project in file("rest/rest-sqs"))
                                 akka2Http,
                                 akka2Streams,
                                 sprayJson,
+                                akkaHttpSprayJson,
                                 akka2Testkit,
                                 akka2HttpTestkit,
                                 scalaAsync) ++ common
   ))
-  .dependsOn(core, commonTest % "test")
+  .dependsOn(core % "compile->compile;test->test", commonTest % "test")
 
 lazy val restSqsTestingAmazonJavaSdk: Project =
   (project in file("rest/rest-sqs-testing-amazon-java-sdk"))
     .settings(buildSettings)
     .settings(
-      Seq(name := "elasticmq-rest-sqs-testing-amazon-java-sdk",
-          libraryDependencies ++= Seq(amazonJavaSdk, jclOverSlf4j) ++ common,
-          publishArtifact := false))
+      Seq(
+        name := "elasticmq-rest-sqs-testing-amazon-java-sdk",
+        libraryDependencies ++= Seq(amazonJavaSdk, jclOverSlf4j) ++ common,
+        publishArtifact := false
+      )
+    )
     .dependsOn(restSqs % "test->test")
 
 lazy val server: Project = (project in file("server"))
   .enablePlugins(JavaServerAppPackaging, DockerPlugin)
   .settings(buildSettings)
   .settings(generateVersionFileSettings)
+  .settings(uiSettings)
   .settings(Seq(
     name := "elasticmq-server",
     libraryDependencies ++= Seq(logback, config),
@@ -192,29 +205,42 @@ lazy val server: Project = (project in file("server"))
     host=softwaremill-public.s3.amazonaws.com
     user=[AWS key id]
     password=[AWS secret key]
-     */
-    credentials += Credentials(Path.userHome / ".s3_elasticmq_credentials"),
-    // docker
-    dockerExposedPorts := Seq(9324),
-    dockerBaseImage := "openjdk:8u212-b04-jdk-stretch",
-    packageName in Docker := "elasticmq",
-    dockerUsername := Some("softwaremill"),
-    dockerUpdateLatest := true,
-    javaOptions in Universal ++= Seq("-Dconfig.file=/opt/elasticmq.conf"),
-    mappings in Docker += (baseDirectory.value / "docker" / "elasticmq.conf") -> "/opt/elasticmq.conf",
-    dockerCommands += Cmd("COPY",
-                          "--from=stage0",
-                          s"--chown=${(daemonUser in Docker).value}:root",
-                          "/opt/elasticmq.conf",
-                          "/opt")
-  ))
+       */
+      credentials += Credentials(Path.userHome / ".s3_elasticmq_credentials"),
+      // docker
+      dockerExposedPorts := Seq(9324,9325),
+      dockerBaseImage := "openjdk:8u212-b04-jdk-stretch",
+      packageName in Docker := "elasticmq",
+      dockerUsername := Some("softwaremill"),
+      dockerUpdateLatest := true,
+      javaOptions in Universal ++= Seq("-Dconfig.file=/opt/elasticmq.conf"),
+      mappings in Docker ++= Seq(
+        (baseDirectory.value / "docker" / "elasticmq.conf") -> "/opt/elasticmq.conf"
+      ) ++ sbt.Path.directory(baseDirectory.value / ".." / "ui" / "build"),
+      publishLocal in Docker := (publishLocal in Docker).dependsOn(yarnTask.toTask(" build")).value,
+      dockerCommands += Cmd(
+        "COPY",
+        "--from=stage0",
+        s"--chown=${(daemonUser in Docker).value}:root",
+        "/opt/elasticmq.conf",
+        "/opt"
+      ),
+      dockerCommands += Cmd(
+        "COPY",
+        "/build/",
+        "/opt/webapp"
+      )
+    )
+  )
   .dependsOn(core, restSqs, commonTest % "test")
+  .aggregate(ui)
 
 val graalVmVersion = "20.2.0"
 
 lazy val nativeServer: Project = (project in file("native-server"))
   .enablePlugins(GraalVMNativeImagePlugin, DockerPlugin)
   .settings(buildSettings)
+  .settings(uiSettings)
   .settings(Seq(
     name := "elasticmq-native-server",
     libraryDependencies ++= Seq(
@@ -246,10 +272,10 @@ lazy val nativeServer: Project = (project in file("native-server"))
     mappings in Docker := Seq(
       (baseDirectory.value / ".." / "server" / "docker" / "elasticmq.conf") -> "/opt/elasticmq.conf",
       ((target in GraalVMNativeImage).value / "elasticmq-native-server") -> "/opt/docker/bin/elasticmq-native-server"
-    ),
+    ) ++ sbt.Path.directory(baseDirectory.value / ".." / "ui" / "build"),
     dockerEntrypoint := Seq("/sbin/tini", "--", "/opt/docker/bin/elasticmq-native-server", "-Dconfig.file=/opt/elasticmq.conf"),
     dockerUpdateLatest := true,
-    dockerExposedPorts := Seq(9324),
+    dockerExposedPorts := Seq(9324,9325),
     dockerCommands := {
       val commands = dockerCommands.value
       val index = commands.indexWhere {
@@ -264,11 +290,17 @@ lazy val nativeServer: Project = (project in file("native-server"))
         "--from=stage0",
         "/opt/elasticmq.conf",
         "/opt")
+      val copyUI = Cmd(
+        "COPY",
+        "/build/",
+        "/opt/webapp"
+      )
       val tiniCommand = ExecCmd("RUN", "apk", "add", "--no-cache", "tini")
-      front ++ Seq(tiniCommand, copyConfig) ++ back
+      front ++ Seq(tiniCommand, copyConfig, copyUI) ++ back
     },
     packageName in Docker := "elasticmq-native",
     dockerUsername := Some("softwaremill"),
+    packageBin in GraalVMNativeImage := (packageBin in GraalVMNativeImage).dependsOn(yarnTask.toTask(" build")).value,
     dockerUpdateLatest := true,
   ))
   .dependsOn(server)
@@ -290,3 +322,31 @@ val generateVersionFileSettings = Seq(
     Seq(targetFile)
   }.taskValue
 )
+
+lazy val uiSettings = Seq(
+  uiDirectory := baseDirectory.value.getParentFile / "ui",
+  updateYarn := {
+    streams.value.log("Updating npm/yarn dependencies")
+    haltOnCmdResultError(Process("yarn install", uiDirectory.value).!)
+  },
+  yarnTask := {
+    val taskName = spaceDelimited("<arg>").parsed.mkString(" ")
+    updateYarn.value
+    val localYarnCommand = "yarn " + taskName
+    def runYarnTask() = Process(localYarnCommand, uiDirectory.value).!
+    streams.value.log("Running yarn task: " + taskName)
+    haltOnCmdResultError(runYarnTask())
+  }
+)
+
+lazy val ui = (project in file("ui"))
+  .settings(organization := "com.softwaremill.elasticmq")
+  .settings(uiSettings)
+  .settings(test in Test := (test in Test).dependsOn(yarnTask.toTask(" test")).value)
+  .settings(cleanFiles += baseDirectory.value / "build")
+
+def haltOnCmdResultError(result: Int) {
+  if (result != 0) {
+    throw new Exception("Build failed.")
+  }
+}
