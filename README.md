@@ -1,6 +1,7 @@
 ![ElasticMQ](https://github.com/softwaremill/elasticmq/raw/master/banner.png)
 
-[![Build Status](https://travis-ci.org/softwaremill/elasticmq.svg?branch=master)](https://travis-ci.org/softwaremill/elasticmq)
+[![ CI ](https://github.com/softwaremill/elasticmq/workflows/ElasticMQ%20tests/badge.svg)](https://github.com/softwaremill/elasticmq/actions?query=workflow%3A%22ElasticMQ+tests%22)
+
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/org.elasticmq/elasticmq-rest-sqs_2.12/badge.svg)](https://maven-badges.herokuapp.com/maven-central/org.elasticmq/elasticmq-rest-sqs_2.12/)
 
 # tl;dr
@@ -287,7 +288,7 @@ docker run -p 9324:9324 -p 9325:9325 --rm -it softwaremill/elasticmq-native
 ```
 
 The `elasticmq-native` image is much smaller (30MB vs 240MB) and starts up much faster (milliseconds instead of seconds).
-It should work exactly the same as the "normal" version. Custom configuration can be provided by creating a custom 
+It should work exactly the same as the "normal" version. Custom configuration can be provided by creating a custom
 configuration file (see above) and using it when running the container:
 
 ```
