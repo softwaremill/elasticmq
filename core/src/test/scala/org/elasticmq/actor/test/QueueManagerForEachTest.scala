@@ -3,6 +3,7 @@ package org.elasticmq.actor.test
 import akka.actor.{ActorRef, ActorSystem, Props}
 import org.elasticmq.StrictSQSLimits
 import org.elasticmq.actor.QueueManagerActor
+import org.elasticmq.util.MutableNowProvider
 import org.scalatest.{BeforeAndAfterEach, Suite}
 
 trait QueueManagerForEachTest extends BeforeAndAfterEach {
