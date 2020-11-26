@@ -34,13 +34,11 @@ As ElasticMQ implements a subset of the [SQS](http://aws.amazon.com/sqs/) query 
 alternative both for testing purposes (ElasticMQ is easily embeddable) and for creating systems which work both within
 and outside of the Amazon infrastructure.
 
-The future will most probably bring even more exciting features :).
+A simple UI is available for viewing real-time queue statistics.
 
 # Community
 
 * [Issues](https://github.com/adamw/elasticmq/issues)
-* Forum (discussions, help): [Google group](https://groups.google.com/forum/?fromgroups#!forum/elasticmq).
-* (old) [blog](http://www.warski.org/blog/category/elasticmq/)
 
 # Installation: stand-alone
 
@@ -229,7 +227,7 @@ The `boto3` interface is different:
 
 A Docker image is built on each release an pushed as [`softwaremill/elasticmq`](https://hub.docker.com/r/softwaremill/elasticmq/).
 
-Run using:
+Run using (9324 is the default REST-SQS API port; 9325 is the default UI port, exposing it is fully optional):
 
 ```
 docker run -p 9324:9324 -p 9325:9325 softwaremill/elasticmq
@@ -417,17 +415,17 @@ The aggregate report can be found at target/scala-2.12/scoverage-report/index.ht
 
 ![ElasticMQ-UI](ui.png)
 
-UI provides real-time information about state of messages and attributes of queue.
+UI provides real-time information about the state of messages and attributes of queue.
 
 ### Using UI in docker image
 
-UI is bundled with a standard and native images. It is exposed on the address that is defined in rest-stats configuration (by default 0:0:0:0:9325).
+UI is bundled with both standard and native images. It is exposed on the address that is defined in rest-stats configuration (by default 0:0:0:0:9325).
 
-In order to turn it off, You have to switch it off via rest-stats.enabled flag.
+In order to turn it off, you have to switch it off via rest-stats.enabled flag.
 
 ### Using UI locally
 
-You can start UI via `yarn start` command which will run UI on localhost:3000 address.
+You can start UI via `yarn start` command in the `ui` directory, which will run on localhost:3000 address.
 
 # MBeans
 
