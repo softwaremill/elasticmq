@@ -44,7 +44,7 @@ trait StatisticsDirectives extends StatisticsJsonFormat {
   case object ResourceBased extends UILocation
   case object FileBased extends UILocation
 
-  val uiLocation: UILocation =
+  lazy val uiLocation: UILocation =
     if (new File("index.html").exists) FileBased
     else if (Try(Source.fromResource("index.html")).toOption.isDefined) ResourceBased
     else throw new RuntimeException("Could not find UI files")
