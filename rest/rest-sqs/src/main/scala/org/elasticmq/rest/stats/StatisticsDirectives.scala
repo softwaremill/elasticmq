@@ -11,8 +11,10 @@ import org.elasticmq.rest.sqs.directives.ElasticMQDirectives
 import org.elasticmq.util.NowProvider
 import org.elasticmq.{QueueData, QueueStatistics}
 
+import java.io.File
 import scala.concurrent.Future
-import scala.util.{Failure, Success}
+import scala.io.Source
+import scala.util.{Failure, Success, Try}
 
 final case class QueuesResponse(
     name: String,
@@ -32,6 +34,20 @@ final case class QueueStatisticsResponse(
 
 trait StatisticsDirectives extends StatisticsJsonFormat {
   this: ElasticMQDirectives with QueueAttributesOps =>
+
+  sealed trait UILocation {
+    def isResourceBased: Boolean = this match {
+      case ResourceBased => true
+      case FileBased     => false
+    }
+  }
+  case object ResourceBased extends UILocation
+  case object FileBased extends UILocation
+
+  val uiLocation: UILocation =
+    if (new File("index.html").exists) FileBased
+    else if (Try(Source.fromResource("index.html")).toOption.isDefined) ResourceBased
+    else throw new RuntimeException("Could not find UI files")
 
   implicit val duration = timeout.duration
 
@@ -76,11 +92,12 @@ trait StatisticsDirectives extends StatisticsJsonFormat {
       entity(as[HttpRequest]) { requestData =>
         requestData.uri.path.toString match {
           case "/" =>
-            getFromFile("/opt/webapp/index.html")
+            if (uiLocation.isResourceBased) getFromResource("index.html") else getFromFile("index.html")
           case "" =>
-            getFromFile("/opt/webapp/index.html")
+            if (uiLocation.isResourceBased) getFromResource("index.html") else getFromFile("index.html")
           case path =>
-            getFromFile("/opt/webapp" + path)
+            // We have to drop leading slash in order to successfully find files
+            if (uiLocation.isResourceBased) getFromResource(path.drop(1)) else getFromFile(path.drop(1))
         }
       }
     }

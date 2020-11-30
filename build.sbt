@@ -170,6 +170,8 @@ lazy val server: Project = (project in file("server"))
   .settings(Seq(
     name := "elasticmq-server",
     libraryDependencies ++= Seq(logback, config),
+    unmanagedResourceDirectories in Compile += { baseDirectory.value / ".." / "ui" / "build" },
+    assembly := assembly.dependsOn(yarnTask.toTask(" build")).value,
     mainClass in assembly := Some("org.elasticmq.server.Main"),
     coverageMinimum := 52,
     // s3 upload
@@ -216,7 +218,7 @@ lazy val server: Project = (project in file("server"))
       javaOptions in Universal ++= Seq("-Dconfig.file=/opt/elasticmq.conf"),
       mappings in Docker ++= Seq(
         (baseDirectory.value / "docker" / "elasticmq.conf") -> "/opt/elasticmq.conf"
-      ) ++ sbt.Path.directory(baseDirectory.value / ".." / "ui" / "build"),
+      ),
       publishLocal in Docker := (publishLocal in Docker).dependsOn(yarnTask.toTask(" build")).value,
       dockerCommands += Cmd(
         "COPY",
@@ -224,16 +226,10 @@ lazy val server: Project = (project in file("server"))
         s"--chown=${(daemonUser in Docker).value}:root",
         "/opt/elasticmq.conf",
         "/opt"
-      ),
-      dockerCommands += Cmd(
-        "COPY",
-        "/build/",
-        "/opt/webapp"
       )
     )
   )
   .dependsOn(core, restSqs, commonTest % "test")
-  .aggregate(ui)
 
 val graalVmVersion = "20.2.0"
 
@@ -293,7 +289,7 @@ lazy val nativeServer: Project = (project in file("native-server"))
       val copyUI = Cmd(
         "COPY",
         "/build/",
-        "/opt/webapp"
+        "/opt/docker"
       )
       val tiniCommand = ExecCmd("RUN", "apk", "add", "--no-cache", "tini")
       front ++ Seq(tiniCommand, copyConfig, copyUI) ++ back
