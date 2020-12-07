@@ -17,6 +17,7 @@ lazy val yarnTask = inputKey[Unit]("Run yarn with arguments")
 
 val buildSettings = commonSmlBuildSettings ++ ossPublishSettings ++ Seq(
   organization := "org.elasticmq",
+  scmInfo := Some(ScmInfo(url("https://github.com/softwaremill/elasticmq"), "scm:git@github.com:softwaremill/elasticmq.git")),
   scalaVersion := v2_13,
   crossScalaVersions := Seq(v2_13, v2_12),
   libraryDependencies += "org.scala-lang.modules" %% "scala-xml" % "1.3.0",
