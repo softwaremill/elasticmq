@@ -1,9 +1,9 @@
-name: ElasticMQ tests
+name: CI
 
 on: [push, pull_request]
 
 jobs:
-  scala-tests:
+  ci:
     # run on external PRs, but not on internal PRs since those will be run by push to branch
     if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
     name: Scala testing
