@@ -95,7 +95,7 @@ val akka2Slf4j = "com.typesafe.akka" %% "akka-slf4j" % akkaVersion
 val akka2Streams = "com.typesafe.akka" %% "akka-stream" % akkaVersion
 val akka2Testkit = "com.typesafe.akka" %% "akka-testkit" % akkaVersion % "test"
 val akka2Http = "com.typesafe.akka" %% "akka-http" % akkaHttpVersion
-val sprayJson = "io.spray" %% "spray-json" % "1.3.5"
+val sprayJson = "io.spray" %% "spray-json" % "1.3.6"
 val akkaHttpSprayJson = "com.typesafe.akka" %% "akka-http-spray-json" % akkaHttpVersion
 val akka2HttpTestkit = "com.typesafe.akka" %% "akka-http-testkit" % akkaHttpVersion % "test"
 
