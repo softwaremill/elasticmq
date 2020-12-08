@@ -1,7 +1,6 @@
 ![ElasticMQ](https://github.com/softwaremill/elasticmq/raw/master/banner.png)
 
 [![ CI ](https://github.com/softwaremill/elasticmq/workflows/ElasticMQ%20tests/badge.svg)](https://github.com/softwaremill/elasticmq/actions?query=workflow%3A%22ElasticMQ+tests%22)
-
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/org.elasticmq/elasticmq-rest-sqs_2.12/badge.svg)](https://maven-badges.herokuapp.com/maven-central/org.elasticmq/elasticmq-rest-sqs_2.12/)
 
 # tl;dr
