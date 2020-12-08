@@ -231,7 +231,7 @@ is available as [`softwaremill/elasticmq-native`](https://hub.docker.com/r/softw
 To start, run (9324 is the default REST-SQS API port; 9325 is the default UI port, exposing it is fully optional):
 
 ```
-docker run -p 9324:9324 -p 9325:9325 --rm -it softwaremill/elasticmq-native
+docker run -p 9324:9324 -p 9325:9325 softwaremill/elasticmq-native
 ```
 
 The `elasticmq-native` image is much smaller (30MB vs 240MB) and starts up much faster (milliseconds instead of seconds),
