@@ -340,7 +340,7 @@ lazy val ui = (project in file("ui"))
   .settings(buildSettings)
   .settings(uiSettings)
   .settings(
-    test in Test := (test in Test).dependsOn(yarnTask.toTask(" test")).value,
+    test in Test := (test in Test).dependsOn(yarnTask.toTask(" test:ci")).value,
     compile in Compile := {
       yarnTask.toTask(" build").value
       (compile in Compile).value
