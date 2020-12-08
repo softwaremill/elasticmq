@@ -7,7 +7,7 @@
 # tl;dr
 
 * in-memory message queue system
-* runs stand-alone ([download](https://s3-eu-west-1.amazonaws.com/softwaremill-public/elasticmq-server-1.0.0.jar)), via [Docker](https://hub.docker.com/r/softwaremill/elasticmq/) or embedded
+* runs stand-alone ([download](https://s3-eu-west-1.amazonaws.com/softwaremill-public/elasticmq-server-1.0.0.jar)), via [Docker](https://hub.docker.com/r/softwaremill/elasticmq-native/) or embedded
 * [Amazon SQS](http://aws.amazon.com/sqs/)-compatible interface
 * fully asynchronous implementation, no blocking calls
 * created and maintained by:
