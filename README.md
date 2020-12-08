@@ -225,9 +225,27 @@ The `boto3` interface is different:
 
 # ElasticMQ via Docker
 
-A Docker image is built on each release an pushed as [`softwaremill/elasticmq`](https://hub.docker.com/r/softwaremill/elasticmq/).
+A Docker image built using GraalVM's [native-image](https://blog.softwaremill.com/small-fast-docker-images-using-graalvms-native-image-99c0bc92e70b),
+is available as [`softwaremill/elasticmq-native`](https://hub.docker.com/r/softwaremill/elasticmq-native/). 
 
-Run using (9324 is the default REST-SQS API port; 9325 is the default UI port, exposing it is fully optional):
+To start, run (9324 is the default REST-SQS API port; 9325 is the default UI port, exposing it is fully optional):
+
+```
+docker run -p 9324:9324 -p 9325:9325 --rm -it softwaremill/elasticmq-native
+```
+
+The `elasticmq-native` image is much smaller (30MB vs 240MB) and starts up much faster (milliseconds instead of seconds),
+comparing to the full JVM version (see below).  Custom configuration can be provided by creating a custom
+configuration file (see above) and using it when running the container:
+
+```
+docker run -p 9324:9324 -p 9325:9325 -v `pwd`/custom.conf:/opt/elasticmq.conf softwaremill/elasticmq-native
+```
+
+# ElasticMQ via Docker (full JVM)
+
+A Docker image is built on each release an pushed as [`softwaremill/elasticmq`](https://hub.docker.com/r/softwaremill/elasticmq/). 
+Run using:
 
 ```
 docker run -p 9324:9324 -p 9325:9325 softwaremill/elasticmq
@@ -274,39 +292,6 @@ ENTRYPOINT [ "/usr/bin/java", "-Dconfig.file=/opt/elasticmq/conf/elasticmq.conf"
 ```
 
 and override the entrypoint passing the required properties.
-
-# ElasticMQ-native via Docker: smaller, faster & experimental
-
-An experimental, dockerized version of ElasticMQ,
-built using GraalVM's [native-image](https://blog.softwaremill.com/small-fast-docker-images-using-graalvms-native-image-99c0bc92e70b),
-is available as [`softwaremill/elasticmq-native`](https://hub.docker.com/r/softwaremill/elasticmq-native/). To start, run:
-
-```
-docker run -p 9324:9324 -p 9325:9325 --rm -it softwaremill/elasticmq-native
-```
-
-The `elasticmq-native` image is much smaller (30MB vs 240MB) and starts up much faster (milliseconds instead of seconds).
-It should work exactly the same as the "normal" version. Custom configuration can be provided by creating a custom
-configuration file (see above) and using it when running the container:
-
-```
-docker run -p 9324:9324 -p 9325:9325 -v `pwd`/custom.conf:/opt/elasticmq.conf softwaremill/elasticmq-native
-```
-
-## Building the native image
-
-Do not forget to adjust the CPU and memory settings for the Docker process. It was checked with 6CPUs, 8GB of memory and 2GB of swap. Also, make sure that you are running sbt with the graalvm java, as the way the jars are composed seem to differ from other java implementations, and affect the native-image process that is run later! To rebuild the native image, run:
-
-```
-sbt "project nativeServer; clean; graalvm-native-image:packageBin; docker:publishLocal"
-```
-
-Generating GraalVM config files is a manual process currently. You need to run the fat-jar using the GraalVM VM (w/ native-image installed using `gu`), and then run the following commands to generate the configs:
-
-* `java -agentlib:native-image-agent=config-output-dir=... -jar elasticmq-server-assembly.jar`
-* `java -agentlib:native-image-agent=config-merge-dir=... -Dconfig.file=test.conf -jar elasticmq-server-assembly.jar` (to additionally generate config needed to load custom elasticmq config)
-
-These files should be placed in `native-server/src/main/resources/META-INF/native-image` and are automatically used by the native-image process.
 
 # ElasticMQ dependencies in SBT
 
@@ -384,6 +369,21 @@ To build a jar-with-dependencies:
 > project server
 > assembly
 ```
+
+## Building the native image
+
+Do not forget to adjust the CPU and memory settings for the Docker process. It was checked with 6CPUs, 8GB of memory and 2GB of swap. Also, make sure that you are running sbt with the graalvm java, as the way the jars are composed seem to differ from other java implementations, and affect the native-image process that is run later! To rebuild the native image, run:
+
+```
+sbt "project nativeServer; clean; graalvm-native-image:packageBin; docker:publishLocal"
+```
+
+Generating GraalVM config files is a manual process currently. You need to run the fat-jar using the GraalVM VM (w/ native-image installed using `gu`), and then run the following commands to generate the configs:
+
+* `java -agentlib:native-image-agent=config-output-dir=... -jar elasticmq-server-assembly.jar`
+* `java -agentlib:native-image-agent=config-merge-dir=... -Dconfig.file=test.conf -jar elasticmq-server-assembly.jar` (to additionally generate config needed to load custom elasticmq config)
+
+These files should be placed in `native-server/src/main/resources/META-INF/native-image` and are automatically used by the native-image process.
 
 # Tests and coverage
 
