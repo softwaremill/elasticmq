@@ -9,7 +9,7 @@ import scoverage.ScoverageKeys._
 import scala.sys.process.Process
 
 val v2_12 = "2.12.12"
-val v2_13 = "2.13.3"
+val v2_13 = "2.13.4"
 
 lazy val uiDirectory = settingKey[File]("Path to the ui project directory")
 lazy val updateYarn = taskKey[Unit]("Update yarn")
