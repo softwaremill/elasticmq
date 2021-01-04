@@ -6,8 +6,8 @@ pull_request_rules:
   - name: automatic merge for scala-steward pull requests affecting build.sbt
     conditions:
       - author=scala-steward
-      - check-success=ci (2.12.10)
-      - check-success=ci (2.13.3)
+      - check-success=ci (2.12.12)
+      - check-success=ci (2.13.4)
       - "#files=1"
       - files=build.sbt
     actions:
@@ -16,8 +16,8 @@ pull_request_rules:
   - name: automatic merge for scala-steward pull requests affecting project plugins.sbt
     conditions:
       - author=scala-steward
-      - check-success=ci (2.12.10)
-      - check-success=ci (2.13.3)
+      - check-success=ci (2.12.12)
+      - check-success=ci (2.13.4)
       - "#files=1"
       - files=project/plugins.sbt
     actions:
@@ -26,8 +26,8 @@ pull_request_rules:
   - name: semi-automatic merge for scala-steward pull requests
     conditions:
       - author=scala-steward
-      - check-success=ci (2.12.10)
-      - check-success=ci (2.13.3)
+      - check-success=ci (2.12.12)
+      - check-success=ci (2.13.4)
       - "#approved-reviews-by>=1"
     actions:
       merge:
