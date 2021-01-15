@@ -1,13 +1,13 @@
 package org.elasticmq.actor.queue.operations
 
-import org.elasticmq.{DeliveryReceipt, ReceiptHandleIsInvalid}
+import org.elasticmq.{DeliveryReceipt, InvalidReceiptHandle}
 import org.elasticmq.actor.queue.QueueActorStorage
 import org.elasticmq.util.Logging
 
 trait DeleteMessageOps extends Logging {
   this: QueueActorStorage =>
 
-  def deleteMessage(deliveryReceipt: DeliveryReceipt): Either[ReceiptHandleIsInvalid, Unit] = {
+  def deleteMessage(deliveryReceipt: DeliveryReceipt): Either[InvalidReceiptHandle, Unit] = {
     val msgId = deliveryReceipt.extractId.toString
 
     messageQueue.byId.get(msgId) match {
@@ -17,10 +17,10 @@ trait DeleteMessageOps extends Logging {
           messageQueue.remove(msgId)
           Right(())
         } else {
-          Left(new ReceiptHandleIsInvalid(queueData.name, deliveryReceipt.receipt))
+          Left(new InvalidReceiptHandle(queueData.name, deliveryReceipt.receipt))
         }
       case None =>
-        Left(new ReceiptHandleIsInvalid(queueData.name, deliveryReceipt.receipt))
+        Left(new InvalidReceiptHandle(queueData.name, deliveryReceipt.receipt))
     }
   }
 }

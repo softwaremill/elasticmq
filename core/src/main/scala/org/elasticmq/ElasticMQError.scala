@@ -21,7 +21,7 @@ class MessageDoesNotExist(val queueName: String, messageId: MessageId) extends E
   val message = s"Message does not exist: $messageId in queue: $queueName"
 }
 
-class ReceiptHandleIsInvalid(val queueName: String, receiptHandle: String) extends ElasticMQError {
+class InvalidReceiptHandle(val queueName: String, receiptHandle: String) extends ElasticMQError {
   val code = "ReceiptHandleIsInvalid"
-  val message = s"""The input receipt handle "$receiptHandle" is not a valid."""
+  val message = s"""The receipt handle "$receiptHandle" is not valid."""
 }
