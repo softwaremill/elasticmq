@@ -249,6 +249,27 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
     }
   }
 
+  test("delete msg with invalid handle should fail") {
+    // Given
+    val q1 = createQueueData("q1", MillisVisibilityTimeout(1L))
+    val m1 = createNewMessageData("xyz", "123", Map(), MillisNextDelivery(50L))
+
+    for {
+      Right(queueActor) <- queueManagerActor ? CreateQueue(q1)
+      _ <- queueActor ? SendMessage(m1)
+      List(m1data) <- queueActor ? ReceiveMessages(DefaultVisibilityTimeout, 1, None, None)
+
+      // When
+      result <- queueActor ? DeleteMessage(DeliveryReceipt("0000#0000"))
+      lookupResult <- queueActor ? LookupMessage(MessageId("xyz"))
+    } yield {
+      // Then
+      result.isLeft should be(true)
+      result.swap.map(_.code).getOrElse("") should be("ReceiptHandleIsInvalid")
+      lookupResult shouldNot be(None)
+    }
+  }
+
   test("msg statistics should be updated") {
     // Given
     val q1 = createQueueData("q1", MillisVisibilityTimeout(1L))

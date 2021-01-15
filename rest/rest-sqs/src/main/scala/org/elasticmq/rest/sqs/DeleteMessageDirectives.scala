@@ -14,14 +14,16 @@ trait DeleteMessageDirectives { this: ElasticMQDirectives =>
         p.requiredParam(ReceiptHandleParameter) { receipt =>
           val result = queueActor ? DeleteMessage(DeliveryReceipt(receipt))
 
-          result.map { _ =>
-            respondWith {
-              <DeleteMessageResponse>
-                <ResponseMetadata>
-                  <RequestId>{EmptyRequestId}</RequestId>
-                </ResponseMetadata>
-              </DeleteMessageResponse>
-            }
+          result.map {
+            case Left(error) => throw new SQSException(error.code, errorMessage = Some(error.message))
+            case Right(_) =>
+              respondWith {
+                <DeleteMessageResponse>
+                  <ResponseMetadata>
+                    <RequestId>{EmptyRequestId}</RequestId>
+                  </ResponseMetadata>
+                </DeleteMessageResponse>
+              }
           }
         }
       }

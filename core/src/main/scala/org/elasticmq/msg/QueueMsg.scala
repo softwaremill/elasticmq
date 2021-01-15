@@ -35,6 +35,6 @@ case class ReceiveMessages(
     waitForMessages: Option[Duration],
     receiveRequestAttemptId: Option[String]
 ) extends QueueMessageMsg[List[MessageData]]
-case class DeleteMessage(deliveryReceipt: DeliveryReceipt) extends QueueMessageMsg[Unit]
+case class DeleteMessage(deliveryReceipt: DeliveryReceipt) extends QueueMessageMsg[Either[ReceiptHandleIsInvalid, Unit]]
 case class LookupMessage(messageId: MessageId) extends QueueMessageMsg[Option[MessageData]]
 case object DeduplicationIdsCleanup extends QueueMessageMsg[Unit]
