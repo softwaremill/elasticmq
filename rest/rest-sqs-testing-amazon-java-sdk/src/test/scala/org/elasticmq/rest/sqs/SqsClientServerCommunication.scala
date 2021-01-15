@@ -23,7 +23,7 @@ trait SqsClientServerCommunication extends AnyFunSuite with BeforeAndAfter with 
 
   var strictServer: SQSRestServer = _
   var relaxedServer: SQSRestServer = _
-  val awsAccountId = "123456789"
+  val awsAccountId = "123456789012"
   val awsRegion = "elasticmq"
 
   before {

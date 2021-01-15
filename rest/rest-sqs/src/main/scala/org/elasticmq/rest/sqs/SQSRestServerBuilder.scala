@@ -391,10 +391,13 @@ trait QueueManagerActorModule {
 
 trait QueueURLModule {
   def serverAddress: NodeAddress
+  def awsAccountId: String
 
   import Directives._
 
   def baseQueueURL: Directive1[String] = {
+    val postfix = if (awsAccountId.nonEmpty) awsAccountId else QueueUrlContext
+
     val baseAddress = if (serverAddress.isWildcard) {
       extractRequest.map { req =>
         val incomingAddress =
@@ -404,16 +407,15 @@ trait QueueURLModule {
           incomingAddress.substring(0, incomingAddress.length - 1)
         } else incomingAddress
 
-        // removing the final /queue or /queue/ if present, it will be re-added later
-        if (incomingAddressNoSlash.endsWith(QueueUrlContext)) {
-          incomingAddressNoSlash.substring(0, incomingAddressNoSlash.length - QueueUrlContext.length - 1)
+        if (incomingAddressNoSlash.endsWith(postfix)) {
+          incomingAddressNoSlash.substring(0, incomingAddressNoSlash.length - postfix.length - 1)
         } else incomingAddressNoSlash
       }
     } else {
       provide(serverAddress.fullAddress)
     }
 
-    baseAddress.map(_ + "/" + QueueUrlContext)
+    baseAddress.map(_ + "/" + postfix)
   }
 
   def queueURL(queueData: QueueData): Directive1[String] = {

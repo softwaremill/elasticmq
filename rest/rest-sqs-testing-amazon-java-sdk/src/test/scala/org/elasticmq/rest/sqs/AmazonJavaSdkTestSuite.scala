@@ -40,7 +40,7 @@ class AmazonJavaSdkTestSuite extends SqsClientServerCommunication with Matchers 
     val queueUrl = client.getQueueUrl(new GetQueueUrlRequest("testQueue1")).getQueueUrl
 
     // Then
-    queueUrl should include("testQueue1")
+    queueUrl shouldEqual "http://localhost:9321/123456789012/testQueue1"
   }
 
   test("should create a queue with the specified visibility timeout") {
