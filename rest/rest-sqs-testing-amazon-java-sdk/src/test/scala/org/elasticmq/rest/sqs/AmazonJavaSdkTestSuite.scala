@@ -936,6 +936,24 @@ class AmazonJavaSdkTestSuite extends SqsClientServerCommunication with Matchers 
     m2 should be(None)
   }
 
+  test("should fail when deleting a message with invalid handle") {
+    // Given
+    val queueUrl = client
+      .createQueue(
+        new CreateQueueRequest("testQueue1")
+          .withAttributes(Map(defaultVisibilityTimeoutAttribute -> "1").asJava)
+      )
+      .getQueueUrl
+
+    // When
+    val result = catching(classOf[AmazonSQSException]) either {
+      client.deleteMessage(new DeleteMessageRequest(queueUrl, "0000#0000"))
+    }
+
+    result.isLeft should be(true)
+    result.swap.map(_.getMessage).getOrElse("") should include("ReceiptHandleIsInvalid")
+  }
+
   test("should delete messages in a batch") {
     // Given
     val queueUrl = client
@@ -962,7 +980,8 @@ class AmazonJavaSdkTestSuite extends SqsClientServerCommunication with Matchers 
     val result = client.deleteMessageBatch(
       new DeleteMessageBatchRequest(queueUrl).withEntries(
         new DeleteMessageBatchRequestEntry("1", msgReceipts.head),
-        new DeleteMessageBatchRequestEntry("2", msgReceipts(1))
+        new DeleteMessageBatchRequestEntry("2", msgReceipts(1)),
+        new DeleteMessageBatchRequestEntry("3", "invalid")
       )
     )
     Thread.sleep(1100)
@@ -971,6 +990,7 @@ class AmazonJavaSdkTestSuite extends SqsClientServerCommunication with Matchers 
 
     // Then
     result.getSuccessful.asScala.map(_.getId).toSet should be(Set("1", "2"))
+    result.getFailed.asScala.map(_.getId).toSet should be(Set("3"))
     m should be(None) // messages deleted
   }
 
@@ -1486,12 +1506,15 @@ class AmazonJavaSdkTestSuite extends SqsClientServerCommunication with Matchers 
     Thread.sleep(1100)
     client.receiveMessage(new ReceiveMessageRequest(queueUrl)).getMessages.get(0) // 2nd receive
 
-    client.deleteMessage(new DeleteMessageRequest(queueUrl, m1.getReceiptHandle)) // Shouldn't delete - old receipt
+    val deleteResult = catching(classOf[AmazonServiceException]) either {
+      client.deleteMessage(new DeleteMessageRequest(queueUrl, m1.getReceiptHandle)) // Shouldn't delete - old receipt
+    }
 
     // Then
     Thread.sleep(1100)
     val m3 = receiveSingleMessage(queueUrl)
     m3 should be(Some("Message 1"))
+    deleteResult.isLeft should be(true)
   }
 
   test("should return an error if creating an existing queue with a different visibility timeout") {

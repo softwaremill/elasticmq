@@ -7,6 +7,8 @@ import org.elasticmq.actor.reply._
 import org.elasticmq.rest.sqs.Action.DeleteMessageBatch
 import org.elasticmq.rest.sqs.directives.ElasticMQDirectives
 
+import scala.xml.{Node, Text}
+
 trait DeleteMessageBatchDirectives {
   this: ElasticMQDirectives with BatchRequestsModule =>
   def deleteMessageBatch(p: AnyParams) = {
@@ -16,10 +18,17 @@ trait DeleteMessageBatchDirectives {
           val receiptHandle = messageData(ReceiptHandleParameter)
           val result = queueActor ? DeleteMessage(DeliveryReceipt(receiptHandle))
 
-          result.map { _ =>
-            <DeleteMessageBatchResultEntry>
-              <Id>{id}</Id>
-            </DeleteMessageBatchResultEntry>
+          result.map {
+            case Left(error) =>
+              <BatchResultErrorEntry>
+                <Id>{id}</Id>
+                <Code>{error.code}</Code>
+                <Message>{error.message}</Message>
+              </BatchResultErrorEntry>
+            case Right(_) =>
+              <DeleteMessageBatchResultEntry>
+                <Id>{id}</Id>
+              </DeleteMessageBatchResultEntry>
           }
         }
 
