@@ -1506,12 +1506,15 @@ class AmazonJavaSdkTestSuite extends SqsClientServerCommunication with Matchers 
     Thread.sleep(1100)
     client.receiveMessage(new ReceiveMessageRequest(queueUrl)).getMessages.get(0) // 2nd receive
 
-    client.deleteMessage(new DeleteMessageRequest(queueUrl, m1.getReceiptHandle)) // Shouldn't delete - old receipt
+    val deleteResult = catching(classOf[AmazonServiceException]) either {
+      client.deleteMessage(new DeleteMessageRequest(queueUrl, m1.getReceiptHandle)) // Shouldn't delete - old receipt
+    }
 
     // Then
     Thread.sleep(1100)
     val m3 = receiveSingleMessage(queueUrl)
     m3 should be(Some("Message 1"))
+    deleteResult should be(true)
   }
 
   test("should return an error if creating an existing queue with a different visibility timeout") {
