@@ -1,6 +1,6 @@
 package org.elasticmq.actor.queue
 
-import org.elasticmq.QueueStatistics
+import org.elasticmq.{FifoDeduplicationIdsHistory, QueueStatistics}
 import org.elasticmq.actor.reply.ReplyAction
 import org.elasticmq.msg._
 import org.elasticmq.util.Logging
@@ -38,6 +38,7 @@ trait QueueActorQueueOps extends Logging {
       case ClearQueue() =>
         logger.info(s"${queueData.name}: Clearing queue")
         messageQueue.clear()
+        fifoMessagesHistory = FifoDeduplicationIdsHistory.newHistory()
       case GetQueueStatistics(deliveryTime) => getQueueStatistics(deliveryTime)
       case UpdateQueueTags(newQueueTags) =>
         logger.info(s"${queueData.name} Adding and Updating tags ${newQueueTags}")
