@@ -58,7 +58,7 @@ case class TheSQSRestServerBuilder(providedActorSystem: Option[ActorSystem],
                                    sqsLimits: Limits,
                                    _awsRegion: String,
                                    _awsAccountId: String,
-                                   config: Option[Config]) extends Logging {
+                                   config: Option[Config] = None) extends Logging {
 
   /** @param _actorSystem Optional actor system. If one is provided, it will be used to create ElasticMQ and Spray
     *                     actors, but its lifecycle (shutdown) will be not managed by the server. If one is not
