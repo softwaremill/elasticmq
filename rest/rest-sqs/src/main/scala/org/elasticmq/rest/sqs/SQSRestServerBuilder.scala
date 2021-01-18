@@ -6,13 +6,13 @@ import java.nio.ByteBuffer
 import java.security.MessageDigest
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
-
 import akka.actor.{ActorRef, ActorSystem, Props}
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.server.{Directive1, Directives}
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
-import com.typesafe.config.ConfigFactory
+import com.typesafe.config.{Config, ConfigFactory}
+
 import javax.management.ObjectName
 import org.elasticmq._
 import org.elasticmq.actor.QueueManagerActor
@@ -45,20 +45,20 @@ object SQSRestServerBuilder
       true,
       StrictSQSLimits,
       "elasticmq",
-      "000000000000"
+      "000000000000",
+      None
     )
 
-case class TheSQSRestServerBuilder(
-    providedActorSystem: Option[ActorSystem],
-    providedQueueManagerActor: Option[ActorRef],
-    interface: String,
-    port: Int,
-    serverAddress: NodeAddress,
-    generateServerAddress: Boolean,
-    sqsLimits: Limits,
-    _awsRegion: String,
-    _awsAccountId: String
-) extends Logging {
+case class TheSQSRestServerBuilder(providedActorSystem: Option[ActorSystem],
+                                   providedQueueManagerActor: Option[ActorRef],
+                                   interface: String,
+                                   port: Int,
+                                   serverAddress: NodeAddress,
+                                   generateServerAddress: Boolean,
+                                   sqsLimits: Limits,
+                                   _awsRegion: String,
+                                   _awsAccountId: String,
+                                   config: Option[Config]) extends Logging {
 
   /** @param _actorSystem Optional actor system. If one is provided, it will be used to create ElasticMQ and Spray
     *                     actors, but its lifecycle (shutdown) will be not managed by the server. If one is not
@@ -107,8 +107,13 @@ case class TheSQSRestServerBuilder(
   def withAWSAccountId(accountId: String) =
     this.copy(_awsAccountId = accountId)
 
+  /** @param config Custom configuration for actor system and the rest server
+    */
+  def withConfig(config: Config) =
+    this.copy(config = Some(config))
+
   def start(): SQSRestServer = {
-    val (theActorSystem, stopActorSystem) = getOrCreateActorSystem
+    val (theActorSystem, stopActorSystem) = getOrCreateActorSystem(config)
     val theQueueManagerActor = getOrCreateQueueManagerActor(theActorSystem)
     val theServerAddress =
       if (generateServerAddress)
@@ -186,15 +191,15 @@ case class TheSQSRestServerBuilder(
         // 4. Unmatched action
         unmatchedAction(p)
 
-    val config = new ElasticMQConfig
-
     implicit val bindingTimeout = Timeout(10, TimeUnit.SECONDS)
+
+    val isDebug = theActorSystem.settings.config.getBoolean("elasticmq.debug")
 
     val routes =
       handleServerExceptions {
         handleRejectionsWithSQSError {
           anyParamsMap { p =>
-            if (config.debug) {
+            if (isDebug) {
               logRequestResult("") {
                 rawRoutes(p)
               }
@@ -240,11 +245,11 @@ case class TheSQSRestServerBuilder(
     )
   }
 
-  private def getOrCreateActorSystem: (ActorSystem, () => Future[Any]) = {
+  private def getOrCreateActorSystem(config: Option[Config]): (ActorSystem, () => Future[Any]) = {
     providedActorSystem
       .map((_, () => Future.successful(())))
       .getOrElse {
-        val actorSystem = ActorSystem("elasticmq")
+        val actorSystem = ActorSystem("elasticmq", config)
         (actorSystem, actorSystem.terminate _)
       }
   }
@@ -425,11 +430,4 @@ trait QueueURLModule {
 
 trait SQSLimitsModule {
   def sqsLimits: Limits
-}
-
-class ElasticMQConfig {
-  private lazy val rootConfig = ConfigFactory.load()
-  private lazy val elasticMQConfig = rootConfig.getConfig("elasticmq")
-
-  lazy val debug = elasticMQConfig.getBoolean("debug")
 }
