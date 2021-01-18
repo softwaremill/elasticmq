@@ -158,6 +158,18 @@ While creating the FIFO queue, .fifo suffix will be added automatically to queue
 
 # Starting an embedded ElasticMQ server with an SQS interface
 
+Add ElasticMQ Server to `build.sbt` dependencies
+
+    libraryDependencies += "org.elasticmq" %% "elasticmq-server" % "1.0.0"
+
+Simply start the server using custom configuration (see examples above):
+
+    val config = ConfigFactory.load("elasticmq.conf")
+    val server = new ElasticMQServer(new ElasticMQServerConfig(config))
+    server.start()
+
+Custom rest server can be built using `SQSRestServerBuilder` provided in `elasticmq-rest-sqs` package:
+
     val server = SQSRestServerBuilder.start()
     // ... use ...
     server.stopAndWait()
@@ -177,7 +189,7 @@ You can also provide a custom `ActorSystem`; for details see the javadocs.
 
 Embedded ElasticMQ can be used from any JVM-based language (Java, Scala, etc.).
 
-(Note that the embedded server does not load any configuration files, so you cannot automatically create queues on startup as described above. You can of course create queues programmatically.)
+(Note that the embedded server created with `SQSRestServerBuilder` does not load any configuration files, so you cannot automatically create queues on startup as described above. You can of course create queues programmatically.)
 
 # Using the Amazon Java SDK to access an ElasticMQ Server
 
