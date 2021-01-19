@@ -6,13 +6,13 @@ import java.nio.ByteBuffer
 import java.security.MessageDigest
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
+
 import akka.actor.{ActorRef, ActorSystem, Props}
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.server.{Directive1, Directives}
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
-import com.typesafe.config.{Config, ConfigFactory}
-
+import com.typesafe.config.ConfigFactory
 import javax.management.ObjectName
 import org.elasticmq._
 import org.elasticmq.actor.QueueManagerActor
@@ -45,20 +45,20 @@ object SQSRestServerBuilder
       true,
       StrictSQSLimits,
       "elasticmq",
-      "000000000000",
-      None
+      "000000000000"
     )
 
-case class TheSQSRestServerBuilder(providedActorSystem: Option[ActorSystem],
-                                   providedQueueManagerActor: Option[ActorRef],
-                                   interface: String,
-                                   port: Int,
-                                   serverAddress: NodeAddress,
-                                   generateServerAddress: Boolean,
-                                   sqsLimits: Limits,
-                                   _awsRegion: String,
-                                   _awsAccountId: String,
-                                   config: Option[Config] = None) extends Logging {
+case class TheSQSRestServerBuilder(
+    providedActorSystem: Option[ActorSystem],
+    providedQueueManagerActor: Option[ActorRef],
+    interface: String,
+    port: Int,
+    serverAddress: NodeAddress,
+    generateServerAddress: Boolean,
+    sqsLimits: Limits,
+    _awsRegion: String,
+    _awsAccountId: String
+) extends Logging {
 
   /** @param _actorSystem Optional actor system. If one is provided, it will be used to create ElasticMQ and Spray
     *                     actors, but its lifecycle (shutdown) will be not managed by the server. If one is not
@@ -107,13 +107,8 @@ case class TheSQSRestServerBuilder(providedActorSystem: Option[ActorSystem],
   def withAWSAccountId(accountId: String) =
     this.copy(_awsAccountId = accountId)
 
-  /** @param config Custom configuration for actor system and the rest server
-    */
-  def withConfig(config: Config) =
-    this.copy(config = Some(config))
-
   def start(): SQSRestServer = {
-    val (theActorSystem, stopActorSystem) = getOrCreateActorSystem(config)
+    val (theActorSystem, stopActorSystem) = getOrCreateActorSystem
     val theQueueManagerActor = getOrCreateQueueManagerActor(theActorSystem)
     val theServerAddress =
       if (generateServerAddress)
@@ -191,15 +186,15 @@ case class TheSQSRestServerBuilder(providedActorSystem: Option[ActorSystem],
         // 4. Unmatched action
         unmatchedAction(p)
 
-    implicit val bindingTimeout = Timeout(10, TimeUnit.SECONDS)
+    val config = new ElasticMQConfig
 
-    val isDebug = theActorSystem.settings.config.getBoolean("elasticmq.debug")
+    implicit val bindingTimeout = Timeout(10, TimeUnit.SECONDS)
 
     val routes =
       handleServerExceptions {
         handleRejectionsWithSQSError {
           anyParamsMap { p =>
-            if (isDebug) {
+            if (config.debug) {
               logRequestResult("") {
                 rawRoutes(p)
               }
@@ -245,11 +240,11 @@ case class TheSQSRestServerBuilder(providedActorSystem: Option[ActorSystem],
     )
   }
 
-  private def getOrCreateActorSystem(config: Option[Config]): (ActorSystem, () => Future[Any]) = {
+  private def getOrCreateActorSystem: (ActorSystem, () => Future[Any]) = {
     providedActorSystem
       .map((_, () => Future.successful(())))
       .getOrElse {
-        val actorSystem = ActorSystem("elasticmq", config)
+        val actorSystem = ActorSystem("elasticmq")
         (actorSystem, actorSystem.terminate _)
       }
   }
@@ -430,4 +425,11 @@ trait QueueURLModule {
 
 trait SQSLimitsModule {
   def sqsLimits: Limits
+}
+
+class ElasticMQConfig {
+  private lazy val rootConfig = ConfigFactory.load()
+  private lazy val elasticMQConfig = rootConfig.getConfig("elasticmq")
+
+  lazy val debug = elasticMQConfig.getBoolean("debug")
 }
