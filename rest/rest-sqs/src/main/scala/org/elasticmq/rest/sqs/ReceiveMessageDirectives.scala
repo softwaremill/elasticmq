@@ -20,7 +20,7 @@ trait ReceiveMessageDirectives {
     val MaxNumberOfMessagesAttribute = "MaxNumberOfMessages"
     val WaitTimeSecondsAttribute = "WaitTimeSeconds"
     val ReceiveRequestAttemptIdAttribute = "ReceiveRequestAttemptId"
-    val MessageAttributeNamePattern = "MessageAttributeName\\.\\d".r
+    val MessageAttributeNamePattern = "MessageAttributeName(\\.\\d)?".r
     val MessageDeduplicationIdAttribute = "MessageDeduplicationId"
     val MessageGroupIdAttribute = "MessageGroupId"
     val AWSTraceHeaderAttribute = "AWSTraceHeader"
