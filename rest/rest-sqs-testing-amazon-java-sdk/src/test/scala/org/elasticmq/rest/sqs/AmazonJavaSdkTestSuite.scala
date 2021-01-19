@@ -3,14 +3,13 @@ package org.elasticmq.rest.sqs
 import java.net.URI
 import java.nio.ByteBuffer
 import java.util.UUID
-
 import akka.http.scaladsl.model.StatusCodes
 import com.amazonaws.AmazonServiceException
 import com.amazonaws.services.sqs.AmazonSQS
 import com.amazonaws.services.sqs.model._
 import org.apache.http.HttpHost
 import org.apache.http.client.entity.UrlEncodedFormEntity
-import org.apache.http.client.methods.HttpPost
+import org.apache.http.client.methods.{HttpGet, HttpPost}
 import org.apache.http.message.BasicNameValuePair
 import org.elasticmq._
 import org.elasticmq.rest.sqs.model.RedrivePolicy
@@ -208,6 +207,21 @@ class AmazonJavaSdkTestSuite extends SqsClientServerCommunication with Matchers 
         "innocent" -> StringMessageAttribute("😇")
       )
     )
+  }
+
+  test("should respond with text/xml") {
+    // given
+    client.createQueue(new CreateQueueRequest("testQueue1"))
+
+    val httpHost = new HttpHost("localhost", 9321)
+    val req = new HttpGet("/queue/testQueue1?Action=ReceiveMessage")
+
+    //when
+    val res = httpClient.execute(httpHost, req)
+
+    //then
+    res.getStatusLine.getStatusCode shouldBe StatusCodes.OK.intValue
+    res.getEntity.getContentType.getValue should be("text/xml; charset=UTF-8")
   }
 
   test("should reply with a MissingAction error when no action sent") {

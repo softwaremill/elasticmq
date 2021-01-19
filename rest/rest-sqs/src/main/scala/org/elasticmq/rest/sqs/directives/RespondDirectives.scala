@@ -1,9 +1,11 @@
 package org.elasticmq.rest.sqs.directives
 
-import akka.http.scaladsl.server.{Route, Directives, RequestContext}
-
-import scala.xml.{Null, UnprefixedAttribute, Elem}
+import akka.http.scaladsl.model.ContentTypes._
+import akka.http.scaladsl.model.HttpEntity
+import akka.http.scaladsl.server.{Directives, RequestContext, Route}
 import org.elasticmq.rest.sqs.Constants._
+
+import scala.xml.{Elem, Null, UnprefixedAttribute}
 
 trait RespondDirectives {
   this: Directives =>
@@ -12,7 +14,7 @@ trait RespondDirectives {
     namespace { ns => (ctx: RequestContext) =>
       {
         val result = elem % ns
-        ctx.complete(result.toString())
+        ctx.complete(HttpEntity(`text/xml(UTF-8)`, result.toString()))
       }
     }
 
@@ -20,7 +22,7 @@ trait RespondDirectives {
     namespace { ns => (ctx: RequestContext) =>
       {
         val result = elem % ns
-        ctx.complete((statusCode, result.toString()))
+        ctx.complete((statusCode, HttpEntity(`text/xml(UTF-8)`, result.toString())))
       }
     }
 
