@@ -244,7 +244,7 @@ lazy val nativeServer: Project = (project in file("native-server"))
       "org.graalvm.nativeimage" % "svm" % graalVmVersion % "compile-internal"
     ),
     //configures sbt-native-packager to build app using dockerized graalvm
-    graalVMNativeImageGraalVersion := Some(graalVmVersion + "-java11"),
+    (containerBuildImage in GraalVMNativeImage) := GraalVMNativeImagePlugin.generateContainerBuildImage(s"ghcr.io/graalvm/graalvm-ce:java11-$graalVmVersion").value,
     graalVMNativeImageOptions ++= Seq(
       "--static",
       "-H:IncludeResources=.*conf",
