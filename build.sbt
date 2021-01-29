@@ -86,7 +86,7 @@ val jclOverSlf4j = "org.slf4j" % "jcl-over-slf4j" % "1.7.30" // needed form amaz
 val scalatest = "org.scalatest" %% "scalatest" % "3.2.3"
 val awaitility = "org.awaitility" % "awaitility-scala" % "4.0.3"
 
-val amazonJavaSdk = "com.amazonaws" % "aws-java-sdk" % "1.11.889" exclude ("commons-logging", "commons-logging")
+val amazonJavaSdk = "com.amazonaws" % "aws-java-sdk" % "1.11.945" exclude ("commons-logging", "commons-logging")
 
 val akkaVersion = "2.6.12"
 val akkaHttpVersion = "10.2.3"
@@ -232,7 +232,7 @@ lazy val server: Project = (project in file("server"))
   )
   .dependsOn(core, restSqs, commonTest % "test")
 
-val graalVmVersion = "20.3.1"
+val graalVmVersion = "21.0.0"
 
 lazy val nativeServer: Project = (project in file("native-server"))
   .enablePlugins(GraalVMNativeImagePlugin, DockerPlugin)
