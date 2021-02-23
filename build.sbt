@@ -88,7 +88,7 @@ val awaitility = "org.awaitility" % "awaitility-scala" % "4.0.3"
 
 val amazonJavaSdk = "com.amazonaws" % "aws-java-sdk" % "1.11.945" exclude ("commons-logging", "commons-logging")
 
-val akkaVersion = "2.6.12"
+val akkaVersion = "2.6.13"
 val akkaHttpVersion = "10.2.3"
 val akka2Actor = "com.typesafe.akka" %% "akka-actor" % akkaVersion
 val akka2Slf4j = "com.typesafe.akka" %% "akka-slf4j" % akkaVersion
