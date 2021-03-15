@@ -9,7 +9,7 @@ addSbtPlugin("com.eed3si9n" % "sbt-assembly" % "0.15.0")
 
 addSbtPlugin("org.scoverage" % "sbt-scoverage" % "1.6.1")
 
-addSbtPlugin("com.typesafe.sbt" % "sbt-native-packager" % "1.8.0")
+addSbtPlugin("com.typesafe.sbt" % "sbt-native-packager" % "1.8.1")
 
 libraryDependencies += "com.amazonaws" % "aws-java-sdk-s3" % "1.11.601"
 
