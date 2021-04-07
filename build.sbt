@@ -86,7 +86,7 @@ val jclOverSlf4j = "org.slf4j" % "jcl-over-slf4j" % "1.7.30" // needed form amaz
 val scalatest = "org.scalatest" %% "scalatest" % "3.2.3"
 val awaitility = "org.awaitility" % "awaitility-scala" % "4.0.3"
 
-val amazonJavaSdk = "com.amazonaws" % "aws-java-sdk" % "1.11.945" exclude ("commons-logging", "commons-logging")
+val amazonJavaSdkSqs = "com.amazonaws" % "aws-java-sdk-sqs" % "1.11.992" exclude ("commons-logging", "commons-logging")
 
 val akkaVersion = "2.6.12"
 val akkaHttpVersion = "10.2.3"
@@ -157,7 +157,7 @@ lazy val restSqsTestingAmazonJavaSdk: Project =
     .settings(
       Seq(
         name := "elasticmq-rest-sqs-testing-amazon-java-sdk",
-        libraryDependencies ++= Seq(amazonJavaSdk, jclOverSlf4j) ++ common,
+        libraryDependencies ++= Seq(amazonJavaSdkSqs, jclOverSlf4j) ++ common,
         publishArtifact := false
       )
     )
@@ -307,7 +307,7 @@ lazy val performanceTests: Project = (project in file("performance-tests"))
   .settings(
     Seq(
       name := "elasticmq-performance-tests",
-      libraryDependencies ++= Seq(amazonJavaSdk, jclOverSlf4j, logback) ++ common,
+      libraryDependencies ++= Seq(amazonJavaSdkSqs, jclOverSlf4j, logback) ++ common,
       publishArtifact := false
     ))
   .dependsOn(core, restSqs, commonTest % "test")
