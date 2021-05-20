@@ -212,7 +212,7 @@ lazy val server: Project = (project in file("server"))
       credentials += Credentials(Path.userHome / ".s3_elasticmq_credentials"),
       // docker
       dockerExposedPorts := Seq(9324,9325),
-      dockerBaseImage := "openjdk:8u212-b04-jdk-stretch",
+      dockerBaseImage := "openjdk:11-jdk-stretch",
       packageName in Docker := "elasticmq",
       dockerUsername := Some("softwaremill"),
       dockerUpdateLatest := true,

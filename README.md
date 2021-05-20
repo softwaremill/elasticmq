@@ -396,6 +396,15 @@ Generating GraalVM config files is a manual process currently. You need to run t
 
 These files should be placed in `native-server/src/main/resources/META-INF/native-image` and are automatically used by the native-image process.
 
+## Building multi-architecture image
+
+Currently docker image supports one platform: `amd64`. To publish it for two different platforms: `amd64` and `arm64`, follow the instruction (macOS).
+
+* Generate the Dockerfile using SBT - executing `sbt docker:stage` will generate it in `target/docker/stage`
+* Check docker buildx `docker buildx version`
+* Create a new builder instance and enable it `docker buildx create --use --name cross-platform-builder` - by default, buildx is using `docker` driver but we need `docker-container` driver instead.
+* Generate image and push to Docker Hub: `docker buildx build --platform=linux/arm64,linux/amd64 --push -t softwaremill/elasticmq:<tag> .`
+
 # Tests and coverage
 
 To run the tests:
