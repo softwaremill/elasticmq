@@ -398,12 +398,21 @@ These files should be placed in `native-server/src/main/resources/META-INF/nativ
 
 ## Building multi-architecture image
 
-Currently docker image supports one platform: `amd64`. To publish it for two different platforms: `amd64` and `arm64`, follow the instruction (macOS).
+Currently, docker image supports one platform: `amd64`. To publish it for two different platforms: `amd64` and `arm64`, module `server` in `build.sbt` is modified as follows:
 
-* Generate the Dockerfile using SBT - executing `sbt docker:stage` will generate it in `target/docker/stage`
-* Check docker buildx `docker buildx version`
-* Create a new builder instance and enable it `docker buildx create --use --name cross-platform-builder` - by default, buildx is using `docker` driver but we need `docker-container` driver instead.
-* Generate image and push to Docker Hub: `docker buildx build --platform=linux/arm64,linux/amd64 --push -t softwaremill/elasticmq:<tag> .`
+* there is added `dockerBuildxSettings` which creates docker buildx instance
+* docker base image is switched to `openjdk:11-jdk-stretch` which supports multi architectures
+* `dockerBuildCommand` is extended with operator `buildx`
+* `dockerBuildOptions` has two additional parameters: `--platform=linux/arm64,linux/amd64` and `--push`
+
+New parameter `--push` is very crucial. Since `docker buildx build` subcommand is not storing the resulting image in the local `docker image` list, we need that flag to determine where the final image will be stored.
+Flag `--load` makes output destination of type docker. However, this currently works only for single architecture images. Therefore, both sbt commands - `docker:publishLocal` and `docker:publish` are pushing images to a docker registry.
+
+To change this - switch parameters for `dockerBuildOptions`:
+
+* from `--push` to `--load` and
+* from `--platform=linux/arm64,linux/amd64` to `--platform=linux/amd64`
+
 
 # Tests and coverage
 
