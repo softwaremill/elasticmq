@@ -398,20 +398,35 @@ These files should be placed in `native-server/src/main/resources/META-INF/nativ
 
 ## Building multi-architecture image
 
-Currently, docker image supports one platform: `amd64`. To publish it for two different platforms: `amd64` and `arm64`, module `server` in `build.sbt` is modified as follows:
+Publishing Docker image for two different platforms: `amd64` and `arm64` is possible with Docker Buildx plugin.
+Docker Buildx is included in Docker Desktop and Docker Linux packages when installed using the DEB or RPM packages. `build.sbt` has following setup:
 
-* there is added `dockerBuildxSettings` which creates docker buildx instance
-* docker base image is switched to `openjdk:11-jdk-stretch` which supports multi architectures
+* `dockerBuildxSettings` creates Docker Buildx instance
+* Docker base image is `openjdk:11-jdk-stretch` which supports multi-arch images
 * `dockerBuildCommand` is extended with operator `buildx`
 * `dockerBuildOptions` has two additional parameters: `--platform=linux/arm64,linux/amd64` and `--push`
 
-New parameter `--push` is very crucial. Since `docker buildx build` subcommand is not storing the resulting image in the local `docker image` list, we need that flag to determine where the final image will be stored.
-Flag `--load` makes output destination of type docker. However, this currently works only for single architecture images. Therefore, both sbt commands - `docker:publishLocal` and `docker:publish` are pushing images to a docker registry.
+Parameter `--push` is very crucial. Since `docker buildx build` subcommand is not storing the resulting image in the local `docker image` list, we need that flag to determine where the final image will be stored.
+Flag `--load` makes output destination of type docker. However, this currently works only for single architecture images. Therefore, both sbt commands - `docker:publishLocal` and `docker:publish` are pushing images to a Docker registry.
 
 To change this - switch parameters for `dockerBuildOptions`:
 
 * from `--push` to `--load` and
 * from `--platform=linux/arm64,linux/amd64` to `--platform=linux/amd64`
+
+To build images locally:
+
+* make sure Docker Buildx is running `docker buildx version`
+* create Docker Buildx instance `docker buildx create --use --name multi-arch-builder`
+* generate the Dockerfile executing `sbt docker:stage` - it will be generated in `server/target/docker/stage`
+* generate multi-arch image and push it to Docker Hub:
+```
+docker buildx build --platform=linux/arm64,linux/amd64 --push -t softwaremill/elasticmq .
+```
+* or generate single-arch image and load it to docker images locally:
+```
+docker buildx build --platform=linux/amd64 --load -t softwaremill/elasticmq .
+```
 
 
 # Tests and coverage

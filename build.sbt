@@ -218,6 +218,8 @@ lazy val server: Project = (project in file("server"))
       dockerBuildOptions := dockerBuildOptions.value :+ "--platform=linux/arm64,linux/amd64" :+ "--push",
       dockerBuildCommand := {
         val old = dockerBuildCommand.value
+        // Default dockerBuildCommand is Seq("[dockerExecCommand]", "build", "[dockerBuildOptions]", ".")
+        // We need buildx after [dockerExecCommand] which is docker by default
         val withBuildx = old.take(1) ++ Seq("buildx") ++ old.drop(1)
         withBuildx
       },
@@ -347,7 +349,7 @@ lazy val uiSettings = Seq(
 lazy val dockerBuildxSettings = Seq(
   createBuildx := {
     streams.value.log("Creating docker buildx instance")
-    haltOnCmdResultError(Process("docker buildx create --use --name cross-platform-builder", baseDirectory.value).!)
+    haltOnCmdResultError(Process("docker buildx create --use --name multi-arch-builder", baseDirectory.value).!)
   }
 )
 
