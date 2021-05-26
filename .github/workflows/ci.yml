@@ -8,7 +8,7 @@ jobs:
     if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
     strategy:
       matrix:
-        scala: [2.12.13, 2.13.4]
+        scala: [2.12.13, 2.13.6]
     runs-on: ubuntu-18.04
     steps:
     - name: Check-out repository
@@ -17,9 +17,10 @@ jobs:
 
     - name: Set up JDK 8
       id: jdk-setup
-      uses: actions/setup-java@v1
+      uses: actions/setup-java@v2
       with:
         java-version: 8
+        distribution: 'zulu'
 
     - name: Cache SBT
       id: cache-sbt

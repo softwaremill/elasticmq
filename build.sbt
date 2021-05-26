@@ -14,13 +14,14 @@ val v2_13 = "2.13.4"
 lazy val uiDirectory = settingKey[File]("Path to the ui project directory")
 lazy val updateYarn = taskKey[Unit]("Update yarn")
 lazy val yarnTask = inputKey[Unit]("Run yarn with arguments")
+lazy val createBuildx = taskKey[Unit]("Create Docker Buildx instance")
 
 val buildSettings = commonSmlBuildSettings ++ ossPublishSettings ++ Seq(
   organization := "org.elasticmq",
   scmInfo := Some(ScmInfo(url("https://github.com/softwaremill/elasticmq"), "scm:git@github.com:softwaremill/elasticmq.git")),
   scalaVersion := v2_13,
   crossScalaVersions := Seq(v2_13, v2_12),
-  libraryDependencies += "org.scala-lang.modules" %% "scala-xml" % "1.3.0",
+  libraryDependencies += "org.scala-lang.modules" %% "scala-xml" % "2.0.0",
   dependencyOverrides := akka25Overrides,
   parallelExecution := false,
   sonatypeProfileName := "org.elasticmq",
@@ -79,16 +80,16 @@ val jodaTime = "joda-time" % "joda-time" % "2.10.9"
 val jodaConvert = "org.joda" % "joda-convert" % "2.2.1"
 val config = "com.typesafe" % "config" % "1.4.1"
 
-val scalalogging = "com.typesafe.scala-logging" %% "scala-logging" % "3.9.2"
+val scalalogging = "com.typesafe.scala-logging" %% "scala-logging" % "3.9.3"
 val logback = "ch.qos.logback" % "logback-classic" % "1.2.3"
 val jclOverSlf4j = "org.slf4j" % "jcl-over-slf4j" % "1.7.30" // needed form amazon java sdk
 
-val scalatest = "org.scalatest" %% "scalatest" % "3.2.3"
-val awaitility = "org.awaitility" % "awaitility-scala" % "4.0.3"
+val scalatest = "org.scalatest" %% "scalatest" % "3.2.9"
+val awaitility = "org.awaitility" % "awaitility-scala" % "4.1.0"
 
-val amazonJavaSdk = "com.amazonaws" % "aws-java-sdk" % "1.11.945" exclude ("commons-logging", "commons-logging")
+val amazonJavaSdkSqs = "com.amazonaws" % "aws-java-sdk-sqs" % "1.11.992" exclude ("commons-logging", "commons-logging")
 
-val akkaVersion = "2.6.12"
+val akkaVersion = "2.6.14"
 val akkaHttpVersion = "10.2.4"
 val akka2Actor = "com.typesafe.akka" %% "akka-actor" % akkaVersion
 val akka2Slf4j = "com.typesafe.akka" %% "akka-slf4j" % akkaVersion
@@ -157,7 +158,7 @@ lazy val restSqsTestingAmazonJavaSdk: Project =
     .settings(
       Seq(
         name := "elasticmq-rest-sqs-testing-amazon-java-sdk",
-        libraryDependencies ++= Seq(amazonJavaSdk, jclOverSlf4j) ++ common,
+        libraryDependencies ++= Seq(amazonJavaSdkSqs, jclOverSlf4j) ++ common,
         publishArtifact := false
       )
     )
@@ -168,6 +169,7 @@ lazy val server: Project = (project in file("server"))
   .settings(buildSettings)
   .settings(generateVersionFileSettings)
   .settings(uiSettings)
+  .settings(dockerBuildxSettings)
   .settings(Seq(
     name := "elasticmq-server",
     libraryDependencies ++= Seq(logback, config),
@@ -212,7 +214,15 @@ lazy val server: Project = (project in file("server"))
       credentials += Credentials(Path.userHome / ".s3_elasticmq_credentials"),
       // docker
       dockerExposedPorts := Seq(9324,9325),
-      dockerBaseImage := "openjdk:8u212-b04-jdk-stretch",
+      dockerBaseImage := "openjdk:11-jdk-stretch",
+      dockerBuildOptions := dockerBuildOptions.value :+ "--platform=linux/arm64,linux/amd64" :+ "--push",
+      dockerBuildCommand := {
+        val old = dockerBuildCommand.value
+        // Default dockerBuildCommand is Seq("[dockerExecCommand]", "build", "[dockerBuildOptions]", ".")
+        // We need buildx after [dockerExecCommand] which is docker by default
+        val withBuildx = old.take(1) ++ Seq("buildx") ++ old.drop(1)
+        withBuildx
+      },
       packageName in Docker := "elasticmq",
       dockerUsername := Some("softwaremill"),
       dockerUpdateLatest := true,
@@ -307,7 +317,7 @@ lazy val performanceTests: Project = (project in file("performance-tests"))
   .settings(
     Seq(
       name := "elasticmq-performance-tests",
-      libraryDependencies ++= Seq(amazonJavaSdk, jclOverSlf4j, logback) ++ common,
+      libraryDependencies ++= Seq(amazonJavaSdkSqs, jclOverSlf4j, logback) ++ common,
       publishArtifact := false
     ))
   .dependsOn(core, restSqs, commonTest % "test")
@@ -333,6 +343,13 @@ lazy val uiSettings = Seq(
     def runYarnTask() = Process(localYarnCommand, uiDirectory.value).!
     streams.value.log("Running yarn task: " + taskName)
     haltOnCmdResultError(runYarnTask())
+  }
+)
+
+lazy val dockerBuildxSettings = Seq(
+  createBuildx := {
+    streams.value.log("Creating docker buildx instance")
+    haltOnCmdResultError(Process("docker buildx create --use --name multi-arch-builder", baseDirectory.value).!)
   }
 )
 
