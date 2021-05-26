@@ -9,7 +9,7 @@ import scoverage.ScoverageKeys._
 import scala.sys.process.Process
 
 val v2_12 = "2.12.13"
-val v2_13 = "2.13.4"
+val v2_13 = "2.13.6"
 
 lazy val uiDirectory = settingKey[File]("Path to the ui project directory")
 lazy val updateYarn = taskKey[Unit]("Update yarn")
@@ -87,7 +87,7 @@ val jclOverSlf4j = "org.slf4j" % "jcl-over-slf4j" % "1.7.30" // needed form amaz
 val scalatest = "org.scalatest" %% "scalatest" % "3.2.9"
 val awaitility = "org.awaitility" % "awaitility-scala" % "4.1.0"
 
-val amazonJavaSdkSqs = "com.amazonaws" % "aws-java-sdk-sqs" % "1.11.992" exclude ("commons-logging", "commons-logging")
+val amazonJavaSdkSqs = "com.amazonaws" % "aws-java-sdk-sqs" % "1.11.1026" exclude ("commons-logging", "commons-logging")
 
 val akkaVersion = "2.6.14"
 val akkaHttpVersion = "10.2.4"
@@ -242,7 +242,7 @@ lazy val server: Project = (project in file("server"))
   )
   .dependsOn(core, restSqs, commonTest % "test")
 
-val graalVmVersion = "21.0.0.2"
+val graalVmVersion = "21.1.0"
 
 lazy val nativeServer: Project = (project in file("native-server"))
   .enablePlugins(GraalVMNativeImagePlugin, DockerPlugin)
