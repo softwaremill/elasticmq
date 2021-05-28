@@ -230,7 +230,10 @@ lazy val server: Project = (project in file("server"))
       mappings in Docker ++= Seq(
         (baseDirectory.value / "docker" / "elasticmq.conf") -> "/opt/elasticmq.conf"
       ),
-      publishLocal in Docker := (publishLocal in Docker).dependsOn(yarnTask.toTask(" build")).value,
+      publishLocal in Docker := (publishLocal in Docker)
+        .dependsOn(yarnTask.toTask(" build"))
+        .dependsOn(createBuildx)
+        .value,
       dockerCommands += Cmd(
         "COPY",
         "--from=stage0",
@@ -248,6 +251,7 @@ lazy val nativeServer: Project = (project in file("native-server"))
   .enablePlugins(GraalVMNativeImagePlugin, DockerPlugin)
   .settings(buildSettings)
   .settings(uiSettings)
+  .settings(dockerBuildxSettings)
   .settings(Seq(
     name := "elasticmq-native-server",
     libraryDependencies ++= Seq(
@@ -283,6 +287,14 @@ lazy val nativeServer: Project = (project in file("native-server"))
     dockerEntrypoint := Seq("/sbin/tini", "--", "/opt/docker/bin/elasticmq-native-server", "-Dconfig.file=/opt/elasticmq.conf"),
     dockerUpdateLatest := true,
     dockerExposedPorts := Seq(9324,9325),
+    dockerBuildOptions := dockerBuildOptions.value :+ "--platform=linux/arm64,linux/amd64" :+ "--push",
+    dockerBuildCommand := {
+      val old = dockerBuildCommand.value
+      // Default dockerBuildCommand is Seq("[dockerExecCommand]", "build", "[dockerBuildOptions]", ".")
+      // We need buildx after [dockerExecCommand] which is docker by default
+      val withBuildx = old.take(1) ++ Seq("buildx") ++ old.drop(1)
+      withBuildx
+    },
     dockerCommands := {
       val commands = dockerCommands.value
       val index = commands.indexWhere {
@@ -307,7 +319,10 @@ lazy val nativeServer: Project = (project in file("native-server"))
     },
     packageName in Docker := "elasticmq-native",
     dockerUsername := Some("softwaremill"),
-    packageBin in GraalVMNativeImage := (packageBin in GraalVMNativeImage).dependsOn(yarnTask.toTask(" build")).value,
+    packageBin in GraalVMNativeImage := (packageBin in GraalVMNativeImage)
+      .dependsOn(yarnTask.toTask(" build"))
+      .dependsOn(createBuildx)
+      .value,
     dockerUpdateLatest := true,
   ))
   .dependsOn(server)
@@ -349,7 +364,7 @@ lazy val uiSettings = Seq(
 lazy val dockerBuildxSettings = Seq(
   createBuildx := {
     streams.value.log("Creating docker buildx instance")
-    haltOnCmdResultError(Process("docker buildx create --use --name multi-arch-builder", baseDirectory.value).!)
+    Process("docker buildx create --use --name multi-arch-builder", baseDirectory.value).!
   }
 )
 
