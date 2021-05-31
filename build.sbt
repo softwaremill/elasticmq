@@ -215,14 +215,6 @@ lazy val server: Project = (project in file("server"))
       // docker
       dockerExposedPorts := Seq(9324,9325),
       dockerBaseImage := "openjdk:11-jdk-stretch",
-      dockerBuildOptions := dockerBuildOptions.value :+ "--platform=linux/arm64,linux/amd64" :+ "--push",
-      dockerBuildCommand := {
-        val old = dockerBuildCommand.value
-        // Default dockerBuildCommand is Seq("[dockerExecCommand]", "build", "[dockerBuildOptions]", ".")
-        // We need buildx after [dockerExecCommand] which is docker by default
-        val withBuildx = old.take(1) ++ Seq("buildx") ++ old.drop(1)
-        withBuildx
-      },
       packageName in Docker := "elasticmq",
       dockerUsername := Some("softwaremill"),
       dockerUpdateLatest := true,
@@ -287,14 +279,6 @@ lazy val nativeServer: Project = (project in file("native-server"))
     dockerEntrypoint := Seq("/sbin/tini", "--", "/opt/docker/bin/elasticmq-native-server", "-Dconfig.file=/opt/elasticmq.conf"),
     dockerUpdateLatest := true,
     dockerExposedPorts := Seq(9324,9325),
-    dockerBuildOptions := dockerBuildOptions.value :+ "--platform=linux/arm64,linux/amd64" :+ "--push",
-    dockerBuildCommand := {
-      val old = dockerBuildCommand.value
-      // Default dockerBuildCommand is Seq("[dockerExecCommand]", "build", "[dockerBuildOptions]", ".")
-      // We need buildx after [dockerExecCommand] which is docker by default
-      val withBuildx = old.take(1) ++ Seq("buildx") ++ old.drop(1)
-      withBuildx
-    },
     dockerCommands := {
       val commands = dockerCommands.value
       val index = commands.indexWhere {
@@ -365,6 +349,14 @@ lazy val dockerBuildxSettings = Seq(
   createBuildx := {
     streams.value.log("Creating docker buildx instance")
     Process("docker buildx create --use --name multi-arch-builder", baseDirectory.value).!
+  },
+  dockerBuildOptions := dockerBuildOptions.value :+ "--platform=linux/arm64,linux/amd64" :+ "--push",
+  dockerBuildCommand := {
+    val old = dockerBuildCommand.value
+    // Default dockerBuildCommand is Seq("[dockerExecCommand]", "build", "[dockerBuildOptions]", ".")
+    // We need buildx after [dockerExecCommand] which is docker by default
+    val withBuildx = old.take(1) ++ Seq("buildx") ++ old.drop(1)
+    withBuildx
   }
 )
 
