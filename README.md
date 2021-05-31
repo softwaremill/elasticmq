@@ -406,6 +406,8 @@ Docker Buildx is included in Docker Desktop and Docker Linux packages when insta
 * `dockerBuildCommand` is extended with operator `buildx`
 * `dockerBuildOptions` has two additional parameters: `--platform=linux/arm64,linux/amd64` and `--push`
 
+For the native server configuration is the same apart from Docker base image.
+
 Parameter `--push` is very crucial. Since `docker buildx build` subcommand is not storing the resulting image in the local `docker image` list, we need that flag to determine where the final image will be stored.
 Flag `--load` makes output destination of type docker. However, this currently works only for single architecture images. Therefore, both sbt commands - `docker:publishLocal` and `docker:publish` are pushing images to a Docker registry.
 
@@ -416,6 +418,7 @@ To change this - switch parameters for `dockerBuildOptions`:
 
 To build images locally:
 
+* switch sbt to module server - `sbt project server` (or `sbt project nativeServer` for module native-server)
 * make sure Docker Buildx is running `docker buildx version`
 * create Docker Buildx instance `docker buildx create --use --name multi-arch-builder`
 * generate the Dockerfile executing `sbt docker:stage` - it will be generated in `server/target/docker/stage`
