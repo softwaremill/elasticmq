@@ -224,14 +224,14 @@ lazy val server: Project = (project in file("server"))
         .dependsOn(yarnTask.toTask(" build"))
         .value,
       publish in Docker := {
-        val _ = publishLocal.value
+        val _ = (publishLocal in Docker).value
         if (Process("docker buildx inspect multi-arch-builder").! == 1) {
           Process("docker buildx create --use --name multi-arch-builder", baseDirectory.value).!
         }
         streams.value.log("Building and pushing image with Buildx")
         dockerAliases.value.foreach(
           alias =>
-            Process("docker buildx build --platform=linux/arm64,linux/amd64 --push -t " + alias + " .").!
+            Process("docker buildx build --platform=linux/arm64,linux/amd64 --push -t " + alias + " .", baseDirectory.value / "target" / "docker"/ "stage").!
         )
       },
       dockerCommands += Cmd(
@@ -314,12 +314,13 @@ lazy val nativeServer: Project = (project in file("native-server"))
       .dependsOn(yarnTask.toTask(" build"))
       .value,
     publish in Docker := {
+      val _ = (publishLocal in Docker).value
       if (Process("docker buildx inspect multi-arch-builder").! == 1) {
         Process("docker buildx create --use --name multi-arch-builder", baseDirectory.value).!
       }
       streams.value.log("Building and pushing image with Buildx")
       dockerAliases.value.foreach(
-        alias => Process("docker buildx build --platform=linux/arm64,linux/amd64 --push -t " + alias + " .").!
+        alias => Process("docker buildx build --platform=linux/arm64,linux/amd64 --push -t " + alias + " .", baseDirectory.value / "target" / "docker"/ "stage").!
       )
     },
     dockerUpdateLatest := true,
