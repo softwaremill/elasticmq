@@ -14,6 +14,8 @@ val v2_13 = "2.13.6"
 lazy val uiDirectory = settingKey[File]("Path to the ui project directory")
 lazy val updateYarn = taskKey[Unit]("Update yarn")
 lazy val yarnTask = inputKey[Unit]("Run yarn with arguments")
+lazy val ensureDockerBuildx = taskKey[Unit]("Ensure that docker buildx configuration exists")
+lazy val dockerBuildWithBuildx = taskKey[Unit]("Build docker images using buildx")
 
 val buildSettings = commonSmlBuildSettings ++ ossPublishSettings ++ Seq(
   organization := "org.elasticmq",
@@ -327,16 +329,22 @@ val generateVersionFileSettings = Seq(
 )
 
 lazy val dockerBuildxSettings = Seq(
-  publish in Docker := {
-    val _ = (publishLocal in Docker).value
+  ensureDockerBuildx := {
     if (Process("docker buildx inspect multi-arch-builder").! == 1) {
       Process("docker buildx create --use --name multi-arch-builder", baseDirectory.value).!
     }
+  },
+  dockerBuildWithBuildx := {
     streams.value.log("Building and pushing image with Buildx")
     dockerAliases.value.foreach(
       alias => Process("docker buildx build --platform=linux/arm64,linux/amd64 --push -t " + alias + " .", baseDirectory.value / "target" / "docker"/ "stage").!
     )
-  }
+  },
+  publish in Docker := Def.sequential(
+    publishLocal in Docker,
+    ensureDockerBuildx,
+    dockerBuildWithBuildx
+  ).value
 )
 
 lazy val uiSettings = Seq(
