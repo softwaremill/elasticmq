@@ -13,7 +13,6 @@ import org.apache.http.client.methods.{HttpGet, HttpPost}
 import org.apache.http.message.BasicNameValuePair
 import org.elasticmq._
 import org.elasticmq.rest.sqs.model.RedrivePolicy
-import org.scalatest._
 import org.scalatest.matchers.should.Matchers
 
 import scala.collection.JavaConverters._
@@ -1946,6 +1945,13 @@ class AmazonJavaSdkTestSuite extends SqsClientServerCommunication with Matchers 
           .withAttributes(Map(redrivePolicyAttribute -> redrivePolicy).asJava)
       )
     }
+  }
+
+  test("should throws proper exception when referencing queue by name") {
+    val _ = client.createQueue(new CreateQueueRequest("testQueue1")).getQueueUrl
+
+    val ex = the[AmazonSQSException] thrownBy client.sendMessage(new SendMessageRequest("testQueue1", "Message 1"))
+    ex.getMessage should include("WrongURLFormatRejection")
   }
 
   def queueDelay(queueUrl: String): Long = getQueueLongAttribute(queueUrl, delaySecondsAttribute)

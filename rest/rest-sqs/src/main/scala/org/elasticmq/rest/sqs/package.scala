@@ -1,6 +1,6 @@
 package org.elasticmq.rest
 
-import akka.http.scaladsl.server.{MissingQueryParamRejection, Directive1, Directive0}
+import akka.http.scaladsl.server.{Directive0, Directive1, MissingQueryParamRejection, Rejection}
 import akka.http.scaladsl.server.Directives._
 
 package object sqs {
@@ -22,5 +22,14 @@ package object sqs {
         case None    => reject(MissingQueryParamRejection(n))
       }
     }
+
+    def requiredUrlParam(n: String): Directive1[String] = {
+      p.get(n) match {
+        case Some(v) => provide(v)
+        case None    => reject(WrongURLFormatRejection(n))
+      }
+    }
   }
 }
+
+final case class WrongURLFormatRejection(fieldName: String) extends Rejection
