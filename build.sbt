@@ -166,6 +166,7 @@ lazy val restSqsTestingAmazonJavaSdk: Project =
 lazy val server: Project = (project in file("server"))
   .enablePlugins(JavaServerAppPackaging, DockerPlugin)
   .settings(buildSettings)
+  .settings(dockerBuildxSettings)
   .settings(generateVersionFileSettings)
   .settings(uiSettings)
   .settings(Seq(
@@ -223,17 +224,6 @@ lazy val server: Project = (project in file("server"))
       publishLocal in Docker := (publishLocal in Docker)
         .dependsOn(yarnTask.toTask(" build"))
         .value,
-      publish in Docker := {
-        val _ = (publishLocal in Docker).value
-        if (Process("docker buildx inspect multi-arch-builder").! == 1) {
-          Process("docker buildx create --use --name multi-arch-builder", baseDirectory.value).!
-        }
-        streams.value.log("Building and pushing image with Buildx")
-        dockerAliases.value.foreach(
-          alias =>
-            Process("docker buildx build --platform=linux/arm64,linux/amd64 --push -t " + alias + " .", baseDirectory.value / "target" / "docker"/ "stage").!
-        )
-      },
       dockerCommands += Cmd(
         "COPY",
         "--from=stage0",
@@ -251,6 +241,7 @@ lazy val nativeServer: Project = (project in file("native-server"))
   .enablePlugins(GraalVMNativeImagePlugin, DockerPlugin)
   .settings(buildSettings)
   .settings(uiSettings)
+  .settings(dockerBuildxSettings)
   .settings(Seq(
     name := "elasticmq-native-server",
     libraryDependencies ++= Seq(
@@ -313,16 +304,6 @@ lazy val nativeServer: Project = (project in file("native-server"))
     packageBin in GraalVMNativeImage := (packageBin in GraalVMNativeImage)
       .dependsOn(yarnTask.toTask(" build"))
       .value,
-    publish in Docker := {
-      val _ = (publishLocal in Docker).value
-      if (Process("docker buildx inspect multi-arch-builder").! == 1) {
-        Process("docker buildx create --use --name multi-arch-builder", baseDirectory.value).!
-      }
-      streams.value.log("Building and pushing image with Buildx")
-      dockerAliases.value.foreach(
-        alias => Process("docker buildx build --platform=linux/arm64,linux/amd64 --push -t " + alias + " .", baseDirectory.value / "target" / "docker"/ "stage").!
-      )
-    },
     dockerUpdateLatest := true,
   ))
   .dependsOn(server)
@@ -343,6 +324,19 @@ val generateVersionFileSettings = Seq(
     IO.write(targetFile, version.value.toString)
     Seq(targetFile)
   }.taskValue
+)
+
+lazy val dockerBuildxSettings = Seq(
+  publish in Docker := {
+    val _ = (publishLocal in Docker).value
+    if (Process("docker buildx inspect multi-arch-builder").! == 1) {
+      Process("docker buildx create --use --name multi-arch-builder", baseDirectory.value).!
+    }
+    streams.value.log("Building and pushing image with Buildx")
+    dockerAliases.value.foreach(
+      alias => Process("docker buildx build --platform=linux/arm64,linux/amd64 --push -t " + alias + " .", baseDirectory.value / "target" / "docker"/ "stage").!
+    )
+  }
 )
 
 lazy val uiSettings = Seq(
