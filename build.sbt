@@ -14,7 +14,6 @@ val v2_13 = "2.13.6"
 lazy val uiDirectory = settingKey[File]("Path to the ui project directory")
 lazy val updateYarn = taskKey[Unit]("Update yarn")
 lazy val yarnTask = inputKey[Unit]("Run yarn with arguments")
-lazy val createBuildx = taskKey[Unit]("Create Docker Buildx instance")
 
 val buildSettings = commonSmlBuildSettings ++ ossPublishSettings ++ Seq(
   organization := "org.elasticmq",
@@ -167,9 +166,9 @@ lazy val restSqsTestingAmazonJavaSdk: Project =
 lazy val server: Project = (project in file("server"))
   .enablePlugins(JavaServerAppPackaging, DockerPlugin)
   .settings(buildSettings)
+  .settings(dockerBuildxSettings)
   .settings(generateVersionFileSettings)
   .settings(uiSettings)
-  .settings(dockerBuildxSettings)
   .settings(Seq(
     name := "elasticmq-server",
     libraryDependencies ++= Seq(logback, config),
@@ -224,7 +223,6 @@ lazy val server: Project = (project in file("server"))
       ),
       publishLocal in Docker := (publishLocal in Docker)
         .dependsOn(yarnTask.toTask(" build"))
-        .dependsOn(createBuildx)
         .value,
       dockerCommands += Cmd(
         "COPY",
@@ -305,7 +303,6 @@ lazy val nativeServer: Project = (project in file("native-server"))
     dockerUsername := Some("softwaremill"),
     packageBin in GraalVMNativeImage := (packageBin in GraalVMNativeImage)
       .dependsOn(yarnTask.toTask(" build"))
-      .dependsOn(createBuildx)
       .value,
     dockerUpdateLatest := true,
   ))
@@ -329,6 +326,19 @@ val generateVersionFileSettings = Seq(
   }.taskValue
 )
 
+lazy val dockerBuildxSettings = Seq(
+  publish in Docker := {
+    val _ = (publishLocal in Docker).value
+    if (Process("docker buildx inspect multi-arch-builder").! == 1) {
+      Process("docker buildx create --use --name multi-arch-builder", baseDirectory.value).!
+    }
+    streams.value.log("Building and pushing image with Buildx")
+    dockerAliases.value.foreach(
+      alias => Process("docker buildx build --platform=linux/arm64,linux/amd64 --push -t " + alias + " .", baseDirectory.value / "target" / "docker"/ "stage").!
+    )
+  }
+)
+
 lazy val uiSettings = Seq(
   uiDirectory := baseDirectory.value.getParentFile / "ui",
   updateYarn := {
@@ -342,21 +352,6 @@ lazy val uiSettings = Seq(
     def runYarnTask() = Process(localYarnCommand, uiDirectory.value).!
     streams.value.log("Running yarn task: " + taskName)
     haltOnCmdResultError(runYarnTask())
-  }
-)
-
-lazy val dockerBuildxSettings = Seq(
-  createBuildx := {
-    streams.value.log("Creating docker buildx instance")
-    Process("docker buildx create --use --name multi-arch-builder", baseDirectory.value).!
-  },
-  dockerBuildOptions := dockerBuildOptions.value :+ "--platform=linux/arm64,linux/amd64" :+ "--push",
-  dockerBuildCommand := {
-    val old = dockerBuildCommand.value
-    // Default dockerBuildCommand is Seq("[dockerExecCommand]", "build", "[dockerBuildOptions]", ".")
-    // We need buildx after [dockerExecCommand] which is docker by default
-    val withBuildx = old.take(1) ++ Seq("buildx") ++ old.drop(1)
-    withBuildx
   }
 )
 
