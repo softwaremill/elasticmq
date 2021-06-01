@@ -1,7 +1,7 @@
 import com.amazonaws.services.s3.model.PutObjectResult
 import com.softwaremill.Publish.Release.updateVersionInDocs
 import com.typesafe.sbt.packager.docker.{Cmd, ExecCmd}
-import sbt.Keys.credentials
+import sbt.Keys.{credentials, javaOptions}
 import sbt.internal.util.complete.Parsers.spaceDelimited
 import sbtrelease.ReleaseStateTransformations._
 import scoverage.ScoverageKeys._
@@ -27,7 +27,7 @@ val buildSettings = commonSmlBuildSettings ++ ossPublishSettings ++ Seq(
   parallelExecution := false,
   sonatypeProfileName := "org.elasticmq",
   // workaround for: https://github.com/sbt/sbt/issues/692
-  fork in Test := true,
+  Test / fork := true,
   releaseProcess := {
     val uploadAssembly: ReleaseStep = ReleaseStep(
       action = { st: State =>
@@ -216,20 +216,20 @@ lazy val server: Project = (project in file("server"))
       // docker
       dockerExposedPorts := Seq(9324,9325),
       dockerBaseImage := "openjdk:11-jdk-stretch",
-      packageName in Docker := "elasticmq",
+      Docker / packageName := "elasticmq",
       dockerUsername := Some("softwaremill"),
       dockerUpdateLatest := true,
-      javaOptions in Universal ++= Seq("-Dconfig.file=/opt/elasticmq.conf"),
-      mappings in Docker ++= Seq(
+      Universal / javaOptions ++= Seq("-Dconfig.file=/opt/elasticmq.conf"),
+      Docker / mappings ++= Seq(
         (baseDirectory.value / "docker" / "elasticmq.conf") -> "/opt/elasticmq.conf"
       ),
-      publishLocal in Docker := (publishLocal in Docker)
+      Docker / publishLocal := (Docker / publishLocal)
         .dependsOn(yarnTask.toTask(" build"))
         .value,
       dockerCommands += Cmd(
         "COPY",
         "--from=stage0",
-        s"--chown=${(daemonUser in Docker).value}:root",
+        s"--chown=${(Docker / daemonUser).value}:root",
         "/opt/elasticmq.conf",
         "/opt"
       )
@@ -250,7 +250,7 @@ lazy val nativeServer: Project = (project in file("native-server"))
       "org.graalvm.nativeimage" % "svm" % graalVmVersion % "compile-internal"
     ),
     //configures sbt-native-packager to build app using dockerized graalvm
-    (containerBuildImage in GraalVMNativeImage) := GraalVMNativeImagePlugin.generateContainerBuildImage(s"ghcr.io/graalvm/graalvm-ce:java11-$graalVmVersion").value,
+    (GraalVMNativeImage / containerBuildImage) := GraalVMNativeImagePlugin.generateContainerBuildImage(s"ghcr.io/graalvm/graalvm-ce:java11-$graalVmVersion").value,
     graalVMNativeImageOptions ++= Seq(
       "--static",
       "-H:IncludeResources=.*conf",
@@ -269,12 +269,12 @@ lazy val nativeServer: Project = (project in file("native-server"))
       "--no-fallback",
       "--verbose"
     ),
-    mainClass in Compile := Some("org.elasticmq.server.Main"),
+    Compile / mainClass := Some("org.elasticmq.server.Main"),
     //configures sbt-native-packager to build docker image with generated executable
     dockerBaseImage := "alpine:3.11",
-    mappings in Docker := Seq(
+    Docker / mappings := Seq(
       (baseDirectory.value / ".." / "server" / "docker" / "elasticmq.conf") -> "/opt/elasticmq.conf",
-      ((target in GraalVMNativeImage).value / "elasticmq-native-server") -> "/opt/docker/bin/elasticmq-native-server"
+      ((GraalVMNativeImage / target).value / "elasticmq-native-server") -> "/opt/docker/bin/elasticmq-native-server"
     ) ++ sbt.Path.directory(baseDirectory.value / ".." / "ui" / "build"),
     dockerEntrypoint := Seq("/sbin/tini", "--", "/opt/docker/bin/elasticmq-native-server", "-Dconfig.file=/opt/elasticmq.conf"),
     dockerUpdateLatest := true,
@@ -301,9 +301,9 @@ lazy val nativeServer: Project = (project in file("native-server"))
       val tiniCommand = ExecCmd("RUN", "apk", "add", "--no-cache", "tini")
       front ++ Seq(tiniCommand, copyConfig, copyUI) ++ back
     },
-    packageName in Docker := "elasticmq-native",
+    Docker / packageName := "elasticmq-native",
     dockerUsername := Some("softwaremill"),
-    packageBin in GraalVMNativeImage := (packageBin in GraalVMNativeImage)
+    GraalVMNativeImage / packageBin := (GraalVMNativeImage / packageBin)
       .dependsOn(yarnTask.toTask(" build"))
       .value,
     dockerUpdateLatest := true,
@@ -321,8 +321,8 @@ lazy val performanceTests: Project = (project in file("performance-tests"))
   .dependsOn(core, restSqs, commonTest % "test")
 
 val generateVersionFileSettings = Seq(
-  resourceGenerators in Compile += Def.task {
-    val targetFile = (resourceManaged in Compile).value / "version"
+  Compile / resourceGenerators += Def.task {
+    val targetFile = (Compile / resourceManaged).value / "version"
     IO.write(targetFile, version.value.toString)
     Seq(targetFile)
   }.taskValue
@@ -340,8 +340,8 @@ lazy val dockerBuildxSettings = Seq(
       alias => Process("docker buildx build --platform=linux/arm64,linux/amd64 --push -t " + alias + " .", baseDirectory.value / "target" / "docker"/ "stage").!
     )
   },
-  publish in Docker := Def.sequential(
-    publishLocal in Docker,
+  Docker / publish := Def.sequential(
+    Docker / publishLocal,
     ensureDockerBuildx,
     dockerBuildWithBuildx
   ).value
@@ -367,13 +367,13 @@ lazy val ui = (project in file("ui"))
   .settings(buildSettings)
   .settings(uiSettings)
   .settings(
-    test in Test := (test in Test).dependsOn(yarnTask.toTask(" test:ci")).value,
-    compile in Compile := {
+    Test / test := (Test / test).dependsOn(yarnTask.toTask(" test:ci")).value,
+    Compile / compile := {
       yarnTask.toTask(" build").value
-      (compile in Compile).value
+      (Compile / compile).value
     },
     cleanFiles += baseDirectory.value / "build",
-    unmanagedResourceDirectories in Compile += baseDirectory.value / "build"
+    Compile / unmanagedResourceDirectories += baseDirectory.value / "build"
   )
 
 def haltOnCmdResultError(result: Int) {
