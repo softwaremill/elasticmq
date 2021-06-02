@@ -1,11 +1,10 @@
 package org.elasticmq.rest.sqs.directives
 
 import akka.actor.ActorRef
-import akka.http.scaladsl.server.{Directive1, Directives, Route}
+import akka.http.scaladsl.server.{Directive1, Directives, MissingQueryParamRejection, Route}
 import org.elasticmq.QueueData
 import org.elasticmq.actor.reply._
 import org.elasticmq.msg.{GetQueueData, LookupQueue}
-import org.elasticmq.rest.WrongURLFormatRejection
 import org.elasticmq.rest.sqs.Constants._
 import org.elasticmq.rest.sqs._
 
@@ -52,7 +51,7 @@ trait QueueDirectives {
         queueUrlFromParams(p).flatMap { queueUrl =>
           lastPathSegment.findFirstMatchIn(queueUrl).map(_.group(2)) match {
             case Some(queueName) => provide(queueName)
-            case None            => reject(WrongURLFormatRejection(queueUrlParameter)): Directive1[String]
+            case None            => reject(MissingQueryParamRejection(queueUrlParameter)): Directive1[String]
           }
         }
 
