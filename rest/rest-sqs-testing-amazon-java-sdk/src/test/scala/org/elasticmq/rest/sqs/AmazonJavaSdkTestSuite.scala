@@ -1950,8 +1950,8 @@ class AmazonJavaSdkTestSuite extends SqsClientServerCommunication with Matchers 
   test("should throws proper exception when referencing queue by name") {
     val _ = client.createQueue(new CreateQueueRequest("testQueue1")).getQueueUrl
 
-    val ex = the[AmazonSQSException] thrownBy client.sendMessage(new SendMessageRequest("testQueue1", "Message 1"))
-    ex.getMessage should include("WrongURLFormatRejection")
+    val ex = the[AmazonSQSException] thrownBy client.sendMessage(new SendMessageRequest("testQueue12", "Message 1"))
+    ex.getMessage should include("WrongURLFormatRejection(Provided only queueName instead of the full URL)")
   }
 
   def queueDelay(queueUrl: String): Long = getQueueLongAttribute(queueUrl, delaySecondsAttribute)

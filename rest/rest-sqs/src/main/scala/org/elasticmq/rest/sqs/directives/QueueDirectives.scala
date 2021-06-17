@@ -1,7 +1,7 @@
 package org.elasticmq.rest.sqs.directives
 
 import akka.actor.ActorRef
-import akka.http.scaladsl.server.{Directive1, Directives, MissingQueryParamRejection, Route}
+import akka.http.scaladsl.server.{Directive1, Directives, MissingQueryParamRejection, Rejection, Route}
 import org.elasticmq.QueueData
 import org.elasticmq.actor.reply._
 import org.elasticmq.msg.{GetQueueData, LookupQueue}
@@ -37,7 +37,7 @@ trait QueueDirectives {
   private val queueUrlParameter = "QueueUrl"
 
   private def queueUrlFromParams(p: AnyParams): Directive1[String] =
-    p.requiredUrlParam(queueUrlParameter)
+    p.requiredParam(queueUrlParameter)
 
   private val accountId = "[a-zA-Z0-9]{12}"
   private val lastPathSegment =
@@ -45,6 +45,7 @@ trait QueueDirectives {
 
   private def queueNameFromRequest(p: AnyParams)(body: String => Route): Route = {
     val queueNameDirective =
+      checkOnlyQueueNameInUri() |
       pathPrefix(accountId.r / Segment).tmap(_._2) |
         pathPrefix(QueueUrlContext / Segment) |
         queueNameFromParams(p) |
@@ -76,4 +77,18 @@ trait QueueDirectives {
       body(queueData)
     }
   }
+
+  private def checkOnlyQueueNameInUri(): Directive1[String] = {
+    extractUri.flatMap {
+      uri => {
+        val onlyQueueNameInUriPath = Option(uri.path.toString().tail)
+        onlyQueueNameInUriPath match {
+          case Some(_) => reject(WrongURLFormatRejection("Provided only queueName instead of the full URL"))
+          case None => reject(WrongURLFormatRejection("Empty URL"))
+        }
+      }
+    }
+  }
 }
+
+final case class WrongURLFormatRejection(fieldName: String) extends Rejection
