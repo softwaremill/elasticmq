@@ -83,7 +83,7 @@ val config = "com.typesafe" % "config" % "1.4.1"
 
 val scalalogging = "com.typesafe.scala-logging" %% "scala-logging" % "3.9.3"
 val logback = "ch.qos.logback" % "logback-classic" % "1.2.3"
-val jclOverSlf4j = "org.slf4j" % "jcl-over-slf4j" % "1.7.30" // needed form amazon java sdk
+val jclOverSlf4j = "org.slf4j" % "jcl-over-slf4j" % "1.7.31" // needed form amazon java sdk
 
 val scalatest = "org.scalatest" %% "scalatest" % "3.2.9"
 val awaitility = "org.awaitility" % "awaitility-scala" % "4.1.0"
