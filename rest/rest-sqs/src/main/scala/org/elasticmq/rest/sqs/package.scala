@@ -1,6 +1,6 @@
 package org.elasticmq.rest
 
-import akka.http.scaladsl.server.{MissingQueryParamRejection, Directive1, Directive0}
+import akka.http.scaladsl.server.{Directive0, Directive1, MissingQueryParamRejection}
 import akka.http.scaladsl.server.Directives._
 
 package object sqs {
@@ -24,3 +24,4 @@ package object sqs {
     }
   }
 }
+

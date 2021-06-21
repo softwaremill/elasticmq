@@ -1,7 +1,7 @@
 package org.elasticmq.rest.sqs.directives
 
 import akka.actor.ActorRef
-import akka.http.scaladsl.server.{Directive1, Directives, MissingFormFieldRejection, Route}
+import akka.http.scaladsl.server.{Directive1, Directives, MissingQueryParamRejection, PathMatchers, Rejection, Route}
 import org.elasticmq.QueueData
 import org.elasticmq.actor.reply._
 import org.elasticmq.msg.{GetQueueData, LookupQueue}
@@ -45,13 +45,14 @@ trait QueueDirectives {
 
   private def queueNameFromRequest(p: AnyParams)(body: String => Route): Route = {
     val queueNameDirective =
+      checkOnlyOneSegmentInUri() |
       pathPrefix(accountId.r / Segment).tmap(_._2) |
         pathPrefix(QueueUrlContext / Segment) |
         queueNameFromParams(p) |
         queueUrlFromParams(p).flatMap { queueUrl =>
           lastPathSegment.findFirstMatchIn(queueUrl).map(_.group(2)) match {
             case Some(queueName) => provide(queueName)
-            case None            => reject(MissingFormFieldRejection(queueUrlParameter)): Directive1[String]
+            case None            => reject(MissingQueryParamRejection(queueUrlParameter)): Directive1[String]
           }
         }
 
@@ -76,4 +77,12 @@ trait QueueDirectives {
       body(queueData)
     }
   }
+
+  private def checkOnlyOneSegmentInUri(): Directive1[String] = {
+    path(Segment).flatMap { _ =>
+      reject(WrongURLFormatRejection("Provided only queueName instead of the full URL")): Directive1[String]
+    }
+  }
 }
+
+final case class WrongURLFormatRejection(fieldName: String) extends Rejection
