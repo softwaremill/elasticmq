@@ -16,7 +16,10 @@ trait TagsModule {
         parameters.get(tagPrefix + suffix + ".Key") match {
           case None => acc
           case Some(an) =>
-            collect(suffix + 1, acc + (an -> parameters(tagPrefix + suffix + ".Value")))
+            parameters.get(tagPrefix + suffix + ".Value") match {
+              case None => collect(suffix + 1, acc + (an -> ""))
+              case Some(tagValue) => collect(suffix + 1, acc + (an -> tagValue))
+            }
         }
       }
 
@@ -46,3 +49,5 @@ trait TagsModule {
     }
   }
 }
+
+object TagsModule extends TagsModule
