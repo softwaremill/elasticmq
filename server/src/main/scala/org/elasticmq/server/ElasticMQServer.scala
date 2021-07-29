@@ -49,7 +49,7 @@ class ElasticMQServer(config: ElasticMQServerConfig) extends Logging {
   private def createBase(): ActorRef = {
     config.storage match {
       case config.InMemoryStorage =>
-        actorSystem.actorOf(Props(new QueueManagerActor(new NowProvider(), config.restSqs.sqsLimits)))
+        actorSystem.actorOf(Props(new QueueManagerActor(new NowProvider(), config.restSqs.sqsLimits, Some(QueueConfigStore(config)))))
     }
   }
 
@@ -65,7 +65,8 @@ class ElasticMQServer(config: ElasticMQServerConfig) extends Logging {
         config.generateNodeAddress,
         config.restSqs.sqsLimits,
         config.awsRegion,
-        config.awsAccountId
+        config.awsAccountId,
+        Some(QueueConfigStore(config))
       ).start()
 
       server.waitUntilStarted()
@@ -102,12 +103,15 @@ class ElasticMQServer(config: ElasticMQServerConfig) extends Logging {
       Timeout(5.seconds)
     }
 
-    config.createQueues.flatMap(cq =>
-      Await
-        .result(queueManagerActor ? org.elasticmq.msg.CreateQueue(configToParams(cq, new DateTime)), timeout.duration)
-        .swap
-        .toOption
-    )
+    val baseQueue = config.createBaseQueues
+    val persistedQueues = config.createPersistedQueues
+    baseQueue.concat(persistedQueues).distinct
+      .flatMap(cq =>
+        Await
+          .result(queueManagerActor ? org.elasticmq.msg.CreateQueue(configToParams(cq, new DateTime)), timeout.duration)
+          .swap
+          .toOption
+      ).toList
   }
 
   private def configToParams(cq: CreateQueue, now: DateTime): QueueData = {

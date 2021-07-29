@@ -1,7 +1,7 @@
 package org.elasticmq.actor
 
 import akka.actor.{ActorRef, Props}
-import org.elasticmq.actor.queue.QueueActor
+import org.elasticmq.actor.queue.{QueueActor, QueuePersister}
 import org.elasticmq.actor.reply._
 import org.elasticmq.msg.{CreateQueue, DeleteQueue, _}
 import org.elasticmq.util.{Logging, NowProvider}
@@ -9,7 +9,7 @@ import org.elasticmq._
 
 import scala.reflect._
 
-class QueueManagerActor(nowProvider: NowProvider, limits: Limits) extends ReplyingActor with Logging {
+class QueueManagerActor(nowProvider: NowProvider, limits: Limits, queuePersister: Option[QueuePersister] = None) extends ReplyingActor with Logging {
   type M[X] = QueueManagerMsg[X]
   val ev: ClassTag[QueueManagerMsg[Unit]] = classTag[M[Unit]]
 
@@ -27,8 +27,9 @@ class QueueManagerActor(nowProvider: NowProvider, limits: Limits) extends Replyi
             case Left(error) =>
               Left(QueueCreationError(queueData.name, error))
             case Right(_) =>
-              val actor = createQueueActor(nowProvider, queueData)
+              val actor = createQueueActor(nowProvider, queueData, queuePersister)
               queues(queueData.name) = actor
+              queuePersister.foreach(_.persist(queueData))
               Right(actor)
           }
         }
@@ -36,6 +37,7 @@ class QueueManagerActor(nowProvider: NowProvider, limits: Limits) extends Replyi
       case DeleteQueue(queueName) =>
         logger.info(s"Deleting queue $queueName")
         queues.remove(queueName).foreach(context.stop)
+        queuePersister.foreach(_.remove(queueName))
 
       case LookupQueue(queueName) =>
         val result = queues.get(queueName)
@@ -46,7 +48,7 @@ class QueueManagerActor(nowProvider: NowProvider, limits: Limits) extends Replyi
       case ListQueues() => queues.keySet.toSeq
     }
 
-  protected def createQueueActor(nowProvider: NowProvider, queueData: QueueData): ActorRef = {
+  protected def createQueueActor(nowProvider: NowProvider, queueData: QueueData, queuePersister: Option[QueuePersister]): ActorRef = {
     val deadLetterQueueActor = queueData.deadLettersQueue.flatMap { qd => queues.get(qd.name) }
     val copyMessagesToQueueActor = queueData.copyMessagesTo.flatMap { queueName => queues.get(queueName) }
     val moveMessagesToQueueActor = queueData.moveMessagesTo.flatMap { queueName => queues.get(queueName) }
@@ -58,7 +60,8 @@ class QueueManagerActor(nowProvider: NowProvider, limits: Limits) extends Replyi
           queueData,
           deadLetterQueueActor,
           copyMessagesToQueueActor,
-          moveMessagesToQueueActor
+          moveMessagesToQueueActor,
+          queuePersister
         )
       )
     )

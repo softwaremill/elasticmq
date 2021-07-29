@@ -6,16 +6,17 @@ import java.nio.ByteBuffer
 import java.security.MessageDigest
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
-
 import akka.actor.{ActorRef, ActorSystem, Props}
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.server.{Directive1, Directives}
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
 import com.typesafe.config.ConfigFactory
+
 import javax.management.ObjectName
 import org.elasticmq._
 import org.elasticmq.actor.QueueManagerActor
+import org.elasticmq.actor.queue.QueuePersister
 import org.elasticmq.metrics.QueuesMetrics
 import org.elasticmq.rest.sqs.Constants._
 import org.elasticmq.rest.sqs.directives.{ElasticMQDirectives, UnmatchedActionRoutes}
@@ -57,7 +58,8 @@ case class TheSQSRestServerBuilder(
     generateServerAddress: Boolean,
     sqsLimits: Limits,
     _awsRegion: String,
-    _awsAccountId: String
+    _awsAccountId: String,
+    queuePersister: Option[QueuePersister] = None
 ) extends Logging {
 
   /** @param _actorSystem Optional actor system. If one is provided, it will be used to create ElasticMQ and Spray
@@ -106,6 +108,9 @@ case class TheSQSRestServerBuilder(
     */
   def withAWSAccountId(accountId: String) =
     this.copy(_awsAccountId = accountId)
+
+  def withQueuePersister(queuePersister: QueuePersister) =
+    this.copy(queuePersister = Some(queuePersister))
 
   def start(): SQSRestServer = {
     val (theActorSystem, stopActorSystem) = getOrCreateActorSystem
@@ -250,7 +255,7 @@ case class TheSQSRestServerBuilder(
   }
 
   private def getOrCreateQueueManagerActor(actorSystem: ActorSystem) = {
-    providedQueueManagerActor.getOrElse(actorSystem.actorOf(Props(new QueueManagerActor(new NowProvider(), sqsLimits))))
+    providedQueueManagerActor.getOrElse(actorSystem.actorOf(Props(new QueueManagerActor(new NowProvider(), sqsLimits, queuePersister))))
   }
 }
 
