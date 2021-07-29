@@ -103,9 +103,9 @@ class ElasticMQServer(config: ElasticMQServerConfig) extends Logging {
       Timeout(5.seconds)
     }
 
-    val baseQueue = config.createBaseQueues
-    val persistedQueues = config.createPersistedQueues
-    baseQueue.concat(persistedQueues).distinct
+    val baseQueue: Seq[CreateQueue] = config.createBaseQueues
+    val persistedQueues: Seq[CreateQueue] = config.createPersistedQueues
+    (baseQueue ++ persistedQueues).distinct
       .flatMap(cq =>
         Await
           .result(queueManagerActor ? org.elasticmq.msg.CreateQueue(configToParams(cq, new DateTime)), timeout.duration)

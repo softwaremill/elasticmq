@@ -1,8 +1,11 @@
 package org.elasticmq.server
 
-import org.elasticmq.QueueData
+import com.typesafe.config.ConfigRenderOptions
 import org.elasticmq.actor.queue.QueuePersister
 import org.elasticmq.server.config.ElasticMQServerConfig
+import org.elasticmq.{QueueMetadata, QueueData}
+import pureconfig.ConfigWriter
+import pureconfig.generic.auto._
 
 import java.io.PrintWriter
 import scala.collection.mutable
@@ -28,57 +31,31 @@ case class QueueConfigStore(config: ElasticMQServerConfig) extends QueuePersiste
   }
 
   private def saveToConfigFile(queues: List[QueueData]): Unit = {
-    val queuesConfig: String = queues
-      .map(queueDataToConfig)
-      .mkString("\n")
-    val queueConfig = s"queues {\n $queuesConfig \n}"
+    val metadata: String = queues
+      .map(queue => (queue.name, toQueueConfig(queue)))
+      .map(queueNameToConfig => {
+        val options = ConfigRenderOptions.defaults().setOriginComments(false).setJson(false).setFormatted(false)
+        val str = ConfigWriter[QueueMetadata].to(queueNameToConfig._2).render(options)
+        s" ${queueNameToConfig._1} {$str}\n"
+      })
+      .mkString("")
+    val queuesConfig = s"queues {\n$metadata}"
     new PrintWriter(config.persisterOutputFile) {
-      write(queueConfig)
+      write(queuesConfig)
       close()
     }
   }
 
-  private def queueDataToConfig(queue: QueueData): String = {
-    val builder = new StringBuilder()
-    builder
-      .append(indent(s"${queue.name} {", 2))
-      .append("\n")
-      .append(indent(s"defaultVisibilityTimeout=${queue.defaultVisibilityTimeout.seconds} seconds", 4))
-      .append("\n")
-      .append(indent(s"delay=${queue.delay.getStandardSeconds} seconds", 4))
-      .append("\n")
-      .append(indent(s"receiveMessageWait=${queue.receiveMessageWait.getStandardSeconds} seconds", 4))
-      .append("\n")
-      .append(indent("deadLettersQueue {", 4))
-      .append("\n")
-    queue.deadLettersQueue.foreach(deadLetterQueue =>
-      builder
-        .append(indent(s"name=\"${deadLetterQueue.name}\"", 6))
-        .append("\n")
-        .append(indent(s"maxReceiveCount=${deadLetterQueue.maxReceiveCount}", 6))
-        .append("\n")
+  private def toQueueConfig(queue: QueueData): QueueMetadata =
+    QueueMetadata(
+      queue.defaultVisibilityTimeout.seconds,
+      queue.delay.getStandardSeconds,
+      queue.receiveMessageWait.getStandardSeconds,
+      queue.deadLettersQueue,
+      queue.isFifo,
+      queue.hasContentBasedDeduplication,
+      queue.copyMessagesTo.getOrElse(""),
+      queue.moveMessagesTo.getOrElse(""),
+      queue.tags
     )
-    builder
-      .append(indent("}",4))
-      .append("\n")
-      .append(indent(s"fife=${queue.isFifo}",4))
-      .append("\n")
-      .append(indent(s"contentBasedDeduplication=${queue.hasContentBasedDeduplication}",4))
-      .append("\n")
-      .append(indent(s"copyTo=\"${queue.copyMessagesTo.getOrElse("")}\"",4))
-      .append("\n")
-      .append(indent(s"moveTo=\"${queue.moveMessagesTo.getOrElse("")}\"",4))
-      .append("\n")
-      .append(indent(s"tags {", 4))
-      .append("\n")
-    queue.tags.foreach(tag => builder.append(indent(s"${tag._1}=\"${tag._2}\"", 6)).append("\n"))
-    builder
-      .append(indent(s"}", 4))
-      .append("\n")
-    builder.append(indent(s"}", 2))
-      .append("\n")
-    builder.toString()
-  }
-
-  def indent(value: String, indentation: Int): String = (" " * indentation).concat(value)
 }
