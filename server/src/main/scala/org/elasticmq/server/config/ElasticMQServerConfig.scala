@@ -72,10 +72,9 @@ class ElasticMQServerConfig(config: Config) extends Logging {
 
   val restStatisticsConfiguration = new RestStatisticsConfiguration
 
-  private val queuePersister = config.getConfig("queue-persister")
-  private val outputDir = queuePersister.getString("output-directory")
-  private val fileName = queuePersister.getString("file-name")
-  val persisterOutputFile: String = outputDir concat fileName
+  private val queuesStorage = config.getConfig("queues-storage")
+  val path: String = queuesStorage.getString("path")
+  val queuesStorageEnabled: Boolean = queuesStorage.getBoolean("enabled")
 
   val createBaseQueues: Seq[CreateQueue] = {
     val baseQueues: mutable.Map[String, ConfigValue] = config
@@ -85,12 +84,13 @@ class ElasticMQServerConfig(config: Config) extends Logging {
   }
 
   val createPersistedQueues: List[CreateQueue] =
-    Try(ConfigFactory
-      .parseFile(new File(persisterOutputFile))
-      .getObject("queues")
-      .asScala)
-      .map(createQueuesFromConfig)
-      .getOrElse(Nil)
+    if (queuesStorageEnabled) {
+      val queuesConfig: mutable.Map[String, ConfigValue] = ConfigFactory
+        .parseFile(new File(path))
+        .getObject("queues")
+        .asScala
+      createQueuesFromConfig(queuesConfig)
+    } else Nil
 
   def createQueuesFromConfig(queuesConfig: mutable.Map[String, ConfigValue]): List[CreateQueue] = {
     def getOptionalBoolean(c: Config, k: String) = if (c.hasPath(k)) Some(c.getBoolean(k)) else None

@@ -40,7 +40,7 @@ case class QueueConfigStore(config: ElasticMQServerConfig) extends QueuePersiste
       })
       .mkString("")
     val queuesConfig = s"queues {\n$metadata}"
-    new PrintWriter(config.persisterOutputFile) {
+    new PrintWriter(config.path) {
       write(queuesConfig)
       close()
     }
