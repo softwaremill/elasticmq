@@ -46,7 +46,8 @@ object SQSRestServerBuilder
       true,
       StrictSQSLimits,
       "elasticmq",
-      "000000000000"
+      "000000000000",
+      None
     )
 
 case class TheSQSRestServerBuilder(
@@ -59,7 +60,7 @@ case class TheSQSRestServerBuilder(
     sqsLimits: Limits,
     _awsRegion: String,
     _awsAccountId: String,
-    queuePersister: Option[QueuePersister] = None
+    queuePersister: Option[QueuePersister]
 ) extends Logging {
 
   /** @param _actorSystem Optional actor system. If one is provided, it will be used to create ElasticMQ and Spray
