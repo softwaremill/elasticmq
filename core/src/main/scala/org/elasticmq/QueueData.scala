@@ -22,10 +22,10 @@ case class QueueMetadata(
     delay: Long,
     receiveMessageWait: Long,
     deadLettersQueue: Option[DeadLettersQueueData],
-    isFifo: Boolean,
-    hasContentBasedDeduplication: Boolean,
-    copyMessagesTo: String,
-    moveMessagesTo: String,
+    fifo: Boolean,
+    contentBasedDeduplication: Boolean,
+    copyTo: String,
+    moveTo: String,
     tags: Map[String, String]
 )
 

@@ -9,7 +9,6 @@ import java.io.File
 import java.util.concurrent.TimeUnit
 import scala.collection.JavaConverters._
 import scala.collection.mutable
-import scala.util.Try
 
 class ElasticMQServerConfig(config: Config) extends Logging {
   // Configure main storage
@@ -73,7 +72,7 @@ class ElasticMQServerConfig(config: Config) extends Logging {
   val restStatisticsConfiguration = new RestStatisticsConfiguration
 
   private val queuesStorage = config.getConfig("queues-storage")
-  val path: String = queuesStorage.getString("path")
+  val queuesStoragePath: String = queuesStorage.getString("path")
   val queuesStorageEnabled: Boolean = queuesStorage.getBoolean("enabled")
 
   val createBaseQueues: Seq[CreateQueue] = {
@@ -83,14 +82,23 @@ class ElasticMQServerConfig(config: Config) extends Logging {
     createQueuesFromConfig(baseQueues)
   }
 
-  val createPersistedQueues: List[CreateQueue] =
-    if (queuesStorageEnabled) {
-      val queuesConfig: mutable.Map[String, ConfigValue] = ConfigFactory
-        .parseFile(new File(path))
-        .getObject("queues")
-        .asScala
-      createQueuesFromConfig(queuesConfig)
-    } else Nil
+  val persistedQueuesConfig: Option[Config] =
+    if (queuesStorageEnabled)
+      Some(
+        ConfigFactory
+          .parseFile(new File(queuesStoragePath))
+      )
+    else None
+
+  def createPersistedQueues(backupFile: Option[Config]): List[CreateQueue] =
+    backupFile match {
+      case Some(file) =>
+        val queuesConfig: mutable.Map[String, ConfigValue] = file
+          .getObject("queues")
+          .asScala
+        createQueuesFromConfig(queuesConfig)
+      case None => Nil
+    }
 
   def createQueuesFromConfig(queuesConfig: mutable.Map[String, ConfigValue]): List[CreateQueue] = {
     def getOptionalBoolean(c: Config, k: String) = if (c.hasPath(k)) Some(c.getBoolean(k)) else None

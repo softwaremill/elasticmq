@@ -1,6 +1,7 @@
 package org.elasticmq.server.config
 
 import com.typesafe.config.ConfigFactory
+import org.elasticmq.server
 import org.scalatest.OptionValues
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
@@ -41,4 +42,26 @@ class ElasticMQServerConfigTest extends AnyFunSuite with Matchers with OptionVal
     val fifoQueue = conf.createBaseQueues.find(_.isFifo).value
     fifoQueue.name shouldBe "fifoQueue.fifo"
   }
+
+  test("Should correctly parse persisted queues configuration") {
+    val conf = new ElasticMQServerConfig(ConfigFactory.load("test"))
+    val config = ConfigFactory.parseString(server.load(this.getClass, "backup.conf"))
+    val persistedQueues = conf.createPersistedQueues(Some(config))
+    val expectedQueue = CreateQueue(
+      "test",
+      Some(3L),
+      Some(0L),
+      Some(0L),
+      Some(DeadLettersQueue("dead", 4)),
+      isFifo = false,
+      hasContentBasedDeduplication = true,
+      Some("copyTo"),
+      Some("messageTo"),
+      Map("tag1Key" -> "tag1Value")
+    )
+    persistedQueues.length shouldBe 1
+    persistedQueues.head shouldBe expectedQueue
+
+  }
+
 }

@@ -104,7 +104,7 @@ class ElasticMQServer(config: ElasticMQServerConfig) extends Logging {
     }
 
     val baseQueue: Seq[CreateQueue] = config.createBaseQueues
-    val persistedQueues: Seq[CreateQueue] = config.createPersistedQueues
+    val persistedQueues: Seq[CreateQueue] = config.createPersistedQueues(config.persistedQueuesConfig)
     (baseQueue ++ persistedQueues).distinct
       .flatMap(cq =>
         Await
