@@ -156,6 +156,22 @@ all messages could be either duplicated (using `copyTo` attribute) or redirected
 
 While creating the FIFO queue, .fifo suffix will be added automatically to queue name.
 
+# Persisting queues configuration
+
+Queues configuration can be automatically persisted to external config file in typesafe config format.
+
+To make it work you need to pass implementation of `QueryPersister` trait while creating `SQSRestServer`. 
+To do it you can use `withQueuePersister` method from `SQSRestServerBuilder`.
+
+    SQSRestServerBuilder.withQueuePersister(QueueConfigStore(config))
+
+Additionally, you have to set `enabled` flag in `reference.conf` to true and specify `path` where the file 
+with backup configuration will be created.
+
+Then operations like creation, removal or metadata change for particular queue will result in generation 
+of file with current configuration for all currently exising queues.
+After restart configuration from file will be loaded as previously
+
 # Starting an embedded ElasticMQ server with an SQS interface
 
 Add ElasticMQ Server to `build.sbt` dependencies
