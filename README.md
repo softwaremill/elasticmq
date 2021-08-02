@@ -179,7 +179,7 @@ Simply start the server using custom configuration (see examples above):
     val server = new ElasticMQServer(new ElasticMQServerConfig(config))
     server.start()
 
-Custom rest server can be built using `SQSRestServerBuilder` provided in `elasticmq-rest-sqs` package:
+Alternatively, custom rest server can be built using `SQSRestServerBuilder` provided in `elasticmq-rest-sqs` package:
 
     val server = SQSRestServerBuilder.start()
     // ... use ...
