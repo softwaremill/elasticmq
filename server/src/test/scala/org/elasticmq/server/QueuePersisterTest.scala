@@ -7,7 +7,7 @@ import org.joda.time.{DateTime, Duration}
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 
-class QueueConfigStoreTest extends AnyFunSuite with Matchers {
+class QueuePersisterTest extends AnyFunSuite with Matchers {
 
   test("should parse queue data") {
     val conf = new ElasticMQServerConfig(ConfigFactory.load("test"))
@@ -27,7 +27,7 @@ class QueueConfigStoreTest extends AnyFunSuite with Matchers {
       tags
     )
     val queues = List(queueData)
-    val actualConfig = QueueConfigStore(conf).prepareQueuesConfig(queues)
+    val actualConfig = QueuePersister(conf.queuesStoragePath).prepareQueuesConfig(queues)
     val expectedConfig = load(this.getClass,"backup.conf")
     actualConfig should be(expectedConfig)
   }

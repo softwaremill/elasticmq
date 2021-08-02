@@ -1,0 +1,28 @@
+package org.elasticmq.server
+
+import akka.actor.Actor
+import org.elasticmq.QueueData
+import org.elasticmq.actor.queue.{PersistQueue, RemoveQueue, UpdateQueueMetadata}
+import org.elasticmq.server.config.ElasticMQServerConfig
+
+import scala.collection.mutable
+
+class QueueMetadataListener(config: ElasticMQServerConfig) extends Actor {
+
+  private val queues: mutable.Map[String, QueueData] = mutable.HashMap[String, QueueData]()
+
+  private val queuePersister: QueuePersister = QueuePersister(config.queuesStoragePath)
+
+  def receive: Receive = {
+    case PersistQueue(queue) =>
+      queues.put(queue.name, queue)
+      queuePersister.saveToConfigFile(queues.values.toList)
+    case RemoveQueue(queueName) =>
+      queues.remove(queueName)
+      queuePersister.saveToConfigFile(queues.values.toList)
+    case UpdateQueueMetadata(queue) =>
+      queues.remove(queue.name)
+      queues.put(queue.name, queue)
+      queuePersister.saveToConfigFile(queues.values.toList)
+  }
+}

@@ -1,44 +1,23 @@
 package org.elasticmq.server
 
 import com.typesafe.config.ConfigRenderOptions
-import org.elasticmq.actor.queue.QueuePersister
-import org.elasticmq.server.config.ElasticMQServerConfig
 import org.elasticmq.{DeadLettersQueueData, QueueData, QueueMetadata}
+import pureconfig.{CamelCase, ConfigFieldMapping, ConfigWriter}
 import pureconfig.generic.ProductHint
 import pureconfig.generic.auto._
-import pureconfig.{CamelCase, ConfigFieldMapping, ConfigWriter}
 
 import java.io.PrintWriter
-import scala.collection.mutable
 
-case class QueueConfigStore(config: ElasticMQServerConfig) extends QueuePersister {
+case class QueuePersister(storagePath: String) {
 
   private implicit val queueMetadataHint: ProductHint[QueueMetadata] =
     ProductHint[QueueMetadata](ConfigFieldMapping(CamelCase, CamelCase))
   private implicit val deadLettersHint: ProductHint[DeadLettersQueueData] =
     ProductHint[DeadLettersQueueData](ConfigFieldMapping(CamelCase, CamelCase))
 
-  private val queues: mutable.Map[String, QueueData] = mutable.HashMap[String, QueueData]()
-
-  override def persist(queueData: QueueData): Unit = {
-    queues.put(queueData.name, queueData)
-    saveToConfigFile(queues.values.toList)
-  }
-
-  override def remove(queueName: String): Unit = {
-    queues.remove(queueName)
-    saveToConfigFile(queues.values.toList)
-  }
-
-  override def update(queueData: QueueData): Unit = {
-    queues.remove(queueData.name)
-    queues.put(queueData.name, queueData)
-    saveToConfigFile(queues.values.toList)
-  }
-
   def saveToConfigFile(queues: List[QueueData]): Unit = {
     val queuesConfig: String = prepareQueuesConfig(queues)
-    new PrintWriter(config.queuesStoragePath) {
+    new PrintWriter(storagePath) {
       write(queuesConfig)
       close()
     }
@@ -70,4 +49,5 @@ case class QueueConfigStore(config: ElasticMQServerConfig) extends QueuePersiste
       queue.moveMessagesTo.getOrElse(""),
       queue.tags
     )
+
 }

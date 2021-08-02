@@ -18,8 +18,9 @@ class ElasticMQServer(config: ElasticMQServerConfig) extends Logging {
   val actorSystem = ActorSystem("elasticmq")
 
   def start() = {
-    val queueManagerActor = createBase()
-    val restServerOpt = optionallyStartRestSqs(queueManagerActor)
+    val queueConfigStore: ActorRef = actorSystem.actorOf(Props(new QueueMetadataListener(config)))
+    val queueManagerActor = createBase(queueConfigStore)
+    val restServerOpt = optionallyStartRestSqs(queueManagerActor, queueConfigStore)
     val restStatisticsServerOpt = optionallyStartRestStatistics(queueManagerActor)
 
     val shutdown = () => {
@@ -46,14 +47,14 @@ class ElasticMQServer(config: ElasticMQServerConfig) extends Logging {
     shutdown
   }
 
-  private def createBase(): ActorRef = {
+  private def createBase(queueConfigStore: ActorRef): ActorRef = {
     config.storage match {
       case config.InMemoryStorage =>
-        actorSystem.actorOf(Props(new QueueManagerActor(new NowProvider(), config.restSqs.sqsLimits, Some(QueueConfigStore(config)))))
+        actorSystem.actorOf(Props(new QueueManagerActor(new NowProvider(), config.restSqs.sqsLimits, Some(queueConfigStore))))
     }
   }
 
-  private def optionallyStartRestSqs(queueManagerActor: ActorRef): Option[SQSRestServer] = {
+  private def optionallyStartRestSqs(queueManagerActor: ActorRef, queueConfigStore: ActorRef): Option[SQSRestServer] = {
     if (config.restSqs.enabled) {
 
       val server = TheSQSRestServerBuilder(
@@ -66,7 +67,7 @@ class ElasticMQServer(config: ElasticMQServerConfig) extends Logging {
         config.restSqs.sqsLimits,
         config.awsRegion,
         config.awsAccountId,
-        Some(QueueConfigStore(config))
+        Some(queueConfigStore)
       ).start()
 
       server.waitUntilStarted()

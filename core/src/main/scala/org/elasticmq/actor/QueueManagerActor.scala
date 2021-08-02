@@ -1,15 +1,15 @@
 package org.elasticmq.actor
 
 import akka.actor.{ActorRef, Props}
-import org.elasticmq.actor.queue.{QueueActor, QueuePersister}
-import org.elasticmq.actor.reply._
-import org.elasticmq.msg.{CreateQueue, DeleteQueue, _}
-import org.elasticmq.util.{Logging, NowProvider}
 import org.elasticmq._
+import org.elasticmq.actor.queue.{PersistQueue, QueueActor, RemoveQueue}
+import org.elasticmq.actor.reply._
+import org.elasticmq.msg._
+import org.elasticmq.util.{Logging, NowProvider}
 
 import scala.reflect._
 
-class QueueManagerActor(nowProvider: NowProvider, limits: Limits, queuePersister: Option[QueuePersister] = None) extends ReplyingActor with Logging {
+class QueueManagerActor(nowProvider: NowProvider, limits: Limits, queueMetadataListener: Option[ActorRef]) extends ReplyingActor with Logging {
   type M[X] = QueueManagerMsg[X]
   val ev: ClassTag[QueueManagerMsg[Unit]] = classTag[M[Unit]]
 
@@ -27,9 +27,9 @@ class QueueManagerActor(nowProvider: NowProvider, limits: Limits, queuePersister
             case Left(error) =>
               Left(QueueCreationError(queueData.name, error))
             case Right(_) =>
-              val actor = createQueueActor(nowProvider, queueData, queuePersister)
+              val actor = createQueueActor(nowProvider, queueData, queueMetadataListener)
               queues(queueData.name) = actor
-              queuePersister.foreach(_.persist(queueData))
+              queueMetadataListener.foreach(_ ! PersistQueue(queueData))
               Right(actor)
           }
         }
@@ -37,7 +37,7 @@ class QueueManagerActor(nowProvider: NowProvider, limits: Limits, queuePersister
       case DeleteQueue(queueName) =>
         logger.info(s"Deleting queue $queueName")
         queues.remove(queueName).foreach(context.stop)
-        queuePersister.foreach(_.remove(queueName))
+        queueMetadataListener.foreach(_ ! RemoveQueue(queueName))
 
       case LookupQueue(queueName) =>
         val result = queues.get(queueName)
@@ -48,7 +48,7 @@ class QueueManagerActor(nowProvider: NowProvider, limits: Limits, queuePersister
       case ListQueues() => queues.keySet.toSeq
     }
 
-  protected def createQueueActor(nowProvider: NowProvider, queueData: QueueData, queuePersister: Option[QueuePersister]): ActorRef = {
+  protected def createQueueActor(nowProvider: NowProvider, queueData: QueueData, queueMetadataListener: Option[ActorRef]): ActorRef = {
     val deadLetterQueueActor = queueData.deadLettersQueue.flatMap { qd => queues.get(qd.name) }
     val copyMessagesToQueueActor = queueData.copyMessagesTo.flatMap { queueName => queues.get(queueName) }
     val moveMessagesToQueueActor = queueData.moveMessagesTo.flatMap { queueName => queues.get(queueName) }
@@ -61,7 +61,7 @@ class QueueManagerActor(nowProvider: NowProvider, limits: Limits, queuePersister
           deadLetterQueueActor,
           copyMessagesToQueueActor,
           moveMessagesToQueueActor,
-          queuePersister
+          queueMetadataListener
         )
       )
     )

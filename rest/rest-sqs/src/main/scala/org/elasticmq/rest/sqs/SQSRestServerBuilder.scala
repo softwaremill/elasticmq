@@ -16,7 +16,6 @@ import com.typesafe.config.ConfigFactory
 import javax.management.ObjectName
 import org.elasticmq._
 import org.elasticmq.actor.QueueManagerActor
-import org.elasticmq.actor.queue.QueuePersister
 import org.elasticmq.metrics.QueuesMetrics
 import org.elasticmq.rest.sqs.Constants._
 import org.elasticmq.rest.sqs.directives.{ElasticMQDirectives, UnmatchedActionRoutes}
@@ -60,7 +59,7 @@ case class TheSQSRestServerBuilder(
     sqsLimits: Limits,
     _awsRegion: String,
     _awsAccountId: String,
-    queuePersister: Option[QueuePersister]
+    queueMetadataListener: Option[ActorRef]
 ) extends Logging {
 
   /** @param _actorSystem Optional actor system. If one is provided, it will be used to create ElasticMQ and Spray
@@ -110,8 +109,8 @@ case class TheSQSRestServerBuilder(
   def withAWSAccountId(accountId: String) =
     this.copy(_awsAccountId = accountId)
 
-  def withQueuePersister(queuePersister: QueuePersister) =
-    this.copy(queuePersister = Some(queuePersister))
+  def withQueueMetadataListener(queueMetadataListener: ActorRef) =
+    this.copy(queueMetadataListener = Some(queueMetadataListener))
 
   def start(): SQSRestServer = {
     val (theActorSystem, stopActorSystem) = getOrCreateActorSystem
@@ -256,7 +255,7 @@ case class TheSQSRestServerBuilder(
   }
 
   private def getOrCreateQueueManagerActor(actorSystem: ActorSystem) = {
-    providedQueueManagerActor.getOrElse(actorSystem.actorOf(Props(new QueueManagerActor(new NowProvider(), sqsLimits, queuePersister))))
+    providedQueueManagerActor.getOrElse(actorSystem.actorOf(Props(new QueueManagerActor(new NowProvider(), sqsLimits, queueMetadataListener))))
   }
 }
 
