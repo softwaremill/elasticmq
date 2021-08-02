@@ -2,6 +2,7 @@ package org.elasticmq.server.config
 
 import com.typesafe.config.ConfigFactory
 import org.elasticmq.server
+import org.elasticmq.server.ElasticMQServer
 import org.scalatest.{OptionValues, color}
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
@@ -65,8 +66,27 @@ class ElasticMQServerConfigTest extends AnyFunSuite with Matchers with OptionVal
 
   test("Should not parse persisted queues when disabled") {
     val conf = new ElasticMQServerConfig(ConfigFactory.load("test"))
-    val persistedQueues = conf.createPersistedQueues(conf.persistedQueuesConfig)
+    val persistedQueues = conf.createPersistedQueues()
     persistedQueues shouldBe Nil
   }
 
+  test("Persisted queues should take precedence over startup queues with same names") {
+    val conf = new ElasticMQServerConfig(ConfigFactory.load("test-with-queue-storage-enabled.conf"))
+    val config = ConfigFactory.parseString(server.load(this.getClass, "backup-with-two-queues.conf"))
+    val persistedQueues = conf.readQueuesToLoad(conf.createPersistedQueues(Some(config)))
+    val expectedQueue = CreateQueue(
+      "test-2",
+      Some(3L),
+      Some(0L),
+      Some(0L),
+      Some(DeadLettersQueue("dead-2", 4)),
+      isFifo = false,
+      hasContentBasedDeduplication = true,
+      Some("copyTo"),
+      Some("messageTo"),
+      Map("tag12Key" -> "tag12Value")
+    )
+    persistedQueues.length shouldBe 3
+    persistedQueues.head shouldBe expectedQueue
+  }
 }

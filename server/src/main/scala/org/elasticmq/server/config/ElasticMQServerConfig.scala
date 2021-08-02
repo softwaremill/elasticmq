@@ -75,6 +75,12 @@ class ElasticMQServerConfig(config: Config) extends Logging {
   val queuesStoragePath: String = queuesStorage.getString("path")
   val queuesStorageEnabled: Boolean = queuesStorage.getBoolean("enabled")
 
+  def readQueuesToLoad(persistedQueues: Seq[CreateQueue]): Seq[CreateQueue] = {
+    val persistedQueuesName = persistedQueues.map(_.name)
+    val baseQueues = createBaseQueues.filterNot(queue => persistedQueuesName.contains(queue.name))
+    persistedQueues ++ baseQueues
+  }
+
   val createBaseQueues: Seq[CreateQueue] = {
     val baseQueues: mutable.Map[String, ConfigValue] = config
       .getObject("queues")
@@ -82,7 +88,7 @@ class ElasticMQServerConfig(config: Config) extends Logging {
     createQueuesFromConfig(baseQueues)
   }
 
-  val persistedQueuesConfig: Option[Config] =
+  private val persistedQueuesConfig: Option[Config] =
     if (queuesStorageEnabled)
       Some(
         ConfigFactory
@@ -90,7 +96,7 @@ class ElasticMQServerConfig(config: Config) extends Logging {
       )
     else None
 
-  def createPersistedQueues(backupFile: Option[Config]): List[CreateQueue] =
+  def createPersistedQueues(backupFile: Option[Config] = persistedQueuesConfig): List[CreateQueue] =
     backupFile match {
       case Some(file) =>
         val queuesConfig: mutable.Map[String, ConfigValue] = file
