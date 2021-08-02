@@ -3,15 +3,14 @@ package org.elasticmq.server
 import akka.actor.Actor
 import org.elasticmq.QueueData
 import org.elasticmq.actor.queue.{PersistQueue, RemoveQueue, UpdateQueueMetadata}
-import org.elasticmq.server.config.ElasticMQServerConfig
 
 import scala.collection.mutable
 
-class QueueMetadataListener(config: ElasticMQServerConfig) extends Actor {
+class QueueMetadataListener(storagePath: String) extends Actor {
 
   private val queues: mutable.Map[String, QueueData] = mutable.HashMap[String, QueueData]()
 
-  private val queuePersister: QueuePersister = QueuePersister(config.queuesStoragePath)
+  private val queuePersister: QueuePersister = QueuePersister(storagePath)
 
   def receive: Receive = {
     case PersistQueue(queue) =>

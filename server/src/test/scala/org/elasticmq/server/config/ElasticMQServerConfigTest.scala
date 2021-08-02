@@ -2,7 +2,7 @@ package org.elasticmq.server.config
 
 import com.typesafe.config.ConfigFactory
 import org.elasticmq.server
-import org.scalatest.OptionValues
+import org.scalatest.{OptionValues, color}
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 
@@ -61,7 +61,12 @@ class ElasticMQServerConfigTest extends AnyFunSuite with Matchers with OptionVal
     )
     persistedQueues.length shouldBe 1
     persistedQueues.head shouldBe expectedQueue
+  }
 
+  test("Should not parse persisted queues when disabled") {
+    val conf = new ElasticMQServerConfig(ConfigFactory.load("test"))
+    val persistedQueues = conf.createPersistedQueues(conf.persistedQueuesConfig)
+    persistedQueues shouldBe Nil
   }
 
 }

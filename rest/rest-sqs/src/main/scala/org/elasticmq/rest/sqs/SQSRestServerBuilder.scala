@@ -109,9 +109,6 @@ case class TheSQSRestServerBuilder(
   def withAWSAccountId(accountId: String) =
     this.copy(_awsAccountId = accountId)
 
-  def withQueueMetadataListener(queueMetadataListener: ActorRef) =
-    this.copy(queueMetadataListener = Some(queueMetadataListener))
-
   def start(): SQSRestServer = {
     val (theActorSystem, stopActorSystem) = getOrCreateActorSystem
     val theQueueManagerActor = getOrCreateQueueManagerActor(theActorSystem)

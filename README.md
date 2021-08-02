@@ -160,12 +160,7 @@ While creating the FIFO queue, .fifo suffix will be added automatically to queue
 
 Queues configuration can be automatically persisted to external config file in typesafe config format.
 
-To make it work you need to pass `ActorRef` to `QueueMetadataListener` trait while creating `SQSRestServer`. 
-To do it you can use `withQueueMetadataListener` method from `SQSRestServerBuilder`.
-
-    SQSRestServerBuilder.withQueueMetadataListener(QueueConfigStore(config))
-
-Additionally, you have to set `enabled` flag in `reference.conf` to true and specify `path` where the file 
+To make it work you have to set `enabled` flag in `reference.conf` to true and specify `path` where the file 
 with backup configuration will be created.
 
 Then operations like creation, removal or metadata change for particular queue will result in generation 
