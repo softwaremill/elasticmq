@@ -78,15 +78,11 @@ class ElasticMQServerConfig(config: Config) extends Logging {
 
   def readQueuesToLoad(persistedQueues: Seq[CreateQueue] = readPersistedQueues()): Seq[CreateQueue] = {
     val persistedQueuesName = persistedQueues.map(_.name)
-    val baseQueues = createBaseQueues.filterNot(queue => persistedQueuesName.contains(queue.name))
-    persistedQueues ++ baseQueues
-  }
-
-  val createBaseQueues: Seq[CreateQueue] = {
-    val baseQueues: mutable.Map[String, ConfigValue] = config
+    val baseQueuesConfig: mutable.Map[String, ConfigValue] = config
       .getObject("queues")
       .asScala
-    createQueuesFromConfig(baseQueues)
+    val baseQueues = createQueuesFromConfig(baseQueuesConfig).filterNot(queue => persistedQueuesName.contains(queue.name))
+    persistedQueues ++ baseQueues
   }
 
   private val persistedQueuesConfig: Option[Config] =
