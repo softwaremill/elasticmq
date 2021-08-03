@@ -47,7 +47,7 @@ class ElasticMQServerConfigTest extends AnyFunSuite with Matchers with OptionVal
   test("Should correctly parse persisted queues configuration") {
     val conf = new ElasticMQServerConfig(ConfigFactory.load("test"))
     val config = ConfigFactory.parseString(server.load(this.getClass, "expected-single-queue-config.conf"))
-    val persistedQueues = conf.createPersistedQueues(Some(config))
+    val persistedQueues = conf.readPersistedQueues(Some(config))
     val expectedQueue = CreateQueue(
       "test",
       Some(3L),
@@ -66,14 +66,14 @@ class ElasticMQServerConfigTest extends AnyFunSuite with Matchers with OptionVal
 
   test("Should not parse persisted queues when disabled") {
     val conf = new ElasticMQServerConfig(ConfigFactory.load("test"))
-    val persistedQueues = conf.createPersistedQueues()
+    val persistedQueues = conf.readPersistedQueues()
     persistedQueues shouldBe Nil
   }
 
   test("Persisted queues should take precedence over startup queues with same names") {
     val conf = new ElasticMQServerConfig(ConfigFactory.load("test-with-queue-storage-enabled.conf"))
     val config = ConfigFactory.parseString(server.load(this.getClass, "two-queues-config.conf"))
-    val persistedQueues = conf.readQueuesToLoad(conf.createPersistedQueues(Some(config)))
+    val persistedQueues = conf.readQueuesToLoad(conf.readPersistedQueues(Some(config)))
     val expectedQueue = CreateQueue(
       "test-2",
       Some(3L),

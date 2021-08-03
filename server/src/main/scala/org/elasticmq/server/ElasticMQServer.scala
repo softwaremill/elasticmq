@@ -48,7 +48,7 @@ class ElasticMQServer(config: ElasticMQServerConfig) extends Logging {
   }
 
   private def createQueueMetadataListener: Option[ActorRef] =
-    if (config.queuesStorageEnabled) Some(actorSystem.actorOf(Props(new QueueConfigStore(config.queuesStoragePath))))
+    if (config.persistingQueuesEnabled) Some(actorSystem.actorOf(Props(new QueueConfigStore(config.persistedQueuesStoragePath))))
     else None
 
   private def createBase(queueConfigStore: Option[ActorRef]): ActorRef = {
@@ -108,7 +108,7 @@ class ElasticMQServer(config: ElasticMQServerConfig) extends Logging {
       Timeout(5.seconds)
     }
 
-    config.readQueuesToLoad(config.createPersistedQueues())
+    config.readQueuesToLoad()
       .flatMap(cq =>
         Await
           .result(queueManagerActor ? org.elasticmq.msg.CreateQueue(configToParams(cq, new DateTime)), timeout.duration)
