@@ -10,6 +10,7 @@ import java.io.File
 import java.util.concurrent.TimeUnit
 import scala.collection.JavaConverters._
 import scala.collection.mutable
+import scala.util.Try
 
 class ElasticMQServerConfig(config: Config) extends Logging {
   // Configure main storage
@@ -87,19 +88,19 @@ class ElasticMQServerConfig(config: Config) extends Logging {
 
   private val persistedQueuesConfig: Option[Config] =
     if (persistingQueuesEnabled)
-      Some(
-        ConfigFactory
-          .parseFile(new File(persistedQueuesStoragePath))
-      )
+      Try(ConfigFactory
+        .parseFile(new File(persistedQueuesStoragePath)))
+        .toOption
     else None
 
   def readPersistedQueues(persistedQueuesConfig: Option[Config] = persistedQueuesConfig): List[CreateQueue] =
     persistedQueuesConfig match {
       case Some(file) =>
-        val queuesConfig: mutable.Map[String, ConfigValue] = file
+        Try(file
           .getObject("queues")
-          .asScala
-        createQueuesFromConfig(queuesConfig)
+          .asScala)
+          .map(createQueuesFromConfig)
+          .getOrElse(Nil)
       case None => Nil
     }
 

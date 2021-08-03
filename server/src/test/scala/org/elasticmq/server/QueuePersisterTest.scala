@@ -1,7 +1,5 @@
 package org.elasticmq.server
 
-import com.typesafe.config.ConfigFactory
-import org.elasticmq.server.config.ElasticMQServerConfig
 import org.elasticmq.{DeadLettersQueueData, MillisVisibilityTimeout, QueueData}
 import org.joda.time.{DateTime, Duration}
 import org.scalatest.funsuite.AnyFunSuite

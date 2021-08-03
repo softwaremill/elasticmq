@@ -72,20 +72,17 @@ class ElasticMQServerConfigTest extends AnyFunSuite with Matchers with OptionVal
   test("Persisted queues should take precedence over startup queues with same names") {
     val conf = new ElasticMQServerConfig(ConfigFactory.load("test-with-queue-storage-enabled.conf"))
     val config = ConfigFactory.parseString(server.load(this.getClass, "two-queues-config.conf"))
-    val persistedQueues = conf.readQueuesToLoad(conf.readPersistedQueues(Some(config)))
-    val expectedQueue = CreateQueue(
-      "test-2",
-      Some(3L),
-      Some(0L),
-      Some(0L),
-      Some(DeadLettersQueue("dead-2", 4)),
-      isFifo = false,
-      hasContentBasedDeduplication = true,
-      Some("copyTo"),
-      Some("messageTo"),
-      Map("tag12Key" -> "tag12Value")
-    )
-    persistedQueues.length shouldBe 3
-    persistedQueues.head shouldBe expectedQueue
+    val persistedQueues = conf.readPersistedQueues(Some(config))
+    val loadedQueues = conf.readQueuesToLoad(persistedQueues)
+    val expectedQueue = CreateQueue("test", Some(3L), Some(0L), Some(0L), Some(DeadLettersQueue("dead", 4)), isFifo = false,
+      hasContentBasedDeduplication = true, Some("copyTo"), Some("messageTo"), Map("tag1Key" -> "tag1Value"))
+    val expectedQueue1 = CreateQueue("test-2", Some(3L), Some(0L), Some(0L), Some(DeadLettersQueue("dead-2", 4)), isFifo = false,
+      hasContentBasedDeduplication = true, Some("copyTo2"), Some("messageTo2"), Map("tag12Key" -> "tag12Value"))
+    val expectedQueue2 = CreateQueue("test-3", Some(3L), Some(0L), Some(0L), Some(DeadLettersQueue("dead-3", 4)), isFifo = false,
+      hasContentBasedDeduplication = true, Some("copyTo3"), Some("messageTo3"), Map("tag13Key" -> "tag13Value"))
+    loadedQueues.length shouldBe 3
+    loadedQueues.head shouldBe expectedQueue
+    loadedQueues(1) shouldBe expectedQueue1
+    loadedQueues(2) shouldBe expectedQueue2
   }
 }
