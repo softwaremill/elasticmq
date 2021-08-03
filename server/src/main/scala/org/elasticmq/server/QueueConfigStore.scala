@@ -10,17 +10,15 @@ class QueueConfigStore(storagePath: String) extends Actor {
 
   private val queues: mutable.Map[String, QueueData] = mutable.HashMap[String, QueueData]()
 
-  private val queuePersister: QueuePersister = QueuePersister(storagePath)
-
   def receive: Receive = {
     case PersistQueue(queue) =>
       queues.put(queue.name, queue)
-      queuePersister.saveToConfigFile(queues.values.toList)
+      QueuePersister.saveToConfigFile(queues.values.toList, storagePath)
     case RemoveQueue(queueName) =>
       queues.remove(queueName)
-      queuePersister.saveToConfigFile(queues.values.toList)
+      QueuePersister.saveToConfigFile(queues.values.toList, storagePath)
     case UpdateQueueMetadata(queue) =>
       queues.put(queue.name, queue)
-      queuePersister.saveToConfigFile(queues.values.toList)
+      QueuePersister.saveToConfigFile(queues.values.toList, storagePath)
   }
 }

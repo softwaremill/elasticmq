@@ -8,14 +8,14 @@ import pureconfig.{CamelCase, ConfigFieldMapping, ConfigWriter}
 
 import java.io.PrintWriter
 
-case class QueuePersister(storagePath: String) {
+object QueuePersister {
 
   private implicit val queueMetadataHint: ProductHint[QueueMetadata] =
     ProductHint[QueueMetadata](ConfigFieldMapping(CamelCase, CamelCase))
   private implicit val deadLettersHint: ProductHint[DeadLettersQueueData] =
     ProductHint[DeadLettersQueueData](ConfigFieldMapping(CamelCase, CamelCase))
 
-  def saveToConfigFile(queues: List[QueueData]): Unit = {
+  def saveToConfigFile(queues: List[QueueData], storagePath: String): Unit = {
     val queuesConfig: String = prepareQueuesConfig(queues)
     new PrintWriter(storagePath) {
       write(queuesConfig)

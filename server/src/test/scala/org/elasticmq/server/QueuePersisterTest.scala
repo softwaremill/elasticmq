@@ -10,8 +10,6 @@ import org.scalatest.matchers.should.Matchers
 class QueuePersisterTest extends AnyFunSuite with Matchers {
 
   test("should parse queue data") {
-    val conf = new ElasticMQServerConfig(ConfigFactory.load("test"))
-    val tags = Map("tag1Key" -> "tag1Value")
     val queueData = QueueData(
       "test",
       MillisVisibilityTimeout(3000L),
@@ -24,11 +22,10 @@ class QueuePersisterTest extends AnyFunSuite with Matchers {
       hasContentBasedDeduplication = true,
       Some("copyTo"),
       Some("messageTo"),
-      tags
+      Map("tag1Key" -> "tag1Value")
     )
-    val queues = List(queueData)
-    val actualConfig = QueuePersister(conf.queuesStoragePath).prepareQueuesConfig(queues)
-    val expectedConfig = load(this.getClass,"backup.conf")
+    val actualConfig = QueuePersister.prepareQueuesConfig(List(queueData))
+    val expectedConfig = load(this.getClass, "backup.conf")
     actualConfig should be(expectedConfig)
   }
 
