@@ -25,7 +25,7 @@ class QueuePersisterTest extends AnyFunSuite with Matchers {
       Map("tag1Key" -> "tag1Value")
     )
     val actualConfig = QueuePersister.prepareQueuesConfig(List(queueData))
-    val expectedConfig = load(this.getClass, "backup.conf")
+    val expectedConfig = load(this.getClass, "expected-single-queue-config.conf")
     actualConfig should be(expectedConfig)
   }
 
