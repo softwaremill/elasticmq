@@ -17,16 +17,4 @@ case class QueueData(
     tags: Map[String, String] = Map[String, String]()
 )
 
-case class QueueMetadata(
-    defaultVisibilityTimeout: Long,
-    delay: Long,
-    receiveMessageWait: Long,
-    deadLettersQueue: Option[DeadLettersQueueData],
-    fifo: Boolean,
-    contentBasedDeduplication: Boolean,
-    copyTo: String,
-    moveTo: String,
-    tags: Map[String, String]
-)
-
 case class DeadLettersQueueData(name: String, maxReceiveCount: Int)

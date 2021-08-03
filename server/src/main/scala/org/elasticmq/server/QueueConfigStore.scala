@@ -6,7 +6,7 @@ import org.elasticmq.actor.queue.{PersistQueue, RemoveQueue, UpdateQueueMetadata
 
 import scala.collection.mutable
 
-class QueueMetadataListener(storagePath: String) extends Actor {
+class QueueConfigStore(storagePath: String) extends Actor {
 
   private val queues: mutable.Map[String, QueueData] = mutable.HashMap[String, QueueData]()
 
@@ -20,7 +20,6 @@ class QueueMetadataListener(storagePath: String) extends Actor {
       queues.remove(queueName)
       queuePersister.saveToConfigFile(queues.values.toList)
     case UpdateQueueMetadata(queue) =>
-      queues.remove(queue.name)
       queues.put(queue.name, queue)
       queuePersister.saveToConfigFile(queues.values.toList)
   }

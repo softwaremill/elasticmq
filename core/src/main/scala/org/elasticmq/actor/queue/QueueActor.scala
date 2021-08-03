@@ -14,7 +14,7 @@ class QueueActor(
     var deadLettersActorRef: Option[ActorRef] = None,
     val copyMessagesToActorRef: Option[ActorRef] = None,
     val moveMessagesToActorRef: Option[ActorRef] = None,
-    val queueMetadataListener: Option[ActorRef]
+    val queueMetadataListener: Option[ActorRef] = None
 ) extends QueueActorStorage
     with QueueActorQueueOps
     with QueueActorWaitForMessagesOps

@@ -1,10 +1,10 @@
 package org.elasticmq.server
 
 import com.typesafe.config.ConfigRenderOptions
-import org.elasticmq.{DeadLettersQueueData, QueueData, QueueMetadata}
-import pureconfig.{CamelCase, ConfigFieldMapping, ConfigWriter}
+import org.elasticmq.{DeadLettersQueueData, QueueData}
 import pureconfig.generic.ProductHint
 import pureconfig.generic.auto._
+import pureconfig.{CamelCase, ConfigFieldMapping, ConfigWriter}
 
 import java.io.PrintWriter
 
@@ -51,3 +51,15 @@ case class QueuePersister(storagePath: String) {
     )
 
 }
+
+private case class QueueMetadata(
+  defaultVisibilityTimeout: Long,
+  delay: Long,
+  receiveMessageWait: Long,
+  deadLettersQueue: Option[DeadLettersQueueData],
+  fifo: Boolean,
+  contentBasedDeduplication: Boolean,
+  copyTo: String,
+  moveTo: String,
+  tags: Map[String, String]
+)

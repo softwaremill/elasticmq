@@ -2,6 +2,7 @@ package org.elasticmq.server.config
 
 import com.typesafe.config.{Config, ConfigFactory, ConfigObject, ConfigValue}
 import org.elasticmq.server.QueueSorter
+import org.elasticmq.server.config.ElasticMQServerConfig.createQueuesFromConfig
 import org.elasticmq.util.Logging
 import org.elasticmq.{NodeAddress, RelaxedSQSLimits, StrictSQSLimits}
 
@@ -106,6 +107,13 @@ class ElasticMQServerConfig(config: Config) extends Logging {
       case None => Nil
     }
 
+  private val awsConfig = config.getConfig("aws")
+  val awsRegion: String = awsConfig.getString("region")
+  val awsAccountId: String = awsConfig.getString("accountId")
+
+}
+
+object ElasticMQServerConfig {
   def createQueuesFromConfig(queuesConfig: mutable.Map[String, ConfigValue]): List[CreateQueue] = {
     def getOptionalBoolean(c: Config, k: String) = if (c.hasPath(k)) Some(c.getBoolean(k)) else None
     def getOptionalDuration(c: Config, k: String) = if (c.hasPath(k)) Some(c.getDuration(k, TimeUnit.SECONDS)) else None
@@ -144,13 +152,8 @@ class ElasticMQServerConfig(config: Config) extends Logging {
     QueueSorter.sortCreateQueues(unsortedCreateQueues)
   }
 
-  private val awsConfig = config.getConfig("aws")
-  val awsRegion: String = awsConfig.getString("region")
-  val awsAccountId: String = awsConfig.getString("accountId")
-
   private def addSuffixWhenFifoQueue(queueName: String, isFifo: Boolean): String = {
     if (isFifo && !queueName.endsWith(".fifo")) queueName + ".fifo"
     else queueName
   }
-
 }
