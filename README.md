@@ -105,8 +105,10 @@ aws {
 You can also provide an alternative [Logback](http://logback.qos.ch/) configuration file (the
 [default](server/src/main/resources/logback.xml) is configured to
 log INFO logs and above to the console):
-
-    java -Dlogback.configurationFile=my_logback.xml -jar elasticmq-server-1.1.1.jar
+                 
+```
+java -Dlogback.configurationFile=my_logback.xml -jar elasticmq-server-1.1.1.jar
+```
 
 # How are queue URLs created
 
@@ -234,15 +236,17 @@ Embedded ElasticMQ can be used from any JVM-based language (Java, Scala, etc.).
 
 To use [Amazon Java SDK](http://aws.amazon.com/sdkforjava/) as an interface to an ElasticMQ server you just need
 to change the endpoint:
-
-    String endpoint = "http://localhost:9324";
-    String region = "elasticmq";
-    String accessKey = "x";
-    String secretKey = "x";
-    AmazonSQS client = AmazonSQSClientBuilder.standard()
-        .withCredentials(new AWSStaticCredentialsProvider(new BasicAWSCredentials(accessKey, secretKey)))
-        .withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration(endpoint, region))
-        .build();
+                      
+```java
+String endpoint = "http://localhost:9324";
+String region = "elasticmq";
+String accessKey = "x";
+String secretKey = "x";
+AmazonSQS client = AmazonSQSClientBuilder.standard()
+    .withCredentials(new AWSStaticCredentialsProvider(new BasicAWSCredentials(accessKey, secretKey)))
+    .withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration(endpoint, region))
+    .build();
+```    
 
 The endpoint value should be the same address as the `NodeAddress` provided as an argument to
 `SQSRestServerBuilder` or in the configuration file.
@@ -252,26 +256,30 @@ The `rest-sqs-testing-amazon-java-sdk` module contains some more usage examples.
 # Using the Amazon boto (Python) to access an ElasticMQ Server
 
 To use [Amazon boto](http://docs.pythonboto.org/en/latest/) as an interface to an ElasticMQ server you set up the connection using:
-
-    region = boto.sqs.regioninfo.RegionInfo(name='elasticmq',
-                                            endpoint=sqs_endpoint)
-    conn = boto.connect_sqs(aws_access_key_id='x',
-                            aws_secret_access_key='x',
-                            is_secure=False,
-                            port=sqs_port,
-                            region=region)
+        
+```python
+region = boto.sqs.regioninfo.RegionInfo(name='elasticmq',
+                                        endpoint=sqs_endpoint)
+conn = boto.connect_sqs(aws_access_key_id='x',
+                        aws_secret_access_key='x',
+                        is_secure=False,
+                        port=sqs_port,
+                        region=region)
+```
 
 where `sqs_endpoint` and `sqs_port` are the host and port.
 
 The `boto3` interface is different:
 
-    client = boto3.resource('sqs',
-                            endpoint_url='http://localhost:9324',
-                            region_name='elasticmq',
-                            aws_secret_access_key='x',
-                            aws_access_key_id='x',
-                            use_ssl=False)
-    queue = client.get_queue_by_name(QueueName='queue1')
+```python
+client = boto3.resource('sqs',
+                        endpoint_url='http://localhost:9324',
+                        region_name='elasticmq',
+                        aws_secret_access_key='x',
+                        aws_access_key_id='x',
+                        use_ssl=False)
+queue = client.get_queue_by_name(QueueName='queue1')
+```
 
 # ElasticMQ via Docker
 
@@ -344,26 +352,32 @@ ENTRYPOINT [ "/usr/bin/java", "-Dconfig.file=/opt/elasticmq/conf/elasticmq.conf"
 and override the entrypoint passing the required properties.
 
 # ElasticMQ dependencies in SBT
-
-    // Scala 2.13 and 2.12
-    val elasticmqSqs        = "org.elasticmq" %% "elasticmq-rest-sqs" % "1.1.1"
+                    
+```scala
+// Scala 2.13 and 2.12
+val elasticmqSqs        = "org.elasticmq" %% "elasticmq-rest-sqs" % "1.1.1"
+```
 
 If you don't want the SQS interface, but just use the actors directly, you can add a dependency only to the `core`
 module:
-
-    val elasticmqCore       = "org.elasticmq" %% "elasticmq-core" % "1.1.1"
+    
+```scala
+val elasticmqCore       = "org.elasticmq" %% "elasticmq-core" % "1.1.1"
+```
 
 If you want to use a snapshot version, you will need to add the [https://oss.sonatype.org/content/repositories/snapshots/](https://oss.sonatype.org/content/repositories/snapshots/) repository to your configuration.
 
 # ElasticMQ dependencies in Maven
 
 Dependencies:
-
-    <dependency>
-        <groupId>org.elasticmq</groupId>
-        <artifactId>elasticmq-rest-sqs_2.12</artifactId>
-        <version>1.1.1</version>
-    </dependency>
+    
+```xml
+<dependency>
+    <groupId>org.elasticmq</groupId>
+    <artifactId>elasticmq-rest-sqs_2.12</artifactId>
+    <version>1.1.1</version>
+</dependency>
+```
 
 If you want to use a snapshot version, you will need to add the [https://oss.sonatype.org/content/repositories/snapshots/](https://oss.sonatype.org/content/repositories/snapshots/) repository to your configuration.
 
@@ -383,22 +397,26 @@ small).
 
 Directly accessing the client:
 
-    Running test for [in-memory], iterations: 10, msgs in iteration: 100000, thread count: 1.
-    Overall in-memory throughput: 21326.054040
+```
+Running test for [in-memory], iterations: 10, msgs in iteration: 100000, thread count: 1.
+Overall in-memory throughput: 21326.054040
 
-    Running test for [in-memory], iterations: 10, msgs in iteration: 100000, thread count: 2.
-    Overall in-memory throughput: 26292.956117
+Running test for [in-memory], iterations: 10, msgs in iteration: 100000, thread count: 2.
+Overall in-memory throughput: 26292.956117
 
-    Running test for [in-memory], iterations: 10, msgs in iteration: 100000, thread count: 10.
-    Overall in-memory throughput: 25591.155697
+Running test for [in-memory], iterations: 10, msgs in iteration: 100000, thread count: 10.
+Overall in-memory throughput: 25591.155697
+```
 
 Through the SQS REST interface:
 
-    Running test for [rest-sqs + in-memory], iterations: 10, msgs in iteration: 1000, thread count: 20.
-    Overall rest-sqs + in-memory throughput: 2540.553587
+```
+Running test for [rest-sqs + in-memory], iterations: 10, msgs in iteration: 1000, thread count: 20.
+Overall rest-sqs + in-memory throughput: 2540.553587
 
-    Running test for [rest-sqs + in-memory], iterations: 10, msgs in iteration: 1000, thread count: 40.
-    Overall rest-sqs + in-memory throughput: 2600.002600
+Running test for [rest-sqs + in-memory], iterations: 10, msgs in iteration: 1000, thread count: 40.
+Overall rest-sqs + in-memory throughput: 2600.002600
+```
 
 Note that both the client and the server were on the same machine.
 
