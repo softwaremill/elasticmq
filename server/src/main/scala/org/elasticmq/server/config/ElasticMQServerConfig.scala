@@ -73,12 +73,12 @@ class ElasticMQServerConfig(config: Config) extends Logging {
 
   val restStatisticsConfiguration = new RestStatisticsConfiguration
 
-  private val persistedQueuesStorageConfig = config.getConfig("persisted-queues-storage")
-  val persistedQueuesStoragePath: String = persistedQueuesStorageConfig.getString("path")
-  val persistingQueuesEnabled: Boolean = persistedQueuesStorageConfig.getBoolean("enabled")
+  private val queuesStorage = config.getConfig("queues-storage")
+  val queuesStoragePath: String = queuesStorage.getString("path")
+  val queuesStorageEnabled: Boolean = queuesStorage.getBoolean("enabled")
 
   def readQueuesToLoad(persistedQueues: Seq[CreateQueue] = readPersistedQueues()): Seq[CreateQueue] = {
-    val persistedQueuesName = persistedQueues.map(_.name)
+    val persistedQueuesName = persistedQueues.map(_.name).toSet
     val baseQueuesConfig: mutable.Map[String, ConfigValue] = config
       .getObject("queues")
       .asScala
@@ -87,9 +87,9 @@ class ElasticMQServerConfig(config: Config) extends Logging {
   }
 
   private val persistedQueuesConfig: Option[Config] =
-    if (persistingQueuesEnabled)
+    if (queuesStorageEnabled)
       Try(ConfigFactory
-        .parseFile(new File(persistedQueuesStoragePath)))
+        .parseFile(new File(queuesStoragePath)))
         .toOption
     else None
 

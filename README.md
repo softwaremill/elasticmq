@@ -88,7 +88,11 @@ rest-stats {
 generate-node-address = false
 
 queues {
-    // See next section
+    // See next sections
+}
+
+queues-storage {
+    // See next sections
 }
 
 // Region and accountId which will be included in resource ids
@@ -124,6 +128,7 @@ Queues can be automatically created on startup by providing appropriate configur
 The queues are specified in a custom configuration file. For example, create a `custom.conf` file with the following:
 
 ````
+# the include should be done only once, at the beginning of the custom configuration file
 include classpath("application.conf")
 
 queues {
@@ -158,43 +163,66 @@ While creating the FIFO queue, .fifo suffix will be added automatically to queue
 
 # Persisting queues configuration
 
-Queues configuration can be automatically persisted to external config file in typesafe config format.
+Queues configuration can be persisted in an external config file in the [HOCON](https://en.wikipedia.org/wiki/HOCON) 
+format. Note that only the queue metadata (which queues are created, and with what attributes) will be stored, without 
+any messages.
 
-To make it work you have to set `enabled` flag in `reference.conf` to true and specify `path` where the file 
-with backup configuration will be created.
+To enable the feature, create a custom configuration file with the following content:
 
-Then operations like creation, removal or metadata change for particular queue will result in generation 
-of file with current configuration for all currently exising queues.
-After restart configuration from file will be loaded as previously
+````
+# the include should be done only once, at the beginning of the custom configuration file
+include classpath("application.conf")
+
+queues-storage {
+  enabled = true
+  path = "/path/to/storage/queues.conf"
+}
+````
+
+Any time a queue is created, deleted, or its metadata change, the given file will be updated. 
+
+On startup, any queues defined in the given file will be created. Note that the persisted queues configuration takes 
+precedence over queues defined in the main configuration file (as described in the previous section) in the `queues`
+section.
 
 # Starting an embedded ElasticMQ server with an SQS interface
 
 Add ElasticMQ Server to `build.sbt` dependencies
 
-    libraryDependencies += "org.elasticmq" %% "elasticmq-server" % "1.1.1"
+```scala
+libraryDependencies += "org.elasticmq" %% "elasticmq-server" % "1.1.1"
+```
 
 Simply start the server using custom configuration (see examples above):
 
-    val config = ConfigFactory.load("elasticmq.conf")
-    val server = new ElasticMQServer(new ElasticMQServerConfig(config))
-    server.start()
+```scala
+val config = ConfigFactory.load("elasticmq.conf")
+val server = new ElasticMQServer(new ElasticMQServerConfig(config))
+server.start()
+```
 
 Alternatively, custom rest server can be built using `SQSRestServerBuilder` provided in `elasticmq-rest-sqs` package:
 
-    val server = SQSRestServerBuilder.start()
-    // ... use ...
-    server.stopAndWait()
+```scala
+val server = SQSRestServerBuilder.start()
+// ... use ...
+server.stopAndWait()
+```
 
 If you need to bind to a different host/port, there are configuration methods on the builder:
 
-    val server = SQSRestServerBuilder.withPort(9325).withInterface("localhost").start()
-    // ... use ...
-    server.stopAndWait()
+```scala
+val server = SQSRestServerBuilder.withPort(9325).withInterface("localhost").start()
+// ... use ...
+server.stopAndWait()
+```
 
 You can also set a dynamic port with a port value of `0` or by using the method `withDynamicPort`. To retrieve the port (and other configuration) when using a dynamic port value you can access the server via `waitUntilStarted` for example:
 
-    val server = SQSRestServerBuilder.withDynamicPort().start()
-    server.waitUntilStarted().localAddress().getPort()
+```scala
+val server = SQSRestServerBuilder.withDynamicPort().start()
+server.waitUntilStarted().localAddress().getPort()
+```
 
 You can also provide a custom `ActorSystem`; for details see the javadocs.
 
@@ -506,4 +534,4 @@ We offer commercial support for ElasticMQ and related technologies, as well as d
 
 # Copyright
 
-Copyright (C) 2011-2020 SoftwareMill [https://softwaremill.com](https://softwaremill.com).
+Copyright (C) 2011-2021 SoftwareMill [https://softwaremill.com](https://softwaremill.com).

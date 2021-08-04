@@ -48,7 +48,7 @@ class ElasticMQServer(config: ElasticMQServerConfig) extends Logging {
   }
 
   private def createQueueMetadataListener: Option[ActorRef] =
-    if (config.persistingQueuesEnabled) Some(actorSystem.actorOf(Props(new QueueConfigStore(config.persistedQueuesStoragePath))))
+    if (config.queuesStorageEnabled) Some(actorSystem.actorOf(Props(new QueueConfigStore(config.queuesStoragePath))))
     else None
 
   private def createBase(queueConfigStore: Option[ActorRef]): ActorRef = {
