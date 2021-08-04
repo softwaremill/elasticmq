@@ -51,12 +51,8 @@ class ElasticMQServer(config: ElasticMQServerConfig) extends Logging {
     if (config.queuesStorageEnabled) Some(actorSystem.actorOf(Props(new QueueConfigStore(config.queuesStoragePath))))
     else None
 
-  private def createBase(queueConfigStore: Option[ActorRef]): ActorRef = {
-    config.storage match {
-      case config.InMemoryStorage =>
-        actorSystem.actorOf(Props(new QueueManagerActor(new NowProvider(), config.restSqs.sqsLimits, queueConfigStore)))
-    }
-  }
+  private def createBase(queueConfigStore: Option[ActorRef]): ActorRef =
+    actorSystem.actorOf(Props(new QueueManagerActor(new NowProvider(), config.restSqs.sqsLimits, queueConfigStore)))
 
   private def optionallyStartRestSqs(queueManagerActor: ActorRef, queueConfigStore: Option[ActorRef]): Option[SQSRestServer] = {
     if (config.restSqs.enabled) {
