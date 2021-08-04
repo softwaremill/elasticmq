@@ -18,8 +18,9 @@ class ElasticMQServer(config: ElasticMQServerConfig) extends Logging {
   val actorSystem = ActorSystem("elasticmq")
 
   def start() = {
-    val queueManagerActor = createBase()
-    val restServerOpt = optionallyStartRestSqs(queueManagerActor)
+    val queueConfigStore: Option[ActorRef] = createQueueMetadataListener
+    val queueManagerActor = createBase(queueConfigStore)
+    val restServerOpt = optionallyStartRestSqs(queueManagerActor, queueConfigStore)
     val restStatisticsServerOpt = optionallyStartRestStatistics(queueManagerActor)
 
     val shutdown = () => {
@@ -46,14 +47,14 @@ class ElasticMQServer(config: ElasticMQServerConfig) extends Logging {
     shutdown
   }
 
-  private def createBase(): ActorRef = {
-    config.storage match {
-      case config.InMemoryStorage =>
-        actorSystem.actorOf(Props(new QueueManagerActor(new NowProvider(), config.restSqs.sqsLimits)))
-    }
-  }
+  private def createQueueMetadataListener: Option[ActorRef] =
+    if (config.queuesStorageEnabled) Some(actorSystem.actorOf(Props(new QueueConfigStore(config.queuesStoragePath))))
+    else None
 
-  private def optionallyStartRestSqs(queueManagerActor: ActorRef): Option[SQSRestServer] = {
+  private def createBase(queueConfigStore: Option[ActorRef]): ActorRef =
+    actorSystem.actorOf(Props(new QueueManagerActor(new NowProvider(), config.restSqs.sqsLimits, queueConfigStore)))
+
+  private def optionallyStartRestSqs(queueManagerActor: ActorRef, queueConfigStore: Option[ActorRef]): Option[SQSRestServer] = {
     if (config.restSqs.enabled) {
 
       val server = TheSQSRestServerBuilder(
@@ -65,7 +66,8 @@ class ElasticMQServer(config: ElasticMQServerConfig) extends Logging {
         config.generateNodeAddress,
         config.restSqs.sqsLimits,
         config.awsRegion,
-        config.awsAccountId
+        config.awsAccountId,
+        queueConfigStore
       ).start()
 
       server.waitUntilStarted()
@@ -102,12 +104,13 @@ class ElasticMQServer(config: ElasticMQServerConfig) extends Logging {
       Timeout(5.seconds)
     }
 
-    config.createQueues.flatMap(cq =>
-      Await
-        .result(queueManagerActor ? org.elasticmq.msg.CreateQueue(configToParams(cq, new DateTime)), timeout.duration)
-        .swap
-        .toOption
-    )
+    config.readQueuesToLoad()
+      .flatMap(cq =>
+        Await
+          .result(queueManagerActor ? org.elasticmq.msg.CreateQueue(configToParams(cq, new DateTime)), timeout.duration)
+          .swap
+          .toOption
+      ).toList
   }
 
   private def configToParams(cq: CreateQueue, now: DateTime): QueueData = {
