@@ -132,26 +132,26 @@ The queues are specified in a custom configuration file. For example, create a `
 include classpath("application.conf")
 
 queues {
-    queue1 {
-        defaultVisibilityTimeout = 10 seconds
-        delay = 5 seconds
-        receiveMessageWait = 0 seconds
-        deadLettersQueue {
-            name = "queue1-dead-letters"
-            maxReceiveCount = 3 // from 1 to 1000
-        }
-        fifo = false
-        contentBasedDeduplication = false
-        copyTo = "audit-queue-name"
-        moveTo = "redirect-queue-name"
-        tags {
-            tag1 = "tagged1"
-            tag2 = "tagged2"
-        }
+  queue1 {
+    defaultVisibilityTimeout = 10 seconds
+    delay = 5 seconds
+    receiveMessageWait = 0 seconds
+    deadLettersQueue {
+      name = "queue1-dead-letters"
+      maxReceiveCount = 3 // from 1 to 1000
     }
-    queue1-dead-letters { }
-    audit-queue-name { }
-    redirect-queue-name { }
+    fifo = false
+    contentBasedDeduplication = false
+    copyTo = "audit-queue-name"
+    moveTo = "redirect-queue-name"
+    tags {
+      tag1 = "tagged1"
+      tag2 = "tagged2"
+    }
+  }
+  queue1-dead-letters { }
+  audit-queue-name { }
+  redirect-queue-name { }
 }
 ````
 
