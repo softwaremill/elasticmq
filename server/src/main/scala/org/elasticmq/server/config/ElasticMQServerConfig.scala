@@ -13,22 +13,6 @@ import scala.collection.mutable
 import scala.util.Try
 
 class ElasticMQServerConfig(config: Config) extends Logging {
-  // Configure main storage
-
-  sealed trait Storage
-
-  case object InMemoryStorage extends Storage
-
-  val storage: Storage = {
-    val subConfig = config.getConfig("storage")
-    val storageType = subConfig.getString("type")
-    if ("in-memory".equalsIgnoreCase(storageType)) {
-      InMemoryStorage
-    } else {
-      throw new IllegalArgumentException("Unknown storage type: " + storageType)
-    }
-  }
-
   // What is the outside visible address of this ElasticMQ node (used by rest-sqs)
 
   val nodeAddress = {
