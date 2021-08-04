@@ -9,6 +9,7 @@
 * runs stand-alone ([download](https://s3-eu-west-1.amazonaws.com/softwaremill-public/elasticmq-server-1.1.1.jar)), via [Docker](https://hub.docker.com/r/softwaremill/elasticmq-native/) or embedded
 * [Amazon SQS](http://aws.amazon.com/sqs/)-compatible interface
 * fully asynchronous implementation, no blocking calls
+* optional UI, queue metadata persistence
 * created and maintained by:
 
 <p align="center">
