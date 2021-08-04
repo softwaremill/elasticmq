@@ -17,7 +17,7 @@ trait QueueManagerForEachTest extends BeforeAndAfterEach {
   override protected def beforeEach(): Unit = {
     super.beforeEach()
     nowProvider = new MutableNowProvider
-    queueManagerActor = system.actorOf(Props(new QueueManagerActor(nowProvider, StrictSQSLimits)))
+    queueManagerActor = system.actorOf(Props(new QueueManagerActor(nowProvider, StrictSQSLimits, None)))
   }
 
   override protected def afterEach(): Unit = {

@@ -34,7 +34,7 @@ class QueueDirectivesTest
   implicit val ec: ExecutionContextExecutor = actorSystem.dispatcher
   implicit lazy val actorSystem: ActorSystem = ActorSystem("lol")
   lazy val queueManagerActor: ActorRef =
-    actorSystem.actorOf(Props(new QueueManagerActor(new NowProvider(), StrictSQSLimits)))
+    actorSystem.actorOf(Props(new QueueManagerActor(new NowProvider(), StrictSQSLimits, None)))
 
   "queueActorAndNameFromRequest" should "return correct queue name" in {
     val future = queueManagerActor ? CreateQueue(
