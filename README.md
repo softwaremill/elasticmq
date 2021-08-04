@@ -47,60 +47,64 @@ You can download the stand-alone distribution here:
 Java 8 or above is required for running the server.
 
 Simply run the jar and you should get a working server, which binds to `localhost:9324`:
-
-    java -jar elasticmq-server-1.1.1.jar
+    
+```
+java -jar elasticmq-server-1.1.1.jar
+```
 
 ElasticMQ uses [Typesafe Config](https://github.com/typesafehub/config) for configuration. To specify custom
 configuration values, create a file (e.g. `custom.conf`), fill it in with the desired values, and pass it to the server:
 
-    java -Dconfig.file=custom.conf -jar elasticmq-server-1.1.1.jar
+```
+java -Dconfig.file=custom.conf -jar elasticmq-server-1.1.1.jar
+```
 
 The config file may contain any configuration for Akka and ElasticMQ. Current ElasticMQ configuration values are:
 
-````
+```
 include classpath("application.conf")
 
-// What is the outside visible address of this ElasticMQ node
-// Used to create the queue URL (may be different from bind address!)
+# What is the outside visible address of this ElasticMQ node
+# Used to create the queue URL (may be different from bind address!)
 node-address {
-    protocol = http
-    host = localhost
-    port = 9324
-    context-path = ""
+  protocol = http
+  host = localhost
+  port = 9324
+  context-path = ""
 }
 
 rest-sqs {
-    enabled = true
-    bind-port = 9324
-    bind-hostname = "0.0.0.0"
-    // Possible values: relaxed, strict
-    sqs-limits = strict
+  enabled = true
+  bind-port = 9324
+  bind-hostname = "0.0.0.0"
+  # Possible values: relaxed, strict
+  sqs-limits = strict
 }
 
 rest-stats {
-    enabled = true
-    bind-port = 9325
-    bind-hostname = "0.0.0.0"
+  enabled = true
+  bind-port = 9325
+  bind-hostname = "0.0.0.0"
 }
 
-// Should the node-address be generated from the bind port/hostname
-// Set this to true e.g. when assigning port automatically by using port 0.
+# Should the node-address be generated from the bind port/hostname
+# Set this to true e.g. when assigning port automatically by using port 0.
 generate-node-address = false
 
 queues {
-    // See next sections
+  # See next sections
 }
 
 queues-storage {
-    // See next sections
+  # See next sections
 }
 
-// Region and accountId which will be included in resource ids
+# Region and accountId which will be included in resource ids
 aws {
-    region = us-west-2
-    accountId = 000000000000
+  region = us-west-2
+  accountId = 000000000000
 }
-````
+```
 
 You can also provide an alternative [Logback](http://logback.qos.ch/) configuration file (the
 [default](server/src/main/resources/logback.xml) is configured to
