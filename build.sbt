@@ -238,7 +238,7 @@ lazy val server: Project = (project in file("server"))
   )
   .dependsOn(core, restSqs, commonTest % "test")
 
-val graalVmVersion = "21.1.0"
+val graalVmVersion = "21.2.0"
 
 lazy val nativeServer: Project = (project in file("native-server"))
   .enablePlugins(GraalVMNativeImagePlugin, DockerPlugin)
