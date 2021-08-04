@@ -80,10 +80,11 @@ val buildSettings = commonSmlBuildSettings ++ ossPublishSettings ++ Seq(
 val jodaTime = "joda-time" % "joda-time" % "2.10.10"
 val jodaConvert = "org.joda" % "joda-convert" % "2.2.1"
 val config = "com.typesafe" % "config" % "1.4.1"
+val pureConfig = "com.github.pureconfig" %% "pureconfig" % "0.16.0"
 
 val scalalogging = "com.typesafe.scala-logging" %% "scala-logging" % "3.9.3"
-val logback = "ch.qos.logback" % "logback-classic" % "1.2.3"
-val jclOverSlf4j = "org.slf4j" % "jcl-over-slf4j" % "1.7.30" // needed form amazon java sdk
+val logback = "ch.qos.logback" % "logback-classic" % "1.2.5"
+val jclOverSlf4j = "org.slf4j" % "jcl-over-slf4j" % "1.7.32" // needed form amazon java sdk
 
 val scalatest = "org.scalatest" %% "scalatest" % "3.2.9"
 val awaitility = "org.awaitility" % "awaitility-scala" % "4.1.0"
@@ -91,7 +92,7 @@ val awaitility = "org.awaitility" % "awaitility-scala" % "4.1.0"
 val amazonJavaSdkSqs = "com.amazonaws" % "aws-java-sdk-sqs" % "1.11.1026" exclude ("commons-logging", "commons-logging")
 
 val akkaVersion = "2.6.15"
-val akkaHttpVersion = "10.2.4"
+val akkaHttpVersion = "10.2.5"
 val akka2Actor = "com.typesafe.akka" %% "akka-actor" % akkaVersion
 val akka2Slf4j = "com.typesafe.akka" %% "akka-slf4j" % akkaVersion
 val akka2Streams = "com.typesafe.akka" %% "akka-stream" % akkaVersion
@@ -173,7 +174,7 @@ lazy val server: Project = (project in file("server"))
   .settings(uiSettings)
   .settings(Seq(
     name := "elasticmq-server",
-    libraryDependencies ++= Seq(logback, config),
+    libraryDependencies ++= Seq(logback, config, pureConfig),
     unmanagedResourceDirectories in Compile += { baseDirectory.value / ".." / "ui" / "build" },
     assembly := assembly.dependsOn(yarnTask.toTask(" build")).value,
     mainClass in assembly := Some("org.elasticmq.server.Main"),
@@ -237,7 +238,7 @@ lazy val server: Project = (project in file("server"))
   )
   .dependsOn(core, restSqs, commonTest % "test")
 
-val graalVmVersion = "21.1.0"
+val graalVmVersion = "21.2.0"
 
 lazy val nativeServer: Project = (project in file("native-server"))
   .enablePlugins(GraalVMNativeImagePlugin, DockerPlugin)

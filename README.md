@@ -9,6 +9,7 @@
 * runs stand-alone ([download](https://s3-eu-west-1.amazonaws.com/softwaremill-public/elasticmq-server-1.1.1.jar)), via [Docker](https://hub.docker.com/r/softwaremill/elasticmq-native/) or embedded
 * [Amazon SQS](http://aws.amazon.com/sqs/)-compatible interface
 * fully asynchronous implementation, no blocking calls
+* optional UI, queue metadata persistence
 * created and maintained by:
 
 <p align="center">
@@ -47,62 +48,72 @@ You can download the stand-alone distribution here:
 Java 8 or above is required for running the server.
 
 Simply run the jar and you should get a working server, which binds to `localhost:9324`:
-
-    java -jar elasticmq-server-1.1.1.jar
+    
+```
+java -jar elasticmq-server-1.1.1.jar
+```
 
 ElasticMQ uses [Typesafe Config](https://github.com/typesafehub/config) for configuration. To specify custom
 configuration values, create a file (e.g. `custom.conf`), fill it in with the desired values, and pass it to the server:
 
-    java -Dconfig.file=custom.conf -jar elasticmq-server-1.1.1.jar
+```
+java -Dconfig.file=custom.conf -jar elasticmq-server-1.1.1.jar
+```
 
 The config file may contain any configuration for Akka and ElasticMQ. Current ElasticMQ configuration values are:
 
-````
+```
 include classpath("application.conf")
 
-// What is the outside visible address of this ElasticMQ node
-// Used to create the queue URL (may be different from bind address!)
+# What is the outside visible address of this ElasticMQ node
+# Used to create the queue URL (may be different from bind address!)
 node-address {
-    protocol = http
-    host = localhost
-    port = 9324
-    context-path = ""
+  protocol = http
+  host = localhost
+  port = 9324
+  context-path = ""
 }
 
 rest-sqs {
-    enabled = true
-    bind-port = 9324
-    bind-hostname = "0.0.0.0"
-    // Possible values: relaxed, strict
-    sqs-limits = strict
+  enabled = true
+  bind-port = 9324
+  bind-hostname = "0.0.0.0"
+  # Possible values: relaxed, strict
+  sqs-limits = strict
 }
 
 rest-stats {
-    enabled = true
-    bind-port = 9325
-    bind-hostname = "0.0.0.0"
+  enabled = true
+  bind-port = 9325
+  bind-hostname = "0.0.0.0"
 }
 
-// Should the node-address be generated from the bind port/hostname
-// Set this to true e.g. when assigning port automatically by using port 0.
+# Should the node-address be generated from the bind port/hostname
+# Set this to true e.g. when assigning port automatically by using port 0.
 generate-node-address = false
 
 queues {
-    // See next section
+  # See next sections
 }
 
-// Region and accountId which will be included in resource ids
-aws {
-    region = us-west-2
-    accountId = 000000000000
+queues-storage {
+  # See next sections
 }
-````
+
+# Region and accountId which will be included in resource ids
+aws {
+  region = us-west-2
+  accountId = 000000000000
+}
+```
 
 You can also provide an alternative [Logback](http://logback.qos.ch/) configuration file (the
 [default](server/src/main/resources/logback.xml) is configured to
 log INFO logs and above to the console):
-
-    java -Dlogback.configurationFile=my_logback.xml -jar elasticmq-server-1.1.1.jar
+                 
+```
+java -Dlogback.configurationFile=my_logback.xml -jar elasticmq-server-1.1.1.jar
+```
 
 # How are queue URLs created
 
@@ -124,29 +135,30 @@ Queues can be automatically created on startup by providing appropriate configur
 The queues are specified in a custom configuration file. For example, create a `custom.conf` file with the following:
 
 ````
+# the include should be done only once, at the beginning of the custom configuration file
 include classpath("application.conf")
 
 queues {
-    queue1 {
-        defaultVisibilityTimeout = 10 seconds
-        delay = 5 seconds
-        receiveMessageWait = 0 seconds
-        deadLettersQueue {
-            name = "queue1-dead-letters"
-            maxReceiveCount = 3 // from 1 to 1000
-        }
-        fifo = false
-        contentBasedDeduplication = false
-        copyTo = "audit-queue-name"
-        moveTo = "redirect-queue-name"
-        tags {
-            tag1 = "tagged1"
-            tag2 = "tagged2"
-        }
+  queue1 {
+    defaultVisibilityTimeout = 10 seconds
+    delay = 5 seconds
+    receiveMessageWait = 0 seconds
+    deadLettersQueue {
+      name = "queue1-dead-letters"
+      maxReceiveCount = 3 // from 1 to 1000
     }
-    queue1-dead-letters { }
-    audit-queue-name { }
-    redirect-queue-name { }
+    fifo = false
+    contentBasedDeduplication = false
+    copyTo = "audit-queue-name"
+    moveTo = "redirect-queue-name"
+    tags {
+      tag1 = "tagged1"
+      tag2 = "tagged2"
+    }
+  }
+  queue1-dead-letters { }
+  audit-queue-name { }
+  redirect-queue-name { }
 }
 ````
 
@@ -156,34 +168,68 @@ all messages could be either duplicated (using `copyTo` attribute) or redirected
 
 While creating the FIFO queue, .fifo suffix will be added automatically to queue name.
 
+# Persisting queues configuration
+
+Queues configuration can be persisted in an external config file in the [HOCON](https://en.wikipedia.org/wiki/HOCON) 
+format. Note that only the queue metadata (which queues are created, and with what attributes) will be stored, without 
+any messages.
+
+To enable the feature, create a custom configuration file with the following content:
+
+````
+# the include should be done only once, at the beginning of the custom configuration file
+include classpath("application.conf")
+
+queues-storage {
+  enabled = true
+  path = "/path/to/storage/queues.conf"
+}
+````
+
+Any time a queue is created, deleted, or its metadata change, the given file will be updated. 
+
+On startup, any queues defined in the given file will be created. Note that the persisted queues configuration takes 
+precedence over queues defined in the main configuration file (as described in the previous section) in the `queues`
+section.
+
 # Starting an embedded ElasticMQ server with an SQS interface
 
 Add ElasticMQ Server to `build.sbt` dependencies
 
-    libraryDependencies += "org.elasticmq" %% "elasticmq-server" % "1.1.1"
+```scala
+libraryDependencies += "org.elasticmq" %% "elasticmq-server" % "1.1.1"
+```
 
 Simply start the server using custom configuration (see examples above):
 
-    val config = ConfigFactory.load("elasticmq.conf")
-    val server = new ElasticMQServer(new ElasticMQServerConfig(config))
-    server.start()
+```scala
+val config = ConfigFactory.load("elasticmq.conf")
+val server = new ElasticMQServer(new ElasticMQServerConfig(config))
+server.start()
+```
 
-Custom rest server can be built using `SQSRestServerBuilder` provided in `elasticmq-rest-sqs` package:
+Alternatively, custom rest server can be built using `SQSRestServerBuilder` provided in `elasticmq-rest-sqs` package:
 
-    val server = SQSRestServerBuilder.start()
-    // ... use ...
-    server.stopAndWait()
+```scala
+val server = SQSRestServerBuilder.start()
+// ... use ...
+server.stopAndWait()
+```
 
 If you need to bind to a different host/port, there are configuration methods on the builder:
 
-    val server = SQSRestServerBuilder.withPort(9325).withInterface("localhost").start()
-    // ... use ...
-    server.stopAndWait()
+```scala
+val server = SQSRestServerBuilder.withPort(9325).withInterface("localhost").start()
+// ... use ...
+server.stopAndWait()
+```
 
 You can also set a dynamic port with a port value of `0` or by using the method `withDynamicPort`. To retrieve the port (and other configuration) when using a dynamic port value you can access the server via `waitUntilStarted` for example:
 
-    val server = SQSRestServerBuilder.withDynamicPort().start()
-    server.waitUntilStarted().localAddress().getPort()
+```scala
+val server = SQSRestServerBuilder.withDynamicPort().start()
+server.waitUntilStarted().localAddress().getPort()
+```
 
 You can also provide a custom `ActorSystem`; for details see the javadocs.
 
@@ -195,15 +241,17 @@ Embedded ElasticMQ can be used from any JVM-based language (Java, Scala, etc.).
 
 To use [Amazon Java SDK](http://aws.amazon.com/sdkforjava/) as an interface to an ElasticMQ server you just need
 to change the endpoint:
-
-    String endpoint = "http://localhost:9324";
-    String region = "elasticmq";
-    String accessKey = "x";
-    String secretKey = "x";
-    AmazonSQS client = AmazonSQSClientBuilder.standard()
-        .withCredentials(new AWSStaticCredentialsProvider(new BasicAWSCredentials(accessKey, secretKey)))
-        .withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration(endpoint, region))
-        .build();
+                      
+```java
+String endpoint = "http://localhost:9324";
+String region = "elasticmq";
+String accessKey = "x";
+String secretKey = "x";
+AmazonSQS client = AmazonSQSClientBuilder.standard()
+    .withCredentials(new AWSStaticCredentialsProvider(new BasicAWSCredentials(accessKey, secretKey)))
+    .withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration(endpoint, region))
+    .build();
+```    
 
 The endpoint value should be the same address as the `NodeAddress` provided as an argument to
 `SQSRestServerBuilder` or in the configuration file.
@@ -213,26 +261,30 @@ The `rest-sqs-testing-amazon-java-sdk` module contains some more usage examples.
 # Using the Amazon boto (Python) to access an ElasticMQ Server
 
 To use [Amazon boto](http://docs.pythonboto.org/en/latest/) as an interface to an ElasticMQ server you set up the connection using:
-
-    region = boto.sqs.regioninfo.RegionInfo(name='elasticmq',
-                                            endpoint=sqs_endpoint)
-    conn = boto.connect_sqs(aws_access_key_id='x',
-                            aws_secret_access_key='x',
-                            is_secure=False,
-                            port=sqs_port,
-                            region=region)
+        
+```python
+region = boto.sqs.regioninfo.RegionInfo(name='elasticmq',
+                                        endpoint=sqs_endpoint)
+conn = boto.connect_sqs(aws_access_key_id='x',
+                        aws_secret_access_key='x',
+                        is_secure=False,
+                        port=sqs_port,
+                        region=region)
+```
 
 where `sqs_endpoint` and `sqs_port` are the host and port.
 
 The `boto3` interface is different:
 
-    client = boto3.resource('sqs',
-                            endpoint_url='http://localhost:9324',
-                            region_name='elasticmq',
-                            aws_secret_access_key='x',
-                            aws_access_key_id='x',
-                            use_ssl=False)
-    queue = client.get_queue_by_name(QueueName='queue1')
+```python
+client = boto3.resource('sqs',
+                        endpoint_url='http://localhost:9324',
+                        region_name='elasticmq',
+                        aws_secret_access_key='x',
+                        aws_access_key_id='x',
+                        use_ssl=False)
+queue = client.get_queue_by_name(QueueName='queue1')
+```
 
 # ElasticMQ via Docker
 
@@ -305,26 +357,32 @@ ENTRYPOINT [ "/usr/bin/java", "-Dconfig.file=/opt/elasticmq/conf/elasticmq.conf"
 and override the entrypoint passing the required properties.
 
 # ElasticMQ dependencies in SBT
-
-    // Scala 2.13 and 2.12
-    val elasticmqSqs        = "org.elasticmq" %% "elasticmq-rest-sqs" % "1.1.1"
+                    
+```scala
+// Scala 2.13 and 2.12
+val elasticmqSqs        = "org.elasticmq" %% "elasticmq-rest-sqs" % "1.1.1"
+```
 
 If you don't want the SQS interface, but just use the actors directly, you can add a dependency only to the `core`
 module:
-
-    val elasticmqCore       = "org.elasticmq" %% "elasticmq-core" % "1.1.1"
+    
+```scala
+val elasticmqCore       = "org.elasticmq" %% "elasticmq-core" % "1.1.1"
+```
 
 If you want to use a snapshot version, you will need to add the [https://oss.sonatype.org/content/repositories/snapshots/](https://oss.sonatype.org/content/repositories/snapshots/) repository to your configuration.
 
 # ElasticMQ dependencies in Maven
 
 Dependencies:
-
-    <dependency>
-        <groupId>org.elasticmq</groupId>
-        <artifactId>elasticmq-rest-sqs_2.12</artifactId>
-        <version>1.1.1</version>
-    </dependency>
+    
+```xml
+<dependency>
+    <groupId>org.elasticmq</groupId>
+    <artifactId>elasticmq-rest-sqs_2.12</artifactId>
+    <version>1.1.1</version>
+</dependency>
+```
 
 If you want to use a snapshot version, you will need to add the [https://oss.sonatype.org/content/repositories/snapshots/](https://oss.sonatype.org/content/repositories/snapshots/) repository to your configuration.
 
@@ -344,22 +402,26 @@ small).
 
 Directly accessing the client:
 
-    Running test for [in-memory], iterations: 10, msgs in iteration: 100000, thread count: 1.
-    Overall in-memory throughput: 21326.054040
+```
+Running test for [in-memory], iterations: 10, msgs in iteration: 100000, thread count: 1.
+Overall in-memory throughput: 21326.054040
 
-    Running test for [in-memory], iterations: 10, msgs in iteration: 100000, thread count: 2.
-    Overall in-memory throughput: 26292.956117
+Running test for [in-memory], iterations: 10, msgs in iteration: 100000, thread count: 2.
+Overall in-memory throughput: 26292.956117
 
-    Running test for [in-memory], iterations: 10, msgs in iteration: 100000, thread count: 10.
-    Overall in-memory throughput: 25591.155697
+Running test for [in-memory], iterations: 10, msgs in iteration: 100000, thread count: 10.
+Overall in-memory throughput: 25591.155697
+```
 
 Through the SQS REST interface:
 
-    Running test for [rest-sqs + in-memory], iterations: 10, msgs in iteration: 1000, thread count: 20.
-    Overall rest-sqs + in-memory throughput: 2540.553587
+```
+Running test for [rest-sqs + in-memory], iterations: 10, msgs in iteration: 1000, thread count: 20.
+Overall rest-sqs + in-memory throughput: 2540.553587
 
-    Running test for [rest-sqs + in-memory], iterations: 10, msgs in iteration: 1000, thread count: 40.
-    Overall rest-sqs + in-memory throughput: 2600.002600
+Running test for [rest-sqs + in-memory], iterations: 10, msgs in iteration: 1000, thread count: 40.
+Overall rest-sqs + in-memory throughput: 2600.002600
+```
 
 Note that both the client and the server were on the same machine.
 
@@ -495,4 +557,4 @@ We offer commercial support for ElasticMQ and related technologies, as well as d
 
 # Copyright
 
-Copyright (C) 2011-2020 SoftwareMill [https://softwaremill.com](https://softwaremill.com).
+Copyright (C) 2011-2021 SoftwareMill [https://softwaremill.com](https://softwaremill.com).
