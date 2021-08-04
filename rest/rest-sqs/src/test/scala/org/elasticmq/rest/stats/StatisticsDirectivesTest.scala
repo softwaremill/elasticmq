@@ -48,7 +48,7 @@ class StatisticsDirectivesTest extends AnyFlatSpec
     new DateTime().withDate(2020, 1, 1).withTimeAtStartOfDay().getMillis)
 
   lazy val queueManagerActor: ActorRef =
-    actorSystem.actorOf(Props(new QueueManagerActor(nowProvider, StrictSQSLimits)))
+    actorSystem.actorOf(Props(new QueueManagerActor(nowProvider, StrictSQSLimits, None)))
 
 
   "statisticsRequestForAllQueues" should "return all queues statistics" in {

@@ -156,6 +156,17 @@ all messages could be either duplicated (using `copyTo` attribute) or redirected
 
 While creating the FIFO queue, .fifo suffix will be added automatically to queue name.
 
+# Persisting queues configuration
+
+Queues configuration can be automatically persisted to external config file in typesafe config format.
+
+To make it work you have to set `enabled` flag in `reference.conf` to true and specify `path` where the file 
+with backup configuration will be created.
+
+Then operations like creation, removal or metadata change for particular queue will result in generation 
+of file with current configuration for all currently exising queues.
+After restart configuration from file will be loaded as previously
+
 # Starting an embedded ElasticMQ server with an SQS interface
 
 Add ElasticMQ Server to `build.sbt` dependencies
@@ -168,7 +179,7 @@ Simply start the server using custom configuration (see examples above):
     val server = new ElasticMQServer(new ElasticMQServerConfig(config))
     server.start()
 
-Custom rest server can be built using `SQSRestServerBuilder` provided in `elasticmq-rest-sqs` package:
+Alternatively, custom rest server can be built using `SQSRestServerBuilder` provided in `elasticmq-rest-sqs` package:
 
     val server = SQSRestServerBuilder.start()
     // ... use ...

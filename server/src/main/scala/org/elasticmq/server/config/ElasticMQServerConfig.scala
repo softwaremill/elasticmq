@@ -1,11 +1,16 @@
 package org.elasticmq.server.config
 
-import java.util.concurrent.TimeUnit
-
-import com.typesafe.config.{Config, ConfigObject}
-import org.elasticmq.{NodeAddress, RelaxedSQSLimits, StrictSQSLimits}
+import com.typesafe.config.{Config, ConfigFactory, ConfigObject, ConfigValue}
 import org.elasticmq.server.QueueSorter
+import org.elasticmq.server.config.ElasticMQServerConfig.createQueuesFromConfig
 import org.elasticmq.util.Logging
+import org.elasticmq.{NodeAddress, RelaxedSQSLimits, StrictSQSLimits}
+
+import java.io.File
+import java.util.concurrent.TimeUnit
+import scala.collection.JavaConverters._
+import scala.collection.mutable
+import scala.util.Try
 
 class ElasticMQServerConfig(config: Config) extends Logging {
   // Configure main storage
@@ -68,13 +73,48 @@ class ElasticMQServerConfig(config: Config) extends Logging {
 
   val restStatisticsConfiguration = new RestStatisticsConfiguration
 
+  private val persistedQueuesStorageConfig = config.getConfig("persisted-queues-storage")
+  val persistedQueuesStoragePath: String = persistedQueuesStorageConfig.getString("path")
+  val persistingQueuesEnabled: Boolean = persistedQueuesStorageConfig.getBoolean("enabled")
 
-  val createQueues: List[CreateQueue] = {
+  def readQueuesToLoad(persistedQueues: Seq[CreateQueue] = readPersistedQueues()): Seq[CreateQueue] = {
+    val persistedQueuesName = persistedQueues.map(_.name)
+    val baseQueuesConfig: mutable.Map[String, ConfigValue] = config
+      .getObject("queues")
+      .asScala
+    val baseQueues = createQueuesFromConfig(baseQueuesConfig).filterNot(queue => persistedQueuesName.contains(queue.name))
+    persistedQueues ++ baseQueues
+  }
+
+  private val persistedQueuesConfig: Option[Config] =
+    if (persistingQueuesEnabled)
+      Try(ConfigFactory
+        .parseFile(new File(persistedQueuesStoragePath)))
+        .toOption
+    else None
+
+  def readPersistedQueues(persistedQueuesConfig: Option[Config] = persistedQueuesConfig): List[CreateQueue] =
+    persistedQueuesConfig match {
+      case Some(file) =>
+        Try(file
+          .getObject("queues")
+          .asScala)
+          .map(createQueuesFromConfig)
+          .getOrElse(Nil)
+      case None => Nil
+    }
+
+  private val awsConfig = config.getConfig("aws")
+  val awsRegion: String = awsConfig.getString("region")
+  val awsAccountId: String = awsConfig.getString("accountId")
+
+}
+
+object ElasticMQServerConfig {
+  def createQueuesFromConfig(queuesConfig: mutable.Map[String, ConfigValue]): List[CreateQueue] = {
     def getOptionalBoolean(c: Config, k: String) = if (c.hasPath(k)) Some(c.getBoolean(k)) else None
     def getOptionalDuration(c: Config, k: String) = if (c.hasPath(k)) Some(c.getDuration(k, TimeUnit.SECONDS)) else None
     def getOptionalString(c: Config, k: String) = if (c.hasPath(k)) Some(c.getString(k)).filter(_.nonEmpty) else None
-
-    import scala.collection.JavaConverters._
 
     def getOptionalTags(c: Config, k: String): Map[String, String] =
       if (c.hasPath(k)) c.getObject(k).asScala.map { case (key, _) => key -> c.getString(k + '.' + key) }.toMap
@@ -82,44 +122,35 @@ class ElasticMQServerConfig(config: Config) extends Logging {
 
     val deadLettersQueueKey = "deadLettersQueue"
 
-    val unsortedCreateQueues = config
-      .getObject("queues")
-      .asScala
-      .map { case (n, v) =>
-        val c = v.asInstanceOf[ConfigObject].toConfig
-        val isFifo = getOptionalBoolean(c, "fifo").getOrElse(false)
-        CreateQueue(
-          name = addSuffixWhenFifoQueue(n, isFifo),
-          defaultVisibilityTimeoutSeconds = getOptionalDuration(c, "defaultVisibilityTimeout"),
-          delaySeconds = getOptionalDuration(c, "delay"),
-          receiveMessageWaitSeconds = getOptionalDuration(c, "receiveMessageWait"),
-          deadLettersQueue = if (c.hasPath(deadLettersQueueKey)) {
-            Some(
-              DeadLettersQueue(
-                c.getString(deadLettersQueueKey + ".name"),
-                c.getInt(deadLettersQueueKey + ".maxReceiveCount")
-              )
+    val unsortedCreateQueues = queuesConfig.map { case (n, v) =>
+      val c = v.asInstanceOf[ConfigObject].toConfig
+      val isFifo = getOptionalBoolean(c, "fifo").getOrElse(false)
+      CreateQueue(
+        name = addSuffixWhenFifoQueue(n, isFifo),
+        defaultVisibilityTimeoutSeconds = getOptionalDuration(c, "defaultVisibilityTimeout"),
+        delaySeconds = getOptionalDuration(c, "delay"),
+        receiveMessageWaitSeconds = getOptionalDuration(c, "receiveMessageWait"),
+        deadLettersQueue = if (c.hasPath(deadLettersQueueKey)) {
+          Some(
+            DeadLettersQueue(
+              c.getString(deadLettersQueueKey + ".name"),
+              c.getInt(deadLettersQueueKey + ".maxReceiveCount")
             )
-          } else None,
-          isFifo = isFifo,
-          hasContentBasedDeduplication = getOptionalBoolean(c, "contentBasedDeduplication").getOrElse(false),
-          copyMessagesTo = getOptionalString(c, "copyTo"),
-          moveMessagesTo = getOptionalString(c, "moveTo"),
-          tags = getOptionalTags(c, "tags")
-        )
-      }
-      .toList
+          )
+        } else None,
+        isFifo = isFifo,
+        hasContentBasedDeduplication = getOptionalBoolean(c, "contentBasedDeduplication").getOrElse(false),
+        copyMessagesTo = getOptionalString(c, "copyTo"),
+        moveMessagesTo = getOptionalString(c, "moveTo"),
+        tags = getOptionalTags(c, "tags")
+      )
+    }.toList
 
     QueueSorter.sortCreateQueues(unsortedCreateQueues)
   }
-
-  private val awsConfig = config.getConfig("aws")
-  val awsRegion: String = awsConfig.getString("region")
-  val awsAccountId: String = awsConfig.getString("accountId")
 
   private def addSuffixWhenFifoQueue(queueName: String, isFifo: Boolean): String = {
     if (isFifo && !queueName.endsWith(".fifo")) queueName + ".fifo"
     else queueName
   }
-
 }
