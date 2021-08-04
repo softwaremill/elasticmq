@@ -8,7 +8,7 @@ import scoverage.ScoverageKeys._
 
 import scala.sys.process.Process
 
-val v2_12 = "2.12.13"
+val v2_12 = "2.12.14"
 val v2_13 = "2.13.6"
 
 lazy val uiDirectory = settingKey[File]("Path to the ui project directory")
