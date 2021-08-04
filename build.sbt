@@ -82,7 +82,7 @@ val jodaConvert = "org.joda" % "joda-convert" % "2.2.1"
 val config = "com.typesafe" % "config" % "1.4.1"
 val pureConfig = "com.github.pureconfig" %% "pureconfig" % "0.16.0"
 
-val scalalogging = "com.typesafe.scala-logging" %% "scala-logging" % "3.9.3"
+val scalalogging = "com.typesafe.scala-logging" %% "scala-logging" % "3.9.4"
 val logback = "ch.qos.logback" % "logback-classic" % "1.2.5"
 val jclOverSlf4j = "org.slf4j" % "jcl-over-slf4j" % "1.7.32" // needed form amazon java sdk
 
