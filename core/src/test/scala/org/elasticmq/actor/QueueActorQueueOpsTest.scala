@@ -189,8 +189,16 @@ class QueueActorQueueOpsTest extends ActorTest with QueueManagerForEachTest with
 
   test("clearing a fifo queue") {
     // Given
-    val queue = createQueueData("q1.fifo", MillisVisibilityTimeout(100L), isFifo = true, hasContentBasedDeduplication = true)
-    val msg = createNewMessageData("m1", "123", Map(), MillisNextDelivery(1L), Some("group_123"), Some(DeduplicationId("dedup_123")))
+    val queue =
+      createQueueData("q1.fifo", MillisVisibilityTimeout(100L), isFifo = true, hasContentBasedDeduplication = true)
+    val msg = createNewMessageData(
+      "m1",
+      "123",
+      Map(),
+      MillisNextDelivery(1L),
+      Some("group_123"),
+      Some(DeduplicationId("dedup_123"))
+    )
 
     for {
       Right(queueActor) <- queueManagerActor ? CreateQueue(queue)

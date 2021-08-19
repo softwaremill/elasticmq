@@ -28,12 +28,9 @@ import scala.concurrent.{Await, Future}
 import scala.util.control.NonFatal
 import scala.xml.{EntityRef, _}
 
-/** By default:
-  * <li>
-  * <ul>for `socketAddress`: when started, the server will bind to `localhost:9324`</ul>
-  * <ul>for `serverAddress`: returned queue addresses will use `http://localhost:9324` as the base address.</ul>
-  * <ul>for `sqsLimits`: relaxed
-  * </li>
+/** By default: <li> <ul>for `socketAddress`: when started, the server will bind to `localhost:9324`</ul> <ul>for
+  * `serverAddress`: returned queue addresses will use `http://localhost:9324` as the base address.</ul> <ul>for
+  * `sqsLimits`: relaxed </li>
   */
 object SQSRestServerBuilder
     extends TheSQSRestServerBuilder(
@@ -62,54 +59,62 @@ case class TheSQSRestServerBuilder(
     queueMetadataListener: Option[ActorRef]
 ) extends Logging {
 
-  /** @param _actorSystem Optional actor system. If one is provided, it will be used to create ElasticMQ and Spray
-    *                     actors, but its lifecycle (shutdown) will be not managed by the server. If one is not
-    *                     provided, an actor system will be created, and its lifecycle will be bound to the server's
-    *                     lifecycle.
+  /** @param _actorSystem
+    *   Optional actor system. If one is provided, it will be used to create ElasticMQ and Spray actors, but its
+    *   lifecycle (shutdown) will be not managed by the server. If one is not provided, an actor system will be created,
+    *   and its lifecycle will be bound to the server's lifecycle.
     */
   def withActorSystem(_actorSystem: ActorSystem) =
     this.copy(providedActorSystem = Some(_actorSystem))
 
-  /** @param _queueManagerActor Optional "main" ElasticMQ actor.
+  /** @param _queueManagerActor
+    *   Optional "main" ElasticMQ actor.
     */
   def withQueueManagerActor(_queueManagerActor: ActorRef) =
     this.copy(providedQueueManagerActor = Some(_queueManagerActor))
 
-  /** @param _interface Hostname to which the server will bind.
+  /** @param _interface
+    *   Hostname to which the server will bind.
     */
   def withInterface(_interface: String) = this.copy(interface = _interface)
 
-  /** @param _port Port to which the server will bind.
+  /** @param _port
+    *   Port to which the server will bind.
     */
   def withPort(_port: Int) = this.copy(port = _port)
 
-  /** Will assign port automatically (uses port 0). The port to which the socket binds will be logged on successful startup.
+  /** Will assign port automatically (uses port 0). The port to which the socket binds will be logged on successful
+    * startup.
     */
   def withDynamicPort() = withPort(0)
 
-  /** @param _serverAddress Address which will be returned as the queue address. Requests to this address
-    *                       should be routed to this server.
+  /** @param _serverAddress
+    *   Address which will be returned as the queue address. Requests to this address should be routed to this server.
     */
   def withServerAddress(_serverAddress: NodeAddress) =
     this.copy(serverAddress = _serverAddress, generateServerAddress = false)
 
-  /** @param _sqsLimits Should "real" SQS limits be used (strict), or should they be relaxed where possible (regarding
-    *                   e.g. message size).
+  /** @param _sqsLimits
+    *   Should "real" SQS limits be used (strict), or should they be relaxed where possible (regarding e.g. message
+    *   size).
     */
   def withSQSLimits(_sqsLimits: Limits) =
     this.copy(sqsLimits = _sqsLimits)
 
-  /** @param region Region which will be included in ARM resource ids.
+  /** @param region
+    *   Region which will be included in ARM resource ids.
     */
   def withAWSRegion(region: String) =
     this.copy(_awsRegion = region)
 
-  /** @param accountId AccountId which will be included in ARM resource ids.
+  /** @param accountId
+    *   AccountId which will be included in ARM resource ids.
     */
   def withAWSAccountId(accountId: String) =
     this.copy(_awsAccountId = accountId)
 
-  /** @param _queueMetadataListener Optional listener of changes in queue metadata
+  /** @param _queueMetadataListener
+    *   Optional listener of changes in queue metadata
     */
   def withQueueMetadataListener(_queueMetadataListener: ActorRef) =
     this.copy(queueMetadataListener = Some(_queueMetadataListener))
@@ -257,7 +262,9 @@ case class TheSQSRestServerBuilder(
   }
 
   private def getOrCreateQueueManagerActor(actorSystem: ActorSystem) = {
-    providedQueueManagerActor.getOrElse(actorSystem.actorOf(Props(new QueueManagerActor(new NowProvider(), sqsLimits, queueMetadataListener))))
+    providedQueueManagerActor.getOrElse(
+      actorSystem.actorOf(Props(new QueueManagerActor(new NowProvider(), sqsLimits, queueMetadataListener)))
+    )
   }
 }
 
