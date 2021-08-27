@@ -11,7 +11,10 @@ import scala.concurrent.{ExecutionContext, Future}
 
 object QueueMetricsOps {
 
-  def getQueueStatistics(queueName: String, queueManagerActor: ActorRef, nowProvider: NowProvider)(implicit timeout: Timeout, ec: ExecutionContext): Future[QueueStatistics] = {
+  def getQueueStatistics(queueName: String, queueManagerActor: ActorRef, nowProvider: NowProvider)(implicit
+      timeout: Timeout,
+      ec: ExecutionContext
+  ): Future[QueueStatistics] = {
     for {
       maybeQueue <- queueManagerActor ? LookupQueue(queueName)
       queue = maybeQueue.getOrElse(throw new IllegalArgumentException(s"Could not find queue with name $queueName"))
@@ -19,17 +22,27 @@ object QueueMetricsOps {
     } yield queueStatistics
   }
 
-  def getQueuesStatistics(queueManagerActor: ActorRef, nowProvider: NowProvider)(implicit timeout: Timeout, ec: ExecutionContext): Future[Map[String, QueueStatistics]] = {
+  def getQueuesStatistics(queueManagerActor: ActorRef, nowProvider: NowProvider)(implicit
+      timeout: Timeout,
+      ec: ExecutionContext
+  ): Future[Map[String, QueueStatistics]] = {
     for {
       queuesNames <- getQueueNames(queueManagerActor)
       statistics <- gatherAllStatistics(queuesNames, queueManagerActor, nowProvider)
     } yield statistics
   }
 
-  def getQueueNames(queueManagerActor: ActorRef)(implicit timeout: Timeout): Future[Seq[String]] = queueManagerActor ? ListQueues()
+  def getQueueNames(queueManagerActor: ActorRef)(implicit timeout: Timeout): Future[Seq[String]] =
+    queueManagerActor ? ListQueues()
 
-  private def gatherAllStatistics(queueNames: Seq[String], queueManagerActor: ActorRef, nowProvider: NowProvider)(implicit timeout: Timeout, ec: ExecutionContext) = {
-    val queuesStatistics = queueNames.map(queueName => getQueueStatistics(queueName, queueManagerActor, nowProvider).map(statistics => (queueName, statistics)))
+  private def gatherAllStatistics(
+      queueNames: Seq[String],
+      queueManagerActor: ActorRef,
+      nowProvider: NowProvider
+  )(implicit timeout: Timeout, ec: ExecutionContext) = {
+    val queuesStatistics = queueNames.map(queueName =>
+      getQueueStatistics(queueName, queueManagerActor, nowProvider).map(statistics => (queueName, statistics))
+    )
     Future.sequence(queuesStatistics).map(_.toMap)
   }
 }

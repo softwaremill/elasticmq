@@ -9,10 +9,13 @@ import org.joda.time.DateTime
 import scala.annotation.tailrec
 
 /** Contains history of used Deduplication IDs associated with incoming messages to FIFO queues
-  * @param messagesByDeduplicationId contains all registered deduplication IDs with associated messages. Used as a fast access storage for lookups if given ID was already registered
-  * @param deduplicationIdsByCreationDate Deduplication IDs stored together with the message creation date.
-  *                                       Incoming IDs should be already sorted by their creation date so it is safe to assume that the list will be ordered from oldest to newest.
-  *                                       Used for fast lookups for messages by their creation date while cleaning outdated messages
+  * @param messagesByDeduplicationId
+  *   contains all registered deduplication IDs with associated messages. Used as a fast access storage for lookups if
+  *   given ID was already registered
+  * @param deduplicationIdsByCreationDate
+  *   Deduplication IDs stored together with the message creation date. Incoming IDs should be already sorted by their
+  *   creation date so it is safe to assume that the list will be ordered from oldest to newest. Used for fast lookups
+  *   for messages by their creation date while cleaning outdated messages
   */
 case class FifoDeduplicationIdsHistory(
     messagesByDeduplicationId: Map[DeduplicationId, InternalMessage],

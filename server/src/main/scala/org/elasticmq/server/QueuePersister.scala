@@ -53,13 +53,13 @@ object QueuePersister {
 }
 
 private case class QueueMetadata(
-  defaultVisibilityTimeout: Long,
-  delay: Long,
-  receiveMessageWait: Long,
-  deadLettersQueue: Option[DeadLettersQueueData],
-  fifo: Boolean,
-  contentBasedDeduplication: Boolean,
-  copyTo: String,
-  moveTo: String,
-  tags: Map[String, String]
+    defaultVisibilityTimeout: Long,
+    delay: Long,
+    receiveMessageWait: Long,
+    deadLettersQueue: Option[DeadLettersQueueData],
+    fifo: Boolean,
+    contentBasedDeduplication: Boolean,
+    copyTo: String,
+    moveTo: String,
+    tags: Map[String, String]
 )

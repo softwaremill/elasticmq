@@ -8,8 +8,8 @@ import scala.collection.mutable
 
 object QueueSorter extends Logging {
 
-  /** Reverse topologically sort CreateQueue collection so that referenced queues are created first
-    * (this includes dead letter, copy-to and move-to queues).
+  /** Reverse topologically sort CreateQueue collection so that referenced queues are created first (this includes dead
+    * letter, copy-to and move-to queues).
     *
     * @param cqs
     * @return

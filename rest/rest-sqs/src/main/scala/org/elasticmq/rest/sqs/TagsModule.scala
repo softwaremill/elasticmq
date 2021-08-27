@@ -17,7 +17,7 @@ trait TagsModule {
           case None => acc
           case Some(an) =>
             parameters.get(tagPrefix + suffix + ".Value") match {
-              case None => collect(suffix + 1, acc + (an -> ""))
+              case None           => collect(suffix + 1, acc + (an -> ""))
               case Some(tagValue) => collect(suffix + 1, acc + (an -> tagValue))
             }
         }

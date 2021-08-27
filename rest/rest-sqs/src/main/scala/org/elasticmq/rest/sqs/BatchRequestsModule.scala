@@ -57,8 +57,9 @@ trait BatchRequestsModule {
 
 object BatchRequestsModule {
 
-  /** In the given list of parameters, lookups all parameters of the form: <code>{prefix}.{discriminator}.key=value</code>,
-    * and for each discriminator builds a map of found key-value mappings.
+  /** In the given list of parameters, lookups all parameters of the form:
+    * <code>{prefix}.{discriminator}.key=value</code>, and for each discriminator builds a map of found key-value
+    * mappings.
     */
   def subParametersMaps(prefix: String, parameters: Map[String, String]): List[Map[String, String]] = {
     val subParameters = collection.mutable.Map[String, Map[String, String]]()
