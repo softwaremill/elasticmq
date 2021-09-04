@@ -24,4 +24,3 @@ package object sqs {
     }
   }
 }
-

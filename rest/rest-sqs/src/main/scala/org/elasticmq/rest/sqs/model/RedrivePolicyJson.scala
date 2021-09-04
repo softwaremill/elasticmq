@@ -15,9 +15,8 @@ import spray.json.{
 
 object RedrivePolicyJson extends DefaultJsonProtocol {
 
-  /** Regexp extracting region, account and queueName from AWS resource id
-    * for example it will match arn:aws:sqs:us-west-2:123456:queue
-    * and extract us-west-2, 123456 and queue in groups
+  /** Regexp extracting region, account and queueName from AWS resource id for example it will match
+    * arn:aws:sqs:us-west-2:123456:queue and extract us-west-2, 123456 and queue in groups
     */
   private val Arn = "(?:.+:(.+)?:(.+)?:)?(.+)".r
 

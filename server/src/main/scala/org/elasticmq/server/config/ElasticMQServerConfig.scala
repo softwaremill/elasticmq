@@ -66,23 +66,27 @@ class ElasticMQServerConfig(config: Config) extends Logging {
     val baseQueuesConfig: mutable.Map[String, ConfigValue] = config
       .getObject("queues")
       .asScala
-    val baseQueues = createQueuesFromConfig(baseQueuesConfig).filterNot(queue => persistedQueuesName.contains(queue.name))
+    val baseQueues =
+      createQueuesFromConfig(baseQueuesConfig).filterNot(queue => persistedQueuesName.contains(queue.name))
     persistedQueues ++ baseQueues
   }
 
   private val persistedQueuesConfig: Option[Config] =
     if (queuesStorageEnabled)
-      Try(ConfigFactory
-        .parseFile(new File(queuesStoragePath)))
-        .toOption
+      Try(
+        ConfigFactory
+          .parseFile(new File(queuesStoragePath))
+      ).toOption
     else None
 
   def readPersistedQueues(persistedQueuesConfig: Option[Config] = persistedQueuesConfig): List[CreateQueue] =
     persistedQueuesConfig match {
       case Some(file) =>
-        Try(file
-          .getObject("queues")
-          .asScala)
+        Try(
+          file
+            .getObject("queues")
+            .asScala
+        )
           .map(createQueuesFromConfig)
           .getOrElse(Nil)
       case None => Nil

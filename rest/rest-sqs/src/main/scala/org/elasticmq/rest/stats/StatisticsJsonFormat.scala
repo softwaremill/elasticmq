@@ -28,7 +28,7 @@ trait StatisticsJsonFormat extends SprayJsonSupport with DefaultJsonProtocol {
     )
 
     override def read(json: JsValue): QueuesResponse = json.asJsObject.getFields("name", "statistics") match {
-      case Seq(JsString(name), statistics@JsObject(_)) => QueuesResponse(name, queueStatisticsFormat.read(statistics))
+      case Seq(JsString(name), statistics @ JsObject(_)) => QueuesResponse(name, queueStatisticsFormat.read(statistics))
     }
   }
   implicit object queueFormat extends RootJsonFormat[QueueResponse] {
@@ -42,10 +42,14 @@ trait StatisticsJsonFormat extends SprayJsonSupport with DefaultJsonProtocol {
     )
 
     override def read(json: JsValue): QueueResponse = json.asJsObject.getFields("name", "attributes") match {
-      case Seq(JsString(name), JsObject(attributes)) => QueueResponse(name, attributes.map {
-        case (name, JsString(value)) => name -> value
-        case _ => deserializationError(s"Could not deserialize $json to QueueResponse")
-      })
+      case Seq(JsString(name), JsObject(attributes)) =>
+        QueueResponse(
+          name,
+          attributes.map {
+            case (name, JsString(value)) => name -> value
+            case _                       => deserializationError(s"Could not deserialize $json to QueueResponse")
+          }
+        )
     }
   }
 }
