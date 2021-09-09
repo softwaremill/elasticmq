@@ -14,9 +14,9 @@ trait QueueActorStorage {
   def moveMessagesToActorRef: Option[ActorRef]
 
   def nextSequenceNumber(): BigInt = {
-    val x = sequenceNumber
+    val next = sequenceNumber
     sequenceNumber = sequenceNumber + 1
-    x
+    next
   }
 
   var queueData: QueueData = initialQueueData

@@ -84,11 +84,11 @@ case class InternalMessage(
 
 object InternalMessage {
 
-  def from(newMessageData: NewMessageData, queueData: QueueData, n: BigInt): InternalMessage = {
+  def from(newMessageData: NewMessageData, queueData: QueueData, sequenceNumber: BigInt): InternalMessage = {
     val attributes = newMessageData
       .messageAttributes
       .updatedWith("SequenceNumber")(
-      _ => if (queueData.isFifo) Some(StringMessageAttribute(n.toString())) else None
+      _ => if (queueData.isFifo) Some(StringMessageAttribute(sequenceNumber.toString())) else None
     )
 
     val now = System.currentTimeMillis()
