@@ -83,13 +83,8 @@ case class InternalMessage(
 }
 
 object InternalMessage {
-
   def from(newMessageData: NewMessageData, queueData: QueueData, sequenceNumber: BigInt): InternalMessage = {
-    val attributes = newMessageData
-      .messageAttributes
-      .updatedWith("SequenceNumber")(
-      _ => if (queueData.isFifo) Some(StringMessageAttribute(sequenceNumber.toString())) else None
-    )
+    val attributes = updateSequenceNumberAttribute(newMessageData, queueData, sequenceNumber)
 
     val now = System.currentTimeMillis()
     new InternalMessage(
@@ -110,4 +105,16 @@ object InternalMessage {
   }
 
   private def generateId() = MessageId(UUID.randomUUID().toString)
+
+  private def updateSequenceNumberAttribute(
+      newMessageData: NewMessageData,
+      queueData: QueueData,
+      sequenceNumber: BigInt
+  ) = {
+    if (!queueData.isFifo) {
+      (newMessageData.messageAttributes - "SequenceNumber")
+    } else {
+      newMessageData.messageAttributes.updated("SequenceNumber", StringMessageAttribute(sequenceNumber.toString()))
+    }
+  }
 }
