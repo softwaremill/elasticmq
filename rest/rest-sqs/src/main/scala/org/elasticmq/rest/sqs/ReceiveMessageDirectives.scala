@@ -24,10 +24,11 @@ trait ReceiveMessageDirectives {
     val MessageDeduplicationIdAttribute = "MessageDeduplicationId"
     val MessageGroupIdAttribute = "MessageGroupId"
     val AWSTraceHeaderAttribute = "AWSTraceHeader"
+    val SequenceNumber = "SequenceNumber"
 
     val AllAttributeNames = SentTimestampAttribute :: ApproximateReceiveCountAttribute ::
       ApproximateFirstReceiveTimestampAttribute :: SenderIdAttribute :: MessageDeduplicationIdAttribute ::
-      MessageGroupIdAttribute :: AWSTraceHeaderAttribute :: Nil
+      MessageGroupIdAttribute :: AWSTraceHeaderAttribute :: SequenceNumber :: Nil
   }
 
   def receiveMessage(p: AnyParams) = {

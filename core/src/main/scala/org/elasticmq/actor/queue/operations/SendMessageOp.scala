@@ -37,7 +37,7 @@ trait SendMessageOp extends Logging {
   }
 
   private def addMessage(message: NewMessageData) = {
-    val internalMessage = InternalMessage.from(message, queueData)
+    val internalMessage = InternalMessage.from(message, queueData, nextSequenceNumber())
     messageQueue += internalMessage
     fifoMessagesHistory = fifoMessagesHistory.addNew(internalMessage)
     logger.debug(s"${queueData.name}: Sent message with id ${internalMessage.id}")

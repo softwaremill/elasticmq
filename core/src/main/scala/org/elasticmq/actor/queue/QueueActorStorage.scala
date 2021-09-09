@@ -13,8 +13,15 @@ trait QueueActorStorage {
   def copyMessagesToActorRef: Option[ActorRef]
   def moveMessagesToActorRef: Option[ActorRef]
 
+  def nextSequenceNumber(): BigInt = {
+    val x = sequenceNumber
+    sequenceNumber = sequenceNumber + 1
+    x
+  }
+
   var queueData: QueueData = initialQueueData
   var messageQueue: MessageQueue = MessageQueue(queueData.isFifo)
   var fifoMessagesHistory: FifoDeduplicationIdsHistory = FifoDeduplicationIdsHistory.newHistory()
   val receiveRequestAttemptCache = new ReceiveRequestAttemptCache
+  var sequenceNumber = BigInt(0)
 }
