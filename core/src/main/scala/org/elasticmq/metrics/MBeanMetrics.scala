@@ -29,18 +29,20 @@ class QueuesMetrics(queueManagerActor: ActorRef) extends QueuesMetricsMBean {
   }
 
   override def getNumberOfMessagesInQueue(queueName: String): CompositeData = {
-    val queueStatistics = Await.result(QueueMetricsOps.getQueueStatistics(queueName, queueManagerActor, new NowProvider), timeout.duration)
+    val queueStatistics =
+      Await.result(QueueMetricsOps.getQueueStatistics(queueName, queueManagerActor, new NowProvider), timeout.duration)
 
     createCompositeDataForQueueStatistics(queueName, queueStatistics)
   }
 
   override def getNumberOfMessagesForAllQueues: TabularData = {
-    val queuesStatistics = Await.result(QueueMetricsOps.getQueuesStatistics(queueManagerActor, new NowProvider), timeout.duration)
+    val queuesStatistics =
+      Await.result(QueueMetricsOps.getQueuesStatistics(queueManagerActor, new NowProvider), timeout.duration)
     val support = new TabularDataSupport(
       queueStatisticsTabularType
     )
-    queuesStatistics.foreach {
-      case (queueName, statistics) => support.put(createCompositeDataForQueueStatistics(queueName, statistics))
+    queuesStatistics.foreach { case (queueName, statistics) =>
+      support.put(createCompositeDataForQueueStatistics(queueName, statistics))
     }
     support
   }
@@ -50,7 +52,7 @@ class QueuesMetrics(queueManagerActor: ActorRef) extends QueuesMetricsMBean {
       queueName,
       Long.box(statistics.approximateNumberOfVisibleMessages),
       Long.box(statistics.approximateNumberOfInvisibleMessages),
-      Long.box(statistics.approximateNumberOfMessagesDelayed),
+      Long.box(statistics.approximateNumberOfMessagesDelayed)
     )
 
     new CompositeDataSupport(queueStatisticsCompositeType, queueDataNames, queueDataValues)

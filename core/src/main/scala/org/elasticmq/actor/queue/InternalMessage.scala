@@ -41,7 +41,8 @@ case class InternalMessage(
 
   /** Keep track of delivering this message to a client
     *
-    * @param nextDeliveryMillis    When this message should become available for its next delivery
+    * @param nextDeliveryMillis
+    *   When this message should become available for its next delivery
     */
   def trackDelivery(nextDeliveryMillis: MillisNextDelivery)(implicit nowProvider: NowProvider): Unit = {
     deliveryReceipts += DeliveryReceipt.generate(MessageId(id)).receipt
@@ -83,8 +84,8 @@ case class InternalMessage(
 }
 
 object InternalMessage {
-
   def from(newMessageData: NewMessageData, queueData: QueueData): InternalMessage = {
+
     val now = System.currentTimeMillis()
     new InternalMessage(
       newMessageData.id.getOrElse(generateId()).id,

@@ -18,7 +18,9 @@ class DeduplicationTimerTest
     with DataCreationHelpers
     with EitherValues {
 
-  test("FIFO messages should be deleted from history if they were created more than 5 minutes ago and it should be possible to add new messages to queue with same deduplication ID") {
+  test(
+    "FIFO messages should be deleted from history if they were created more than 5 minutes ago and it should be possible to add new messages to queue with same deduplication ID"
+  ) {
     val (fifoQueue, firstLookup) = Await.result(
       for {
         maybeFifoQueue <- queueManagerActor ? CreateQueue(
@@ -46,7 +48,8 @@ class DeduplicationTimerTest
     )
 
     firstLookup.map(_.id) shouldBe List(MessageId("id1"), MessageId("id2"))
-    secondLookupAfterFiveMinutes.map(_.id) shouldBe List(MessageId("id1"), MessageId("id2"), MessageId("id3"), MessageId("id4"))
+    secondLookupAfterFiveMinutes
+      .map(_.id) shouldBe List(MessageId("id1"), MessageId("id2"), MessageId("id3"), MessageId("id4"))
 
   }
 

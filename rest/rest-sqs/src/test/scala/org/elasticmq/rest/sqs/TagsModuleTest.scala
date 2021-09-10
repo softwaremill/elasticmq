@@ -13,9 +13,7 @@ class TagsModuleTest extends AnyFlatSpec with AttributesModule with Matchers {
   }
 
   "Two tags" should "result in two-entry map with correct relation" in {
-    val parameters = Map(
-      "Tag.1.Key" -> "Test-1", "Tag.1.Value" -> "1",
-      "Tag.2.Key" -> "Test-2", "Tag.2.Value" -> "2")
+    val parameters = Map("Tag.1.Key" -> "Test-1", "Tag.1.Value" -> "1", "Tag.2.Key" -> "Test-2", "Tag.2.Value" -> "2")
     val tagsModule = new TagsModule {}
     val tags = tagsModule.tagNameAndValuesReader.read(parameters)
     tags shouldEqual Map("Test-1" -> "1", "Test-2" -> "2")

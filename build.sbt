@@ -19,7 +19,9 @@ lazy val dockerBuildWithBuildx = taskKey[Unit]("Build docker images using buildx
 
 val buildSettings = commonSmlBuildSettings ++ ossPublishSettings ++ Seq(
   organization := "org.elasticmq",
-  scmInfo := Some(ScmInfo(url("https://github.com/softwaremill/elasticmq"), "scm:git@github.com:softwaremill/elasticmq.git")),
+  scmInfo := Some(
+    ScmInfo(url("https://github.com/softwaremill/elasticmq"), "scm:git@github.com:softwaremill/elasticmq.git")
+  ),
   scalaVersion := v2_13,
   crossScalaVersions := Seq(v2_13, v2_12),
   libraryDependencies += "org.scala-lang.modules" %% "scala-xml" % "1.3.0",
@@ -83,7 +85,7 @@ val config = "com.typesafe" % "config" % "1.4.1"
 val pureConfig = "com.github.pureconfig" %% "pureconfig" % "0.16.0"
 
 val scalalogging = "com.typesafe.scala-logging" %% "scala-logging" % "3.9.4"
-val logback = "ch.qos.logback" % "logback-classic" % "1.2.5"
+val logback = "ch.qos.logback" % "logback-classic" % "1.2.6"
 val jclOverSlf4j = "org.slf4j" % "jcl-over-slf4j" % "1.7.32" // needed form amazon java sdk
 
 val scalatest = "org.scalatest" %% "scalatest" % "3.2.9"
@@ -91,8 +93,8 @@ val awaitility = "org.awaitility" % "awaitility-scala" % "4.1.0"
 
 val amazonJavaSdkSqs = "com.amazonaws" % "aws-java-sdk-sqs" % "1.11.1026" exclude ("commons-logging", "commons-logging")
 
-val akkaVersion = "2.6.15"
-val akkaHttpVersion = "10.2.5"
+val akkaVersion = "2.6.16"
+val akkaHttpVersion = "10.2.6"
 val akka2Actor = "com.typesafe.akka" %% "akka-actor" % akkaVersion
 val akka2Slf4j = "com.typesafe.akka" %% "akka-slf4j" % akkaVersion
 val akka2Streams = "com.typesafe.akka" %% "akka-stream" % akkaVersion
@@ -128,9 +130,12 @@ lazy val commonTest: Project = (project in file("common-test"))
 lazy val core: Project = (project in file("core"))
   .settings(buildSettings)
   .settings(
-    Seq(name := "elasticmq-core",
-        libraryDependencies ++= Seq(jodaTime, jodaConvert, akka2Actor, akka2Testkit) ++ common,
-        coverageMinimum := 94))
+    Seq(
+      name := "elasticmq-core",
+      libraryDependencies ++= Seq(jodaTime, jodaConvert, akka2Actor, akka2Testkit) ++ common,
+      coverageMinimum := 94
+    )
+  )
   .dependsOn(commonTest % "test")
 
 lazy val rest: Project = (project in file("rest"))
@@ -140,18 +145,22 @@ lazy val rest: Project = (project in file("rest"))
 
 lazy val restSqs: Project = (project in file("rest/rest-sqs"))
   .settings(buildSettings)
-  .settings(Seq(
-    name := "elasticmq-rest-sqs",
-    libraryDependencies ++= Seq(akka2Actor,
-                                akka2Slf4j,
-                                akka2Http,
-                                akka2Streams,
-                                sprayJson,
-                                akkaHttpSprayJson,
-                                akka2Testkit,
-                                akka2HttpTestkit,
-                                scalaAsync) ++ common
-  ))
+  .settings(
+    Seq(
+      name := "elasticmq-rest-sqs",
+      libraryDependencies ++= Seq(
+        akka2Actor,
+        akka2Slf4j,
+        akka2Http,
+        akka2Streams,
+        sprayJson,
+        akkaHttpSprayJson,
+        akka2Testkit,
+        akka2HttpTestkit,
+        scalaAsync
+      ) ++ common
+    )
+  )
   .dependsOn(core % "compile->compile;test->test", commonTest % "test")
 
 lazy val restSqsTestingAmazonJavaSdk: Project =
@@ -172,41 +181,48 @@ lazy val server: Project = (project in file("server"))
   .settings(dockerBuildxSettings)
   .settings(generateVersionFileSettings)
   .settings(uiSettings)
-  .settings(Seq(
-    name := "elasticmq-server",
-    libraryDependencies ++= Seq(logback, config, pureConfig),
-    unmanagedResourceDirectories in Compile += { baseDirectory.value / ".." / "ui" / "build" },
-    assembly := assembly.dependsOn(yarnTask.toTask(" build")).value,
-    mainClass in assembly := Some("org.elasticmq.server.Main"),
-    coverageMinimum := 52,
-    // s3 upload
-    s3Upload := {
-      import com.amazonaws.auth.{AWSStaticCredentialsProvider, BasicAWSCredentials, DefaultAWSCredentialsProviderChain}
-      import com.amazonaws.services.s3.AmazonS3ClientBuilder
-      import com.amazonaws.services.s3.model.{CannedAccessControlList, PutObjectRequest}
+  .settings(
+    Seq(
+      name := "elasticmq-server",
+      libraryDependencies ++= Seq(logback, config, pureConfig),
+      unmanagedResourceDirectories in Compile += { baseDirectory.value / ".." / "ui" / "build" },
+      assembly := assembly.dependsOn(yarnTask.toTask(" build")).value,
+      mainClass in assembly := Some("org.elasticmq.server.Main"),
+      coverageMinimum := 52,
+      // s3 upload
+      s3Upload := {
+        import com.amazonaws.auth.{
+          AWSStaticCredentialsProvider,
+          BasicAWSCredentials,
+          DefaultAWSCredentialsProviderChain
+        }
+        import com.amazonaws.services.s3.AmazonS3ClientBuilder
+        import com.amazonaws.services.s3.model.{CannedAccessControlList, PutObjectRequest}
 
-      val bucketName = "softwaremill-public"
-      val creds = Credentials.forHost(credentials.value, bucketName + ".s3.amazonaws.com")
+        val bucketName = "softwaremill-public"
+        val creds = Credentials.forHost(credentials.value, bucketName + ".s3.amazonaws.com")
 
-      val awsCreds = creds match {
-        case Some(cred) => new AWSStaticCredentialsProvider(new BasicAWSCredentials(cred.userName, cred.passwd))
-        case None       => new DefaultAWSCredentialsProviderChain
-      }
+        val awsCreds = creds match {
+          case Some(cred) => new AWSStaticCredentialsProvider(new BasicAWSCredentials(cred.userName, cred.passwd))
+          case None       => new DefaultAWSCredentialsProviderChain
+        }
 
-      val client = AmazonS3ClientBuilder.standard().withCredentials(awsCreds).withRegion("eu-west-1").build()
+        val client = AmazonS3ClientBuilder.standard().withCredentials(awsCreds).withRegion("eu-west-1").build()
 
-      val log = streams.value.log
-      val v = version.value
+        val log = streams.value.log
+        val v = version.value
 
-      val source = (assemblyOutputPath in assembly).value
-      val targetObjectName = s"elasticmq-server-$v.jar"
+        val source = (assemblyOutputPath in assembly).value
+        val targetObjectName = s"elasticmq-server-$v.jar"
 
-      log.info("Uploading " + source.getAbsolutePath + " as " + targetObjectName)
+        log.info("Uploading " + source.getAbsolutePath + " as " + targetObjectName)
 
-      client.putObject(new PutObjectRequest(bucketName, targetObjectName, source)
-        .withCannedAcl(CannedAccessControlList.PublicRead))
-    },
-    /*
+        client.putObject(
+          new PutObjectRequest(bucketName, targetObjectName, source)
+            .withCannedAcl(CannedAccessControlList.PublicRead)
+        )
+      },
+      /*
     Format:
     realm=Amazon S3
     host=softwaremill-public.s3.amazonaws.com
@@ -215,7 +231,7 @@ lazy val server: Project = (project in file("server"))
        */
       credentials += Credentials(Path.userHome / ".s3_elasticmq_credentials"),
       // docker
-      dockerExposedPorts := Seq(9324,9325),
+      dockerExposedPorts := Seq(9324, 9325),
       dockerBaseImage := "openjdk:11-jdk-stretch",
       Docker / packageName := "elasticmq",
       dockerUsername := Some("softwaremill"),
@@ -245,70 +261,76 @@ lazy val nativeServer: Project = (project in file("native-server"))
   .settings(buildSettings)
   .settings(uiSettings)
   .settings(dockerBuildxSettings)
-  .settings(Seq(
-    name := "elasticmq-native-server",
-    libraryDependencies ++= Seq(
-      "org.graalvm.nativeimage" % "svm" % graalVmVersion % "compile-internal"
-    ),
-    //configures sbt-native-packager to build app using dockerized graalvm
-    (GraalVMNativeImage / containerBuildImage) := GraalVMNativeImagePlugin.generateContainerBuildImage(s"ghcr.io/graalvm/graalvm-ce:java11-$graalVmVersion").value,
-    graalVMNativeImageOptions ++= Seq(
-      "--static",
-      "-H:IncludeResources=.*conf",
-      "-H:IncludeResources=version",
-      "-H:IncludeResources=.*\\.properties",
-      "-H:IncludeResources='org/joda/time/tz/data/.*'",
-      "-H:+ReportExceptionStackTraces",
-      "-H:-ThrowUnsafeOffsetErrors",
-      "-H:+PrintClassInitialization",
-      "--enable-http",
-      "--enable-https",
-      "--enable-url-protocols=https,http",
-      "--initialize-at-build-time",
-      "--report-unsupported-elements-at-runtime",
-      "--allow-incomplete-classpath",
-      "--no-fallback",
-      "--verbose"
-    ),
-    Compile / mainClass := Some("org.elasticmq.server.Main"),
-    //configures sbt-native-packager to build docker image with generated executable
-    dockerBaseImage := "alpine:3.11",
-    Docker / mappings := Seq(
-      (baseDirectory.value / ".." / "server" / "docker" / "elasticmq.conf") -> "/opt/elasticmq.conf",
-      ((GraalVMNativeImage / target).value / "elasticmq-native-server") -> "/opt/docker/bin/elasticmq-native-server"
-    ) ++ sbt.Path.directory(baseDirectory.value / ".." / "ui" / "build"),
-    dockerEntrypoint := Seq("/sbin/tini", "--", "/opt/docker/bin/elasticmq-native-server", "-Dconfig.file=/opt/elasticmq.conf"),
-    dockerUpdateLatest := true,
-    dockerExposedPorts := Seq(9324,9325),
-    dockerCommands := {
-      val commands = dockerCommands.value
-      val index = commands.indexWhere {
-        case Cmd("FROM", args@_*) =>
-          args.head == "alpine:3.11" && args.last == "mainstage"
-        case _ => false
-      }
-      val (front, back) = commands.splitAt(index + 1)
-      // sbt-native-packager by default copies stage0:/opt/docker to the target container; we need to additionally
-      // copy the configuration file
-      val copyConfig = Cmd("COPY",
-        "--from=stage0",
-        "/opt/elasticmq.conf",
-        "/opt")
-      val copyUI = Cmd(
-        "COPY",
-        "/build/",
-        "/opt/docker"
-      )
-      val tiniCommand = ExecCmd("RUN", "apk", "add", "--no-cache", "tini")
-      front ++ Seq(tiniCommand, copyConfig, copyUI) ++ back
-    },
-    Docker / packageName := "elasticmq-native",
-    dockerUsername := Some("softwaremill"),
-    GraalVMNativeImage / packageBin := (GraalVMNativeImage / packageBin)
-      .dependsOn(yarnTask.toTask(" build"))
-      .value,
-    dockerUpdateLatest := true,
-  ))
+  .settings(
+    Seq(
+      name := "elasticmq-native-server",
+      libraryDependencies ++= Seq(
+        "org.graalvm.nativeimage" % "svm" % graalVmVersion % "compile-internal"
+      ),
+      //configures sbt-native-packager to build app using dockerized graalvm
+      (GraalVMNativeImage / containerBuildImage) := GraalVMNativeImagePlugin
+        .generateContainerBuildImage(s"ghcr.io/graalvm/graalvm-ce:java11-$graalVmVersion")
+        .value,
+      graalVMNativeImageOptions ++= Seq(
+        "--static",
+        "-H:IncludeResources=.*conf",
+        "-H:IncludeResources=version",
+        "-H:IncludeResources=.*\\.properties",
+        "-H:IncludeResources='org/joda/time/tz/data/.*'",
+        "-H:+ReportExceptionStackTraces",
+        "-H:-ThrowUnsafeOffsetErrors",
+        "-H:+PrintClassInitialization",
+        "--enable-http",
+        "--enable-https",
+        "--enable-url-protocols=https,http",
+        "--initialize-at-build-time",
+        "--report-unsupported-elements-at-runtime",
+        "--allow-incomplete-classpath",
+        "--no-fallback",
+        "--verbose"
+      ),
+      Compile / mainClass := Some("org.elasticmq.server.Main"),
+      //configures sbt-native-packager to build docker image with generated executable
+      dockerBaseImage := "alpine:3.11",
+      Docker / mappings := Seq(
+        (baseDirectory.value / ".." / "server" / "docker" / "elasticmq.conf") -> "/opt/elasticmq.conf",
+        ((GraalVMNativeImage / target).value / "elasticmq-native-server") -> "/opt/docker/bin/elasticmq-native-server"
+      ) ++ sbt.Path.directory(baseDirectory.value / ".." / "ui" / "build"),
+      dockerEntrypoint := Seq(
+        "/sbin/tini",
+        "--",
+        "/opt/docker/bin/elasticmq-native-server",
+        "-Dconfig.file=/opt/elasticmq.conf"
+      ),
+      dockerUpdateLatest := true,
+      dockerExposedPorts := Seq(9324, 9325),
+      dockerCommands := {
+        val commands = dockerCommands.value
+        val index = commands.indexWhere {
+          case Cmd("FROM", args @ _*) =>
+            args.head == "alpine:3.11" && args.last == "mainstage"
+          case _ => false
+        }
+        val (front, back) = commands.splitAt(index + 1)
+        // sbt-native-packager by default copies stage0:/opt/docker to the target container; we need to additionally
+        // copy the configuration file
+        val copyConfig = Cmd("COPY", "--from=stage0", "/opt/elasticmq.conf", "/opt")
+        val copyUI = Cmd(
+          "COPY",
+          "/build/",
+          "/opt/docker"
+        )
+        val tiniCommand = ExecCmd("RUN", "apk", "add", "--no-cache", "tini")
+        front ++ Seq(tiniCommand, copyConfig, copyUI) ++ back
+      },
+      Docker / packageName := "elasticmq-native",
+      dockerUsername := Some("softwaremill"),
+      GraalVMNativeImage / packageBin := (GraalVMNativeImage / packageBin)
+        .dependsOn(yarnTask.toTask(" build"))
+        .value,
+      dockerUpdateLatest := true
+    )
+  )
   .dependsOn(server)
 
 lazy val performanceTests: Project = (project in file("performance-tests"))
@@ -318,7 +340,8 @@ lazy val performanceTests: Project = (project in file("performance-tests"))
       name := "elasticmq-performance-tests",
       libraryDependencies ++= Seq(amazonJavaSdkSqs, jclOverSlf4j, logback) ++ common,
       publishArtifact := false
-    ))
+    )
+  )
   .dependsOn(core, restSqs, commonTest % "test")
 
 val generateVersionFileSettings = Seq(
@@ -337,15 +360,20 @@ lazy val dockerBuildxSettings = Seq(
   },
   dockerBuildWithBuildx := {
     streams.value.log("Building and pushing image with Buildx")
-    dockerAliases.value.foreach(
-      alias => Process("docker buildx build --platform=linux/arm64,linux/amd64 --push -t " + alias + " .", baseDirectory.value / "target" / "docker"/ "stage").!
+    dockerAliases.value.foreach(alias =>
+      Process(
+        "docker buildx build --platform=linux/arm64,linux/amd64 --push -t " + alias + " .",
+        baseDirectory.value / "target" / "docker" / "stage"
+      ).!
     )
   },
-  Docker / publish := Def.sequential(
-    Docker / publishLocal,
-    ensureDockerBuildx,
-    dockerBuildWithBuildx
-  ).value
+  Docker / publish := Def
+    .sequential(
+      Docker / publishLocal,
+      ensureDockerBuildx,
+      dockerBuildWithBuildx
+    )
+    .value
 )
 
 lazy val uiSettings = Seq(

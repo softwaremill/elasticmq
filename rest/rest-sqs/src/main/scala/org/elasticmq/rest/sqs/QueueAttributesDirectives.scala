@@ -13,7 +13,6 @@ trait QueueAttributesDirectives {
   def getQueueAttributes(p: AnyParams): Route = {
     p.action(GetQueueAttributes) {
       queueActorAndDataFromRequest(p) { (queueActor, queueData) =>
-
         val attributesFuture = getQueueAttributes(p, queueActor, queueData)
 
         def responseXml(attributes: List[(String, String)]) = {

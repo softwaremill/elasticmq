@@ -307,18 +307,17 @@ class AmazonJavaSdkTestSuite extends SqsClientServerCommunication with Matchers 
     val queueUrl = client.createQueue(new CreateQueueRequest("testQueue1")).getQueueUrl
 
     // When
-    val sendMessage = messageAttributes.foldLeft(new SendMessageRequest(queueUrl, content)) {
-      case (message, (k, v)) =>
-        val attr = new MessageAttributeValue()
-        attr.setDataType(v.getDataType())
+    val sendMessage = messageAttributes.foldLeft(new SendMessageRequest(queueUrl, content)) { case (message, (k, v)) =>
+      val attr = new MessageAttributeValue()
+      attr.setDataType(v.getDataType())
 
-        v match {
-          case s: StringMessageAttribute => attr.setStringValue(s.stringValue)
-          case n: NumberMessageAttribute => attr.setStringValue(n.stringValue)
-          case b: BinaryMessageAttribute => attr.setBinaryValue(ByteBuffer.wrap(b.binaryValue))
-        }
+      v match {
+        case s: StringMessageAttribute => attr.setStringValue(s.stringValue)
+        case n: NumberMessageAttribute => attr.setStringValue(n.stringValue)
+        case b: BinaryMessageAttribute => attr.setBinaryValue(ByteBuffer.wrap(b.binaryValue))
+      }
 
-        message.addMessageAttributesEntry(k, attr)
+      message.addMessageAttributesEntry(k, attr)
     }
 
     client.sendMessage(sendMessage)
@@ -340,28 +339,26 @@ class AmazonJavaSdkTestSuite extends SqsClientServerCommunication with Matchers 
     val filteredMessageAttributes = filterBasedOnRequestedAttributes(requestedAttributes, messageAttributes)
 
     message.getMessageAttributes should be(filteredSendMessageAttr) // Checks they match
-    message.getMessageAttributes.asScala.map {
-      case (k, attr) =>
-        (
-          k,
-          if (attr.getDataType.startsWith("String") && attr.getStringValue != null) {
-            StringMessageAttribute(attr.getStringValue).stringValue
-          } else if (attr.getDataType.startsWith("Number") && attr.getStringValue != null) {
-            NumberMessageAttribute(attr.getStringValue).stringValue
-          } else {
-            BinaryMessageAttribute.fromByteBuffer(attr.getBinaryValue).asBase64
-          }
-        )
-    } should be(filteredMessageAttributes.map {
-      case (k, attr) =>
-        (
-          k,
-          attr match {
-            case s: StringMessageAttribute => s.stringValue
-            case n: NumberMessageAttribute => n.stringValue
-            case b: BinaryMessageAttribute => b.asBase64
-          }
-        )
+    message.getMessageAttributes.asScala.map { case (k, attr) =>
+      (
+        k,
+        if (attr.getDataType.startsWith("String") && attr.getStringValue != null) {
+          StringMessageAttribute(attr.getStringValue).stringValue
+        } else if (attr.getDataType.startsWith("Number") && attr.getStringValue != null) {
+          NumberMessageAttribute(attr.getStringValue).stringValue
+        } else {
+          BinaryMessageAttribute.fromByteBuffer(attr.getBinaryValue).asBase64
+        }
+      )
+    } should be(filteredMessageAttributes.map { case (k, attr) =>
+      (
+        k,
+        attr match {
+          case s: StringMessageAttribute => s.stringValue
+          case n: NumberMessageAttribute => n.stringValue
+          case b: BinaryMessageAttribute => b.asBase64
+        }
+      )
     }) // Checks they match map
   }
 
@@ -832,6 +829,64 @@ class AmazonJavaSdkTestSuite extends SqsClientServerCommunication with Matchers 
     attributes1.get("ApproximateNumberOfMessages") should be("2")
     attributes2.get("ApproximateNumberOfMessages") should be("0")
     m2 should be(Some("Body 3"))
+  }
+
+  test("Message does not have SequenceNumber if it is not connected with FIFO queue") {
+    val queueUrl = client.createQueue(new CreateQueueRequest("testQueue1")).getQueueUrl
+
+    val sendingResult = client.sendMessage(new SendMessageRequest(queueUrl, "Body 1"))
+    val message = receiveSingleMessageObject(queueUrl).orNull
+
+    Option(sendingResult.getSequenceNumber).isEmpty should be(true)
+    message.getMessageAttributes.asScala.contains("SequenceNumber") should be(false)
+  }
+
+  test("Message should have SequenceNumber in result when sent to FIFO queue") {
+    val groupId = "1"
+    val queueUrl = createFifoQueue()
+
+    val sendingResult = client.sendMessage(new SendMessageRequest(queueUrl, "Body 1")
+      .withMessageGroupId(groupId))
+
+    Option(sendingResult.getSequenceNumber).isDefined should be(true)
+  }
+
+  test("FIFO queue - older message should have SequenceNumber which is less than that in newer message") {
+    val groupId = "1"
+    val queueUrl = createFifoQueue()
+
+    val firstSeqNum = client.sendMessage(new SendMessageRequest(queueUrl, "Body 1").withMessageGroupId(groupId)).getSequenceNumber
+    val secondSeqNum = client.sendMessage(new SendMessageRequest(queueUrl, "Body 2").withMessageGroupId(groupId)).getSequenceNumber
+
+    firstSeqNum.toLong should be <  secondSeqNum.toLong
+  }
+
+  test("FIFO queue - SequenceNumber continues to increase after deleting message from queue") {
+    val groupId1 = "1"
+    val queueUrl = createFifoQueue(attributes = Map(visibilityTimeoutAttribute -> "0"))
+
+    val seqNumFromDeleted = client.sendMessage(new SendMessageRequest(queueUrl, "Body 1").withMessageGroupId(groupId1)).getSequenceNumber
+
+    val willBeDeleted = client.receiveMessage(new ReceiveMessageRequest(queueUrl).withMessageAttributeNames("All")).getMessages.get(0)
+    client.deleteMessage(new DeleteMessageRequest(queueUrl, willBeDeleted.getReceiptHandle))
+
+    val secondSeqNum = client.sendMessage(new SendMessageRequest(queueUrl, "Body 2").withMessageGroupId(groupId1)).getSequenceNumber
+
+    seqNumFromDeleted.toLong should be < secondSeqNum.toLong
+  }
+
+  test("FIFO queue - SequenceNumber is not incremented between receives") {
+    val groupId1 = "1"
+    val queueUrl = createFifoQueue(attributes = Map(visibilityTimeoutAttribute -> "0"))
+    val res = client.sendMessage(new SendMessageRequest(queueUrl, "Body 1").withMessageGroupId(groupId1))
+
+    val seqNum1 = client.receiveMessage(new ReceiveMessageRequest(queueUrl).withMessageAttributeNames("All"))
+      .getMessages.get(0).getMessageAttributes.asScala("SequenceNumber").getStringValue
+    val seqNum2 = client.receiveMessage(new ReceiveMessageRequest(queueUrl).withMessageAttributeNames("All"))
+      .getMessages.get(0).getMessageAttributes.asScala("SequenceNumber").getStringValue
+
+    res.getSequenceNumber should equal(seqNum1)
+    res.getSequenceNumber should equal(seqNum2)
   }
 
   def queueVisibilityTimeout(queueUrl: String): Long = getQueueLongAttribute(queueUrl, visibilityTimeoutAttribute)

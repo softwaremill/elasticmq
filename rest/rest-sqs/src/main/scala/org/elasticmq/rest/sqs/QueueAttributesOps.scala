@@ -69,12 +69,18 @@ trait QueueAttributesOps extends AttributesModule {
         QueueArnAttribute :: Nil) ++ FifoAttributeNames.AllFifoAttributeNames
   }
 
-  def getAllQueueAttributes(queueActor: ActorRef, queueData: QueueData)(implicit timeout: Timeout, executionContext: ExecutionContext): Future[List[(String, String)]] = {
+  def getAllQueueAttributes(queueActor: ActorRef, queueData: QueueData)(implicit
+      timeout: Timeout,
+      executionContext: ExecutionContext
+  ): Future[List[(String, String)]] = {
     val attributesParams = attributeNamesReader.prepareParametersForRead(QueueReadableAttributeNames.AllAttributeNames)
     getQueueAttributes(attributesParams, queueActor, queueData)
   }
 
-  def getQueueAttributes(p: AnyParams, queueActor: ActorRef, queueData: QueueData)(implicit timeout: Timeout, executionContext: ExecutionContext): Future[List[(String, String)]] = {
+  def getQueueAttributes(p: AnyParams, queueActor: ActorRef, queueData: QueueData)(implicit
+      timeout: Timeout,
+      executionContext: ExecutionContext
+  ): Future[List[(String, String)]] = {
     import QueueReadableAttributeNames._
     import org.elasticmq.rest.sqs.model.RedrivePolicyJson._
 
@@ -86,8 +92,10 @@ trait QueueAttributesOps extends AttributesModule {
           VisibilityTimeoutParameter,
           () => Future.successful(queueData.defaultVisibilityTimeout.seconds.toString)
         ),
-        AttributeValuesCalculator.Rule(DelaySecondsAttribute, () => Future.successful(queueData.delay.getStandardSeconds.toString)),
-        AttributeValuesCalculator.Rule(ApproximateNumberOfMessagesAttribute, () => stats.map(_.approximateNumberOfVisibleMessages.toString)),
+        AttributeValuesCalculator
+          .Rule(DelaySecondsAttribute, () => Future.successful(queueData.delay.getStandardSeconds.toString)),
+        AttributeValuesCalculator
+          .Rule(ApproximateNumberOfMessagesAttribute, () => stats.map(_.approximateNumberOfVisibleMessages.toString)),
         AttributeValuesCalculator.Rule(
           ApproximateNumberOfMessagesNotVisibleAttribute,
           () => stats.map(_.approximateNumberOfInvisibleMessages.toString)
@@ -96,7 +104,8 @@ trait QueueAttributesOps extends AttributesModule {
           ApproximateNumberOfMessagesDelayedAttribute,
           () => stats.map(_.approximateNumberOfMessagesDelayed.toString)
         ),
-        AttributeValuesCalculator.Rule(CreatedTimestampAttribute, () => Future.successful((queueData.created.getMillis / 1000L).toString)),
+        AttributeValuesCalculator
+          .Rule(CreatedTimestampAttribute, () => Future.successful((queueData.created.getMillis / 1000L).toString)),
         AttributeValuesCalculator.Rule(
           LastModifiedTimestampAttribute,
           () => Future.successful((queueData.lastModified.getMillis / 1000L).toString)
@@ -105,20 +114,25 @@ trait QueueAttributesOps extends AttributesModule {
           ReceiveMessageWaitTimeSecondsAttribute,
           () => Future.successful(queueData.receiveMessageWait.getStandardSeconds.toString)
         ),
-        AttributeValuesCalculator.Rule(QueueArnAttribute, () => Future.successful(s"arn:aws:sqs:$awsRegion:$awsAccountId:${queueData.name}"))
+        AttributeValuesCalculator.Rule(
+          QueueArnAttribute,
+          () => Future.successful(s"arn:aws:sqs:$awsRegion:$awsAccountId:${queueData.name}")
+        )
       )
 
       val optionalRules = Seq(
         queueData.deadLettersQueue
           .map(dlq => RedrivePolicy(dlq.name, awsRegion, awsAccountId, dlq.maxReceiveCount))
           .map(redrivePolicy =>
-            AttributeValuesCalculator.Rule(RedrivePolicyParameter, () => Future.successful(redrivePolicy.toJson.toString))
+            AttributeValuesCalculator
+              .Rule(RedrivePolicyParameter, () => Future.successful(redrivePolicy.toJson.toString))
           )
       )
 
       val fifoRules = if (queueData.isFifo) {
         Seq(
-          AttributeValuesCalculator.Rule(FifoAttributeNames.FifoQueue, () => Future.successful(queueData.isFifo.toString)),
+          AttributeValuesCalculator
+            .Rule(FifoAttributeNames.FifoQueue, () => Future.successful(queueData.isFifo.toString)),
           AttributeValuesCalculator.Rule(
             FifoAttributeNames.ContentBasedDeduplication,
             () => Future.successful(queueData.hasContentBasedDeduplication.toString)
@@ -132,14 +146,15 @@ trait QueueAttributesOps extends AttributesModule {
       attributeValuesCalculator.calculate(attributeNames, rules: _*)
     }
 
-
     val attributeNames = attributeNamesReader.read(p, AllAttributeNames)
     Future.sequence(calculateAttributeValues(attributeNames).map(p => p._2.map((p._1, _))))
 
-
   }
 
-  def setQueueAttributes(p: AnyParams, queueActor: ActorRef, queueManagerActor: ActorRef)(implicit timeout: Timeout, executionContext: ExecutionContext) = {
+  def setQueueAttributes(p: AnyParams, queueActor: ActorRef, queueManagerActor: ActorRef)(implicit
+      timeout: Timeout,
+      executionContext: ExecutionContext
+  ) = {
     val attributes = attributeNameAndValuesReader.read(p)
 
     attributes.map({ case (attributeName, attributeValue) =>
@@ -179,8 +194,8 @@ trait QueueAttributesOps extends AttributesModule {
             )
           }
         case attr
-          if UnsupportedAttributeNames.AllUnsupportedAttributeNames
-            .contains(attr) =>
+            if UnsupportedAttributeNames.AllUnsupportedAttributeNames
+              .contains(attr) =>
           logger.warn("Ignored attribute \"" + attr + "\" (supported by SQS but not ElasticMQ)")
           Future.successful(())
         case attr =>

@@ -10,7 +10,12 @@ import org.elasticmq.rest.sqs.Constants._
 import org.elasticmq.rest.sqs.MD5Util._
 import org.elasticmq.rest.sqs.ParametersUtil._
 import org.elasticmq.rest.sqs.directives.ElasticMQDirectives
-import org.elasticmq.rest.sqs.model.{BinaryMessageSystemAttribute, MessageSystemAttribute, NumberMessageSystemAttribute, StringMessageSystemAttribute}
+import org.elasticmq.rest.sqs.model.{
+  BinaryMessageSystemAttribute,
+  MessageSystemAttribute,
+  NumberMessageSystemAttribute,
+  StringMessageSystemAttribute
+}
 
 import scala.concurrent.Future
 
@@ -35,6 +40,12 @@ trait SendMessageDirectives { this: ElasticMQDirectives with SQSLimitsModule =>
                   {messageAttributeDigest.map(d => <MD5OfMessageAttributes>{d}</MD5OfMessageAttributes>).getOrElse(())}
                   <MD5OfMessageBody>{digest}</MD5OfMessageBody>
                   <MessageId>{message.id.id}</MessageId>
+                  {message.messageAttributes.get("SequenceNumber").flatMap(sn => {
+                    sn match {
+                      case StringMessageAttribute(x, _) => Some(<SequenceNumber>{x}</SequenceNumber>)
+                      case _ => None
+                    }
+                }).getOrElse(())}
                 </SendMessageResult>
                 <ResponseMetadata>
                   <RequestId>{EmptyRequestId}</RequestId>

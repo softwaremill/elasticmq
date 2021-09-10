@@ -35,9 +35,7 @@ trait AttributesModule {
     }
 
     def prepareParametersForRead(attributesToRead: List[String]): Map[String, String] = {
-      attributesToRead.zipWithIndex
-        .map { case (item, index) => (makeAttributeMapKeyAtPosition(index + 1), item) }
-        .toMap
+      attributesToRead.zipWithIndex.map { case (item, index) => (makeAttributeMapKeyAtPosition(index + 1), item) }.toMap
     }
 
     private def makeAttributeMapKeyAtPosition(position: Int): String = {
