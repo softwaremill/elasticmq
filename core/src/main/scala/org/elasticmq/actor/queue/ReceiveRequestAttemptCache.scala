@@ -40,9 +40,12 @@ class ReceiveRequestAttemptCache {
 
   /** Ensure that all the given messages are still valid on the queue
     *
-    * @param messages        The messages to check
-    * @param messageQueue    The queue that should contain the messages
-    * @return                `true` if all the given messages are still valid and present on the queue
+    * @param messages
+    *   The messages to check
+    * @param messageQueue
+    *   The queue that should contain the messages
+    * @return
+    *   `true` if all the given messages are still valid and present on the queue
     */
   private def allValid(messages: List[InternalMessage], messageQueue: MessageQueue): Boolean = {
     messages.forall { lastAttemptMessage =>

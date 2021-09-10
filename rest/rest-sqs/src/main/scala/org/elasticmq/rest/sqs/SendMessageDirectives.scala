@@ -10,7 +10,12 @@ import org.elasticmq.rest.sqs.Constants._
 import org.elasticmq.rest.sqs.MD5Util._
 import org.elasticmq.rest.sqs.ParametersUtil._
 import org.elasticmq.rest.sqs.directives.ElasticMQDirectives
-import org.elasticmq.rest.sqs.model.{BinaryMessageSystemAttribute, MessageSystemAttribute, NumberMessageSystemAttribute, StringMessageSystemAttribute}
+import org.elasticmq.rest.sqs.model.{
+  BinaryMessageSystemAttribute,
+  MessageSystemAttribute,
+  NumberMessageSystemAttribute,
+  StringMessageSystemAttribute
+}
 
 import scala.concurrent.Future
 

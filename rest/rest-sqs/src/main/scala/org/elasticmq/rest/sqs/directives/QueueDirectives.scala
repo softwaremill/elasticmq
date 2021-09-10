@@ -46,7 +46,7 @@ trait QueueDirectives {
   private def queueNameFromRequest(p: AnyParams)(body: String => Route): Route = {
     val queueNameDirective =
       checkOnlyOneSegmentInUri() |
-      pathPrefix(accountId.r / Segment).tmap(_._2) |
+        pathPrefix(accountId.r / Segment).tmap(_._2) |
         pathPrefix(QueueUrlContext / Segment) |
         queueNameFromParams(p) |
         queueUrlFromParams(p).flatMap { queueUrl =>

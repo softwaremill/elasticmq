@@ -44,7 +44,8 @@ object LocalPerformanceTest extends App {
   def testWithMq(mq: MQ, iterations: Int, msgsInIteration: Int, name: String, threadCount: Int): Unit = {
     println(
       "Running test for [%s], iterations: %d, msgs in iteration: %d, thread count: %d."
-        .format(name, iterations, msgsInIteration, threadCount))
+        .format(name, iterations, msgsInIteration, threadCount)
+    )
 
     mq.start(StrictSQSLimits)
 
@@ -87,7 +88,8 @@ object LocalPerformanceTest extends App {
       val loopEnd = System.currentTimeMillis()
       println(
         "%-20s throughput: %f, %d"
-          .format(name, count.toDouble / ((loopEnd - start).toDouble / 1000.0), loopEnd - loopStart))
+          .format(name, count.toDouble / ((loopEnd - start).toDouble / 1000.0), loopEnd - loopStart)
+      )
     }
   }
 
@@ -104,12 +106,15 @@ object LocalPerformanceTest extends App {
       currentQueue = Await
         .result(
           queueManagerActor ? CreateQueue(
-            QueueData("testQueue",
-                      MillisVisibilityTimeout(1000),
-                      org.joda.time.Duration.ZERO,
-                      org.joda.time.Duration.ZERO,
-                      new DateTime(),
-                      new DateTime())),
+            QueueData(
+              "testQueue",
+              MillisVisibilityTimeout(1000),
+              org.joda.time.Duration.ZERO,
+              org.joda.time.Duration.ZERO,
+              new DateTime(),
+              new DateTime()
+            )
+          ),
           10.seconds
         )
         .right
@@ -119,8 +124,10 @@ object LocalPerformanceTest extends App {
     }
 
     def sendMessage(m: String): Unit = {
-      Await.result(currentQueue ? SendMessage(NewMessageData(None, m, Map.empty, ImmediateNextDelivery, None, None, 0, None)),
-                   10.seconds)
+      Await.result(
+        currentQueue ? SendMessage(NewMessageData(None, m, Map.empty, ImmediateNextDelivery, None, None, 0, None)),
+        10.seconds
+      )
     }
 
     def receiveMessage() = {

@@ -19,23 +19,24 @@ import org.scalatest.matchers.should.Matchers
 
 import scala.concurrent.duration.DurationInt
 
-class StatisticsDirectivesTest extends AnyFlatSpec
-  with Matchers
-  with ScalatestRouteTest
-  with Directives
-  with QueueDirectives
-  with AnyParamDirectives
-  with QueueManagerActorModule
-  with FutureDirectives
-  with ActorSystemModule
-  with ExceptionDirectives
-  with RespondDirectives
-  with StatisticsDirectives
-  with ElasticMQDirectives
-  with QueueAttributesOps
-  with BeforeAndAfter
-  with ScalaFutures
-  with IntegrationPatience {
+class StatisticsDirectivesTest
+    extends AnyFlatSpec
+    with Matchers
+    with ScalatestRouteTest
+    with Directives
+    with QueueDirectives
+    with AnyParamDirectives
+    with QueueManagerActorModule
+    with FutureDirectives
+    with ActorSystemModule
+    with ExceptionDirectives
+    with RespondDirectives
+    with StatisticsDirectives
+    with ElasticMQDirectives
+    with QueueAttributesOps
+    with BeforeAndAfter
+    with ScalaFutures
+    with IntegrationPatience {
 
   def awsAccountId: String = "id"
 
@@ -45,11 +46,11 @@ class StatisticsDirectivesTest extends AnyFlatSpec
   implicit lazy val actorSystem: ActorSystem = ActorSystem("test-actor-system")
 
   implicit val nowProvider = new MutableNowProvider(
-    new DateTime().withDate(2020, 1, 1).withTimeAtStartOfDay().getMillis)
+    new DateTime().withDate(2020, 1, 1).withTimeAtStartOfDay().getMillis
+  )
 
   lazy val queueManagerActor: ActorRef =
     actorSystem.actorOf(Props(new QueueManagerActor(nowProvider, StrictSQSLimits, None)))
-
 
   "statisticsRequestForAllQueues" should "return all queues statistics" in {
 
@@ -73,9 +74,10 @@ class StatisticsDirectivesTest extends AnyFlatSpec
 
     Get("/statistics/queues/firstQueue") ~> route ~> check {
       val queueResponse = responseAs[QueueResponse]
-      val expectedNowTimeInMillis = (nowProvider.nowMillis/1000L).toString
+      val expectedNowTimeInMillis = (nowProvider.nowMillis / 1000L).toString
       queueResponse.name shouldEqual "firstQueue"
-      queueResponse.attributes should contain theSameElementsAs Map("ApproximateNumberOfMessagesDelayed" -> "0",
+      queueResponse.attributes should contain theSameElementsAs Map(
+        "ApproximateNumberOfMessagesDelayed" -> "0",
         "VisibilityTimeout" -> "0",
         "ApproximateNumberOfMessagesNotVisible" -> "0",
         "LastModifiedTimestamp" -> expectedNowTimeInMillis,
@@ -87,7 +89,7 @@ class StatisticsDirectivesTest extends AnyFlatSpec
       )
     }
   }
-  
+
   before {
     createQueueWithName("firstQueue")
     createQueueWithName("secondQueue")
@@ -98,7 +100,6 @@ class StatisticsDirectivesTest extends AnyFlatSpec
     deleteQueueWithName("firstQueue")
     deleteQueueWithName("secondQueue")
   }
-
 
   private def createQueueWithName(name: String) = {
     (queueManagerActor ? CreateQueue(

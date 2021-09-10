@@ -307,18 +307,17 @@ class AmazonJavaSdkTestSuite extends SqsClientServerCommunication with Matchers 
     val queueUrl = client.createQueue(new CreateQueueRequest("testQueue1")).getQueueUrl
 
     // When
-    val sendMessage = messageAttributes.foldLeft(new SendMessageRequest(queueUrl, content)) {
-      case (message, (k, v)) =>
-        val attr = new MessageAttributeValue()
-        attr.setDataType(v.getDataType())
+    val sendMessage = messageAttributes.foldLeft(new SendMessageRequest(queueUrl, content)) { case (message, (k, v)) =>
+      val attr = new MessageAttributeValue()
+      attr.setDataType(v.getDataType())
 
-        v match {
-          case s: StringMessageAttribute => attr.setStringValue(s.stringValue)
-          case n: NumberMessageAttribute => attr.setStringValue(n.stringValue)
-          case b: BinaryMessageAttribute => attr.setBinaryValue(ByteBuffer.wrap(b.binaryValue))
-        }
+      v match {
+        case s: StringMessageAttribute => attr.setStringValue(s.stringValue)
+        case n: NumberMessageAttribute => attr.setStringValue(n.stringValue)
+        case b: BinaryMessageAttribute => attr.setBinaryValue(ByteBuffer.wrap(b.binaryValue))
+      }
 
-        message.addMessageAttributesEntry(k, attr)
+      message.addMessageAttributesEntry(k, attr)
     }
 
     client.sendMessage(sendMessage)
@@ -340,28 +339,26 @@ class AmazonJavaSdkTestSuite extends SqsClientServerCommunication with Matchers 
     val filteredMessageAttributes = filterBasedOnRequestedAttributes(requestedAttributes, messageAttributes)
 
     message.getMessageAttributes should be(filteredSendMessageAttr) // Checks they match
-    message.getMessageAttributes.asScala.map {
-      case (k, attr) =>
-        (
-          k,
-          if (attr.getDataType.startsWith("String") && attr.getStringValue != null) {
-            StringMessageAttribute(attr.getStringValue).stringValue
-          } else if (attr.getDataType.startsWith("Number") && attr.getStringValue != null) {
-            NumberMessageAttribute(attr.getStringValue).stringValue
-          } else {
-            BinaryMessageAttribute.fromByteBuffer(attr.getBinaryValue).asBase64
-          }
-        )
-    } should be(filteredMessageAttributes.map {
-      case (k, attr) =>
-        (
-          k,
-          attr match {
-            case s: StringMessageAttribute => s.stringValue
-            case n: NumberMessageAttribute => n.stringValue
-            case b: BinaryMessageAttribute => b.asBase64
-          }
-        )
+    message.getMessageAttributes.asScala.map { case (k, attr) =>
+      (
+        k,
+        if (attr.getDataType.startsWith("String") && attr.getStringValue != null) {
+          StringMessageAttribute(attr.getStringValue).stringValue
+        } else if (attr.getDataType.startsWith("Number") && attr.getStringValue != null) {
+          NumberMessageAttribute(attr.getStringValue).stringValue
+        } else {
+          BinaryMessageAttribute.fromByteBuffer(attr.getBinaryValue).asBase64
+        }
+      )
+    } should be(filteredMessageAttributes.map { case (k, attr) =>
+      (
+        k,
+        attr match {
+          case s: StringMessageAttribute => s.stringValue
+          case n: NumberMessageAttribute => n.stringValue
+          case b: BinaryMessageAttribute => b.asBase64
+        }
+      )
     }) // Checks they match map
   }
 

@@ -11,5 +11,3 @@ class MutableNowProvider(initalValue: Long = 100L) extends NowProvider {
 
   override def now = new DateTime(nowMillis)
 }
-
-
