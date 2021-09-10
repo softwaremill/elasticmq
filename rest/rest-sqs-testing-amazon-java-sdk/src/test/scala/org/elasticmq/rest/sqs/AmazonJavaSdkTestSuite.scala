@@ -861,7 +861,7 @@ class AmazonJavaSdkTestSuite extends SqsClientServerCommunication with Matchers 
     val firstSeqNum = client.sendMessage(new SendMessageRequest(queueUrl, "Body 1").withMessageGroupId(groupId)).getSequenceNumber
     val secondSeqNum = client.sendMessage(new SendMessageRequest(queueUrl, "Body 2").withMessageGroupId(groupId)).getSequenceNumber
 
-    BigInt(firstSeqNum) should be <  BigInt(secondSeqNum)
+    firstSeqNum.toLong should be <  secondSeqNum.toLong
   }
 
   test("FIFO queue - SequenceNumber continues to increase after deleting message from queue") {
@@ -875,7 +875,7 @@ class AmazonJavaSdkTestSuite extends SqsClientServerCommunication with Matchers 
 
     val secondSeqNum = client.sendMessage(new SendMessageRequest(queueUrl, "Body 2").withMessageGroupId(groupId1)).getSequenceNumber
 
-    BigInt(seqNumFromDeleted) should be < BigInt(secondSeqNum)
+    seqNumFromDeleted.toLong should be < secondSeqNum.toLong
   }
 
   test("FIFO queue - SequenceNumber is not incremented between receives") {
@@ -890,23 +890,6 @@ class AmazonJavaSdkTestSuite extends SqsClientServerCommunication with Matchers 
 
     res.getSequenceNumber should equal(seqNum1)
     res.getSequenceNumber should equal(seqNum2)
-  }
-
-  test("FIFO queue - SequenceNumber attribute between two groups can be the same") {
-    val groupId1 = "1"
-    val groupId2 = "2"
-    val queueUrl = createFifoQueue()
-
-    val seqNum11 = client.sendMessage(new SendMessageRequest(queueUrl, "Body 1").withMessageGroupId(groupId1)).getSequenceNumber
-    val seqNum12 = client.sendMessage(new SendMessageRequest(queueUrl, "Body 3").withMessageGroupId(groupId1)).getSequenceNumber
-
-    val seqNum21 = client.sendMessage(new SendMessageRequest(queueUrl, "Body 2").withMessageGroupId(groupId2)).getSequenceNumber
-    val seqNum22 = client.sendMessage(new SendMessageRequest(queueUrl, "Body 4").withMessageGroupId(groupId2)).getSequenceNumber
-
-    groupId1 shouldNot equal(groupId2)
-
-    BigInt(seqNum11) should be < BigInt(seqNum12)
-    BigInt(seqNum21) should be < BigInt(seqNum22)
   }
 
   def queueVisibilityTimeout(queueUrl: String): Long = getQueueLongAttribute(queueUrl, visibilityTimeoutAttribute)

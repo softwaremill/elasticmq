@@ -5,7 +5,7 @@ import org.elasticmq.actor.queue.{InternalMessage, QueueActorStorage}
 import org.elasticmq.actor.reply.{DoNotReply, ReplyAction}
 import org.elasticmq.msg.SendMessage
 import org.elasticmq.util.Logging
-import org.elasticmq.{MessageData, NewMessageData}
+import org.elasticmq.{MessageData, NewMessageData, QueueData, StringMessageAttribute}
 
 trait SendMessageOp extends Logging {
   this: QueueActorStorage =>
@@ -37,11 +37,30 @@ trait SendMessageOp extends Logging {
   }
 
   private def addMessage(message: NewMessageData) = {
-    val internalMessage = InternalMessage.from(message, queueData, nextSequenceNumber())
+    val updatedMessage = updateSequenceNumberAttribute(message, queueData)
+    val internalMessage = InternalMessage.from(updatedMessage, queueData)
     messageQueue += internalMessage
     fifoMessagesHistory = fifoMessagesHistory.addNew(internalMessage)
     logger.debug(s"${queueData.name}: Sent message with id ${internalMessage.id}")
 
     internalMessage.toMessageData
+  }
+
+  private def updateSequenceNumberAttribute(
+      newMessageData: NewMessageData,
+      queueData: QueueData
+  ) = {
+    val updatedAttributes = {
+      if (!queueData.isFifo) {
+        (newMessageData.messageAttributes - "SequenceNumber")
+      } else {
+        newMessageData.messageAttributes.updated(
+          "SequenceNumber",
+          StringMessageAttribute(nextSequenceNumber().toString)
+        )
+      }
+    }
+    newMessageData.copy(messageAttributes = updatedAttributes)
+
   }
 }
