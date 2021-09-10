@@ -83,8 +83,8 @@ case class InternalMessage(
 }
 
 object InternalMessage {
-
   def from(newMessageData: NewMessageData, queueData: QueueData): InternalMessage = {
+
     val now = System.currentTimeMillis()
     new InternalMessage(
       newMessageData.id.getOrElse(generateId()).id,

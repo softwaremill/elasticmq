@@ -834,6 +834,64 @@ class AmazonJavaSdkTestSuite extends SqsClientServerCommunication with Matchers 
     m2 should be(Some("Body 3"))
   }
 
+  test("Message does not have SequenceNumber if it is not connected with FIFO queue") {
+    val queueUrl = client.createQueue(new CreateQueueRequest("testQueue1")).getQueueUrl
+
+    val sendingResult = client.sendMessage(new SendMessageRequest(queueUrl, "Body 1"))
+    val message = receiveSingleMessageObject(queueUrl).orNull
+
+    Option(sendingResult.getSequenceNumber).isEmpty should be(true)
+    message.getMessageAttributes.asScala.contains("SequenceNumber") should be(false)
+  }
+
+  test("Message should have SequenceNumber in result when sent to FIFO queue") {
+    val groupId = "1"
+    val queueUrl = createFifoQueue()
+
+    val sendingResult = client.sendMessage(new SendMessageRequest(queueUrl, "Body 1")
+      .withMessageGroupId(groupId))
+
+    Option(sendingResult.getSequenceNumber).isDefined should be(true)
+  }
+
+  test("FIFO queue - older message should have SequenceNumber which is less than that in newer message") {
+    val groupId = "1"
+    val queueUrl = createFifoQueue()
+
+    val firstSeqNum = client.sendMessage(new SendMessageRequest(queueUrl, "Body 1").withMessageGroupId(groupId)).getSequenceNumber
+    val secondSeqNum = client.sendMessage(new SendMessageRequest(queueUrl, "Body 2").withMessageGroupId(groupId)).getSequenceNumber
+
+    firstSeqNum.toLong should be <  secondSeqNum.toLong
+  }
+
+  test("FIFO queue - SequenceNumber continues to increase after deleting message from queue") {
+    val groupId1 = "1"
+    val queueUrl = createFifoQueue(attributes = Map(visibilityTimeoutAttribute -> "0"))
+
+    val seqNumFromDeleted = client.sendMessage(new SendMessageRequest(queueUrl, "Body 1").withMessageGroupId(groupId1)).getSequenceNumber
+
+    val willBeDeleted = client.receiveMessage(new ReceiveMessageRequest(queueUrl).withMessageAttributeNames("All")).getMessages.get(0)
+    client.deleteMessage(new DeleteMessageRequest(queueUrl, willBeDeleted.getReceiptHandle))
+
+    val secondSeqNum = client.sendMessage(new SendMessageRequest(queueUrl, "Body 2").withMessageGroupId(groupId1)).getSequenceNumber
+
+    seqNumFromDeleted.toLong should be < secondSeqNum.toLong
+  }
+
+  test("FIFO queue - SequenceNumber is not incremented between receives") {
+    val groupId1 = "1"
+    val queueUrl = createFifoQueue(attributes = Map(visibilityTimeoutAttribute -> "0"))
+    val res = client.sendMessage(new SendMessageRequest(queueUrl, "Body 1").withMessageGroupId(groupId1))
+
+    val seqNum1 = client.receiveMessage(new ReceiveMessageRequest(queueUrl).withMessageAttributeNames("All"))
+      .getMessages.get(0).getMessageAttributes.asScala("SequenceNumber").getStringValue
+    val seqNum2 = client.receiveMessage(new ReceiveMessageRequest(queueUrl).withMessageAttributeNames("All"))
+      .getMessages.get(0).getMessageAttributes.asScala("SequenceNumber").getStringValue
+
+    res.getSequenceNumber should equal(seqNum1)
+    res.getSequenceNumber should equal(seqNum2)
+  }
+
   def queueVisibilityTimeout(queueUrl: String): Long = getQueueLongAttribute(queueUrl, visibilityTimeoutAttribute)
 
   test("should receive no more than the given amount of messages") {
