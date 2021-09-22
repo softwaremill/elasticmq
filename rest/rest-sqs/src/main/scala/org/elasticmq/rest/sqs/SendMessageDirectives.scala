@@ -71,6 +71,9 @@ trait SendMessageDirectives { this: ElasticMQDirectives with SQSLimitsModule =>
       .union(List(0))
       .max // even if nothing, return 0
 
+    Limits.verifyMessageAttributesNumber(numAttributes, sqsLimits)
+      .fold(error => throw new SQSException(error), identity)
+
     (1 to numAttributes).map { i =>
       val name = parameters("MessageAttribute." + i + ".Name")
       val dataType = parameters("MessageAttribute." + i + ".Value.DataType")
