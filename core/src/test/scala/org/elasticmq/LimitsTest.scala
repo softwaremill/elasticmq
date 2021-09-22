@@ -56,6 +56,22 @@ class LimitsTest extends AnyWordSpec with Matchers with EitherValues {
     }
   }
 
+  "Validate number of message attributes" should {
+    val attributesLimit = 10
+
+    "fail on exceeded sqs limit in strict mode" in {
+      Limits.verifyMessageAttributesNumber(attributesLimit, StrictSQSLimits) shouldBe Right(())
+      Limits.verifyMessageAttributesNumber(attributesLimit + 1, StrictSQSLimits) shouldBe Left(
+        "Number of message attributes [11] exceeds the allowed maximum [10]."
+      )
+    }
+
+    "pass on exceeded sqs limit in relaxed mode" in {
+      Limits.verifyMessageAttributesNumber(attributesLimit, RelaxedSQSLimits) shouldBe Right(())
+      Limits.verifyMessageAttributesNumber(attributesLimit + 1, RelaxedSQSLimits) shouldBe Right(())
+    }
+  }
+
   "Validation of message string attribute in strict mode" should {
     "pass if string attribute contains only allowed characters" in {
       val testString = List(0x9, 0xa, 0xd, 0x21, 0xe005, 0x10efff).map(_.toChar).mkString

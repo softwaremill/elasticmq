@@ -889,6 +889,24 @@ class AmazonJavaSdkTestSuite extends SqsClientServerCommunication with Matchers 
     res.getSequenceNumber should equal(seqNum2)
   }
 
+  test("sendMessage should throw when message has more than 10 message attributes") {
+    val sqsMessageAttributesLimit = 10
+
+    val queueUrl = client.createQueue(new CreateQueueRequest("q")).getQueueUrl
+    val attr = new MessageAttributeValue().withStringValue("str").withDataType("String")
+    val atLeastElevenMessageAttributes = (1 to 11).map(_.toString -> attr)
+      .toMap
+      .asJava
+
+    atLeastElevenMessageAttributes.size() > sqsMessageAttributesLimit shouldBe true
+
+    assertThrows[AmazonSQSException] {
+      client.sendMessage(
+        new SendMessageRequest(queueUrl, "MessageWithMoreThan10MessageAttributes")
+          .withMessageAttributes(atLeastElevenMessageAttributes))
+    }
+  }
+
   def queueVisibilityTimeout(queueUrl: String): Long = getQueueLongAttribute(queueUrl, visibilityTimeoutAttribute)
 
   test("should receive no more than the given amount of messages") {

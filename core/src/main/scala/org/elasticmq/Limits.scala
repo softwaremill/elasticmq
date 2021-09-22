@@ -12,6 +12,7 @@ trait Limits {
   def numberAttributeValueLimit: Limit[RangeLimit[BigDecimal]]
   def messageWaitTimeLimit: Limit[RangeLimit[Long]]
   def maxMessageLength: Limit[Int]
+  def messageAttributesLimit: Limit[Int]
 }
 
 case object StrictSQSLimits extends Limits {
@@ -19,6 +20,7 @@ case object StrictSQSLimits extends Limits {
   override val batchSizeLimit: Limit[Int] = LimitedValue(10)
   override val numberOfMessagesLimit: Limit[RangeLimit[Int]] = LimitedValue(RangeLimit(1, 10))
   override val nonEmptyAttributesLimit: Limit[Boolean] = LimitedValue(true)
+  override val messageAttributesLimit: Limit[Int] = LimitedValue(10)
   override val bodyValidCharactersLimit: Limit[List[RangeLimit[Int]]] = LimitedValue(
     List(
       RangeLimit(0x9, 0x9),
@@ -44,6 +46,7 @@ case object RelaxedSQSLimits extends Limits {
   override val numberAttributeValueLimit: Limit[RangeLimit[BigDecimal]] = NoLimit
   override val messageWaitTimeLimit: Limit[RangeLimit[Long]] = NoLimit
   override val maxMessageLength: Limit[Int] = NoLimit
+  override val messageAttributesLimit: Limit[Int] = NoLimit
 }
 
 sealed trait Limit[+A]
@@ -61,6 +64,13 @@ object Limits {
       limit => batchSize <= limit,
       "AWS.SimpleQueueService.TooManyEntriesInBatchRequest"
     )
+
+  def verifyMessageAttributesNumber(n: Int, limits: Limits): Either[String, Unit] = {
+    validateWhenLimitAvailable(limits.messageAttributesLimit)(
+      n <= _,
+      s"Number of message attributes [$n] exceeds the allowed maximum [10]."
+    )
+  }
 
   def verifyNumberOfMessagesFromParameters(
       numberOfMessagesFromParameters: Int,
