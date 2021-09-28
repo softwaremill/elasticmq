@@ -17,7 +17,6 @@ object Main extends Logging {
 
     logUncaughtExceptions()
 
-    ConfigFactory.invalidateCaches()
     val config = ConfigFactory.load()
     val server = new ElasticMQServer(new ElasticMQServerConfig(config))
     val shutdown = server.start()
