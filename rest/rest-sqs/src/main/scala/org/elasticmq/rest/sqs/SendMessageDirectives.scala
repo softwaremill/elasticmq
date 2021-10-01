@@ -40,12 +40,17 @@ trait SendMessageDirectives { this: ElasticMQDirectives with SQSLimitsModule =>
                   {messageAttributeDigest.map(d => <MD5OfMessageAttributes>{d}</MD5OfMessageAttributes>).getOrElse(())}
                   <MD5OfMessageBody>{digest}</MD5OfMessageBody>
                   <MessageId>{message.id.id}</MessageId>
-                  {message.messageAttributes.get("SequenceNumber").flatMap(sn => {
-                    sn match {
-                      case StringMessageAttribute(x, _) => Some(<SequenceNumber>{x}</SequenceNumber>)
-                      case _ => None
-                    }
-                }).getOrElse(())}
+                  {
+              message.messageAttributes
+                .get("SequenceNumber")
+                .flatMap(sn => {
+                  sn match {
+                    case StringMessageAttribute(x, _) => Some(<SequenceNumber>{x}</SequenceNumber>)
+                    case _                            => None
+                  }
+                })
+                .getOrElse(())
+            }
                 </SendMessageResult>
                 <ResponseMetadata>
                   <RequestId>{EmptyRequestId}</RequestId>
@@ -71,7 +76,8 @@ trait SendMessageDirectives { this: ElasticMQDirectives with SQSLimitsModule =>
       .union(List(0))
       .max // even if nothing, return 0
 
-    Limits.verifyMessageAttributesNumber(numAttributes, sqsLimits)
+    Limits
+      .verifyMessageAttributesNumber(numAttributes, sqsLimits)
       .fold(error => throw new SQSException(error), identity)
 
     (1 to numAttributes).map { i =>

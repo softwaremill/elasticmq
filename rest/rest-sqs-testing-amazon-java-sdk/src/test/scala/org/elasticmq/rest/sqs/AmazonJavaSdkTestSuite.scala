@@ -845,8 +845,10 @@ class AmazonJavaSdkTestSuite extends SqsClientServerCommunication with Matchers 
     val groupId = "1"
     val queueUrl = createFifoQueue()
 
-    val sendingResult = client.sendMessage(new SendMessageRequest(queueUrl, "Body 1")
-      .withMessageGroupId(groupId))
+    val sendingResult = client.sendMessage(
+      new SendMessageRequest(queueUrl, "Body 1")
+        .withMessageGroupId(groupId)
+    )
 
     Option(sendingResult.getSequenceNumber).isDefined should be(true)
   }
@@ -855,22 +857,27 @@ class AmazonJavaSdkTestSuite extends SqsClientServerCommunication with Matchers 
     val groupId = "1"
     val queueUrl = createFifoQueue()
 
-    val firstSeqNum = client.sendMessage(new SendMessageRequest(queueUrl, "Body 1").withMessageGroupId(groupId)).getSequenceNumber
-    val secondSeqNum = client.sendMessage(new SendMessageRequest(queueUrl, "Body 2").withMessageGroupId(groupId)).getSequenceNumber
+    val firstSeqNum =
+      client.sendMessage(new SendMessageRequest(queueUrl, "Body 1").withMessageGroupId(groupId)).getSequenceNumber
+    val secondSeqNum =
+      client.sendMessage(new SendMessageRequest(queueUrl, "Body 2").withMessageGroupId(groupId)).getSequenceNumber
 
-    firstSeqNum.toLong should be <  secondSeqNum.toLong
+    firstSeqNum.toLong should be < secondSeqNum.toLong
   }
 
   test("FIFO queue - SequenceNumber continues to increase after deleting message from queue") {
     val groupId1 = "1"
     val queueUrl = createFifoQueue(attributes = Map(visibilityTimeoutAttribute -> "0"))
 
-    val seqNumFromDeleted = client.sendMessage(new SendMessageRequest(queueUrl, "Body 1").withMessageGroupId(groupId1)).getSequenceNumber
+    val seqNumFromDeleted =
+      client.sendMessage(new SendMessageRequest(queueUrl, "Body 1").withMessageGroupId(groupId1)).getSequenceNumber
 
-    val willBeDeleted = client.receiveMessage(new ReceiveMessageRequest(queueUrl).withMessageAttributeNames("All")).getMessages.get(0)
+    val willBeDeleted =
+      client.receiveMessage(new ReceiveMessageRequest(queueUrl).withMessageAttributeNames("All")).getMessages.get(0)
     client.deleteMessage(new DeleteMessageRequest(queueUrl, willBeDeleted.getReceiptHandle))
 
-    val secondSeqNum = client.sendMessage(new SendMessageRequest(queueUrl, "Body 2").withMessageGroupId(groupId1)).getSequenceNumber
+    val secondSeqNum =
+      client.sendMessage(new SendMessageRequest(queueUrl, "Body 2").withMessageGroupId(groupId1)).getSequenceNumber
 
     seqNumFromDeleted.toLong should be < secondSeqNum.toLong
   }
@@ -880,10 +887,20 @@ class AmazonJavaSdkTestSuite extends SqsClientServerCommunication with Matchers 
     val queueUrl = createFifoQueue(attributes = Map(visibilityTimeoutAttribute -> "0"))
     val res = client.sendMessage(new SendMessageRequest(queueUrl, "Body 1").withMessageGroupId(groupId1))
 
-    val seqNum1 = client.receiveMessage(new ReceiveMessageRequest(queueUrl).withMessageAttributeNames("All"))
-      .getMessages.get(0).getMessageAttributes.asScala("SequenceNumber").getStringValue
-    val seqNum2 = client.receiveMessage(new ReceiveMessageRequest(queueUrl).withMessageAttributeNames("All"))
-      .getMessages.get(0).getMessageAttributes.asScala("SequenceNumber").getStringValue
+    val seqNum1 = client
+      .receiveMessage(new ReceiveMessageRequest(queueUrl).withMessageAttributeNames("All"))
+      .getMessages
+      .get(0)
+      .getMessageAttributes
+      .asScala("SequenceNumber")
+      .getStringValue
+    val seqNum2 = client
+      .receiveMessage(new ReceiveMessageRequest(queueUrl).withMessageAttributeNames("All"))
+      .getMessages
+      .get(0)
+      .getMessageAttributes
+      .asScala("SequenceNumber")
+      .getStringValue
 
     res.getSequenceNumber should equal(seqNum1)
     res.getSequenceNumber should equal(seqNum2)
@@ -894,16 +911,15 @@ class AmazonJavaSdkTestSuite extends SqsClientServerCommunication with Matchers 
 
     val queueUrl = client.createQueue(new CreateQueueRequest("q")).getQueueUrl
     val attr = new MessageAttributeValue().withStringValue("str").withDataType("String")
-    val atLeastElevenMessageAttributes = (1 to 11).map(_.toString -> attr)
-      .toMap
-      .asJava
+    val atLeastElevenMessageAttributes = (1 to 11).map(_.toString -> attr).toMap.asJava
 
     atLeastElevenMessageAttributes.size() > sqsMessageAttributesLimit shouldBe true
 
     assertThrows[AmazonSQSException] {
       client.sendMessage(
         new SendMessageRequest(queueUrl, "MessageWithMoreThan10MessageAttributes")
-          .withMessageAttributes(atLeastElevenMessageAttributes))
+          .withMessageAttributes(atLeastElevenMessageAttributes)
+      )
     }
   }
 
