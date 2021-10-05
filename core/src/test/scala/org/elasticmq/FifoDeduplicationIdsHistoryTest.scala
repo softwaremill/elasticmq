@@ -114,7 +114,8 @@ class FifoDeduplicationIdsHistoryTest extends AnyFunSuite with Matchers {
       isFifo = true,
       messageGroupId = None,
       messageDeduplicationId = maybeDeduplicationId,
-      tracingId = None
+      tracingId = None,
+      sequenceNumber = None
     )
 
 }

@@ -37,30 +37,11 @@ trait SendMessageOp extends Logging {
   }
 
   private def addMessage(message: NewMessageData) = {
-    val updatedMessage = updateSequenceNumberAttribute(message, queueData)
-    val internalMessage = InternalMessage.from(updatedMessage, queueData)
+    val internalMessage = InternalMessage.from(message, queueData)
     messageQueue += internalMessage
     fifoMessagesHistory = fifoMessagesHistory.addNew(internalMessage)
     logger.debug(s"${queueData.name}: Sent message with id ${internalMessage.id}")
 
     internalMessage.toMessageData
-  }
-
-  private def updateSequenceNumberAttribute(
-      newMessageData: NewMessageData,
-      queueData: QueueData
-  ) = {
-    val updatedAttributes = {
-      if (!queueData.isFifo) {
-        (newMessageData.messageAttributes - "SequenceNumber")
-      } else {
-        newMessageData.messageAttributes.updated(
-          "SequenceNumber",
-          StringMessageAttribute(nextSequenceNumber().toString)
-        )
-      }
-    }
-    newMessageData.copy(messageAttributes = updatedAttributes)
-
   }
 }

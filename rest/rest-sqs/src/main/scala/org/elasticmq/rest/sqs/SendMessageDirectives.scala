@@ -40,17 +40,7 @@ trait SendMessageDirectives { this: ElasticMQDirectives with SQSLimitsModule =>
                   {messageAttributeDigest.map(d => <MD5OfMessageAttributes>{d}</MD5OfMessageAttributes>).getOrElse(())}
                   <MD5OfMessageBody>{digest}</MD5OfMessageBody>
                   <MessageId>{message.id.id}</MessageId>
-                  {
-              message.messageAttributes
-                .get("SequenceNumber")
-                .flatMap(sn => {
-                  sn match {
-                    case StringMessageAttribute(x, _) => Some(<SequenceNumber>{x}</SequenceNumber>)
-                    case _                            => None
-                  }
-                })
-                .getOrElse(())
-            }
+                  {message.sequenceNumber.map(x => <SequenceNumber>{x}</SequenceNumber>).getOrElse(())}
                 </SendMessageResult>
                 <ResponseMetadata>
                   <RequestId>{EmptyRequestId}</RequestId>
@@ -224,6 +214,8 @@ trait SendMessageDirectives { this: ElasticMQDirectives with SQSLimitsModule =>
       }
       .orElse(parameters.get(AwsTraceIdHeaderName).map(TracingId.apply))
 
+    val sequenceNumber = if (queueData.isFifo) Some(SequenceNumber.next()) else None
+
     NewMessageData(
       None,
       body,
@@ -232,7 +224,8 @@ trait SendMessageDirectives { this: ElasticMQDirectives with SQSLimitsModule =>
       messageGroupId,
       messageDeduplicationId,
       orderIndex,
-      maybeTracingId
+      maybeTracingId,
+      sequenceNumber
     )
   }
 

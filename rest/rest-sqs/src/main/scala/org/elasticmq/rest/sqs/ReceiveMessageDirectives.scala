@@ -105,7 +105,8 @@ trait ReceiveMessageDirectives {
                   case OnDateTimeReceived(when) => when.getMillis
                 }).toString)
             ),
-            Rule(AWSTraceHeaderAttribute, () => msg.tracingId.map(_.id))
+            Rule(AWSTraceHeaderAttribute, () => msg.tracingId.map(_.id)),
+            Rule(SequenceNumberAttribute, () => msg.sequenceNumber)
           )
         }
 

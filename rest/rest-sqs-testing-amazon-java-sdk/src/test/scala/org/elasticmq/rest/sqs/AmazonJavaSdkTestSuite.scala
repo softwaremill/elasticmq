@@ -882,25 +882,42 @@ class AmazonJavaSdkTestSuite extends SqsClientServerCommunication with Matchers 
     seqNumFromDeleted.toLong should be < secondSeqNum.toLong
   }
 
+  test("FIFO queue - SequenceNumber is part of Attributes, but not MessageAttributes") {
+    val groupId1 = "1"
+    val queueUrl = createFifoQueue(attributes = Map(visibilityTimeoutAttribute -> "0"))
+
+    client.sendMessage(new SendMessageRequest(queueUrl, "Body 1").withMessageGroupId(groupId1))
+
+    val msg = client
+      .receiveMessage(new ReceiveMessageRequest(queueUrl).withAttributeNames("All").withMessageAttributeNames("All"))
+      .getMessages
+      .get(0)
+
+    val attributes = msg.getAttributes.asScala
+    val msgAttributes = msg.getMessageAttributes.asScala
+
+    attributes.contains("SequenceNumber") shouldBe true
+    msgAttributes.contains("SequenceNumber") shouldBe false
+  }
+
   test("FIFO queue - SequenceNumber is not incremented between receives") {
     val groupId1 = "1"
     val queueUrl = createFifoQueue(attributes = Map(visibilityTimeoutAttribute -> "0"))
     val res = client.sendMessage(new SendMessageRequest(queueUrl, "Body 1").withMessageGroupId(groupId1))
 
     val seqNum1 = client
-      .receiveMessage(new ReceiveMessageRequest(queueUrl).withMessageAttributeNames("All"))
+      .receiveMessage(new ReceiveMessageRequest(queueUrl).withAttributeNames("All"))
       .getMessages
       .get(0)
-      .getMessageAttributes
+      .getAttributes
       .asScala("SequenceNumber")
-      .getStringValue
+
     val seqNum2 = client
-      .receiveMessage(new ReceiveMessageRequest(queueUrl).withMessageAttributeNames("All"))
+      .receiveMessage(new ReceiveMessageRequest(queueUrl).withAttributeNames("All"))
       .getMessages
       .get(0)
-      .getMessageAttributes
+      .getAttributes
       .asScala("SequenceNumber")
-      .getStringValue
 
     res.getSequenceNumber should equal(seqNum1)
     res.getSequenceNumber should equal(seqNum2)
