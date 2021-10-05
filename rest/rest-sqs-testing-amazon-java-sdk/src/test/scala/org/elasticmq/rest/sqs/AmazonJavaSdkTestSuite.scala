@@ -884,7 +884,7 @@ class AmazonJavaSdkTestSuite extends SqsClientServerCommunication with Matchers 
 
   test("FIFO queue - SequenceNumber is part of Attributes, but not MessageAttributes") {
     val groupId1 = "1"
-    val queueUrl = createFifoQueue(attributes = Map(visibilityTimeoutAttribute -> "0"))
+    val queueUrl: String = createFifoQueue(attributes = Map(visibilityTimeoutAttribute -> "0"))
 
     client.sendMessage(new SendMessageRequest(queueUrl, "Body 1").withMessageGroupId(groupId1))
 
