@@ -5,23 +5,29 @@ import org.elasticmq.actor.queue.{InternalMessage, QueueActorStorage}
 import org.elasticmq.actor.reply.{DoNotReply, ReplyAction}
 import org.elasticmq.msg.SendMessage
 import org.elasticmq.util.Logging
-import org.elasticmq.{MessageData, NewMessageData, QueueData, StringMessageAttribute}
+import org.elasticmq.{MessageData, NewMessageData}
+
+import java.util.concurrent.atomic.AtomicLong
 
 trait SendMessageOp extends Logging {
   this: QueueActorStorage =>
 
   def handleOrRedirectMessage(message: NewMessageData, context: ActorContext): ReplyAction[MessageData] = {
-    copyMessagesToActorRef.foreach { _ ! SendMessage(message) }
+    val message2 = if (queueData.isFifo && message.sequenceNumber.isEmpty) {
+      message.copy(sequenceNumber = Some(SequenceNumber.next()))
+    } else message
+
+    copyMessagesToActorRef.foreach { _ ! SendMessage(message2) }
 
     moveMessagesToActorRef match {
       case Some(moveTo) =>
         // preserve original sender so that reply would be received there from the move-to actor
         implicit val sender: ActorRef = context.sender()
-        moveTo ! SendMessage(message)
+        moveTo ! SendMessage(message2)
         DoNotReply()
 
       case None =>
-        sendMessage(message)
+        sendMessage(message2)
     }
   }
 
@@ -44,4 +50,10 @@ trait SendMessageOp extends Logging {
 
     internalMessage.toMessageData
   }
+}
+
+private object SequenceNumber {
+  private val current = new AtomicLong
+
+  def next(): String = current.getAndIncrement().toString
 }

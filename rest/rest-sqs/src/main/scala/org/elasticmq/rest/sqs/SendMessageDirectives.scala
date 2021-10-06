@@ -214,8 +214,6 @@ trait SendMessageDirectives { this: ElasticMQDirectives with SQSLimitsModule =>
       }
       .orElse(parameters.get(AwsTraceIdHeaderName).map(TracingId.apply))
 
-    val sequenceNumber = if (queueData.isFifo) Some(SequenceNumber.next()) else None
-
     NewMessageData(
       None,
       body,
@@ -225,7 +223,7 @@ trait SendMessageDirectives { this: ElasticMQDirectives with SQSLimitsModule =>
       messageDeduplicationId,
       orderIndex,
       maybeTracingId,
-      sequenceNumber
+      None
     )
   }
 
