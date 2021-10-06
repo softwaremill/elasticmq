@@ -4,12 +4,9 @@ import org.elasticmq._
 import org.elasticmq.util.{Logging, NowProvider}
 import org.joda.time.DateTime
 
-import java.io.File
 import scala.annotation.tailrec
 import scala.collection.mutable
 import spray.json._
-
-import scala.collection.mutable.ArrayBuffer
 
 sealed trait MessageQueue {
 
@@ -340,16 +337,17 @@ object MessageQueue {
     create table if not exists $tableName (
       id integer primary key autoincrement,
       message_id varchar unique,
+      delivery_receipts blob,
+      next_delivery integer(8),
       content blob,
       attributes blob,
-      next_delivery integer(8),
       created integer(8),
       received integer(8),
       receive_count integer(4),
       group_id varchar,
       deduplication_id varchar,
       tracing_id varchar,
-      delivery_receipts blob
+      sequence_number varchar
     )""".execute.apply()
 
     case class SerializableAttribute(key: String, primaryDataType: String, stringValue: String, customType: Option[String])
@@ -362,16 +360,17 @@ object MessageQueue {
 
     case class DBMessage(id: Long,
                          messageId: String,
+                         deliveryReceipts: String,
+                         nextDelivery: Long,
                          content: String,
                          attributes: String,
-                         nextDelivery: Long,
                          created: Long,
                          received: Option[Long],
                          receiveCount: Int,
                          groupId: Option[String],
                          deduplicationId: Option[String],
                          tracingId: Option[String],
-                         deliveryReceipts: String) {
+                         sequenceNumber: Option[String]) {
 
       def toInternalMessage: InternalMessage = {
         val serializedAttrs = attributes.parseJson.convertTo[List[SerializableAttribute]].map { attr =>
@@ -387,11 +386,20 @@ object MessageQueue {
         val firstReceive = received.map(time => OnDateTimeReceived(new DateTime(time))).getOrElse(NeverReceived)
 
         InternalMessage(
-          messageId, serializedDeliveryReceipts.toBuffer, nextDelivery, content,
-          serializedAttrs, new DateTime(created), 0, firstReceive, receiveCount, isFifo = false,
+          messageId,
+          serializedDeliveryReceipts.toBuffer,
+          nextDelivery,
+          content,
+          serializedAttrs,
+          new DateTime(created),
+          orderIndex = 0,
+          firstReceive,
+          receiveCount,
+          isFifo = false,
           groupId,
           deduplicationId.map(id => DeduplicationId(id)),
           tracingId.map(TracingId),
+          sequenceNumber,
           Some(id))
       }
     }
@@ -401,16 +409,17 @@ object MessageQueue {
       def apply(rs: WrappedResultSet) = new DBMessage(
         rs.long("id"),
         rs.string("message_id"),
+        rs.string("delivery_receipts"),
+        rs.long("next_delivery"),
         rs.string("content"),
         rs.string("attributes"),
-        rs.long("next_delivery"),
         rs.long("created"),
         rs.longOpt("received"),
         rs.int("receive_count"),
         rs.stringOpt("group_id"),
         rs.stringOpt("deduplication_id"),
         rs.stringOpt("tracing_id"),
-        rs.string("delivery_receipts")
+        rs.stringOpt("sequence_number")
       )
     }
 
@@ -439,28 +448,30 @@ object MessageQueue {
       val updateCount = message.persistedId match {
         case Some(persistedId) =>
           sql"""update $tableName set
-                      attributes = ${attributes.toJson.toString},
+                      delivery_receipts = ${deliveryReceipts.toJson.toString},
                       next_delivery = ${message.nextDelivery},
+                      attributes = ${attributes.toJson.toString},
                       received = $received,
                       receive_count = ${message.receiveCount},
                       tracing_id = ${message.tracingId.map(_.id)},
-                      delivery_receipts = ${deliveryReceipts.toJson.toString}
+                      sequence_number = ${message.sequenceNumber}
                 where id = $persistedId""".update.apply
         case None =>
           sql"""insert into $tableName
-           (message_id, content, attributes, next_delivery, created, received, receive_count, group_id, deduplication_id, tracing_id, delivery_receipts)
+           (message_id, delivery_receipts, next_delivery, content, attributes, created, received, receive_count, group_id, deduplication_id, tracing_id, sequence_number)
            values (
                    ${message.id},
+                   ${deliveryReceipts.toJson.toString},
+                   ${message.nextDelivery},
                    ${message.content},
                    ${attributes.toJson.toString},
-                   ${message.nextDelivery},
                    ${message.created.toInstant.getMillis},
                    $received,
                    ${message.receiveCount},
                    ${message.messageGroupId},
                    $deduplicationId,
                    ${message.tracingId.map(_.id)},
-                   ${deliveryReceipts.toJson.toString})""".update.apply
+                   ${message.sequenceNumber})""".update.apply
       }
 
       if (updateCount != 1) {
