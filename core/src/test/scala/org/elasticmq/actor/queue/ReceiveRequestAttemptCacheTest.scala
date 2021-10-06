@@ -1,7 +1,7 @@
 package org.elasticmq.actor.queue
 
 import scala.collection.mutable
-import org.elasticmq.NeverReceived
+import org.elasticmq.{MessagePersistenceConfig, NeverReceived}
 import org.elasticmq.actor.queue.ReceiveRequestAttemptCache.ReceiveFailure.Invalid
 import org.elasticmq.util.MutableNowProvider
 import org.scalatest.funsuite.AnyFunSuite
@@ -35,7 +35,7 @@ class ReceiveRequestAttemptCacheTest extends AnyFunSuite with Matchers {
     val msg2 = msg1.copy(id = "id-2")
     val msg3 = msg1.copy(id = "id-3")
 
-    val messageQueue = MessageQueue("testQueue", isFifo = false)
+    val messageQueue = MessageQueue("testQueue", MessagePersistenceConfig(), isFifo = false)
     messageQueue += msg1
     messageQueue += msg2
     messageQueue += msg3
@@ -82,7 +82,7 @@ class ReceiveRequestAttemptCacheTest extends AnyFunSuite with Matchers {
       tracingId = None
     )
     val msg2 = msg1.copy(id = "id-2")
-    val messageQueue = MessageQueue("testQueue", isFifo = false)
+    val messageQueue = MessageQueue("testQueue", MessagePersistenceConfig(), isFifo = false)
     messageQueue += msg1
     messageQueue += msg2
     cache.add(attemptId1, List(msg1))

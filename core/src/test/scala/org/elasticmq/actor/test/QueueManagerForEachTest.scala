@@ -1,7 +1,7 @@
 package org.elasticmq.actor.test
 
 import akka.actor.{ActorRef, ActorSystem, Props}
-import org.elasticmq.StrictSQSLimits
+import org.elasticmq.{MessagePersistenceConfig, StrictSQSLimits}
 import org.elasticmq.actor.QueueManagerActor
 import org.elasticmq.util.MutableNowProvider
 import org.scalatest.{BeforeAndAfterEach, Suite}
@@ -17,7 +17,7 @@ trait QueueManagerForEachTest extends BeforeAndAfterEach {
   override protected def beforeEach(): Unit = {
     super.beforeEach()
     nowProvider = new MutableNowProvider
-    queueManagerActor = system.actorOf(Props(new QueueManagerActor(nowProvider, StrictSQSLimits, None)))
+    queueManagerActor = system.actorOf(Props(new QueueManagerActor(nowProvider, StrictSQSLimits, MessagePersistenceConfig(), None)))
   }
 
   override protected def afterEach(): Unit = {

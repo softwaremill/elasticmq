@@ -1,7 +1,7 @@
 package org.elasticmq.actor.queue
 
 import akka.actor.ActorRef
-import org.elasticmq.QueueData
+import org.elasticmq.{MessagePersistenceConfig, QueueData}
 import org.elasticmq.actor.reply.ReplyingActor
 import org.elasticmq.msg._
 import org.elasticmq.util.{Logging, NowProvider}
@@ -11,6 +11,7 @@ import scala.reflect._
 class QueueActor(
     val nowProvider: NowProvider,
     val initialQueueData: QueueData,
+    val persistenceConfig: MessagePersistenceConfig,
     var deadLettersActorRef: Option[ActorRef] = None,
     val copyMessagesToActorRef: Option[ActorRef] = None,
     val moveMessagesToActorRef: Option[ActorRef] = None,

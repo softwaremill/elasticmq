@@ -4,7 +4,7 @@ import com.typesafe.config.{Config, ConfigFactory, ConfigObject, ConfigValue}
 import org.elasticmq.server.QueueSorter
 import org.elasticmq.server.config.ElasticMQServerConfig.createQueuesFromConfig
 import org.elasticmq.util.Logging
-import org.elasticmq.{NodeAddress, RelaxedSQSLimits, StrictSQSLimits}
+import org.elasticmq.{MessagePersistenceConfig, NodeAddress, RelaxedSQSLimits, StrictSQSLimits}
 
 import java.io.File
 import java.util.concurrent.TimeUnit
@@ -96,6 +96,19 @@ class ElasticMQServerConfig(config: Config) extends Logging {
   val awsRegion: String = awsConfig.getString("region")
   val awsAccountId: String = awsConfig.getString("accountId")
 
+  private def getMessagePersistenceConfig = {
+    val subConfig = config.getConfig("message-persistence")
+    val enabled = subConfig.getBoolean("enabled")
+    val driverClass = subConfig.getString("driver-class")
+    val uri = subConfig.getString("uri")
+    val username = subConfig.getString("username")
+    val password = subConfig.getString("password")
+    val pruneDataOnInit = subConfig.getBoolean("prune-data-on-init")
+
+    MessagePersistenceConfig(enabled, driverClass, uri, username, password, pruneDataOnInit)
+  }
+
+  val messagePersistenceConfig = getMessagePersistenceConfig
 }
 
 object ElasticMQServerConfig {

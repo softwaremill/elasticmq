@@ -9,7 +9,7 @@ import org.elasticmq.util.{Logging, NowProvider}
 
 import scala.reflect._
 
-class QueueManagerActor(nowProvider: NowProvider, limits: Limits, queueMetadataListener: Option[ActorRef])
+class QueueManagerActor(nowProvider: NowProvider, limits: Limits, persistenceConfig: MessagePersistenceConfig, queueMetadataListener: Option[ActorRef])
     extends ReplyingActor
     with Logging {
   type M[X] = QueueManagerMsg[X]
@@ -29,7 +29,7 @@ class QueueManagerActor(nowProvider: NowProvider, limits: Limits, queueMetadataL
             case Left(error) =>
               Left(QueueCreationError(queueData.name, error))
             case Right(_) =>
-              val actor = createQueueActor(nowProvider, queueData, queueMetadataListener)
+              val actor = createQueueActor(nowProvider, queueData, persistenceConfig, queueMetadataListener)
               queues(queueData.name) = actor
               queueMetadataListener.foreach(_ ! QueueCreated(queueData))
               Right(actor)
@@ -53,6 +53,7 @@ class QueueManagerActor(nowProvider: NowProvider, limits: Limits, queueMetadataL
   protected def createQueueActor(
       nowProvider: NowProvider,
       queueData: QueueData,
+      persistenceConfig: MessagePersistenceConfig,
       queueMetadataListener: Option[ActorRef]
   ): ActorRef = {
     val deadLetterQueueActor = queueData.deadLettersQueue.flatMap { qd => queues.get(qd.name) }
@@ -64,6 +65,7 @@ class QueueManagerActor(nowProvider: NowProvider, limits: Limits, queueMetadataL
         new QueueActor(
           nowProvider,
           queueData,
+          persistenceConfig,
           deadLetterQueueActor,
           copyMessagesToQueueActor,
           moveMessagesToQueueActor,

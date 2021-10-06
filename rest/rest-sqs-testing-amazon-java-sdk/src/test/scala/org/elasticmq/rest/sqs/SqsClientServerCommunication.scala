@@ -6,7 +6,7 @@ import com.amazonaws.services.sqs.model.{Message, ReceiveMessageRequest}
 import com.amazonaws.services.sqs.{AmazonSQS, AmazonSQSClientBuilder}
 import org.apache.http.impl.client.{CloseableHttpClient, HttpClients}
 import org.elasticmq.util.Logging
-import org.elasticmq.{NodeAddress, RelaxedSQSLimits}
+import org.elasticmq.{MessagePersistenceConfig, NodeAddress, RelaxedSQSLimits}
 import org.scalatest.{Args, BeforeAndAfter, Status}
 import org.scalatest.funsuite.AnyFunSuite
 
@@ -29,17 +29,25 @@ trait SqsClientServerCommunication extends AnyFunSuite with BeforeAndAfter with 
   before {
     logger.info(s"\n---\nRunning test: $currentTestName\n---\n")
 
+    val messagePersistenceConfig = MessagePersistenceConfig(
+      enabled = true,
+      driverClass = "org.sqlite.JDBC",
+      uri = "jdbc:sqlite:./elastimq.db",
+      pruneDataOnInit = true)
+
     strictServer = SQSRestServerBuilder
       .withPort(9321)
       .withServerAddress(NodeAddress(port = 9321))
       .withAWSAccountId(awsAccountId)
       .withAWSRegion(awsRegion)
+      .withMessagePersistenceConfig(messagePersistenceConfig)
       .start()
 
     relaxedServer = SQSRestServerBuilder
       .withPort(9322)
       .withServerAddress(NodeAddress(port = 9322))
       .withSQSLimits(RelaxedSQSLimits)
+      .withMessagePersistenceConfig(messagePersistenceConfig)
       .start()
 
     strictServer.waitUntilStarted()

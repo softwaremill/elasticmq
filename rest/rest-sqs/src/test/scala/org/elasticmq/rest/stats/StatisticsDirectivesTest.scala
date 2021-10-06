@@ -10,7 +10,7 @@ import org.elasticmq.msg.{CreateQueue, DeleteQueue}
 import org.elasticmq.rest.sqs.directives._
 import org.elasticmq.rest.sqs.{ActorSystemModule, QueueAttributesOps, QueueManagerActorModule}
 import org.elasticmq.util.MutableNowProvider
-import org.elasticmq.{MillisVisibilityTimeout, QueueData, StrictSQSLimits}
+import org.elasticmq.{MessagePersistenceConfig, MillisVisibilityTimeout, QueueData, StrictSQSLimits}
 import org.joda.time.{DateTime, Duration}
 import org.scalatest._
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
@@ -50,7 +50,7 @@ class StatisticsDirectivesTest
   )
 
   lazy val queueManagerActor: ActorRef =
-    actorSystem.actorOf(Props(new QueueManagerActor(nowProvider, StrictSQSLimits, None)))
+    actorSystem.actorOf(Props(new QueueManagerActor(nowProvider, StrictSQSLimits, MessagePersistenceConfig(), None)))
 
   "statisticsRequestForAllQueues" should "return all queues statistics" in {
 

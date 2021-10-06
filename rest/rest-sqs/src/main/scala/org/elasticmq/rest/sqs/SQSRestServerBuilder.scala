@@ -43,7 +43,8 @@ object SQSRestServerBuilder
       StrictSQSLimits,
       "elasticmq",
       "000000000000",
-      None
+      None,
+      MessagePersistenceConfig()
     )
 
 case class TheSQSRestServerBuilder(
@@ -56,7 +57,8 @@ case class TheSQSRestServerBuilder(
     sqsLimits: Limits,
     _awsRegion: String,
     _awsAccountId: String,
-    queueMetadataListener: Option[ActorRef]
+    queueMetadataListener: Option[ActorRef],
+    messagePersistenceConfig: MessagePersistenceConfig
 ) extends Logging {
 
   /** @param _actorSystem
@@ -118,6 +120,12 @@ case class TheSQSRestServerBuilder(
     */
   def withQueueMetadataListener(_queueMetadataListener: ActorRef) =
     this.copy(queueMetadataListener = Some(_queueMetadataListener))
+
+  /** @param _messagePersistenceConfig
+    *   Configuration of message-level persistence
+    */
+  def withMessagePersistenceConfig(_messagePersistenceConfig: MessagePersistenceConfig) =
+    this.copy(messagePersistenceConfig = _messagePersistenceConfig)
 
   def start(): SQSRestServer = {
     val (theActorSystem, stopActorSystem) = getOrCreateActorSystem
@@ -263,7 +271,7 @@ case class TheSQSRestServerBuilder(
 
   private def getOrCreateQueueManagerActor(actorSystem: ActorSystem) = {
     providedQueueManagerActor.getOrElse(
-      actorSystem.actorOf(Props(new QueueManagerActor(new NowProvider(), sqsLimits, queueMetadataListener)))
+      actorSystem.actorOf(Props(new QueueManagerActor(new NowProvider(), sqsLimits, messagePersistenceConfig, queueMetadataListener)))
     )
   }
 }

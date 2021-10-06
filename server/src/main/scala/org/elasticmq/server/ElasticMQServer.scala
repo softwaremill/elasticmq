@@ -52,7 +52,7 @@ class ElasticMQServer(config: ElasticMQServerConfig) extends Logging {
     else None
 
   private def createBase(queueConfigStore: Option[ActorRef]): ActorRef =
-    actorSystem.actorOf(Props(new QueueManagerActor(new NowProvider(), config.restSqs.sqsLimits, queueConfigStore)))
+    actorSystem.actorOf(Props(new QueueManagerActor(new NowProvider(), config.restSqs.sqsLimits, config.messagePersistenceConfig, queueConfigStore)))
 
   private def optionallyStartRestSqs(
       queueManagerActor: ActorRef,
@@ -70,7 +70,8 @@ class ElasticMQServer(config: ElasticMQServerConfig) extends Logging {
         config.restSqs.sqsLimits,
         config.awsRegion,
         config.awsAccountId,
-        queueConfigStore
+        queueConfigStore,
+        config.messagePersistenceConfig
       ).start()
 
       server.waitUntilStarted()

@@ -120,10 +120,9 @@ sealed trait MessageQueue {
 
 object MessageQueue {
 
-  def apply(name: String, isFifo: Boolean)(implicit nowProvider: NowProvider): MessageQueue = {
-    val persistenceEnabled = true
-    if (persistenceEnabled) {
-      new PersistedMessageQueue(name, isFifo)
+  def apply(name: String, persistenceConfig: MessagePersistenceConfig, isFifo: Boolean)(implicit nowProvider: NowProvider): MessageQueue = {
+    if (persistenceConfig.enabled) {
+      new PersistedMessageQueue(name, persistenceConfig, isFifo)
     } else {
       if (isFifo) {
         new FifoMessageQueue
@@ -307,26 +306,35 @@ object MessageQueue {
       )
   }
 
-  // TODO: remove this clean-up on init
-  val file = new File("./elastimq.db")
-  file.delete()
-
   import scalikejdbc._
 
-  Class.forName("org.sqlite.JDBC")
-  ConnectionPool.singleton("jdbc:sqlite:./elastimq.db", "", "")
+  object PersistedMessageQueue {
 
-  import scalikejdbc._
-  implicit val session = AutoSession
+    private var initialized = false
 
-  class PersistedMessageQueue(val name: String, val isFifo: Boolean)(implicit nowProvider: NowProvider) extends SimpleMessageQueue with Logging {
+    def initializedSingleton(persistenceConfig: MessagePersistenceConfig): Unit = {
+      if (!initialized) {
+        Class.forName(persistenceConfig.driverClass)
+        ConnectionPool.singleton(persistenceConfig.uri, persistenceConfig.username, persistenceConfig.password)
+        initialized = true
+      }
+    }
+  }
+
+  class PersistedMessageQueue(name: String, persistenceConfig: MessagePersistenceConfig, isFifo: Boolean)(implicit nowProvider: NowProvider)
+    extends SimpleMessageQueue with Logging {
+
+    implicit val session: AutoSession = AutoSession
+
+    PersistedMessageQueue.initializedSingleton(persistenceConfig)
 
     private val hashHex = name.hashCode.toHexString
     private val escapedName = name.replace(".", "_").replace("-", "_")
     private val tableName = SQLSyntax.createUnsafely(s"message_${escapedName}_${hashHex}")
 
-    // TODO: remove this clean-up on init
-    sql"drop table if exists $tableName".execute.apply()
+    if (persistenceConfig.pruneDataOnInit) {
+      sql"drop table if exists $tableName".execute.apply()
+    }
 
     sql"""
     create table if not exists $tableName (
@@ -343,7 +351,6 @@ object MessageQueue {
       tracing_id varchar,
       delivery_receipts blob
     )""".execute.apply()
-
 
     case class SerializableAttribute(key: String, primaryDataType: String, stringValue: String, customType: Option[String])
 
