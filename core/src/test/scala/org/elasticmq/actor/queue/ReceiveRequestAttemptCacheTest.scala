@@ -30,7 +30,8 @@ class ReceiveRequestAttemptCacheTest extends AnyFunSuite with Matchers {
       isFifo = false,
       messageGroupId = None,
       messageDeduplicationId = None,
-      tracingId = None
+      tracingId = None,
+      sequenceNumber = None
     )
     val msg2 = msg1.copy(id = "id-2")
     val msg3 = msg1.copy(id = "id-3")
@@ -79,7 +80,8 @@ class ReceiveRequestAttemptCacheTest extends AnyFunSuite with Matchers {
       isFifo = false,
       messageGroupId = None,
       messageDeduplicationId = None,
-      tracingId = None
+      tracingId = None,
+      sequenceNumber = None
     )
     val msg2 = msg1.copy(id = "id-2")
     val messageQueue = MessageQueue(isFifo = false)
