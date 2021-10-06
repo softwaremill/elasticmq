@@ -22,6 +22,7 @@ case class InternalMessage(
     messageGroupId: Option[String],
     messageDeduplicationId: Option[DeduplicationId],
     tracingId: Option[TracingId],
+    sequenceNumber: Option[String],
     persistedId: Option[Long] = None
 ) extends Comparable[InternalMessage] {
 
@@ -66,7 +67,8 @@ case class InternalMessage(
       MessageStatistics(firstReceive, receiveCount),
       messageGroupId,
       messageDeduplicationId,
-      tracingId
+      tracingId,
+      sequenceNumber
     )
 
   def toNewMessageData =
@@ -78,7 +80,8 @@ case class InternalMessage(
       messageGroupId,
       messageDeduplicationId,
       orderIndex,
-      tracingId
+      tracingId,
+      sequenceNumber
     )
 
   def deliverable(deliveryTime: Long): Boolean = nextDelivery <= deliveryTime
@@ -101,7 +104,8 @@ object InternalMessage {
       queueData.isFifo,
       newMessageData.messageGroupId,
       newMessageData.messageDeduplicationId,
-      newMessageData.tracingId
+      newMessageData.tracingId,
+      newMessageData.sequenceNumber
     )
   }
 

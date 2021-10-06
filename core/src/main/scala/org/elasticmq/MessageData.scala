@@ -12,5 +12,6 @@ case class MessageData(
     statistics: MessageStatistics,
     messageGroupId: Option[String],
     messageDeduplicationId: Option[DeduplicationId],
-    tracingId: Option[TracingId]
+    tracingId: Option[TracingId],
+    sequenceNumber: Option[String]
 )
