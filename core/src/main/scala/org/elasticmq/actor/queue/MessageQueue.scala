@@ -9,6 +9,8 @@ import scala.annotation.tailrec
 import scala.collection.mutable
 import spray.json._
 
+import scala.collection.mutable.ArrayBuffer
+
 sealed trait MessageQueue {
 
   /** Add a message onto the queue. Note that this doesn't do any deduplication, that should've happened in an earlier
@@ -378,7 +380,7 @@ object MessageQueue {
         val firstReceive = received.map(time => OnDateTimeReceived(new DateTime(time))).getOrElse(NeverReceived)
 
         InternalMessage(
-          messageId, mutable.Buffer.from(serializedDeliveryReceipts), nextDelivery, content,
+          messageId, serializedDeliveryReceipts.toBuffer, nextDelivery, content,
           serializedAttrs, new DateTime(created), 0, firstReceive, receiveCount, isFifo = false,
           groupId,
           deduplicationId.map(id => DeduplicationId(id)),
