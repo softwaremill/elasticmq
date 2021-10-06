@@ -1,7 +1,13 @@
 package org.elasticmq.actor.queue
 
+import org.elasticmq._
+import org.elasticmq.util.{Logging, NowProvider}
+import org.joda.time.DateTime
+
+import java.io.File
 import scala.annotation.tailrec
 import scala.collection.mutable
+import spray.json._
 
 sealed trait MessageQueue {
 
@@ -30,6 +36,10 @@ sealed trait MessageQueue {
     *   The id of the message to remove
     */
   def remove(messageId: String): Unit
+
+  def inMemory: Boolean = true
+
+  def onDelete(): Unit = { }
 
   /** Return a message queue where all the messages on the queue do not match the given predicate function
     *
@@ -108,16 +118,22 @@ sealed trait MessageQueue {
 
 object MessageQueue {
 
-  def apply(isFifo: Boolean): MessageQueue =
-    if (isFifo) {
-      new FifoMessageQueue
+  def apply(name: String, isFifo: Boolean)(implicit nowProvider: NowProvider): MessageQueue = {
+    val persistenceEnabled = true
+    if (persistenceEnabled) {
+      new PersistedMessageQueue(name, isFifo)
     } else {
-      new SimpleMessageQueue
+      if (isFifo) {
+        new FifoMessageQueue
+      } else {
+        new SimpleMessageQueue
+      }
     }
+  }
 
   /** A "simple" straightforward message queue. The queue represents the common SQS behaviour
     */
-  class SimpleMessageQueue extends MessageQueue {
+  class SimpleMessageQueue extends MessageQueue with Logging {
     protected val messagesById: mutable.HashMap[String, InternalMessage] = mutable.HashMap.empty
     protected val messageQueue: mutable.PriorityQueue[InternalMessage] = mutable.PriorityQueue.empty
 
@@ -287,5 +303,215 @@ object MessageQueue {
       messageGroupId.getOrElse(
         throw new IllegalStateException("Messages on a FIFO queue are required to have a message group id")
       )
+  }
+
+  // TODO: remove this clean-up on init
+  val file = new File("./elastimq.db")
+  file.delete()
+
+  import scalikejdbc._
+
+  Class.forName("org.sqlite.JDBC")
+  ConnectionPool.singleton("jdbc:sqlite:./elastimq.db", "", "")
+
+  import scalikejdbc._
+  implicit val session = AutoSession
+
+  class PersistedMessageQueue(val name: String, val isFifo: Boolean)(implicit nowProvider: NowProvider) extends SimpleMessageQueue with Logging {
+
+    private val hashHex = name.hashCode.toHexString
+    private val escapedName = name.replace(".", "_").replace("-", "_")
+    private val tableName = SQLSyntax.createUnsafely(s"message_${escapedName}_${hashHex}")
+
+    // TODO: remove this clean-up on init
+    sql"drop table if exists $tableName".execute.apply()
+
+    sql"""
+    create table if not exists $tableName (
+      id integer primary key autoincrement,
+      message_id varchar unique,
+      content blob,
+      attributes blob,
+      next_delivery integer(8),
+      created integer(8),
+      received integer(8),
+      receive_count integer(4),
+      group_id varchar,
+      deduplication_id varchar,
+      tracing_id varchar,
+      delivery_receipts blob
+    )""".execute.apply()
+
+
+    case class SerializableAttribute(key: String, primaryDataType: String, stringValue: String, customType: Option[String])
+
+    object SerializableAttributeProtocol extends DefaultJsonProtocol {
+      implicit val colorFormat: JsonFormat[SerializableAttribute] = jsonFormat4(SerializableAttribute)
+    }
+
+    import SerializableAttributeProtocol._
+
+    case class DBMessage(id: Long,
+                         messageId: String,
+                         content: String,
+                         attributes: String,
+                         nextDelivery: Long,
+                         created: Long,
+                         received: Option[Long],
+                         receiveCount: Int,
+                         groupId: Option[String],
+                         deduplicationId: Option[String],
+                         tracingId: Option[String],
+                         deliveryReceipts: String) {
+
+      def toInternalMessage: InternalMessage = {
+        val serializedAttrs = attributes.parseJson.convertTo[List[SerializableAttribute]].map { attr =>
+          (attr.key, attr.primaryDataType match {
+            case "String" => StringMessageAttribute(attr.stringValue, attr.customType)
+            case "Number" => NumberMessageAttribute(attr.stringValue, attr.customType)
+            case "Binary" => BinaryMessageAttribute.fromBase64(attr.stringValue, attr.customType)
+          })
+        } toMap
+
+        val serializedDeliveryReceipts = deliveryReceipts.parseJson.convertTo[List[String]]
+
+        val firstReceive = received.map(time => OnDateTimeReceived(new DateTime(time))).getOrElse(NeverReceived)
+
+        InternalMessage(
+          messageId, mutable.Buffer.from(serializedDeliveryReceipts), nextDelivery, content,
+          serializedAttrs, new DateTime(created), 0, firstReceive, receiveCount, isFifo = false,
+          groupId,
+          deduplicationId.map(id => DeduplicationId(id)),
+          tracingId.map(TracingId),
+          Some(id))
+      }
+    }
+
+    object DBMessage extends SQLSyntaxSupport[DBMessage] {
+      override val tableName = s"message_$name"
+      def apply(rs: WrappedResultSet) = new DBMessage(
+        rs.long("id"),
+        rs.string("message_id"),
+        rs.string("content"),
+        rs.string("attributes"),
+        rs.long("next_delivery"),
+        rs.long("created"),
+        rs.longOpt("received"),
+        rs.int("receive_count"),
+        rs.stringOpt("group_id"),
+        rs.stringOpt("deduplication_id"),
+        rs.stringOpt("tracing_id"),
+        rs.string("delivery_receipts")
+      )
+    }
+
+    override def onDelete(): Unit = {
+      sql"drop table if exists $tableName".execute.apply()
+    }
+
+    override def +=(message: InternalMessage): Unit = {
+      val attributes = message.messageAttributes.toList.map {
+        case (k, v) =>
+          v match {
+            case StringMessageAttribute(stringValue, customType) => SerializableAttribute(k, "String", stringValue, customType)
+            case NumberMessageAttribute(stringValue, customType) => SerializableAttribute(k, "Number", stringValue, customType)
+            case attr: BinaryMessageAttribute => SerializableAttribute(k, "Binary", attr.asBase64, attr.customType)
+          }
+      }
+
+      val received = message.firstReceive match {
+        case NeverReceived => None
+        case OnDateTimeReceived(when) => Some(when.toInstant.getMillis)
+      }
+
+      val deduplicationId = message.messageDeduplicationId.map(_.id)
+      val deliveryReceipts = message.deliveryReceipts.toList
+
+      val updateCount = message.persistedId match {
+        case Some(persistedId) =>
+          sql"""update $tableName set
+                      attributes = ${attributes.toJson.toString},
+                      next_delivery = ${message.nextDelivery},
+                      received = $received,
+                      receive_count = ${message.receiveCount},
+                      tracing_id = ${message.tracingId.map(_.id)},
+                      delivery_receipts = ${deliveryReceipts.toJson.toString}
+                where id = $persistedId""".update.apply
+        case None =>
+          sql"""insert into $tableName
+           (message_id, content, attributes, next_delivery, created, received, receive_count, group_id, deduplication_id, tracing_id, delivery_receipts)
+           values (
+                   ${message.id},
+                   ${message.content},
+                   ${attributes.toJson.toString},
+                   ${message.nextDelivery},
+                   ${message.created.toInstant.getMillis},
+                   $received,
+                   ${message.receiveCount},
+                   ${message.messageGroupId},
+                   $deduplicationId,
+                   ${message.tracingId.map(_.id)},
+                   ${deliveryReceipts.toJson.toString})""".update.apply
+      }
+
+      if (updateCount != 1) {
+        // TODO: handle error
+      }
+    }
+
+    override def byId: Map[String, InternalMessage] = {
+      DB localTx { implicit session =>
+        sql"select * from $tableName order by id"
+          .map(rs => DBMessage(rs)).list.apply()
+          .map(_.toInternalMessage)
+          .map(msg => (msg.id, msg))
+          .toMap
+      }
+    }
+
+    override def clear(): Unit = {
+      sql"delete from $tableName".update.apply
+    }
+
+    override def remove(messageId: String): Unit = {
+      sql"delete from $tableName where message_id = ${messageId}".update.apply
+    }
+
+    override def inMemory: Boolean = false
+
+    override def filterNot(p: InternalMessage => Boolean): MessageQueue = ???
+
+    override def dequeue(count: Int, deliveryTime: Long): List[InternalMessage] = {
+      val now = nowProvider.now.toInstant.getMillis
+
+      if (isFifo) {
+        dequeueFifo(count, now)
+      } else {
+        dequeueNonFifo(count, now)
+      }
+    }
+
+    private def dequeueFifo(count: Int, now: Long) = {
+      DB localTx { implicit session =>
+        val messages = sql"select * from $tableName order by id".map(rs => DBMessage(rs)).list.apply()
+          .map(_.toInternalMessage)
+
+        val filteredMessages = messages.groupBy(_.messageGroupId.get).filter {
+          case (_, messagesInGroup) => messagesInGroup.head.nextDelivery <= now
+        }.toList.flatMap(_._2).take(count)
+
+        filteredMessages
+      }
+    }
+
+    private def dequeueNonFifo(count: Int, now: Long) = {
+      DB localTx { implicit session =>
+        val messages = sql"select * from $tableName where next_delivery <= $now order by id limit $count"
+          .map(rs => DBMessage(rs)).list.apply()
+          .map(_.toInternalMessage)
+
+        messages
+      }
+    }
   }
 }

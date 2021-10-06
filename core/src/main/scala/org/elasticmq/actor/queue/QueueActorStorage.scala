@@ -20,7 +20,7 @@ trait QueueActorStorage {
   }
 
   var queueData: QueueData = initialQueueData
-  var messageQueue: MessageQueue = MessageQueue(queueData.isFifo)
+  var messageQueue: MessageQueue = MessageQueue(queueData.name, queueData.isFifo)(nowProvider)
   var fifoMessagesHistory: FifoDeduplicationIdsHistory = FifoDeduplicationIdsHistory.newHistory()
   val receiveRequestAttemptCache = new ReceiveRequestAttemptCache
   private var sequenceNumber: Long = 0

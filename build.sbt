@@ -106,6 +106,9 @@ val akka2HttpTestkit = "com.typesafe.akka" %% "akka-http-testkit" % akkaHttpVers
 
 val scalaAsync = "org.scala-lang.modules" %% "scala-async" % "0.10.0"
 
+val scalikeJdbc = "org.scalikejdbc" %% "scalikejdbc" % "3.5.0"
+val sqliteJdbc = "org.xerial" % "sqlite-jdbc" % "3.36.0.3"
+
 val common = Seq(scalalogging)
 
 val akka25Overrides =
@@ -132,7 +135,7 @@ lazy val core: Project = (project in file("core"))
   .settings(
     Seq(
       name := "elasticmq-core",
-      libraryDependencies ++= Seq(jodaTime, jodaConvert, akka2Actor, akka2Testkit) ++ common,
+      libraryDependencies ++= Seq(jodaTime, jodaConvert, akka2Actor, akka2Testkit, scalikeJdbc, sqliteJdbc, sprayJson) ++ common,
       coverageMinimum := 94
     )
   )

@@ -21,11 +21,16 @@ trait UpdateVisibilityTimeoutOps extends Logging {
         val oldNextDelivery = internalMessage.nextDelivery
         internalMessage.nextDelivery = newNextDelivery.millis
 
-        if (newNextDelivery.millis < oldNextDelivery) {
-          // We have to re-insert the msg, as another msg with a bigger next delivery may be now before it,
-          // so the msg wouldn't be correctly received.
-          // (!) This may be slow (!)
-          messageQueue = messageQueue.filterNot(_.id == internalMessage.id)
+        logger.debug(s"${newNextDelivery.millis} < ${oldNextDelivery}")
+        if (messageQueue.inMemory) {
+          if (newNextDelivery.millis < oldNextDelivery) {
+            // We have to re-insert the msg, as another msg with a bigger next delivery may be now before it,
+            // so the msg wouldn't be correctly received.
+            // (!) This may be slow (!)
+            messageQueue = messageQueue.filterNot(_.id == internalMessage.id)
+            messageQueue += internalMessage
+          }
+        } else {
           messageQueue += internalMessage
         }
         // Else:

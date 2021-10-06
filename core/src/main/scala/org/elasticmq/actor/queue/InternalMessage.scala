@@ -21,7 +21,8 @@ case class InternalMessage(
     isFifo: Boolean,
     messageGroupId: Option[String],
     messageDeduplicationId: Option[DeduplicationId],
-    tracingId: Option[TracingId]
+    tracingId: Option[TracingId],
+    persistedId: Option[Long] = None
 ) extends Comparable[InternalMessage] {
 
   // Priority queues have biggest elements first

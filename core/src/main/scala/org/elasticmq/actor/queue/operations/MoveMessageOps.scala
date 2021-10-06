@@ -35,7 +35,7 @@ trait MoveMessageOps extends Logging {
   }
 
   private def moveMessageToQueue(internalMessage: InternalMessage): Unit = {
-    messageQueue += internalMessage
+    messageQueue += internalMessage.copy(persistedId = None)
     fifoMessagesHistory = fifoMessagesHistory.addNew(internalMessage)
   }
 }
