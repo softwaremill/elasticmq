@@ -31,7 +31,7 @@ class DeduplicationTimerTest
         _ <- fifoQueue ? SendMessage(createMessage("id2", "body2", DeduplicationId("dedup2")))
         firstLookup <- fifoQueue ? ReceiveMessages(DefaultVisibilityTimeout, 10, None, None)
       } yield (fifoQueue, firstLookup),
-      1.second
+      2.second
     )
     nowProvider.mutableNowMillis.set(DateTime.now().plusMinutes(5).plusSeconds(1).getMillis)
 
@@ -44,7 +44,7 @@ class DeduplicationTimerTest
         _ <- fifoQueue ? SendMessage(createMessage("id4", "body2", DeduplicationId("dedup2")))
         secondLookup <- fifoQueue ? ReceiveMessages(DefaultVisibilityTimeout, 10, None, None)
       } yield secondLookup,
-      1.second
+      2.second
     )
 
     firstLookup.map(_.id) shouldBe List(MessageId("id1"), MessageId("id2"))
