@@ -2,7 +2,7 @@ package org.elasticmq.actor
 
 import org.elasticmq._
 import org.elasticmq.actor.reply._
-import org.elasticmq.actor.test.{ActorTest, DataCreationHelpers, QueueManagerForEachTest}
+import org.elasticmq.actor.test._
 import org.elasticmq.msg._
 import org.joda.time.DateTime
 import org.scalatest.EitherValues
@@ -11,8 +11,8 @@ import org.scalatest.matchers.should.Matchers
 import scala.concurrent.Await
 import scala.concurrent.duration.DurationInt
 
-class DeduplicationTimerTest
-    extends ActorTest
+abstract class DeduplicationTimerTest
+  extends ActorTest
     with Matchers
     with QueueManagerForEachTest
     with DataCreationHelpers
@@ -63,3 +63,7 @@ class DeduplicationTimerTest
       messageDeduplicationId = Some(deduplicationId)
     )
 }
+
+class DeduplicationTimerTestWithInMemoryQueues extends DeduplicationTimerTest with MessagePersistenceDisabledConfig
+
+class DeduplicationTimerTestWithPersistenceQueues extends DeduplicationTimerTest with MessagePersistenceEnabledConfig

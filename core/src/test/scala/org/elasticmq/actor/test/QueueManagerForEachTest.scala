@@ -14,14 +14,28 @@ trait QueueManagerForEachTest extends BeforeAndAfterEach {
   var queueManagerActor: ActorRef = _
   var nowProvider: MutableNowProvider = _
 
+  def messagePersistenceConfig: MessagePersistenceConfig
+
   override protected def beforeEach(): Unit = {
     super.beforeEach()
     nowProvider = new MutableNowProvider
-    queueManagerActor = system.actorOf(Props(new QueueManagerActor(nowProvider, StrictSQSLimits, MessagePersistenceConfig(), None)))
+    queueManagerActor = system.actorOf(Props(new QueueManagerActor(nowProvider, StrictSQSLimits, messagePersistenceConfig, None)))
   }
 
   override protected def afterEach(): Unit = {
     system.stop(queueManagerActor)
     super.afterEach()
   }
+}
+
+trait MessagePersistenceDisabledConfig {
+  def messagePersistenceConfig: MessagePersistenceConfig = MessagePersistenceConfig()
+}
+
+trait MessagePersistenceEnabledConfig {
+  def messagePersistenceConfig: MessagePersistenceConfig = MessagePersistenceConfig(
+    enabled = true,
+    driverClass = "org.sqlite.JDBC",
+    uri = "jdbc:sqlite:./elastimq.db",
+    pruneDataOnInit = true)
 }

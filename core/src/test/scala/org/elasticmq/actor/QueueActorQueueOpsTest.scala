@@ -1,12 +1,12 @@
 package org.elasticmq.actor
 
-import org.elasticmq.actor.reply._
 import org.elasticmq._
+import org.elasticmq.actor.reply._
+import org.elasticmq.actor.test._
 import org.elasticmq.msg._
-import org.elasticmq.actor.test.{DataCreationHelpers, QueueManagerForEachTest, ActorTest}
-import org.joda.time.{Duration, DateTime}
+import org.joda.time.{DateTime, Duration}
 
-class QueueActorQueueOpsTest extends ActorTest with QueueManagerForEachTest with DataCreationHelpers {
+abstract class QueueActorQueueOpsTest extends ActorTest with QueueManagerForEachTest with DataCreationHelpers {
 
   test("queue modified and created dates should be stored") {
     // Given
@@ -218,3 +218,7 @@ class QueueActorQueueOpsTest extends ActorTest with QueueManagerForEachTest with
     }
   }
 }
+
+class QueueActorQueueOpsTestWithInMemoryQueues extends QueueActorQueueOpsTest with MessagePersistenceDisabledConfig
+
+class QueueActorQueueOpsTestWithPersistenceQueues extends QueueActorQueueOpsTest with MessagePersistenceEnabledConfig

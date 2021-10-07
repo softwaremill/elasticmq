@@ -1,14 +1,14 @@
 package org.elasticmq.actor
 
 import akka.util.Timeout
-import org.elasticmq.actor.reply._
-import org.elasticmq.msg.{CreateQueue, DeleteQueue, ListQueues, LookupQueue}
 import org.elasticmq.MillisVisibilityTimeout
-import org.elasticmq.actor.test.{ActorTest, DataCreationHelpers, QueueManagerForEachTest}
+import org.elasticmq.actor.reply._
+import org.elasticmq.actor.test._
+import org.elasticmq.msg.{CreateQueue, DeleteQueue, ListQueues, LookupQueue}
 
 import scala.concurrent.duration.DurationInt
 
-class QueueManagerActorTest extends ActorTest with QueueManagerForEachTest with DataCreationHelpers {
+abstract class QueueManagerActorTest extends ActorTest with QueueManagerForEachTest with DataCreationHelpers {
 
   implicit override val timeout: Timeout = 5.seconds
 
@@ -92,3 +92,7 @@ class QueueManagerActorTest extends ActorTest with QueueManagerForEachTest with 
     }
   }
 }
+
+class QueueManagerActorTestWithInMemoryQueues extends QueueManagerActorTest with MessagePersistenceDisabledConfig
+
+class QueueManagerActorTestWithPersistenceQueues extends QueueManagerActorTest with MessagePersistenceEnabledConfig

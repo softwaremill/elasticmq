@@ -1,12 +1,12 @@
 package org.elasticmq.actor
 
-import org.elasticmq.actor.reply._
 import org.elasticmq._
+import org.elasticmq.actor.reply._
+import org.elasticmq.actor.test._
 import org.elasticmq.msg._
-import org.elasticmq.actor.test.{ActorTest, DataCreationHelpers, QueueManagerForEachTest}
 import org.joda.time.{DateTime, Duration}
 
-class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with DataCreationHelpers {
+abstract class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with DataCreationHelpers {
 
   test("non-existent msg should not be found") {
     // Given
@@ -295,7 +295,7 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
   test("should receive at most as much messages as given") {
     // Given
     val q1 = createQueueData("q1", MillisVisibilityTimeout(1L))
-    val msgs = (for { i <- 1 to 5 } yield createNewMessageData("xyz" + i, "123", Map(), MillisNextDelivery(i))).toList
+    val msgs = (for {i <- 1 to 5} yield createNewMessageData("xyz" + i, "123", Map(), MillisNextDelivery(i))).toList
     val List(m1, m2, m3, m4, m5) = msgs
 
     for {
@@ -321,7 +321,7 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
   test("should receive as much messages as possible") {
     // Given
     val q1 = createQueueData("q1", MillisVisibilityTimeout(1L))
-    val msgs = (for { i <- 1 to 3 } yield createNewMessageData("xyz" + i, "123", Map(), MillisNextDelivery(i))).toList
+    val msgs = (for {i <- 1 to 3} yield createNewMessageData("xyz" + i, "123", Map(), MillisNextDelivery(i))).toList
     val List(m1, m2, m3) = msgs
 
     for {
@@ -376,7 +376,8 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
         None
       )
       _ <- {
-        Thread.sleep(500); nowProvider.mutableNowMillis.set(200L)
+        Thread.sleep(500);
+        nowProvider.mutableNowMillis.set(200L)
         queueActor ? SendMessage(msg)
       }
 
@@ -411,7 +412,10 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
         None
       )
 
-      _ <- { Thread.sleep(500); queueActor ? SendMessage(msg) }
+      _ <- {
+        Thread.sleep(500);
+        queueActor ? SendMessage(msg)
+      }
 
       receiveResults1 <- receiveResults1Future
       receiveResults2 <- receiveResults2Future
@@ -457,7 +461,8 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
       )
 
       _ <- {
-        Thread.sleep(500); queueActor ? SendMessage(msg1)
+        Thread.sleep(500);
+        queueActor ? SendMessage(msg1)
         queueActor ? SendMessage(msg2)
       }
 
@@ -594,3 +599,7 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
     messageOpt.map(_.copy(deliveryReceipt = None))
   }
 }
+
+class QueueActorMsgOpsTestWithInMemoryQueues extends QueueManagerActorTest with MessagePersistenceDisabledConfig
+
+class QueueActorMsgOpsTestWithPersistenceQueues extends QueueManagerActorTest with MessagePersistenceEnabledConfig
