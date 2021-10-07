@@ -5,7 +5,7 @@ import org.scalatest.matchers.should.Matchers
 
 import scala.collection.JavaConverters.{iterableAsScalaIterableConverter, mapAsScalaMapConverter}
 
-class ReceiveMessageAttributesTest extends SqsClientServerCommunication with Matchers {
+abstract class ReceiveMessageAttributesTest extends SqsClientServerCommunication with Matchers {
 
   val MessageDeduplicationIdKey = "MessageDeduplicationId"
   val MessageGroupIdKey = "MessageGroupId"

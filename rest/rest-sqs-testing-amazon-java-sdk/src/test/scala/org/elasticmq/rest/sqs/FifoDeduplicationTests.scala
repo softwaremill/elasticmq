@@ -14,7 +14,7 @@ import spray.json.enrichAny
 
 import scala.collection.JavaConverters._
 
-class FifoDeduplicationTests extends SqsClientServerCommunication with Matchers with OptionValues {
+abstract class FifoDeduplicationTests extends SqsClientServerCommunication with Matchers with OptionValues {
 
   test("FIFO provided message deduplication ids should take priority over content based deduplication") {
     // Given

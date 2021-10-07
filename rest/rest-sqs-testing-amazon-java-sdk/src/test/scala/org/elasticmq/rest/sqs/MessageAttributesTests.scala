@@ -6,7 +6,7 @@ import org.scalatest.matchers.should.Matchers
 
 import scala.collection.JavaConverters.{collectionAsScalaIterableConverter, mapAsJavaMapConverter}
 
-class MessageAttributesTests extends SqsClientServerCommunication with Matchers with OptionValues {
+abstract class MessageAttributesTests extends SqsClientServerCommunication with Matchers with OptionValues {
 
   test("Sending message with empty attribute value and String data type should result in error") {
     val queueUrl = client.createQueue(new CreateQueueRequest("testQueue1")).getQueueUrl

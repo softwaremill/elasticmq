@@ -19,7 +19,7 @@ import scala.collection.JavaConverters._
 import scala.io.Source
 import scala.util.control.Exception._
 
-class AmazonJavaSdkTestSuite extends SqsClientServerCommunication with Matchers {
+abstract class AmazonJavaSdkTestSuite extends SqsClientServerCommunication with Matchers {
   val visibilityTimeoutAttribute = "VisibilityTimeout"
   val defaultVisibilityTimeoutAttribute = "VisibilityTimeout"
   val redrivePolicyAttribute = "RedrivePolicy"

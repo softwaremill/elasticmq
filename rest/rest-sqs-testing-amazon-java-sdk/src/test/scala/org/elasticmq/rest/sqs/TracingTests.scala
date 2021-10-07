@@ -10,7 +10,7 @@ import scala.collection.JavaConverters.{
   seqAsJavaListConverter
 }
 
-class TracingTests extends SqsClientServerCommunication with Matchers with OptionValues {
+abstract class TracingTests extends SqsClientServerCommunication with Matchers with OptionValues {
 
   val AWSTraceHeaderAttribute = "AWSTraceHeader"
 

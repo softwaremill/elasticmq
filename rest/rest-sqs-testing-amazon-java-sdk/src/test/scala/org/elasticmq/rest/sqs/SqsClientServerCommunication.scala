@@ -26,14 +26,10 @@ trait SqsClientServerCommunication extends AnyFunSuite with BeforeAndAfter with 
   val awsAccountId = "123456789012"
   val awsRegion = "elasticmq"
 
+  def messagePersistenceConfig: MessagePersistenceConfig
+
   before {
     logger.info(s"\n---\nRunning test: $currentTestName\n---\n")
-
-    val messagePersistenceConfig = MessagePersistenceConfig(
-      enabled = true,
-      driverClass = "org.sqlite.JDBC",
-      uri = "jdbc:sqlite:./elastimq.db",
-      pruneDataOnInit = true)
 
     strictServer = SQSRestServerBuilder
       .withPort(9321)

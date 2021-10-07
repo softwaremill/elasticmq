@@ -1,0 +1,14 @@
+package org.elasticmq.rest.sqs.inmemory
+
+import org.elasticmq.MessagePersistenceConfig
+import org.elasticmq.rest.sqs._
+
+trait MessagePersistenceDisabledConfig {
+  def messagePersistenceConfig: MessagePersistenceConfig = MessagePersistenceConfig()
+}
+
+class InMemoryAmazonJavaSdkTest extends AmazonJavaSdkTestSuite with MessagePersistenceDisabledConfig
+class InMemoryFifoDeduplicationTests extends FifoDeduplicationTests with MessagePersistenceDisabledConfig
+class InMemoryMessageAttributesTests extends MessageAttributesTests with MessagePersistenceDisabledConfig
+class InMemoryReceiveMessageAttributesTest extends ReceiveMessageAttributesTest with MessagePersistenceDisabledConfig
+class InMemoryTracingTests extends TracingTests with MessagePersistenceDisabledConfig
