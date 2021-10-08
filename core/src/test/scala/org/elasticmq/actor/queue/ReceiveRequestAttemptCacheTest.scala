@@ -3,11 +3,14 @@ package org.elasticmq.actor.queue
 import scala.collection.mutable
 import org.elasticmq.{MessagePersistenceConfig, NeverReceived}
 import org.elasticmq.actor.queue.ReceiveRequestAttemptCache.ReceiveFailure.Invalid
+import org.elasticmq.actor.test.{MessagePersistenceDisabledConfig, MessagePersistenceEnabledConfig}
 import org.elasticmq.util.MutableNowProvider
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 
-class ReceiveRequestAttemptCacheTest extends AnyFunSuite with Matchers {
+abstract class ReceiveRequestAttemptCacheTest extends AnyFunSuite with Matchers {
+
+  def messagePersistenceConfig: MessagePersistenceConfig
 
   test("should retrieve message by attempt id or return the appropriate failure") {
     val cache = new ReceiveRequestAttemptCache
@@ -36,7 +39,7 @@ class ReceiveRequestAttemptCacheTest extends AnyFunSuite with Matchers {
     val msg2 = msg1.copy(id = "id-2")
     val msg3 = msg1.copy(id = "id-3")
 
-    val messageQueue = MessageQueue("testQueue", MessagePersistenceConfig(), isFifo = false)
+    val messageQueue = MessageQueue("testQueue", messagePersistenceConfig, isFifo = false)
     messageQueue += msg1
     messageQueue += msg2
     messageQueue += msg3
@@ -84,7 +87,7 @@ class ReceiveRequestAttemptCacheTest extends AnyFunSuite with Matchers {
       sequenceNumber = None
     )
     val msg2 = msg1.copy(id = "id-2")
-    val messageQueue = MessageQueue("testQueue", MessagePersistenceConfig(), isFifo = false)
+    val messageQueue = MessageQueue("testQueue", messagePersistenceConfig, isFifo = false)
     messageQueue += msg1
     messageQueue += msg2
     cache.add(attemptId1, List(msg1))
@@ -98,3 +101,7 @@ class ReceiveRequestAttemptCacheTest extends AnyFunSuite with Matchers {
     cache.get(attemptId1, messageQueue).right.get should be(empty)
   }
 }
+
+class ReceiveRequestAttemptCacheTestWithInMemoryQueues extends ReceiveRequestAttemptCacheTest with MessagePersistenceDisabledConfig
+
+class ReceiveRequestAttemptCacheTestWithPersistedQueues extends ReceiveRequestAttemptCacheTest with MessagePersistenceEnabledConfig
