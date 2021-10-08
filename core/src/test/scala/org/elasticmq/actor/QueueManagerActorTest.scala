@@ -8,7 +8,7 @@ import org.elasticmq.msg.{CreateQueue, DeleteQueue, ListQueues, LookupQueue}
 
 import scala.concurrent.duration.DurationInt
 
-abstract class QueueManagerActorTest extends ActorTest with QueueManagerForEachTest with DataCreationHelpers {
+sealed abstract class QueueManagerActorTest extends ActorTest with QueueManagerForEachTest with DataCreationHelpers {
 
   implicit override val timeout: Timeout = 5.seconds
 

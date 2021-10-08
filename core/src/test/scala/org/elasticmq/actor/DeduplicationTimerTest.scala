@@ -11,7 +11,7 @@ import org.scalatest.matchers.should.Matchers
 import scala.concurrent.Await
 import scala.concurrent.duration.DurationInt
 
-abstract class DeduplicationTimerTest
+sealed abstract class DeduplicationTimerTest
   extends ActorTest
     with Matchers
     with QueueManagerForEachTest

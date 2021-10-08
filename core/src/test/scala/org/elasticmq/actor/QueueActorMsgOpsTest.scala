@@ -6,7 +6,7 @@ import org.elasticmq.actor.test._
 import org.elasticmq.msg._
 import org.joda.time.{DateTime, Duration}
 
-abstract class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with DataCreationHelpers {
+sealed abstract class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with DataCreationHelpers {
 
   test("non-existent msg should not be found") {
     // Given
@@ -600,6 +600,6 @@ abstract class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTe
   }
 }
 
-class QueueActorMsgOpsTestWithInMemoryQueues extends QueueManagerActorTest with MessagePersistenceDisabledConfig
+class QueueActorMsgOpsTestWithInMemoryQueues extends QueueActorMsgOpsTest with MessagePersistenceDisabledConfig
 
-class QueueActorMsgOpsTestWithPersistenceQueues extends QueueManagerActorTest with MessagePersistenceEnabledConfig
+class QueueActorMsgOpsTestWithPersistenceQueues extends QueueActorMsgOpsTest with MessagePersistenceEnabledConfig
