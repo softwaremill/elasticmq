@@ -8,7 +8,7 @@ import org.elasticmq.util.MutableNowProvider
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 
-abstract class ReceiveRequestAttemptCacheTest extends AnyFunSuite with Matchers {
+sealed abstract class ReceiveRequestAttemptCacheTest extends AnyFunSuite with Matchers {
 
   def messagePersistenceConfig: MessagePersistenceConfig
 
