@@ -93,10 +93,10 @@ trait CreateQueueDirectives {
             // if the request set the attributes compare them against the queue
             if (
               (secondsDelayOpt.isDefined && queueData.delay.getStandardSeconds != secondsDelay) ||
-                (secondsReceiveMessageWaitTimeOpt.isDefined
-                  && queueData.receiveMessageWait.getStandardSeconds != secondsReceiveMessageWaitTime) ||
-                (secondsVisibilityTimeoutOpt.isDefined
-                  && queueData.defaultVisibilityTimeout.seconds != secondsVisibilityTimeout)
+              (secondsReceiveMessageWaitTimeOpt.isDefined
+                && queueData.receiveMessageWait.getStandardSeconds != secondsReceiveMessageWaitTime) ||
+              (secondsVisibilityTimeoutOpt.isDefined
+                && queueData.defaultVisibilityTimeout.seconds != secondsVisibilityTimeout)
             ) {
               // Special case: the queue existed, but has different attributes
               throw new SQSException("AWS.SimpleQueueService.QueueNameExists")
@@ -106,14 +106,10 @@ trait CreateQueueDirectives {
               respondWith {
                 <CreateQueueResponse>
                   <CreateQueueResult>
-                    <QueueUrl>
-                      {url}
-                    </QueueUrl>
+                    <QueueUrl>{url}</QueueUrl>
                   </CreateQueueResult>
                   <ResponseMetadata>
-                    <RequestId>
-                      {EmptyRequestId}
-                    </RequestId>
+                    <RequestId>{EmptyRequestId}</RequestId>
                   </ResponseMetadata>
                 </CreateQueueResponse>
               }
