@@ -36,5 +36,6 @@ trait QueueActorMessageOps
       case DeduplicationIdsCleanup =>
         fifoMessagesHistory = fifoMessagesHistory.cleanOutdatedMessages(nowProvider)
         DoNotReply()
+      case RestoreMessages(messages) => restoreMessages(messages)
     }
 }

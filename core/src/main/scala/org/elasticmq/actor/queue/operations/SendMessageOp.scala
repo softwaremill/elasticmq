@@ -1,13 +1,16 @@
 package org.elasticmq.actor.queue.operations
 
 import akka.actor.{ActorContext, ActorRef}
-import org.elasticmq.actor.queue.{InternalMessage, QueueActorStorage}
+import akka.pattern.ask
+import akka.util.Timeout
+import org.elasticmq.actor.queue.{AddMessage, InternalMessage, QueueActorStorage}
 import org.elasticmq.actor.reply.{DoNotReply, ReplyAction}
 import org.elasticmq.msg.SendMessage
 import org.elasticmq.util.Logging
 import org.elasticmq.{MessageData, NewMessageData}
 
 import java.util.concurrent.atomic.AtomicLong
+import scala.concurrent.{Await, ExecutionContext}
 
 trait SendMessageOp extends Logging {
   this: QueueActorStorage =>
@@ -31,6 +34,11 @@ trait SendMessageOp extends Logging {
     }
   }
 
+  def restoreMessages(messages: List[InternalMessage]): Unit = {
+    messages.foreach(addInternalMessage)
+    logger.info(s"Restored ${messages.size} messages")
+  }
+
   private def sendMessage(message: NewMessageData): MessageData = {
     if (queueData.isFifo) {
       CommonOperations.wasRegistered(message, fifoMessagesHistory) match {
@@ -44,11 +52,26 @@ trait SendMessageOp extends Logging {
 
   private def addMessage(message: NewMessageData) = {
     val internalMessage = InternalMessage.from(message, queueData)
-    messageQueue += internalMessage
-    fifoMessagesHistory = fifoMessagesHistory.addNew(internalMessage)
+    addInternalMessage(internalMessage)
     logger.debug(s"${queueData.name}: Sent message with id ${internalMessage.id}")
 
+    addMessageNotification(internalMessage)
+
     internalMessage.toMessageData
+  }
+
+  private def addInternalMessage(internalMessage: InternalMessage) = {
+    messageQueue += internalMessage
+    fifoMessagesHistory = fifoMessagesHistory.addNew(internalMessage)
+  }
+
+  private def addMessageNotification(internalMessage: InternalMessage) = {
+    implicit val ec: ExecutionContext = context.dispatcher
+    implicit val timeout: Timeout = defaultTimeout
+
+    queueMetadataListener.foreach(ref => {
+      Await.result(ref ? AddMessage(queueData.name, internalMessage), timeout.duration)
+    })
   }
 }
 

@@ -1,10 +1,14 @@
 package org.elasticmq.actor.queue.operations
 
+import akka.pattern.ask
+import akka.util.Timeout
 import org.elasticmq._
 import org.elasticmq.actor.queue.ReceiveRequestAttemptCache.ReceiveFailure.{Expired, Invalid}
-import org.elasticmq.actor.queue.{InternalMessage, QueueActorStorage}
+import org.elasticmq.actor.queue.{InternalMessage, QueueActorStorage, UpdateMessage}
 import org.elasticmq.msg.MoveMessage
 import org.elasticmq.util.{Logging, NowProvider}
+
+import scala.concurrent.{Await, ExecutionContext}
 
 trait ReceiveMessageOps extends Logging {
   this: QueueActorStorage with DeleteMessageOps =>
@@ -33,6 +37,8 @@ trait ReceiveMessageOps extends Logging {
         val newNextDelivery = CommonOperations.computeNextDelivery(visibilityTimeout, queueData, np)
         internalMessage.trackDelivery(newNextDelivery)
         messageQueue += internalMessage
+
+        updateMessageNotification(internalMessage)
 
         logger.debug(s"${queueData.name}: Receiving message ${internalMessage.id}")
         internalMessage
@@ -66,5 +72,14 @@ trait ReceiveMessageOps extends Logging {
         Some(internalMessage)
       }
     }
+  }
+
+  private def updateMessageNotification(internalMessage: InternalMessage) = {
+    implicit val ec: ExecutionContext = context.dispatcher
+    implicit val timeout: Timeout = defaultTimeout
+
+    queueMetadataListener.foreach(ref => {
+      Await.result(ref ? UpdateMessage(queueData.name, internalMessage), timeout.duration)
+    })
   }
 }
