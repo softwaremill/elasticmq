@@ -4,8 +4,8 @@ import com.typesafe.config.{Config, ConfigFactory, ConfigObject, ConfigValue}
 
 import java.io.File
 import java.util.concurrent.TimeUnit
-import scala.jdk.CollectionConverters.MapHasAsScala
 import scala.util.Try
+import scala.collection.JavaConverters._
 
 object QueueConfigUtil {
 
@@ -18,7 +18,7 @@ object QueueConfigUtil {
     Try(persistedQueuesConfig
       .getObject("queues")
       .asScala.toMap)
-      .map(getQueuesFromConfig)
+      .map(getQueuesFromConfig(_))
       .getOrElse(Nil)
 
   def getQueuesToCreate(persistedQueues: List[CreateQueueMetadata], baseQueues: List[CreateQueueMetadata]): List[CreateQueueMetadata] = {

@@ -56,6 +56,6 @@ class ConfigBasedQueuePersistenceActor(storagePath: String, baseQueues: List[Cre
           .toOption
       )
 
-    if (errors.nonEmpty) Left(errors) else Right()
+    if (errors.nonEmpty) Left(errors) else Right(())
   }
 }
