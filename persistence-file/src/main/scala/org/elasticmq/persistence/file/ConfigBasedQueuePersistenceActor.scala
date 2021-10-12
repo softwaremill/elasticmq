@@ -29,13 +29,13 @@ class ConfigBasedQueuePersistenceActor(storagePath: String, baseQueues: List[Cre
       queues.put(queue.name, queue)
       QueuePersister.saveToConfigFile(queues.values.toList, storagePath)
 
-    case AddMessage(_, _) =>
+    case QueueMessageAdded(_, _) =>
       sender() ! OperationUnsupported
 
-    case UpdateMessage(_, _) =>
+    case QueueMessageUpdated(_, _) =>
       sender() ! OperationUnsupported
 
-    case RemoveMessage(_, _) =>
+    case QueueMessageRemoved(_, _) =>
       sender() ! OperationUnsupported
 
     case Restore(queueManagerActor: ActorRef) =>

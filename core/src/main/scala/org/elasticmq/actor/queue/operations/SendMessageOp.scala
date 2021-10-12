@@ -3,7 +3,7 @@ package org.elasticmq.actor.queue.operations
 import akka.actor.{ActorContext, ActorRef}
 import akka.pattern.ask
 import akka.util.Timeout
-import org.elasticmq.actor.queue.{AddMessage, InternalMessage, QueueActorStorage}
+import org.elasticmq.actor.queue.{QueueMessageAdded, InternalMessage, QueueActorStorage}
 import org.elasticmq.actor.reply.{DoNotReply, ReplyAction}
 import org.elasticmq.msg.SendMessage
 import org.elasticmq.util.Logging
@@ -55,7 +55,7 @@ trait SendMessageOp extends Logging {
     addInternalMessage(internalMessage)
     logger.debug(s"${queueData.name}: Sent message with id ${internalMessage.id}")
 
-    addMessageNotification(internalMessage)
+    sendMessageAddedNotification(internalMessage)
 
     internalMessage.toMessageData
   }
@@ -63,15 +63,6 @@ trait SendMessageOp extends Logging {
   private def addInternalMessage(internalMessage: InternalMessage) = {
     messageQueue += internalMessage
     fifoMessagesHistory = fifoMessagesHistory.addNew(internalMessage)
-  }
-
-  private def addMessageNotification(internalMessage: InternalMessage) = {
-    implicit val ec: ExecutionContext = context.dispatcher
-    implicit val timeout: Timeout = defaultTimeout
-
-    queueMetadataListener.foreach(ref => {
-      Await.result(ref ? AddMessage(queueData.name, internalMessage), timeout.duration)
-    })
   }
 }
 

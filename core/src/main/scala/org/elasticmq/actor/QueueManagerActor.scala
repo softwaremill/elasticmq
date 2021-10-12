@@ -9,7 +9,7 @@ import org.elasticmq.util.{Logging, NowProvider}
 
 import scala.reflect._
 
-class QueueManagerActor(nowProvider: NowProvider, limits: Limits, queueMetadataListener: Option[ActorRef])
+class QueueManagerActor(nowProvider: NowProvider, limits: Limits, queueEventListener: Option[ActorRef])
     extends ReplyingActor
     with Logging {
   type M[X] = QueueManagerMsg[X]
@@ -29,9 +29,9 @@ class QueueManagerActor(nowProvider: NowProvider, limits: Limits, queueMetadataL
             case Left(error) =>
               Left(QueueCreationError(queueData.name, error))
             case Right(_) =>
-              val actor = createQueueActor(nowProvider, queueData, queueMetadataListener)
+              val actor = createQueueActor(nowProvider, queueData, queueEventListener)
               queues(queueData.name) = actor
-              queueMetadataListener.foreach(_ ! QueueCreated(queueData))
+              queueEventListener.foreach(_ ! QueueCreated(queueData))
               Right(actor)
           }
         }
@@ -39,7 +39,7 @@ class QueueManagerActor(nowProvider: NowProvider, limits: Limits, queueMetadataL
       case DeleteQueue(queueName) =>
         logger.info(s"Deleting queue $queueName")
         queues.remove(queueName).foreach(context.stop)
-        queueMetadataListener.foreach(_ ! QueueDeleted(queueName))
+        queueEventListener.foreach(_ ! QueueDeleted(queueName))
 
       case LookupQueue(queueName) =>
         val result = queues.get(queueName)
@@ -53,7 +53,7 @@ class QueueManagerActor(nowProvider: NowProvider, limits: Limits, queueMetadataL
   protected def createQueueActor(
       nowProvider: NowProvider,
       queueData: QueueData,
-      queueMetadataListener: Option[ActorRef]
+      queueEventListener: Option[ActorRef]
   ): ActorRef = {
     val deadLetterQueueActor = queueData.deadLettersQueue.flatMap { qd => queues.get(qd.name) }
     val copyMessagesToQueueActor = queueData.copyMessagesTo.flatMap { queueName => queues.get(queueName) }
@@ -67,7 +67,7 @@ class QueueManagerActor(nowProvider: NowProvider, limits: Limits, queueMetadataL
           deadLetterQueueActor,
           copyMessagesToQueueActor,
           moveMessagesToQueueActor,
-          queueMetadataListener
+          queueEventListener
         )
       )
     )

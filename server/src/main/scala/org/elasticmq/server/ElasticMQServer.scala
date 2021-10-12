@@ -6,6 +6,7 @@ import org.elasticmq.ElasticMQError
 import org.elasticmq.actor.QueueManagerActor
 import org.elasticmq.actor.queue.Restore
 import org.elasticmq.actor.reply._
+import org.elasticmq.persistence.file.ConfigBasedQueuePersistenceActor
 import org.elasticmq.persistence.sql.SqlQueuePersistenceActor
 import org.elasticmq.rest.sqs.{SQSRestServer, TheSQSRestServerBuilder}
 import org.elasticmq.rest.stats.{StatisticsRestServer, TheStatisticsRestServerBuilder}
@@ -19,7 +20,7 @@ class ElasticMQServer(config: ElasticMQServerConfig) extends Logging {
   val actorSystem = ActorSystem("elasticmq")
 
   def start() = {
-    val queueConfigStore: Option[ActorRef] = createQueueMetadataListener
+    val queueConfigStore: Option[ActorRef] = createQueueEventListener
     val queueManagerActor = createBase(queueConfigStore)
     val restServerOpt = optionallyStartRestSqs(queueManagerActor, queueConfigStore)
     val restStatisticsServerOpt = optionallyStartRestStatistics(queueManagerActor)
@@ -52,11 +53,16 @@ class ElasticMQServer(config: ElasticMQServerConfig) extends Logging {
     shutdown
   }
 
-  private def createQueueMetadataListener: Option[ActorRef] =
-    if (config.queuesStorageEnabled) Some(actorSystem.actorOf(Props(new SqlQueuePersistenceActor(
-      config.baseQueues,
-      config.sqlQueuePersistenceConfig))))
-    else None
+  private def createQueueEventListener: Option[ActorRef] =
+    if (config.sqlQueuePersistenceConfig.enabled) {
+      Some(
+        actorSystem.actorOf(Props(new SqlQueuePersistenceActor(config.sqlQueuePersistenceConfig, config.baseQueues)))
+      )
+    } else if (config.queuesStorageEnabled) {
+      Some(
+        actorSystem.actorOf(Props(new ConfigBasedQueuePersistenceActor(config.queuesStoragePath, config.baseQueues)))
+      )
+    } else None
 
   private def createBase(queueConfigStore: Option[ActorRef]): ActorRef =
     actorSystem.actorOf(Props(new QueueManagerActor(new NowProvider(), config.restSqs.sqsLimits, queueConfigStore)))

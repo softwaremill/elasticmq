@@ -4,7 +4,7 @@ import akka.pattern.ask
 import akka.util.Timeout
 import org.elasticmq._
 import org.elasticmq.actor.queue.ReceiveRequestAttemptCache.ReceiveFailure.{Expired, Invalid}
-import org.elasticmq.actor.queue.{InternalMessage, QueueActorStorage, UpdateMessage}
+import org.elasticmq.actor.queue.{InternalMessage, QueueActorStorage, QueueMessageUpdated}
 import org.elasticmq.msg.MoveMessage
 import org.elasticmq.util.{Logging, NowProvider}
 
@@ -38,7 +38,7 @@ trait ReceiveMessageOps extends Logging {
         internalMessage.trackDelivery(newNextDelivery)
         messageQueue += internalMessage
 
-        updateMessageNotification(internalMessage)
+        sendMessageUpdatedNotification(internalMessage)
 
         logger.debug(s"${queueData.name}: Receiving message ${internalMessage.id}")
         internalMessage
@@ -72,14 +72,5 @@ trait ReceiveMessageOps extends Logging {
         Some(internalMessage)
       }
     }
-  }
-
-  private def updateMessageNotification(internalMessage: InternalMessage) = {
-    implicit val ec: ExecutionContext = context.dispatcher
-    implicit val timeout: Timeout = defaultTimeout
-
-    queueMetadataListener.foreach(ref => {
-      Await.result(ref ? UpdateMessage(queueData.name, internalMessage), timeout.duration)
-    })
   }
 }

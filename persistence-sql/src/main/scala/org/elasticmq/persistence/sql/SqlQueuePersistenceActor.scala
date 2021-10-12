@@ -13,7 +13,7 @@ import org.joda.time.DateTime
 import scala.collection.mutable
 import scala.concurrent.Await
 
-class SqlQueuePersistenceActor(baseQueues: List[CreateQueueMetadata], messagePersistenceConfig: SqlQueuePersistenceConfig) extends Actor with Logging {
+class SqlQueuePersistenceActor(messagePersistenceConfig: SqlQueuePersistenceConfig, baseQueues: List[CreateQueueMetadata]) extends Actor with Logging {
 
   private val queueRepo: QueueRepository = new QueueRepository(messagePersistenceConfig)
   private val repos: mutable.Map[String, MessageRepository] = mutable.HashMap[String, MessageRepository]()
@@ -34,15 +34,15 @@ class SqlQueuePersistenceActor(baseQueues: List[CreateQueueMetadata], messagePer
     case QueueMetadataUpdated(queueData) =>
       queueRepo.update(CreateQueueMetadata.from(queueData))
 
-    case AddMessage(queueName, message) =>
+    case QueueMessageAdded(queueName, message) =>
       repos.get(queueName).foreach(_.add(message))
       sender() ! OperationSuccessful
 
-    case UpdateMessage(queueName, message) =>
+    case QueueMessageUpdated(queueName, message) =>
       repos.get(queueName).foreach(_.update(message))
       sender() ! OperationSuccessful
 
-    case RemoveMessage(queueName, messageId) =>
+    case QueueMessageRemoved(queueName, messageId) =>
       repos.get(queueName).foreach(_.remove(messageId))
       sender() ! OperationSuccessful
 

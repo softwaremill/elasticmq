@@ -1,7 +1,7 @@
 package org.elasticmq.actor.queue.operations
 
 import org.elasticmq._
-import org.elasticmq.actor.queue.{QueueActorStorage, UpdateMessage}
+import org.elasticmq.actor.queue.QueueActorStorage
 import org.elasticmq.util.Logging
 
 trait UpdateVisibilityTimeoutOps extends Logging {
@@ -32,7 +32,7 @@ trait UpdateVisibilityTimeoutOps extends Logging {
         // Just increasing the next delivery. Common case. It is enough to increase the value in the object. No need to
         // re-insert the msg into the queue, as it will be reinserted if needed during receiving.
 
-        queueMetadataListener.foreach(_ ! UpdateMessage(queueData.name, internalMessage))
+        sendMessageUpdatedNotification(internalMessage)
 
         logger.debug(s"${queueData.name}: Updated next delivery of $messageId to $newNextDelivery")
 

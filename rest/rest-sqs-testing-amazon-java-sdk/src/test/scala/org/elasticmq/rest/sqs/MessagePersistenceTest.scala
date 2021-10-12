@@ -63,7 +63,7 @@ class MessagePersistenceTest extends AnyFunSuite with BeforeAndAfter with Matche
       uri = "jdbc:sqlite:./elastimq.db",
       pruneDataOnInit = pruneDataOnInit)
 
-    val store = actorSystem.actorOf(Props(new SqlQueuePersistenceActor(List.empty, persistenceConfigPrune)))
+    val store = actorSystem.actorOf(Props(new SqlQueuePersistenceActor(persistenceConfigPrune, List.empty)))
     val manager = actorSystem.actorOf(Props(new QueueManagerActor(new NowProvider(), StrictSQSLimits, Some(store))))
 
     strictServer = SQSRestServerBuilder
