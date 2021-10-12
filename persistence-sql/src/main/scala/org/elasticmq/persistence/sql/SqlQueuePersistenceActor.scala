@@ -20,6 +20,10 @@ class SqlQueuePersistenceActor(messagePersistenceConfig: SqlQueuePersistenceConf
 
   def receive: Receive = {
     case QueueCreated(queueData) =>
+      logger.whenDebugEnabled {
+        logger.debug(s"Storing queue data: $queueData")
+      }
+
       if (repos.contains(queueData.name)) {
         queueRepo.update(CreateQueueMetadata.from(queueData))
       } else {
@@ -28,21 +32,36 @@ class SqlQueuePersistenceActor(messagePersistenceConfig: SqlQueuePersistenceConf
       }
 
     case QueueDeleted(queueName) =>
+      logger.whenDebugEnabled {
+        logger.debug(s"Removing queue data for queue $queueName")
+      }
       queueRepo.remove(queueName)
       repos.remove(queueName).foreach(_.drop())
 
     case QueueMetadataUpdated(queueData) =>
+      logger.whenDebugEnabled {
+        logger.debug(s"Updating queue: $queueData")
+      }
       queueRepo.update(CreateQueueMetadata.from(queueData))
 
     case QueueMessageAdded(queueName, message) =>
+      logger.whenDebugEnabled {
+        logger.debug(s"Adding new message: $message")
+      }
       repos.get(queueName).foreach(_.add(message))
       sender() ! OperationSuccessful
 
     case QueueMessageUpdated(queueName, message) =>
+      logger.whenDebugEnabled {
+        logger.debug(s"Updating message: $message")
+      }
       repos.get(queueName).foreach(_.update(message))
       sender() ! OperationSuccessful
 
     case QueueMessageRemoved(queueName, messageId) =>
+      logger.whenDebugEnabled {
+        logger.debug(s"Removing message with id $messageId")
+      }
       repos.get(queueName).foreach(_.remove(messageId))
       sender() ! OperationSuccessful
 

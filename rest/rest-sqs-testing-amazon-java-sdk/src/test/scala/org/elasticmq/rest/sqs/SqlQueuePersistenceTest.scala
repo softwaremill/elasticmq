@@ -16,11 +16,11 @@ import org.scalatest.BeforeAndAfter
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 
-import scala.collection.JavaConverters.iterableAsScalaIterableConverter
+import scala.collection.JavaConverters._
 import scala.concurrent.Await
 import scala.util.Try
 
-class MessagePersistenceTest extends AnyFunSuite with BeforeAndAfter with Matchers with Logging {
+class SqlQueuePersistenceTest extends AnyFunSuite with BeforeAndAfter with Matchers with Logging {
 
   private val awsAccountId = "123456789012"
   private val awsRegion = "elasticmq"
@@ -30,24 +30,49 @@ class MessagePersistenceTest extends AnyFunSuite with BeforeAndAfter with Matche
 
   private val actorSystem: ActorSystem = ActorSystem("elasticmq-test")
 
-  test("should persist and read the messages after restart") {
+  test("should persist the messages and after restart read the messages") {
     startServerAndRun(pruneDataOnInit = true) {
       val queueUrl = client.createQueue(new CreateQueueRequest("testQueue1")).getQueueUrl
 
       client.sendMessage(new SendMessageRequest(queueUrl, "Message 1"))
       client.sendMessage(new SendMessageRequest(queueUrl, "Message 2"))
       client.sendMessage(new SendMessageRequest(queueUrl, "Message 3"))
-      client.sendMessage(new SendMessageRequest(queueUrl, "Message 4"))
-      client.sendMessage(new SendMessageRequest(queueUrl, "Message 5"))
     }
 
     startServerAndRun(pruneDataOnInit = false) {
-      val queueUrl = client.createQueue(new CreateQueueRequest("testQueue1")).getQueueUrl
+      val queueUrl = client.getQueueUrl("testQueue1").getQueueUrl
 
-      val messages = client.receiveMessage(new ReceiveMessageRequest(queueUrl).withMaxNumberOfMessages(5)).getMessages
+      val messages = client.receiveMessage(new ReceiveMessageRequest(queueUrl).withMaxNumberOfMessages(3)).getMessages
 
       val bodies = messages.asScala.map(_.getBody).toSet
-      bodies should be(Set("Message 1", "Message 2", "Message 3", "Message 4", "Message 5"))
+      bodies should be(Set("Message 1", "Message 2", "Message 3"))
+    }
+  }
+
+  test("should persist, read messages and after restart re-read the messages") {
+    startServerAndRun(pruneDataOnInit = true) {
+      val queueUrl = client.createQueue(new CreateQueueRequest("testQueue1")
+        .withAttributes(Map("VisibilityTimeout" -> "1").asJava)).getQueueUrl
+
+      client.sendMessage(new SendMessageRequest(queueUrl, "Message 1"))
+      client.sendMessage(new SendMessageRequest(queueUrl, "Message 2"))
+      client.sendMessage(new SendMessageRequest(queueUrl, "Message 3"))
+
+      val messages = client.receiveMessage(new ReceiveMessageRequest(queueUrl).withMaxNumberOfMessages(3)).getMessages
+
+      val bodies = messages.asScala.map(_.getBody).toSet
+      bodies should be(Set("Message 1", "Message 2", "Message 3"))
+    }
+
+    Thread.sleep(1000)
+
+    startServerAndRun(pruneDataOnInit = false) {
+      val queueUrl = client.getQueueUrl("testQueue1").getQueueUrl
+
+      val messages = client.receiveMessage(new ReceiveMessageRequest(queueUrl).withMaxNumberOfMessages(3)).getMessages
+
+      val bodies = messages.asScala.map(_.getBody).toSet
+      bodies should be(Set("Message 1", "Message 2", "Message 3"))
     }
   }
 
@@ -57,13 +82,13 @@ class MessagePersistenceTest extends AnyFunSuite with BeforeAndAfter with Matche
       Timeout(5.seconds)
     }
 
-    val persistenceConfigPrune = SqlQueuePersistenceConfig(
+    val persistenceConfig = SqlQueuePersistenceConfig(
       enabled = true,
       driverClass = "org.sqlite.JDBC",
       uri = "jdbc:sqlite:./elastimq.db",
       pruneDataOnInit = pruneDataOnInit)
 
-    val store = actorSystem.actorOf(Props(new SqlQueuePersistenceActor(persistenceConfigPrune, List.empty)))
+    val store = actorSystem.actorOf(Props(new SqlQueuePersistenceActor(persistenceConfig, List.empty)))
     val manager = actorSystem.actorOf(Props(new QueueManagerActor(new NowProvider(), StrictSQSLimits, Some(store))))
 
     strictServer = SQSRestServerBuilder
