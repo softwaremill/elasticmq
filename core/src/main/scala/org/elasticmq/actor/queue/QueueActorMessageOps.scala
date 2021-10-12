@@ -23,15 +23,20 @@ trait QueueActorMessageOps
 
   timers.startTimerWithFixedDelay(s"Timer: ${queueData.name}", DeduplicationIdsCleanup, 1.second)
 
-  def receiveAndReplyMessageMsg[T](msg: QueueMessageMsg[T]): ReplyAction[T] =
+  def receiveAndReplyMessageMsg[T](msg: QueueMessageMsg[T]): ReplyAction[T] = {
+    val sender = context.sender()
     msg match {
       case SendMessage(message) =>
         handleOrRedirectMessage(message, context)
         DoNotReply()
       case UpdateVisibilityTimeout(messageId, visibilityTimeout) =>
         updateVisibilityTimeout(messageId, visibilityTimeout)
+          .map(result => sender ! result)
+        DoNotReply()
       case ReceiveMessages(visibilityTimeout, count, _, receiveRequestAttemptId) =>
         receiveMessages(visibilityTimeout, count, receiveRequestAttemptId)
+          .map(messages => sender ! messages)
+        DoNotReply()
       case DeleteMessage(deliveryReceipt)    => deleteMessage(deliveryReceipt)
       case LookupMessage(messageId)          => messageQueue.byId.get(messageId.id).map(_.toMessageData)
       case MoveMessage(message, destination) => moveMessage(message, destination)
@@ -40,4 +45,5 @@ trait QueueActorMessageOps
         DoNotReply()
       case RestoreMessages(messages) => restoreMessages(messages)
     }
+  }
 }

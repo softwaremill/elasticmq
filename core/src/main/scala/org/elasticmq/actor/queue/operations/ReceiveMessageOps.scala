@@ -1,14 +1,12 @@
 package org.elasticmq.actor.queue.operations
 
-import akka.pattern.ask
-import akka.util.Timeout
 import org.elasticmq._
 import org.elasticmq.actor.queue.ReceiveRequestAttemptCache.ReceiveFailure.{Expired, Invalid}
-import org.elasticmq.actor.queue.{InternalMessage, QueueActorStorage, QueueMessageUpdated}
+import org.elasticmq.actor.queue.{InternalMessage, QueueActorStorage}
 import org.elasticmq.msg.MoveMessage
 import org.elasticmq.util.{Logging, NowProvider}
 
-import scala.concurrent.{Await, ExecutionContext}
+import scala.concurrent.Future
 
 trait ReceiveMessageOps extends Logging {
   this: QueueActorStorage with DeleteMessageOps =>
@@ -17,7 +15,7 @@ trait ReceiveMessageOps extends Logging {
       visibilityTimeout: VisibilityTimeout,
       count: Int,
       receiveRequestAttemptId: Option[String]
-  ): List[MessageData] = {
+  ): Future[List[MessageData]] = {
     implicit val np: NowProvider = nowProvider
     val messages = receiveRequestAttemptId
       .flatMap({ attemptId =>
@@ -38,15 +36,17 @@ trait ReceiveMessageOps extends Logging {
         internalMessage.trackDelivery(newNextDelivery)
         messageQueue += internalMessage
 
-        sendMessageUpdatedNotification(internalMessage)
-
         logger.debug(s"${queueData.name}: Receiving message ${internalMessage.id}")
         internalMessage
       }
 
     receiveRequestAttemptId.foreach { attemptId => receiveRequestAttemptCache.add(attemptId, messages) }
 
-    messages.map(_.toMessageData)
+    Future.sequence(
+      messages.map(internalMessage =>
+        sendMessageUpdatedNotification(internalMessage).map(_ => internalMessage.toMessageData)
+      )
+    )
   }
 
   private def getMessagesFromRequestAttemptCache(

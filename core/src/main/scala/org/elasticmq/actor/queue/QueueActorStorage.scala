@@ -36,10 +36,10 @@ trait QueueActorStorage {
     }).getOrElse(Future.successful(OperationUnsupported))
   }
 
-  def sendMessageUpdatedNotification(internalMessage: InternalMessage): Unit = {
-    queueEventListener.foreach(ref => {
-      Await.result(ref ? QueueMessageUpdated(queueData.name, internalMessage), timeout.duration)
-    })
+  def sendMessageUpdatedNotification(internalMessage: InternalMessage): Future[OperationStatus] = {
+    queueEventListener.map(ref => {
+      ref ? QueueMessageUpdated(queueData.name, internalMessage)
+    }).getOrElse(Future.successful(OperationUnsupported))
   }
 
   def sendMessageRemovedNotification(msgId: String): Unit = {

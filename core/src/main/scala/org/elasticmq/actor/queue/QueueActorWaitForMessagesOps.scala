@@ -32,7 +32,7 @@ trait QueueActorWaitForMessagesOps extends ReplyingActor with QueueActorMessageO
         scheduleTryReplyWhenAvailable()
     }
 
-  override def receiveAndReplyMessageMsg[T](msg: QueueMessageMsg[T]): ReplyAction[T] =
+  override def receiveAndReplyMessageMsg[T](msg: QueueMessageMsg[T]): ReplyAction[T] = {
     msg match {
       case SendMessage(message) =>
         val result = super.receiveAndReplyMessageMsg(msg)
@@ -40,17 +40,21 @@ trait QueueActorWaitForMessagesOps extends ReplyingActor with QueueActorMessageO
         scheduleTryReplyWhenAvailable()
         result
 
-      case rm @ ReceiveMessages(_, _, waitForMessagesOpt, _) =>
-        val result = super.receiveAndReplyMessageMsg(msg)
-        val waitForMessages =
-          waitForMessagesOpt.getOrElse(queueData.receiveMessageWait)
-        if (result == ReplyWith(Nil) && waitForMessages.getMillis > 0) {
-          val seq = assignSequenceFor(rm)
-          logger.debug(s"${queueData.name}: Awaiting messages: start for sequence $seq.")
-          scheduleTimeoutReply(seq, waitForMessages)
-          scheduleTryReplyWhenAvailable()
-          DoNotReply()
-        } else result
+      case rm @ ReceiveMessages(visibilityTimeout, count, waitForMessagesOpt, receiveRequestAttemptId) =>
+        val result = receiveMessages(visibilityTimeout, count, receiveRequestAttemptId)
+        val waitForMessages = waitForMessagesOpt.getOrElse(queueData.receiveMessageWait)
+        val sender = context.sender()
+        result.map { messages =>
+          if (messages == Nil && waitForMessages.getMillis > 0) {
+            val seq = assignSequenceFor(rm, sender)
+            logger.debug(s"${queueData.name}: Awaiting messages: start for sequence $seq.")
+            scheduleTimeoutReply(seq, waitForMessages)
+            scheduleTryReplyWhenAvailable()
+          } else {
+            sender ! messages
+          }
+        }
+        DoNotReply()
 
       case uvm: UpdateVisibilityTimeout =>
         val result = super.receiveAndReplyMessageMsg(msg)
@@ -60,8 +64,8 @@ trait QueueActorWaitForMessagesOps extends ReplyingActor with QueueActorMessageO
 
       case _ => super.receiveAndReplyMessageMsg(msg)
     }
+  }
 
-  @tailrec
   private def tryReply(): Unit = {
     awaitingReply.headOption match {
       case Some(
@@ -72,10 +76,12 @@ trait QueueActorWaitForMessagesOps extends ReplyingActor with QueueActorMessageO
           ) =>
         val received = receiveMessages(visibilityTimeout, count, receiveRequestAttemptId)
 
-        if (received != Nil) {
-          sendReply(seq, originalSender, received)
-          awaitingReply.remove(seq)
-          tryReply()
+        received.map { messages =>
+          if (messages != Nil) {
+            sendReply(seq, originalSender, messages)
+            awaitingReply.remove(seq)
+            tryReply()
+          }
         }
       case _ => // do nothing
     }
@@ -88,10 +94,10 @@ trait QueueActorWaitForMessagesOps extends ReplyingActor with QueueActorMessageO
     )
   }
 
-  private def assignSequenceFor(receiveMessages: ReceiveMessages): Long = {
+  private def assignSequenceFor(receiveMessages: ReceiveMessages, recipient: ActorRef): Long = {
     val seq = senderSequence
     senderSequence += 1
-    awaitingReply(seq) = AwaitingData(sender, receiveMessages, nowProvider.nowMillis)
+    awaitingReply(seq) = AwaitingData(recipient, receiveMessages, nowProvider.nowMillis)
     seq
   }
 
