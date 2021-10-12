@@ -1,12 +1,12 @@
 package org.elasticmq.actor.queue
 
 import akka.actor.{ActorContext, ActorRef}
-import akka.pattern.ask
+import org.elasticmq.actor.reply._
 import akka.util.Timeout
 import org.elasticmq.util.NowProvider
 import org.elasticmq.{FifoDeduplicationIdsHistory, QueueData}
 
-import scala.concurrent.{Await, ExecutionContext}
+import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.concurrent.duration.DurationInt
 
 trait QueueActorStorage {
@@ -30,10 +30,10 @@ trait QueueActorStorage {
   var fifoMessagesHistory: FifoDeduplicationIdsHistory = FifoDeduplicationIdsHistory.newHistory()
   val receiveRequestAttemptCache = new ReceiveRequestAttemptCache
 
-  def sendMessageAddedNotification(internalMessage: InternalMessage): Unit = {
-    queueEventListener.foreach(ref => {
-      Await.result(ref ? QueueMessageAdded(queueData.name, internalMessage), timeout.duration)
-    })
+  def sendMessageAddedNotification(internalMessage: InternalMessage): Future[OperationStatus] = {
+    queueEventListener.map(ref => {
+      ref ? QueueMessageAdded(queueData.name, internalMessage)
+    }).getOrElse(Future.successful(OperationUnsupported))
   }
 
   def sendMessageUpdatedNotification(internalMessage: InternalMessage): Unit = {

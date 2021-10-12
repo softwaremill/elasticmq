@@ -1,21 +1,18 @@
 package org.elasticmq.actor.queue.operations
 
 import akka.actor.{ActorContext, ActorRef}
-import akka.pattern.ask
-import akka.util.Timeout
-import org.elasticmq.actor.queue.{QueueMessageAdded, InternalMessage, QueueActorStorage}
-import org.elasticmq.actor.reply.{DoNotReply, ReplyAction}
+import org.elasticmq.actor.queue.{InternalMessage, QueueActorStorage}
 import org.elasticmq.msg.SendMessage
 import org.elasticmq.util.Logging
 import org.elasticmq.{MessageData, NewMessageData}
 
 import java.util.concurrent.atomic.AtomicLong
-import scala.concurrent.{Await, ExecutionContext}
+import scala.concurrent.Future
 
 trait SendMessageOp extends Logging {
   this: QueueActorStorage =>
 
-  def handleOrRedirectMessage(message: NewMessageData, context: ActorContext): ReplyAction[MessageData] = {
+  def handleOrRedirectMessage(message: NewMessageData, context: ActorContext): Unit = {
     val message2 = if (queueData.isFifo && message.sequenceNumber.isEmpty) {
       message.copy(sequenceNumber = Some(SequenceNumber.next()))
     } else message
@@ -24,13 +21,13 @@ trait SendMessageOp extends Logging {
 
     moveMessagesToActorRef match {
       case Some(moveTo) =>
-        // preserve original sender so that reply would be received there from the move-to actor
         implicit val sender: ActorRef = context.sender()
+        // preserve original sender so that reply would be received there from the move-to actor
         moveTo ! SendMessage(message2)
-        DoNotReply()
 
       case None =>
-        sendMessage(message2)
+        val sender = context.sender()
+        sendMessage(message2).map(msg => sender ! msg)
     }
   }
 
@@ -39,10 +36,10 @@ trait SendMessageOp extends Logging {
     logger.info(s"Restored ${messages.size} messages")
   }
 
-  private def sendMessage(message: NewMessageData): MessageData = {
+  private def sendMessage(message: NewMessageData): Future[MessageData] = {
     if (queueData.isFifo) {
       CommonOperations.wasRegistered(message, fifoMessagesHistory) match {
-        case Some(messageOnQueue) => messageOnQueue.toMessageData
+        case Some(messageOnQueue) => Future.successful(messageOnQueue.toMessageData)
         case None                 => addMessage(message)
       }
     } else {
@@ -50,14 +47,13 @@ trait SendMessageOp extends Logging {
     }
   }
 
-  private def addMessage(message: NewMessageData) = {
+  private def addMessage(message: NewMessageData): Future[MessageData] = {
     val internalMessage = InternalMessage.from(message, queueData)
     addInternalMessage(internalMessage)
     logger.debug(s"${queueData.name}: Sent message with id ${internalMessage.id}")
 
     sendMessageAddedNotification(internalMessage)
-
-    internalMessage.toMessageData
+      .map(_ => internalMessage.toMessageData)
   }
 
   private def addInternalMessage(internalMessage: InternalMessage) = {

@@ -25,7 +25,9 @@ trait QueueActorMessageOps
 
   def receiveAndReplyMessageMsg[T](msg: QueueMessageMsg[T]): ReplyAction[T] =
     msg match {
-      case SendMessage(message) => handleOrRedirectMessage(message, context)
+      case SendMessage(message) =>
+        handleOrRedirectMessage(message, context)
+        DoNotReply()
       case UpdateVisibilityTimeout(messageId, visibilityTimeout) =>
         updateVisibilityTimeout(messageId, visibilityTimeout)
       case ReceiveMessages(visibilityTimeout, count, _, receiveRequestAttemptId) =>
