@@ -41,7 +41,7 @@ object CreateQueueMetadata {
   def from(queueData: QueueData): CreateQueueMetadata = {
     CreateQueueMetadata(
       queueData.name,
-      Some(queueData.defaultVisibilityTimeout.millis),
+      Some(queueData.defaultVisibilityTimeout.seconds),
       Some(queueData.delay.getStandardSeconds),
       Some(queueData.receiveMessageWait.getStandardSeconds),
       queueData.deadLettersQueue.map(dlq => DeadLettersQueue(dlq.name, dlq.maxReceiveCount)),
