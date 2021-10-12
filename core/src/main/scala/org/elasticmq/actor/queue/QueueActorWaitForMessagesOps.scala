@@ -1,22 +1,19 @@
 package org.elasticmq.actor.queue
 
-import org.elasticmq.msg.{QueueMessageMsg, ReceiveMessages, SendMessage, UpdateVisibilityTimeout}
-import org.elasticmq.actor.reply._
-import org.elasticmq.{MessageData}
 import akka.actor.{ActorRef, Cancellable}
-
-import scala.concurrent.{duration => scd}
+import org.elasticmq.MessageData
+import org.elasticmq.actor.reply._
+import org.elasticmq.msg.{QueueMessageMsg, ReceiveMessages, SendMessage, UpdateVisibilityTimeout}
 import org.joda.time.Duration
 
-import scala.annotation.tailrec
+import scala.concurrent.{duration => scd}
 
 trait QueueActorWaitForMessagesOps extends ReplyingActor with QueueActorMessageOps {
   this: QueueActorStorage =>
 
   private var senderSequence = 0L
   private var scheduledTryReply: Option[Cancellable] = None
-  private val awaitingReply =
-    new collection.mutable.HashMap[Long, AwaitingData]()
+  private val awaitingReply = new collection.mutable.HashMap[Long, AwaitingData]()
 
   override def receive =
     super.receive orElse {
@@ -28,10 +25,10 @@ trait QueueActorWaitForMessagesOps extends ReplyingActor with QueueActorMessageO
         scheduleTryReplyWhenAvailable()
 
       case ReAwaitMessages(seq, ad) =>
-        awaitingReply.put(seq, ad)
+        awaitingReply.put(seq, ad.copy(pending = false))
 
       case ReplyIfTimeout(seq, replyWith) =>
-        awaitingReply.remove(seq).foreach { case AwaitingData(originalSender, _, _) =>
+        awaitingReply.remove(seq).foreach { case AwaitingData(originalSender, _, _, _) =>
           logger.debug(s"${queueData.name}: Awaiting messages: sequence $seq timed out. Replying with no messages.")
           originalSender ! replyWith
         }
@@ -42,6 +39,7 @@ trait QueueActorWaitForMessagesOps extends ReplyingActor with QueueActorMessageO
         scheduleTryReplyWhenAvailable()
 
       case SendReply(seq, originalSender, messages) =>
+        awaitingReply.remove(seq)
         sendReply(seq, originalSender, messages)
         tryReply()
     }
@@ -57,11 +55,10 @@ trait QueueActorWaitForMessagesOps extends ReplyingActor with QueueActorMessageO
       case rm @ ReceiveMessages(visibilityTimeout, count, waitForMessagesOpt, receiveRequestAttemptId) =>
         val result = receiveMessages(visibilityTimeout, count, receiveRequestAttemptId)
         val waitForMessages = waitForMessagesOpt.getOrElse(queueData.receiveMessageWait)
-        val _self = self
         val recipient = context.sender()
         result.map { messages =>
           if (messages == Nil && waitForMessages.getMillis > 0) {
-            _self ! AwaitMessages(rm, recipient)
+            self ! AwaitMessages(rm, recipient)
           } else {
             recipient ! messages
           }
@@ -83,19 +80,19 @@ trait QueueActorWaitForMessagesOps extends ReplyingActor with QueueActorMessageO
       case Some(
             (
               seq,
-              ad @ AwaitingData(originalSender, ReceiveMessages(visibilityTimeout, count, _, receiveRequestAttemptId), _)
+              ad @ AwaitingData(originalSender, ReceiveMessages(visibilityTimeout, count, _, receiveRequestAttemptId), _, pending)
             )
           ) =>
-        val received = receiveMessages(visibilityTimeout, count, receiveRequestAttemptId)
+        if (!pending) {
+          val received = receiveMessages(visibilityTimeout, count, receiveRequestAttemptId)
+          awaitingReply.put(seq, ad.copy(pending = true))
 
-        awaitingReply.remove(seq)
-
-        val _self = self
-        received.map { messages =>
-          if (messages != Nil) {
-            _self ! SendReply(seq, originalSender, messages)
-          } else {
-            _self ! ReAwaitMessages(seq, ad)
+          received.map { messages =>
+            if (messages != Nil) {
+              self ! SendReply(seq, originalSender, messages)
+            } else {
+              self ! ReAwaitMessages(seq, ad)
+            }
           }
         }
       case _ => // do nothing
@@ -137,14 +134,13 @@ trait QueueActorWaitForMessagesOps extends ReplyingActor with QueueActorMessageO
   }
 
   private def schedule(afterMillis: Long, msg: Any): Cancellable = {
-    import context.dispatcher
     context.system.scheduler
       .scheduleOnce(scd.Duration(afterMillis, scd.MILLISECONDS), self, msg)
   }
 
   case class ReplyIfTimeout(seq: Long, replyWith: AnyRef)
 
-  case class AwaitingData(originalSender: ActorRef, originalReceiveMessages: ReceiveMessages, waitStart: Long)
+  case class AwaitingData(originalSender: ActorRef, originalReceiveMessages: ReceiveMessages, waitStart: Long, pending: Boolean = false)
 
   case class AwaitMessages(rm: ReceiveMessages, recipient: ActorRef)
 
