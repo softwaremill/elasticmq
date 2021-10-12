@@ -20,6 +20,13 @@ trait QueueActorWaitForMessagesOps extends ReplyingActor with QueueActorMessageO
 
   override def receive =
     super.receive orElse {
+      case AwaitMessages(rm, recipient) =>
+        val waitForMessages = rm.waitForMessages.getOrElse(queueData.receiveMessageWait)
+        val seq = assignSequenceFor(rm, recipient)
+        logger.debug(s"${queueData.name}: Awaiting messages: start for sequence $seq.")
+        scheduleTimeoutReply(seq, waitForMessages)
+        scheduleTryReplyWhenAvailable()
+
       case ReplyIfTimeout(seq, replyWith) =>
         awaitingReply.remove(seq).foreach { case AwaitingData(originalSender, _, _) =>
           logger.debug(s"${queueData.name}: Awaiting messages: sequence $seq timed out. Replying with no messages.")
@@ -43,13 +50,11 @@ trait QueueActorWaitForMessagesOps extends ReplyingActor with QueueActorMessageO
       case rm @ ReceiveMessages(visibilityTimeout, count, waitForMessagesOpt, receiveRequestAttemptId) =>
         val result = receiveMessages(visibilityTimeout, count, receiveRequestAttemptId)
         val waitForMessages = waitForMessagesOpt.getOrElse(queueData.receiveMessageWait)
+        val _self = self
         val sender = context.sender()
         result.map { messages =>
           if (messages == Nil && waitForMessages.getMillis > 0) {
-            val seq = assignSequenceFor(rm, sender)
-            logger.debug(s"${queueData.name}: Awaiting messages: start for sequence $seq.")
-            scheduleTimeoutReply(seq, waitForMessages)
-            scheduleTryReplyWhenAvailable()
+            _self ! AwaitMessages(rm, sender)
           } else {
             sender ! messages
           }
@@ -130,6 +135,8 @@ trait QueueActorWaitForMessagesOps extends ReplyingActor with QueueActorMessageO
   case class ReplyIfTimeout(seq: Long, replyWith: AnyRef)
 
   case class AwaitingData(originalSender: ActorRef, originalReceiveMessages: ReceiveMessages, waitStart: Long)
+
+  case class AwaitMessages(rm: ReceiveMessages, recipient: ActorRef)
 
   case object TryReply
 }
