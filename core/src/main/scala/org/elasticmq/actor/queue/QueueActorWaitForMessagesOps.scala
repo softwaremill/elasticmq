@@ -57,11 +57,10 @@ trait QueueActorWaitForMessagesOps extends ReplyingActor with QueueActorMessageO
         val waitForMessages = waitForMessagesOpt.getOrElse(queueData.receiveMessageWait)
         val recipient = context.sender()
         result.map { messages =>
-          if (messages == Nil && waitForMessages.getMillis > 0) {
+          if (messages == Nil && waitForMessages.getMillis > 0)
             self ! AwaitMessages(rm, recipient)
-          } else {
+          else
             recipient ! messages
-          }
         }
         DoNotReply()
 
@@ -88,11 +87,10 @@ trait QueueActorWaitForMessagesOps extends ReplyingActor with QueueActorMessageO
           awaitingReply.put(seq, ad.copy(pending = true))
 
           received.map { messages =>
-            if (messages != Nil) {
+            if (messages != Nil)
               self ! SendReply(seq, originalSender, messages)
-            } else {
+            else
               self ! ReAwaitMessages(seq, ad)
-            }
           }
         }
       case _ => // do nothing
