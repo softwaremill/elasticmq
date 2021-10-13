@@ -312,7 +312,8 @@ lazy val server: Project = (project in file("server"))
         s"--chown=${(Docker / daemonUser).value}:root",
         "/opt/elasticmq.conf",
         "/opt"
-      )
+      ),
+      dockerExposedVolumes += "/data"
     )
   )
   .dependsOn(core, restSqs, persistenceFile, persistenceSql, commonTest % "test")
@@ -390,7 +391,8 @@ lazy val nativeServer: Project = (project in file("native-server"))
       GraalVMNativeImage / packageBin := (GraalVMNativeImage / packageBin)
         .dependsOn(yarnTask.toTask(" build"))
         .value,
-      dockerUpdateLatest := true
+      dockerUpdateLatest := true,
+      dockerExposedVolumes += "/data"
     )
   )
   .dependsOn(server)

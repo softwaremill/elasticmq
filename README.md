@@ -192,6 +192,40 @@ On startup, any queues defined in the given file will be created. Note that the 
 precedence over queues defined in the main configuration file (as described in the previous section) in the `queues`
 section.
 
+# Persisting queues and messages to SQL database
+
+Queues and their messages can be persisted to SQLite database in runtime.
+All events like queue or message creation, deletion or update will be stored in database,
+so that the entire ElasticMQ state can be restored after server restart.
+
+To enable the feature, create a custom configuration file with the following content:
+
+````
+# the include should be done only once, at the beginning of the custom configuration file
+include classpath("application.conf")
+
+message-persistence {
+  enabled = true
+}
+````
+
+By default, the database file is stored in `/data/elasticmq.db`. In order to change it,
+custom JDBC uri needs to be provided:
+
+````
+# the include should be done only once, at the beginning of the custom configuration file
+include classpath("application.conf")
+
+message-persistence {
+  enabled = true
+  uri = "jdbc:sqlite:/home/me/elasticmq.db"
+}
+````
+
+On startup, any queues and their messages persisted in the database will be recreated.
+Note that the persisted queues take precedence over the queues defined
+in the main configuration file (as described in the previous section) in the `queues` section.
+
 # Starting an embedded ElasticMQ server with an SQS interface
 
 Add ElasticMQ Server to `build.sbt` dependencies

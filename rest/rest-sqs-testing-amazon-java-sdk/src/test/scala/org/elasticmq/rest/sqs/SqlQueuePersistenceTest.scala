@@ -85,7 +85,7 @@ class SqlQueuePersistenceTest extends AnyFunSuite with BeforeAndAfter with Match
     val persistenceConfig = SqlQueuePersistenceConfig(
       enabled = true,
       driverClass = "org.sqlite.JDBC",
-      uri = "jdbc:sqlite:./elastimq.db",
+      uri = "jdbc:sqlite:./elasticmq.db",
       pruneDataOnInit = pruneDataOnInit)
 
     val store = actorSystem.actorOf(Props(new SqlQueuePersistenceActor(persistenceConfig, List.empty)))
