@@ -1,10 +1,8 @@
 package org.elasticmq.persistence.sql
 
-import org.elasticmq.persistence.{CreateQueueMetadata, DeadLettersQueue}
+import org.elasticmq.persistence.CreateQueueMetadata
 import org.elasticmq.util.Logging
 import scalikejdbc._
-import spray.json._
-
 
 class QueueRepository(persistenceConfig: SqlQueuePersistenceConfig) extends Logging {
 
@@ -25,38 +23,6 @@ class QueueRepository(persistenceConfig: SqlQueuePersistenceConfig) extends Logg
       data blob
     )""".execute.apply()
 
-  object DeadLettersQueueProtocol extends DefaultJsonProtocol {
-    implicit val DeadLettersQueueFormat: JsonFormat[DeadLettersQueue] = jsonFormat2(DeadLettersQueue)
-  }
-
-  import DeadLettersQueueProtocol._
-
-  object CreateQueueProtocol extends DefaultJsonProtocol {
-    implicit val CreateQueueFormat: JsonFormat[CreateQueueMetadata] = jsonFormat10(CreateQueueMetadata.apply)
-  }
-
-  import CreateQueueProtocol._
-
-  case class DBQueue(name: String, data: String) {
-
-    def toCreateQueue: CreateQueueMetadata = {
-      data.parseJson.convertTo[CreateQueueMetadata]
-    }
-  }
-
-  object DBQueue extends SQLSyntaxSupport[DBQueue] {
-    override val tableName = "queue"
-
-    def apply(rs: WrappedResultSet) = new DBQueue(
-      rs.string("name"),
-      rs.string("data")
-    )
-
-    def from(createQueue: CreateQueueMetadata): DBQueue = {
-      DBQueue(createQueue.name, createQueue.toJson.toString)
-    }
-  }
-
   def drop(): Unit = {
     sql"drop table if exists $tableName".execute.apply()
   }
@@ -64,7 +30,9 @@ class QueueRepository(persistenceConfig: SqlQueuePersistenceConfig) extends Logg
   def findAll(): List[CreateQueueMetadata] = {
     DB localTx { implicit session =>
       sql"select * from $tableName"
-        .map(rs => DBQueue(rs)).list.apply()
+        .map(rs => DBQueue(rs))
+        .list
+        .apply()
         .map(_.toCreateQueue)
     }
   }
