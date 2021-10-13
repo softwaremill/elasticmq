@@ -13,6 +13,8 @@ import org.joda.time.DateTime
 import scala.collection.mutable
 import scala.concurrent.Await
 
+case class GetAllMessages(queueName: String) extends Replyable[List[InternalMessage]]
+
 class SqlQueuePersistenceActor(messagePersistenceConfig: SqlQueuePersistenceConfig, baseQueues: List[CreateQueueMetadata]) extends Actor with Logging {
 
   private val queueRepo: QueueRepository = new QueueRepository(messagePersistenceConfig)
@@ -67,6 +69,9 @@ class SqlQueuePersistenceActor(messagePersistenceConfig: SqlQueuePersistenceConf
 
     case Restore(queueManagerActor: ActorRef) =>
       sender() ! createQueues(queueManagerActor)
+
+    case GetAllMessages(queueName) =>
+      repos.get(queueName).foreach(repo => sender() ! repo.findAll())
   }
 
   private def createQueues(queueManagerActor: ActorRef): Either[List[ElasticMQError], OperationStatus] = {
