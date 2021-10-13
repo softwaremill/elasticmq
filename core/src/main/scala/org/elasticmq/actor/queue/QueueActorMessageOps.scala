@@ -3,7 +3,7 @@ package org.elasticmq.actor.queue
 import akka.actor.Timers
 import org.elasticmq.actor.queue.operations._
 import org.elasticmq.actor.reply._
-import org.elasticmq.msg.{DeleteMessage, LookupMessage, ReceiveMessages, SendMessage, UpdateVisibilityTimeout, _}
+import org.elasticmq.msg._
 import org.elasticmq.util.{Logging, NowProvider}
 
 import scala.concurrent.duration.DurationInt
@@ -37,7 +37,10 @@ trait QueueActorMessageOps
         receiveMessages(visibilityTimeout, count, receiveRequestAttemptId)
           .map(messages => sender ! messages)
         DoNotReply()
-      case DeleteMessage(deliveryReceipt)    => deleteMessage(deliveryReceipt)
+      case DeleteMessage(deliveryReceipt) =>
+        deleteMessage(deliveryReceipt)
+          .map(messages => sender ! messages)
+        DoNotReply()
       case LookupMessage(messageId)          => messageQueue.byId.get(messageId.id).map(_.toMessageData)
       case MoveMessage(message, destination) => moveMessage(message, destination)
       case DeduplicationIdsCleanup =>

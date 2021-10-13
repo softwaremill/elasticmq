@@ -1,13 +1,13 @@
 package org.elasticmq.actor.queue
 
 import akka.actor.{ActorContext, ActorRef}
-import org.elasticmq.actor.reply._
 import akka.util.Timeout
+import org.elasticmq.actor.reply._
 import org.elasticmq.util.NowProvider
 import org.elasticmq.{FifoDeduplicationIdsHistory, QueueData}
 
-import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.concurrent.duration.DurationInt
+import scala.concurrent.{ExecutionContext, Future}
 
 trait QueueActorStorage {
   def nowProvider: NowProvider
@@ -31,20 +31,26 @@ trait QueueActorStorage {
   val receiveRequestAttemptCache = new ReceiveRequestAttemptCache
 
   def sendMessageAddedNotification(internalMessage: InternalMessage): Future[OperationStatus] = {
-    queueEventListener.map(ref => {
-      ref ? QueueMessageAdded(queueData.name, internalMessage)
-    }).getOrElse(Future.successful(OperationUnsupported))
+    queueEventListener
+      .map(ref => {
+        ref ? QueueMessageAdded(queueData.name, internalMessage)
+      })
+      .getOrElse(Future.successful(OperationUnsupported))
   }
 
   def sendMessageUpdatedNotification(internalMessage: InternalMessage): Future[OperationStatus] = {
-    queueEventListener.map(ref => {
-      ref ? QueueMessageUpdated(queueData.name, internalMessage)
-    }).getOrElse(Future.successful(OperationUnsupported))
+    queueEventListener
+      .map(ref => {
+        ref ? QueueMessageUpdated(queueData.name, internalMessage)
+      })
+      .getOrElse(Future.successful(OperationUnsupported))
   }
 
-  def sendMessageRemovedNotification(msgId: String): Unit = {
-    queueEventListener.foreach(ref => {
-      Await.result(ref ? QueueMessageRemoved(queueData.name, msgId), timeout.duration)
-    })
+  def sendMessageRemovedNotification(msgId: String): Future[OperationStatus] = {
+    queueEventListener
+      .map(ref => {
+        ref ? QueueMessageRemoved(queueData.name, msgId)
+      })
+      .getOrElse(Future.successful(OperationUnsupported))
   }
 }
