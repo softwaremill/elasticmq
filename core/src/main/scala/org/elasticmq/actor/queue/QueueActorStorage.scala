@@ -20,10 +20,9 @@ trait QueueActorStorage {
   def queueEventListener: Option[ActorRef]
 
   def context: ActorContext
-  def defaultTimeout: Timeout = 5.seconds
 
   implicit lazy val ec: ExecutionContext = context.dispatcher
-  implicit lazy val timeout: Timeout = defaultTimeout
+  implicit lazy val timeout: Timeout = 5.seconds
 
   var queueData: QueueData = initialQueueData
   var messageQueue: MessageQueue = MessageQueue(queueData.isFifo)
@@ -32,25 +31,25 @@ trait QueueActorStorage {
 
   def sendMessageAddedNotification(internalMessage: InternalMessage): Future[OperationStatus] = {
     queueEventListener
-      .map(ref => {
+      .map { ref =>
         ref ? QueueMessageAdded(queueData.name, internalMessage)
-      })
+      }
       .getOrElse(Future.successful(OperationUnsupported))
   }
 
   def sendMessageUpdatedNotification(internalMessage: InternalMessage): Future[OperationStatus] = {
     queueEventListener
-      .map(ref => {
+      .map { ref =>
         ref ? QueueMessageUpdated(queueData.name, internalMessage)
-      })
+      }
       .getOrElse(Future.successful(OperationUnsupported))
   }
 
   def sendMessageRemovedNotification(msgId: String): Future[OperationStatus] = {
     queueEventListener
-      .map(ref => {
+      .map { ref =>
         ref ? QueueMessageRemoved(queueData.name, msgId)
-      })
+      }
       .getOrElse(Future.successful(OperationUnsupported))
   }
 }

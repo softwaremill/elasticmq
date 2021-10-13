@@ -4,6 +4,7 @@ import akka.actor.{Actor, ActorRef}
 import akka.util.Timeout
 import org.elasticmq.actor.queue._
 import org.elasticmq.actor.reply._
+import org.elasticmq.msg.CreateQueue
 import org.elasticmq.persistence.{CreateQueueMetadata, QueueConfigUtil}
 import org.elasticmq.util.Logging
 import org.elasticmq.{ElasticMQError, QueueData}
@@ -51,7 +52,7 @@ class ConfigBasedQueuePersistenceActor(storagePath: String, baseQueues: List[Cre
     val queuesToCreate = QueueConfigUtil.getQueuesToCreate(QueueConfigUtil.readPersistedQueuesFromPath(storagePath), baseQueues)
     val errors = queuesToCreate
       .flatMap((cq: CreateQueueMetadata) =>
-        Await.result(queueManagerActor ? org.elasticmq.msg.CreateQueue(cq.toQueueData(new DateTime())), timeout.duration)
+        Await.result(queueManagerActor ? CreateQueue(cq.toQueueData(new DateTime())), timeout.duration)
           .swap
           .toOption
       )
