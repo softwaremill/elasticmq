@@ -149,11 +149,7 @@ lazy val persistence: Project = (project in file("persistence"))
       libraryDependencies ++= Seq(
         akka2Actor,
         akka2Slf4j,
-        sprayJson,
         config,
-        pureConfig,
-        scalikeJdbc,
-        sqliteJdbc,
         akka2Testkit,
         scalaAsync
       ) ++ common
@@ -169,11 +165,7 @@ lazy val persistenceFile: Project = (project in file("persistence-file"))
       libraryDependencies ++= Seq(
         akka2Actor,
         akka2Slf4j,
-        sprayJson,
-        config,
         pureConfig,
-        scalikeJdbc,
-        sqliteJdbc,
         akka2Testkit,
         scalaAsync
       ) ++ common
@@ -190,8 +182,6 @@ lazy val persistenceSql: Project = (project in file("persistence-sql"))
         akka2Actor,
         akka2Slf4j,
         sprayJson,
-        config,
-        pureConfig,
         scalikeJdbc,
         sqliteJdbc,
         akka2Testkit,
@@ -247,7 +237,7 @@ lazy val server: Project = (project in file("server"))
   .settings(
     Seq(
       name := "elasticmq-server",
-      libraryDependencies ++= Seq(logback, config, pureConfig, scalikeJdbc, sqliteJdbc),
+      libraryDependencies ++= Seq(logback),
       unmanagedResourceDirectories in Compile += { baseDirectory.value / ".." / "ui" / "build" },
       assembly := assembly.dependsOn(yarnTask.toTask(" build")).value,
       mainClass in assembly := Some("org.elasticmq.server.Main"),
