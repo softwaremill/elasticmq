@@ -1,7 +1,7 @@
 package org.elasticmq.actor.queue.operations
 
 import akka.actor.{ActorContext, ActorRef}
-import org.elasticmq.actor.queue.{InternalMessage, QueueActorStorage}
+import org.elasticmq.actor.queue.{InternalMessage, QueueActorStorage, QueueMessageAdded}
 import org.elasticmq.msg.SendMessage
 import org.elasticmq.util.Logging
 import org.elasticmq.{MessageData, NewMessageData}
@@ -12,7 +12,7 @@ import scala.concurrent.Future
 trait SendMessageOp extends Logging {
   this: QueueActorStorage =>
 
-  def handleOrRedirectMessage(message: NewMessageData, context: ActorContext): Unit = {
+  def handleOrRedirectMessage(message: NewMessageData, context: ActorContext): ResultWithEvents[MessageData] = {
     val message2 = if (queueData.isFifo && message.sequenceNumber.isEmpty) {
       message.copy(sequenceNumber = Some(SequenceNumber.next()))
     } else message
@@ -24,10 +24,10 @@ trait SendMessageOp extends Logging {
         implicit val sender: ActorRef = context.sender()
         // preserve original sender so that reply would be received there from the move-to actor
         moveTo ! SendMessage(message2)
+        ResultWithEvents.none()
 
       case None =>
-        val sender = context.sender()
-        sendMessage(message2).map(msg => sender ! msg)
+        sendMessage(message2)
     }
   }
 
@@ -36,10 +36,10 @@ trait SendMessageOp extends Logging {
     logger.info(s"Restored ${messages.size} messages")
   }
 
-  private def sendMessage(message: NewMessageData): Future[MessageData] = {
+  private def sendMessage(message: NewMessageData): ResultWithEvents[MessageData] = {
     if (queueData.isFifo) {
       CommonOperations.wasRegistered(message, fifoMessagesHistory) match {
-        case Some(messageOnQueue) => Future.successful(messageOnQueue.toMessageData)
+        case Some(messageOnQueue) => ResultWithEvents.some(messageOnQueue.toMessageData)
         case None                 => addMessage(message)
       }
     } else {
@@ -47,16 +47,15 @@ trait SendMessageOp extends Logging {
     }
   }
 
-  private def addMessage(message: NewMessageData): Future[MessageData] = {
+  private def addMessage(message: NewMessageData): ResultWithEvents[MessageData] = {
     val internalMessage = InternalMessage.from(message, queueData)
     addInternalMessage(internalMessage)
     logger.debug(s"${queueData.name}: Sent message with id ${internalMessage.id}")
 
-    sendMessageAddedNotification(internalMessage)
-      .map(_ => internalMessage.toMessageData)
+    ResultWithEvents.some(internalMessage.toMessageData, List(QueueMessageAdded(queueData.name, internalMessage)))
   }
 
-  private def addInternalMessage(internalMessage: InternalMessage) = {
+  private def addInternalMessage(internalMessage: InternalMessage): Unit = {
     messageQueue += internalMessage
     fifoMessagesHistory = fifoMessagesHistory.addNew(internalMessage)
   }

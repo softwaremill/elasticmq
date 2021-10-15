@@ -1,11 +1,11 @@
 package org.elasticmq.actor.queue
 
 import akka.actor.{ActorRef, Cancellable}
-import org.elasticmq.MessageData
 import org.elasticmq.actor.reply._
 import org.elasticmq.msg.{QueueMessageMsg, ReceiveMessages, SendMessage, UpdateVisibilityTimeout}
 import org.joda.time.Duration
 
+import scala.annotation.tailrec
 import scala.concurrent.{duration => scd}
 
 trait QueueActorWaitForMessagesOps extends ReplyingActor with QueueActorMessageOps {
@@ -17,18 +17,8 @@ trait QueueActorWaitForMessagesOps extends ReplyingActor with QueueActorMessageO
 
   override def receive =
     super.receive orElse {
-      case AwaitMessages(rm, recipient) =>
-        val waitForMessages = rm.waitForMessages.getOrElse(queueData.receiveMessageWait)
-        val seq = assignSequenceFor(rm, recipient)
-        logger.debug(s"${queueData.name}: Awaiting messages: start for sequence $seq.")
-        scheduleTimeoutReply(seq, waitForMessages)
-        scheduleTryReplyWhenAvailable()
-
-      case ReAwaitMessages(seq, ad) =>
-        awaitingReply.put(seq, ad.copy(pending = false))
-
       case ReplyIfTimeout(seq, replyWith) =>
-        awaitingReply.remove(seq).foreach { case AwaitingData(originalSender, _, _, _) =>
+        awaitingReply.remove(seq).foreach { case AwaitingData(originalSender, _, _) =>
           logger.debug(s"${queueData.name}: Awaiting messages: sequence $seq timed out. Replying with no messages.")
           originalSender ! replyWith
         }
@@ -37,11 +27,6 @@ trait QueueActorWaitForMessagesOps extends ReplyingActor with QueueActorMessageO
         scheduledTryReply = None
         tryReply()
         scheduleTryReplyWhenAvailable()
-
-      case SendReply(seq, originalSender, messages) =>
-        awaitingReply.remove(seq)
-        sendReply(seq, originalSender, messages)
-        tryReply()
     }
 
   override def receiveAndReplyMessageMsg[T](msg: QueueMessageMsg[T]): ReplyAction[T] = {
@@ -55,14 +40,15 @@ trait QueueActorWaitForMessagesOps extends ReplyingActor with QueueActorMessageO
       case rm @ ReceiveMessages(visibilityTimeout, count, waitForMessagesOpt, receiveRequestAttemptId) =>
         val result = receiveMessages(visibilityTimeout, count, receiveRequestAttemptId)
         val waitForMessages = waitForMessagesOpt.getOrElse(queueData.receiveMessageWait)
-        val recipient = context.sender()
-        result.map { messages =>
-          if (messages == Nil && waitForMessages.getMillis > 0)
-            self ! AwaitMessages(rm, recipient)
-          else
-            recipient ! messages
-        }
-        DoNotReply()
+
+        if (result.result.contains(Nil) && waitForMessages.getMillis > 0) {
+          val seq = assignSequenceFor(rm, context.sender())
+          logger.debug(s"${queueData.name}: Awaiting messages: start for sequence $seq.")
+          scheduleTimeoutReply(seq, waitForMessages)
+          scheduleTryReplyWhenAvailable()
+          DoNotReply()
+        } else
+          result.send()
 
       case uvm: UpdateVisibilityTimeout =>
         val result = super.receiveAndReplyMessageMsg(msg)
@@ -74,34 +60,24 @@ trait QueueActorWaitForMessagesOps extends ReplyingActor with QueueActorMessageO
     }
   }
 
+  @tailrec
   private def tryReply(): Unit = {
     awaitingReply.headOption match {
       case Some(
             (
               seq,
-              ad @ AwaitingData(originalSender, ReceiveMessages(visibilityTimeout, count, _, receiveRequestAttemptId), _, pending)
+              AwaitingData(originalSender, ReceiveMessages(visibilityTimeout, count, _, receiveRequestAttemptId), _)
             )
           ) =>
-        if (!pending) {
-          val received = receiveMessages(visibilityTimeout, count, receiveRequestAttemptId)
-          awaitingReply.put(seq, ad.copy(pending = true))
-
-          received.map { messages =>
-            if (messages != Nil)
-              self ! SendReply(seq, originalSender, messages)
-            else
-              self ! ReAwaitMessages(seq, ad)
-          }
+        val result = receiveMessages(visibilityTimeout, count, receiveRequestAttemptId)
+        if (!result.result.contains(Nil)) {
+          logger.debug(s"${queueData.name}: Awaiting messages: replying to sequence $seq with ${result.result.get.size} messages.")
+          result.send(Some(originalSender))
+          awaitingReply.remove(seq)
+          tryReply()
         }
       case _ => // do nothing
     }
-  }
-
-  protected def sendReply(seq: Long, recipient: ActorRef, messages: List[MessageData]): Unit = {
-    recipient ! messages
-    logger.debug(
-      s"${queueData.name}: Awaiting messages: replying to sequence $seq with ${messages.size} messages."
-    )
   }
 
   private def assignSequenceFor(receiveMessages: ReceiveMessages, recipient: ActorRef): Long = {
@@ -138,13 +114,7 @@ trait QueueActorWaitForMessagesOps extends ReplyingActor with QueueActorMessageO
 
   case class ReplyIfTimeout(seq: Long, replyWith: AnyRef)
 
-  case class AwaitingData(originalSender: ActorRef, originalReceiveMessages: ReceiveMessages, waitStart: Long, pending: Boolean = false)
-
-  case class AwaitMessages(rm: ReceiveMessages, recipient: ActorRef)
-
-  case class ReAwaitMessages(seq: Long, ad: AwaitingData)
-
-  case class SendReply(seq: Long, recipient: ActorRef, messages: List[MessageData])
+  case class AwaitingData(originalSender: ActorRef, originalReceiveMessages: ReceiveMessages, waitStart: Long)
 
   case object TryReply
 }

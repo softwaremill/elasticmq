@@ -1,10 +1,8 @@
 package org.elasticmq.actor.queue.operations
 
 import org.elasticmq._
-import org.elasticmq.actor.queue.QueueActorStorage
+import org.elasticmq.actor.queue.{QueueActorStorage, QueueMessageUpdated}
 import org.elasticmq.util.Logging
-
-import scala.concurrent.Future
 
 trait UpdateVisibilityTimeoutOps extends Logging {
   this: QueueActorStorage =>
@@ -12,11 +10,11 @@ trait UpdateVisibilityTimeoutOps extends Logging {
   def updateVisibilityTimeout(
       messageId: MessageId,
       visibilityTimeout: VisibilityTimeout
-  ): Future[Either[MessageDoesNotExist, Unit]] = {
+  ): ResultWithEvents[Either[MessageDoesNotExist, Unit]] = {
     updateNextDelivery(messageId, CommonOperations.computeNextDelivery(visibilityTimeout, queueData, nowProvider))
   }
 
-  private def updateNextDelivery(messageId: MessageId, newNextDelivery: MillisNextDelivery): Future[Either[MessageDoesNotExist, Unit]] = {
+  private def updateNextDelivery(messageId: MessageId, newNextDelivery: MillisNextDelivery): ResultWithEvents[Either[MessageDoesNotExist, Unit]] = {
     messageQueue.byId.get(messageId.id) match {
       case Some(internalMessage) =>
         // Updating
@@ -36,10 +34,13 @@ trait UpdateVisibilityTimeoutOps extends Logging {
 
         logger.debug(s"${queueData.name}: Updated next delivery of $messageId to $newNextDelivery")
 
-        sendMessageUpdatedNotification(internalMessage).map(_ => Right(()))
+        ResultWithEvents.some(
+          Right(()),
+          List(QueueMessageUpdated(queueData.name, internalMessage))
+        )
 
       case None =>
-        Future.successful(Left(new MessageDoesNotExist(queueData.name, messageId)))
+        ResultWithEvents.some(Left(new MessageDoesNotExist(queueData.name, messageId)))
     }
   }
 

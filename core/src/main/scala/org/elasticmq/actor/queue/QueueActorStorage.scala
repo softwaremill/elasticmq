@@ -3,11 +3,12 @@ package org.elasticmq.actor.queue
 import akka.actor.{ActorContext, ActorRef}
 import akka.util.Timeout
 import org.elasticmq.actor.reply._
-import org.elasticmq.util.NowProvider
+import org.elasticmq.util.{Logging, NowProvider}
 import org.elasticmq.{FifoDeduplicationIdsHistory, QueueData}
 
 import scala.concurrent.duration.DurationInt
 import scala.concurrent.{ExecutionContext, Future}
+import scala.util.{Failure, Success}
 
 trait QueueActorStorage {
   def nowProvider: NowProvider
@@ -29,27 +30,43 @@ trait QueueActorStorage {
   var fifoMessagesHistory: FifoDeduplicationIdsHistory = FifoDeduplicationIdsHistory.newHistory()
   val receiveRequestAttemptCache = new ReceiveRequestAttemptCache
 
-  def sendMessageAddedNotification(internalMessage: InternalMessage): Future[OperationStatus] = {
-    queueEventListener
-      .map { ref =>
-        ref ? QueueMessageAdded(queueData.name, internalMessage)
+  case class ResultWithEvents[T](result: Option[T], events: List[QueueEventWithOperationStatus] = List.empty)
+      extends Logging {
+
+    def send[U](recipient: Option[ActorRef] = None): ReplyAction[U] = {
+      val notificationF =
+        if (events == Nil || queueEventListener.isEmpty) {
+          Future.successful(OperationUnsupported)
+        } else {
+          Future.sequence(events.map { event => sendNotification(event) })
+        }
+
+      val actualSender = recipient.getOrElse(context.sender())
+
+      notificationF.onComplete {
+        case Success(_) =>
+          result match {
+            case Some(r) => actualSender ! r
+            case None    =>
+          }
+        case Failure(ex) => logger.error(s"Failed to notify queue event listener. The state may be inconsistent.", ex)
       }
-      .getOrElse(Future.successful(OperationUnsupported))
+
+      DoNotReply()
+    }
+
+    private def sendNotification(event: QueueEventWithOperationStatus): Future[OperationStatus] = {
+      queueEventListener
+        .map(_ ? event)
+        .getOrElse(Future.successful(OperationUnsupported))
+    }
   }
 
-  def sendMessageUpdatedNotification(internalMessage: InternalMessage): Future[OperationStatus] = {
-    queueEventListener
-      .map { ref =>
-        ref ? QueueMessageUpdated(queueData.name, internalMessage)
-      }
-      .getOrElse(Future.successful(OperationUnsupported))
-  }
+  object ResultWithEvents {
+    def some[T](result: T, events: List[QueueEventWithOperationStatus] = List.empty): ResultWithEvents[T] =
+      ResultWithEvents(Some(result), events)
 
-  def sendMessageRemovedNotification(msgId: String): Future[OperationStatus] = {
-    queueEventListener
-      .map { ref =>
-        ref ? QueueMessageRemoved(queueData.name, msgId)
-      }
-      .getOrElse(Future.successful(OperationUnsupported))
+    def none[T](events: List[QueueEventWithOperationStatus] = List.empty): ResultWithEvents[T] =
+      ResultWithEvents(None, events)
   }
 }
