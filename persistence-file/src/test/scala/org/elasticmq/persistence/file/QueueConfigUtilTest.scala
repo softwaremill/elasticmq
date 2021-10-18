@@ -1,6 +1,7 @@
-package org.elasticmq.persistence
+package org.elasticmq.persistence.file
 
 import com.typesafe.config.ConfigFactory
+import org.elasticmq.persistence.{CreateQueueMetadata, DeadLettersQueue}
 import org.scalatest.OptionValues
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
@@ -42,7 +43,6 @@ class QueueConfigUtilTest extends AnyFunSuite with Matchers with OptionValues {
     fifoQueue.name shouldBe "fifoQueue.fifo"
   }
 
-
   test("Should correctly parse persisted queues configuration") {
     val conf = ConfigFactory.load("expected-single-queue-config.conf")
     val persistedQueues = QueueConfigUtil.readPersistedQueuesFromConfig(conf)
@@ -65,9 +65,10 @@ class QueueConfigUtilTest extends AnyFunSuite with Matchers with OptionValues {
   }
 
   test("Persisted queues should take precedence over startup queues with same names") {
-    val baseConf = QueueConfigUtil.readPersistedQueuesFromConfig(ConfigFactory.load("test-with-queue-storage-enabled.conf"))
+    val baseConf =
+      QueueConfigUtil.readPersistedQueuesFromConfig(ConfigFactory.load("test-with-queue-storage-enabled.conf"))
     val queueConf = QueueConfigUtil.readPersistedQueuesFromConfig(ConfigFactory.load("two-queues-config.conf"))
-    val loadedQueues = QueueConfigUtil.getQueuesToCreate(queueConf, baseConf)
+    val loadedQueues = CreateQueueMetadata.mergePersistedAndBaseQueues(queueConf, baseConf)
     val expectedQueue1 = CreateQueueMetadata(
       "test",
       Some(3L),

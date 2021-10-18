@@ -55,4 +55,10 @@ object CreateQueueMetadata {
       queueData.moveMessagesTo,
       queueData.tags)
   }
+
+  def mergePersistedAndBaseQueues(persistedQueues: List[CreateQueueMetadata], baseQueues: List[CreateQueueMetadata]): List[CreateQueueMetadata] = {
+    val persistedQueuesName = persistedQueues.map(_.name).toSet
+    val result = persistedQueues ++ baseQueues.filterNot(queue => persistedQueuesName.contains(queue.name))
+    QueueSorter.sortCreateQueues(result)
+  }
 }

@@ -6,7 +6,7 @@ import org.elasticmq.ElasticMQError
 import org.elasticmq.actor.queue._
 import org.elasticmq.actor.reply._
 import org.elasticmq.msg.{CreateQueue, RestoreMessages}
-import org.elasticmq.persistence.{CreateQueueMetadata, QueueConfigUtil}
+import org.elasticmq.persistence.CreateQueueMetadata
 import org.elasticmq.util.Logging
 
 import scala.collection.mutable
@@ -26,9 +26,7 @@ class SqlQueuePersistenceActor(messagePersistenceConfig: SqlQueuePersistenceConf
 
   def receive: Receive = {
     case QueueCreated(queueData) =>
-      logger.whenDebugEnabled {
-        logger.debug(s"Storing queue data: $queueData")
-      }
+      logger.debug(s"Storing queue data: $queueData")
 
       if (repos.contains(queueData.name)) {
         queueRepo.update(CreateQueueMetadata.from(queueData))
@@ -38,9 +36,7 @@ class SqlQueuePersistenceActor(messagePersistenceConfig: SqlQueuePersistenceConf
       }
 
     case QueueDeleted(queueName) =>
-      logger.whenDebugEnabled {
-        logger.debug(s"Removing queue data for queue $queueName")
-      }
+      logger.debug(s"Removing queue data for queue $queueName")
       queueRepo.remove(queueName)
       repos.remove(queueName).foreach(_.drop())
 
@@ -84,7 +80,7 @@ class SqlQueuePersistenceActor(messagePersistenceConfig: SqlQueuePersistenceConf
 
   private def createQueues(queueManagerActor: ActorRef)(implicit timeout: Timeout): Future[Either[List[ElasticMQError], OperationStatus]] = {
     val persistedQueues = queueRepo.findAll()
-    val allQueues = QueueConfigUtil.getQueuesToCreate(persistedQueues, baseQueues)
+    val allQueues = CreateQueueMetadata.mergePersistedAndBaseQueues(persistedQueues, baseQueues)
 
     val restoreResult: List[Future[Either[ElasticMQError, OperationStatus]]] = allQueues.map { cq =>
       restoreQueue(queueManagerActor, cq)

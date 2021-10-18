@@ -1,12 +1,13 @@
-package org.elasticmq.persistence
+package org.elasticmq.persistence.file
 
 import com.typesafe.config.{Config, ConfigFactory, ConfigObject, ConfigValue}
+import org.elasticmq.persistence.{CreateQueueMetadata, DeadLettersQueue}
 import org.joda.time.DateTime
 
 import java.io.File
 import java.util.concurrent.TimeUnit
-import scala.util.Try
 import scala.collection.JavaConverters._
+import scala.util.Try
 
 object QueueConfigUtil {
 
@@ -21,12 +22,6 @@ object QueueConfigUtil {
       .asScala.toMap)
       .map(getQueuesFromConfig(_))
       .getOrElse(Nil)
-
-  def getQueuesToCreate(persistedQueues: List[CreateQueueMetadata], baseQueues: List[CreateQueueMetadata]): List[CreateQueueMetadata] = {
-    val persistedQueuesName = persistedQueues.map(_.name).toSet
-    val result = persistedQueues ++ baseQueues.filterNot(queue => persistedQueuesName.contains(queue.name))
-    QueueSorter.sortCreateQueues(result)
-  }
 
   def getQueuesFromConfig(queuesConfig: Map[String, ConfigValue]): List[CreateQueueMetadata] = {
     def getOptionalBoolean(c: Config, k: String) = if (c.hasPath(k)) Some(c.getBoolean(k)) else None
