@@ -40,8 +40,8 @@ trait SqlQueuePersistenceServer {
   private def startServerAndSetupClient(pruneDataOnInit: Boolean): Unit = {
     val persistenceConfig = SqlQueuePersistenceConfig(
       enabled = true,
-      driverClass = "org.sqlite.JDBC",
-      uri = "jdbc:sqlite:./elasticmq.db",
+      driverClass = "org.h2.Driver",
+      uri = "jdbc:h2:./elasticmq-h2",
       pruneDataOnInit = pruneDataOnInit)
 
     store = actorSystem.actorOf(Props(new SqlQueuePersistenceActor(persistenceConfig, List.empty)))

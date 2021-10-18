@@ -2,10 +2,10 @@
 {
   "name":"akka.actor.ActorCell",
   "fields":[
-    {"name":"akka$actor$dungeon$Children$$_childrenRefsDoNotCallMeDirectly", "allowUnsafeAccess":true}, 
-    {"name":"akka$actor$dungeon$Children$$_functionRefsDoNotCallMeDirectly", "allowUnsafeAccess":true}, 
-    {"name":"akka$actor$dungeon$Children$$_nextNameDoNotCallMeDirectly", "allowUnsafeAccess":true}, 
-    {"name":"akka$actor$dungeon$Dispatch$$_mailboxDoNotCallMeDirectly", "allowUnsafeAccess":true}
+    {"name":"akka$actor$dungeon$Children$$_childrenRefsDoNotCallMeDirectly"},
+    {"name":"akka$actor$dungeon$Children$$_functionRefsDoNotCallMeDirectly"},
+    {"name":"akka$actor$dungeon$Children$$_nextNameDoNotCallMeDirectly"},
+    {"name":"akka$actor$dungeon$Dispatch$$_mailboxDoNotCallMeDirectly"}
   ]
 },
 {
@@ -18,7 +18,7 @@
 },
 {
   "name":"akka.actor.LightArrayRevolverScheduler$TaskHolder",
-  "fields":[{"name":"task", "allowUnsafeAccess":true}]
+  "fields":[{"name":"task"}]
 },
 {
   "name":"akka.actor.LightArrayRevolverScheduler$TaskQueue[]"
@@ -42,17 +42,17 @@
 {
   "name":"akka.actor.RepointableActorRef",
   "fields":[
-    {"name":"_cellDoNotCallMeDirectly", "allowUnsafeAccess":true}, 
-    {"name":"_lookupDoNotCallMeDirectly", "allowUnsafeAccess":true}
+    {"name":"_cellDoNotCallMeDirectly"},
+    {"name":"_lookupDoNotCallMeDirectly"}
   ]
 },
 {
   "name":"akka.dispatch.AbstractNodeQueue",
-  "fields":[{"name":"_tailDoNotCallMeDirectly", "allowUnsafeAccess":true}]
+  "fields":[{"name":"_tailDoNotCallMeDirectly"}]
 },
 {
   "name":"akka.dispatch.AbstractNodeQueue$Node",
-  "fields":[{"name":"_nextDoNotCallMeDirectly", "allowUnsafeAccess":true}]
+  "fields":[{"name":"_nextDoNotCallMeDirectly"}]
 },
 {
   "name":"akka.dispatch.BoundedControlAwareMessageQueueSemantics"
@@ -72,15 +72,15 @@
 {
   "name":"akka.dispatch.Mailbox",
   "fields":[
-    {"name":"_statusDoNotCallMeDirectly", "allowUnsafeAccess":true}, 
-    {"name":"_systemQueueDoNotCallMeDirectly", "allowUnsafeAccess":true}
+    {"name":"_statusDoNotCallMeDirectly"},
+    {"name":"_systemQueueDoNotCallMeDirectly"}
   ]
 },
 {
   "name":"akka.dispatch.MessageDispatcher",
   "fields":[
-    {"name":"_inhabitantsDoNotCallMeDirectly", "allowUnsafeAccess":true}, 
-    {"name":"_shutdownScheduleDoNotCallMeDirectly", "allowUnsafeAccess":true}
+    {"name":"_inhabitantsDoNotCallMeDirectly"},
+    {"name":"_shutdownScheduleDoNotCallMeDirectly"}
   ]
 },
 {
@@ -104,11 +104,6 @@
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
 {
-  "name": "akka.event.DefaultLoggingFilter",
-  "allDeclaredConstructors": true,
-  "allPublicConstructors": true
-},
-{
   "name":"akka.event.EventStreamUnsubscriber",
   "allDeclaredConstructors":true
 },
@@ -120,16 +115,6 @@
   "name":"akka.event.LoggerMessageQueueSemantics"
 },
 {
-  "name": "akka.event.Logging$DefaultLogger",
-  "allDeclaredConstructors": true,
-  "allPublicConstructors": true
-},
-{
-  "name": "akka.event.Logging$StdOutLogger",
-  "allDeclaredConstructors": true,
-  "allPublicConstructors": true
-},
-{
   "name":"akka.event.slf4j.Slf4jLogger",
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
@@ -138,19 +123,11 @@
   "methods":[{"name":"<init>","parameterTypes":["akka.actor.ActorSystem$Settings","akka.event.EventStream"] }]
 },
 {
-  "name":"akka.http.DefaultParsingErrorHandler$",
-  "methods":[{"name":"<init>","parameterTypes":[] }]
-},
-{
   "name":"akka.http.impl.engine.client.PoolMasterActor",
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
 {
   "name":"akka.io.SelectionHandler",
-  "allDeclaredConstructors":true
-},
-{
-  "name":"akka.io.TcpIncomingConnection",
   "allDeclaredConstructors":true
 },
 {
@@ -164,8 +141,8 @@
 {
   "name":"akka.pattern.PromiseActorRef",
   "fields":[
-    {"name":"_stateDoNotCallMeDirectly", "allowUnsafeAccess":true}, 
-    {"name":"_watchedByDoNotCallMeDirectly", "allowUnsafeAccess":true}
+    {"name":"_stateDoNotCallMeDirectly"},
+    {"name":"_watchedByDoNotCallMeDirectly"}
   ]
 },
 {
@@ -181,65 +158,13 @@
   "allDeclaredConstructors":true
 },
 {
-  "name":"akka.serialization.BooleanSerializer",
-  "methods":[{"name":"<init>","parameterTypes":["akka.actor.ExtendedActorSystem"] }]
-},
-{
-  "name":"akka.serialization.ByteArraySerializer",
-  "methods":[{"name":"<init>","parameterTypes":["akka.actor.ExtendedActorSystem"] }]
-},
-{
-  "name":"akka.serialization.ByteStringSerializer",
-  "methods":[{"name":"<init>","parameterTypes":["akka.actor.ExtendedActorSystem"] }]
-},
-{
-  "name":"akka.serialization.DisabledJavaSerializer",
-  "methods":[{"name":"<init>","parameterTypes":["akka.actor.ExtendedActorSystem"] }]
-},
-{
-  "name":"akka.serialization.IntSerializer",
-  "methods":[{"name":"<init>","parameterTypes":["akka.actor.ExtendedActorSystem"] }]
-},
-{
-  "name":"akka.serialization.LongSerializer",
-  "methods":[{"name":"<init>","parameterTypes":["akka.actor.ExtendedActorSystem"] }]
-},
-{
-  "name":"akka.serialization.SerializationExtension$",
-  "fields":[{"name":"MODULE$"}]
-},
-{
-  "name":"akka.serialization.StringSerializer",
-  "methods":[{"name":"<init>","parameterTypes":["akka.actor.ExtendedActorSystem"] }]
-},
-{
-  "name":"akka.stream.SinkRef"
-},
-{
-  "name":"akka.stream.SourceRef"
-},
-{
-  "name":"akka.stream.SystemMaterializer$",
-  "fields":[{"name":"MODULE$"}]
-},
-{
-  "name":"akka.stream.impl.streamref.StreamRefsProtocol"
-},
-{
-  "name":"akka.stream.serialization.StreamRefSerializer",
-  "methods":[{"name":"<init>","parameterTypes":["akka.actor.ExtendedActorSystem"] }]
-},
-{
   "name":"akka.stream.stage.GraphStageLogic[]"
 },
 {
-  "name":"akka.util.ByteString$ByteString1"
+  "name":"boolean[]"
 },
 {
-  "name":"akka.util.ByteString$ByteString1C"
-},
-{
-  "name":"akka.util.ByteString$ByteStrings"
+  "name":"byte[]"
 },
 {
   "name":"ch.qos.logback.classic.encoder.PatternLayoutEncoder",
@@ -276,47 +201,182 @@
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
 {
+  "name":"char[]"
+},
+{
   "name":"com.sun.crypto.provider.TlsMasterSecretGenerator",
   "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.sun.management.GarbageCollectorMXBean",
+  "allPublicMethods":true
+},
+{
+  "name":"com.sun.management.GcInfo",
+  "allPublicMethods":true
+},
+{
+  "name":"com.sun.management.HotSpotDiagnosticMXBean",
+  "allPublicMethods":true
+},
+{
+  "name":"com.sun.management.ThreadMXBean",
+  "allPublicMethods":true
+},
+{
+  "name":"com.sun.management.UnixOperatingSystemMXBean",
+  "allPublicMethods":true
+},
+{
+  "name":"com.sun.management.VMOption",
+  "allPublicMethods":true
+},
+{
+  "name":"com.sun.management.internal.GarbageCollectorExtImpl",
+  "allPublicConstructors":true
+},
+{
+  "name":"com.sun.management.internal.HotSpotDiagnostic",
+  "allPublicConstructors":true
+},
+{
+  "name":"com.sun.management.internal.HotSpotThreadImpl",
+  "allPublicConstructors":true
+},
+{
+  "name":"com.sun.management.internal.OperatingSystemImpl",
+  "allPublicConstructors":true
 },
 {
   "name":"com.sun.org.apache.xerces.internal.jaxp.SAXParserFactoryImpl",
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
 {
+  "name":"double[]"
+},
+{
+  "name":"float[]"
+},
+{
+  "name":"int[]"
+},
+{
   "name":"java.io.FilePermission"
 },
 {
-  "name":"java.io.Serializable"
+  "name":"java.lang.Boolean",
+  "fields":[{"name":"TYPE"}]
 },
 {
-  "name":"java.lang.Boolean"
+  "name":"java.lang.Byte",
+  "fields":[{"name":"TYPE"}]
+},
+{
+  "name":"java.lang.Character",
+  "fields":[{"name":"TYPE"}]
 },
 {
   "name":"java.lang.Class[]"
 },
 {
-  "name":"java.lang.Integer"
+  "name":"java.lang.Double",
+  "fields":[{"name":"TYPE"}]
 },
 {
-  "name":"java.lang.Long"
+  "name":"java.lang.Float",
+  "fields":[{"name":"TYPE"}]
+},
+{
+  "name":"java.lang.Integer",
+  "fields":[{"name":"TYPE"}]
+},
+{
+  "name":"java.lang.Long",
+  "fields":[{"name":"TYPE"}]
 },
 {
   "name":"java.lang.RuntimePermission"
 },
 {
+  "name":"java.lang.Short",
+  "fields":[{"name":"TYPE"}]
+},
+{
+  "name":"java.lang.StackTraceElement",
+  "allPublicMethods":true
+},
+{
   "name":"java.lang.String",
-  "fields":[{"name":"value", "allowUnsafeAccess":true}]
+  "fields":[{"name":"value"}]
 },
 {
   "name":"java.lang.String[]"
 },
 {
-  "name":"java.lang.Throwable",
-  "methods":[{"name":"getSuppressed","parameterTypes":[] }]
+  "name":"java.lang.Void",
+  "fields":[{"name":"TYPE"}]
 },
 {
-  "name":"java.lang.invoke.VarHandle"
+  "name":"java.lang.invoke.VarHandle",
+  "methods":[{"name":"releaseFence","parameterTypes":[] }]
+},
+{
+  "name":"java.lang.management.BufferPoolMXBean",
+  "allPublicMethods":true
+},
+{
+  "name":"java.lang.management.ClassLoadingMXBean",
+  "allPublicMethods":true
+},
+{
+  "name":"java.lang.management.CompilationMXBean",
+  "allPublicMethods":true
+},
+{
+  "name":"java.lang.management.LockInfo",
+  "allPublicMethods":true
+},
+{
+  "name":"java.lang.management.ManagementPermission",
+  "methods":[{"name":"<init>","parameterTypes":["java.lang.String"] }]
+},
+{
+  "name":"java.lang.management.MemoryMXBean",
+  "allPublicMethods":true
+},
+{
+  "name":"java.lang.management.MemoryManagerMXBean",
+  "allPublicMethods":true
+},
+{
+  "name":"java.lang.management.MemoryPoolMXBean",
+  "allPublicMethods":true
+},
+{
+  "name":"java.lang.management.MemoryUsage",
+  "allPublicMethods":true
+},
+{
+  "name":"java.lang.management.MonitorInfo",
+  "allPublicMethods":true
+},
+{
+  "name":"java.lang.management.PlatformLoggingMXBean",
+  "allPublicMethods":true
+},
+{
+  "name":"java.lang.management.RuntimeMXBean",
+  "allPublicMethods":true
+},
+{
+  "name":"java.lang.management.ThreadInfo",
+  "allPublicMethods":true
+},
+{
+  "name":"java.math.BigDecimal"
+},
+{
+  "name":"java.math.BigInteger"
 },
 {
   "name":"java.net.NetPermission"
@@ -347,10 +407,42 @@
   "name":"java.security.SecurityPermission"
 },
 {
-  "name":"java.util.PropertyPermission"
+  "name":"java.util.Date"
+},
+{
+  "name":"java.util.PropertyPermission",
+  "methods":[{"name":"<init>","parameterTypes":["java.lang.String","java.lang.String"] }]
+},
+{
+  "name":"java.util.logging.LogManager",
+  "methods":[{"name":"getLoggingMXBean","parameterTypes":[] }]
+},
+{
+  "name":"java.util.logging.LoggingMXBean",
+  "allPublicMethods":true
+},
+{
+  "name":"javax.management.MBeanOperationInfo",
+  "allPublicMethods":true
+},
+{
+  "name":"javax.management.MBeanServerBuilder",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
 },
 {
   "name":"javax.management.ObjectName"
+},
+{
+  "name":"javax.management.openmbean.CompositeData"
+},
+{
+  "name":"javax.management.openmbean.CompositeData[]"
+},
+{
+  "name":"javax.management.openmbean.OpenMBeanOperationInfoSupport"
+},
+{
+  "name":"javax.management.openmbean.TabularData"
 },
 {
   "name":"javax.security.auth.x500.X500Principal",
@@ -358,13 +450,179 @@
   "methods":[{"name":"<init>","parameterTypes":["sun.security.x509.X500Name"] }]
 },
 {
-  "name":"scala.Boolean"
+  "name":"jdk.management.jfr.ConfigurationInfo",
+  "allPublicMethods":true
 },
 {
-  "name":"scala.Int"
+  "name":"jdk.management.jfr.EventTypeInfo",
+  "allPublicMethods":true
 },
 {
-  "name":"scala.Long"
+  "name":"jdk.management.jfr.FlightRecorderMXBean",
+  "allPublicMethods":true
+},
+{
+  "name":"jdk.management.jfr.FlightRecorderMXBeanImpl",
+  "allPublicConstructors":true
+},
+{
+  "name":"jdk.management.jfr.RecordingInfo",
+  "allPublicMethods":true
+},
+{
+  "name":"jdk.management.jfr.SettingDescriptorInfo",
+  "allPublicMethods":true
+},
+{
+  "name":"long[]"
+},
+{
+  "name":"org.apache.commons.dbcp2.PoolingDataSource$PoolGuardConnectionWrapper",
+  "methods":[{"name":"close","parameterTypes":[] }]
+},
+{
+  "name":"org.apache.commons.logging.LogFactory"
+},
+{
+  "name":"org.apache.commons.logging.impl.Jdk14Logger",
+  "methods":[{"name":"<init>","parameterTypes":["java.lang.String"] }]
+},
+{
+  "name":"org.apache.commons.logging.impl.Log4JLogger"
+},
+{
+  "name":"org.apache.commons.logging.impl.LogFactoryImpl",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.apache.commons.logging.impl.WeakHashtable",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.apache.commons.pool2.impl.DefaultEvictionPolicy",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.apache.commons.pool2.impl.DefaultPooledObjectInfo",
+  "allPublicMethods":true
+},
+{
+  "name":"org.apache.commons.pool2.impl.GenericObjectPool",
+  "allPublicConstructors":true
+},
+{
+  "name":"org.apache.commons.pool2.impl.GenericObjectPoolMXBean",
+  "allPublicMethods":true
+},
+{
+  "name":"org.elasticmq.metrics.QueuesMetrics",
+  "allPublicConstructors":true
+},
+{
+  "name":"org.elasticmq.metrics.QueuesMetricsMBean",
+  "allPublicMethods":true
+},
+{
+  "name":"org.h2.Driver"
+},
+{
+  "name":"org.h2.engine.Engine",
+  "methods":[{"name":"getInstance","parameterTypes":[] }]
+},
+{
+  "name":"org.h2.mvstore.db.MVTableEngine",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.h2.store.fs.FilePathAsync",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.h2.store.fs.FilePathDisk",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.h2.store.fs.FilePathMem",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.h2.store.fs.FilePathMemLZF",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.h2.store.fs.FilePathNio",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.h2.store.fs.FilePathNioMapped",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.h2.store.fs.FilePathNioMem",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.h2.store.fs.FilePathNioMemLZF",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.h2.store.fs.FilePathRetryOnInterrupt",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.h2.store.fs.FilePathSplit",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.h2.store.fs.FilePathZip",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"scala.Symbol",
+  "methods":[{"name":"apply","parameterTypes":["java.lang.String"] }]
+},
+{
+  "name":"scala.reflect.ScalaSignature",
+  "allPublicMethods":true
+},
+{
+  "name":"scalikejdbc.StatementExecutor",
+  "methods":[{"name":"close","parameterTypes":[] }]
+},
+{
+  "name":"short[]"
+},
+{
+  "name":"sun.management.ClassLoadingImpl",
+  "allPublicConstructors":true
+},
+{
+  "name":"sun.management.CompilationImpl",
+  "allPublicConstructors":true
+},
+{
+  "name":"sun.management.ManagementFactoryHelper$1",
+  "allPublicConstructors":true
+},
+{
+  "name":"sun.management.ManagementFactoryHelper$PlatformLoggingImpl",
+  "allPublicConstructors":true
+},
+{
+  "name":"sun.management.MemoryImpl",
+  "allPublicConstructors":true
+},
+{
+  "name":"sun.management.MemoryManagerImpl",
+  "allPublicConstructors":true
+},
+{
+  "name":"sun.management.MemoryPoolImpl",
+  "allPublicConstructors":true
+},
+{
+  "name":"sun.management.RuntimeImpl",
+  "allPublicConstructors":true
 },
 {
   "name":"sun.misc.Unsafe",
@@ -383,19 +641,11 @@
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
 {
-  "name":"sun.security.provider.MD5",
-  "methods":[{"name":"<init>","parameterTypes":[] }]
-},
-{
   "name":"sun.security.provider.NativePRNG",
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
 {
   "name":"sun.security.provider.SHA",
-  "methods":[{"name":"<init>","parameterTypes":[] }]
-},
-{
-  "name":"sun.security.provider.SHA2$SHA256",
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
 {
@@ -465,8 +715,5 @@
 {
   "name":"sun.security.x509.SubjectKeyIdentifierExtension",
   "methods":[{"name":"<init>","parameterTypes":["java.lang.Boolean","java.lang.Object"] }]
-},
-{
-  "name":"[B"
 }
 ]

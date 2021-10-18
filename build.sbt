@@ -107,7 +107,7 @@ val akka2HttpTestkit = "com.typesafe.akka" %% "akka-http-testkit" % akkaHttpVers
 val scalaAsync = "org.scala-lang.modules" %% "scala-async" % "0.10.0"
 
 val scalikeJdbc = "org.scalikejdbc" %% "scalikejdbc" % "3.5.0"
-val sqliteJdbc = "org.xerial" % "sqlite-jdbc" % "3.36.0.3"
+val h2 = "com.h2database" % "h2" % "1.4.200"
 
 val common = Seq(scalalogging)
 
@@ -183,7 +183,7 @@ lazy val persistenceSql: Project = (project in file("persistence-sql"))
         akka2Slf4j,
         sprayJson,
         scalikeJdbc,
-        sqliteJdbc,
+        h2,
         akka2Testkit,
         scalaAsync
       ) ++ common
@@ -338,6 +338,7 @@ lazy val nativeServer: Project = (project in file("native-server"))
         "--enable-https",
         "--enable-url-protocols=https,http",
         "--report-unsupported-elements-at-runtime",
+        "--initialize-at-build-time=scala.Symbol$",
         "--allow-incomplete-classpath",
         "--no-fallback",
         "--verbose"

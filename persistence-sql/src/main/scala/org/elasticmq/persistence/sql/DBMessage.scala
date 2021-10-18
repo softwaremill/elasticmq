@@ -9,10 +9,10 @@ import spray.json._
 
 case class DBMessage(
     messageId: String,
-    deliveryReceipts: String,
+    deliveryReceipts: Array[Byte],
     nextDelivery: Long,
-    content: String,
-    attributes: String,
+    content: Array[Byte],
+    attributes: Array[Byte],
     created: Long,
     received: Option[Long],
     receiveCount: Int,
@@ -23,7 +23,7 @@ case class DBMessage(
 ) {
 
   def toInternalMessage: InternalMessage = {
-    val serializedAttrs = attributes.parseJson
+    val serializedAttrs = new String(attributes).parseJson
       .convertTo[List[SerializableAttribute]]
       .map { attr =>
         (
@@ -36,7 +36,7 @@ case class DBMessage(
         )
       } toMap
 
-    val serializedDeliveryReceipts = deliveryReceipts.parseJson.convertTo[List[String]]
+    val serializedDeliveryReceipts = new String(deliveryReceipts).parseJson.convertTo[List[String]]
 
     val firstReceive = received.map(time => OnDateTimeReceived(new DateTime(time))).getOrElse(NeverReceived)
 
@@ -44,7 +44,7 @@ case class DBMessage(
       messageId,
       serializedDeliveryReceipts.toBuffer,
       nextDelivery,
-      content,
+      new String(content),
       serializedAttrs,
       new DateTime(created),
       orderIndex = 0,
@@ -63,10 +63,10 @@ object DBMessage {
 
   def apply(rs: WrappedResultSet) = new DBMessage(
     rs.string("message_id"),
-    rs.string("delivery_receipts"),
+    rs.bytes("delivery_receipts"),
     rs.long("next_delivery"),
-    rs.string("content"),
-    rs.string("attributes"),
+    rs.bytes("content"),
+    rs.bytes("attributes"),
     rs.long("created"),
     rs.longOpt("received"),
     rs.int("receive_count"),
@@ -98,10 +98,10 @@ object DBMessage {
 
     new DBMessage(
       message.id,
-      deliveryReceipts.toJson.toString,
+      deliveryReceipts.toJson.toString.getBytes,
       message.nextDelivery,
-      message.content,
-      attributes.toJson.toString,
+      message.content.getBytes,
+      attributes.toJson.toString.getBytes,
       message.created.toInstant.getMillis,
       received,
       message.receiveCount,
