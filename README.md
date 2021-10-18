@@ -9,7 +9,7 @@
 * runs stand-alone ([download](https://s3-eu-west-1.amazonaws.com/softwaremill-public/elasticmq-server-1.2.3.jar)), via [Docker](https://hub.docker.com/r/softwaremill/elasticmq-native/) or embedded
 * [Amazon SQS](http://aws.amazon.com/sqs/)-compatible interface
 * fully asynchronous implementation, no blocking calls
-* optional UI, queue metadata persistence
+* optional UI, queue persistence
 * created and maintained by:
 
 <p align="center">
@@ -195,7 +195,7 @@ section.
 # Persisting queues and messages to SQL database
 
 Queues and their messages can be persisted to SQL database in runtime.
-All events like queue or message creation, deletion or update will be stored in database,
+All events like queue or message creation, deletion or update will be stored in H2 in-file database,
 so that the entire ElasticMQ state can be restored after server restart.
 
 To enable the feature, create a custom configuration file with the following content:
@@ -339,6 +339,12 @@ configuration file (see above) and using it when running the container:
 docker run -p 9324:9324 -p 9325:9325 -v `pwd`/custom.conf:/opt/elasticmq.conf softwaremill/elasticmq-native
 ```
 
+If messages storage is enabled, the directory containing database files can also be mapped:
+
+```
+docker run -p 9324:9324 -p 9325:9325 -v `pwd`/custom.conf:/opt/elasticmq.conf -v `pwd`/data:/data softwaremill/elasticmq-native
+```
+
 As for now to run `elasticmq-native` docker image on ARM based CPU one have to install `Qemu` docker for `amd64`.
 
 ```
@@ -358,6 +364,12 @@ The image uses default configuration. Custom configuration can be provided (e.g.
 
 ```
 docker run -p 9324:9324 -p 9325:9325 -v `pwd`/custom.conf:/opt/elasticmq.conf softwaremill/elasticmq
+```
+
+If messages storage is enabled, the directory containing database files can also be mapped:
+
+```
+docker run -p 9324:9324 -p 9325:9325 -v `pwd`/custom.conf:/opt/elasticmq.conf -v `pwd`/data:/data softwaremill/elasticmq
 ```
 
 To pass additional java system properties (`-D`) you need to prepare an `application.ini` file. For instance, to set custom `logback.xml` configuration, `application.ini` should look as follows:
