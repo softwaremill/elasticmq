@@ -5,13 +5,14 @@ import akka.util.Timeout
 import org.elasticmq.ElasticMQError
 import org.elasticmq.actor.queue._
 import org.elasticmq.actor.reply._
-import org.elasticmq.msg.RestoreMessages
+import org.elasticmq.msg.{CreateQueue, RestoreMessages}
 import org.elasticmq.persistence.{CreateQueueMetadata, QueueConfigUtil}
 import org.elasticmq.util.Logging
-import org.joda.time.DateTime
 
 import scala.collection.mutable
-import scala.concurrent.Await
+import scala.concurrent.duration.DurationInt
+import scala.concurrent.{ExecutionContext, Future}
+import scala.util.{Failure, Success}
 
 case class GetAllMessages(queueName: String) extends Replyable[List[InternalMessage]]
 
@@ -19,6 +20,9 @@ class SqlQueuePersistenceActor(messagePersistenceConfig: SqlQueuePersistenceConf
 
   private val queueRepo: QueueRepository = new QueueRepository(messagePersistenceConfig)
   private val repos: mutable.Map[String, MessageRepository] = mutable.HashMap[String, MessageRepository]()
+
+  implicit val timeout: Timeout = Timeout(5.seconds)
+  implicit val ec: ExecutionContext = context.dispatcher
 
   def receive: Receive = {
     case QueueCreated(queueData) =>
@@ -68,34 +72,41 @@ class SqlQueuePersistenceActor(messagePersistenceConfig: SqlQueuePersistenceConf
       sender() ! OperationSuccessful
 
     case Restore(queueManagerActor: ActorRef) =>
-      sender() ! createQueues(queueManagerActor)
+      val recip = sender()
+      createQueues(queueManagerActor).onComplete {
+        case Success(result) => recip ! result
+        case Failure(exception) => logger.error("Failed to restore persisted queues", exception)
+      }
 
     case GetAllMessages(queueName) =>
       repos.get(queueName).foreach(repo => sender() ! repo.findAll())
   }
 
-  private def createQueues(queueManagerActor: ActorRef): Either[List[ElasticMQError], OperationStatus] = {
-    implicit val timeout: Timeout = {
-      import scala.concurrent.duration._
-      Timeout(5.seconds)
-    }
-
+  private def createQueues(queueManagerActor: ActorRef)(implicit timeout: Timeout): Future[Either[List[ElasticMQError], OperationStatus]] = {
     val persistedQueues = queueRepo.findAll()
     val allQueues = QueueConfigUtil.getQueuesToCreate(persistedQueues, baseQueues)
 
-    val errors = allQueues.flatMap { cq =>
-      Await.result(queueManagerActor ? org.elasticmq.msg.CreateQueue(cq.toQueueData), timeout.duration)
-        .map(queueActor => restoreMessages(cq.name, queueActor))
-        .swap
-        .toOption
+    val restoreResult: List[Future[Either[ElasticMQError, OperationStatus]]] = allQueues.map { cq =>
+      restoreQueue(queueManagerActor, cq)
+        .flatMap {
+            case Left(errors)  => Future.successful(Left(errors))
+            case Right(queueActor) => restoreMessages(cq.name, queueActor).map(_ => Right(OperationSuccessful))
+          }
     }
 
-    if (errors.nonEmpty) Left(errors) else Right(OperationSuccessful)
+    Future.sequence(restoreResult).map(results => {
+      val errors = results.flatMap(_.swap.toOption)
+      if (errors.nonEmpty) Left(errors) else Right(OperationSuccessful)
+    })
   }
 
-  private def restoreMessages(queueName: String, queueActor: ActorRef)(implicit timeout: Timeout): Unit = {
+  private def restoreQueue(queueManagerActor: ActorRef, cq: CreateQueueMetadata): Future[Either[ElasticMQError, ActorRef]] = {
+    queueManagerActor ? CreateQueue(cq.toQueueData)
+  }
+
+  private def restoreMessages(queueName: String, queueActor: ActorRef): Future[Unit] = {
     val repository = new MessageRepository(queueName, messagePersistenceConfig)
     repos.put(queueName, repository)
-    Await.result(queueActor ? RestoreMessages(repository.findAll()), timeout.duration)
+    queueActor ? RestoreMessages(repository.findAll())
   }
 }
