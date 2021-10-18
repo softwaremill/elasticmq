@@ -66,7 +66,7 @@ class ElasticMQServerConfig(config: Config) extends Logging {
   val awsAccountId: String = awsConfig.getString("accountId")
 
   private def getSqlQueuePersistenceConfig = {
-    val subConfig = config.getConfig("message-persistence")
+    val subConfig = config.getConfig("messages-storage")
     val enabled = subConfig.getBoolean("enabled")
     val driverClass = subConfig.getString("driver-class")
     val uri = subConfig.getString("uri")

@@ -204,7 +204,7 @@ To enable the feature, create a custom configuration file with the following con
 # the include should be done only once, at the beginning of the custom configuration file
 include classpath("application.conf")
 
-message-persistence {
+messages-storage {
   enabled = true
 }
 ````
@@ -216,7 +216,7 @@ custom JDBC uri needs to be provided:
 # the include should be done only once, at the beginning of the custom configuration file
 include classpath("application.conf")
 
-message-persistence {
+messages-storage {
   enabled = true
   uri = "jdbc:h2:/home/me/elasticmq"
 }
