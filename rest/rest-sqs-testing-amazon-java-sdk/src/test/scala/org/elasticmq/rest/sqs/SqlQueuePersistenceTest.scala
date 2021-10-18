@@ -5,11 +5,11 @@ import org.elasticmq.actor.reply._
 import org.elasticmq.persistence.sql.GetAllMessages
 import org.elasticmq.util.Logging
 import org.scalatest.BeforeAndAfter
+import org.scalatest.concurrent.ScalaFutures.convertScalaFuture
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 
 import scala.collection.JavaConverters._
-import scala.concurrent.Await
 
 class SqlQueuePersistenceTest extends AnyFunSuite with SqlQueuePersistenceServer with BeforeAndAfter with Matchers with Logging {
 
@@ -23,7 +23,7 @@ class SqlQueuePersistenceTest extends AnyFunSuite with SqlQueuePersistenceServer
       client.sendMessage(new SendMessageRequest(queueUrl, "Message 2"))
       client.sendMessage(new SendMessageRequest(queueUrl, "Message 3"))
 
-      val storedMessages = Await.result(store ? GetAllMessages("testQueue1"), timeout.duration)
+      val storedMessages = (store ? GetAllMessages("testQueue1")).futureValue
       storedMessages.map(_.content).toSet shouldBe Set("Message 1", "Message 2", "Message 3")
     }
 
@@ -77,7 +77,7 @@ class SqlQueuePersistenceTest extends AnyFunSuite with SqlQueuePersistenceServer
 
       messages.forEach(message => client.deleteMessage(queueUrl, message.getReceiptHandle))
 
-      val storedMessages = Await.result(store ? GetAllMessages("testQueue1"), timeout.duration)
+      val storedMessages = (store ? GetAllMessages("testQueue1")).futureValue
       storedMessages.toSet shouldBe Set()
     }
 
