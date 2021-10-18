@@ -41,7 +41,7 @@ class ElasticMQServer(config: ElasticMQServerConfig) extends Logging {
 
     queueConfigStore match {
       case Some(queueConfigStoreActor) =>
-        createQueues2(queueConfigStoreActor, queueManagerActor) match {
+        createQueues(queueConfigStoreActor, queueManagerActor) match {
           case Some(errors) =>
             errors.foreach(error => logger.error(s"Could not start server because $error"))
             shutdown()
@@ -111,7 +111,7 @@ class ElasticMQServer(config: ElasticMQServerConfig) extends Logging {
     }
   }
 
-  private def createQueues2(queueConfigStore: ActorRef, queueManagerActor: ActorRef): Option[List[ElasticMQError]] = {
+  private def createQueues(queueConfigStore: ActorRef, queueManagerActor: ActorRef): Option[List[ElasticMQError]] = {
     implicit val timeout: Timeout = {
       import scala.concurrent.duration._
       Timeout(5.seconds)
