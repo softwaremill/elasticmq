@@ -21,6 +21,6 @@ package object sql {
   import DeadLettersQueueProtocol._
 
   object CreateQueueProtocol extends DefaultJsonProtocol {
-    implicit val CreateQueueFormat: JsonFormat[CreateQueueMetadata] = jsonFormat10(CreateQueueMetadata.apply)
+    implicit val CreateQueueFormat: JsonFormat[CreateQueueMetadata] = jsonFormat12(CreateQueueMetadata.apply)
   }
 }

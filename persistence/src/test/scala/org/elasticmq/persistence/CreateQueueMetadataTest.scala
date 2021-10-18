@@ -8,7 +8,13 @@ class CreateQueueMetadataTest extends AnyFunSuite with Matchers with OptionValue
 
   test("CreateQueueMetadata and CreateQueue structures should be exchangeable") {
     val createQueue = CreateQueueMetadata(
-      "xyz", Some(5), Some(10), Some(15), Some(DeadLettersQueue("dlq", 3)),
+      name = "xyz",
+      defaultVisibilityTimeoutSeconds = Some(5),
+      delaySeconds = Some(10),
+      receiveMessageWaitSeconds = Some(15),
+      created = 10,
+      lastModified = 15,
+      deadLettersQueue = Some(DeadLettersQueue("dlq", 3)),
       isFifo = true,
       hasContentBasedDeduplication = true,
       copyMessagesTo = Some("xyz_copy"),
@@ -16,6 +22,6 @@ class CreateQueueMetadataTest extends AnyFunSuite with Matchers with OptionValue
       tags = Map("abc" -> "123")
     )
 
-    CreateQueueMetadata.from(createQueue.toQueueData(new DateTime())) shouldBe createQueue
+    CreateQueueMetadata.from(createQueue.toQueueData) shouldBe createQueue
   }
 }

@@ -6,7 +6,7 @@ import org.elasticmq.ElasticMQError
 import org.elasticmq.actor.queue._
 import org.elasticmq.actor.reply._
 import org.elasticmq.msg.RestoreMessages
-import org.elasticmq.persistence.CreateQueueMetadata
+import org.elasticmq.persistence.{CreateQueueMetadata, QueueConfigUtil}
 import org.elasticmq.util.Logging
 import org.joda.time.DateTime
 
@@ -81,11 +81,10 @@ class SqlQueuePersistenceActor(messagePersistenceConfig: SqlQueuePersistenceConf
     }
 
     val persistedQueues = queueRepo.findAll()
-    val persistedQueuesNames = persistedQueues.map(_.name).toSet
-    val allQueues = persistedQueues ++ baseQueues.filterNot(queue => persistedQueuesNames.contains(queue.name))
+    val allQueues = QueueConfigUtil.getQueuesToCreate(persistedQueues, baseQueues)
 
     val errors = allQueues.flatMap { cq =>
-      Await.result(queueManagerActor ? org.elasticmq.msg.CreateQueue(cq.toQueueData(new DateTime())), timeout.duration)
+      Await.result(queueManagerActor ? org.elasticmq.msg.CreateQueue(cq.toQueueData), timeout.duration)
         .map(queueActor => restoreMessages(cq.name, queueActor))
         .swap
         .toOption

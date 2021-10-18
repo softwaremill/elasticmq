@@ -51,6 +51,8 @@ class QueueConfigUtilTest extends AnyFunSuite with Matchers with OptionValues {
       Some(3L),
       Some(0L),
       Some(0L),
+      100L,
+      200L,
       Some(DeadLettersQueue("dead", 4)),
       isFifo = false,
       hasContentBasedDeduplication = true,
@@ -66,11 +68,13 @@ class QueueConfigUtilTest extends AnyFunSuite with Matchers with OptionValues {
     val baseConf = QueueConfigUtil.readPersistedQueuesFromConfig(ConfigFactory.load("test-with-queue-storage-enabled.conf"))
     val queueConf = QueueConfigUtil.readPersistedQueuesFromConfig(ConfigFactory.load("two-queues-config.conf"))
     val loadedQueues = QueueConfigUtil.getQueuesToCreate(queueConf, baseConf)
-    val expectedQueue = CreateQueueMetadata(
+    val expectedQueue1 = CreateQueueMetadata(
       "test",
       Some(3L),
       Some(0L),
       Some(0L),
+      100L,
+      200L,
       Some(DeadLettersQueue("dead", 4)),
       isFifo = false,
       hasContentBasedDeduplication = true,
@@ -78,11 +82,13 @@ class QueueConfigUtilTest extends AnyFunSuite with Matchers with OptionValues {
       Some("messageTo"),
       Map("tag1Key" -> "tag1Value")
     )
-    val expectedQueue1 = CreateQueueMetadata(
+    val expectedQueue2 = CreateQueueMetadata(
       "test-2",
       Some(3L),
       Some(0L),
       Some(0L),
+      100L,
+      200L,
       Some(DeadLettersQueue("dead-2", 4)),
       isFifo = false,
       hasContentBasedDeduplication = true,
@@ -90,11 +96,13 @@ class QueueConfigUtilTest extends AnyFunSuite with Matchers with OptionValues {
       Some("messageTo2"),
       Map("tag12Key" -> "tag12Value")
     )
-    val expectedQueue2 = CreateQueueMetadata(
+    val expectedQueue3 = CreateQueueMetadata(
       "test-3",
       Some(3L),
       Some(0L),
       Some(0L),
+      100L,
+      200L,
       Some(DeadLettersQueue("dead-3", 4)),
       isFifo = false,
       hasContentBasedDeduplication = true,
@@ -103,8 +111,11 @@ class QueueConfigUtilTest extends AnyFunSuite with Matchers with OptionValues {
       Map("tag13Key" -> "tag13Value")
     )
     loadedQueues.length shouldBe 3
-    loadedQueues.head shouldBe expectedQueue
-    loadedQueues(1) shouldBe expectedQueue1
-    loadedQueues(2) shouldBe expectedQueue2
+
+    val loadedQueuesMap = loadedQueues.map(e => e.name -> e).toMap
+
+    loadedQueuesMap("test") shouldBe expectedQueue1
+    loadedQueuesMap("test-2") shouldBe expectedQueue2
+    loadedQueuesMap("test-3") shouldBe expectedQueue3
   }
 }

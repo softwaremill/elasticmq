@@ -46,7 +46,7 @@ class ConfigBasedQueuePersistenceActor(storagePath: String, baseQueues: List[Cre
     val queuesToCreate = QueueConfigUtil.getQueuesToCreate(QueueConfigUtil.readPersistedQueuesFromPath(storagePath), baseQueues)
     val errors = queuesToCreate
       .flatMap((cq: CreateQueueMetadata) =>
-        Await.result(queueManagerActor ? CreateQueue(cq.toQueueData(new DateTime())), timeout.duration)
+        Await.result(queueManagerActor ? CreateQueue(cq.toQueueData), timeout.duration)
           .swap
           .toOption
       )

@@ -5,17 +5,19 @@ import org.joda.time.{DateTime, Duration}
 
 case class CreateQueueMetadata(
     name: String,
-    defaultVisibilityTimeoutSeconds: Option[Long],
-    delaySeconds: Option[Long],
-    receiveMessageWaitSeconds: Option[Long],
-    deadLettersQueue: Option[DeadLettersQueue],
-    isFifo: Boolean,
-    hasContentBasedDeduplication: Boolean,
+    defaultVisibilityTimeoutSeconds: Option[Long] = None,
+    delaySeconds: Option[Long] = None,
+    receiveMessageWaitSeconds: Option[Long] = None,
+    created: Long = 0L,
+    lastModified: Long = 0L,
+    deadLettersQueue: Option[DeadLettersQueue] = None,
+    isFifo: Boolean = false,
+    hasContentBasedDeduplication: Boolean = false,
     copyMessagesTo: Option[String] = None,
     moveMessagesTo: Option[String] = None,
     tags: Map[String, String] = Map[String, String]()) {
 
-  def toQueueData(now: DateTime): QueueData = {
+  def toQueueData: QueueData = {
     QueueData(
       name = name,
       defaultVisibilityTimeout = MillisVisibilityTimeout.fromSeconds(
@@ -25,8 +27,8 @@ case class CreateQueueMetadata(
       receiveMessageWait = Duration.standardSeconds(
         receiveMessageWaitSeconds.getOrElse(CreateQueueDefaults.DefaultReceiveMessageWait)
       ),
-      created = now,
-      lastModified = now,
+      created = new DateTime(created),
+      lastModified = new DateTime(lastModified),
       deadLettersQueue = deadLettersQueue.map(dlq => DeadLettersQueueData(dlq.name, dlq.maxReceiveCount)),
       isFifo = isFifo,
       hasContentBasedDeduplication = hasContentBasedDeduplication,
@@ -44,6 +46,8 @@ object CreateQueueMetadata {
       Some(queueData.defaultVisibilityTimeout.seconds),
       Some(queueData.delay.getStandardSeconds),
       Some(queueData.receiveMessageWait.getStandardSeconds),
+      queueData.created.toInstant.getMillis,
+      queueData.lastModified.toInstant.getMillis,
       queueData.deadLettersQueue.map(dlq => DeadLettersQueue(dlq.name, dlq.maxReceiveCount)),
       queueData.isFifo,
       queueData.hasContentBasedDeduplication,

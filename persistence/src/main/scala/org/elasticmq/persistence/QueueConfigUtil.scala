@@ -1,6 +1,7 @@
 package org.elasticmq.persistence
 
 import com.typesafe.config.{Config, ConfigFactory, ConfigObject, ConfigValue}
+import org.joda.time.DateTime
 
 import java.io.File
 import java.util.concurrent.TimeUnit
@@ -23,11 +24,14 @@ object QueueConfigUtil {
 
   def getQueuesToCreate(persistedQueues: List[CreateQueueMetadata], baseQueues: List[CreateQueueMetadata]): List[CreateQueueMetadata] = {
     val persistedQueuesName = persistedQueues.map(_.name).toSet
-    persistedQueues ++ baseQueues.filterNot(queue => persistedQueuesName.contains(queue.name))
+    val result = persistedQueues ++ baseQueues.filterNot(queue => persistedQueuesName.contains(queue.name))
+    QueueSorter.sortCreateQueues(result)
   }
 
   def getQueuesFromConfig(queuesConfig: Map[String, ConfigValue]): List[CreateQueueMetadata] = {
     def getOptionalBoolean(c: Config, k: String) = if (c.hasPath(k)) Some(c.getBoolean(k)) else None
+
+    def getOptionalLong(c: Config, k: String) = if (c.hasPath(k)) Some(c.getLong(k)) else None
 
     def getOptionalDuration(c: Config, k: String) = if (c.hasPath(k)) Some(c.getDuration(k, TimeUnit.SECONDS)) else None
 
@@ -39,6 +43,8 @@ object QueueConfigUtil {
 
     val deadLettersQueueKey = "deadLettersQueue"
 
+    val now = new DateTime().toInstant.getMillis
+
     queuesConfig.map { case (n, v) =>
       val c = v.asInstanceOf[ConfigObject].toConfig
       val isFifo = getOptionalBoolean(c, "fifo").getOrElse(false)
@@ -47,6 +53,8 @@ object QueueConfigUtil {
         defaultVisibilityTimeoutSeconds = getOptionalDuration(c, "defaultVisibilityTimeout"),
         delaySeconds = getOptionalDuration(c, "delay"),
         receiveMessageWaitSeconds = getOptionalDuration(c, "receiveMessageWait"),
+        created = getOptionalLong(c, "created").getOrElse(now),
+        lastModified = getOptionalLong(c, "lastModified").getOrElse(now),
         deadLettersQueue = if (c.hasPath(deadLettersQueueKey)) {
           Some(
             DeadLettersQueue(
