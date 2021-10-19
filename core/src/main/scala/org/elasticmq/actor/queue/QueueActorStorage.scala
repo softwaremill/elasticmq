@@ -68,10 +68,15 @@ trait QueueActorStorage {
   }
 
   object ResultWithEvents {
-    def some[T](result: T, events: List[QueueEventWithOperationStatus] = List.empty): ResultWithEvents[T] =
+    def valueWithEvents[T](result: T, events: List[QueueEventWithOperationStatus]): ResultWithEvents[T] =
       ResultWithEvents(Some(result), events)
 
-    def none[T](events: List[QueueEventWithOperationStatus] = List.empty): ResultWithEvents[T] =
+    def onlyValue[T](result: T): ResultWithEvents[T] =
+      ResultWithEvents(Some(result), List.empty)
+
+    def onlyEvents[T](events: List[QueueEventWithOperationStatus]): ResultWithEvents[T] =
       ResultWithEvents(None, events)
+
+    def empty[T]: ResultWithEvents[T] = ResultWithEvents(None, List.empty)
   }
 }

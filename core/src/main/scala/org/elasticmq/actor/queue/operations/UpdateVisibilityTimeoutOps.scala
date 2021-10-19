@@ -34,13 +34,13 @@ trait UpdateVisibilityTimeoutOps extends Logging {
 
         logger.debug(s"${queueData.name}: Updated next delivery of $messageId to $newNextDelivery")
 
-        ResultWithEvents.some(
+        ResultWithEvents.valueWithEvents(
           Right(()),
           List(QueueMessageUpdated(queueData.name, internalMessage))
         )
 
       case None =>
-        ResultWithEvents.some(Left(new MessageDoesNotExist(queueData.name, messageId)))
+        ResultWithEvents.onlyValue(Left(new MessageDoesNotExist(queueData.name, messageId)))
     }
   }
 

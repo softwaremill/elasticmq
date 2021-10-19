@@ -15,12 +15,12 @@ trait DeleteMessageOps extends Logging {
         if (msgData.deliveryReceipts.lastOption.contains(deliveryReceipt.receipt)) {
           // Just removing the msg from the map. The msg will be removed from the queue when trying to receive it.
           messageQueue.remove(msgId)
-          ResultWithEvents.some(Right(()), List(QueueMessageRemoved(queueData.name, msgId)))
+          ResultWithEvents.valueWithEvents(Right(()), List(QueueMessageRemoved(queueData.name, msgId)))
         } else {
-          ResultWithEvents.some(Left(new InvalidReceiptHandle(queueData.name, deliveryReceipt.receipt)))
+          ResultWithEvents.onlyValue(Left(new InvalidReceiptHandle(queueData.name, deliveryReceipt.receipt)))
         }
       case None =>
-        ResultWithEvents.some(Left(new InvalidReceiptHandle(queueData.name, deliveryReceipt.receipt)))
+        ResultWithEvents.onlyValue(Left(new InvalidReceiptHandle(queueData.name, deliveryReceipt.receipt)))
     }
   }
 }

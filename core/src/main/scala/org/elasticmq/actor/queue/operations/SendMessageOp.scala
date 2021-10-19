@@ -24,7 +24,7 @@ trait SendMessageOp extends Logging {
         implicit val sender: ActorRef = context.sender()
         // preserve original sender so that reply would be received there from the move-to actor
         moveTo ! SendMessage(message2)
-        ResultWithEvents.none()
+        ResultWithEvents.empty
 
       case None =>
         sendMessage(message2)
@@ -39,7 +39,7 @@ trait SendMessageOp extends Logging {
   private def sendMessage(message: NewMessageData): ResultWithEvents[MessageData] = {
     if (queueData.isFifo) {
       CommonOperations.wasRegistered(message, fifoMessagesHistory) match {
-        case Some(messageOnQueue) => ResultWithEvents.some(messageOnQueue.toMessageData)
+        case Some(messageOnQueue) => ResultWithEvents.onlyValue(messageOnQueue.toMessageData)
         case None                 => addMessage(message)
       }
     } else {
@@ -52,7 +52,7 @@ trait SendMessageOp extends Logging {
     addInternalMessage(internalMessage)
     logger.debug(s"${queueData.name}: Sent message with id ${internalMessage.id}")
 
-    ResultWithEvents.some(internalMessage.toMessageData, List(QueueMessageAdded(queueData.name, internalMessage)))
+    ResultWithEvents.valueWithEvents(internalMessage.toMessageData, List(QueueMessageAdded(queueData.name, internalMessage)))
   }
 
   private def addInternalMessage(internalMessage: InternalMessage): Unit = {

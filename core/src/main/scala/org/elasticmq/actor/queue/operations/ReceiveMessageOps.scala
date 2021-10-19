@@ -42,7 +42,7 @@ trait ReceiveMessageOps extends Logging {
 
     receiveRequestAttemptId.foreach { attemptId => receiveRequestAttemptCache.add(attemptId, messages) }
 
-    ResultWithEvents.some(
+    ResultWithEvents.valueWithEvents(
       messages.map(_.toMessageData),
       messages.map(internalMessage => QueueMessageUpdated(queueData.name, internalMessage))
     )
