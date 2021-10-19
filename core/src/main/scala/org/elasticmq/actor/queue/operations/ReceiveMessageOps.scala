@@ -2,11 +2,9 @@ package org.elasticmq.actor.queue.operations
 
 import org.elasticmq._
 import org.elasticmq.actor.queue.ReceiveRequestAttemptCache.ReceiveFailure.{Expired, Invalid}
-import org.elasticmq.actor.queue.{InternalMessage, QueueActorStorage, QueueMessageUpdated}
+import org.elasticmq.actor.queue.{InternalMessage, QueueActorStorage, QueueEvent}
 import org.elasticmq.msg.MoveMessage
 import org.elasticmq.util.{Logging, NowProvider}
-
-import scala.concurrent.Future
 
 trait ReceiveMessageOps extends Logging {
   this: QueueActorStorage with DeleteMessageOps =>
@@ -44,7 +42,7 @@ trait ReceiveMessageOps extends Logging {
 
     ResultWithEvents.valueWithEvents(
       messages.map(_.toMessageData),
-      messages.map(internalMessage => QueueMessageUpdated(queueData.name, internalMessage))
+      messages.map(internalMessage => QueueEvent.MessageUpdated(queueData.name, internalMessage))
     )
   }
 

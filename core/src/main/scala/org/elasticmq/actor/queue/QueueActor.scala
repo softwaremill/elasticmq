@@ -28,7 +28,7 @@ class QueueActor(
     msg match {
       case m: QueueQueueMsg[T] =>
         val replyAction = receiveAndReplyQueueMsg(m)
-        if (m.updatesQueueMetadata) queueEventListener.foreach(_ ! QueueMetadataUpdated(queueData))
+        if (m.updatesQueueMetadata) queueEventListener.foreach(_ ! QueueEvent.QueueMetadataUpdated(queueData))
         replyAction
       case m: QueueMessageMsg[T] => receiveAndReplyMessageMsg(m)
     }

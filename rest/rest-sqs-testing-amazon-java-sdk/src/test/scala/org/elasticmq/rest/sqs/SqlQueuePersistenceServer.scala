@@ -6,13 +6,13 @@ import com.amazonaws.auth.{AWSStaticCredentialsProvider, BasicAWSCredentials}
 import com.amazonaws.client.builder.AwsClientBuilder.EndpointConfiguration
 import com.amazonaws.services.sqs.{AmazonSQS, AmazonSQSClientBuilder}
 import org.elasticmq.actor.QueueManagerActor
-import org.elasticmq.actor.queue.Restore
+import org.elasticmq.actor.queue.QueueEvent
 import org.elasticmq.actor.reply._
 import org.elasticmq.persistence.sql.{SqlQueuePersistenceActor, SqlQueuePersistenceConfig}
 import org.elasticmq.util.NowProvider
 import org.elasticmq.{NodeAddress, StrictSQSLimits}
+import org.scalatest.concurrent.ScalaFutures.convertScalaFuture
 
-import scala.concurrent.Await
 import scala.util.Try
 
 trait SqlQueuePersistenceServer {
@@ -56,7 +56,7 @@ trait SqlQueuePersistenceServer {
       .withAWSRegion(awsRegion)
       .start()
 
-    Await.result(store ? Restore(manager), timeout.duration)
+    (store ? QueueEvent.Restore(manager)).futureValue
 
     client = AmazonSQSClientBuilder
       .standard()

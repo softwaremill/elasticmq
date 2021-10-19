@@ -17,22 +17,22 @@ class ConfigBasedQueuePersistenceActor(storagePath: String, baseQueues: List[Cre
   private val queues: mutable.Map[String, QueueData] = mutable.HashMap[String, QueueData]()
 
   def receive: Receive = {
-    case QueueCreated(queue) =>
+    case QueueEvent.QueueCreated(queue) =>
       queues.put(queue.name, queue)
       QueuePersister.saveToConfigFile(queues.values.toList, storagePath)
 
-    case QueueDeleted(queueName) =>
+    case QueueEvent.QueueDeleted(queueName) =>
       queues.remove(queueName)
       QueuePersister.saveToConfigFile(queues.values.toList, storagePath)
 
-    case QueueMetadataUpdated(queue) =>
+    case QueueEvent.QueueMetadataUpdated(queue) =>
       queues.put(queue.name, queue)
       QueuePersister.saveToConfigFile(queues.values.toList, storagePath)
 
-    case QueueMessageAdded | QueueMessageUpdated | QueueMessageRemoved =>
+    case QueueEvent.MessageAdded | QueueEvent.MessageUpdated | QueueEvent.MessageRemoved =>
       sender() ! OperationUnsupported
 
-    case Restore(queueManagerActor: ActorRef) =>
+    case QueueEvent.Restore(queueManagerActor: ActorRef) =>
       sender() ! createQueues(queueManagerActor)
   }
 

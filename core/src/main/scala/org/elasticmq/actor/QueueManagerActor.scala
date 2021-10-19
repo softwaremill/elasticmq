@@ -2,7 +2,7 @@ package org.elasticmq.actor
 
 import akka.actor.{ActorRef, Props}
 import org.elasticmq._
-import org.elasticmq.actor.queue.{QueueCreated, QueueActor, QueueDeleted}
+import org.elasticmq.actor.queue.{QueueActor, QueueEvent}
 import org.elasticmq.actor.reply._
 import org.elasticmq.msg._
 import org.elasticmq.util.{Logging, NowProvider}
@@ -31,7 +31,7 @@ class QueueManagerActor(nowProvider: NowProvider, limits: Limits, queueEventList
             case Right(_) =>
               val actor = createQueueActor(nowProvider, queueData, queueEventListener)
               queues(queueData.name) = actor
-              queueEventListener.foreach(_ ! QueueCreated(queueData))
+              queueEventListener.foreach(_ ! QueueEvent.QueueCreated(queueData))
               Right(actor)
           }
         }
@@ -39,7 +39,7 @@ class QueueManagerActor(nowProvider: NowProvider, limits: Limits, queueEventList
       case DeleteQueue(queueName) =>
         logger.info(s"Deleting queue $queueName")
         queues.remove(queueName).foreach(context.stop)
-        queueEventListener.foreach(_ ! QueueDeleted(queueName))
+        queueEventListener.foreach(_ ! QueueEvent.QueueDeleted(queueName))
 
       case LookupQueue(queueName) =>
         val result = queues.get(queueName)

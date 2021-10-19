@@ -4,7 +4,7 @@ import akka.actor.{ActorRef, ActorSystem, Props}
 import akka.testkit.{TestActor, TestActors, TestProbe}
 import org.elasticmq.StrictSQSLimits
 import org.elasticmq.actor.QueueManagerActor
-import org.elasticmq.actor.queue.{OperationSuccessful, QueueMessageAdded, QueueMessageRemoved, QueueMessageUpdated}
+import org.elasticmq.actor.queue.{OperationSuccessful, QueueEvent}
 import org.elasticmq.util.MutableNowProvider
 import org.scalatest.{BeforeAndAfterEach, Suite}
 
@@ -24,9 +24,9 @@ trait QueueManagerWithListenerForEachTest extends BeforeAndAfterEach {
     queueEventListener = new TestProbe(system)
     queueEventListener.setAutoPilot((sender: ActorRef, msg: Any) => {
       msg match {
-        case QueueMessageAdded(_, _) => sender.tell(OperationSuccessful, queueEventListener.ref)
-        case QueueMessageUpdated(_, _) => sender.tell(OperationSuccessful, queueEventListener.ref)
-        case QueueMessageRemoved(_, _) => sender.tell(OperationSuccessful, queueEventListener.ref)
+        case QueueEvent.MessageAdded(_, _) => sender.tell(OperationSuccessful, queueEventListener.ref)
+        case QueueEvent.MessageUpdated(_, _) => sender.tell(OperationSuccessful, queueEventListener.ref)
+        case QueueEvent.MessageRemoved(_, _) => sender.tell(OperationSuccessful, queueEventListener.ref)
         case _ =>
       }
       TestActor.KeepRunning

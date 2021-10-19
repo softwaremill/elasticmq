@@ -1,7 +1,7 @@
 package org.elasticmq.actor.queue.operations
 
 import org.elasticmq._
-import org.elasticmq.actor.queue.{QueueActorStorage, QueueMessageUpdated}
+import org.elasticmq.actor.queue.{QueueActorStorage, QueueEvent}
 import org.elasticmq.util.Logging
 
 trait UpdateVisibilityTimeoutOps extends Logging {
@@ -36,7 +36,7 @@ trait UpdateVisibilityTimeoutOps extends Logging {
 
         ResultWithEvents.valueWithEvents(
           Right(()),
-          List(QueueMessageUpdated(queueData.name, internalMessage))
+          List(QueueEvent.MessageUpdated(queueData.name, internalMessage))
         )
 
       case None =>

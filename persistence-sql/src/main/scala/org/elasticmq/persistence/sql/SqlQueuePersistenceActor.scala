@@ -25,7 +25,7 @@ class SqlQueuePersistenceActor(messagePersistenceConfig: SqlQueuePersistenceConf
   implicit val ec: ExecutionContext = context.dispatcher
 
   def receive: Receive = {
-    case QueueCreated(queueData) =>
+    case QueueEvent.QueueCreated(queueData) =>
       logger.debug(s"Storing queue data: $queueData")
 
       if (repos.contains(queueData.name)) {
@@ -35,39 +35,39 @@ class SqlQueuePersistenceActor(messagePersistenceConfig: SqlQueuePersistenceConf
         repos.put(queueData.name, new MessageRepository(queueData.name, messagePersistenceConfig))
       }
 
-    case QueueDeleted(queueName) =>
+    case QueueEvent.QueueDeleted(queueName) =>
       logger.debug(s"Removing queue data for queue $queueName")
       queueRepo.remove(queueName)
       repos.remove(queueName).foreach(_.drop())
 
-    case QueueMetadataUpdated(queueData) =>
+    case QueueEvent.QueueMetadataUpdated(queueData) =>
       logger.whenDebugEnabled {
         logger.debug(s"Updating queue: $queueData")
       }
       queueRepo.update(CreateQueueMetadata.from(queueData))
 
-    case QueueMessageAdded(queueName, message) =>
+    case QueueEvent.MessageAdded(queueName, message) =>
       logger.whenDebugEnabled {
         logger.debug(s"Adding new message: $message")
       }
       repos.get(queueName).foreach(_.add(message))
       sender() ! OperationSuccessful
 
-    case QueueMessageUpdated(queueName, message) =>
+    case QueueEvent.MessageUpdated(queueName, message) =>
       logger.whenDebugEnabled {
         logger.debug(s"Updating message: $message")
       }
       repos.get(queueName).foreach(_.update(message))
       sender() ! OperationSuccessful
 
-    case QueueMessageRemoved(queueName, messageId) =>
+    case QueueEvent.MessageRemoved(queueName, messageId) =>
       logger.whenDebugEnabled {
         logger.debug(s"Removing message with id $messageId")
       }
       repos.get(queueName).foreach(_.remove(messageId))
       sender() ! OperationSuccessful
 
-    case Restore(queueManagerActor: ActorRef) =>
+    case QueueEvent.Restore(queueManagerActor: ActorRef) =>
       val recip = sender()
       createQueues(queueManagerActor).onComplete {
         case Success(result) => recip ! result

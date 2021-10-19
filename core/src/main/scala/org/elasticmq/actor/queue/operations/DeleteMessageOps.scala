@@ -1,6 +1,6 @@
 package org.elasticmq.actor.queue.operations
 
-import org.elasticmq.actor.queue.{QueueActorStorage, QueueMessageRemoved}
+import org.elasticmq.actor.queue.{QueueActorStorage, QueueEvent}
 import org.elasticmq.util.Logging
 import org.elasticmq.{DeliveryReceipt, InvalidReceiptHandle}
 
@@ -15,7 +15,7 @@ trait DeleteMessageOps extends Logging {
         if (msgData.deliveryReceipts.lastOption.contains(deliveryReceipt.receipt)) {
           // Just removing the msg from the map. The msg will be removed from the queue when trying to receive it.
           messageQueue.remove(msgId)
-          ResultWithEvents.valueWithEvents(Right(()), List(QueueMessageRemoved(queueData.name, msgId)))
+          ResultWithEvents.valueWithEvents(Right(()), List(QueueEvent.MessageRemoved(queueData.name, msgId)))
         } else {
           ResultWithEvents.onlyValue(Left(new InvalidReceiptHandle(queueData.name, deliveryReceipt.receipt)))
         }

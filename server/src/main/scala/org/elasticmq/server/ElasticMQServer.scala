@@ -4,7 +4,7 @@ import akka.actor.{ActorRef, ActorSystem, Props}
 import akka.util.Timeout
 import org.elasticmq.ElasticMQError
 import org.elasticmq.actor.QueueManagerActor
-import org.elasticmq.actor.queue.Restore
+import org.elasticmq.actor.queue.QueueEvent
 import org.elasticmq.actor.reply._
 import org.elasticmq.persistence.file.ConfigBasedQueuePersistenceActor
 import org.elasticmq.persistence.sql.SqlQueuePersistenceActor
@@ -117,6 +117,6 @@ class ElasticMQServer(config: ElasticMQServerConfig) extends Logging {
       Timeout(5.seconds)
     }
 
-    Await.result(queueConfigStore ? Restore(queueManagerActor), timeout.duration).swap.toOption
+    Await.result(queueConfigStore ? QueueEvent.Restore(queueManagerActor), timeout.duration).swap.toOption
   }
 }

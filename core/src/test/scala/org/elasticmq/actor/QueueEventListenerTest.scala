@@ -12,7 +12,7 @@ class QueueEventListenerTest extends ActorTest with QueueManagerWithListenerForE
     for {
       _ <- queueManagerActor ? CreateQueue(createQueueData("q1", MillisVisibilityTimeout(1L)))
     } yield {
-      queueEventListener.expectMsgType[QueueCreated].queue.name shouldBe "q1"
+      queueEventListener.expectMsgType[QueueEvent.QueueCreated].queue.name shouldBe "q1"
     }
   }
 
@@ -21,8 +21,8 @@ class QueueEventListenerTest extends ActorTest with QueueManagerWithListenerForE
       _ <- queueManagerActor ? CreateQueue(createQueueData("q1", MillisVisibilityTimeout(1L)))
       _ <- queueManagerActor ? DeleteQueue("q1")
     } yield {
-      queueEventListener.expectMsgType[QueueCreated].queue.name shouldBe "q1"
-      queueEventListener.expectMsgType[QueueDeleted].queueName shouldBe "q1"
+      queueEventListener.expectMsgType[QueueEvent.QueueCreated].queue.name shouldBe "q1"
+      queueEventListener.expectMsgType[QueueEvent.QueueDeleted].queueName shouldBe "q1"
     }
   }
 
@@ -31,8 +31,8 @@ class QueueEventListenerTest extends ActorTest with QueueManagerWithListenerForE
       Right(queue) <- queueManagerActor ? CreateQueue(createQueueData("q1", MillisVisibilityTimeout(1L)))
       _ <- queue ? UpdateQueueDefaultVisibilityTimeout(MillisVisibilityTimeout(1000))
     } yield {
-      queueEventListener.expectMsgType[QueueCreated].queue.name shouldBe "q1"
-      queueEventListener.expectMsgType[QueueMetadataUpdated].queue.defaultVisibilityTimeout.millis shouldBe 1000
+      queueEventListener.expectMsgType[QueueEvent.QueueCreated].queue.name shouldBe "q1"
+      queueEventListener.expectMsgType[QueueEvent.QueueMetadataUpdated].queue.defaultVisibilityTimeout.millis shouldBe 1000
     }
   }
 
@@ -41,8 +41,8 @@ class QueueEventListenerTest extends ActorTest with QueueManagerWithListenerForE
       Right(queue) <- queueManagerActor ? CreateQueue(createQueueData("q1", MillisVisibilityTimeout(1L)))
       _ <- queue ? SendMessage(createNewMessageData("abc", "xyz", Map.empty, MillisNextDelivery(100)))
     } yield {
-      queueEventListener.expectMsgType[QueueCreated].queue.name shouldBe "q1"
-      queueEventListener.expectMsgType[QueueMessageAdded].message.id shouldBe "abc"
+      queueEventListener.expectMsgType[QueueEvent.QueueCreated].queue.name shouldBe "q1"
+      queueEventListener.expectMsgType[QueueEvent.MessageAdded].message.id shouldBe "abc"
     }
   }
 
@@ -52,9 +52,9 @@ class QueueEventListenerTest extends ActorTest with QueueManagerWithListenerForE
       msg <- queue ? SendMessage(createNewMessageData("abc", "xyz", Map.empty, MillisNextDelivery(100)))
       _ <- queue ? UpdateVisibilityTimeout(msg.id, MillisVisibilityTimeout(2000))
     } yield {
-      queueEventListener.expectMsgType[QueueCreated].queue.name shouldBe "q1"
-      queueEventListener.expectMsgType[QueueMessageAdded].message.id shouldBe "abc"
-      queueEventListener.expectMsgType[QueueMessageUpdated].message.nextDelivery shouldBe 2100
+      queueEventListener.expectMsgType[QueueEvent.QueueCreated].queue.name shouldBe "q1"
+      queueEventListener.expectMsgType[QueueEvent.MessageAdded].message.id shouldBe "abc"
+      queueEventListener.expectMsgType[QueueEvent.MessageUpdated].message.nextDelivery shouldBe 2100
     }
   }
 
@@ -65,10 +65,10 @@ class QueueEventListenerTest extends ActorTest with QueueManagerWithListenerForE
       List(msg) <- queue ? ReceiveMessages(MillisVisibilityTimeout(1), 1, None, None)
       _ <- queue ? DeleteMessage(msg.deliveryReceipt.get)
     } yield {
-      queueEventListener.expectMsgType[QueueCreated].queue.name shouldBe "q1"
-      queueEventListener.expectMsgType[QueueMessageAdded].message.id shouldBe "abc"
-      queueEventListener.expectMsgType[QueueMessageUpdated].message.deliveryReceipts.size shouldBe 1
-      queueEventListener.expectMsgType[QueueMessageRemoved].messageId shouldBe "abc"
+      queueEventListener.expectMsgType[QueueEvent.QueueCreated].queue.name shouldBe "q1"
+      queueEventListener.expectMsgType[QueueEvent.MessageAdded].message.id shouldBe "abc"
+      queueEventListener.expectMsgType[QueueEvent.MessageUpdated].message.deliveryReceipts.size shouldBe 1
+      queueEventListener.expectMsgType[QueueEvent.MessageRemoved].messageId shouldBe "abc"
     }
   }
 }

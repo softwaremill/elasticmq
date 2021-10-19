@@ -1,13 +1,12 @@
 package org.elasticmq.actor.queue.operations
 
 import akka.actor.{ActorContext, ActorRef}
-import org.elasticmq.actor.queue.{InternalMessage, QueueActorStorage, QueueMessageAdded}
+import org.elasticmq.actor.queue.{InternalMessage, QueueActorStorage, QueueEvent}
 import org.elasticmq.msg.SendMessage
 import org.elasticmq.util.Logging
 import org.elasticmq.{MessageData, NewMessageData}
 
 import java.util.concurrent.atomic.AtomicLong
-import scala.concurrent.Future
 
 trait SendMessageOp extends Logging {
   this: QueueActorStorage =>
@@ -52,7 +51,7 @@ trait SendMessageOp extends Logging {
     addInternalMessage(internalMessage)
     logger.debug(s"${queueData.name}: Sent message with id ${internalMessage.id}")
 
-    ResultWithEvents.valueWithEvents(internalMessage.toMessageData, List(QueueMessageAdded(queueData.name, internalMessage)))
+    ResultWithEvents.valueWithEvents(internalMessage.toMessageData, List(QueueEvent.MessageAdded(queueData.name, internalMessage)))
   }
 
   private def addInternalMessage(internalMessage: InternalMessage): Unit = {
