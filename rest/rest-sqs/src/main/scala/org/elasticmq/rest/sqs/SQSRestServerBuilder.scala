@@ -56,7 +56,7 @@ case class TheSQSRestServerBuilder(
     sqsLimits: Limits,
     _awsRegion: String,
     _awsAccountId: String,
-    queueMetadataListener: Option[ActorRef]
+    queueEventListener: Option[ActorRef]
 ) extends Logging {
 
   /** @param _actorSystem
@@ -113,11 +113,11 @@ case class TheSQSRestServerBuilder(
   def withAWSAccountId(accountId: String) =
     this.copy(_awsAccountId = accountId)
 
-  /** @param _queueMetadataListener
-    *   Optional listener of changes in queue metadata
+  /** @param _queueEventListener
+    *   Optional listener of changes in queues and messages
     */
-  def withQueueMetadataListener(_queueMetadataListener: ActorRef) =
-    this.copy(queueMetadataListener = Some(_queueMetadataListener))
+  def withQueueEventListener(_queueEventListener: ActorRef) =
+    this.copy(queueEventListener = Some(_queueEventListener))
 
   def start(): SQSRestServer = {
     val (theActorSystem, stopActorSystem) = getOrCreateActorSystem
@@ -263,7 +263,7 @@ case class TheSQSRestServerBuilder(
 
   private def getOrCreateQueueManagerActor(actorSystem: ActorSystem) = {
     providedQueueManagerActor.getOrElse(
-      actorSystem.actorOf(Props(new QueueManagerActor(new NowProvider(), sqsLimits, queueMetadataListener)))
+      actorSystem.actorOf(Props(new QueueManagerActor(new NowProvider(), sqsLimits, queueEventListener)))
     )
   }
 }

@@ -4,11 +4,10 @@ import org.elasticmq.actor.reply._
 import org.elasticmq.msg.{GetQueueData, LookupQueue, CreateQueue => CreateQueueMsg}
 import org.elasticmq.rest.sqs.Action.CreateQueue
 import org.elasticmq.rest.sqs.Constants._
-import org.elasticmq.rest.sqs.CreateQueueDirectives._
 import org.elasticmq.rest.sqs.ParametersUtil._
 import org.elasticmq.rest.sqs.directives.ElasticMQDirectives
 import org.elasticmq.rest.sqs.model.RedrivePolicy.BackwardCompatibleRedrivePolicy
-import org.elasticmq.{DeadLettersQueueData, Limits, MillisVisibilityTimeout, QueueData}
+import org.elasticmq._
 import org.joda.time.{DateTime, Duration}
 import spray.json.JsonParser.ParsingException
 import spray.json._
@@ -56,15 +55,15 @@ trait CreateQueueDirectives {
             val secondsVisibilityTimeoutOpt =
               attributes.parseOptionalLong(VisibilityTimeoutParameter)
             val secondsVisibilityTimeout =
-              secondsVisibilityTimeoutOpt.getOrElse(DefaultVisibilityTimeout)
+              secondsVisibilityTimeoutOpt.getOrElse(CreateQueueDefaults.DefaultVisibilityTimeout)
 
             val secondsDelayOpt =
               attributes.parseOptionalLong(DelaySecondsAttribute)
-            val secondsDelay = secondsDelayOpt.getOrElse(DefaultDelay)
+            val secondsDelay = secondsDelayOpt.getOrElse(CreateQueueDefaults.DefaultDelay)
 
             val secondsReceiveMessageWaitTimeOpt = attributes.parseOptionalLong(ReceiveMessageWaitTimeSecondsAttribute)
             val secondsReceiveMessageWaitTime = secondsReceiveMessageWaitTimeOpt
-              .getOrElse(DefaultReceiveMessageWait)
+              .getOrElse(CreateQueueDefaults.DefaultReceiveMessageWait)
 
             val now = new DateTime()
             val isFifo = attributes.get("FifoQueue").contains("true")
@@ -139,10 +138,4 @@ trait CreateQueueDirectives {
       }
     }
   }
-}
-
-object CreateQueueDirectives {
-  val DefaultVisibilityTimeout = 30L
-  val DefaultDelay = 0L
-  val DefaultReceiveMessageWait = 0L
 }

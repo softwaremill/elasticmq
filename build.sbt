@@ -106,6 +106,9 @@ val akka2HttpTestkit = "com.typesafe.akka" %% "akka-http-testkit" % akkaHttpVers
 
 val scalaAsync = "org.scala-lang.modules" %% "scala-async" % "0.10.0"
 
+val scalikeJdbc = "org.scalikejdbc" %% "scalikejdbc" % "3.5.0"
+val h2 = "com.h2database" % "h2" % "1.4.200"
+
 val common = Seq(scalalogging)
 
 val akka25Overrides =
@@ -137,6 +140,56 @@ lazy val core: Project = (project in file("core"))
     )
   )
   .dependsOn(commonTest % "test")
+
+lazy val persistence: Project = (project in file("persistence"))
+  .settings(buildSettings)
+  .settings(
+    Seq(
+      name := "persistence",
+      libraryDependencies ++= Seq(
+        akka2Actor,
+        akka2Slf4j,
+        config,
+        akka2Testkit,
+        scalaAsync
+      ) ++ common
+    )
+  )
+  .dependsOn(core % "compile->compile;test->test", commonTest % "test")
+
+lazy val persistenceFile: Project = (project in file("persistence-file"))
+  .settings(buildSettings)
+  .settings(
+    Seq(
+      name := "persistence-file",
+      libraryDependencies ++= Seq(
+        akka2Actor,
+        akka2Slf4j,
+        pureConfig,
+        akka2Testkit,
+        scalaAsync
+      ) ++ common
+    )
+  )
+  .dependsOn(persistence, commonTest % "test")
+
+lazy val persistenceSql: Project = (project in file("persistence-sql"))
+  .settings(buildSettings)
+  .settings(
+    Seq(
+      name := "persistence-sql",
+      libraryDependencies ++= Seq(
+        akka2Actor,
+        akka2Slf4j,
+        sprayJson,
+        scalikeJdbc,
+        h2,
+        akka2Testkit,
+        scalaAsync
+      ) ++ common
+    )
+  )
+  .dependsOn(persistence, commonTest % "test")
 
 lazy val rest: Project = (project in file("rest"))
   .settings(buildSettings)
@@ -173,7 +226,7 @@ lazy val restSqsTestingAmazonJavaSdk: Project =
         publishArtifact := false
       )
     )
-    .dependsOn(restSqs % "test->test")
+    .dependsOn(restSqs % "test->test", persistenceFile % "test", persistenceSql % "test")
 
 lazy val server: Project = (project in file("server"))
   .enablePlugins(JavaServerAppPackaging, DockerPlugin)
@@ -184,7 +237,7 @@ lazy val server: Project = (project in file("server"))
   .settings(
     Seq(
       name := "elasticmq-server",
-      libraryDependencies ++= Seq(logback, config, pureConfig),
+      libraryDependencies ++= Seq(logback),
       unmanagedResourceDirectories in Compile += { baseDirectory.value / ".." / "ui" / "build" },
       assembly := assembly.dependsOn(yarnTask.toTask(" build")).value,
       mainClass in assembly := Some("org.elasticmq.server.Main"),
@@ -249,10 +302,11 @@ lazy val server: Project = (project in file("server"))
         s"--chown=${(Docker / daemonUser).value}:root",
         "/opt/elasticmq.conf",
         "/opt"
-      )
+      ),
+      dockerExposedVolumes += "/data"
     )
   )
-  .dependsOn(core, restSqs, commonTest % "test")
+  .dependsOn(core, restSqs, persistenceFile, persistenceSql, commonTest % "test")
 
 val graalVmVersion = "21.2.0"
 
@@ -284,6 +338,7 @@ lazy val nativeServer: Project = (project in file("native-server"))
         "--enable-https",
         "--enable-url-protocols=https,http",
         "--report-unsupported-elements-at-runtime",
+        "--initialize-at-build-time=scala.Symbol$",
         "--allow-incomplete-classpath",
         "--no-fallback",
         "--verbose"
@@ -327,7 +382,8 @@ lazy val nativeServer: Project = (project in file("native-server"))
       GraalVMNativeImage / packageBin := (GraalVMNativeImage / packageBin)
         .dependsOn(yarnTask.toTask(" build"))
         .value,
-      dockerUpdateLatest := true
+      dockerUpdateLatest := true,
+      dockerExposedVolumes += "/data"
     )
   )
   .dependsOn(server)
