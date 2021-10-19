@@ -38,7 +38,7 @@ trait QueueActorStorage {
         if (events == Nil || queueEventListener.isEmpty) {
           Future.successful(OperationUnsupported)
         } else {
-          events.foldLeft(Future(List.empty[OperationStatus])) { (prevFuture, nextEvent) =>
+          events.foldLeft(Future.successful(List.empty[OperationStatus])) { (prevFuture, nextEvent) =>
             for {
               prevResults <- prevFuture
               nextResult <- sendNotification(nextEvent)
