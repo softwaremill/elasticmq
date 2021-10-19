@@ -1,6 +1,5 @@
-package org.elasticmq.server
+package org.elasticmq.persistence
 
-import org.elasticmq.server.config.{CreateQueue, DeadLettersQueue}
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 
@@ -11,7 +10,7 @@ class QueueSorterTest extends AnyFunSuite with Matchers {
   }
 
   test("sorts one queue") {
-    val sortedQueues = QueueSorter.sortCreateQueues(List(CreateQueue("queue1", None, None, None, None, false, false)))
+    val sortedQueues = QueueSorter.sortCreateQueues(List(CreateQueueMetadata("queue1")))
     sortedQueues should have size (1)
     sortedQueues.head.name should be("queue1")
   }
@@ -19,8 +18,8 @@ class QueueSorterTest extends AnyFunSuite with Matchers {
   test("sorts queue and dead letters queue") {
     val sortedQueues = QueueSorter.sortCreateQueues(
       List(
-        CreateQueue("queue1", None, None, None, Some(DeadLettersQueue("deadletters", 1)), false, false),
-        CreateQueue("deadletters", None, None, None, None, false, false)
+        CreateQueueMetadata("queue1", deadLettersQueue = Some(DeadLettersQueue("deadletters", 1))),
+        CreateQueueMetadata("deadletters")
       )
     )
     sortedQueues should have size (2)
@@ -30,10 +29,10 @@ class QueueSorterTest extends AnyFunSuite with Matchers {
   test("sorts queue and copyTo/moveTo queues") {
     val sortedQueues = QueueSorter.sortCreateQueues(
       List(
-        CreateQueue("queue1", None, None, None, None, false, false, None, Some("redirect")),
-        CreateQueue("redirect", None, None, None, None, false, false, Some("audit"), None),
-        CreateQueue("deadletters", None, None, None, None, false, false),
-        CreateQueue("audit", None, None, None, Some(DeadLettersQueue("deadletters", 1)), false, false, None, None)
+        CreateQueueMetadata("queue1", moveMessagesTo = Some("redirect")),
+        CreateQueueMetadata("redirect", copyMessagesTo = Some("audit")),
+        CreateQueueMetadata("deadletters"),
+        CreateQueueMetadata("audit", deadLettersQueue = Some(DeadLettersQueue("deadletters", 1)))
       )
     )
     sortedQueues.map(_.name) should be(
@@ -44,8 +43,8 @@ class QueueSorterTest extends AnyFunSuite with Matchers {
   test("throws exception for circular graphs") {
     an[IllegalArgumentException] should be thrownBy QueueSorter.sortCreateQueues(
       List(
-        CreateQueue("queue1", None, None, None, Some(DeadLettersQueue("deadletters", 1)), false, false),
-        CreateQueue("deadletters", None, None, None, Some(DeadLettersQueue("queue1", 1)), false, false)
+        CreateQueueMetadata("queue1", deadLettersQueue = Some(DeadLettersQueue("deadletters", 1))),
+        CreateQueueMetadata("deadletters", deadLettersQueue = Some(DeadLettersQueue("queue1", 1)))
       )
     )
   }
@@ -53,9 +52,9 @@ class QueueSorterTest extends AnyFunSuite with Matchers {
   test("sorts two queues that use the same dead letters queue") {
     val sortedQueues = QueueSorter.sortCreateQueues(
       List(
-        CreateQueue("queue1", None, None, None, Some(DeadLettersQueue("deadletters", 1)), false, false),
-        CreateQueue("deadletters", None, None, None, None, false, false),
-        CreateQueue("queue2", None, None, None, Some(DeadLettersQueue("deadletters", 1)), false, false)
+        CreateQueueMetadata("queue1", deadLettersQueue = Some(DeadLettersQueue("deadletters", 1))),
+        CreateQueueMetadata("deadletters"),
+        CreateQueueMetadata("queue2", deadLettersQueue = Some(DeadLettersQueue("deadletters", 1)))
       )
     )
     sortedQueues should have size (3)
@@ -66,10 +65,10 @@ class QueueSorterTest extends AnyFunSuite with Matchers {
   test("sorts chained dead letters queues") {
     val sortedQueues = QueueSorter.sortCreateQueues(
       List(
-        CreateQueue("queue1", None, None, None, Some(DeadLettersQueue("deadletters1", 1)), false, false),
-        CreateQueue("deadletters1", None, None, None, Some(DeadLettersQueue("deadletters2", 1)), false, false),
-        CreateQueue("deadletters2", None, None, None, None, false, false),
-        CreateQueue("queue2", None, None, None, Some(DeadLettersQueue("deadletters1", 1)), false, false)
+        CreateQueueMetadata("queue1", deadLettersQueue = Some(DeadLettersQueue("deadletters1", 1))),
+        CreateQueueMetadata("deadletters1", deadLettersQueue = Some(DeadLettersQueue("deadletters2", 1))),
+        CreateQueueMetadata("deadletters2"),
+        CreateQueueMetadata("queue2", deadLettersQueue = Some(DeadLettersQueue("deadletters1", 1)))
       )
     )
     sortedQueues should have size (4)

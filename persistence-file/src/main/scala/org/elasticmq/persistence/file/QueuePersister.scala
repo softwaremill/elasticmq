@@ -1,4 +1,4 @@
-package org.elasticmq.server
+package org.elasticmq.persistence.file
 
 import com.typesafe.config.ConfigRenderOptions
 import org.elasticmq.{DeadLettersQueueData, QueueData}
