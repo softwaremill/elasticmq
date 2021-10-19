@@ -345,6 +345,13 @@ If messages storage is enabled, the directory containing database files can also
 docker run -p 9324:9324 -p 9325:9325 -v `pwd`/custom.conf:/opt/elasticmq.conf -v `pwd`/data:/data softwaremill/elasticmq-native
 ```
 
+It is possible to specify custom `logback.xml` config as well to enable additional debug logging for example.
+Some logback features, like console coloring, will not work due to missing classes in the native image. This can only be solved by building a custom image.
+
+```
+docker run -p 9324:9324 -p 9325:9325 -v `pwd`/custom.conf:/opt/elasticmq.conf -v `pwd`/logback.xml:/opt/logback.xml softwaremill/elasticmq-native
+```
+
 As for now to run `elasticmq-native` docker image on ARM based CPU one have to install `Qemu` docker for `amd64`.
 
 ```
