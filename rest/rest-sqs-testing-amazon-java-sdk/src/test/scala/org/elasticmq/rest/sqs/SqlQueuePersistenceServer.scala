@@ -11,11 +11,12 @@ import org.elasticmq.actor.reply._
 import org.elasticmq.persistence.sql.{SqlQueuePersistenceActor, SqlQueuePersistenceConfig}
 import org.elasticmq.util.NowProvider
 import org.elasticmq.{NodeAddress, StrictSQSLimits}
-import org.scalatest.concurrent.ScalaFutures.convertScalaFuture
+import org.scalatest.concurrent.ScalaFutures
+import org.scalatest.time.{Seconds, Span}
 
 import scala.util.Try
 
-trait SqlQueuePersistenceServer {
+trait SqlQueuePersistenceServer extends ScalaFutures {
 
   private val awsAccountId = "123456789012"
   private val awsRegion = "elasticmq"
@@ -30,6 +31,8 @@ trait SqlQueuePersistenceServer {
     import scala.concurrent.duration._
     Timeout(5.seconds)
   }
+
+  implicit val defaultPatience: PatienceConfig = PatienceConfig(timeout = Span(5, Seconds))
 
   def startServerAndRun(pruneDataOnInit: Boolean)(body: => Unit): Unit = {
     startServerAndSetupClient(pruneDataOnInit)
