@@ -305,6 +305,13 @@ configuration file (see above) and using it when running the container:
 docker run -p 9324:9324 -p 9325:9325 -v `pwd`/custom.conf:/opt/elasticmq.conf softwaremill/elasticmq-native
 ```
 
+It is possible to specify custom `logback.xml` config as well to enable additional debug logging for example.
+Some logback features, like console coloring, will not work due to missing classes in the native image. This can only be solved by building a custom image.
+
+```
+docker run -p 9324:9324 -p 9325:9325 -v `pwd`/custom.conf:/opt/elasticmq.conf -v `pwd`/logback.xml:/opt/logback.xml softwaremill/elasticmq-native
+```
+
 As for now to run `elasticmq-native` docker image on ARM based CPU one have to install `Qemu` docker for `amd64`.
 
 ```

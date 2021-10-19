@@ -293,13 +293,15 @@ lazy val nativeServer: Project = (project in file("native-server"))
       dockerBaseImage := "alpine:3.11",
       Docker / mappings := Seq(
         (baseDirectory.value / ".." / "server" / "docker" / "elasticmq.conf") -> "/opt/elasticmq.conf",
+        (baseDirectory.value / ".." / "server" / "src" / "main" / "resources" / "logback.xml") -> "/opt/logback.xml",
         ((GraalVMNativeImage / target).value / "elasticmq-native-server") -> "/opt/docker/bin/elasticmq-native-server"
       ) ++ sbt.Path.directory(baseDirectory.value / ".." / "ui" / "build"),
       dockerEntrypoint := Seq(
         "/sbin/tini",
         "--",
         "/opt/docker/bin/elasticmq-native-server",
-        "-Dconfig.file=/opt/elasticmq.conf"
+        "-Dconfig.file=/opt/elasticmq.conf",
+        "-Dlogback.configurationFile=/opt/logback.xml"
       ),
       dockerUpdateLatest := true,
       dockerExposedPorts := Seq(9324, 9325),
@@ -314,13 +316,14 @@ lazy val nativeServer: Project = (project in file("native-server"))
         // sbt-native-packager by default copies stage0:/opt/docker to the target container; we need to additionally
         // copy the configuration file
         val copyConfig = Cmd("COPY", "--from=stage0", "/opt/elasticmq.conf", "/opt")
+        val copyLogback = Cmd("COPY", "--from=stage0", "/opt/logback.xml", "/opt")
         val copyUI = Cmd(
           "COPY",
           "/build/",
           "/opt/docker"
         )
         val tiniCommand = ExecCmd("RUN", "apk", "add", "--no-cache", "tini")
-        front ++ Seq(tiniCommand, copyConfig, copyUI) ++ back
+        front ++ Seq(tiniCommand, copyConfig, copyLogback, copyUI) ++ back
       },
       Docker / packageName := "elasticmq-native",
       dockerUsername := Some("softwaremill"),
