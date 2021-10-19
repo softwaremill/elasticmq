@@ -83,6 +83,8 @@ class SqlQueuePersistenceActor(messagePersistenceConfig: SqlQueuePersistenceConf
     val persistedQueues = queueRepo.findAll()
     val allQueues = CreateQueueMetadata.mergePersistedAndBaseQueues(persistedQueues, baseQueues)
 
+    allQueues.foreach(queue => repos.put(queue.name, new MessageRepository(queue.name, db)))
+
     val restoreResult: List[Future[Either[ElasticMQError, OperationStatus]]] = allQueues.map { cq =>
       restoreQueue(queueManagerActor, cq)
         .flatMap {
@@ -102,8 +104,6 @@ class SqlQueuePersistenceActor(messagePersistenceConfig: SqlQueuePersistenceConf
   }
 
   private def restoreMessages(queueName: String, queueActor: ActorRef): Future[Unit] = {
-    val repository = new MessageRepository(queueName, messagePersistenceConfig)
-    repos.put(queueName, repository)
-    queueActor ? RestoreMessages(repository.findAll())
+    queueActor ? RestoreMessages(repos(queueName).findAll())
   }
 }

@@ -55,12 +55,6 @@ class ElasticMQServerConfig(config: Config) extends Logging {
   private val queuesStorage = config.getConfig("queues-storage")
   val queuesStoragePath: String = queuesStorage.getString("path")
   val queuesStorageEnabled: Boolean = queuesStorage.getBoolean("enabled")
-  val baseQueues: List[CreateQueueMetadata] = {
-    if (queuesStorageEnabled)
-      QueueConfigUtil.readPersistedQueuesFromConfig(config)
-    else
-      Nil
-  }
 
   private val awsConfig = config.getConfig("aws")
   val awsRegion: String = awsConfig.getString("region")
@@ -79,4 +73,11 @@ class ElasticMQServerConfig(config: Config) extends Logging {
   }
 
   val sqlQueuePersistenceConfig: SqlQueuePersistenceConfig = getSqlQueuePersistenceConfig
+
+  val baseQueues: List[CreateQueueMetadata] = {
+    if (queuesStorageEnabled || sqlQueuePersistenceConfig.enabled)
+      QueueConfigUtil.readPersistedQueuesFromConfig(config)
+    else
+      Nil
+  }
 }
