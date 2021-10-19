@@ -18,8 +18,9 @@ case class GetAllMessages(queueName: String) extends Replyable[List[InternalMess
 
 class SqlQueuePersistenceActor(messagePersistenceConfig: SqlQueuePersistenceConfig, baseQueues: List[CreateQueueMetadata]) extends Actor with Logging {
 
-  private val queueRepo: QueueRepository = new QueueRepository(messagePersistenceConfig)
-  private val repos: mutable.Map[String, MessageRepository] = mutable.HashMap[String, MessageRepository]()
+  private val db = new DB(messagePersistenceConfig)
+  private val queueRepo = new QueueRepository(db)
+  private val repos = mutable.HashMap[String, MessageRepository]()
 
   implicit val timeout: Timeout = Timeout(5.seconds)
   implicit val ec: ExecutionContext = context.dispatcher
@@ -32,7 +33,7 @@ class SqlQueuePersistenceActor(messagePersistenceConfig: SqlQueuePersistenceConf
         queueRepo.update(CreateQueueMetadata.from(queueData))
       } else {
         queueRepo.add(CreateQueueMetadata.from(queueData))
-        repos.put(queueData.name, new MessageRepository(queueData.name, messagePersistenceConfig))
+        repos.put(queueData.name, new MessageRepository(queueData.name, db))
       }
 
     case QueueEvent.QueueDeleted(queueName) =>

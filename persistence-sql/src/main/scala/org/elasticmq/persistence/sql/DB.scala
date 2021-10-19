@@ -1,9 +1,11 @@
 package org.elasticmq.persistence.sql
-
 import scalikejdbc.ConnectionPool
 
-object SqlPersistence {
+class DB(val persistenceConfig: SqlQueuePersistenceConfig) {
+  DB.initializeSingleton(persistenceConfig)
+}
 
+object DB {
   private var initialized = false
 
   def initializeSingleton(persistenceConfig: SqlQueuePersistenceConfig): Unit = {

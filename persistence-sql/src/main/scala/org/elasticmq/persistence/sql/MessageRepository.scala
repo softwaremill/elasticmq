@@ -2,19 +2,17 @@ package org.elasticmq.persistence.sql
 
 import org.elasticmq.actor.queue.InternalMessage
 import org.elasticmq.util.Logging
-import scalikejdbc._
 
-class MessageRepository(queueName: String, persistenceConfig: SqlQueuePersistenceConfig) extends Logging {
+class MessageRepository(queueName: String, db: DB) extends Logging {
 
+  import scalikejdbc._
   implicit val session: AutoSession = AutoSession
-
-  SqlPersistence.initializeSingleton(persistenceConfig)
 
   private val hashHex = queueName.hashCode.toHexString
   private val escapedName = queueName.replace(".", "_").replace("-", "_")
   private val tableName = SQLSyntax.createUnsafely(s"message_${escapedName}_${hashHex}")
 
-  if (persistenceConfig.pruneDataOnInit) {
+  if (db.persistenceConfig.pruneDataOnInit) {
     logger.debug(s"Deleting stored messages for queue $queueName")
     sql"drop table if exists $tableName".execute.apply()
   }

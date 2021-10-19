@@ -2,17 +2,15 @@ package org.elasticmq.persistence.sql
 
 import org.elasticmq.persistence.CreateQueueMetadata
 import org.elasticmq.util.Logging
-import scalikejdbc._
 
-class QueueRepository(persistenceConfig: SqlQueuePersistenceConfig) extends Logging {
+class QueueRepository(db: DB) extends Logging {
 
+  import scalikejdbc._
   implicit val session: AutoSession = AutoSession
-
-  SqlPersistence.initializeSingleton(persistenceConfig)
 
   private val tableName = SQLSyntax.createUnsafely("queue")
 
-  if (persistenceConfig.pruneDataOnInit) {
+  if (db.persistenceConfig.pruneDataOnInit) {
     logger.debug(s"Deleting stored queues")
     sql"drop table if exists $tableName".execute.apply()
   }
