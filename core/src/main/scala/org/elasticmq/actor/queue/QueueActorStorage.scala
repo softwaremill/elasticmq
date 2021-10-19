@@ -38,7 +38,12 @@ trait QueueActorStorage {
         if (events == Nil || queueEventListener.isEmpty) {
           Future.successful(OperationUnsupported)
         } else {
-          Future.sequence(events.map { event => sendNotification(event) })
+          events.foldLeft(Future(List.empty[OperationStatus])) { (prevFuture, nextEvent) =>
+            for {
+              prevResults <- prevFuture
+              nextResult <- sendNotification(nextEvent)
+            } yield prevResults :+ nextResult
+          }
         }
 
       val actualSender = recipient.getOrElse(context.sender())
