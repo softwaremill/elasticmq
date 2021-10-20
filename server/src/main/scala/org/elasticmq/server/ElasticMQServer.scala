@@ -49,12 +49,12 @@ class ElasticMQServer(config: ElasticMQServerConfig) extends Logging {
 
     queueConfigStore match {
       case Some(queueConfigStoreActor) =>
-        restoreQueues(queueConfigStoreActor, queueManagerActor) match {
+        restoreQueuesViaQueueEventListener(queueConfigStoreActor, queueManagerActor) match {
           case Some(errors) => logErrorsAndShutdown(errors)
           case None =>
         }
       case None =>
-        createQueues(queueManagerActor) match {
+        createQueuesFromConfig(queueManagerActor) match {
           case Some(errors) => logErrorsAndShutdown(errors)
           case None =>
         }
@@ -121,10 +121,10 @@ class ElasticMQServer(config: ElasticMQServerConfig) extends Logging {
     }
   }
 
-  private def restoreQueues(queueConfigStore: ActorRef, queueManagerActor: ActorRef): Option[List[ElasticMQError]] =
-    Await.result(queueConfigStore ? QueueEvent.Restore(queueManagerActor), timeout.duration).swap.toOption
+  private def restoreQueuesViaQueueEventListener(queueEventListenerActor: ActorRef, queueManagerActor: ActorRef): Option[List[ElasticMQError]] =
+    Await.result(queueEventListenerActor ? QueueEvent.Restore(queueManagerActor), timeout.duration).swap.toOption
 
-  private def createQueues(queueManagerActor: ActorRef): Option[List[ElasticMQError]] = {
+  private def createQueuesFromConfig(queueManagerActor: ActorRef): Option[List[ElasticMQError]] = {
     val errors = config
       .baseQueues
       .flatMap(createQueue =>
