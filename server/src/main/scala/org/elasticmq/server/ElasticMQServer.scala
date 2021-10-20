@@ -134,9 +134,6 @@ class ElasticMQServer(config: ElasticMQServerConfig) extends Logging {
           .toOption
       )
 
-    errors match {
-      case _ => Some(errors)
-      case Nil => None
-    }
+    if (errors.nonEmpty) Some(errors) else None
   }
 }
