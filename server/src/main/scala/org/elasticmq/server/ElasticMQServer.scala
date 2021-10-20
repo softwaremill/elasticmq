@@ -12,12 +12,15 @@ import org.elasticmq.rest.sqs.{SQSRestServer, TheSQSRestServerBuilder}
 import org.elasticmq.rest.stats.{StatisticsRestServer, TheStatisticsRestServerBuilder}
 import org.elasticmq.server.config.ElasticMQServerConfig
 import org.elasticmq.util.{Logging, NowProvider}
+import scala.concurrent.duration._
 
 import scala.concurrent.duration.Duration.Inf
 import scala.concurrent.{Await, ExecutionContextExecutor, Future}
 
 class ElasticMQServer(config: ElasticMQServerConfig) extends Logging {
   val actorSystem = ActorSystem("elasticmq")
+
+  implicit val timeout: Timeout = Timeout(5.seconds)
 
   def start() = {
     val queueConfigStore: Option[ActorRef] = createQueueEventListener
@@ -39,15 +42,22 @@ class ElasticMQServer(config: ElasticMQServerConfig) extends Logging {
 
     }
 
+    val logErrorsAndShutdown = { errors: List[ElasticMQError] =>
+      errors.foreach(error => logger.error(s"Could not start server because $error"))
+      shutdown()
+    }
+
     queueConfigStore match {
       case Some(queueConfigStoreActor) =>
-        createQueues(queueConfigStoreActor, queueManagerActor) match {
-          case Some(errors) =>
-            errors.foreach(error => logger.error(s"Could not start server because $error"))
-            shutdown()
+        restoreQueues(queueConfigStoreActor, queueManagerActor) match {
+          case Some(errors) => logErrorsAndShutdown(errors)
           case None =>
         }
       case None =>
+        createQueues(queueManagerActor) match {
+          case Some(errors) => logErrorsAndShutdown(errors)
+          case None =>
+        }
     }
 
     shutdown
@@ -111,12 +121,22 @@ class ElasticMQServer(config: ElasticMQServerConfig) extends Logging {
     }
   }
 
-  private def createQueues(queueConfigStore: ActorRef, queueManagerActor: ActorRef): Option[List[ElasticMQError]] = {
-    implicit val timeout: Timeout = {
-      import scala.concurrent.duration._
-      Timeout(5.seconds)
-    }
-
+  private def restoreQueues(queueConfigStore: ActorRef, queueManagerActor: ActorRef): Option[List[ElasticMQError]] =
     Await.result(queueConfigStore ? QueueEvent.Restore(queueManagerActor), timeout.duration).swap.toOption
+
+  private def createQueues(queueManagerActor: ActorRef): Option[List[ElasticMQError]] = {
+    val errors = config
+      .baseQueues
+      .flatMap(createQueue =>
+        Await
+          .result(queueManagerActor ? org.elasticmq.msg.CreateQueue(createQueue.toQueueData), timeout.duration)
+          .swap
+          .toOption
+      )
+
+    errors match {
+      case _ => Some(errors)
+      case Nil => None
+    }
   }
 }
