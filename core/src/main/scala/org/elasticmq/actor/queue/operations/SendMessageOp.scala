@@ -51,7 +51,10 @@ trait SendMessageOp extends Logging {
     addInternalMessage(internalMessage)
     logger.debug(s"${queueData.name}: Sent message with id ${internalMessage.id}")
 
-    ResultWithEvents.valueWithEvents(internalMessage.toMessageData, List(QueueEvent.MessageAdded(queueData.name, internalMessage)))
+    ResultWithEvents.valueWithEvents(
+      internalMessage.toMessageData,
+      List(QueueEvent.MessageAdded(queueData.name, internalMessage))
+    )
   }
 
   private def addInternalMessage(internalMessage: InternalMessage): Unit = {

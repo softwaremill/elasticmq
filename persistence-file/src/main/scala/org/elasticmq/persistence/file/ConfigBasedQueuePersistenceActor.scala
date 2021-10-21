@@ -12,7 +12,9 @@ import org.elasticmq.{ElasticMQError, QueueData}
 import scala.collection.mutable
 import scala.concurrent.Await
 
-class ConfigBasedQueuePersistenceActor(storagePath: String, baseQueues: List[CreateQueueMetadata]) extends Actor with Logging {
+class ConfigBasedQueuePersistenceActor(storagePath: String, baseQueues: List[CreateQueueMetadata])
+    extends Actor
+    with Logging {
 
   private val queues: mutable.Map[String, QueueData] = mutable.HashMap[String, QueueData]()
 
@@ -42,12 +44,13 @@ class ConfigBasedQueuePersistenceActor(storagePath: String, baseQueues: List[Cre
       Timeout(5.seconds)
     }
 
-    val queuesToCreate = CreateQueueMetadata.mergePersistedAndBaseQueues(QueueConfigUtil.readPersistedQueuesFromPath(storagePath), baseQueues)
+    val queuesToCreate = CreateQueueMetadata.mergePersistedAndBaseQueues(
+      QueueConfigUtil.readPersistedQueuesFromPath(storagePath),
+      baseQueues
+    )
     val errors = queuesToCreate
       .flatMap((cq: CreateQueueMetadata) =>
-        Await.result(queueManagerActor ? CreateQueue(cq.toQueueData), timeout.duration)
-          .swap
-          .toOption
+        Await.result(queueManagerActor ? CreateQueue(cq.toQueueData), timeout.duration).swap.toOption
       )
 
     if (errors.nonEmpty) Left(errors) else Right(())

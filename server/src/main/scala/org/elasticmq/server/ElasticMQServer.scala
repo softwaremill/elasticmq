@@ -67,7 +67,10 @@ class ElasticMQServer(config: ElasticMQServerConfig) extends Logging {
   private def createBase(queueConfigStore: Option[ActorRef]): ActorRef =
     actorSystem.actorOf(Props(new QueueManagerActor(new NowProvider(), config.restSqs.sqsLimits, queueConfigStore)))
 
-  private def optionallyStartRestSqs(queueManagerActor: ActorRef, queueConfigStore: Option[ActorRef]): Option[SQSRestServer] = {
+  private def optionallyStartRestSqs(
+      queueManagerActor: ActorRef,
+      queueConfigStore: Option[ActorRef]
+  ): Option[SQSRestServer] = {
     if (config.restSqs.enabled) {
 
       val server = TheSQSRestServerBuilder(

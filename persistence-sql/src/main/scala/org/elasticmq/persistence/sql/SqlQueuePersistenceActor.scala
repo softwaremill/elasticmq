@@ -16,7 +16,11 @@ import scala.util.{Failure, Success}
 
 case class GetAllMessages(queueName: String) extends Replyable[List[InternalMessage]]
 
-class SqlQueuePersistenceActor(messagePersistenceConfig: SqlQueuePersistenceConfig, baseQueues: List[CreateQueueMetadata]) extends Actor with Logging {
+class SqlQueuePersistenceActor(
+    messagePersistenceConfig: SqlQueuePersistenceConfig,
+    baseQueues: List[CreateQueueMetadata]
+) extends Actor
+    with Logging {
 
   private val db = new DB(messagePersistenceConfig)
   private val queueRepo = new QueueRepository(db)
@@ -71,7 +75,7 @@ class SqlQueuePersistenceActor(messagePersistenceConfig: SqlQueuePersistenceConf
     case QueueEvent.Restore(queueManagerActor: ActorRef) =>
       val recip = sender()
       createQueues(queueManagerActor).onComplete {
-        case Success(result) => recip ! result
+        case Success(result)    => recip ! result
         case Failure(exception) => logger.error("Failed to restore persisted queues", exception)
       }
 
@@ -79,7 +83,9 @@ class SqlQueuePersistenceActor(messagePersistenceConfig: SqlQueuePersistenceConf
       repos.get(queueName).foreach(repo => sender() ! repo.findAll())
   }
 
-  private def createQueues(queueManagerActor: ActorRef)(implicit timeout: Timeout): Future[Either[List[ElasticMQError], OperationStatus]] = {
+  private def createQueues(
+      queueManagerActor: ActorRef
+  )(implicit timeout: Timeout): Future[Either[List[ElasticMQError], OperationStatus]] = {
     val persistedQueues = queueRepo.findAll()
     val allQueues = CreateQueueMetadata.mergePersistedAndBaseQueues(persistedQueues, baseQueues)
 
@@ -88,18 +94,23 @@ class SqlQueuePersistenceActor(messagePersistenceConfig: SqlQueuePersistenceConf
     val restoreResult: List[Future[Either[ElasticMQError, OperationStatus]]] = allQueues.map { cq =>
       restoreQueue(queueManagerActor, cq)
         .flatMap {
-            case Left(errors)  => Future.successful(Left(errors))
-            case Right(queueActor) => restoreMessages(cq.name, queueActor).map(_ => Right(OperationSuccessful))
-          }
+          case Left(errors)      => Future.successful(Left(errors))
+          case Right(queueActor) => restoreMessages(cq.name, queueActor).map(_ => Right(OperationSuccessful))
+        }
     }
 
-    Future.sequence(restoreResult).map(results => {
-      val errors = results.flatMap(_.swap.toOption)
-      if (errors.nonEmpty) Left(errors) else Right(OperationSuccessful)
-    })
+    Future
+      .sequence(restoreResult)
+      .map(results => {
+        val errors = results.flatMap(_.swap.toOption)
+        if (errors.nonEmpty) Left(errors) else Right(OperationSuccessful)
+      })
   }
 
-  private def restoreQueue(queueManagerActor: ActorRef, cq: CreateQueueMetadata): Future[Either[ElasticMQError, ActorRef]] = {
+  private def restoreQueue(
+      queueManagerActor: ActorRef,
+      cq: CreateQueueMetadata
+  ): Future[Either[ElasticMQError, ActorRef]] = {
     queueManagerActor ? CreateQueue(cq.toQueueData)
   }
 

@@ -17,9 +17,12 @@ object QueueConfigUtil {
       .getOrElse(Nil)
 
   def readPersistedQueuesFromConfig(persistedQueuesConfig: Config): List[CreateQueueMetadata] =
-    Try(persistedQueuesConfig
-      .getObject("queues")
-      .asScala.toMap)
+    Try(
+      persistedQueuesConfig
+        .getObject("queues")
+        .asScala
+        .toMap
+    )
       .map(getQueuesFromConfig(_))
       .getOrElse(Nil)
 

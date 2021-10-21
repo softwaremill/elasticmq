@@ -45,7 +45,8 @@ trait SqlQueuePersistenceServer extends ScalaFutures {
       enabled = true,
       driverClass = "org.h2.Driver",
       uri = "jdbc:h2:./elasticmq-h2",
-      pruneDataOnInit = pruneDataOnInit)
+      pruneDataOnInit = pruneDataOnInit
+    )
 
     store = actorSystem.actorOf(Props(new SqlQueuePersistenceActor(persistenceConfig, List.empty)))
     val manager = actorSystem.actorOf(Props(new QueueManagerActor(new NowProvider(), StrictSQSLimits, Some(store))))

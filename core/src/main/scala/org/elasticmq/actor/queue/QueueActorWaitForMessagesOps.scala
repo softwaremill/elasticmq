@@ -71,7 +71,9 @@ trait QueueActorWaitForMessagesOps extends ReplyingActor with QueueActorMessageO
           ) =>
         val result = receiveMessages(visibilityTimeout, count, receiveRequestAttemptId)
         if (!result.result.contains(Nil)) {
-          logger.debug(s"${queueData.name}: Awaiting messages: replying to sequence $seq with ${result.result.get.size} messages.")
+          logger.debug(
+            s"${queueData.name}: Awaiting messages: replying to sequence $seq with ${result.result.get.size} messages."
+          )
           result.send(Some(originalSender))
           awaitingReply.remove(seq)
           tryReply()

@@ -24,15 +24,16 @@ trait QueueManagerWithListenerForEachTest extends BeforeAndAfterEach {
     queueEventListener = new TestProbe(system)
     queueEventListener.setAutoPilot((sender: ActorRef, msg: Any) => {
       msg match {
-        case QueueEvent.MessageAdded(_, _) => sender.tell(OperationSuccessful, queueEventListener.ref)
+        case QueueEvent.MessageAdded(_, _)   => sender.tell(OperationSuccessful, queueEventListener.ref)
         case QueueEvent.MessageUpdated(_, _) => sender.tell(OperationSuccessful, queueEventListener.ref)
         case QueueEvent.MessageRemoved(_, _) => sender.tell(OperationSuccessful, queueEventListener.ref)
-        case _ =>
+        case _                               =>
       }
       TestActor.KeepRunning
     })
 
-    queueManagerActor = system.actorOf(Props(new QueueManagerActor(nowProvider, StrictSQSLimits, Some(queueEventListener.ref))))
+    queueManagerActor =
+      system.actorOf(Props(new QueueManagerActor(nowProvider, StrictSQSLimits, Some(queueEventListener.ref))))
   }
 
   override protected def afterEach(): Unit = {

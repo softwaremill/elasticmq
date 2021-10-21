@@ -19,7 +19,9 @@ object QueueSorter extends Logging {
     TopologicalSorter(nodes.map(Node.apply).toSet, edges)
   }
 
-  private def createReferencedQueuesEdges(nodes: List[CreateQueueMetadata]): Map[CreateQueueMetadata, Set[CreateQueueMetadata]] = {
+  private def createReferencedQueuesEdges(
+      nodes: List[CreateQueueMetadata]
+  ): Map[CreateQueueMetadata, Set[CreateQueueMetadata]] = {
     val edges = new mutable.ListMap[CreateQueueMetadata, Set[CreateQueueMetadata]]
 
     // create map to look up queues by name

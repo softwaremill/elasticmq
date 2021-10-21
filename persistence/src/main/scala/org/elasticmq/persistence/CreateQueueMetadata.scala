@@ -15,7 +15,8 @@ case class CreateQueueMetadata(
     hasContentBasedDeduplication: Boolean = false,
     copyMessagesTo: Option[String] = None,
     moveMessagesTo: Option[String] = None,
-    tags: Map[String, String] = Map[String, String]()) {
+    tags: Map[String, String] = Map[String, String]()
+) {
 
   def toQueueData: QueueData = {
     QueueData(
@@ -34,7 +35,8 @@ case class CreateQueueMetadata(
       hasContentBasedDeduplication = hasContentBasedDeduplication,
       copyMessagesTo = copyMessagesTo,
       moveMessagesTo = moveMessagesTo,
-      tags = tags)
+      tags = tags
+    )
   }
 }
 
@@ -53,10 +55,14 @@ object CreateQueueMetadata {
       queueData.hasContentBasedDeduplication,
       queueData.copyMessagesTo,
       queueData.moveMessagesTo,
-      queueData.tags)
+      queueData.tags
+    )
   }
 
-  def mergePersistedAndBaseQueues(persistedQueues: List[CreateQueueMetadata], baseQueues: List[CreateQueueMetadata]): List[CreateQueueMetadata] = {
+  def mergePersistedAndBaseQueues(
+      persistedQueues: List[CreateQueueMetadata],
+      baseQueues: List[CreateQueueMetadata]
+  ): List[CreateQueueMetadata] = {
     val persistedQueuesName = persistedQueues.map(_.name).toSet
     val result = persistedQueues ++ baseQueues.filterNot(queue => persistedQueuesName.contains(queue.name))
     QueueSorter.sortCreateQueues(result)
