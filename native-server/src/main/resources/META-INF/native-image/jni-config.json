@@ -21,6 +21,12 @@
   ]
 },
 {
+  "name":"java.lang.ClassNotFoundException"
+},
+{
+  "name":"java.lang.NoSuchMethodError"
+},
+{
   "name":"java.util.Arrays",
   "methods":[{"name":"asList","parameterTypes":["java.lang.Object[]"] }]
 },

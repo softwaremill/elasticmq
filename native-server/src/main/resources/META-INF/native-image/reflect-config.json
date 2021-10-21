@@ -104,6 +104,11 @@
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
 {
+  "name":"akka.event.DefaultLoggingFilter",
+  "allDeclaredConstructors":true,
+  "allPublicConstructors":true
+},
+{
   "name":"akka.event.EventStreamUnsubscriber",
   "allDeclaredConstructors":true
 },
@@ -115,6 +120,16 @@
   "name":"akka.event.LoggerMessageQueueSemantics"
 },
 {
+  "name":"akka.event.Logging$DefaultLogger",
+  "allDeclaredConstructors":true,
+  "allPublicConstructors":true
+},
+{
+  "name":"akka.event.Logging$StdOutLogger",
+  "allDeclaredConstructors":true,
+  "allPublicConstructors":true
+},
+{
   "name":"akka.event.slf4j.Slf4jLogger",
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
@@ -123,11 +138,19 @@
   "methods":[{"name":"<init>","parameterTypes":["akka.actor.ActorSystem$Settings","akka.event.EventStream"] }]
 },
 {
+  "name":"akka.http.DefaultParsingErrorHandler$",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
   "name":"akka.http.impl.engine.client.PoolMasterActor",
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
 {
   "name":"akka.io.SelectionHandler",
+  "allDeclaredConstructors":true
+},
+{
+  "name":"akka.io.TcpIncomingConnection",
   "allDeclaredConstructors":true
 },
 {
@@ -158,7 +181,65 @@
   "allDeclaredConstructors":true
 },
 {
+  "name":"akka.serialization.BooleanSerializer",
+  "methods":[{"name":"<init>","parameterTypes":["akka.actor.ExtendedActorSystem"] }]
+},
+{
+  "name":"akka.serialization.ByteArraySerializer",
+  "methods":[{"name":"<init>","parameterTypes":["akka.actor.ExtendedActorSystem"] }]
+},
+{
+  "name":"akka.serialization.ByteStringSerializer",
+  "methods":[{"name":"<init>","parameterTypes":["akka.actor.ExtendedActorSystem"] }]
+},
+{
+  "name":"akka.serialization.DisabledJavaSerializer",
+  "methods":[{"name":"<init>","parameterTypes":["akka.actor.ExtendedActorSystem"] }]
+},
+{
+  "name":"akka.serialization.IntSerializer",
+  "methods":[{"name":"<init>","parameterTypes":["akka.actor.ExtendedActorSystem"] }]
+},
+{
+  "name":"akka.serialization.LongSerializer",
+  "methods":[{"name":"<init>","parameterTypes":["akka.actor.ExtendedActorSystem"] }]
+},
+{
+  "name":"akka.serialization.SerializationExtension$",
+  "fields":[{"name":"MODULE$"}]
+},
+{
+  "name":"akka.serialization.StringSerializer",
+  "methods":[{"name":"<init>","parameterTypes":["akka.actor.ExtendedActorSystem"] }]
+},
+{
+  "name":"akka.stream.SinkRef"
+},
+{
+  "name":"akka.stream.SourceRef"
+},
+{
+  "name":"akka.stream.SystemMaterializer$",
+  "fields":[{"name":"MODULE$"}]
+},
+{
+  "name":"akka.stream.impl.streamref.StreamRefsProtocol"
+},
+{
+  "name":"akka.stream.serialization.StreamRefSerializer",
+  "methods":[{"name":"<init>","parameterTypes":["akka.actor.ExtendedActorSystem"] }]
+},
+{
   "name":"akka.stream.stage.GraphStageLogic[]"
+},
+{
+  "name":"akka.util.ByteString$ByteString1"
+},
+{
+  "name":"akka.util.ByteString$ByteString1C"
+},
+{
+  "name":"akka.util.ByteString$ByteStrings"
 },
 {
   "name":"boolean[]"
@@ -264,6 +345,9 @@
   "name":"java.io.FilePermission"
 },
 {
+  "name":"java.io.Serializable"
+},
+{
   "name":"java.lang.Boolean",
   "fields":[{"name":"TYPE"}]
 },
@@ -311,6 +395,10 @@
 },
 {
   "name":"java.lang.String[]"
+},
+{
+  "name":"java.lang.Throwable",
+  "methods":[{"name":"getSuppressed","parameterTypes":[] }]
 },
 {
   "name":"java.lang.Void",
@@ -371,6 +459,12 @@
 {
   "name":"java.lang.management.ThreadInfo",
   "allPublicMethods":true
+},
+{
+  "name":"java.lang.reflect.Field[]"
+},
+{
+  "name":"java.lang.reflect.Method[]"
 },
 {
   "name":"java.math.BigDecimal"
@@ -523,6 +617,21 @@
   "allPublicMethods":true
 },
 {
+  "name":"org.elasticmq.persistence.CreateQueueMetadata",
+  "allDeclaredFields":true,
+  "allPublicMethods":true
+},
+{
+  "name":"org.elasticmq.persistence.DeadLettersQueue",
+  "allDeclaredFields":true,
+  "allPublicMethods":true
+},
+{
+  "name":"org.elasticmq.persistence.sql.package$SerializableAttribute",
+  "allDeclaredFields":true,
+  "allPublicMethods":true
+},
+{
   "name":"org.h2.Driver"
 },
 {
@@ -578,8 +687,20 @@
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
 {
+  "name":"scala.Boolean"
+},
+{
+  "name":"scala.Int"
+},
+{
+  "name":"scala.Long"
+},
+{
   "name":"scala.Symbol",
   "methods":[{"name":"apply","parameterTypes":["java.lang.String"] }]
+},
+{
+  "name":"scala.Tuple2[]"
 },
 {
   "name":"scala.reflect.ScalaSignature",
@@ -641,11 +762,19 @@
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
 {
+  "name":"sun.security.provider.MD5",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
   "name":"sun.security.provider.NativePRNG",
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
 {
   "name":"sun.security.provider.SHA",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"sun.security.provider.SHA2$SHA256",
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
 {
