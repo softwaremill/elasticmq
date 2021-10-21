@@ -32,7 +32,11 @@ class QueueEventListenerTest extends ActorTest with QueueManagerWithListenerForE
       _ <- queue ? UpdateQueueDefaultVisibilityTimeout(MillisVisibilityTimeout(1000))
     } yield {
       queueEventListener.expectMsgType[QueueEvent.QueueCreated].queue.name shouldBe "q1"
-      queueEventListener.expectMsgType[QueueEvent.QueueMetadataUpdated].queue.defaultVisibilityTimeout.millis shouldBe 1000
+      queueEventListener
+        .expectMsgType[QueueEvent.QueueMetadataUpdated]
+        .queue
+        .defaultVisibilityTimeout
+        .millis shouldBe 1000
     }
   }
 

@@ -14,7 +14,10 @@ trait UpdateVisibilityTimeoutOps extends Logging {
     updateNextDelivery(messageId, CommonOperations.computeNextDelivery(visibilityTimeout, queueData, nowProvider))
   }
 
-  private def updateNextDelivery(messageId: MessageId, newNextDelivery: MillisNextDelivery): ResultWithEvents[Either[MessageDoesNotExist, Unit]] = {
+  private def updateNextDelivery(
+      messageId: MessageId,
+      newNextDelivery: MillisNextDelivery
+  ): ResultWithEvents[Either[MessageDoesNotExist, Unit]] = {
     messageQueue.byId.get(messageId.id) match {
       case Some(internalMessage) =>
         // Updating

@@ -11,7 +11,12 @@ import org.scalatest.matchers.should.Matchers
 
 import scala.collection.JavaConverters._
 
-class SqlQueuePersistenceTest extends AnyFunSuite with SqlQueuePersistenceServer with BeforeAndAfter with Matchers with Logging {
+class SqlQueuePersistenceTest
+    extends AnyFunSuite
+    with SqlQueuePersistenceServer
+    with BeforeAndAfter
+    with Matchers
+    with Logging {
 
   val testQueueName = "testQueue1"
 
@@ -39,8 +44,12 @@ class SqlQueuePersistenceTest extends AnyFunSuite with SqlQueuePersistenceServer
 
   test("should persist, read messages and after restart re-read the messages") {
     startServerAndRun(pruneDataOnInit = true) {
-      val queueUrl = client.createQueue(new CreateQueueRequest(testQueueName)
-        .withAttributes(Map("VisibilityTimeout" -> "1").asJava)).getQueueUrl
+      val queueUrl = client
+        .createQueue(
+          new CreateQueueRequest(testQueueName)
+            .withAttributes(Map("VisibilityTimeout" -> "1").asJava)
+        )
+        .getQueueUrl
 
       client.sendMessage(new SendMessageRequest(queueUrl, "Message 1"))
       client.sendMessage(new SendMessageRequest(queueUrl, "Message 2"))
@@ -66,8 +75,12 @@ class SqlQueuePersistenceTest extends AnyFunSuite with SqlQueuePersistenceServer
 
   test("should persist, read and delete messages and after restart re-read the messages") {
     startServerAndRun(pruneDataOnInit = true) {
-      val queueUrl = client.createQueue(new CreateQueueRequest(testQueueName)
-        .withAttributes(Map("VisibilityTimeout" -> "1").asJava)).getQueueUrl
+      val queueUrl = client
+        .createQueue(
+          new CreateQueueRequest(testQueueName)
+            .withAttributes(Map("VisibilityTimeout" -> "1").asJava)
+        )
+        .getQueueUrl
 
       client.sendMessage(new SendMessageRequest(queueUrl, "Message 1"))
       client.sendMessage(new SendMessageRequest(queueUrl, "Message 2"))
@@ -95,8 +108,12 @@ class SqlQueuePersistenceTest extends AnyFunSuite with SqlQueuePersistenceServer
 
   test("should persist, read messages, update visibility and after restart re-read the messages") {
     startServerAndRun(pruneDataOnInit = true) {
-      val queueUrl = client.createQueue(new CreateQueueRequest(testQueueName)
-        .withAttributes(Map("VisibilityTimeout" -> "1").asJava)).getQueueUrl
+      val queueUrl = client
+        .createQueue(
+          new CreateQueueRequest(testQueueName)
+            .withAttributes(Map("VisibilityTimeout" -> "1").asJava)
+        )
+        .getQueueUrl
 
       client.sendMessage(new SendMessageRequest(queueUrl, "Message 1"))
       client.sendMessage(new SendMessageRequest(queueUrl, "Message 2"))

@@ -22,7 +22,7 @@ case class InternalMessage(
     messageGroupId: Option[String],
     messageDeduplicationId: Option[DeduplicationId],
     tracingId: Option[TracingId],
-    sequenceNumber: Option[String],
+    sequenceNumber: Option[String]
 ) extends Comparable[InternalMessage] {
 
   // Priority queues have biggest elements first

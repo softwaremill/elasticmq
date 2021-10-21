@@ -12,7 +12,9 @@ sealed trait QueueEvent
 sealed trait QueueEventWithOperationStatus extends QueueEvent with Replyable[OperationStatus]
 
 object QueueEvent {
-  case class Restore(queueManagerActor: ActorRef) extends QueueEvent with Replyable[Either[List[ElasticMQError], OperationStatus]]
+  case class Restore(queueManagerActor: ActorRef)
+      extends QueueEvent
+      with Replyable[Either[List[ElasticMQError], OperationStatus]]
 
   case class QueueCreated(queue: QueueData) extends QueueEvent
   case class QueueDeleted(queueName: String) extends QueueEvent
