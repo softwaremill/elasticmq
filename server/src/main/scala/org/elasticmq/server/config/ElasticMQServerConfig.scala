@@ -74,10 +74,5 @@ class ElasticMQServerConfig(config: Config) extends Logging {
 
   val sqlQueuePersistenceConfig: SqlQueuePersistenceConfig = getSqlQueuePersistenceConfig
 
-  val baseQueues: List[CreateQueueMetadata] = {
-    if (queuesStorageEnabled || sqlQueuePersistenceConfig.enabled)
-      QueueConfigUtil.readPersistedQueuesFromConfig(config)
-    else
-      Nil
-  }
+  val baseQueues: List[CreateQueueMetadata] = QueueConfigUtil.readPersistedQueuesFromConfig(config)
 }
