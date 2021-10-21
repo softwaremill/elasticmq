@@ -11,8 +11,8 @@ class ElasticMQServerConfigTest extends AnyFunSuite with Matchers with OptionVal
     new ElasticMQServerConfig(ConfigFactory.load("conf/elasticmq"))
   }
 
-  test("Should not parse persisted queues when disabled") {
+  test("Should parse base queues") {
     val conf = new ElasticMQServerConfig(ConfigFactory.load("test"))
-    conf.baseQueues shouldBe Nil
+    conf.baseQueues.size shouldBe 8
   }
 }
