@@ -1,6 +1,6 @@
 package org.elasticmq.server
 
-import akka.actor.{ActorRef, ActorSystem, Props}
+import akka.actor.{ActorRef, ActorSystem, Props, Terminated}
 import akka.util.Timeout
 import org.elasticmq.ElasticMQError
 import org.elasticmq.actor.QueueManagerActor
@@ -12,25 +12,24 @@ import org.elasticmq.rest.sqs.{SQSRestServer, TheSQSRestServerBuilder}
 import org.elasticmq.rest.stats.{StatisticsRestServer, TheStatisticsRestServerBuilder}
 import org.elasticmq.server.config.ElasticMQServerConfig
 import org.elasticmq.util.{Logging, NowProvider}
-import scala.concurrent.duration._
 
 import scala.concurrent.duration.Duration.Inf
+import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContextExecutor, Future}
 
 class ElasticMQServer(config: ElasticMQServerConfig) extends Logging {
-  val actorSystem = ActorSystem("elasticmq")
+  private val actorSystem = ActorSystem("elasticmq")
 
+  implicit val ec: ExecutionContextExecutor = actorSystem.dispatcher
   implicit val timeout: Timeout = Timeout(5.seconds)
 
-  def start() = {
+  def start(): () => Terminated = {
     val queueConfigStore: Option[ActorRef] = createQueueEventListener
     val queueManagerActor = createBase(queueConfigStore)
     val restServerOpt = optionallyStartRestSqs(queueManagerActor, queueConfigStore)
     val restStatisticsServerOpt = optionallyStartRestStatistics(queueManagerActor)
 
     val shutdown = () => {
-      implicit val ec: ExecutionContextExecutor = actorSystem.dispatcher
-
       val futureTerminationRestSQS = restServerOpt.map(_.stopAndGetFuture()).getOrElse(Future.unit)
       val futureTerminationRestStats = restStatisticsServerOpt.map(_.stopAndGetFuture()).getOrElse(Future.unit)
       val eventualTerminated = for {
@@ -39,7 +38,6 @@ class ElasticMQServer(config: ElasticMQServerConfig) extends Logging {
         ac <- actorSystem.terminate()
       } yield ac
       Await.result(eventualTerminated, Inf)
-
     }
 
     val logErrorsAndShutdown = { errors: List[ElasticMQError] =>
@@ -49,14 +47,14 @@ class ElasticMQServer(config: ElasticMQServerConfig) extends Logging {
 
     queueConfigStore match {
       case Some(queueConfigStoreActor) =>
-        restoreQueuesViaQueueEventListener(queueConfigStoreActor, queueManagerActor) match {
+        restoreQueuesViaQueueEventListener(queueConfigStoreActor, queueManagerActor) map {
           case Some(errors) => logErrorsAndShutdown(errors)
-          case None =>
+          case None         =>
         }
       case None =>
-        createQueuesFromConfig(queueManagerActor) match {
+        createQueuesFromConfig(queueManagerActor) map {
           case Some(errors) => logErrorsAndShutdown(errors)
-          case None =>
+          case None         =>
         }
     }
 
@@ -124,19 +122,17 @@ class ElasticMQServer(config: ElasticMQServerConfig) extends Logging {
     }
   }
 
-  private def restoreQueuesViaQueueEventListener(queueEventListenerActor: ActorRef, queueManagerActor: ActorRef): Option[List[ElasticMQError]] =
-    Await.result(queueEventListenerActor ? QueueEvent.Restore(queueManagerActor), timeout.duration).swap.toOption
+  private def restoreQueuesViaQueueEventListener(queueEventListenerActor: ActorRef, queueManagerActor: ActorRef): Future[Option[List[ElasticMQError]]] =
+    (queueEventListenerActor ? QueueEvent.Restore(queueManagerActor)).map(_.swap.toOption)
 
-  private def createQueuesFromConfig(queueManagerActor: ActorRef): Option[List[ElasticMQError]] = {
-    val errors = config
-      .baseQueues
-      .flatMap(createQueue =>
-        Await
-          .result(queueManagerActor ? org.elasticmq.msg.CreateQueue(createQueue.toQueueData), timeout.duration)
-          .swap
-          .toOption
-      )
+  private def createQueuesFromConfig(queueManagerActor: ActorRef): Future[Option[List[ElasticMQError]]] = {
+    val createQueuesFutures = config.baseQueues.map { createQueue =>
+        (queueManagerActor ? org.elasticmq.msg.CreateQueue(createQueue.toQueueData)).map(_.swap.toOption)
+      }
 
-    if (errors.nonEmpty) Some(errors) else None
+    Future.sequence(createQueuesFutures).map { maybeErrors =>
+      val errors = maybeErrors.flatten
+      if (errors.nonEmpty) Some(errors) else None
+    }
   }
 }
