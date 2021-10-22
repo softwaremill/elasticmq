@@ -36,11 +36,11 @@ object Main extends Logging {
       logger.error("Uncaught exception in thread: " + thread.getName, ex))
   }
 
-  private def addShutdownHook(shutdown: () => Future[Terminated]): Unit = {
+  private def addShutdownHook(shutdown: () => Terminated): Unit = {
     Runtime.getRuntime.addShutdownHook(new Thread() {
       override def run(): Unit = {
         logger.info("ElasticMQ server stopping ...")
-        Await.result(shutdown(), Inf)
+        shutdown()
         logger.info("=== ElasticMQ server stopped ===")
       }
     })

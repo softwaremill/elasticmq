@@ -13,8 +13,9 @@ import org.elasticmq.rest.stats.{StatisticsRestServer, TheStatisticsRestServerBu
 import org.elasticmq.server.config.ElasticMQServerConfig
 import org.elasticmq.util.{Logging, NowProvider}
 
+import scala.concurrent.duration.Duration.Inf
 import scala.concurrent.duration._
-import scala.concurrent.{ExecutionContextExecutor, Future}
+import scala.concurrent.{Await, ExecutionContextExecutor, Future}
 
 class ElasticMQServer(config: ElasticMQServerConfig) extends Logging {
   private val actorSystem = ActorSystem("elasticmq")
@@ -22,7 +23,7 @@ class ElasticMQServer(config: ElasticMQServerConfig) extends Logging {
   implicit val ec: ExecutionContextExecutor = actorSystem.dispatcher
   implicit val timeout: Timeout = Timeout(5.seconds)
 
-  def start(): () => Future[Terminated] = {
+  def start(): () => Terminated = {
     val queueConfigStore: Option[ActorRef] = createQueueEventListener
     val queueManagerActor = createBase(queueConfigStore)
     val restServerOpt = optionallyStartRestSqs(queueManagerActor, queueConfigStore)
@@ -31,11 +32,12 @@ class ElasticMQServer(config: ElasticMQServerConfig) extends Logging {
     val shutdown = () => {
       val futureTerminationRestSQS = restServerOpt.map(_.stopAndGetFuture()).getOrElse(Future.unit)
       val futureTerminationRestStats = restStatisticsServerOpt.map(_.stopAndGetFuture()).getOrElse(Future.unit)
-      for {
+      val eventualTerminated = for {
         _ <- futureTerminationRestSQS
         _ <- futureTerminationRestStats
         ac <- actorSystem.terminate()
       } yield ac
+      Await.result(eventualTerminated, Inf)
     }
 
     val logErrorsAndShutdown = { errors: List[ElasticMQError] =>
@@ -45,14 +47,14 @@ class ElasticMQServer(config: ElasticMQServerConfig) extends Logging {
 
     queueConfigStore match {
       case Some(queueConfigStoreActor) =>
-        restoreQueuesViaQueueEventListener(queueConfigStoreActor, queueManagerActor) flatMap {
+        restoreQueuesViaQueueEventListener(queueConfigStoreActor, queueManagerActor) map {
           case Some(errors) => logErrorsAndShutdown(errors)
-          case None => Future.successful()
+          case None         =>
         }
       case None =>
-        createQueuesFromConfig(queueManagerActor) flatMap {
+        createQueuesFromConfig(queueManagerActor) map {
           case Some(errors) => logErrorsAndShutdown(errors)
-          case None => Future.successful()
+          case None         =>
         }
     }
 
