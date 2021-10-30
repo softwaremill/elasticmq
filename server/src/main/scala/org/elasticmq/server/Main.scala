@@ -33,7 +33,8 @@ object Main extends Logging {
 
   private def logUncaughtExceptions(): Unit = {
     Thread.setDefaultUncaughtExceptionHandler((thread: Thread, ex: Throwable) =>
-      logger.error("Uncaught exception in thread: " + thread.getName, ex))
+      logger.error("Uncaught exception in thread: " + thread.getName, ex)
+    )
   }
 
   private def addShutdownHook(shutdown: () => Terminated): Unit = {

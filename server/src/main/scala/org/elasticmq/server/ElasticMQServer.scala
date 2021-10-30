@@ -122,13 +122,16 @@ class ElasticMQServer(config: ElasticMQServerConfig) extends Logging {
     }
   }
 
-  private def restoreQueuesViaQueueEventListener(queueEventListenerActor: ActorRef, queueManagerActor: ActorRef): Future[Option[List[ElasticMQError]]] =
+  private def restoreQueuesViaQueueEventListener(
+      queueEventListenerActor: ActorRef,
+      queueManagerActor: ActorRef
+  ): Future[Option[List[ElasticMQError]]] =
     (queueEventListenerActor ? QueueEvent.Restore(queueManagerActor)).map(_.swap.toOption)
 
   private def createQueuesFromConfig(queueManagerActor: ActorRef): Future[Option[List[ElasticMQError]]] = {
     val createQueuesFutures = config.baseQueues.map { createQueue =>
-        (queueManagerActor ? org.elasticmq.msg.CreateQueue(createQueue.toQueueData)).map(_.swap.toOption)
-      }
+      (queueManagerActor ? org.elasticmq.msg.CreateQueue(createQueue.toQueueData)).map(_.swap.toOption)
+    }
 
     Future.sequence(createQueuesFutures).map { maybeErrors =>
       val errors = maybeErrors.flatten
