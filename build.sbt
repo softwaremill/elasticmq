@@ -123,7 +123,7 @@ val s3Upload = TaskKey[PutObjectResult]("s3-upload", "Uploads files to an S3 buc
 lazy val root: Project = (project in file("."))
   .settings(buildSettings)
   .settings(name := "elasticmq-root")
-  .aggregate(commonTest, core, rest, server, nativeServer, ui)
+  .aggregate(commonTest, core, rest, persistence, server, nativeServer, ui)
 
 lazy val commonTest: Project = (project in file("common-test"))
   .settings(buildSettings)
@@ -143,9 +143,14 @@ lazy val core: Project = (project in file("core"))
 
 lazy val persistence: Project = (project in file("persistence"))
   .settings(buildSettings)
+  .settings(name := "elasticmq-persistence")
+  .aggregate(persistenceCore, persistenceFile, persistenceSql)
+
+lazy val persistenceCore: Project = (project in file("persistence/persistence-core"))
+  .settings(buildSettings)
   .settings(
     Seq(
-      name := "persistence",
+      name := "elasticmq-persistence-core",
       libraryDependencies ++= Seq(
         akka2Actor,
         akka2Slf4j,
@@ -157,39 +162,29 @@ lazy val persistence: Project = (project in file("persistence"))
   )
   .dependsOn(core % "compile->compile;test->test", commonTest % "test")
 
-lazy val persistenceFile: Project = (project in file("persistence-file"))
+lazy val persistenceFile: Project = (project in file("persistence/persistence-file"))
   .settings(buildSettings)
   .settings(
     Seq(
-      name := "persistence-file",
-      libraryDependencies ++= Seq(
-        akka2Actor,
-        akka2Slf4j,
-        pureConfig,
-        akka2Testkit,
-        scalaAsync
-      ) ++ common
+      name := "elasticmq-persistence-file",
+      libraryDependencies ++= Seq(pureConfig) ++ common
     )
   )
-  .dependsOn(persistence, commonTest % "test")
+  .dependsOn(persistenceCore, commonTest % "test")
 
-lazy val persistenceSql: Project = (project in file("persistence-sql"))
+lazy val persistenceSql: Project = (project in file("persistence/persistence-sql"))
   .settings(buildSettings)
   .settings(
     Seq(
-      name := "persistence-sql",
+      name := "elasticmq-persistence-sql",
       libraryDependencies ++= Seq(
-        akka2Actor,
-        akka2Slf4j,
         sprayJson,
         scalikeJdbc,
-        h2,
-        akka2Testkit,
-        scalaAsync
+        h2
       ) ++ common
     )
   )
-  .dependsOn(persistence, commonTest % "test")
+  .dependsOn(persistenceCore, commonTest % "test")
 
 lazy val rest: Project = (project in file("rest"))
   .settings(buildSettings)
