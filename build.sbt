@@ -316,7 +316,7 @@ lazy val nativeServer: Project = (project in file("native-server"))
       libraryDependencies ++= Seq(
         "org.graalvm.nativeimage" % "svm" % graalVmVersion % "compile-internal"
       ),
-      //configures sbt-native-packager to build app using dockerized graalvm
+      // configures sbt-native-packager to build app using dockerized graalvm
       (GraalVMNativeImage / containerBuildImage) := GraalVMNativeImagePlugin
         .generateContainerBuildImage(s"ghcr.io/graalvm/graalvm-ce:java11-$graalVmVersion")
         .value,
@@ -339,7 +339,7 @@ lazy val nativeServer: Project = (project in file("native-server"))
         "--verbose"
       ),
       Compile / mainClass := Some("org.elasticmq.server.Main"),
-      //configures sbt-native-packager to build docker image with generated executable
+      // configures sbt-native-packager to build docker image with generated executable
       dockerBaseImage := "alpine:3.11",
       Docker / mappings := Seq(
         (baseDirectory.value / ".." / "server" / "docker" / "elasticmq.conf") -> "/opt/elasticmq.conf",

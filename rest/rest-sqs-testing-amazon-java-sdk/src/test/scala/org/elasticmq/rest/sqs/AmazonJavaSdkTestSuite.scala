@@ -215,10 +215,10 @@ class AmazonJavaSdkTestSuite extends SqsClientServerCommunication with Matchers 
     val httpHost = new HttpHost("localhost", 9321)
     val req = new HttpGet("/queue/testQueue1?Action=ReceiveMessage")
 
-    //when
+    // when
     val res = httpClient.execute(httpHost, req)
 
-    //then
+    // then
     res.getStatusLine.getStatusCode shouldBe StatusCodes.OK.intValue
     res.getEntity.getContentType.getValue should be("text/xml; charset=UTF-8")
   }
@@ -229,10 +229,10 @@ class AmazonJavaSdkTestSuite extends SqsClientServerCommunication with Matchers 
     val req = new HttpPost()
     req.setURI(new URI("/queue/lol"))
 
-    //when
+    // when
     val res = httpClient.execute(httpHost, req)
 
-    //then
+    // then
     res.getStatusLine.getStatusCode shouldBe StatusCodes.BadRequest.intValue
     Source.fromInputStream(res.getEntity.getContent).mkString should include("<Code>MissingAction</Code>")
   }
@@ -245,10 +245,10 @@ class AmazonJavaSdkTestSuite extends SqsClientServerCommunication with Matchers 
     val action = new BasicNameValuePair("Action", "")
     req.setEntity(new UrlEncodedFormEntity(List(action).asJava))
 
-    //when
+    // when
     val res = httpClient.execute(httpHost, req)
 
-    //then
+    // then
     res.getStatusLine.getStatusCode shouldBe StatusCodes.BadRequest.intValue
     Source.fromInputStream(res.getEntity.getContent).mkString should include("<Code>InvalidAction</Code>")
   }
@@ -261,10 +261,10 @@ class AmazonJavaSdkTestSuite extends SqsClientServerCommunication with Matchers 
     val action = new BasicNameValuePair("Action", "ReceiveMessage")
     req.setEntity(new UrlEncodedFormEntity(List(action).asJava))
 
-    //when
+    // when
     val res = httpClient.execute(httpHost, req)
 
-    //then
+    // then
     res.getStatusLine.getStatusCode shouldBe StatusCodes.BadRequest.intValue
     Source.fromInputStream(res.getEntity.getContent).mkString should include("<Code>Invalid request")
 
@@ -278,10 +278,10 @@ class AmazonJavaSdkTestSuite extends SqsClientServerCommunication with Matchers 
     val action = new BasicNameValuePair("Action", "Whatever")
     req.setEntity(new UrlEncodedFormEntity(List(action).asJava))
 
-    //when
+    // when
     val res = httpClient.execute(httpHost, req)
 
-    //then
+    // then
     res.getStatusLine.getStatusCode shouldBe StatusCodes.BadRequest.intValue
     Source.fromInputStream(res.getEntity.getContent).mkString should include("<Code>InvalidAction</Code>")
   }

@@ -35,9 +35,9 @@ object LocalPerformanceTest extends App {
 
     testWithMq(new ActorBasedMQ, 3, 100000, "in-memory warmup", 1)
 
-    //testWithMq(new ActorBasedMQ, iterations, msgsInIteration, "in-memory", 1)
-    //testWithMq(new ActorBasedMQ, iterations, msgsInIteration, "in-memory", 2)
-    //testWithMq(new ActorBasedMQ, iterations, msgsInIteration, "in-memory", 3)
+    // testWithMq(new ActorBasedMQ, iterations, msgsInIteration, "in-memory", 1)
+    // testWithMq(new ActorBasedMQ, iterations, msgsInIteration, "in-memory", 2)
+    // testWithMq(new ActorBasedMQ, iterations, msgsInIteration, "in-memory", 3)
     testWithMq(new RestSQSMQ, iterations, msgsInIteration, "rest-sqs + in-memory", 1)
   }
 
