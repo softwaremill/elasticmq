@@ -151,7 +151,6 @@ lazy val persistenceCore: Project = (project in file("persistence/persistence-co
   .settings(
     Seq(
       name := "elasticmq-persistence-core",
-      publishArtifact := true,
       libraryDependencies ++= Seq(
         akka2Actor,
         akka2Slf4j,
@@ -168,7 +167,6 @@ lazy val persistenceFile: Project = (project in file("persistence/persistence-fi
   .settings(
     Seq(
       name := "elasticmq-persistence-file",
-      publishArtifact := true,
       libraryDependencies ++= Seq(pureConfig) ++ common
     )
   )
