@@ -14,7 +14,7 @@ class QueueActor(
     var deadLettersActorRef: Option[ActorRef] = None,
     val copyMessagesToActorRef: Option[ActorRef] = None,
     val moveMessagesToActorRef: Option[ActorRef] = None,
-    val queueMetadataListener: Option[ActorRef] = None
+    val queueEventListener: Option[ActorRef] = None
 ) extends QueueActorStorage
     with QueueActorQueueOps
     with QueueActorWaitForMessagesOps
@@ -28,7 +28,7 @@ class QueueActor(
     msg match {
       case m: QueueQueueMsg[T] =>
         val replyAction = receiveAndReplyQueueMsg(m)
-        if (m.updatesQueueMetadata) queueMetadataListener.foreach(_ ! QueueMetadataUpdated(queueData))
+        if (m.updatesQueueMetadata) queueEventListener.foreach(_ ! QueueEvent.QueueMetadataUpdated(queueData))
         replyAction
       case m: QueueMessageMsg[T] => receiveAndReplyMessageMsg(m)
     }

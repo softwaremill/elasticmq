@@ -6,10 +6,10 @@
 # tl;dr
 
 * in-memory message queue system
-* runs stand-alone ([download](https://s3-eu-west-1.amazonaws.com/softwaremill-public/elasticmq-server-1.2.1.jar)), via [Docker](https://hub.docker.com/r/softwaremill/elasticmq-native/) or embedded
+* runs stand-alone ([download](https://s3-eu-west-1.amazonaws.com/softwaremill-public/elasticmq-server-1.3.2.jar)), via [Docker](https://hub.docker.com/r/softwaremill/elasticmq-native/) or embedded
 * [Amazon SQS](http://aws.amazon.com/sqs/)-compatible interface
 * fully asynchronous implementation, no blocking calls
-* optional UI, queue metadata persistence
+* optional UI, queue persistence
 * created and maintained by:
 
 <p align="center">
@@ -43,21 +43,21 @@ A simple UI is available for viewing real-time queue statistics.
 # Installation: stand-alone
 
 You can download the stand-alone distribution here:
-[https://s3/.../elasticmq-server-1.2.1.jar](https://s3-eu-west-1.amazonaws.com/softwaremill-public/elasticmq-server-1.2.1.jar)
+[https://s3/.../elasticmq-server-1.3.2.jar](https://s3-eu-west-1.amazonaws.com/softwaremill-public/elasticmq-server-1.3.2.jar)
 
 Java 8 or above is required for running the server.
 
 Simply run the jar and you should get a working server, which binds to `localhost:9324`:
     
 ```
-java -jar elasticmq-server-1.2.1.jar
+java -jar elasticmq-server-1.3.2.jar
 ```
 
 ElasticMQ uses [Typesafe Config](https://github.com/typesafehub/config) for configuration. To specify custom
 configuration values, create a file (e.g. `custom.conf`), fill it in with the desired values, and pass it to the server:
 
 ```
-java -Dconfig.file=custom.conf -jar elasticmq-server-1.2.1.jar
+java -Dconfig.file=custom.conf -jar elasticmq-server-1.3.2.jar
 ```
 
 The config file may contain any configuration for Akka and ElasticMQ. Current ElasticMQ configuration values are:
@@ -112,7 +112,7 @@ You can also provide an alternative [Logback](http://logback.qos.ch/) configurat
 log INFO logs and above to the console):
                  
 ```
-java -Dlogback.configurationFile=my_logback.xml -jar elasticmq-server-1.2.1.jar
+java -Dlogback.configurationFile=my_logback.xml -jar elasticmq-server-1.3.2.jar
 ```
 
 # How are queue URLs created
@@ -192,12 +192,46 @@ On startup, any queues defined in the given file will be created. Note that the 
 precedence over queues defined in the main configuration file (as described in the previous section) in the `queues`
 section.
 
+# Persisting queues and messages to SQL database
+
+Queues and their messages can be persisted to SQL database in runtime.
+All events like queue or message creation, deletion or update will be stored in H2 in-file database,
+so that the entire ElasticMQ state can be restored after server restart.
+
+To enable the feature, create a custom configuration file with the following content:
+
+````
+# the include should be done only once, at the beginning of the custom configuration file
+include classpath("application.conf")
+
+messages-storage {
+  enabled = true
+}
+````
+
+By default, the database file is stored in `/data/elasticmq.db`. In order to change it,
+custom JDBC uri needs to be provided:
+
+````
+# the include should be done only once, at the beginning of the custom configuration file
+include classpath("application.conf")
+
+messages-storage {
+  enabled = true
+  uri = "jdbc:h2:/home/me/elasticmq"
+}
+````
+
+On startup, any queues and their messages persisted in the database will be recreated.
+Note that the persisted queues take precedence over the queues defined
+in the main configuration file (as described in the previous section) in the `queues` section.
+
 # Starting an embedded ElasticMQ server with an SQS interface
 
 Add ElasticMQ Server to `build.sbt` dependencies
 
 ```scala
-libraryDependencies += "org.elasticmq" %% "elasticmq-server" % "1.2.1"
+libraryDependencies += "org.elasticmq" %% "elasticmq-server" % "1.3.2"
 ```
 
 Simply start the server using custom configuration (see examples above):
@@ -305,6 +339,19 @@ configuration file (see above) and using it when running the container:
 docker run -p 9324:9324 -p 9325:9325 -v `pwd`/custom.conf:/opt/elasticmq.conf softwaremill/elasticmq-native
 ```
 
+If messages storage is enabled, the directory containing database files can also be mapped:
+
+```
+docker run -p 9324:9324 -p 9325:9325 -v `pwd`/custom.conf:/opt/elasticmq.conf -v `pwd`/data:/data softwaremill/elasticmq-native
+```
+
+It is possible to specify custom `logback.xml` config as well to enable additional debug logging for example.
+Some logback features, like console coloring, will not work due to missing classes in the native image. This can only be solved by building a custom image.
+
+```
+docker run -p 9324:9324 -p 9325:9325 -v `pwd`/custom.conf:/opt/elasticmq.conf -v `pwd`/logback.xml:/opt/logback.xml softwaremill/elasticmq-native
+```
+
 As for now to run `elasticmq-native` docker image on ARM based CPU one have to install `Qemu` docker for `amd64`.
 
 ```
@@ -326,6 +373,12 @@ The image uses default configuration. Custom configuration can be provided (e.g.
 docker run -p 9324:9324 -p 9325:9325 -v `pwd`/custom.conf:/opt/elasticmq.conf softwaremill/elasticmq
 ```
 
+If messages storage is enabled, the directory containing database files can also be mapped:
+
+```
+docker run -p 9324:9324 -p 9325:9325 -v `pwd`/custom.conf:/opt/elasticmq.conf -v `pwd`/data:/data softwaremill/elasticmq
+```
+
 To pass additional java system properties (`-D`) you need to prepare an `application.ini` file. For instance, to set custom `logback.xml` configuration, `application.ini` should look as follows:
 
 ```
@@ -345,7 +398,7 @@ Another option is to use custom `Dockerfile`:
 FROM openjdk:8-jre-alpine
 
 ARG ELASTICMQ_VERSION
-ENV ELASTICMQ_VERSION ${ELASTICMQ_VERSION:-1.2.1}
+ENV ELASTICMQ_VERSION ${ELASTICMQ_VERSION:-1.3.2}
 
 RUN apk add --no-cache curl ca-certificates
 RUN mkdir -p /opt/elasticmq/log /opt/elasticmq/lib /opt/elasticmq/config
@@ -366,14 +419,14 @@ and override the entrypoint passing the required properties.
                     
 ```scala
 // Scala 2.13 and 2.12
-val elasticmqSqs        = "org.elasticmq" %% "elasticmq-rest-sqs" % "1.2.1"
+val elasticmqSqs        = "org.elasticmq" %% "elasticmq-rest-sqs" % "1.3.2"
 ```
 
 If you don't want the SQS interface, but just use the actors directly, you can add a dependency only to the `core`
 module:
     
 ```scala
-val elasticmqCore       = "org.elasticmq" %% "elasticmq-core" % "1.2.1"
+val elasticmqCore       = "org.elasticmq" %% "elasticmq-core" % "1.3.2"
 ```
 
 If you want to use a snapshot version, you will need to add the [https://oss.sonatype.org/content/repositories/snapshots/](https://oss.sonatype.org/content/repositories/snapshots/) repository to your configuration.
@@ -386,7 +439,7 @@ Dependencies:
 <dependency>
     <groupId>org.elasticmq</groupId>
     <artifactId>elasticmq-rest-sqs_2.12</artifactId>
-    <version>1.2.1</version>
+    <version>1.3.2</version>
 </dependency>
 ```
 
@@ -394,7 +447,7 @@ If you want to use a snapshot version, you will need to add the [https://oss.son
 
 # Current versions
 
-*Stable*: 1.2.1
+*Stable*: 1.3.2
 
 # Logging
 
@@ -454,7 +507,7 @@ To build a jar-with-dependencies:
 Do not forget to adjust the CPU and memory settings for the Docker process. It was checked with 6CPUs, 8GB of memory and 2GB of swap. Also, make sure that you are running sbt with the graalvm java, as the way the jars are composed seem to differ from other java implementations, and affect the native-image process that is run later! To rebuild the native image, run:
 
 ```
-sbt "project nativeServer; clean; graalvm-native-image:packageBin; docker:publishLocal"
+sbt "project nativeServer; clean; assembly; graalvm-native-image:packageBin; docker:publishLocal"
 ```
 
 Generating GraalVM config files is a manual process currently. You need to run the fat-jar using the GraalVM VM (w/ native-image installed using `gu`), and then run the following commands to generate the configs:
@@ -463,6 +516,13 @@ Generating GraalVM config files is a manual process currently. You need to run t
 * `java -agentlib:native-image-agent=config-merge-dir=... -Dconfig.file=test.conf -jar elasticmq-server-assembly.jar` (to additionally generate config needed to load custom elasticmq config)
 
 These files should be placed in `native-server/src/main/resources/META-INF/native-image` and are automatically used by the native-image process.
+
+In case of issues with running GraalVM with `native-image-agent` it's possible to execute above commands inside of docker container (the image is generated by the sbt command above).
+`graalVmVersion` is defined in `build.sbt`:
+
+```
+docker run -it -v `pwd`:/opt/graalvm --entrypoint /bin/bash --rm ghcr.io-graalvm-graalvm-ce-native-image:java11-${graalVmVersion}
+```
 
 ## Building multi-architecture image
 

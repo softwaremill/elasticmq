@@ -8,5 +8,6 @@ case class NewMessageData(
     messageGroupId: Option[String],
     messageDeduplicationId: Option[DeduplicationId],
     orderIndex: Int,
-    tracingId: Option[TracingId]
+    tracingId: Option[TracingId],
+    sequenceNumber: Option[String]
 )

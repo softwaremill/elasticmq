@@ -2,7 +2,7 @@ package org.elasticmq.actor.queue.operations
 
 import org.elasticmq._
 import org.elasticmq.actor.queue.ReceiveRequestAttemptCache.ReceiveFailure.{Expired, Invalid}
-import org.elasticmq.actor.queue.{InternalMessage, QueueActorStorage}
+import org.elasticmq.actor.queue.{InternalMessage, QueueActorStorage, QueueEvent}
 import org.elasticmq.msg.MoveMessage
 import org.elasticmq.util.{Logging, NowProvider}
 
@@ -13,7 +13,7 @@ trait ReceiveMessageOps extends Logging {
       visibilityTimeout: VisibilityTimeout,
       count: Int,
       receiveRequestAttemptId: Option[String]
-  ): List[MessageData] = {
+  ): ResultWithEvents[List[MessageData]] = {
     implicit val np: NowProvider = nowProvider
     val messages = receiveRequestAttemptId
       .flatMap({ attemptId =>
@@ -40,7 +40,10 @@ trait ReceiveMessageOps extends Logging {
 
     receiveRequestAttemptId.foreach { attemptId => receiveRequestAttemptCache.add(attemptId, messages) }
 
-    messages.map(_.toMessageData)
+    ResultWithEvents.valueWithEvents(
+      messages.map(_.toMessageData),
+      messages.map(internalMessage => QueueEvent.MessageUpdated(queueData.name, internalMessage))
+    )
   }
 
   private def getMessagesFromRequestAttemptCache(

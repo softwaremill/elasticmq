@@ -1,34 +1,44 @@
 package org.elasticmq.actor.queue.operations
 
 import akka.actor.{ActorContext, ActorRef}
-import org.elasticmq.actor.queue.{InternalMessage, QueueActorStorage}
-import org.elasticmq.actor.reply.{DoNotReply, ReplyAction}
+import org.elasticmq.actor.queue.{InternalMessage, QueueActorStorage, QueueEvent}
 import org.elasticmq.msg.SendMessage
 import org.elasticmq.util.Logging
-import org.elasticmq.{MessageData, NewMessageData, QueueData, StringMessageAttribute}
+import org.elasticmq.{MessageData, NewMessageData}
+
+import java.util.concurrent.atomic.AtomicLong
 
 trait SendMessageOp extends Logging {
   this: QueueActorStorage =>
 
-  def handleOrRedirectMessage(message: NewMessageData, context: ActorContext): ReplyAction[MessageData] = {
-    copyMessagesToActorRef.foreach { _ ! SendMessage(message) }
+  def handleOrRedirectMessage(message: NewMessageData, context: ActorContext): ResultWithEvents[MessageData] = {
+    val message2 = if (queueData.isFifo && message.sequenceNumber.isEmpty) {
+      message.copy(sequenceNumber = Some(SequenceNumber.next()))
+    } else message
+
+    copyMessagesToActorRef.foreach { _ ! SendMessage(message2) }
 
     moveMessagesToActorRef match {
       case Some(moveTo) =>
-        // preserve original sender so that reply would be received there from the move-to actor
         implicit val sender: ActorRef = context.sender()
-        moveTo ! SendMessage(message)
-        DoNotReply()
+        // preserve original sender so that reply would be received there from the move-to actor
+        moveTo ! SendMessage(message2)
+        ResultWithEvents.empty
 
       case None =>
-        sendMessage(message)
+        sendMessage(message2)
     }
   }
 
-  private def sendMessage(message: NewMessageData): MessageData = {
+  def restoreMessages(messages: List[InternalMessage]): Unit = {
+    messages.foreach(addInternalMessage)
+    logger.info(s"Restored ${messages.size} messages")
+  }
+
+  private def sendMessage(message: NewMessageData): ResultWithEvents[MessageData] = {
     if (queueData.isFifo) {
       CommonOperations.wasRegistered(message, fifoMessagesHistory) match {
-        case Some(messageOnQueue) => messageOnQueue.toMessageData
+        case Some(messageOnQueue) => ResultWithEvents.onlyValue(messageOnQueue.toMessageData)
         case None                 => addMessage(message)
       }
     } else {
@@ -36,31 +46,25 @@ trait SendMessageOp extends Logging {
     }
   }
 
-  private def addMessage(message: NewMessageData) = {
-    val updatedMessage = updateSequenceNumberAttribute(message, queueData)
-    val internalMessage = InternalMessage.from(updatedMessage, queueData)
-    messageQueue += internalMessage
-    fifoMessagesHistory = fifoMessagesHistory.addNew(internalMessage)
+  private def addMessage(message: NewMessageData): ResultWithEvents[MessageData] = {
+    val internalMessage = InternalMessage.from(message, queueData)
+    addInternalMessage(internalMessage)
     logger.debug(s"${queueData.name}: Sent message with id ${internalMessage.id}")
 
-    internalMessage.toMessageData
+    ResultWithEvents.valueWithEvents(
+      internalMessage.toMessageData,
+      List(QueueEvent.MessageAdded(queueData.name, internalMessage))
+    )
   }
 
-  private def updateSequenceNumberAttribute(
-      newMessageData: NewMessageData,
-      queueData: QueueData
-  ) = {
-    val updatedAttributes = {
-      if (!queueData.isFifo) {
-        (newMessageData.messageAttributes - "SequenceNumber")
-      } else {
-        newMessageData.messageAttributes.updated(
-          "SequenceNumber",
-          StringMessageAttribute(nextSequenceNumber().toString)
-        )
-      }
-    }
-    newMessageData.copy(messageAttributes = updatedAttributes)
-
+  private def addInternalMessage(internalMessage: InternalMessage): Unit = {
+    messageQueue += internalMessage
+    fifoMessagesHistory = fifoMessagesHistory.addNew(internalMessage)
   }
+}
+
+private object SequenceNumber {
+  private val current = new AtomicLong
+
+  def next(): String = current.getAndIncrement().toString
 }

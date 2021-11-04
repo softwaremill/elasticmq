@@ -1,4 +1,4 @@
-package org.elasticmq.server
+package org.elasticmq.persistence
 
 object TopologicalSorter {
   def apply[T](nodes: Set[Node[T]], edges: Map[Node[T], Set[Node[T]]]): List[T] = {

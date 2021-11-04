@@ -52,3 +52,4 @@ case class ReceiveMessages(
 case class DeleteMessage(deliveryReceipt: DeliveryReceipt) extends QueueMessageMsg[Either[InvalidReceiptHandle, Unit]]
 case class LookupMessage(messageId: MessageId) extends QueueMessageMsg[Option[MessageData]]
 case object DeduplicationIdsCleanup extends QueueMessageMsg[Unit]
+case class RestoreMessages(messages: List[InternalMessage]) extends QueueMessageMsg[Unit]

@@ -21,7 +21,8 @@ case class InternalMessage(
     isFifo: Boolean,
     messageGroupId: Option[String],
     messageDeduplicationId: Option[DeduplicationId],
-    tracingId: Option[TracingId]
+    tracingId: Option[TracingId],
+    sequenceNumber: Option[String]
 ) extends Comparable[InternalMessage] {
 
   // Priority queues have biggest elements first
@@ -65,7 +66,8 @@ case class InternalMessage(
       MessageStatistics(firstReceive, receiveCount),
       messageGroupId,
       messageDeduplicationId,
-      tracingId
+      tracingId,
+      sequenceNumber
     )
 
   def toNewMessageData =
@@ -77,7 +79,8 @@ case class InternalMessage(
       messageGroupId,
       messageDeduplicationId,
       orderIndex,
-      tracingId
+      tracingId,
+      sequenceNumber
     )
 
   def deliverable(deliveryTime: Long): Boolean = nextDelivery <= deliveryTime
@@ -100,7 +103,8 @@ object InternalMessage {
       queueData.isFifo,
       newMessageData.messageGroupId,
       newMessageData.messageDeduplicationId,
-      newMessageData.tracingId
+      newMessageData.tracingId,
+      newMessageData.sequenceNumber
     )
   }
 

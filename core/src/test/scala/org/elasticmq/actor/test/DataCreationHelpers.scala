@@ -51,7 +51,8 @@ trait DataCreationHelpers {
       MessageStatistics(NeverReceived, 0),
       messageGroupId,
       messageDeduplicationId,
-      tracingId
+      tracingId,
+      None
     )
 
   def createNewMessageData(
@@ -71,7 +72,8 @@ trait DataCreationHelpers {
       messageGroupId,
       messageDeduplicationId,
       orderIndex = 0,
-      tracingId
+      tracingId,
+      None
     )
 
   def createNewMessageData(messageData: MessageData) =
@@ -83,6 +85,7 @@ trait DataCreationHelpers {
       messageData.messageGroupId,
       messageData.messageDeduplicationId,
       orderIndex = 0,
-      messageData.tracingId
+      messageData.tracingId,
+      messageData.sequenceNumber
     )
 }

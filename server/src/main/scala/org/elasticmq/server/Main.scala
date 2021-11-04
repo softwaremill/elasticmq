@@ -1,12 +1,12 @@
 package org.elasticmq.server
 
-import java.lang.Thread.UncaughtExceptionHandler
-
 import akka.actor.Terminated
 import com.typesafe.config.ConfigFactory
 import org.elasticmq.server.config.ElasticMQServerConfig
 import org.elasticmq.util.Logging
 
+import scala.concurrent.duration.Duration.Inf
+import scala.concurrent.{Await, Future}
 import scala.io.Source
 
 object Main extends Logging {
@@ -32,10 +32,9 @@ object Main extends Logging {
   }
 
   private def logUncaughtExceptions(): Unit = {
-    Thread.setDefaultUncaughtExceptionHandler(new UncaughtExceptionHandler {
-      override def uncaughtException(t: Thread, e: Throwable): Unit =
-        logger.error("Uncaught exception in thread: " + t.getName, e)
-    })
+    Thread.setDefaultUncaughtExceptionHandler((thread: Thread, ex: Throwable) =>
+      logger.error("Uncaught exception in thread: " + thread.getName, ex)
+    )
   }
 
   private def addShutdownHook(shutdown: () => Terminated): Unit = {

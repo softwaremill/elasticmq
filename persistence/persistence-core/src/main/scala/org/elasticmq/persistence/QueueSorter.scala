@@ -1,7 +1,6 @@
-package org.elasticmq.server
+package org.elasticmq.persistence
 
-import org.elasticmq.server.TopologicalSorter.Node
-import org.elasticmq.server.config.CreateQueue
+import org.elasticmq.persistence.TopologicalSorter.Node
 import org.elasticmq.util.Logging
 
 import scala.collection.mutable
@@ -14,14 +13,16 @@ object QueueSorter extends Logging {
     * @param cqs
     * @return
     */
-  def sortCreateQueues(cqs: List[CreateQueue]): List[CreateQueue] = {
+  def sortCreateQueues(cqs: List[CreateQueueMetadata]): List[CreateQueueMetadata] = {
     val nodes = cqs
     val edges = createReferencedQueuesEdges(nodes).map { case (k, v) => Node(k) -> v.map(Node.apply) }
     TopologicalSorter(nodes.map(Node.apply).toSet, edges)
   }
 
-  private def createReferencedQueuesEdges(nodes: List[CreateQueue]): Map[CreateQueue, Set[CreateQueue]] = {
-    val edges = new mutable.ListMap[CreateQueue, Set[CreateQueue]]
+  private def createReferencedQueuesEdges(
+      nodes: List[CreateQueueMetadata]
+  ): Map[CreateQueueMetadata, Set[CreateQueueMetadata]] = {
+    val edges = new mutable.ListMap[CreateQueueMetadata, Set[CreateQueueMetadata]]
 
     // create map to look up queues by name
     val queueMap = nodes.map { cq => cq.name -> cq }.toMap

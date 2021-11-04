@@ -1,31 +1,35 @@
 package org.elasticmq.server
 
-import akka.actor.{ActorRef, ActorSystem, Props}
+import akka.actor.{ActorRef, ActorSystem, Props, Terminated}
 import akka.util.Timeout
+import org.elasticmq.ElasticMQError
 import org.elasticmq.actor.QueueManagerActor
+import org.elasticmq.actor.queue.QueueEvent
 import org.elasticmq.actor.reply._
-import org.elasticmq.rest.sqs.{CreateQueueDirectives, SQSRestServer, TheSQSRestServerBuilder}
+import org.elasticmq.persistence.file.ConfigBasedQueuePersistenceActor
+import org.elasticmq.persistence.sql.SqlQueuePersistenceActor
+import org.elasticmq.rest.sqs.{SQSRestServer, TheSQSRestServerBuilder}
 import org.elasticmq.rest.stats.{StatisticsRestServer, TheStatisticsRestServerBuilder}
-import org.elasticmq.server.config.{CreateQueue, ElasticMQServerConfig}
+import org.elasticmq.server.config.ElasticMQServerConfig
 import org.elasticmq.util.{Logging, NowProvider}
-import org.elasticmq.{DeadLettersQueueData, ElasticMQError, MillisVisibilityTimeout, QueueData}
-import org.joda.time.{DateTime, Duration}
 
 import scala.concurrent.duration.Duration.Inf
+import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContextExecutor, Future}
 
 class ElasticMQServer(config: ElasticMQServerConfig) extends Logging {
-  val actorSystem = ActorSystem("elasticmq")
+  private val actorSystem = ActorSystem("elasticmq")
 
-  def start() = {
-    val queueConfigStore: Option[ActorRef] = createQueueMetadataListener
+  implicit val ec: ExecutionContextExecutor = actorSystem.dispatcher
+  implicit val timeout: Timeout = Timeout(5.seconds)
+
+  def start(): () => Terminated = {
+    val queueConfigStore: Option[ActorRef] = createQueueEventListener
     val queueManagerActor = createBase(queueConfigStore)
     val restServerOpt = optionallyStartRestSqs(queueManagerActor, queueConfigStore)
     val restStatisticsServerOpt = optionallyStartRestStatistics(queueManagerActor)
 
     val shutdown = () => {
-      implicit val ec: ExecutionContextExecutor = actorSystem.dispatcher
-
       val futureTerminationRestSQS = restServerOpt.map(_.stopAndGetFuture()).getOrElse(Future.unit)
       val futureTerminationRestStats = restStatisticsServerOpt.map(_.stopAndGetFuture()).getOrElse(Future.unit)
       val eventualTerminated = for {
@@ -34,22 +38,39 @@ class ElasticMQServer(config: ElasticMQServerConfig) extends Logging {
         ac <- actorSystem.terminate()
       } yield ac
       Await.result(eventualTerminated, Inf)
-
     }
 
-    createQueues(queueManagerActor) match {
-      case Nil => ()
-      case errors =>
-        errors.foreach(error => logger.error(s"Could not start server because $error"))
-        shutdown()
+    val logErrorsAndShutdown = { errors: List[ElasticMQError] =>
+      errors.foreach(error => logger.error(s"Could not start server because $error"))
+      shutdown()
+    }
+
+    queueConfigStore match {
+      case Some(queueConfigStoreActor) =>
+        restoreQueuesViaQueueEventListener(queueConfigStoreActor, queueManagerActor) map {
+          case Some(errors) => logErrorsAndShutdown(errors)
+          case None         =>
+        }
+      case None =>
+        createQueuesFromConfig(queueManagerActor) map {
+          case Some(errors) => logErrorsAndShutdown(errors)
+          case None         =>
+        }
     }
 
     shutdown
   }
 
-  private def createQueueMetadataListener: Option[ActorRef] =
-    if (config.queuesStorageEnabled) Some(actorSystem.actorOf(Props(new QueueConfigStore(config.queuesStoragePath))))
-    else None
+  private def createQueueEventListener: Option[ActorRef] =
+    if (config.sqlQueuePersistenceConfig.enabled) {
+      Some(
+        actorSystem.actorOf(Props(new SqlQueuePersistenceActor(config.sqlQueuePersistenceConfig, config.baseQueues)))
+      )
+    } else if (config.queuesStorageEnabled) {
+      Some(
+        actorSystem.actorOf(Props(new ConfigBasedQueuePersistenceActor(config.queuesStoragePath, config.baseQueues)))
+      )
+    } else None
 
   private def createBase(queueConfigStore: Option[ActorRef]): ActorRef =
     actorSystem.actorOf(Props(new QueueManagerActor(new NowProvider(), config.restSqs.sqsLimits, queueConfigStore)))
@@ -101,42 +122,20 @@ class ElasticMQServer(config: ElasticMQServerConfig) extends Logging {
     }
   }
 
-  private def createQueues(queueManagerActor: ActorRef): List[ElasticMQError] = {
-    implicit val timeout = {
-      import scala.concurrent.duration._
-      Timeout(5.seconds)
+  private def restoreQueuesViaQueueEventListener(
+      queueEventListenerActor: ActorRef,
+      queueManagerActor: ActorRef
+  ): Future[Option[List[ElasticMQError]]] =
+    (queueEventListenerActor ? QueueEvent.Restore(queueManagerActor)).map(_.swap.toOption)
+
+  private def createQueuesFromConfig(queueManagerActor: ActorRef): Future[Option[List[ElasticMQError]]] = {
+    val createQueuesFutures = config.baseQueues.map { createQueue =>
+      (queueManagerActor ? org.elasticmq.msg.CreateQueue(createQueue.toQueueData)).map(_.swap.toOption)
     }
 
-    config
-      .readQueuesToLoad()
-      .flatMap(cq =>
-        Await
-          .result(queueManagerActor ? org.elasticmq.msg.CreateQueue(configToParams(cq, new DateTime)), timeout.duration)
-          .swap
-          .toOption
-      )
-      .toList
+    Future.sequence(createQueuesFutures).map { maybeErrors =>
+      val errors = maybeErrors.flatten
+      if (errors.nonEmpty) Some(errors) else None
+    }
   }
-
-  private def configToParams(cq: CreateQueue, now: DateTime): QueueData = {
-    QueueData(
-      name = cq.name,
-      defaultVisibilityTimeout = MillisVisibilityTimeout.fromSeconds(
-        cq.defaultVisibilityTimeoutSeconds.getOrElse(CreateQueueDirectives.DefaultVisibilityTimeout)
-      ),
-      delay = Duration.standardSeconds(cq.delaySeconds.getOrElse(CreateQueueDirectives.DefaultDelay)),
-      receiveMessageWait = Duration.standardSeconds(
-        cq.receiveMessageWaitSeconds.getOrElse(CreateQueueDirectives.DefaultReceiveMessageWait)
-      ),
-      created = now,
-      lastModified = now,
-      deadLettersQueue = cq.deadLettersQueue.map(dlq => DeadLettersQueueData(dlq.name, dlq.maxReceiveCount)),
-      isFifo = cq.isFifo,
-      hasContentBasedDeduplication = cq.hasContentBasedDeduplication,
-      copyMessagesTo = cq.copyMessagesTo,
-      moveMessagesTo = cq.moveMessagesTo,
-      tags = cq.tags
-    )
-  }
-
 }
