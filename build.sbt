@@ -122,7 +122,7 @@ val s3Upload = TaskKey[PutObjectResult]("s3-upload", "Uploads files to an S3 buc
 
 lazy val root: Project = (project in file("."))
   .settings(buildSettings)
-  .settings(name := "elasticmq-root")
+  .settings(name := "elasticmq-root", publishArtifact := false)
   .aggregate(commonTest, core, rest, persistence, server, nativeServer, ui)
 
 lazy val commonTest: Project = (project in file("common-test"))
@@ -143,7 +143,7 @@ lazy val core: Project = (project in file("core"))
 
 lazy val persistence: Project = (project in file("persistence"))
   .settings(buildSettings)
-  .settings(name := "elasticmq-persistence")
+  .settings(name := "elasticmq-persistence", publishArtifact := false)
   .aggregate(persistenceCore, persistenceFile, persistenceSql)
 
 lazy val persistenceCore: Project = (project in file("persistence/persistence-core"))
