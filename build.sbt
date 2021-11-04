@@ -106,7 +106,7 @@ val akka2HttpTestkit = "com.typesafe.akka" %% "akka-http-testkit" % akkaHttpVers
 
 val scalaAsync = "org.scala-lang.modules" %% "scala-async" % "0.10.0"
 
-val scalikeJdbc = "org.scalikejdbc" %% "scalikejdbc" % "3.5.0"
+val scalikeJdbc = "org.scalikejdbc" %% "scalikejdbc" % "4.0.0"
 val h2 = "com.h2database" % "h2" % "1.4.200"
 
 val common = Seq(scalalogging)
