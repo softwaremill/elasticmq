@@ -177,7 +177,6 @@ lazy val persistenceSql: Project = (project in file("persistence/persistence-sql
   .settings(
     Seq(
       name := "elasticmq-persistence-sql",
-      publishArtifact := true,
       libraryDependencies ++= Seq(
         sprayJson,
         scalikeJdbc,
