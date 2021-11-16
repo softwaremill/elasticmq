@@ -1,13 +1,15 @@
 package org.elasticmq.rest.sqs
 
-import Constants._
 import org.elasticmq._
-import org.elasticmq.rest.sqs.MD5Util._
 import org.elasticmq.actor.reply._
 import org.elasticmq.msg.ReceiveMessages
 import org.elasticmq.rest.sqs.Action.ReceiveMessage
+import org.elasticmq.rest.sqs.Constants._
+import org.elasticmq.rest.sqs.MD5Util._
 import org.elasticmq.rest.sqs.directives.ElasticMQDirectives
 import org.joda.time.Duration
+
+import scala.xml.Elem
 
 trait ReceiveMessageDirectives {
   this: ElasticMQDirectives with AttributesModule with SQSLimitsModule =>
@@ -123,32 +125,36 @@ trait ReceiveMessageDirectives {
           }
         }
 
-        msgsFuture.map { msgs =>
-          respondWith {
-            <ReceiveMessageResponse>
-              <ReceiveMessageResult>
-                {
-              msgs.map { msg =>
-                val receipt = msg.deliveryReceipt
-                  .map(_.receipt)
-                  .getOrElse(throw new RuntimeException("No receipt for a received msg."))
-                val filteredMessageAttributes = getFilteredAttributeNames(messageAttributeNames, msg)
-                <Message>
-                  <MessageId>{msg.id.id}</MessageId>
-                  <ReceiptHandle>{receipt}</ReceiptHandle>
-                  <MD5OfBody>{md5Digest(msg.content)}</MD5OfBody>
-                  <Body>{XmlUtil.convertTexWithCRToNodeSeq(msg.content)}</Body>
-                  {attributesToXmlConverter.convert(calculateAttributeValues(msg))}
-                  {
-                  if (filteredMessageAttributes.nonEmpty) <MD5OfMessageAttributes>{
-                    md5AttributeDigest(filteredMessageAttributes)
-                  }</MD5OfMessageAttributes>
-                }
-                  {messageAttributesToXmlConverter.convert(filteredMessageAttributes.toList)}
-                </Message>
-              }
+        def messagesToXml(messages: List[MessageData]): List[Elem] = {
+          messages.map { msg =>
+            val receipt = msg.deliveryReceipt
+              .map(_.receipt)
+              .getOrElse(throw new RuntimeException("No receipt for a received msg."))
+            val filteredMessageAttributes = getFilteredAttributeNames(messageAttributeNames, msg)
+            <Message>
+              <MessageId>{msg.id.id}</MessageId>
+              <ReceiptHandle>{receipt}</ReceiptHandle>
+              <MD5OfBody>{md5Digest(msg.content)}</MD5OfBody>
+              <Body>{XmlUtil.convertTexWithCRToNodeSeq(msg.content)}</Body>
+              {attributesToXmlConverter.convert(calculateAttributeValues(msg))}
+              {
+              if (filteredMessageAttributes.nonEmpty) <MD5OfMessageAttributes>{
+                md5AttributeDigest(filteredMessageAttributes)
+              }</MD5OfMessageAttributes>
             }
-              </ReceiveMessageResult>
+              {messageAttributesToXmlConverter.convert(filteredMessageAttributes.toList)}
+            </Message>
+          }
+        }
+
+        msgsFuture.map { messages =>
+          respondWith {
+            <ReceiveMessageResponse> {
+              if (messages.isEmpty)
+                <ReceiveMessageResult/>
+              else
+                <ReceiveMessageResult>{messagesToXml(messages)}</ReceiveMessageResult>
+            }
               <ResponseMetadata>
                 <RequestId>{EmptyRequestId}</RequestId>
               </ResponseMetadata>
