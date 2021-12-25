@@ -32,3 +32,13 @@ pull_request_rules:
     actions:
       merge:
         method: merge
+  - name: automatic merge for scala-steward pull requests affecting .scalafmt.conf
+      conditions:
+        - author=scala-steward
+        - check-success=ci-2-12
+        - check-success=ci-2-13
+        - "#files=1"
+        - files=.scalafmt.conf
+      actions:
+        merge:
+          method: merge
