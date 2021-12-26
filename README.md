@@ -401,10 +401,10 @@ ARG ELASTICMQ_VERSION
 ENV ELASTICMQ_VERSION ${ELASTICMQ_VERSION:-1.3.3}
 
 RUN apk add --no-cache curl ca-certificates
-RUN mkdir -p /opt/elasticmq/log /opt/elasticmq/lib /opt/elasticmq/config
+RUN mkdir -p /opt/elasticmq/log /opt/elasticmq/lib /opt/elasticmq/conf
 RUN curl -sfLo /opt/elasticmq/lib/elasticmq.jar https://s3-eu-west-1.amazonaws.com/softwaremill-public/elasticmq-server-${ELASTICMQ_VERSION}.jar
 
-COPY ${PWD}/elasticmq.conf /opt/elasticmq/config/elasticmq.conf
+COPY ${PWD}/elasticmq.conf /opt/elasticmq/conf/elasticmq.conf
 
 WORKDIR /opt/elasticmq
 
