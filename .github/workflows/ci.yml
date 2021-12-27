@@ -3,13 +3,12 @@ name: CI
 on: [push, pull_request]
 
 jobs:
-  ci:
+  ci-2-12:
     # run on external PRs, but not on internal PRs since those will be run by push to branch
     if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
-    strategy:
-      matrix:
-        scala: [2.12.15, 2.13.7]
     runs-on: ubuntu-18.04
+    env:
+      scala: 2.12.15
     steps:
     - name: Check-out repository
       id: repo-checkout
@@ -30,8 +29,40 @@ jobs:
           ~/.sbt
           ~/.ivy2/cache
           ~/.coursier
-        key: ${{ runner.os }}-sbt-${{ matrix.scala }}-${{ hashFiles('**/build.sbt') }}
+        key: ${{ runner.os }}-sbt-${{ env.scala }}-${{ hashFiles('**/build.sbt') }}
 
     - name: Run tests
       id: run-tests
-      run: sbt ++${{ matrix.scala }} test
+      run: sbt ++${{ env.scala }} test
+
+  ci-2-13:
+    # run on external PRs, but not on internal PRs since those will be run by push to branch
+    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
+    runs-on: ubuntu-18.04
+    env:
+      scala: 2.13.7
+    steps:
+      - name: Check-out repository
+        id: repo-checkout
+        uses: actions/checkout@v2
+
+      - name: Set up JDK 8
+        id: jdk-setup
+        uses: actions/setup-java@v2
+        with:
+          java-version: 8
+          distribution: 'zulu'
+
+      - name: Cache SBT
+        id: cache-sbt
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.sbt
+            ~/.ivy2/cache
+            ~/.coursier
+          key: ${{ runner.os }}-sbt-${{ env.scala }}-${{ hashFiles('**/build.sbt') }}
+
+      - name: Run tests
+        id: run-tests
+        run: sbt ++${{ env.scala }} test
