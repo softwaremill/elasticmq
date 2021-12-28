@@ -1,8 +1,5 @@
 package org.elasticmq.rest.sqs
 
-import java.net.URI
-import java.nio.ByteBuffer
-import java.util.UUID
 import akka.http.scaladsl.model.StatusCodes
 import com.amazonaws.AmazonServiceException
 import com.amazonaws.services.sqs.AmazonSQS
@@ -13,8 +10,13 @@ import org.apache.http.client.methods.{HttpGet, HttpPost}
 import org.apache.http.message.BasicNameValuePair
 import org.elasticmq._
 import org.elasticmq.rest.sqs.model.RedrivePolicy
+import org.elasticmq.rest.sqs.model.RedrivePolicyJson.format
 import org.scalatest.matchers.should.Matchers
+import spray.json.enrichAny
 
+import java.net.URI
+import java.nio.ByteBuffer
+import java.util.UUID
 import scala.collection.JavaConverters._
 import scala.io.Source
 import scala.util.control.Exception._
@@ -520,9 +522,6 @@ class AmazonJavaSdkTestSuite extends SqsClientServerCommunication with Matchers 
 
   test("FIFO queues should respond quickly during long polling") {
     // Given
-    import org.elasticmq.rest.sqs.model.RedrivePolicyJson._
-    import spray.json._
-
     val deadLetterQueue = new CreateQueueRequest(s"dead.testFifoQueue-long-poll.fifo")
       .addAttributesEntry("FifoQueue", "true")
       .addAttributesEntry("ContentBasedDeduplication", "false")
@@ -1767,8 +1766,6 @@ class AmazonJavaSdkTestSuite extends SqsClientServerCommunication with Matchers 
   }
 
   test("should create queue with redrive policy.") {
-    import org.elasticmq.rest.sqs.model.RedrivePolicyJson._
-    import spray.json._
 
     // Given
     val deadLetterQueueUrl = client.createQueue(new CreateQueueRequest("dlq1")).getQueueUrl
@@ -1793,8 +1790,6 @@ class AmazonJavaSdkTestSuite extends SqsClientServerCommunication with Matchers 
   test(
     "When message is moved to dead letter queue, its SentTimestamp and ApproximateFirstReceiveTimestamp attributes should not be changed"
   ) {
-    import org.elasticmq.rest.sqs.model.RedrivePolicyJson._
-    import spray.json._
 
     def getOneMessage(queueUrl: String) = {
       client
@@ -1851,8 +1846,6 @@ class AmazonJavaSdkTestSuite extends SqsClientServerCommunication with Matchers 
   }
 
   test("should return an error when the deadletter queue does not exist") {
-    import org.elasticmq.rest.sqs.model.RedrivePolicyJson._
-    import spray.json._
 
     // Given no dead letter queue
     // Then
@@ -1993,8 +1986,6 @@ class AmazonJavaSdkTestSuite extends SqsClientServerCommunication with Matchers 
   }
 
   test("should update queue redrive policy.") {
-    import org.elasticmq.rest.sqs.model.RedrivePolicyJson._
-    import spray.json._
 
     val deadLetterQueueUrl = client.createQueue(new CreateQueueRequest("dlq2")).getQueueUrl
     val deadLetterQueueAttributes = client.getQueueAttributes(deadLetterQueueUrl, List("All").asJava).getAttributes
@@ -2025,8 +2016,6 @@ class AmazonJavaSdkTestSuite extends SqsClientServerCommunication with Matchers 
   }
 
   test("should not create queue with redrive policy if dlq does not exist") {
-    import org.elasticmq.rest.sqs.model.RedrivePolicyJson._
-    import spray.json._
 
     val redrivePolicy = RedrivePolicy("notaqueue", awsRegion, awsAccountId, 1).toJson.toString()
     a[AmazonSQSException] shouldBe thrownBy {
@@ -2038,8 +2027,6 @@ class AmazonJavaSdkTestSuite extends SqsClientServerCommunication with Matchers 
   }
 
   test("should not update queue redrive policy if dlq does not exist") {
-    import org.elasticmq.rest.sqs.model.RedrivePolicyJson._
-    import spray.json._
 
     val createQueueResult = client.createQueue(new CreateQueueRequest("q4"))
 
@@ -2053,11 +2040,35 @@ class AmazonJavaSdkTestSuite extends SqsClientServerCommunication with Matchers 
     }
   }
 
-  test("should throws proper exception when referencing queue by name") {
+  test("should throw proper exception when referencing queue by name") {
     val _ = client.createQueue(new CreateQueueRequest("testQueue1")).getQueueUrl
 
     val ex = the[AmazonSQSException] thrownBy client.sendMessage(new SendMessageRequest("testQueue1", "Message 1"))
     ex.getMessage should include("WrongURLFormatRejection(Provided only queueName instead of the full URL)")
+  }
+
+  test("should move message to dlq after exceeding maxReceiveCount") {
+
+    // given
+    val messageBody = "Message 1"
+    val deadLetterQueueUrl = client.createQueue(new CreateQueueRequest("testDlq")).getQueueUrl
+    val redrivePolicy = RedrivePolicy("testDlq", awsRegion, awsAccountId, 1).toJson.toString()
+
+    val createQueueResult = client.createQueue(
+      new CreateQueueRequest("main")
+        .withAttributes(Map(defaultVisibilityTimeoutAttribute -> "10", redrivePolicyAttribute -> redrivePolicy).asJava)
+    ).getQueueUrl
+
+    // when
+    client.sendMessage(createQueueResult, messageBody)
+    val firstReceiveResult = client.receiveMessage(new ReceiveMessageRequest().withQueueUrl(createQueueResult).withWaitTimeSeconds(11))
+    val secondReceiveResult = client.receiveMessage(new ReceiveMessageRequest().withQueueUrl(createQueueResult).withWaitTimeSeconds(11))
+    val messageFromDlq = client.receiveMessage(deadLetterQueueUrl)
+
+    // then
+    messageFromDlq.getMessages.asScala.map(_.getBody) shouldBe firstReceiveResult.getMessages.asScala.map(_.getBody)
+    messageFromDlq.getMessages.asScala.map(_.getBody) should contain(messageBody)
+    secondReceiveResult.getMessages shouldBe empty
   }
 
   def queueDelay(queueUrl: String): Long = getQueueLongAttribute(queueUrl, delaySecondsAttribute)
