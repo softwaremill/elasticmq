@@ -2054,15 +2054,21 @@ class AmazonJavaSdkTestSuite extends SqsClientServerCommunication with Matchers 
     val deadLetterQueueUrl = client.createQueue(new CreateQueueRequest("testDlq")).getQueueUrl
     val redrivePolicy = RedrivePolicy("testDlq", awsRegion, awsAccountId, 1).toJson.toString()
 
-    val createQueueResult = client.createQueue(
-      new CreateQueueRequest("main")
-        .withAttributes(Map(defaultVisibilityTimeoutAttribute -> "10", redrivePolicyAttribute -> redrivePolicy).asJava)
-    ).getQueueUrl
+    val createQueueResult = client
+      .createQueue(
+        new CreateQueueRequest("main")
+          .withAttributes(
+            Map(defaultVisibilityTimeoutAttribute -> "10", redrivePolicyAttribute -> redrivePolicy).asJava
+          )
+      )
+      .getQueueUrl
 
     // when
     client.sendMessage(createQueueResult, messageBody)
-    val firstReceiveResult = client.receiveMessage(new ReceiveMessageRequest().withQueueUrl(createQueueResult).withWaitTimeSeconds(11))
-    val secondReceiveResult = client.receiveMessage(new ReceiveMessageRequest().withQueueUrl(createQueueResult).withWaitTimeSeconds(11))
+    val firstReceiveResult =
+      client.receiveMessage(new ReceiveMessageRequest().withQueueUrl(createQueueResult).withWaitTimeSeconds(11))
+    val secondReceiveResult =
+      client.receiveMessage(new ReceiveMessageRequest().withQueueUrl(createQueueResult).withWaitTimeSeconds(11))
     val messageFromDlq = client.receiveMessage(deadLetterQueueUrl)
 
     // then
