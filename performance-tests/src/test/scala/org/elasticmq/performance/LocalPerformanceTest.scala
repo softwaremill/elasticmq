@@ -125,7 +125,9 @@ object LocalPerformanceTest extends App {
 
     def sendMessage(m: String): Unit = {
       Await.result(
-        currentQueue ? SendMessage(NewMessageData(None, m, Map.empty, ImmediateNextDelivery, None, None, 0, None, None)),
+        currentQueue ? SendMessage(
+          NewMessageData(None, m, Map.empty, ImmediateNextDelivery, None, None, 0, None, None)
+        ),
         10.seconds
       )
     }
