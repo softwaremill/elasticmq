@@ -23,6 +23,16 @@ pull_request_rules:
     actions:
       merge:
         method: merge
+  - name: automatic merge for scala-steward pull requests affecting project build.properties
+    conditions:
+      - author=scala-steward
+      - check-success=ci-2-12
+      - check-success=ci-2-13
+      - "#files=1"
+      - files=project/build.properties
+    actions:
+      merge:
+        method: merge
   - name: semi-automatic merge for scala-steward pull requests
     conditions:
       - author=scala-steward
