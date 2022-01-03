@@ -1,9 +1,9 @@
 import com.amazonaws.services.s3.model.PutObjectResult
-import com.softwaremill.Publish.Release.updateVersionInDocs
+import com.softwaremill.SbtSoftwareMillCommon.commonSmlBuildSettings
+import com.softwaremill.Publish.ossPublishSettings
 import com.typesafe.sbt.packager.docker.{Cmd, ExecCmd}
 import sbt.Keys.{credentials, javaOptions}
 import sbt.internal.util.complete.Parsers.spaceDelimited
-import sbtrelease.ReleaseStateTransformations._
 import scoverage.ScoverageKeys._
 
 import scala.sys.process.Process
@@ -29,54 +29,7 @@ val buildSettings = commonSmlBuildSettings ++ ossPublishSettings ++ Seq(
   parallelExecution := false,
   sonatypeProfileName := "org.elasticmq",
   // workaround for: https://github.com/sbt/sbt/issues/692
-  Test / fork := true,
-  releaseProcess := {
-    val uploadAssembly: ReleaseStep = ReleaseStep(
-      action = { st: State =>
-        val extracted = Project.extract(st)
-        val (st2, _) = extracted.runTask(assembly in server, st)
-        val (st3, _) = extracted.runTask(s3Upload in server, st2)
-        st3
-      }
-    )
-
-    val uploadDocker: ReleaseStep = ReleaseStep(
-      action = { st: State =>
-        val extracted = Project.extract(st)
-        val (st2, _) = extracted.runTask(publish in Docker in server, st)
-        st2
-      }
-    )
-
-    val uploadNativeDocker: ReleaseStep = ReleaseStep(
-      action = { st: State =>
-        val extracted = Project.extract(st)
-        val (st2, _) = extracted.runTask(packageBin in GraalVMNativeImage in nativeServer, st)
-        val (st3, _) = extracted.runTask(publish in Docker in nativeServer, st2)
-        st3
-      }
-    )
-
-    Seq(
-      checkSnapshotDependencies,
-      inquireVersions,
-      // publishing locally so that the pgp password prompt is displayed early
-      // in the process
-      releaseStepCommand("publishLocalSigned"),
-      runClean,
-      runTest,
-      setReleaseVersion,
-      uploadDocker,
-      uploadNativeDocker,
-      uploadAssembly,
-      updateVersionInDocs(organization.value),
-      commitReleaseVersion,
-      tagRelease,
-      publishArtifacts,
-      releaseStepCommand("sonatypeBundleRelease"),
-      pushChanges
-    )
-  }
+  Test / fork := true
 )
 
 val jodaTime = "joda-time" % "joda-time" % "2.10.13"

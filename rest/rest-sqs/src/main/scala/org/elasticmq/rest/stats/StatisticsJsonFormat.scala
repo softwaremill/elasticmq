@@ -29,6 +29,7 @@ trait StatisticsJsonFormat extends SprayJsonSupport with DefaultJsonProtocol {
 
     override def read(json: JsValue): QueuesResponse = json.asJsObject.getFields("name", "statistics") match {
       case Seq(JsString(name), statistics @ JsObject(_)) => QueuesResponse(name, queueStatisticsFormat.read(statistics))
+      case _                                             => throw new IllegalArgumentException("Invalid json")
     }
   }
   implicit object queueFormat extends RootJsonFormat[QueueResponse] {
@@ -50,6 +51,7 @@ trait StatisticsJsonFormat extends SprayJsonSupport with DefaultJsonProtocol {
             case _                       => deserializationError(s"Could not deserialize $json to QueueResponse")
           }
         )
+      case _ => throw new IllegalArgumentException("Invalid json")
     }
   }
 }
