@@ -1,12 +1,15 @@
 name: CI
-
-on: [push, pull_request]
-
+on:
+  pull_request:
+    branches: ['**']
+  push:
+    branches: ['**']
+    tags: [v*]
 jobs:
   ci-2-12:
     # run on external PRs, but not on internal PRs since those will be run by push to branch
     if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     env:
       scala: 2.12.15
     steps:
@@ -14,12 +17,11 @@ jobs:
       id: repo-checkout
       uses: actions/checkout@v2
 
-    - name: Set up JDK 8
-      id: jdk-setup
+    - name: Set up JDK
       uses: actions/setup-java@v2
       with:
-        java-version: 8
-        distribution: 'zulu'
+        distribution: 'temurin'
+        java-version: 11
 
     - name: Cache SBT
       id: cache-sbt
@@ -38,7 +40,7 @@ jobs:
   ci-2-13:
     # run on external PRs, but not on internal PRs since those will be run by push to branch
     if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     env:
       scala: 2.13.7
     steps:
@@ -46,12 +48,11 @@ jobs:
         id: repo-checkout
         uses: actions/checkout@v2
 
-      - name: Set up JDK 8
-        id: jdk-setup
+      - name: Set up JDK
         uses: actions/setup-java@v2
         with:
-          java-version: 8
-          distribution: 'zulu'
+          distribution: 'temurin'
+          java-version: 11
 
       - name: Cache SBT
         id: cache-sbt
