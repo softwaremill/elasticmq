@@ -8,8 +8,8 @@ import scoverage.ScoverageKeys._
 
 import scala.sys.process.Process
 
-val v2_12 = "2.12.14"
-val v2_13 = "2.13.6"
+val v2_12 = "2.12.15"
+val v2_13 = "2.13.7"
 
 lazy val uiDirectory = settingKey[File]("Path to the ui project directory")
 lazy val updateYarn = taskKey[Unit]("Update yarn")
@@ -106,8 +106,8 @@ val akka2HttpTestkit = "com.typesafe.akka" %% "akka-http-testkit" % akkaHttpVers
 
 val scalaAsync = "org.scala-lang.modules" %% "scala-async" % "0.10.0"
 
-val scalikeJdbc = "org.scalikejdbc" %% "scalikejdbc" % "4.0.0"
-val h2 = "com.h2database" % "h2" % "2.0.204"
+val scalikeJdbc = "org.scalikejdbc" %% "scalikejdbc" % "3.5.0"
+val h2 = "com.h2database" % "h2" % "2.0.206"
 
 val common = Seq(scalalogging)
 

@@ -33,7 +33,7 @@ object LocalPerformanceTest extends App {
     val iterations = 10
     val msgsInIteration = 100000
 
-    testWithMq(new ActorBasedMQ, 3, 100000, "in-memory warmup", 1)
+    testWithMq(new ActorBasedMQ, 3, msgsInIteration, "in-memory warmup", 1)
 
     // testWithMq(new ActorBasedMQ, iterations, msgsInIteration, "in-memory", 1)
     // testWithMq(new ActorBasedMQ, iterations, msgsInIteration, "in-memory", 2)
@@ -125,7 +125,9 @@ object LocalPerformanceTest extends App {
 
     def sendMessage(m: String): Unit = {
       Await.result(
-        currentQueue ? SendMessage(NewMessageData(None, m, Map.empty, ImmediateNextDelivery, None, None, 0, None)),
+        currentQueue ? SendMessage(
+          NewMessageData(None, m, Map.empty, ImmediateNextDelivery, None, None, 0, None, None)
+        ),
         10.seconds
       )
     }
@@ -143,7 +145,7 @@ object LocalPerformanceTest extends App {
 
     def start(sqsLimits: Limits): ActorRef = {
       actorSystem = ActorSystem("performance-tests")
-      val queueManagerActor = actorSystem.actorOf(Props(new QueueManagerActor(new NowProvider(), sqsLimits)))
+      val queueManagerActor = actorSystem.actorOf(Props(new QueueManagerActor(new NowProvider(), sqsLimits, None)))
 
       queueManagerActor
     }
