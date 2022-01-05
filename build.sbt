@@ -25,6 +25,7 @@ val buildSettings = commonSmlBuildSettings ++ ossPublishSettings ++ Seq(
   scalaVersion := v2_13,
   crossScalaVersions := Seq(v2_13, v2_12),
   libraryDependencies += "org.scala-lang.modules" %% "scala-xml" % "1.3.0",
+  libraryDependencies += "com.dimafeng" %% "testcontainers-scala-scalatest" % "0.39.12" % "test",
   dependencyOverrides := akka25Overrides,
   parallelExecution := false,
   sonatypeProfileName := "org.elasticmq",
