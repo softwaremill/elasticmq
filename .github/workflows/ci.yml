@@ -13,29 +13,29 @@ jobs:
     env:
       scala: 2.12.15
     steps:
-    - name: Check-out repository
-      id: repo-checkout
-      uses: actions/checkout@v2
+      - name: Check-out repository
+        id: repo-checkout
+        uses: actions/checkout@v2
 
-    - name: Set up JDK
-      uses: actions/setup-java@v2
-      with:
-        distribution: 'temurin'
-        java-version: 11
+      - name: Set up JDK
+        uses: actions/setup-java@v2
+        with:
+          distribution: 'temurin'
+          java-version: 11
 
-    - name: Cache SBT
-      id: cache-sbt
-      uses: actions/cache@v2
-      with:
-        path: |
-          ~/.sbt
-          ~/.ivy2/cache
-          ~/.coursier
-        key: ${{ runner.os }}-sbt-${{ env.scala }}-${{ hashFiles('**/build.sbt') }}
+      - name: Cache SBT
+        id: cache-sbt
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.sbt
+            ~/.ivy2/cache
+            ~/.coursier
+          key: ${{ runner.os }}-sbt-${{ env.scala }}-${{ hashFiles('**/build.sbt') }}
 
-    - name: Run tests
-      id: run-tests
-      run: sbt ++${{ env.scala }} test
+      - name: Run tests
+        id: run-tests
+        run: sbt ++${{ env.scala }} test
 
   ci-2-13:
     # run on external PRs, but not on internal PRs since those will be run by push to branch
@@ -67,3 +67,32 @@ jobs:
       - name: Run tests
         id: run-tests
         run: sbt ++${{ env.scala }} test
+
+  ci-native-image:
+    # run on external PRs, but not on internal PRs since those will be run by push to branch
+    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Check-out repository
+        id: repo-checkout
+        uses: actions/checkout@v2
+
+      - name: Set up JDK
+        uses: actions/setup-java@v2
+        with:
+          distribution: 'temurin'
+          java-version: 11
+
+      - name: Cache SBT
+        id: cache-sbt
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.sbt
+            ~/.ivy2/cache
+            ~/.coursier
+          key: ${{ runner.os }}-sbt-${{ env.scala }}-${{ hashFiles('**/build.sbt') }}
+
+      - name: Build Native Image
+        id: run-tests
+        run: sbt "project nativeServer; assembly; graalvm-native-image:packageBin; docker:publishLocal"
