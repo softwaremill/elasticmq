@@ -97,10 +97,10 @@ jobs:
         run: sbt compile
 
       - name: Build jvm docker image
-        run: sbt "project server; assembly; docker / publishLocal"
+        run: sbt "project server; assembly; Docker / publishLocal"
 
       - name: Build native docker image
-        run: sbt "project nativeServer; assembly; GraalVMNativeImage / packageBin; docker / publishLocal"
+        run: sbt "project nativeServer; assembly; GraalVMNativeImage / packageBin; Docker / publishLocal"
 
   publish:
     name: Publish release
@@ -129,10 +129,10 @@ jobs:
         run: sbt compile
 
       - name: Build jvm docker image
-        run: sbt "project server; assembly; docker / publishLocal"
+        run: sbt "project server; assembly; Docker / publishLocal"
 
       - name: Build native docker image
-        run: sbt "project nativeServer; assembly; GraalVMNativeImage / packageBin; docker / publishLocal"
+        run: sbt "project nativeServer; assembly; GraalVMNativeImage / packageBin; Docker / publishLocal"
 
       - name: Publish artifacts
         run: sbt ci-release

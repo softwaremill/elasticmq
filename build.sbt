@@ -192,11 +192,7 @@ lazy val server: Project = (project in file("server"))
       coverageMinimum := 52,
       // s3 upload
       s3Upload := {
-        import com.amazonaws.auth.{
-          AWSStaticCredentialsProvider,
-          BasicAWSCredentials,
-          DefaultAWSCredentialsProviderChain
-        }
+        import com.amazonaws.auth.{AWSStaticCredentialsProvider, BasicAWSCredentials}
         import com.amazonaws.services.s3.AmazonS3ClientBuilder
         import com.amazonaws.services.s3.model.{CannedAccessControlList, PutObjectRequest}
 
@@ -220,14 +216,6 @@ lazy val server: Project = (project in file("server"))
             .withCannedAcl(CannedAccessControlList.PublicRead)
         )
       },
-      /*
-    Format:
-    realm=Amazon S3
-    host=softwaremill-public.s3.amazonaws.com
-    user=[AWS key id]
-    password=[AWS secret key]
-       */
-      credentials += Credentials(Path.userHome / ".s3_elasticmq_credentials"),
       // docker
       dockerExposedPorts := Seq(9324, 9325),
       dockerBaseImage := "openjdk:11-jdk-stretch",
