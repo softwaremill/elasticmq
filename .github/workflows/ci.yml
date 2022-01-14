@@ -104,7 +104,6 @@ jobs:
 
   publish:
     name: Publish release
-    needs: [ci]
     if: github.event_name != 'pull_request' && (startsWith(github.ref, 'refs/tags/v'))
     runs-on: ubuntu-20.04
     steps:
