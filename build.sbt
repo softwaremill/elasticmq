@@ -201,12 +201,9 @@ lazy val server: Project = (project in file("server"))
         import com.amazonaws.services.s3.model.{CannedAccessControlList, PutObjectRequest}
 
         val bucketName = "softwaremill-public"
-        val creds = Credentials.forHost(credentials.value, bucketName + ".s3.amazonaws.com")
 
-        val awsCreds = creds match {
-          case Some(cred) => new AWSStaticCredentialsProvider(new BasicAWSCredentials(cred.userName, cred.passwd))
-          case None       => new DefaultAWSCredentialsProviderChain
-        }
+        val awsCreds =
+          new AWSStaticCredentialsProvider(new BasicAWSCredentials(sys.env("S3_USER"), sys.env("S3_PASSWORD")))
 
         val client = AmazonS3ClientBuilder.standard().withCredentials(awsCreds).withRegion("eu-west-1").build()
 
