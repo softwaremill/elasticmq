@@ -149,23 +149,6 @@ jobs:
         env:
           COMMIT_MSG: ${{ github.event.head_commit.message }}
 
-      - name: Publish release notes
-        uses: release-drafter/release-drafter@v5
-        with:
-          config-name: release-drafter.yml
-          publish: true
-          name: "v${{ env.VERSION }}"
-          tag: "v${{ env.VERSION }}"
-          version: "v${{ env.VERSION }}"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Upload to S3
-        run: sbt "server / s3Upload"
-        env:
-          S3_USER: ${{ secrets.S3_USER }}
-          S3_PASSWORD: ${{ secrets.S3_PASSWORD }}
-
       - name: Login to DockerHub
         uses: docker/login-action@v1
         with:
@@ -177,3 +160,20 @@ jobs:
 
       - name: Publish JVM native docker image
         run: sbt "nativeServer / Docker / publish"
+
+      - name: Upload to S3
+        run: sbt "server / s3Upload"
+        env:
+          S3_USER: ${{ secrets.S3_USER }}
+          S3_PASSWORD: ${{ secrets.S3_PASSWORD }}
+
+      - name: Publish release notes
+        uses: release-drafter/release-drafter@v5
+        with:
+          config-name: release-drafter.yml
+          publish: true
+          name: "v${{ env.VERSION }}"
+          tag: "v${{ env.VERSION }}"
+          version: "v${{ env.VERSION }}"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
