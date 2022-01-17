@@ -9,7 +9,7 @@ import scoverage.ScoverageKeys._
 import scala.sys.process.Process
 
 val v2_12 = "2.12.15"
-val v2_13 = "2.13.7"
+val v2_13 = "2.13.8"
 
 lazy val uiDirectory = settingKey[File]("Path to the ui project directory")
 lazy val updateYarn = taskKey[Unit]("Update yarn")
@@ -86,7 +86,7 @@ val pureConfig = "com.github.pureconfig" %% "pureconfig" % "0.17.1"
 
 val scalalogging = "com.typesafe.scala-logging" %% "scala-logging" % "3.9.4"
 val logback = "ch.qos.logback" % "logback-classic" % "1.2.10"
-val jclOverSlf4j = "org.slf4j" % "jcl-over-slf4j" % "1.7.32" // needed form amazon java sdk
+val jclOverSlf4j = "org.slf4j" % "jcl-over-slf4j" % "1.7.33" // needed form amazon java sdk
 
 val scalatest = "org.scalatest" %% "scalatest" % "3.2.10"
 val awaitility = "org.awaitility" % "awaitility-scala" % "4.1.1"
@@ -106,8 +106,8 @@ val akka2HttpTestkit = "com.typesafe.akka" %% "akka-http-testkit" % akkaHttpVers
 
 val scalaAsync = "org.scala-lang.modules" %% "scala-async" % "0.10.0"
 
-val scalikeJdbc = "org.scalikejdbc" %% "scalikejdbc" % "4.0.0"
-val h2 = "com.h2database" % "h2" % "2.0.206"
+val scalikeJdbc = "org.scalikejdbc" %% "scalikejdbc" % "3.5.0"
+val h2 = "com.h2database" % "h2" % "2.1.210"
 
 val common = Seq(scalalogging)
 
