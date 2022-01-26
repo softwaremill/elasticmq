@@ -74,6 +74,7 @@ val akka25Overrides =
 val s3Upload = TaskKey[PutObjectResult]("s3-upload", "Uploads files to an S3 bucket.")
 
 lazy val root: Project = (project in file("."))
+  .enablePlugins(GitVersioning)
   .settings(buildSettings)
   .settings(name := "elasticmq-root", publishArtifact := false)
   .aggregate(commonTest, core, rest, persistence, server, nativeServer, ui)
