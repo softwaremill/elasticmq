@@ -154,6 +154,13 @@ jobs:
           S3_USER: ${{ secrets.S3_USER }}
           S3_PASSWORD: ${{ secrets.S3_PASSWORD }}
 
+      - name: Extract version from commit message
+        run: |
+          version=${GITHUB_REF/refs\/tags\/v/}
+          echo "VERSION=$version" >> $GITHUB_ENV
+        env:
+          COMMIT_MSG: ${{ github.event.head_commit.message }}
+
       - name: Publish release notes
         uses: release-drafter/release-drafter@v5
         with:
