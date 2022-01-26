@@ -116,13 +116,6 @@ jobs:
           distribution: 'temurin'
           java-version: 11
 
-      - name: Extract version from commit message
-        run: |
-          version=${GITHUB_REF/refs\/tags\/v/}
-          echo "VERSION=$version" >> $GITHUB_ENV
-        env:
-          COMMIT_MSG: ${{ github.event.head_commit.message }}
-
       - name: Cache sbt
         uses: actions/cache@v2
         with:
@@ -134,12 +127,6 @@ jobs:
 
       - name: Compile
         run: sbt compile
-
-      - name: Build jvm docker image
-        run: sbt "project server; assembly; Docker / publishLocal"
-
-      - name: Build native docker image
-        run: sbt "project nativeServer; assembly; GraalVMNativeImage / packageBin; Docker / publishLocal"
 
       - name: Publish artifacts
         run: sbt ci-release
@@ -156,10 +143,10 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Publish JVM docker image
-        run: sbt "server / Docker / publish"
+        run: sbt "project server; assembly; Docker / publish"
 
       - name: Publish JVM native docker image
-        run: sbt "nativeServer / Docker / publish"
+        run: sbt "project nativeServer; assembly; GraalVMNativeImage / packageBin; Docker / publish"
 
       - name: Upload to S3
         run: sbt "server / s3Upload"
