@@ -116,6 +116,13 @@ jobs:
           distribution: 'temurin'
           java-version: 11
 
+      - name: Extract version from commit message
+        run: |
+          version=${GITHUB_REF/refs\/tags\/v/}
+          echo "VERSION=$version" >> $GITHUB_ENV
+        env:
+          COMMIT_MSG: ${{ github.event.head_commit.message }}
+
       - name: Cache sbt
         uses: actions/cache@v2
         with:
@@ -141,13 +148,6 @@ jobs:
           PGP_SECRET: ${{ secrets.PGP_SECRET }}
           SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
           SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
-
-      - name: Extract version from commit message
-        run: |
-          version=${GITHUB_REF/refs\/tags\/v/}
-          echo "VERSION=$version" >> $GITHUB_ENV
-        env:
-          COMMIT_MSG: ${{ github.event.head_commit.message }}
 
       - name: Login to DockerHub
         uses: docker/login-action@v1
