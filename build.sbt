@@ -43,7 +43,7 @@ val sprayJson = "io.spray" %% "spray-json" % "1.3.6"
 val akkaHttpSprayJson = "com.typesafe.akka" %% "akka-http-spray-json" % akkaHttpVersion
 val akka2HttpTestkit = "com.typesafe.akka" %% "akka-http-testkit" % akkaHttpVersion % "test"
 
-val scalaAsync = "org.scala-lang.modules" %% "scala-async" % "0.10.0"
+val scalaAsync = "org.scala-lang.modules" %% "scala-async" % "1.0.1"
 
 val scalikeJdbc = "org.scalikejdbc" %% "scalikejdbc" % "3.5.0"
 val h2 = "com.h2database" % "h2" % "2.1.210"
@@ -63,6 +63,7 @@ val buildSettings = commonSmlBuildSettings ++ ossPublishSettings ++ Seq(
   ),
   scalaVersion := v2_13,
   crossScalaVersions := Seq(v2_13, v2_12),
+  scalacOptions += "-Xasync",
   libraryDependencies += scalaXml,
   dependencyOverrides := akka25Overrides,
   parallelExecution := false,
