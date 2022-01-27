@@ -63,6 +63,7 @@ val buildSettings = commonSmlBuildSettings ++ ossPublishSettings ++ Seq(
   ),
   scalaVersion := v2_13,
   crossScalaVersions := Seq(v2_13, v2_12),
+  scalacOptions += "-Xasync",
   libraryDependencies += scalaXml,
   dependencyOverrides := akka25Overrides,
   parallelExecution := false,
