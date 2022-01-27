@@ -1,9 +1,9 @@
 import com.amazonaws.services.s3.model.PutObjectResult
-import com.softwaremill.Publish.Release.updateVersionInDocs
+import com.softwaremill.SbtSoftwareMillCommon.commonSmlBuildSettings
+import com.softwaremill.Publish.ossPublishSettings
 import com.typesafe.sbt.packager.docker.{Cmd, ExecCmd}
 import sbt.Keys.{credentials, javaOptions}
 import sbt.internal.util.complete.Parsers.spaceDelimited
-import sbtrelease.ReleaseStateTransformations._
 import scoverage.ScoverageKeys._
 
 import scala.sys.process.Process
@@ -29,54 +29,7 @@ val buildSettings = commonSmlBuildSettings ++ ossPublishSettings ++ Seq(
   parallelExecution := false,
   sonatypeProfileName := "org.elasticmq",
   // workaround for: https://github.com/sbt/sbt/issues/692
-  Test / fork := true,
-  releaseProcess := {
-    val uploadAssembly: ReleaseStep = ReleaseStep(
-      action = { st: State =>
-        val extracted = Project.extract(st)
-        val (st2, _) = extracted.runTask(assembly in server, st)
-        val (st3, _) = extracted.runTask(s3Upload in server, st2)
-        st3
-      }
-    )
-
-    val uploadDocker: ReleaseStep = ReleaseStep(
-      action = { st: State =>
-        val extracted = Project.extract(st)
-        val (st2, _) = extracted.runTask(publish in Docker in server, st)
-        st2
-      }
-    )
-
-    val uploadNativeDocker: ReleaseStep = ReleaseStep(
-      action = { st: State =>
-        val extracted = Project.extract(st)
-        val (st2, _) = extracted.runTask(packageBin in GraalVMNativeImage in nativeServer, st)
-        val (st3, _) = extracted.runTask(publish in Docker in nativeServer, st2)
-        st3
-      }
-    )
-
-    Seq(
-      checkSnapshotDependencies,
-      inquireVersions,
-      // publishing locally so that the pgp password prompt is displayed early
-      // in the process
-      releaseStepCommand("publishLocalSigned"),
-      runClean,
-      runTest,
-      setReleaseVersion,
-      uploadDocker,
-      uploadNativeDocker,
-      uploadAssembly,
-      updateVersionInDocs(organization.value),
-      commitReleaseVersion,
-      tagRelease,
-      publishArtifacts,
-      releaseStepCommand("sonatypeBundleRelease"),
-      pushChanges
-    )
-  }
+  Test / fork := true
 )
 
 val jodaTime = "joda-time" % "joda-time" % "2.10.13"
@@ -121,6 +74,7 @@ val akka25Overrides =
 val s3Upload = TaskKey[PutObjectResult]("s3-upload", "Uploads files to an S3 bucket.")
 
 lazy val root: Project = (project in file("."))
+  .enablePlugins(GitVersioning)
   .settings(buildSettings)
   .settings(name := "elasticmq-root", publishArtifact := false)
   .aggregate(commonTest, core, rest, persistence, server, nativeServer, ui)
@@ -239,21 +193,14 @@ lazy val server: Project = (project in file("server"))
       coverageMinimum := 52,
       // s3 upload
       s3Upload := {
-        import com.amazonaws.auth.{
-          AWSStaticCredentialsProvider,
-          BasicAWSCredentials,
-          DefaultAWSCredentialsProviderChain
-        }
+        import com.amazonaws.auth.{AWSStaticCredentialsProvider, BasicAWSCredentials}
         import com.amazonaws.services.s3.AmazonS3ClientBuilder
         import com.amazonaws.services.s3.model.{CannedAccessControlList, PutObjectRequest}
 
         val bucketName = "softwaremill-public"
-        val creds = Credentials.forHost(credentials.value, bucketName + ".s3.amazonaws.com")
 
-        val awsCreds = creds match {
-          case Some(cred) => new AWSStaticCredentialsProvider(new BasicAWSCredentials(cred.userName, cred.passwd))
-          case None       => new DefaultAWSCredentialsProviderChain
-        }
+        val awsCreds =
+          new AWSStaticCredentialsProvider(new BasicAWSCredentials(sys.env("S3_USER"), sys.env("S3_PASSWORD")))
 
         val client = AmazonS3ClientBuilder.standard().withCredentials(awsCreds).withRegion("eu-west-1").build()
 
@@ -270,14 +217,6 @@ lazy val server: Project = (project in file("server"))
             .withCannedAcl(CannedAccessControlList.PublicRead)
         )
       },
-      /*
-    Format:
-    realm=Amazon S3
-    host=softwaremill-public.s3.amazonaws.com
-    user=[AWS key id]
-    password=[AWS secret key]
-       */
-      credentials += Credentials(Path.userHome / ".s3_elasticmq_credentials"),
       // docker
       dockerExposedPorts := Seq(9324, 9325),
       dockerBaseImage := "openjdk:11-jdk-stretch",

@@ -4,6 +4,7 @@ import akka.http.scaladsl.model.ContentTypes._
 import akka.http.scaladsl.model.HttpEntity
 import akka.http.scaladsl.server.{Directives, RequestContext, Route}
 import org.elasticmq.rest.sqs.Constants._
+import scala.language.postfixOps
 
 import scala.xml.{Elem, Null, UnprefixedAttribute}
 

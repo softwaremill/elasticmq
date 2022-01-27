@@ -234,9 +234,11 @@ case class TheSQSRestServerBuilder(
       )
     }
 
-    appStartFuture.failed.foreach { case NonFatal(e) =>
-      TheSQSRestServerBuilder.this.logger
-        .error("Cannot start SQS rest server, bind address %s:%d".format(interface, port), e)
+    appStartFuture.failed.foreach {
+      case NonFatal(e) =>
+        TheSQSRestServerBuilder.this.logger
+          .error("Cannot start SQS rest server, bind address %s:%d".format(interface, port), e)
+      case _ =>
     }
 
     val queuesMetricsBean = new QueuesMetrics(theQueueManagerActor)

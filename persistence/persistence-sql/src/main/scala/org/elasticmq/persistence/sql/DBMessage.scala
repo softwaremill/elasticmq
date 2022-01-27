@@ -34,7 +34,8 @@ case class DBMessage(
             case "Binary" => BinaryMessageAttribute.fromBase64(attr.stringValue, attr.customType)
           }
         )
-      } toMap
+      }
+      .toMap
 
     val serializedDeliveryReceipts = new String(deliveryReceipts).parseJson.convertTo[List[String]]
 

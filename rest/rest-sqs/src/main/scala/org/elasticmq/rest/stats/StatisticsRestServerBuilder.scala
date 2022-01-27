@@ -102,9 +102,11 @@ case class TheStatisticsRestServerBuilder(
       )
     }
 
-    appStartFuture.failed.foreach { case NonFatal(e) =>
-      TheStatisticsRestServerBuilder.this.logger
-        .error("Cannot start statistics rest server, bind address %s:%d".format(interface, port), e)
+    appStartFuture.failed.foreach {
+      case NonFatal(e) =>
+        TheStatisticsRestServerBuilder.this.logger
+          .error("Cannot start statistics rest server, bind address %s:%d".format(interface, port), e)
+      case _ =>
     }
 
     StatisticsRestServer(
