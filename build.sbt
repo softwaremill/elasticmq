@@ -17,31 +17,17 @@ lazy val yarnTask = inputKey[Unit]("Run yarn with arguments")
 lazy val ensureDockerBuildx = taskKey[Unit]("Ensure that docker buildx configuration exists")
 lazy val dockerBuildWithBuildx = taskKey[Unit]("Build docker images using buildx")
 
-val buildSettings = commonSmlBuildSettings ++ ossPublishSettings ++ Seq(
-  organization := "org.elasticmq",
-  scmInfo := Some(
-    ScmInfo(url("https://github.com/softwaremill/elasticmq"), "scm:git@github.com:softwaremill/elasticmq.git")
-  ),
-  scalaVersion := v2_13,
-  crossScalaVersions := Seq(v2_13, v2_12),
-  libraryDependencies += "org.scala-lang.modules" %% "scala-xml" % "1.3.0",
-  dependencyOverrides := akka25Overrides,
-  parallelExecution := false,
-  sonatypeProfileName := "org.elasticmq",
-  // workaround for: https://github.com/sbt/sbt/issues/692
-  Test / fork := true
-)
-
 val jodaTime = "joda-time" % "joda-time" % "2.10.13"
 val jodaConvert = "org.joda" % "joda-convert" % "2.2.2"
 val config = "com.typesafe" % "config" % "1.4.1"
 val pureConfig = "com.github.pureconfig" %% "pureconfig" % "0.17.1"
+val scalaXml = "org.scala-lang.modules" %% "scala-xml" % "2.0.1"
 
 val scalalogging = "com.typesafe.scala-logging" %% "scala-logging" % "3.9.4"
 val logback = "ch.qos.logback" % "logback-classic" % "1.2.10"
 val jclOverSlf4j = "org.slf4j" % "jcl-over-slf4j" % "1.7.35" // needed form amazon java sdk
 
-val scalatest = "org.scalatest" %% "scalatest" % "3.2.10"
+val scalatest = "org.scalatest" %% "scalatest" % "3.2.11"
 val awaitility = "org.awaitility" % "awaitility-scala" % "4.1.1"
 
 val amazonJavaSdkSqs = "com.amazonaws" % "aws-java-sdk-sqs" % "1.11.1026" exclude ("commons-logging", "commons-logging")
@@ -69,6 +55,21 @@ val akka25Overrides =
     "com.typesafe.akka" %% "akka-stream" % akkaVersion,
     "com.typesafe.akka" %% "akka-stream-testkit" % akkaVersion
   )
+
+val buildSettings = commonSmlBuildSettings ++ ossPublishSettings ++ Seq(
+  organization := "org.elasticmq",
+  scmInfo := Some(
+    ScmInfo(url("https://github.com/softwaremill/elasticmq"), "scm:git@github.com:softwaremill/elasticmq.git")
+  ),
+  scalaVersion := v2_13,
+  crossScalaVersions := Seq(v2_13, v2_12),
+  libraryDependencies += scalaXml,
+  dependencyOverrides := akka25Overrides,
+  parallelExecution := false,
+  sonatypeProfileName := "org.elasticmq",
+  // workaround for: https://github.com/sbt/sbt/issues/692
+  Test / fork := true
+)
 
 // see https://github.com/scala/scala-dist/pull/181/files
 val s3Upload = TaskKey[PutObjectResult]("s3-upload", "Uploads files to an S3 bucket.")
