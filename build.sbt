@@ -19,7 +19,7 @@ lazy val dockerBuildWithBuildx = taskKey[Unit]("Build docker images using buildx
 
 val jodaTime = "joda-time" % "joda-time" % "2.10.13"
 val jodaConvert = "org.joda" % "joda-convert" % "2.2.2"
-val config = "com.typesafe" % "config" % "1.4.1"
+val config = "com.typesafe" % "config" % "1.4.2"
 val pureConfig = "com.github.pureconfig" %% "pureconfig" % "0.17.1"
 val scalaXml = "org.scala-lang.modules" %% "scala-xml" % "2.0.1"
 
