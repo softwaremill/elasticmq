@@ -1168,7 +1168,8 @@ class AmazonJavaSdkTestSuite extends SqsClientServerCommunication with Matchers 
         .withQueueUrl(queueUrl)
         .withEntries(
           new ChangeMessageVisibilityBatchRequestEntry("1", msg1.getReceiptHandle).withVisibilityTimeout(1),
-          new ChangeMessageVisibilityBatchRequestEntry("2", msg2.getReceiptHandle).withVisibilityTimeout(1)
+          new ChangeMessageVisibilityBatchRequestEntry("2", msg2.getReceiptHandle).withVisibilityTimeout(1),
+          new ChangeMessageVisibilityBatchRequestEntry("3", "invalid").withVisibilityTimeout(1)
         )
     )
 
@@ -1179,6 +1180,7 @@ class AmazonJavaSdkTestSuite extends SqsClientServerCommunication with Matchers 
 
     // Then
     result.getSuccessful.asScala.map(_.getId).toSet should be(Set("1", "2"))
+    result.getFailed.asScala.map(e => (e.getId, e.getCode)) should be(List(("3", "ReceiptHandleIsInvalid")))
 
     Set(m3, m4) should be(Set(Some("Message 1"), Some("Message 2")))
   }
@@ -1712,7 +1714,13 @@ class AmazonJavaSdkTestSuite extends SqsClientServerCommunication with Matchers 
     // Given
     val queueUrl = client.createQueue(new CreateQueueRequest("testQueue1")).getQueueUrl
 
-    val handle = client.sendMessage(new SendMessageRequest(queueUrl, "Message 1").withDelaySeconds(4)).getMessageId
+    client.sendMessage(new SendMessageRequest(queueUrl, "Message 1"))
+    val handle = client
+      .receiveMessage(new ReceiveMessageRequest(queueUrl).withVisibilityTimeout(4))
+      .getMessages
+      .get(0)
+      .getReceiptHandle
+
     new Thread {
       override def run(): Unit = {
         Thread.sleep(1000L)

@@ -53,8 +53,9 @@ class QueueEventListenerTest extends ActorTest with QueueManagerWithListenerForE
   test("QueueMessageUpdated event should be triggerred") {
     for {
       Right(queue) <- queueManagerActor ? CreateQueue(createQueueData("q1", MillisVisibilityTimeout(1L)))
-      msg <- queue ? SendMessage(createNewMessageData("abc", "xyz", Map.empty, MillisNextDelivery(100)))
-      _ <- queue ? UpdateVisibilityTimeout(msg.id, MillisVisibilityTimeout(2000))
+      _ <- queue ? SendMessage(createNewMessageData("abc", "xyz", Map.empty, MillisNextDelivery(100)))
+      List(msg) <- queue ? ReceiveMessages(MillisVisibilityTimeout(1), 1, None, None)
+      _ <- queue ? UpdateVisibilityTimeout(msg.deliveryReceipt.get, MillisVisibilityTimeout(2000))
     } yield {
       queueEventListener.expectMsgType[QueueEvent.QueueCreated].queue.name shouldBe "q1"
       queueEventListener.expectMsgType[QueueEvent.MessageAdded].message.id shouldBe "abc"
