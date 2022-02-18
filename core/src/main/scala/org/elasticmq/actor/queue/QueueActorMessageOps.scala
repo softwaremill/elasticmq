@@ -34,7 +34,7 @@ trait QueueActorMessageOps
       case DeleteMessage(deliveryReceipt) =>
         deleteMessage(deliveryReceipt).send()
       case LookupMessage(messageId)          => messageQueue.getById(messageId.id).map(_.toMessageData)
-      case MoveMessage(message, destination) => moveMessage(message, destination)
+      case MoveMessage(message, destination) => moveMessage(message, destination).send()
       case DeduplicationIdsCleanup =>
         fifoMessagesHistory = fifoMessagesHistory.cleanOutdatedMessages(nowProvider)
         DoNotReply()

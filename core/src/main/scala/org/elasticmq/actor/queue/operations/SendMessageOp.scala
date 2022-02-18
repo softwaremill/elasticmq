@@ -32,7 +32,7 @@ trait SendMessageOp extends Logging {
 
   def restoreMessages(messages: List[InternalMessage]): Unit = {
     messages.foreach(addInternalMessage)
-    logger.info(s"Restored ${messages.size} messages")
+    logger.info(s"Restored ${messages.size} messages in queue ${queueData.name}")
   }
 
   private def sendMessage(message: NewMessageData): ResultWithEvents[MessageData] = {
