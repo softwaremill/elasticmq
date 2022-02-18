@@ -41,7 +41,7 @@ trait QueueDirectives {
   private def queueUrlFromParams(p: AnyParams): Directive1[String] =
     p.requiredParam(queueUrlParameter)
 
-  private val accountIdRegex = "[0-9]{12}".r
+  private val accountIdRegex = "[a-zA-Z0-9]+".r
 
   private def queueNameFromRequest(p: AnyParams)(body: String => Route): Route = {
     val queueNameDirective =
