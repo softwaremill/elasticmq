@@ -8,42 +8,43 @@ trait UpdateVisibilityTimeoutOps extends Logging {
   this: QueueActorStorage =>
 
   def updateVisibilityTimeout(
-      messageId: MessageId,
+      deliveryReceipt: DeliveryReceipt,
       visibilityTimeout: VisibilityTimeout
-  ): ResultWithEvents[Either[MessageDoesNotExist, Unit]] = {
-    updateNextDelivery(messageId, CommonOperations.computeNextDelivery(visibilityTimeout, queueData, nowProvider))
+  ): ResultWithEvents[Either[InvalidReceiptHandle, Unit]] = {
+    updateNextDelivery(deliveryReceipt, CommonOperations.computeNextDelivery(visibilityTimeout, queueData, nowProvider))
   }
 
   private def updateNextDelivery(
-      messageId: MessageId,
+      deliveryReceipt: DeliveryReceipt,
       newNextDelivery: MillisNextDelivery
-  ): ResultWithEvents[Either[MessageDoesNotExist, Unit]] = {
-    messageQueue.byId.get(messageId.id) match {
-      case Some(internalMessage) =>
+  ): ResultWithEvents[Either[InvalidReceiptHandle, Unit]] = {
+    val msgId = deliveryReceipt.extractId.toString
+
+    messageQueue.byId.get(msgId) match {
+      case Some(msg) if msg.deliveryReceipts.lastOption.contains(deliveryReceipt.receipt) =>
         // Updating
-        val oldNextDelivery = internalMessage.nextDelivery
-        internalMessage.nextDelivery = newNextDelivery.millis
+        val oldNextDelivery = msg.nextDelivery
+        msg.nextDelivery = newNextDelivery.millis
 
         if (newNextDelivery.millis < oldNextDelivery) {
           // We have to re-insert the msg, as another msg with a bigger next delivery may be now before it,
           // so the msg wouldn't be correctly received.
           // (!) This may be slow (!)
-          messageQueue = messageQueue.filterNot(_.id == internalMessage.id)
-          messageQueue += internalMessage
+          messageQueue = messageQueue.filterNot(_.id == msg.id)
+          messageQueue += msg
         }
         // Else:
         // Just increasing the next delivery. Common case. It is enough to increase the value in the object. No need to
         // re-insert the msg into the queue, as it will be reinserted if needed during receiving.
 
-        logger.debug(s"${queueData.name}: Updated next delivery of $messageId to $newNextDelivery")
+        logger.debug(s"${queueData.name}: Updated next delivery of $msgId to $newNextDelivery")
 
         ResultWithEvents.valueWithEvents(
           Right(()),
-          List(QueueEvent.MessageUpdated(queueData.name, internalMessage))
+          List(QueueEvent.MessageUpdated(queueData.name, msg))
         )
-
-      case None =>
-        ResultWithEvents.onlyValue(Left(new MessageDoesNotExist(queueData.name, messageId)))
+      case _ =>
+        ResultWithEvents.onlyValue(Left(new InvalidReceiptHandle(queueData.name, deliveryReceipt.receipt)))
     }
   }
 

@@ -41,8 +41,8 @@ case class ClearQueue() extends QueueQueueMsg[Unit]
 
 case class SendMessage(message: NewMessageData) extends QueueMessageMsg[MessageData]
 case class MoveMessage(message: InternalMessage, moveDestination: MoveDestination) extends QueueMessageMsg[Unit]
-case class UpdateVisibilityTimeout(messageId: MessageId, visibilityTimeout: VisibilityTimeout)
-    extends QueueMessageMsg[Either[MessageDoesNotExist, Unit]]
+case class UpdateVisibilityTimeout(deliveryReceipt: DeliveryReceipt, visibilityTimeout: VisibilityTimeout)
+    extends QueueMessageMsg[Either[InvalidReceiptHandle, Unit]]
 case class ReceiveMessages(
     visibilityTimeout: VisibilityTimeout,
     count: Int,

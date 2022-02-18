@@ -189,14 +189,15 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
   test("increasing next delivery of a msg") {
     // Given
     val q1 = createQueueData("q1", MillisVisibilityTimeout(1L))
-    val m = createNewMessageData("xyz", "1234", Map(), MillisNextDelivery(123L))
+    val m = createNewMessageData("xyz", "1234", Map(), MillisNextDelivery(100L))
 
     for {
       Right(queueActor) <- queueManagerActor ? CreateQueue(q1)
       _ <- queueActor ? SendMessage(m)
+      List(mdata) <- queueActor ? ReceiveMessages(DefaultVisibilityTimeout, 1, None, None)
 
       // When
-      _ <- queueActor ? UpdateVisibilityTimeout(m.id.get, MillisVisibilityTimeout(50L))
+      _ <- queueActor ? UpdateVisibilityTimeout(mdata.deliveryReceipt.get, MillisVisibilityTimeout(50L))
       lookupResult <- queueActor ? LookupMessage(MessageId("xyz"))
     } yield {
       // Then
@@ -208,19 +209,21 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
 
   test("decreasing next delivery of a msg") {
     // Given
-    val q1 = createQueueData("q1", MillisVisibilityTimeout(1L)) // Initially m2 should be delivered after m1
+    val q1 = createQueueData("q1", MillisVisibilityTimeout(100L)) // Initially m2 should be delivered after m1
     val m1 =
-      createNewMessageData("xyz1", "1234", Map(), MillisNextDelivery(150L))
+      createNewMessageData("xyz1", "1234", Map(), MillisNextDelivery(50L))
     val m2 =
-      createNewMessageData("xyz2", "1234", Map(), MillisNextDelivery(200L))
+      createNewMessageData("xyz2", "1234", Map(), MillisNextDelivery(100L))
 
     for {
       Right(queueActor) <- queueManagerActor ? CreateQueue(q1)
       _ <- queueActor ? SendMessage(m1)
       _ <- queueActor ? SendMessage(m2)
 
+      List(_, m2data) <- queueActor ? ReceiveMessages(DefaultVisibilityTimeout, 2, None, None)
+
       // When
-      _ <- queueActor ? UpdateVisibilityTimeout(m2.id.get, MillisVisibilityTimeout(10L))
+      _ <- queueActor ? UpdateVisibilityTimeout(m2data.deliveryReceipt.get, MillisVisibilityTimeout(10L))
       _ = nowProvider.mutableNowMillis.set(110L)
       receiveResult <- queueActor ? ReceiveMessages(DefaultVisibilityTimeout, 1, None, None)
     } yield {

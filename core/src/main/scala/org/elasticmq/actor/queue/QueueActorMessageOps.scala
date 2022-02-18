@@ -27,8 +27,8 @@ trait QueueActorMessageOps
     msg match {
       case SendMessage(message) =>
         handleOrRedirectMessage(message, context).send()
-      case UpdateVisibilityTimeout(messageId, visibilityTimeout) =>
-        updateVisibilityTimeout(messageId, visibilityTimeout).send()
+      case UpdateVisibilityTimeout(deliveryReceipt, visibilityTimeout) =>
+        updateVisibilityTimeout(deliveryReceipt, visibilityTimeout).send()
       case ReceiveMessages(visibilityTimeout, count, _, receiveRequestAttemptId) =>
         receiveMessages(visibilityTimeout, count, receiveRequestAttemptId).send()
       case DeleteMessage(deliveryReceipt) =>
