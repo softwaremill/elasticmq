@@ -137,7 +137,7 @@ object MessageQueue {
 
     override def getById(id: String): Option[InternalMessage] = messagesById.get(id)
 
-    override def all: Iterable[InternalMessage] = messageQueue
+    override def all: Iterable[InternalMessage] = messagesById.values
 
     override def clear(): Unit = {
       messagesById.clear()
