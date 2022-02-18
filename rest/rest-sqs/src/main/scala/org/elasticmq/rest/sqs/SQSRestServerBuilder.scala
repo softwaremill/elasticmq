@@ -25,6 +25,7 @@ import scala.collection.immutable.TreeMap
 import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
+import scala.util.{Failure, Success, Try}
 import scala.util.control.NonFatal
 import scala.xml.{EntityRef, _}
 
@@ -245,7 +246,15 @@ case class TheSQSRestServerBuilder(
     val platformMBeanServer = ManagementFactory.getPlatformMBeanServer
     val objectName = new ObjectName("org.elasticmq:name=Queues")
     if (!platformMBeanServer.isRegistered(objectName)) {
-      platformMBeanServer.registerMBean(queuesMetricsBean, objectName)
+      Try(platformMBeanServer.registerMBean(queuesMetricsBean, objectName)) match {
+        case Success(_) =>
+          logger.info("Metrics MBean {} successfully registered", objectName)
+        case Failure(exception) =>
+          logger.warn(
+            "Failed to register metrics MBean. It may happen when multiple instances of the server are started in parallel",
+            exception
+          )
+      }
     }
 
     SQSRestServer(
