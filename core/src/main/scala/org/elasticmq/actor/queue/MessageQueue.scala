@@ -16,9 +16,9 @@ sealed trait MessageQueue {
   /** Get the message by its unique id
     *
     * @param id
-    *   The message id
+    *   The message id to look up
     * @return
-    *   The message
+    *   The message or None if not exists
     */
   def getById(id: String): Option[InternalMessage]
 
