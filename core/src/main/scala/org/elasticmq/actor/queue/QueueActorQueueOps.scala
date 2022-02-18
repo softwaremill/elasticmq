@@ -57,7 +57,7 @@ trait QueueActorQueueOps extends Logging {
     var invisible = 0
     var delayed = 0
 
-    messageQueue.byId.values.foreach { internalMessage =>
+    messageQueue.all.foreach { internalMessage =>
       if (internalMessage.nextDelivery < deliveryTime) {
         visible += 1
       } else if (internalMessage.deliveryReceipts.nonEmpty) {

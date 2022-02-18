@@ -20,7 +20,7 @@ trait UpdateVisibilityTimeoutOps extends Logging {
   ): ResultWithEvents[Either[InvalidReceiptHandle, Unit]] = {
     val msgId = deliveryReceipt.extractId.toString
 
-    messageQueue.byId.get(msgId) match {
+    messageQueue.getById(msgId) match {
       case Some(msg) if msg.deliveryReceipts.lastOption.contains(deliveryReceipt.receipt) =>
         // Updating
         val oldNextDelivery = msg.nextDelivery
