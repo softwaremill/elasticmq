@@ -36,7 +36,7 @@ class QueueDirectivesTest
   lazy val queueManagerActor: ActorRef =
     actorSystem.actorOf(Props(new QueueManagerActor(new NowProvider(), StrictSQSLimits, None)))
 
-  "queueActorAndNameFromRequest" should "return correct queue name" in {
+  "queueActorAndNameFromRequest" should "return correct queue name based on QueueName" in {
     val future = queueManagerActor ? CreateQueue(
       QueueData("lol", MillisVisibilityTimeout(1L), Duration.ZERO, Duration.ZERO, DateTime.now(), DateTime.now())
     )
@@ -44,11 +44,45 @@ class QueueDirectivesTest
     val route = {
       queueActorAndNameFromRequest(
         Map("QueueName" -> "lol", "QueueUrl" -> "https://eu-central-1.queue.amazonaws.com/906175111765/lol")
-      ) { (actor, name) => _.complete(name) }
+      ) { (_, name) => _.complete(name) }
     }
 
     Get("/906175111765/lol") ~> route ~> check {
       responseAs[String] shouldEqual "lol"
+    }
+  }
+
+  "queueActorAndNameFromRequest" should "return correct queue name based on QueueUrl" in {
+    val future = queueManagerActor ? CreateQueue(
+      QueueData("lol", MillisVisibilityTimeout(1L), Duration.ZERO, Duration.ZERO, DateTime.now(), DateTime.now())
+    )
+    Await.result(future, maxDuration)
+    val route = {
+      queueActorAndNameFromRequest(
+        Map("QueueUrl" -> "https://eu-central-1.queue.amazonaws.com/906175111765/lol")
+      ) { (_, name) => _.complete(name) }
+    }
+
+    Get("/") ~> route ~> check {
+      responseAs[String] shouldEqual "lol"
+    }
+  }
+
+  "queueActorAndNameFromRequest" should "return error when invalid QueueUrl" in {
+    val future = queueManagerActor ? CreateQueue(
+      QueueData("lol", MillisVisibilityTimeout(1L), Duration.ZERO, Duration.ZERO, DateTime.now(), DateTime.now())
+    )
+    Await.result(future, maxDuration)
+    val route = {
+      handleServerExceptions {
+        queueActorAndNameFromRequest(
+          Map("QueueUrl" -> "https://eu-central-1.queue.amazonaws.com")
+        ) { (_, name) => _.complete(name) }
+      }
+    }
+
+    Get("/") ~> route ~> check {
+      rejections shouldNot be(empty)
     }
   }
 }

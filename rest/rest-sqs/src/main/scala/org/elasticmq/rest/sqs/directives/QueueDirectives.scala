@@ -1,7 +1,9 @@
 package org.elasticmq.rest.sqs.directives
 
 import akka.actor.ActorRef
-import akka.http.scaladsl.server.{Directive1, Directives, MissingQueryParamRejection, PathMatchers, Rejection, Route}
+import akka.http.scaladsl.model.Uri
+import akka.http.scaladsl.server.PathMatcher.{Matched, Unmatched}
+import akka.http.scaladsl.server._
 import org.elasticmq.QueueData
 import org.elasticmq.actor.reply._
 import org.elasticmq.msg.{GetQueueData, LookupQueue}
@@ -39,24 +41,31 @@ trait QueueDirectives {
   private def queueUrlFromParams(p: AnyParams): Directive1[String] =
     p.requiredParam(queueUrlParameter)
 
-  private val accountId = "[a-zA-Z0-9]{12}"
-  private val lastPathSegment =
-    ("^[^/]*//[^/]*/(" + accountId + "|" + QueueUrlContext + ")/([^/]+)$").r
+  private val accountIdRegex = "[a-zA-Z0-9]+".r
 
   private def queueNameFromRequest(p: AnyParams)(body: String => Route): Route = {
     val queueNameDirective =
       checkOnlyOneSegmentInUri() |
-        pathPrefix(accountId.r / Segment).tmap(_._2) |
+        pathPrefix(accountIdRegex / Segment).tmap(_._2) |
         pathPrefix(QueueUrlContext / Segment) |
         queueNameFromParams(p) |
-        queueUrlFromParams(p).flatMap { queueUrl =>
-          lastPathSegment.findFirstMatchIn(queueUrl).map(_.group(2)) match {
-            case Some(queueName) => provide(queueName)
-            case None            => reject(MissingQueryParamRejection(queueUrlParameter)): Directive1[String]
-          }
-        }
+        queueUrlFromParams(p).flatMap { queueUrl => getQueueNameFromQueueUrl(queueUrl) }
 
     queueNameDirective(body)
+  }
+
+  private def getQueueNameFromQueueUrl(queueUrl: String): Directive1[String] = {
+    val matcher = Slash ~ accountIdRegex / "[^/]+".r
+    matcher(Uri(queueUrl).path) match {
+      case Matched(_, extractions) => provide(extractions._2): Directive1[String]
+      case Unmatched =>
+        reject(
+          MalformedQueryParamRejection(
+            queueUrlParameter,
+            "Invalid queue url, the path should be /<accountId>/<queueName> where accountId must match " + accountIdRegex + " regex"
+          )
+        )
+    }
   }
 
   private def queueActor(queueName: String, body: ActorRef => Route): Route = {
