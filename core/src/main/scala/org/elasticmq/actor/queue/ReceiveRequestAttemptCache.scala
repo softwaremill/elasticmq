@@ -49,7 +49,7 @@ class ReceiveRequestAttemptCache {
     */
   private def allValid(messages: List[InternalMessage], messageQueue: MessageQueue): Boolean = {
     messages.forall { lastAttemptMessage =>
-      messageQueue.byId.get(lastAttemptMessage.id) match {
+      messageQueue.getById(lastAttemptMessage.id) match {
         case None =>
           // If the message has been deleted, than this message can no longer be returned for the same request attempt.
           false

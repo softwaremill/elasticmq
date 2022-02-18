@@ -13,12 +13,21 @@ sealed trait MessageQueue {
     */
   def +=(message: InternalMessage): Unit
 
-  /** Get the messages indexed by their unique id
+  /** Get the message by its unique id
+    *
+    * @param id
+    *   The message id
+    * @return
+    *   The message
+    */
+  def getById(id: String): Option[InternalMessage]
+
+  /** Get all messages in queue
     *
     * @return
-    *   The messages indexed by their id
+    *   All messages in queue
     */
-  def byId: Map[String, InternalMessage]
+  def all: Iterable[InternalMessage]
 
   /** Drop all messages on the queue
     */
@@ -77,7 +86,7 @@ sealed trait MessageQueue {
     if (priorityQueue.nonEmpty) {
       val msg = priorityQueue.dequeue()
 
-      if (byId.get(msg.id).isEmpty) {
+      if (getById(msg.id).isEmpty) {
         // A message that's not in the byId map is considered to be deleted and can be dropped
         nextVisibleMessage(priorityQueue, deliveryTime, accBatch, accMessage)
       } else {
@@ -126,7 +135,9 @@ object MessageQueue {
       messageQueue += message
     }
 
-    override def byId: Map[String, InternalMessage] = messagesById.toMap
+    override def getById(id: String): Option[InternalMessage] = messagesById.get(id)
+
+    override def all: Iterable[InternalMessage] = messageQueue
 
     override def clear(): Unit = {
       messagesById.clear()

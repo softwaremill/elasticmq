@@ -99,10 +99,10 @@ trait QueueActorWaitForMessagesOps extends ReplyingActor with QueueActorMessageO
 
     // The request needs a reply and there are messages on the queue, we should try to reply. The earliest we can reply
     // is when the next message becomes available
-    if (awaitingReply.nonEmpty && messageQueue.byId.nonEmpty) {
+    if (awaitingReply.nonEmpty && messageQueue.all.nonEmpty) {
       val deliveryTime = nowProvider.nowMillis
 
-      messageQueue.byId.values.toList.sortBy(_.nextDelivery).headOption match {
+      messageQueue.all.toList.sortBy(_.nextDelivery).headOption match {
         case Some(msg) => scheduledTryReply = Some(schedule(msg.nextDelivery - deliveryTime + 1, TryReply))
         case None      =>
       }

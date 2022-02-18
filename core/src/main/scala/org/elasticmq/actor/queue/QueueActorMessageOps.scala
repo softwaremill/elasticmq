@@ -33,7 +33,7 @@ trait QueueActorMessageOps
         receiveMessages(visibilityTimeout, count, receiveRequestAttemptId).send()
       case DeleteMessage(deliveryReceipt) =>
         deleteMessage(deliveryReceipt).send()
-      case LookupMessage(messageId)          => messageQueue.byId.get(messageId.id).map(_.toMessageData)
+      case LookupMessage(messageId)          => messageQueue.getById(messageId.id).map(_.toMessageData)
       case MoveMessage(message, destination) => moveMessage(message, destination)
       case DeduplicationIdsCleanup =>
         fifoMessagesHistory = fifoMessagesHistory.cleanOutdatedMessages(nowProvider)
