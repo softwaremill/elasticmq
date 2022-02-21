@@ -33,6 +33,10 @@ trait QueueActorStorage {
   case class ResultWithEvents[T](result: Option[T], events: List[QueueEventWithOperationStatus] = List.empty)
       extends Logging {
 
+    def mapResult[U](f: T => U): ResultWithEvents[U] = {
+      ResultWithEvents(result.map(f), events)
+    }
+
     def send[U](recipient: Option[ActorRef] = None): ReplyAction[U] = {
       val notificationF =
         if (events == Nil || queueEventListener.isEmpty) {
