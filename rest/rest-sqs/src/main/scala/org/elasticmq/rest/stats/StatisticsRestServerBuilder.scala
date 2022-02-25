@@ -20,7 +20,8 @@ case class TheStatisticsRestServerBuilder(
     interface: String,
     port: Int,
     _awsRegion: String,
-    _awsAccountId: String
+    _awsAccountId: String,
+    _contextPath: String
 ) extends Logging {
 
   /** @param _actorSystem
@@ -77,6 +78,7 @@ case class TheStatisticsRestServerBuilder(
       lazy val materializer = implicitMaterializer
       lazy val queueManagerActor = providedQueueManagerActor
       lazy val timeout = Timeout(21, TimeUnit.SECONDS) // see application.conf
+      lazy val contextPath = _contextPath
 
       lazy val awsRegion: String = _awsRegion
       lazy val awsAccountId: String = _awsAccountId

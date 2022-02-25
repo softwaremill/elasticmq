@@ -2,6 +2,7 @@ package org.elasticmq.rest.sqs.directives
 
 import akka.actor.ActorRef
 import akka.http.scaladsl.model.Uri
+import akka.http.scaladsl.model.Uri.Path
 import akka.http.scaladsl.server.PathMatcher.{Matched, Unmatched}
 import akka.http.scaladsl.server._
 import org.elasticmq.QueueData
@@ -11,7 +12,12 @@ import org.elasticmq.rest.sqs.Constants._
 import org.elasticmq.rest.sqs._
 
 trait QueueDirectives {
-  this: Directives with QueueManagerActorModule with ActorSystemModule with FutureDirectives with AnyParamDirectives =>
+  this: Directives
+    with QueueManagerActorModule
+    with ContextPathModule
+    with ActorSystemModule
+    with FutureDirectives
+    with AnyParamDirectives =>
 
   def queueNameFromParams(p: AnyParams): Directive1[String] =
     p.requiredParam("QueueName")
@@ -44,10 +50,17 @@ trait QueueDirectives {
   private val accountIdRegex = "[a-zA-Z0-9]+".r
 
   private def queueNameFromRequest(p: AnyParams)(body: String => Route): Route = {
+    val pathDirective =
+      if (contextPath.nonEmpty)
+        pathPrefix(contextPath / accountIdRegex / Segment).tmap(_._2) |
+          pathPrefix(contextPath / QueueUrlContext / Segment)
+      else
+        pathPrefix(accountIdRegex / Segment).tmap(_._2) |
+          pathPrefix(QueueUrlContext / Segment)
+
     val queueNameDirective =
       checkOnlyOneSegmentInUri() |
-        pathPrefix(accountIdRegex / Segment).tmap(_._2) |
-        pathPrefix(QueueUrlContext / Segment) |
+        pathDirective |
         queueNameFromParams(p) |
         queueUrlFromParams(p).flatMap { queueUrl => getQueueNameFromQueueUrl(queueUrl) }
 
@@ -55,7 +68,13 @@ trait QueueDirectives {
   }
 
   private def getQueueNameFromQueueUrl(queueUrl: String): Directive1[String] = {
-    val matcher = Slash ~ accountIdRegex / "[^/]+".r
+
+    val matcher =
+      if (contextPath.nonEmpty)
+        separateOnSlashes(contextPath) / accountIdRegex / "[^/]+".r
+      else
+        Slash ~ accountIdRegex / "[^/]+".r
+
     matcher(Uri(queueUrl).path) match {
       case Matched(_, extractions) => provide(extractions._2): Directive1[String]
       case Unmatched =>
