@@ -52,6 +52,8 @@ class StatisticsDirectivesTest
   lazy val queueManagerActor: ActorRef =
     actorSystem.actorOf(Props(new QueueManagerActor(nowProvider, StrictSQSLimits, None)))
 
+  lazy val contextPath = ""
+
   "statisticsRequestForAllQueues" should "return all queues statistics" in {
 
     val route = {

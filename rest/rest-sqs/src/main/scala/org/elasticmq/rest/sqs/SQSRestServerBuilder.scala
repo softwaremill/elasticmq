@@ -137,6 +137,7 @@ case class TheSQSRestServerBuilder(
 
     val env = new QueueManagerActorModule
       with QueueURLModule
+      with ContextPathModule
       with SQSLimitsModule
       with BatchRequestsModule
       with ElasticMQDirectives
@@ -167,6 +168,7 @@ case class TheSQSRestServerBuilder(
       lazy val queueManagerActor = theQueueManagerActor
       lazy val sqsLimits = theLimits
       lazy val timeout = Timeout(21, TimeUnit.SECONDS) // see application.conf
+      lazy val contextPath = serverAddress.contextPath
 
       lazy val awsRegion: String = _awsRegion
       lazy val awsAccountId: String = _awsAccountId
@@ -446,6 +448,10 @@ trait QueueURLModule {
   def queueURL(queueData: QueueData): Directive1[String] = {
     baseQueueURL.map(base => base + "/" + queueData.name)
   }
+}
+
+trait ContextPathModule {
+  def contextPath: String
 }
 
 trait SQSLimitsModule {
