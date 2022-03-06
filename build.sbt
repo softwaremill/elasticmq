@@ -24,7 +24,7 @@ val pureConfig = "com.github.pureconfig" %% "pureconfig" % "0.17.1"
 val scalaXml = "org.scala-lang.modules" %% "scala-xml" % "2.0.1"
 
 val scalalogging = "com.typesafe.scala-logging" %% "scala-logging" % "3.9.4"
-val logback = "ch.qos.logback" % "logback-classic" % "1.2.10"
+val logback = "ch.qos.logback" % "logback-classic" % "1.2.11"
 val jclOverSlf4j = "org.slf4j" % "jcl-over-slf4j" % "1.7.36" // needed form amazon java sdk
 
 val scalatest = "org.scalatest" %% "scalatest" % "3.2.11"
