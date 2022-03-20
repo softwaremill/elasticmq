@@ -17,7 +17,7 @@ lazy val yarnTask = inputKey[Unit]("Run yarn with arguments")
 lazy val ensureDockerBuildx = taskKey[Unit]("Ensure that docker buildx configuration exists")
 lazy val dockerBuildWithBuildx = taskKey[Unit]("Build docker images using buildx")
 
-val jodaTime = "joda-time" % "joda-time" % "2.10.13"
+val jodaTime = "joda-time" % "joda-time" % "2.10.14"
 val jodaConvert = "org.joda" % "joda-convert" % "2.2.2"
 val config = "com.typesafe" % "config" % "1.4.2"
 val pureConfig = "com.github.pureconfig" %% "pureconfig" % "0.17.1"
