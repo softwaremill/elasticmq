@@ -11,7 +11,7 @@ addSbtPlugin("org.scoverage" % "sbt-scoverage" % "1.9.3")
 
 addSbtPlugin("com.github.sbt" % "sbt-native-packager" % "1.9.9")
 
-addSbtPlugin("com.typesafe.sbt" % "sbt-git" % "1.0.2")
+addSbtPlugin("com.github.sbt" % "sbt-git" % "2.0.0")
 
 libraryDependencies += "com.amazonaws" % "aws-java-sdk-s3" % "1.11.601"
 
