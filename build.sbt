@@ -21,7 +21,7 @@ val jodaTime = "joda-time" % "joda-time" % "2.10.14"
 val jodaConvert = "org.joda" % "joda-convert" % "2.2.2"
 val config = "com.typesafe" % "config" % "1.4.2"
 val pureConfig = "com.github.pureconfig" %% "pureconfig" % "0.17.1"
-val scalaXml = "org.scala-lang.modules" %% "scala-xml" % "2.0.1"
+val scalaXml = "org.scala-lang.modules" %% "scala-xml" % "2.1.0"
 
 val scalalogging = "com.typesafe.scala-logging" %% "scala-logging" % "3.9.4"
 val logback = "ch.qos.logback" % "logback-classic" % "1.2.11"
