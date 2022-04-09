@@ -25,6 +25,7 @@ import scala.collection.immutable.TreeMap
 import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
+import scala.util.{Failure, Success, Try}
 import scala.util.control.NonFatal
 import scala.xml.{EntityRef, _}
 
@@ -136,6 +137,7 @@ case class TheSQSRestServerBuilder(
 
     val env = new QueueManagerActorModule
       with QueueURLModule
+      with ContextPathModule
       with SQSLimitsModule
       with BatchRequestsModule
       with ElasticMQDirectives
@@ -166,6 +168,7 @@ case class TheSQSRestServerBuilder(
       lazy val queueManagerActor = theQueueManagerActor
       lazy val sqsLimits = theLimits
       lazy val timeout = Timeout(21, TimeUnit.SECONDS) // see application.conf
+      lazy val contextPath = serverAddress.contextPath
 
       lazy val awsRegion: String = _awsRegion
       lazy val awsAccountId: String = _awsAccountId
@@ -234,16 +237,26 @@ case class TheSQSRestServerBuilder(
       )
     }
 
-    appStartFuture.failed.foreach { case NonFatal(e) =>
-      TheSQSRestServerBuilder.this.logger
-        .error("Cannot start SQS rest server, bind address %s:%d".format(interface, port), e)
+    appStartFuture.failed.foreach {
+      case NonFatal(e) =>
+        TheSQSRestServerBuilder.this.logger
+          .error("Cannot start SQS rest server, bind address %s:%d".format(interface, port), e)
+      case _ =>
     }
 
     val queuesMetricsBean = new QueuesMetrics(theQueueManagerActor)
     val platformMBeanServer = ManagementFactory.getPlatformMBeanServer
     val objectName = new ObjectName("org.elasticmq:name=Queues")
     if (!platformMBeanServer.isRegistered(objectName)) {
-      platformMBeanServer.registerMBean(queuesMetricsBean, objectName)
+      Try(platformMBeanServer.registerMBean(queuesMetricsBean, objectName)) match {
+        case Success(_) =>
+          logger.info("Metrics MBean {} successfully registered", objectName)
+        case Failure(exception) =>
+          logger.warn(
+            "Failed to register metrics MBean. It may happen when multiple instances of the server are started in parallel",
+            exception
+          )
+      }
     }
 
     SQSRestServer(
@@ -435,6 +448,10 @@ trait QueueURLModule {
   def queueURL(queueData: QueueData): Directive1[String] = {
     baseQueueURL.map(base => base + "/" + queueData.name)
   }
+}
+
+trait ContextPathModule {
+  def contextPath: String
 }
 
 trait SQSLimitsModule {

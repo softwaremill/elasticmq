@@ -27,14 +27,14 @@ trait QueueActorMessageOps
     msg match {
       case SendMessage(message) =>
         handleOrRedirectMessage(message, context).send()
-      case UpdateVisibilityTimeout(messageId, visibilityTimeout) =>
-        updateVisibilityTimeout(messageId, visibilityTimeout).send()
+      case UpdateVisibilityTimeout(deliveryReceipt, visibilityTimeout) =>
+        updateVisibilityTimeout(deliveryReceipt, visibilityTimeout).send()
       case ReceiveMessages(visibilityTimeout, count, _, receiveRequestAttemptId) =>
         receiveMessages(visibilityTimeout, count, receiveRequestAttemptId).send()
       case DeleteMessage(deliveryReceipt) =>
         deleteMessage(deliveryReceipt).send()
-      case LookupMessage(messageId)          => messageQueue.byId.get(messageId.id).map(_.toMessageData)
-      case MoveMessage(message, destination) => moveMessage(message, destination)
+      case LookupMessage(messageId)          => messageQueue.getById(messageId.id).map(_.toMessageData)
+      case MoveMessage(message, destination) => moveMessage(message, destination).send()
       case DeduplicationIdsCleanup =>
         fifoMessagesHistory = fifoMessagesHistory.cleanOutdatedMessages(nowProvider)
         DoNotReply()

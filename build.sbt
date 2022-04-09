@@ -1,9 +1,9 @@
 import com.amazonaws.services.s3.model.PutObjectResult
-import com.softwaremill.Publish.Release.updateVersionInDocs
+import com.softwaremill.SbtSoftwareMillCommon.commonSmlBuildSettings
+import com.softwaremill.Publish.ossPublishSettings
 import com.typesafe.sbt.packager.docker.{Cmd, ExecCmd}
 import sbt.Keys.{credentials, javaOptions}
 import sbt.internal.util.complete.Parsers.spaceDelimited
-import sbtrelease.ReleaseStateTransformations._
 import scoverage.ScoverageKeys._
 
 import scala.sys.process.Process
@@ -17,84 +17,23 @@ lazy val yarnTask = inputKey[Unit]("Run yarn with arguments")
 lazy val ensureDockerBuildx = taskKey[Unit]("Ensure that docker buildx configuration exists")
 lazy val dockerBuildWithBuildx = taskKey[Unit]("Build docker images using buildx")
 
-val buildSettings = commonSmlBuildSettings ++ ossPublishSettings ++ Seq(
-  organization := "org.elasticmq",
-  scmInfo := Some(
-    ScmInfo(url("https://github.com/softwaremill/elasticmq"), "scm:git@github.com:softwaremill/elasticmq.git")
-  ),
-  scalaVersion := v2_13,
-  crossScalaVersions := Seq(v2_13, v2_12),
-  libraryDependencies += "org.scala-lang.modules" %% "scala-xml" % "1.3.0",
-  dependencyOverrides := akka25Overrides,
-  parallelExecution := false,
-  sonatypeProfileName := "org.elasticmq",
-  // workaround for: https://github.com/sbt/sbt/issues/692
-  Test / fork := true,
-  releaseProcess := {
-    val uploadAssembly: ReleaseStep = ReleaseStep(
-      action = { st: State =>
-        val extracted = Project.extract(st)
-        val (st2, _) = extracted.runTask(assembly in server, st)
-        val (st3, _) = extracted.runTask(s3Upload in server, st2)
-        st3
-      }
-    )
-
-    val uploadDocker: ReleaseStep = ReleaseStep(
-      action = { st: State =>
-        val extracted = Project.extract(st)
-        val (st2, _) = extracted.runTask(publish in Docker in server, st)
-        st2
-      }
-    )
-
-    val uploadNativeDocker: ReleaseStep = ReleaseStep(
-      action = { st: State =>
-        val extracted = Project.extract(st)
-        val (st2, _) = extracted.runTask(packageBin in GraalVMNativeImage in nativeServer, st)
-        val (st3, _) = extracted.runTask(publish in Docker in nativeServer, st2)
-        st3
-      }
-    )
-
-    Seq(
-      checkSnapshotDependencies,
-      inquireVersions,
-      // publishing locally so that the pgp password prompt is displayed early
-      // in the process
-      releaseStepCommand("publishLocalSigned"),
-      runClean,
-      runTest,
-      setReleaseVersion,
-      uploadDocker,
-      uploadNativeDocker,
-      uploadAssembly,
-      updateVersionInDocs(organization.value),
-      commitReleaseVersion,
-      tagRelease,
-      publishArtifacts,
-      releaseStepCommand("sonatypeBundleRelease"),
-      pushChanges
-    )
-  }
-)
-
-val jodaTime = "joda-time" % "joda-time" % "2.10.13"
+val jodaTime = "joda-time" % "joda-time" % "2.10.14"
 val jodaConvert = "org.joda" % "joda-convert" % "2.2.2"
-val config = "com.typesafe" % "config" % "1.4.1"
+val config = "com.typesafe" % "config" % "1.4.2"
 val pureConfig = "com.github.pureconfig" %% "pureconfig" % "0.17.1"
+val scalaXml = "org.scala-lang.modules" %% "scala-xml" % "2.1.0"
 
 val scalalogging = "com.typesafe.scala-logging" %% "scala-logging" % "3.9.4"
-val logback = "ch.qos.logback" % "logback-classic" % "1.2.10"
-val jclOverSlf4j = "org.slf4j" % "jcl-over-slf4j" % "1.7.33" // needed form amazon java sdk
+val logback = "ch.qos.logback" % "logback-classic" % "1.2.11"
+val jclOverSlf4j = "org.slf4j" % "jcl-over-slf4j" % "1.7.36" // needed form amazon java sdk
 
-val scalatest = "org.scalatest" %% "scalatest" % "3.2.10"
-val awaitility = "org.awaitility" % "awaitility-scala" % "4.1.1"
+val scalatest = "org.scalatest" %% "scalatest" % "3.2.11"
+val awaitility = "org.awaitility" % "awaitility-scala" % "4.2.0"
 
 val amazonJavaSdkSqs = "com.amazonaws" % "aws-java-sdk-sqs" % "1.11.1026" exclude ("commons-logging", "commons-logging")
 
-val akkaVersion = "2.6.18"
-val akkaHttpVersion = "10.2.7"
+val akkaVersion = "2.6.19"
+val akkaHttpVersion = "10.2.9"
 val akka2Actor = "com.typesafe.akka" %% "akka-actor" % akkaVersion
 val akka2Slf4j = "com.typesafe.akka" %% "akka-slf4j" % akkaVersion
 val akka2Streams = "com.typesafe.akka" %% "akka-stream" % akkaVersion
@@ -104,10 +43,10 @@ val sprayJson = "io.spray" %% "spray-json" % "1.3.6"
 val akkaHttpSprayJson = "com.typesafe.akka" %% "akka-http-spray-json" % akkaHttpVersion
 val akka2HttpTestkit = "com.typesafe.akka" %% "akka-http-testkit" % akkaHttpVersion % "test"
 
-val scalaAsync = "org.scala-lang.modules" %% "scala-async" % "0.10.0"
+val scalaAsync = "org.scala-lang.modules" %% "scala-async" % "1.0.1"
 
 val scalikeJdbc = "org.scalikejdbc" %% "scalikejdbc" % "3.5.0"
-val h2 = "com.h2database" % "h2" % "2.1.210"
+val h2 = "com.h2database" % "h2" % "2.1.212"
 
 val common = Seq(scalalogging)
 
@@ -117,10 +56,27 @@ val akka25Overrides =
     "com.typesafe.akka" %% "akka-stream-testkit" % akkaVersion
   )
 
+val buildSettings = commonSmlBuildSettings ++ ossPublishSettings ++ Seq(
+  organization := "org.elasticmq",
+  scmInfo := Some(
+    ScmInfo(url("https://github.com/softwaremill/elasticmq"), "scm:git@github.com:softwaremill/elasticmq.git")
+  ),
+  scalaVersion := v2_13,
+  crossScalaVersions := Seq(v2_13, v2_12),
+  scalacOptions += "-Xasync",
+  libraryDependencies += scalaXml,
+  dependencyOverrides := akka25Overrides,
+  parallelExecution := false,
+  sonatypeProfileName := "org.elasticmq",
+  // workaround for: https://github.com/sbt/sbt/issues/692
+  Test / fork := true
+)
+
 // see https://github.com/scala/scala-dist/pull/181/files
 val s3Upload = TaskKey[PutObjectResult]("s3-upload", "Uploads files to an S3 bucket.")
 
 lazy val root: Project = (project in file("."))
+  .enablePlugins(GitVersioning)
   .settings(buildSettings)
   .settings(name := "elasticmq-root", publishArtifact := false)
   .aggregate(commonTest, core, rest, persistence, server, nativeServer, ui)
@@ -239,21 +195,14 @@ lazy val server: Project = (project in file("server"))
       coverageMinimum := 52,
       // s3 upload
       s3Upload := {
-        import com.amazonaws.auth.{
-          AWSStaticCredentialsProvider,
-          BasicAWSCredentials,
-          DefaultAWSCredentialsProviderChain
-        }
+        import com.amazonaws.auth.{AWSStaticCredentialsProvider, BasicAWSCredentials}
         import com.amazonaws.services.s3.AmazonS3ClientBuilder
         import com.amazonaws.services.s3.model.{CannedAccessControlList, PutObjectRequest}
 
         val bucketName = "softwaremill-public"
-        val creds = Credentials.forHost(credentials.value, bucketName + ".s3.amazonaws.com")
 
-        val awsCreds = creds match {
-          case Some(cred) => new AWSStaticCredentialsProvider(new BasicAWSCredentials(cred.userName, cred.passwd))
-          case None       => new DefaultAWSCredentialsProviderChain
-        }
+        val awsCreds =
+          new AWSStaticCredentialsProvider(new BasicAWSCredentials(sys.env("S3_USER"), sys.env("S3_PASSWORD")))
 
         val client = AmazonS3ClientBuilder.standard().withCredentials(awsCreds).withRegion("eu-west-1").build()
 
@@ -270,14 +219,6 @@ lazy val server: Project = (project in file("server"))
             .withCannedAcl(CannedAccessControlList.PublicRead)
         )
       },
-      /*
-    Format:
-    realm=Amazon S3
-    host=softwaremill-public.s3.amazonaws.com
-    user=[AWS key id]
-    password=[AWS secret key]
-       */
-      credentials += Credentials(Path.userHome / ".s3_elasticmq_credentials"),
       // docker
       dockerExposedPorts := Seq(9324, 9325),
       dockerBaseImage := "openjdk:11-jdk-stretch",

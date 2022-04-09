@@ -111,7 +111,8 @@ class ElasticMQServer(config: ElasticMQServerConfig) extends Logging {
         config.restStatisticsConfiguration.bindHostname,
         config.restStatisticsConfiguration.bindPort,
         config.awsRegion,
-        config.awsAccountId
+        config.awsAccountId,
+        config.nodeAddress.contextPath
       ).start()
 
       server.waitUntilStarted()

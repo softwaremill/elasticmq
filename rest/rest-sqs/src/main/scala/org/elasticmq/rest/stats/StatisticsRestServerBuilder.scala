@@ -20,7 +20,8 @@ case class TheStatisticsRestServerBuilder(
     interface: String,
     port: Int,
     _awsRegion: String,
-    _awsAccountId: String
+    _awsAccountId: String,
+    _contextPath: String
 ) extends Logging {
 
   /** @param _actorSystem
@@ -77,6 +78,7 @@ case class TheStatisticsRestServerBuilder(
       lazy val materializer = implicitMaterializer
       lazy val queueManagerActor = providedQueueManagerActor
       lazy val timeout = Timeout(21, TimeUnit.SECONDS) // see application.conf
+      lazy val contextPath = _contextPath
 
       lazy val awsRegion: String = _awsRegion
       lazy val awsAccountId: String = _awsAccountId
@@ -102,9 +104,11 @@ case class TheStatisticsRestServerBuilder(
       )
     }
 
-    appStartFuture.failed.foreach { case NonFatal(e) =>
-      TheStatisticsRestServerBuilder.this.logger
-        .error("Cannot start statistics rest server, bind address %s:%d".format(interface, port), e)
+    appStartFuture.failed.foreach {
+      case NonFatal(e) =>
+        TheStatisticsRestServerBuilder.this.logger
+          .error("Cannot start statistics rest server, bind address %s:%d".format(interface, port), e)
+      case _ =>
     }
 
     StatisticsRestServer(
