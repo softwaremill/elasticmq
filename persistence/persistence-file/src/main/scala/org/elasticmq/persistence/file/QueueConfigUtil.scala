@@ -1,7 +1,7 @@
 package org.elasticmq.persistence.file
 
 import com.typesafe.config.{Config, ConfigFactory, ConfigObject, ConfigValue}
-import org.elasticmq.persistence.{CreateQueueMetadata, DeadLettersQueue}
+import org.elasticmq.persistence.{CreateQueueMetadata, DeadLettersQueue, QueueSorter}
 import org.joda.time.DateTime
 
 import java.io.File
@@ -43,7 +43,7 @@ object QueueConfigUtil {
 
     val now = new DateTime().toInstant.getMillis
 
-    queuesConfig.map { case (n, v) =>
+    val unsortedQueues = queuesConfig.map { case (n, v) =>
       val c = v.asInstanceOf[ConfigObject].toConfig
       val isFifo = getOptionalBoolean(c, "fifo").getOrElse(false)
       CreateQueueMetadata(
@@ -68,6 +68,7 @@ object QueueConfigUtil {
         tags = getOptionalTags(c, "tags")
       )
     }.toList
+    QueueSorter.sortCreateQueues(unsortedQueues)
   }
 
   private def addSuffixWhenFifoQueue(queueName: String, isFifo: Boolean): String = {
