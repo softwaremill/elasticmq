@@ -60,8 +60,10 @@ class QueueConfigUtilTest extends AnyFunSuite with Matchers with OptionValues {
       Some("messageTo"),
       Map("tag1Key" -> "tag1Value")
     )
-    persistedQueues.length shouldBe 1
-    persistedQueues.head shouldBe expectedQueue
+    val expectedDeadLetters = CreateQueueMetadata("dead")
+    persistedQueues.length shouldBe 2
+    persistedQueues.head shouldBe expectedDeadLetters
+    persistedQueues.last shouldBe expectedQueue
   }
 
   test("Persisted queues should take precedence over startup queues with same names") {
