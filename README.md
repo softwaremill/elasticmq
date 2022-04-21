@@ -392,6 +392,11 @@ To run container with customized `application.ini` file (and custom `logback.xml
 docker run -v `pwd`/application.ini:/opt/docker/conf/application.ini -v `pwd`/logback.xml:/opt/docker/conf/logback.xml -p 9324:9324 -p 9325:9325 softwaremill/elasticmq
 ```
 
+In case of problems with file mounting on Windows place the `application.ini` and the configuration file `elasticmq.conf` in the same directory then mount this directory to /opt/docker/conf:
+```
+--mount type=bind,source="$(pwd)"/somefolder,target=/opt/docker/conf.
+```
+
 Another option is to use custom `Dockerfile`:
 
 ```
