@@ -1,0 +1,13 @@
+version: "3.1"
+
+services:
+  mariadb:
+    image: mariadb:10.8.3
+    container_name: mariadb
+    environment:
+      MARIADB_ROOT_PASSWORD: admin
+    volumes:
+      - "./db:/var/lib/mysql"
+      - "./init.sql:/docker-entrypoint-initdb.d/init.sql"
+    ports:
+      - "3306:3306"

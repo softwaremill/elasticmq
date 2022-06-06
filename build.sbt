@@ -47,6 +47,7 @@ val scalaAsync = "org.scala-lang.modules" %% "scala-async" % "1.0.1"
 
 val scalikeJdbc = "org.scalikejdbc" %% "scalikejdbc" % "3.5.0"
 val h2 = "com.h2database" % "h2" % "2.1.212"
+val mariadb = "org.mariadb.jdbc" % "mariadb-java-client" % "1.5.5"
 
 val common = Seq(scalalogging)
 
@@ -136,7 +137,8 @@ lazy val persistenceSql: Project = (project in file("persistence/persistence-sql
       libraryDependencies ++= Seq(
         sprayJson,
         scalikeJdbc,
-        h2
+        h2,
+        mariadb
       ) ++ common
     )
   )
