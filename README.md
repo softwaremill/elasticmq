@@ -7,6 +7,16 @@ Persisting queue data using MariaDB.
 cd database && docker-compose up
 ```
 
+### View Database Schema for ElasticMQ
+```sh
+docker exec -it mariadb bash
+> mysql -u root -p
+> Enter password: admin
+> show databases;
+> use queuedb;
+> show tables;
+```
+
 ## Config Examples
 
 Create queue when ElasticMQ starts:
@@ -47,6 +57,14 @@ messages-storage {
 ```
 
 ## Build and Run
+
+You need `sbt` to build.
+
+If you are using Mac:
+```sh
+brew install sbt
+```
+
 To build and run with debug (this will listen for a remote debugger on port 5005):
 ```sh
 sbt -jvm-debug 5005
