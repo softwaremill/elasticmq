@@ -17,8 +17,8 @@ class QueueRepository(db: DB) extends Logging {
 
   sql"""
     create table if not exists $tableName (
-      name longtext unique,
-      data blob
+      name varchar unique,
+      data bytea
     )""".execute.apply()
 
   def drop(): Unit = {

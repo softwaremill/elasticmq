@@ -1,13 +1,15 @@
 version: "3.1"
 
 services:
-  mariadb:
-    image: mariadb:10.8.3
-    container_name: mariadb
+  elasticmq-db:
+    image: postgres:14.2
+    container_name: elasticmq-db
     environment:
-      MARIADB_ROOT_PASSWORD: admin
-    volumes:
-      - "./db:/var/lib/mysql"
-      - "./init.sql:/docker-entrypoint-initdb.d/init.sql"
-    ports:
-      - "3306:3306"
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: queuedb
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes: 
+      - "./data:/var/lib/postgresql/data"
+    ports: 
+      - "15432:5432"

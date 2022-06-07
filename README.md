@@ -1,20 +1,10 @@
-# ElasticMQ Connect to MariaDB
+# ElasticMQ Connect to SQL Database
 
-Persisting queue data using MariaDB.
+Persisting queue data using PostgreSQL.
 
-## Start MariaDB
+## Start Database
 ```sh
 cd database && docker-compose up
-```
-
-### View Database Schema for ElasticMQ
-```sh
-docker exec -it mariadb bash
-> mysql -u root -p
-> Enter password: admin
-> show databases;
-> use queuedb;
-> show tables;
 ```
 
 ## Config Examples
@@ -45,12 +35,12 @@ queues {
 }
 ```
 
-Use MariaDB to persist data:
+Use PostgreSQL to persist data:
 ```
 messages-storage {
   enabled = true
-  uri = "jdbc:mariadb://localhost:3306/queuedb"
-  driver-class = "org.mariadb.jdbc.Driver"
+  uri = "jdbc:postgresql://localhost:15432/queuedb"
+  driver-class = "org.postgresql.Driver"
   username = "root"
   password = "admin"
 }
