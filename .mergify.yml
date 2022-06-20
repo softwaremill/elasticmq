@@ -3,9 +3,9 @@ pull_request_rules:
     conditions: []
     actions:
       delete_head_branch: {}
-  - name: automatic merge for scala-steward pull requests affecting build.sbt
+  - name: automatic merge for softwaremill-ci pull requests affecting build.sbt
     conditions:
-      - author=scala-steward
+      - author=softwaremill-ci
       - check-success=ci-2-12
       - check-success=ci-2-13
       - check-success=ci-docker
@@ -14,9 +14,9 @@ pull_request_rules:
     actions:
       merge:
         method: merge
-  - name: automatic merge for scala-steward pull requests affecting project plugins.sbt
+  - name: automatic merge for softwaremill-ci pull requests affecting project plugins.sbt
     conditions:
-      - author=scala-steward
+      - author=softwaremill-ci
       - check-success=ci-2-12
       - check-success=ci-2-13
       - check-success=ci-docker
@@ -25,9 +25,9 @@ pull_request_rules:
     actions:
       merge:
         method: merge
-  - name: automatic merge for scala-steward pull requests affecting project build.properties
+  - name: automatic merge for softwaremill-ci pull requests affecting project build.properties
     conditions:
-      - author=scala-steward
+      - author=softwaremill-ci
       - check-success=ci-2-12
       - check-success=ci-2-13
       - check-success=ci-docker
@@ -36,9 +36,9 @@ pull_request_rules:
     actions:
       merge:
         method: merge
-  - name: semi-automatic merge for scala-steward pull requests
+  - name: semi-automatic merge for softwaremill-ci pull requests
     conditions:
-      - author=scala-steward
+      - author=softwaremill-ci
       - check-success=ci-2-12
       - check-success=ci-2-13
       - check-success=ci-docker
@@ -46,9 +46,9 @@ pull_request_rules:
     actions:
       merge:
         method: merge
-  - name: automatic merge for scala-steward pull requests affecting .scalafmt.conf
+  - name: automatic merge for softwaremill-ci pull requests affecting .scalafmt.conf
     conditions:
-      - author=scala-steward
+      - author=softwaremill-ci
       - check-success=ci-2-12
       - check-success=ci-2-13
       - check-success=ci-docker
