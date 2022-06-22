@@ -25,10 +25,19 @@ object QueuePersister {
 
   def prepareQueuesConfig(queues: List[QueueData]): String = {
     val queuesMetadata: String = queues
-      .map(queue => (queue.name, toQueueConfig(queue)))
+      .map(queue => (toPersistQueueName(queue.name), toQueueConfig(queue)))
       .map(serializeQueueMetadata)
       .mkString("")
     s"queues {\n$queuesMetadata}"
+  }
+
+  private val fifoQueueNamePattern = "^(.*)\\.fifo$".r
+
+  private def toPersistQueueName(queueName: String): String = {
+    queueName match {
+      case fifoQueueNamePattern(prefix) => prefix
+      case name                         => name
+    }
   }
 
   private def serializeQueueMetadata(queueNameToMetadata: (String, QueueMetadata)): String = {
