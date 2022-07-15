@@ -151,13 +151,26 @@ object Limits {
     )
   }
 
+  val InvalidQueueNameError = "Can only include alphanumeric characters, hyphens, or underscores."
+  val InvalidFifoQueueNameError =
+    "The name of a FIFO queue can only include alphanumeric characters, hyphens, or underscores, must end with .fifo suffix."
+
   def verifyQueueName(queueName: String, isFifo: Boolean, limits: Limits): Either[String, Unit] = {
     for {
-      _ <- if (!queueName.matches("[\\p{Alnum}\\._-]*")) Left("InvalidParameterValue") else Right(())
-      _ <- if (isFifo && !queueName.endsWith(".fifo")) Left("InvalidParameterValue") else Right(())
+      _ <-
+        if (isFifo && !queueName.matches("[\\p{Alnum}_-]+\\.fifo"))
+          Left(InvalidFifoQueueNameError)
+        else Right(())
+      _ <-
+        if (!isFifo && !queueName.matches("[\\p{Alnum}_-]+"))
+          Left(InvalidQueueNameError)
+        else Right(())
       _ <- validateWhenLimitAvailable(limits.queueNameLengthLimit)(
         limit => queueName.length <= limit,
-        "InvalidParameterValue"
+        limits.queueNameLengthLimit match {
+          case LimitedValue(v) => s"The name of a queue must not be longer than $v."
+          case _               => ""
+        }
       )
     } yield ()
   }

@@ -27,7 +27,7 @@ class QueueManagerActor(nowProvider: NowProvider, limits: Limits, queueEventList
           logger.info(s"Creating queue $queueData")
           Limits.verifyQueueName(queueData.name, queueData.isFifo, limits) match {
             case Left(error) =>
-              Left(QueueCreationError(queueData.name, error))
+              Left(InvalidParameterValue(queueData.name, error))
             case Right(_) =>
               val actor = createQueueActor(nowProvider, queueData, queueEventListener)
               queues(queueData.name) = actor

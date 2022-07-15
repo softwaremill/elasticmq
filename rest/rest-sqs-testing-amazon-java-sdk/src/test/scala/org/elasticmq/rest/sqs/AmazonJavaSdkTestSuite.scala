@@ -522,14 +522,14 @@ class AmazonJavaSdkTestSuite extends SqsClientServerCommunication with Matchers 
 
   test("FIFO queues should respond quickly during long polling") {
     // Given
-    val deadLetterQueue = new CreateQueueRequest(s"dead.testFifoQueue-long-poll.fifo")
+    val deadLetterQueue = new CreateQueueRequest(s"dead-testFifoQueue-long-poll.fifo")
       .addAttributesEntry("FifoQueue", "true")
       .addAttributesEntry("ContentBasedDeduplication", "false")
 
     val deadLetterUrl = client.createQueue(deadLetterQueue).getQueueUrl
 
     val redrivePolicy =
-      RedrivePolicy("dead.testFifoQueue-long-poll.fifo", awsRegion, awsAccountId, 1).toJson.toString()
+      RedrivePolicy("dead-testFifoQueue-long-poll.fifo", awsRegion, awsAccountId, 1).toJson.toString()
 
     val fifoQueue = new CreateQueueRequest(s"testFifoQueue-long-poll.fifo")
       .addAttributesEntry("FifoQueue", "true")

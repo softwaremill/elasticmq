@@ -233,12 +233,22 @@ class LimitsTest extends AnyWordSpec with Matchers with EitherValues {
 
   "Validation of queue name in strict mode" should {
     "pass if queue name is made of alphanumeric characters and has length smaller than 80" in {
-      Limits.verifyQueueName("abc123.-_", isFifo = false, StrictSQSLimits) shouldBe Right(())
+      Limits.verifyQueueName("abc123-_", isFifo = false, StrictSQSLimits) shouldBe Right(())
+    }
+
+    "fail if non-fifo queue name contains ends with fifo" in {
+      val error = Limits.verifyQueueName("queue.fifo", isFifo = false, StrictSQSLimits).left.value
+      error shouldBe Limits.InvalidQueueNameError
+    }
+
+    "fail if fifo queue name does not end with fifo" in {
+      val error = Limits.verifyQueueName("queue", isFifo = true, StrictSQSLimits).left.value
+      error shouldBe Limits.InvalidFifoQueueNameError
     }
 
     "fail if queue name contains invalid characters" in {
       val error = Limits.verifyQueueName("invalid#characters&.fifo", isFifo = true, StrictSQSLimits).left.value
-      error shouldBe "InvalidParameterValue"
+      error shouldBe Limits.InvalidFifoQueueNameError
     }
 
     "fail if normal queue name exceeds 80 characters limit cap" in {
@@ -250,13 +260,13 @@ class LimitsTest extends AnyWordSpec with Matchers with EitherValues {
         )
         .left
         .value
-      error shouldBe "InvalidParameterValue"
+      error shouldBe "The name of a queue must not be longer than 80."
     }
   }
 
   "Validation of queue name in relaxed mode" should {
     "pass when queue name is made of alphanumeric characters" in {
-      Limits.verifyQueueName("abc123.-_", isFifo = false, RelaxedSQSLimits) shouldBe Right(())
+      Limits.verifyQueueName("abc123-_", isFifo = false, RelaxedSQSLimits) shouldBe Right(())
     }
 
     "pass when normal queue name exceeds 80 characters limit cap" in {
@@ -270,7 +280,7 @@ class LimitsTest extends AnyWordSpec with Matchers with EitherValues {
     "fail if queue name contains invalid characters" in {
       val error =
         Limits.verifyQueueName("invalid#characters&.fifo", isFifo = true, RelaxedSQSLimits).left.value
-      error shouldBe "InvalidParameterValue"
+      error shouldBe "The name of a FIFO queue can only include alphanumeric characters, hyphens, or underscores, must end with .fifo suffix."
     }
   }
 
