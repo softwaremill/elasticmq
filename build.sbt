@@ -277,7 +277,6 @@ lazy val nativeServer: Project = (project in file("native-server"))
         "-H:IncludeResources=org/joda/time/tz/data/.*",
         "-H:+ReportExceptionStackTraces",
         "-H:-ThrowUnsafeOffsetErrors",
-        "-H:+PrintClassInitialization",
         "--enable-http",
         "--enable-https",
         "--enable-url-protocols=https,http",
