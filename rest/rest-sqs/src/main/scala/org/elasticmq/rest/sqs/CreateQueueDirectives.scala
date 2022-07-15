@@ -129,8 +129,8 @@ trait CreateQueueDirectives {
           val createResult =
             await(queueManagerActor ? CreateQueueMsg(newQueueData))
           createResult match {
-            case Left(e) =>
-              throw new SQSException("Concurrent access: " + e.message)
+            case Left(e: ElasticMQError) =>
+              throw new SQSException(e.code, errorMessage = Some(e.message))
             case Right(_) => newQueueData
           }
         case Some(queueActor) =>
