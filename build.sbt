@@ -11,6 +11,10 @@ import scala.sys.process.Process
 val v2_12 = "2.12.15"
 val v2_13 = "2.13.8"
 
+lazy val resolvedScalaVersion = sys.env.get("SCALA_MAJOR_VERSION") match {
+  case Some(majorVersion) => if (majorVersion == "2.12") v2_12 else v2_13
+  case None               => v2_13
+}
 lazy val uiDirectory = settingKey[File]("Path to the ui project directory")
 lazy val updateYarn = taskKey[Unit]("Update yarn")
 lazy val yarnTask = inputKey[Unit]("Run yarn with arguments")
@@ -61,8 +65,7 @@ val buildSettings = commonSmlBuildSettings ++ ossPublishSettings ++ Seq(
   scmInfo := Some(
     ScmInfo(url("https://github.com/softwaremill/elasticmq"), "scm:git@github.com:softwaremill/elasticmq.git")
   ),
-  scalaVersion := v2_13,
-  crossScalaVersions := Seq(v2_13, v2_12),
+  scalaVersion := resolvedScalaVersion,
   scalacOptions += "-Xasync",
   libraryDependencies += scalaXml,
   dependencyOverrides := akka25Overrides,
