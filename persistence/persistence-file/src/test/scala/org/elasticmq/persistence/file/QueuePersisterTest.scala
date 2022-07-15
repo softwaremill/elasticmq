@@ -21,7 +21,7 @@ class QueuePersisterTest extends AnyFunSuite with Matchers {
 
     actual shouldBe
       """queues {
-        | queue1 {contentBasedDeduplication=false,copyTo="",defaultVisibilityTimeout=10,delay=0,fifo=false,moveTo="",receiveMessageWait=10,tags{}}
+        | "queue1" {contentBasedDeduplication=false,copyTo="",defaultVisibilityTimeout=10,delay=0,fifo=false,moveTo="",receiveMessageWait=10,tags{}}
         |}""".stripMargin
   }
 
@@ -41,7 +41,7 @@ class QueuePersisterTest extends AnyFunSuite with Matchers {
 
     actual shouldBe
       """queues {
-        | queue2 {contentBasedDeduplication=false,copyTo="",defaultVisibilityTimeout=10,delay=0,fifo=true,moveTo="",receiveMessageWait=10,tags{}}
+        | "queue2.fifo" {contentBasedDeduplication=false,copyTo="",defaultVisibilityTimeout=10,delay=0,fifo=true,moveTo="",receiveMessageWait=10,tags{}}
         |}""".stripMargin
   }
 

@@ -16,6 +16,11 @@ case class QueueCreationError(queueName: String, reason: String) extends Elastic
   val message = s"Queue named $queueName could not be created because of $reason"
 }
 
+case class InvalidParameterValue(queueName: String, reason: String) extends ElasticMQError {
+  val code = "InvalidParameterValue"
+  val message = reason
+}
+
 class MessageDoesNotExist(val queueName: String, messageId: MessageId) extends ElasticMQError {
   val code = "MessageDoesNotExist"
   val message = s"Message does not exist: $messageId in queue: $queueName"
