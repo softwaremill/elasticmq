@@ -1,8 +1,8 @@
 import com.amazonaws.services.s3.model.PutObjectResult
-import com.softwaremill.SbtSoftwareMillCommon.commonSmlBuildSettings
 import com.softwaremill.Publish.ossPublishSettings
+import com.softwaremill.SbtSoftwareMillCommon.commonSmlBuildSettings
 import com.typesafe.sbt.packager.docker.{Cmd, ExecCmd}
-import sbt.Keys.{credentials, javaOptions}
+import sbt.Keys.javaOptions
 import sbt.internal.util.complete.Parsers.spaceDelimited
 import scoverage.ScoverageKeys._
 
@@ -11,10 +11,14 @@ import scala.sys.process.Process
 val v2_12 = "2.12.15"
 val v2_13 = "2.13.8"
 
-lazy val resolvedScalaVersion = sys.env.get("SCALA_MAJOR_VERSION") match {
-  case Some(majorVersion) => if (majorVersion == "2.12") v2_12 else v2_13
-  case None               => v2_13
-}
+lazy val resolvedScalaVersion =
+  sys.env.get("SCALA_MAJOR_VERSION") match {
+    case Some("2.12")      => v2_12
+    case Some("2.13")      => v2_13
+    case Some(unsupported) => throw new IllegalArgumentException(s"Unsupported SCALA_MAJOR_VERSION: $unsupported")
+    case _                 => v2_13
+  }
+
 lazy val uiDirectory = settingKey[File]("Path to the ui project directory")
 lazy val updateYarn = taskKey[Unit]("Update yarn")
 lazy val yarnTask = inputKey[Unit]("Run yarn with arguments")
