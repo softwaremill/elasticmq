@@ -11,7 +11,7 @@ jobs:
     if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
     runs-on: ubuntu-20.04
     env:
-      scala: 2.12.15
+      scala: 2.12
     steps:
       - name: Check-out repository
         id: repo-checkout
@@ -35,14 +35,14 @@ jobs:
 
       - name: Run tests
         id: run-tests
-        run: sbt ++${{ env.scala }} test
+        run: SCALA_MAJOR_VERSION=${{ env.scala }} sbt test
 
   ci-2-13:
     # run on external PRs, but not on internal PRs since those will be run by push to branch
     if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
     runs-on: ubuntu-20.04
     env:
-      scala: 2.13.8
+      scala: 2.13
     steps:
       - name: Check-out repository
         id: repo-checkout
@@ -66,12 +66,14 @@ jobs:
 
       - name: Run tests
         id: run-tests
-        run: sbt ++${{ env.scala }} test
+        run: SCALA_MAJOR_VERSION=${{ env.scala }} sbt test
 
   ci-docker:
     # run on external PRs, but not on internal PRs since those will be run by push to branch
     if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
     runs-on: ubuntu-20.04
+    env:
+      scala: 2.13
     steps:
       - name: Check-out repository
         id: repo-checkout
