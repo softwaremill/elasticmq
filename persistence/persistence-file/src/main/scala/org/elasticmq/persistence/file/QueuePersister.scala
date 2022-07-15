@@ -31,7 +31,7 @@ object QueuePersister {
     s"queues {\n$queuesMetadata}"
   }
 
-  private def quote(name: String): String = s"\"$name\"";
+  private def quote(name: String): String = s""""$name""""
 
   private def serializeQueueMetadata(queueNameToMetadata: (String, QueueMetadata)): String = {
     val options = ConfigRenderOptions.defaults().setOriginComments(false).setJson(false).setFormatted(false)
