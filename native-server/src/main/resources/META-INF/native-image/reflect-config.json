@@ -1,10 +1,58 @@
 [
 {
+  "name":"[B"
+},
+{
+  "name":"[C"
+},
+{
+  "name":"[D"
+},
+{
+  "name":"[F"
+},
+{
+  "name":"[I"
+},
+{
+  "name":"[J"
+},
+{
+  "name":"[Lakka.actor.LightArrayRevolverScheduler$TaskQueue;"
+},
+{
+  "name":"[Lakka.stream.stage.GraphStageLogic;"
+},
+{
+  "name":"[Ljava.lang.Class;"
+},
+{
+  "name":"[Ljava.lang.String;"
+},
+{
+  "name":"[Ljava.lang.reflect.Field;"
+},
+{
+  "name":"[Ljava.lang.reflect.Method;"
+},
+{
+  "name":"[Ljavax.management.openmbean.CompositeData;"
+},
+{
+  "name":"[Lscala.Tuple2;"
+},
+{
+  "name":"[S"
+},
+{
+  "name":"[Z"
+},
+{
   "name":"akka.actor.ActorCell",
   "fields":[
-    {"name":"akka$actor$dungeon$Children$$_childrenRefsDoNotCallMeDirectly"},
-    {"name":"akka$actor$dungeon$Children$$_functionRefsDoNotCallMeDirectly"},
-    {"name":"akka$actor$dungeon$Children$$_nextNameDoNotCallMeDirectly"},
+    {"name":"akka$actor$dungeon$Children$$_childrenRefsDoNotCallMeDirectly"}, 
+    {"name":"akka$actor$dungeon$Children$$_functionRefsDoNotCallMeDirectly"}, 
+    {"name":"akka$actor$dungeon$Children$$_nextNameDoNotCallMeDirectly"}, 
     {"name":"akka$actor$dungeon$Dispatch$$_mailboxDoNotCallMeDirectly"}
   ]
 },
@@ -42,7 +90,7 @@
 {
   "name":"akka.actor.RepointableActorRef",
   "fields":[
-    {"name":"_cellDoNotCallMeDirectly"},
+    {"name":"_cellDoNotCallMeDirectly"}, 
     {"name":"_lookupDoNotCallMeDirectly"}
   ]
 },
@@ -72,14 +120,14 @@
 {
   "name":"akka.dispatch.Mailbox",
   "fields":[
-    {"name":"_statusDoNotCallMeDirectly"},
+    {"name":"_statusDoNotCallMeDirectly"}, 
     {"name":"_systemQueueDoNotCallMeDirectly"}
   ]
 },
 {
   "name":"akka.dispatch.MessageDispatcher",
   "fields":[
-    {"name":"_inhabitantsDoNotCallMeDirectly"},
+    {"name":"_inhabitantsDoNotCallMeDirectly"}, 
     {"name":"_shutdownScheduleDoNotCallMeDirectly"}
   ]
 },
@@ -164,7 +212,7 @@
 {
   "name":"akka.pattern.PromiseActorRef",
   "fields":[
-    {"name":"_stateDoNotCallMeDirectly"},
+    {"name":"_stateDoNotCallMeDirectly"}, 
     {"name":"_watchedByDoNotCallMeDirectly"}
   ]
 },
@@ -282,6 +330,18 @@
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
 {
+  "name":"ch.qos.logback.core.OutputStreamAppender",
+  "methods":[{"name":"setEncoder","parameterTypes":["ch.qos.logback.core.encoder.Encoder"] }]
+},
+{
+  "name":"ch.qos.logback.core.encoder.LayoutWrappingEncoder",
+  "methods":[{"name":"setParent","parameterTypes":["ch.qos.logback.core.spi.ContextAware"] }]
+},
+{
+  "name":"ch.qos.logback.core.pattern.PatternLayoutEncoderBase",
+  "methods":[{"name":"setPattern","parameterTypes":["java.lang.String"] }]
+},
+{
   "name":"char[]"
 },
 {
@@ -358,6 +418,9 @@
 {
   "name":"java.lang.Character",
   "fields":[{"name":"TYPE"}]
+},
+{
+  "name":"java.lang.ClassValue"
 },
 {
   "name":"java.lang.Class[]"
@@ -684,6 +747,46 @@
 },
 {
   "name":"org.h2.store.fs.FilePathZip",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.h2.store.fs.async.FilePathAsync",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.h2.store.fs.disk.FilePathDisk",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.h2.store.fs.mem.FilePathMem",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.h2.store.fs.mem.FilePathMemLZF",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.h2.store.fs.niomapped.FilePathNioMapped",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.h2.store.fs.niomem.FilePathNioMem",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.h2.store.fs.niomem.FilePathNioMemLZF",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.h2.store.fs.retry.FilePathRetryOnInterrupt",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.h2.store.fs.split.FilePathSplit",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.h2.store.fs.zip.FilePathZip",
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
 {

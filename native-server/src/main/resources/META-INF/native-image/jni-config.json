@@ -1,5 +1,11 @@
 [
 {
+  "name":"[Lcom.sun.management.internal.DiagnosticCommandArgumentInfo;"
+},
+{
+  "name":"[Lcom.sun.management.internal.DiagnosticCommandInfo;"
+},
+{
   "name":"com.sun.management.internal.DiagnosticCommandArgumentInfo",
   "methods":[{"name":"<init>","parameterTypes":["java.lang.String","java.lang.String","java.lang.String","java.lang.String","boolean","boolean","boolean","int"] }]
 },
@@ -12,6 +18,10 @@
 },
 {
   "name":"com.sun.management.internal.DiagnosticCommandInfo[]"
+},
+{
+  "name":"java.lang.Boolean",
+  "methods":[{"name":"getBoolean","parameterTypes":["java.lang.String"] }]
 },
 {
   "name":"java.lang.ClassLoader",
@@ -32,6 +42,10 @@
 },
 {
   "name":"jdk.internal.loader.ClassLoaders$PlatformClassLoader"
+},
+{
+  "name":"org.graalvm.jniutils.JNIExceptionWrapperEntryPoints",
+  "methods":[{"name":"getClassName","parameterTypes":["java.lang.Class"] }]
 },
 {
   "name":"org.graalvm.nativebridge.jni.JNIExceptionWrapperEntryPoints",
