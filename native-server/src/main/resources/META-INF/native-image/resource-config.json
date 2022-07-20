@@ -39,6 +39,7 @@
     }
   ]},
   "bundles":[{
-      "name":"org.apache.commons.dbcp2.LocalStrings"
+      "name":"org.apache.commons.dbcp2.LocalStrings",
+      "locales":[""]
     }]
 }
