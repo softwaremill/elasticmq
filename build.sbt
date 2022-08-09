@@ -99,7 +99,7 @@ lazy val core: Project = (project in file("core"))
     Seq(
       name := "elasticmq-core",
       libraryDependencies ++= Seq(jodaTime, jodaConvert, akka2Actor, akka2Testkit) ++ common,
-      coverageMinimum := 94
+      coverageMinimumStmtTotal := 94
     )
   )
   .dependsOn(commonTest % "test")
@@ -199,7 +199,7 @@ lazy val server: Project = (project in file("server"))
       unmanagedResourceDirectories in Compile += { baseDirectory.value / ".." / "ui" / "build" },
       assembly := assembly.dependsOn(yarnTask.toTask(" build")).value,
       mainClass in assembly := Some("org.elasticmq.server.Main"),
-      coverageMinimum := 52,
+      coverageMinimumStmtTotal := 52,
       // s3 upload
       s3Upload := {
         import com.amazonaws.auth.{AWSStaticCredentialsProvider, BasicAWSCredentials}
