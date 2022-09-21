@@ -702,8 +702,37 @@
   "methods":[{"name":"getInstance","parameterTypes":[] }]
 },
 {
+  "name":"org.h2.mvstore.db.LobStorageMap$BlobMeta$Type",
+  "fields":[{"name":"INSTANCE"}]
+},
+{
+  "name":"org.h2.mvstore.db.LobStorageMap$BlobReference$Type",
+  "fields":[{"name":"INSTANCE"}]
+},
+{
   "name":"org.h2.mvstore.db.MVTableEngine",
   "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.h2.mvstore.db.NullValueDataType",
+  "fields":[{"name":"INSTANCE"}],
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.h2.mvstore.db.RowDataType$Factory",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.h2.mvstore.tx.VersionedValueType$Factory",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.h2.mvstore.type.ByteArrayDataType",
+  "fields":[{"name":"INSTANCE"}]
+},
+{
+  "name":"org.h2.mvstore.type.LongDataType",
+  "fields":[{"name":"INSTANCE"}]
 },
 {
   "name":"org.h2.store.fs.FilePathAsync",
