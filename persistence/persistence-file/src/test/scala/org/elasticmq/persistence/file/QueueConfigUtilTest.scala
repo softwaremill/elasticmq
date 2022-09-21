@@ -73,9 +73,9 @@ class QueueConfigUtilTest extends AnyFunSuite with Matchers with OptionValues {
     val loadedQueues = CreateQueueMetadata.mergePersistedAndBaseQueues(queueConf, baseConf)
     val expectedQueue1 = CreateQueueMetadata(
       "test",
-      Some(3L),
-      Some(0L),
-      Some(0L),
+      Some(5L),
+      Some(2L),
+      Some(20L),
       100L,
       200L,
       Some(DeadLettersQueue("dead", 4)),
@@ -88,8 +88,8 @@ class QueueConfigUtilTest extends AnyFunSuite with Matchers with OptionValues {
     val expectedQueue2 = CreateQueueMetadata(
       "test-2",
       Some(3L),
-      Some(0L),
-      Some(0L),
+      Some(1L),
+      Some(25L),
       100L,
       200L,
       Some(DeadLettersQueue("dead-2", 4)),
