@@ -10,9 +10,9 @@ class QueuePersisterTest extends AnyFunSuite with Matchers {
     val queues = List(
       QueueData(
         name = "queue1",
-        defaultVisibilityTimeout = MillisVisibilityTimeout(10),
-        delay = Duration.ZERO,
-        receiveMessageWait = Duration.standardSeconds(10),
+        defaultVisibilityTimeout = MillisVisibilityTimeout.fromSeconds(10),
+        delay = Duration.standardSeconds(8),
+        receiveMessageWait = Duration.standardSeconds(3),
         created = new DateTime(),
         lastModified = new DateTime()
       )
@@ -21,7 +21,7 @@ class QueuePersisterTest extends AnyFunSuite with Matchers {
 
     actual shouldBe
       """queues {
-        | "queue1" {contentBasedDeduplication=false,copyTo="",defaultVisibilityTimeout=10,delay=0,fifo=false,moveTo="",receiveMessageWait=10,tags{}}
+        | "queue1" {contentBasedDeduplication=false,copyTo="",defaultVisibilityTimeout=10000,delay=8000,fifo=false,moveTo="",receiveMessageWait=3000,tags{}}
         |}""".stripMargin
   }
 
@@ -29,9 +29,9 @@ class QueuePersisterTest extends AnyFunSuite with Matchers {
     val queues = List(
       QueueData(
         name = "queue2.fifo",
-        defaultVisibilityTimeout = MillisVisibilityTimeout(10),
-        delay = Duration.ZERO,
-        receiveMessageWait = Duration.standardSeconds(10),
+        defaultVisibilityTimeout = MillisVisibilityTimeout.fromSeconds(10),
+        delay = Duration.standardSeconds(8),
+        receiveMessageWait = Duration.standardSeconds(3),
         created = new DateTime(),
         lastModified = new DateTime(),
         isFifo = true
@@ -41,7 +41,7 @@ class QueuePersisterTest extends AnyFunSuite with Matchers {
 
     actual shouldBe
       """queues {
-        | "queue2.fifo" {contentBasedDeduplication=false,copyTo="",defaultVisibilityTimeout=10,delay=0,fifo=true,moveTo="",receiveMessageWait=10,tags{}}
+        | "queue2.fifo" {contentBasedDeduplication=false,copyTo="",defaultVisibilityTimeout=10000,delay=8000,fifo=true,moveTo="",receiveMessageWait=3000,tags{}}
         |}""".stripMargin
   }
 
