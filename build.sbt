@@ -32,7 +32,7 @@ val pureConfig = "com.github.pureconfig" %% "pureconfig" % "0.17.1"
 val scalaXml = "org.scala-lang.modules" %% "scala-xml" % "2.1.0"
 
 val scalalogging = "com.typesafe.scala-logging" %% "scala-logging" % "3.9.5"
-val logback = "ch.qos.logback" % "logback-classic" % "1.2.11"
+val logback = "ch.qos.logback" % "logback-classic" % "1.4.1"
 val jclOverSlf4j = "org.slf4j" % "jcl-over-slf4j" % "2.0.2" // needed form amazon java sdk
 
 val scalatest = "org.scalatest" %% "scalatest" % "3.2.13"
@@ -76,7 +76,11 @@ val buildSettings = commonSmlBuildSettings ++ ossPublishSettings ++ Seq(
   parallelExecution := false,
   sonatypeProfileName := "org.elasticmq",
   // workaround for: https://github.com/sbt/sbt/issues/692
-  Test / fork := true
+  Test / fork := true,
+  assembly / assemblyMergeStrategy := {
+    case PathList(ps @ _*) if ps.last == "module-info.class" => MergeStrategy.first
+    case x                                                   => (assembly / assemblyMergeStrategy).value(x)
+  }
 )
 
 // see https://github.com/scala/scala-dist/pull/181/files
@@ -196,9 +200,9 @@ lazy val server: Project = (project in file("server"))
     Seq(
       name := "elasticmq-server",
       libraryDependencies ++= Seq(logback),
-      unmanagedResourceDirectories in Compile += { baseDirectory.value / ".." / "ui" / "build" },
+      Compile / unmanagedResourceDirectories += { baseDirectory.value / ".." / "ui" / "build" },
       assembly := assembly.dependsOn(yarnTask.toTask(" build")).value,
-      mainClass in assembly := Some("org.elasticmq.server.Main"),
+      assembly / mainClass := Some("org.elasticmq.server.Main"),
       coverageMinimumStmtTotal := 52,
       // s3 upload
       s3Upload := {
@@ -216,7 +220,7 @@ lazy val server: Project = (project in file("server"))
         val log = streams.value.log
         val v = version.value
 
-        val source = (assemblyOutputPath in assembly).value
+        val source = (assembly / assemblyOutputPath).value
         val targetObjectName = s"elasticmq-server-$v.jar"
 
         log.info("Uploading " + source.getAbsolutePath + " as " + targetObjectName)
