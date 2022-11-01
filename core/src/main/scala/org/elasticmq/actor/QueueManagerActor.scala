@@ -15,8 +15,8 @@ class QueueManagerActor(nowProvider: NowProvider, limits: Limits, queueEventList
   type M[X] = QueueManagerMsg[X]
   val ev: ClassTag[QueueManagerMsg[Unit]] = classTag[M[Unit]]
 
-  case class QueueMetadata(actorRef: ActorRef, queueData: QueueData)
-  private val queues = collection.mutable.HashMap[String, QueueMetadata]()
+  case class ActorWithQueueData(actorRef: ActorRef, queueData: QueueData)
+  private val queues = collection.mutable.HashMap[String, ActorWithQueueData]()
 
   def receiveAndReply[T](msg: QueueManagerMsg[T]): ReplyAction[T] =
     msg match {
@@ -40,7 +40,7 @@ class QueueManagerActor(nowProvider: NowProvider, limits: Limits, queueEventList
               case Right(_) =>
                 val queueData = request.toQueueData
                 val actor = createQueueActor(nowProvider, queueData, queueEventListener)
-                queues(request.name) = QueueMetadata(actor, queueData)
+                queues(request.name) = ActorWithQueueData(actor, queueData)
                 queueEventListener.foreach(_ ! QueueEvent.QueueCreated(queueData))
                 Right(actor)
             }
@@ -48,7 +48,7 @@ class QueueManagerActor(nowProvider: NowProvider, limits: Limits, queueEventList
 
       case DeleteQueue(queueName) =>
         logger.info(s"Deleting queue $queueName")
-        queues.remove(queueName).foreach { case QueueMetadata(actorRef, _) => context.stop(actorRef) }
+        queues.remove(queueName).foreach { case ActorWithQueueData(actorRef, _) => context.stop(actorRef) }
         queueEventListener.foreach(_ ! QueueEvent.QueueDeleted(queueName))
 
       case LookupQueue(queueName) =>
@@ -92,11 +92,12 @@ class QueueManagerActor(nowProvider: NowProvider, limits: Limits, queueEventList
       (requested.defaultVisibilityTimeout.isDefined && requested.defaultVisibilityTimeout.get != existing.defaultVisibilityTimeout) ||
         (requested.delay.isDefined && requested.delay.get != existing.delay) ||
         (requested.receiveMessageWait.isDefined && requested.receiveMessageWait.get != existing.receiveMessageWait) ||
-        existing.deadLettersQueue != requested.deadLettersQueue ||
+        (requested.deadLettersQueue.isDefined && requested.deadLettersQueue != existing.deadLettersQueue) ||
         existing.isFifo != requested.isFifo ||
-        existing.copyMessagesTo != requested.copyMessagesTo ||
-        existing.moveMessagesTo != requested.moveMessagesTo ||
-        existing.tags != requested.tags
+        existing.hasContentBasedDeduplication != requested.hasContentBasedDeduplication ||
+        (requested.copyMessagesTo.isDefined && existing.copyMessagesTo != requested.copyMessagesTo) ||
+        (requested.moveMessagesTo.isDefined && existing.moveMessagesTo != requested.moveMessagesTo) ||
+        (requested.tags.nonEmpty && existing.tags != requested.tags)
     )
   }
 }

@@ -1,7 +1,7 @@
 package org.elasticmq.rest.sqs
 
-import Constants._
 import org.elasticmq.rest.sqs.Action.GetQueueUrl
+import org.elasticmq.rest.sqs.Constants._
 import org.elasticmq.rest.sqs.directives.ElasticMQDirectives
 
 trait GetQueueUrlDirectives { this: ElasticMQDirectives with QueueURLModule =>
@@ -9,7 +9,7 @@ trait GetQueueUrlDirectives { this: ElasticMQDirectives with QueueURLModule =>
     p.action(GetQueueUrl) {
       rootPath {
         queueDataFromParams(p) { queueData =>
-          queueURL(queueData) { url =>
+          queueURL(queueData.name) { url =>
             respondWith {
               <GetQueueUrlResponse>
                 <GetQueueUrlResult>

@@ -444,10 +444,6 @@ trait QueueURLModule {
     baseAddress.map(_ + "/" + postfix)
   }
 
-  def queueURL(queueData: QueueData): Directive1[String] = {
-    baseQueueURL.map(base => base + "/" + queueData.name)
-  }
-
   def queueURL(queueName: String): Directive1[String] = {
     baseQueueURL.map(base => base + "/" + queueName)
   }

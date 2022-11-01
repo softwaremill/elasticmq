@@ -15,13 +15,7 @@ import scala.util.Try
 class CreateQueueRaceConditionTest extends SqsClientServerCommunication with Matchers with OptionValues {
 
   test("should create one queue and return its address for every request with the same name and metadata") {
-    val clients: Seq[AmazonSQS] = (0 until 100).map { _ =>
-      AmazonSQSClientBuilder
-        .standard()
-        .withCredentials(new AWSStaticCredentialsProvider(new BasicAWSCredentials("x", "x")))
-        .withEndpointConfiguration(new EndpointConfiguration("http://localhost:9321", "us-east-1"))
-        .build()
-    }
+    val clients = createTestClients()
 
     implicit val ec: ExecutionContextExecutor = ExecutionContext.fromExecutor(Executors.newFixedThreadPool(100))
 
@@ -32,13 +26,7 @@ class CreateQueueRaceConditionTest extends SqsClientServerCommunication with Mat
   }
 
   test("should create one queue and return an error for every request with the same name and different metadata") {
-    val clients: Seq[AmazonSQS] = (0 until 100).map { _ =>
-      AmazonSQSClientBuilder
-        .standard()
-        .withCredentials(new AWSStaticCredentialsProvider(new BasicAWSCredentials("x", "x")))
-        .withEndpointConfiguration(new EndpointConfiguration("http://localhost:9321", "us-east-1"))
-        .build()
-    }
+    val clients = createTestClients()
 
     implicit val ec: ExecutionContextExecutor = ExecutionContext.fromExecutor(Executors.newFixedThreadPool(100))
 
@@ -59,5 +47,13 @@ class CreateQueueRaceConditionTest extends SqsClientServerCommunication with Mat
     val lefts = grouped(true)
     rights.length should be(1)
     lefts.length should be(99)
+  }
+
+  def createTestClients(): Seq[AmazonSQS] = (0 until 100).map { _ =>
+    AmazonSQSClientBuilder
+      .standard()
+      .withCredentials(new AWSStaticCredentialsProvider(new BasicAWSCredentials("x", "x")))
+      .withEndpointConfiguration(new EndpointConfiguration("http://localhost:9321", "us-east-1"))
+      .build()
   }
 }

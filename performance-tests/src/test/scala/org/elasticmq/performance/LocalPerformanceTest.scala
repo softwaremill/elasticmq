@@ -105,7 +105,7 @@ object LocalPerformanceTest extends App {
       currentQueue = Await
         .result(
           queueManagerActor ? CreateQueue(
-            org.elasticmq.CreateQueueData.from(
+            CreateQueueData.from(
               QueueData(
                 "testQueue",
                 MillisVisibilityTimeout(1000),
