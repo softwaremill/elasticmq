@@ -21,6 +21,6 @@ class CreateQueueMetadataTest extends AnyFunSuite with Matchers with OptionValue
       tags = Map("abc" -> "123")
     )
 
-    CreateQueueMetadata.from(createQueue.toCreateQueueRequest.toQueueData) shouldBe createQueue
+    CreateQueueMetadata.from(createQueue.toCreateQueueData.toQueueData) shouldBe createQueue
   }
 }

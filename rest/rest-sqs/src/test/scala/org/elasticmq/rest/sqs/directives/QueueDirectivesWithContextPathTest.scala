@@ -9,7 +9,7 @@ import org.elasticmq.actor.reply._
 import org.elasticmq.msg.CreateQueue
 import org.elasticmq.rest.sqs.{ActorSystemModule, ContextPathModule, QueueManagerActorModule}
 import org.elasticmq.util.NowProvider
-import org.elasticmq.{CreateQueueRequest, MillisVisibilityTimeout, QueueData, StrictSQSLimits}
+import org.elasticmq.{CreateQueueData, MillisVisibilityTimeout, QueueData, StrictSQSLimits}
 import org.joda.time.{DateTime, Duration}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -41,7 +41,7 @@ class QueueDirectivesWithContextPathTest
 
   "queueActorAndNameFromRequest" should "return correct queue name based on QueueName" in {
     val future = queueManagerActor ? CreateQueue(
-      CreateQueueRequest.from(
+      CreateQueueData.from(
         QueueData("lol", MillisVisibilityTimeout(1L), Duration.ZERO, Duration.ZERO, DateTime.now(), DateTime.now())
       )
     )
@@ -62,7 +62,7 @@ class QueueDirectivesWithContextPathTest
 
   "queueActorAndNameFromRequest" should "return correct queue name based on QueueUrl" in {
     val future = queueManagerActor ? CreateQueue(
-      CreateQueueRequest.from(
+      CreateQueueData.from(
         QueueData("lol", MillisVisibilityTimeout(1L), Duration.ZERO, Duration.ZERO, DateTime.now(), DateTime.now())
       )
     )

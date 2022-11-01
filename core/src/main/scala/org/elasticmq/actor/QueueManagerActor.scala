@@ -87,7 +87,7 @@ class QueueManagerActor(nowProvider: NowProvider, limits: Limits, queueEventList
     )
   }
 
-  private def sameCreateQueueData(existing: QueueData, requested: CreateQueueRequest) = {
+  private def sameCreateQueueData(existing: QueueData, requested: CreateQueueData) = {
     !(
       (requested.defaultVisibilityTimeout.isDefined && requested.defaultVisibilityTimeout.get != existing.defaultVisibilityTimeout) ||
         (requested.delay.isDefined && requested.delay.get != existing.delay) ||

@@ -1,6 +1,6 @@
 package org.elasticmq.persistence
 
-import org.elasticmq.{CreateQueueRequest, DeadLettersQueueData, MillisVisibilityTimeout, QueueData}
+import org.elasticmq.{CreateQueueData, DeadLettersQueueData, MillisVisibilityTimeout, QueueData}
 import org.joda.time.{DateTime, Duration}
 
 case class CreateQueueMetadata(
@@ -18,8 +18,8 @@ case class CreateQueueMetadata(
     tags: Map[String, String] = Map[String, String]()
 ) {
 
-  def toCreateQueueRequest: CreateQueueRequest = {
-    CreateQueueRequest(
+  def toCreateQueueData: CreateQueueData = {
+    CreateQueueData(
       name = name,
       defaultVisibilityTimeoutSeconds.map(sec => MillisVisibilityTimeout.fromSeconds(sec)),
       delaySeconds.map(sec => Duration.standardSeconds(sec)),

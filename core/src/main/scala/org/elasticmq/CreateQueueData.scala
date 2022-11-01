@@ -2,7 +2,7 @@ package org.elasticmq
 
 import org.joda.time.{DateTime, Duration}
 
-case class CreateQueueRequest(
+case class CreateQueueData(
     name: String,
     defaultVisibilityTimeout: Option[MillisVisibilityTimeout] = None,
     delay: Option[Duration] = None,
@@ -37,9 +37,9 @@ case class CreateQueueRequest(
   }
 }
 
-object CreateQueueRequest {
-  def from(queueData: QueueData): CreateQueueRequest =
-    CreateQueueRequest(
+object CreateQueueData {
+  def from(queueData: QueueData): CreateQueueData =
+    CreateQueueData(
       queueData.name,
       Some(queueData.defaultVisibilityTimeout),
       Some(queueData.delay),

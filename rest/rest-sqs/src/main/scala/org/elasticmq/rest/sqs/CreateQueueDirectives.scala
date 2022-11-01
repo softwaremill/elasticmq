@@ -58,7 +58,7 @@ trait CreateQueueDirectives {
             val isFifo = attributes.get("FifoQueue").contains("true")
             val hasContentBasedDeduplication = attributes.get("ContentBasedDeduplication").contains("true")
 
-            val newQueueData = CreateQueueRequest(
+            val newQueueData = CreateQueueData(
               queueName,
               secondsVisibilityTimeoutOpt.map(sec => MillisVisibilityTimeout.fromSeconds(sec)),
               secondsDelayOpt.map(sec => Duration.standardSeconds(sec)),
@@ -97,7 +97,7 @@ trait CreateQueueDirectives {
     }
   }
 
-  private def lookupOrCreateQueue[T](newQueueData: CreateQueueRequest): Future[Unit] = {
+  private def lookupOrCreateQueue[T](newQueueData: CreateQueueData): Future[Unit] = {
     async {
       val createResult = await(queueManagerActor ? CreateQueueMsg(newQueueData))
       createResult match {

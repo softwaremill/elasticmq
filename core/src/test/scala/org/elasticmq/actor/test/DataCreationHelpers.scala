@@ -14,7 +14,7 @@ trait DataCreationHelpers {
       isFifo: Boolean = false,
       hasContentBasedDeduplication: Boolean = false
   ) =
-    CreateQueueRequest(
+    CreateQueueData(
       name = name,
       defaultVisibilityTimeout = Some(defaultVisibilityTimeout),
       delay = Some(Duration.ZERO),

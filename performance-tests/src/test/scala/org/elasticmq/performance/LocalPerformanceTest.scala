@@ -4,15 +4,20 @@ import akka.actor.{ActorRef, ActorSystem, Props}
 import akka.util.Timeout
 import com.amazonaws.auth.{AWSStaticCredentialsProvider, BasicAWSCredentials}
 import com.amazonaws.client.builder.AwsClientBuilder.EndpointConfiguration
-import com.amazonaws.services.sqs.model.{CreateQueueRequest, DeleteMessageRequest, ReceiveMessageRequest, SendMessageRequest}
+import com.amazonaws.services.sqs.model.{
+  CreateQueueRequest,
+  DeleteMessageRequest,
+  ReceiveMessageRequest,
+  SendMessageRequest
+}
 import com.amazonaws.services.sqs.{AmazonSQS, AmazonSQSClientBuilder}
+import org.elasticmq._
 import org.elasticmq.actor.QueueManagerActor
 import org.elasticmq.actor.reply._
 import org.elasticmq.msg._
 import org.elasticmq.rest.sqs.{SQSRestServer, SQSRestServerBuilder}
 import org.elasticmq.test._
 import org.elasticmq.util.NowProvider
-import org.elasticmq._
 import org.joda.time.DateTime
 
 import java.util.concurrent.TimeUnit
@@ -100,7 +105,7 @@ object LocalPerformanceTest extends App {
       currentQueue = Await
         .result(
           queueManagerActor ? CreateQueue(
-            org.elasticmq.CreateQueueRequest.from(
+            org.elasticmq.CreateQueueData.from(
               QueueData(
                 "testQueue",
                 MillisVisibilityTimeout(1000),

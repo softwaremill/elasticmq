@@ -10,7 +10,7 @@ import org.elasticmq.msg.{CreateQueue, DeleteQueue}
 import org.elasticmq.rest.sqs.directives._
 import org.elasticmq.rest.sqs.{ActorSystemModule, QueueAttributesOps, QueueManagerActorModule}
 import org.elasticmq.util.MutableNowProvider
-import org.elasticmq.{CreateQueueRequest, MillisVisibilityTimeout, QueueData, StrictSQSLimits}
+import org.elasticmq.{CreateQueueData, MillisVisibilityTimeout, QueueData, StrictSQSLimits}
 import org.joda.time.{DateTime, Duration}
 import org.scalatest._
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
@@ -105,7 +105,7 @@ class StatisticsDirectivesTest
 
   private def createQueueWithName(name: String) = {
     (queueManagerActor ? CreateQueue(
-      CreateQueueRequest.from(
+      CreateQueueData.from(
         QueueData(name, MillisVisibilityTimeout(1L), Duration.ZERO, Duration.ZERO, nowProvider.now, nowProvider.now)
       )
     )).futureValue
