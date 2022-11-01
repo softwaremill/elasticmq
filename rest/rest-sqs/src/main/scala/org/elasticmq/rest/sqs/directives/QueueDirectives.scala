@@ -2,13 +2,11 @@ package org.elasticmq.rest.sqs.directives
 
 import akka.actor.ActorRef
 import akka.http.scaladsl.model.Uri
-import akka.http.scaladsl.model.Uri.Path
 import akka.http.scaladsl.server.PathMatcher.{Matched, Unmatched}
 import akka.http.scaladsl.server._
 import org.elasticmq.QueueData
 import org.elasticmq.actor.reply._
 import org.elasticmq.msg.{GetQueueData, LookupQueue}
-import org.elasticmq.rest.sqs.Constants._
 import org.elasticmq.rest.sqs._
 
 trait QueueDirectives {
@@ -53,10 +51,10 @@ trait QueueDirectives {
     val pathDirective =
       if (contextPath.nonEmpty)
         pathPrefix(contextPath / accountIdRegex / Segment).tmap(_._2) |
-          pathPrefix(contextPath / QueueUrlContext / Segment)
+          pathPrefix(contextPath / Segment)
       else
         pathPrefix(accountIdRegex / Segment).tmap(_._2) |
-          pathPrefix(QueueUrlContext / Segment)
+          pathPrefix(Segment)
 
     val queueNameDirective =
       checkOnlyOneSegmentInUri() |

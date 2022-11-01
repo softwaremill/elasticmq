@@ -102,22 +102,28 @@ class AmazonJavaSdkTestSuite extends SqsClientServerCommunication with Matchers 
     client.listQueues().getQueueUrls.size() should be(0)
   }
 
-  test("should refer to queue via both URL formats") {
+  test("should refer to queue via three URL formats") {
     // Given
     val queueUrl = client.createQueue(new CreateQueueRequest("lol")).getQueueUrl
 
     // When
-    val attributes2 = client
+    val attributes1 = client
       .getQueueAttributes(new GetQueueAttributesRequest("http://localhost:9321/queue/lol").withAttributeNames("All"))
       .getAttributes
-    val attributes1 = client
+    val attributes2 = client
       .getQueueAttributes(
         new GetQueueAttributesRequest("http://localhost:9321/012345678900/lol").withAttributeNames("All")
+      )
+      .getAttributes
+    val attributes3 = client
+      .getQueueAttributes(
+        new GetQueueAttributesRequest("http://localhost:9321/lol").withAttributeNames("All")
       )
       .getAttributes
 
     // Then
     attributes1 should be(attributes2)
+    attributes1 should be(attributes3)
   }
 
   test("should get queue visibility timeout") {
@@ -255,7 +261,7 @@ class AmazonJavaSdkTestSuite extends SqsClientServerCommunication with Matchers 
     Source.fromInputStream(res.getEntity.getContent).mkString should include("<Code>InvalidAction</Code>")
   }
 
-  test("should reply with 404 if request can't be recognized as any known route") {
+  test("should reply with 400 and NonExistentQueue if path starts with invalid name") {
     // given
     val httpHost = new HttpHost("localhost", 9321)
     val req = new HttpPost()
@@ -268,8 +274,9 @@ class AmazonJavaSdkTestSuite extends SqsClientServerCommunication with Matchers 
 
     // then
     res.getStatusLine.getStatusCode shouldBe StatusCodes.BadRequest.intValue
-    Source.fromInputStream(res.getEntity.getContent).mkString should include("<Code>Invalid request")
-
+    Source.fromInputStream(res.getEntity.getContent).mkString should include(
+      "<Code>AWS.SimpleQueueService.NonExistentQueue"
+    )
   }
 
   test("should reply with a InvalidAction error when uknown action set") {
@@ -2046,13 +2053,6 @@ class AmazonJavaSdkTestSuite extends SqsClientServerCommunication with Matchers 
           .withAttributes(Map(redrivePolicyAttribute -> redrivePolicy).asJava)
       )
     }
-  }
-
-  test("should throw proper exception when referencing queue by name") {
-    val _ = client.createQueue(new CreateQueueRequest("testQueue1")).getQueueUrl
-
-    val ex = the[AmazonSQSException] thrownBy client.sendMessage(new SendMessageRequest("testQueue1", "Message 1"))
-    ex.getMessage should include("WrongURLFormatRejection(Provided only queueName instead of the full URL)")
   }
 
   test("should move message to dlq after exceeding maxReceiveCount") {

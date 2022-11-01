@@ -7,6 +7,8 @@ case class NodeAddress(
     contextPath: String = ""
 ) {
   def hostAndPort: String = host + ":" + port
-  def fullAddress: String = protocol + "://" + hostAndPort + contextPath
+  def fullAddress: String = protocol + "://" + hostAndPort + suffix
   def isWildcard: Boolean = host == "*"
+  def contextPathStripped: String = contextPath.stripPrefix("/").stripSuffix("/")
+  def suffix = if (contextPath.isBlank) "" else "/" + contextPathStripped
 }
