@@ -1,7 +1,7 @@
 package org.elasticmq.rest.sqs.directives
 
 import akka.http.scaladsl.server.{Directives, Route}
-import org.elasticmq.rest.sqs.{ActorSystemModule, ContextPathModule, QueueManagerActorModule, QueueURLModule}
+import org.elasticmq.rest.sqs.{ActorSystemModule, ContextPathModule, QueueManagerActorModule}
 import org.elasticmq.util.Logging
 
 trait ElasticMQDirectives
@@ -24,7 +24,7 @@ trait ElasticMQDirectives
   private val validFifoParameterValueCharsRe = """^[a-zA-Z0-9!"#\$%&'\(\)\*\+,-\./:;<=>?@\[\\\]\^_`\{|\}~]{1,128}$""".r
 
   def rootPath(body: Route): Route = {
-    path("") {
+    path(separateOnSlashes(contextPath) ~ Slash.?) {
       body
     }
   }

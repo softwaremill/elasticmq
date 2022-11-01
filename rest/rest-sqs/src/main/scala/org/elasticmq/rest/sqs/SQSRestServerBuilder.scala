@@ -167,7 +167,7 @@ case class TheSQSRestServerBuilder(
       lazy val queueManagerActor = theQueueManagerActor
       lazy val sqsLimits = theLimits
       lazy val timeout = Timeout(21, TimeUnit.SECONDS) // see application.conf
-      lazy val contextPath = serverAddress.contextPath
+      lazy val contextPath = serverAddress.contextPathStripped
 
       lazy val awsRegion: String = _awsRegion
       lazy val awsAccountId: String = _awsAccountId
