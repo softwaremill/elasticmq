@@ -1,27 +1,26 @@
 package org.elasticmq.performance
 
-import java.util.concurrent.TimeUnit
-
 import akka.actor.{ActorRef, ActorSystem, Props}
 import akka.util.Timeout
 import com.amazonaws.auth.{AWSStaticCredentialsProvider, BasicAWSCredentials}
 import com.amazonaws.client.builder.AwsClientBuilder.EndpointConfiguration
-import com.amazonaws.services.sqs.{AmazonSQS, AmazonSQSClientBuilder}
 import com.amazonaws.services.sqs.model.{
   CreateQueueRequest,
   DeleteMessageRequest,
   ReceiveMessageRequest,
   SendMessageRequest
 }
-import org.elasticmq.{NewMessageData, QueueData, _}
+import com.amazonaws.services.sqs.{AmazonSQS, AmazonSQSClientBuilder}
+import org.elasticmq._
 import org.elasticmq.actor.QueueManagerActor
 import org.elasticmq.actor.reply._
-import org.elasticmq.msg.{CreateQueue, ReceiveMessages, SendMessage, _}
+import org.elasticmq.msg._
 import org.elasticmq.rest.sqs.{SQSRestServer, SQSRestServerBuilder}
 import org.elasticmq.test._
 import org.elasticmq.util.NowProvider
 import org.joda.time.DateTime
 
+import java.util.concurrent.TimeUnit
 import scala.collection.JavaConverters._
 import scala.concurrent.Await
 import scala.concurrent.duration._
@@ -106,13 +105,15 @@ object LocalPerformanceTest extends App {
       currentQueue = Await
         .result(
           queueManagerActor ? CreateQueue(
-            QueueData(
-              "testQueue",
-              MillisVisibilityTimeout(1000),
-              org.joda.time.Duration.ZERO,
-              org.joda.time.Duration.ZERO,
-              new DateTime(),
-              new DateTime()
+            CreateQueueData.from(
+              QueueData(
+                "testQueue",
+                MillisVisibilityTimeout(1000),
+                org.joda.time.Duration.ZERO,
+                org.joda.time.Duration.ZERO,
+                new DateTime(),
+                new DateTime()
+              )
             )
           ),
           10.seconds

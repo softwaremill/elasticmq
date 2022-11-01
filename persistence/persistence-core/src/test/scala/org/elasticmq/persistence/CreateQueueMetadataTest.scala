@@ -1,5 +1,4 @@
 package org.elasticmq.persistence
-import org.joda.time.DateTime
 import org.scalatest.OptionValues
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
@@ -22,6 +21,6 @@ class CreateQueueMetadataTest extends AnyFunSuite with Matchers with OptionValue
       tags = Map("abc" -> "123")
     )
 
-    CreateQueueMetadata.from(createQueue.toQueueData) shouldBe createQueue
+    CreateQueueMetadata.from(createQueue.toCreateQueueData.toQueueData) shouldBe createQueue
   }
 }

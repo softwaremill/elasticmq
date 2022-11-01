@@ -131,7 +131,7 @@ class ElasticMQServer(config: ElasticMQServerConfig) extends Logging {
 
   private def createQueuesFromConfig(queueManagerActor: ActorRef): Future[Option[List[ElasticMQError]]] = {
     val createQueuesFutures = config.baseQueues.map { createQueue =>
-      (queueManagerActor ? org.elasticmq.msg.CreateQueue(createQueue.toQueueData)).map(_.swap.toOption)
+      (queueManagerActor ? org.elasticmq.msg.CreateQueue(createQueue.toCreateQueueData)).map(_.swap.toOption)
     }
 
     Future.sequence(createQueuesFutures).map { maybeErrors =>

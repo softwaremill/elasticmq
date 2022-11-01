@@ -1,14 +1,14 @@
 package org.elasticmq.rest.sqs
 
+import org.elasticmq._
 import org.elasticmq.actor.reply._
-import org.elasticmq.msg.{GetQueueData, LookupQueue, CreateQueue => CreateQueueMsg}
+import org.elasticmq.msg.{LookupQueue, CreateQueue => CreateQueueMsg}
 import org.elasticmq.rest.sqs.Action.CreateQueue
 import org.elasticmq.rest.sqs.Constants._
 import org.elasticmq.rest.sqs.ParametersUtil._
 import org.elasticmq.rest.sqs.directives.ElasticMQDirectives
 import org.elasticmq.rest.sqs.model.RedrivePolicy.BackwardCompatibleRedrivePolicy
-import org.elasticmq._
-import org.joda.time.{DateTime, Duration}
+import org.joda.time.Duration
 import spray.json.JsonParser.ParsingException
 import spray.json._
 
@@ -52,30 +52,19 @@ trait CreateQueueDirectives {
               case None =>
             }
 
-            val secondsVisibilityTimeoutOpt =
-              attributes.parseOptionalLong(VisibilityTimeoutParameter)
-            val secondsVisibilityTimeout =
-              secondsVisibilityTimeoutOpt.getOrElse(CreateQueueDefaults.DefaultVisibilityTimeout)
-
-            val secondsDelayOpt =
-              attributes.parseOptionalLong(DelaySecondsAttribute)
-            val secondsDelay = secondsDelayOpt.getOrElse(CreateQueueDefaults.DefaultDelay)
-
+            val secondsVisibilityTimeoutOpt = attributes.parseOptionalLong(VisibilityTimeoutParameter)
+            val secondsDelayOpt = attributes.parseOptionalLong(DelaySecondsAttribute)
             val secondsReceiveMessageWaitTimeOpt = attributes.parseOptionalLong(ReceiveMessageWaitTimeSecondsAttribute)
-            val secondsReceiveMessageWaitTime = secondsReceiveMessageWaitTimeOpt
-              .getOrElse(CreateQueueDefaults.DefaultReceiveMessageWait)
-
-            val now = new DateTime()
             val isFifo = attributes.get("FifoQueue").contains("true")
             val hasContentBasedDeduplication = attributes.get("ContentBasedDeduplication").contains("true")
 
-            val newQueueData = QueueData(
+            val newQueueData = CreateQueueData(
               queueName,
-              MillisVisibilityTimeout.fromSeconds(secondsVisibilityTimeout),
-              Duration.standardSeconds(secondsDelay),
-              Duration.standardSeconds(secondsReceiveMessageWaitTime),
-              now,
-              now,
+              secondsVisibilityTimeoutOpt.map(sec => MillisVisibilityTimeout.fromSeconds(sec)),
+              secondsDelayOpt.map(sec => Duration.standardSeconds(sec)),
+              secondsReceiveMessageWaitTimeOpt.map(sec => Duration.standardSeconds(sec)),
+              None,
+              None,
               redrivePolicy.map(rd => DeadLettersQueueData(rd.queueName, rd.maxReceiveCount)),
               isFifo,
               hasContentBasedDeduplication,
@@ -88,21 +77,9 @@ trait CreateQueueDirectives {
                 .fold(error => throw new SQSException(error), identity)
             )
 
-            val queueData = await(lookupOrCreateQueue(newQueueData))
+            await(lookupOrCreateQueue(newQueueData))
 
-            // if the request set the attributes compare them against the queue
-            if (
-              (secondsDelayOpt.isDefined && queueData.delay.getStandardSeconds != secondsDelay) ||
-              (secondsReceiveMessageWaitTimeOpt.isDefined
-                && queueData.receiveMessageWait.getStandardSeconds != secondsReceiveMessageWaitTime) ||
-              (secondsVisibilityTimeoutOpt.isDefined
-                && queueData.defaultVisibilityTimeout.seconds != secondsVisibilityTimeout)
-            ) {
-              // Special case: the queue existed, but has different attributes
-              throw new SQSException("AWS.SimpleQueueService.QueueNameExists")
-            }
-
-            queueURL(queueData) { url =>
+            queueURL(queueName) { url =>
               respondWith {
                 <CreateQueueResponse>
                   <CreateQueueResult>
@@ -120,21 +97,13 @@ trait CreateQueueDirectives {
     }
   }
 
-  private def lookupOrCreateQueue[T](newQueueData: QueueData): Future[QueueData] = {
+  private def lookupOrCreateQueue[T](newQueueData: CreateQueueData): Future[Unit] = {
     async {
-      val queueActorOption =
-        await(queueManagerActor ? LookupQueue(newQueueData.name))
-      queueActorOption match {
-        case None =>
-          val createResult =
-            await(queueManagerActor ? CreateQueueMsg(newQueueData))
-          createResult match {
-            case Left(e: ElasticMQError) =>
-              throw new SQSException(e.code, errorMessage = Some(e.message))
-            case Right(_) => newQueueData
-          }
-        case Some(queueActor) =>
-          await(queueActor ? GetQueueData())
+      val createResult = await(queueManagerActor ? CreateQueueMsg(newQueueData))
+      createResult match {
+        case Left(e: ElasticMQError) =>
+          throw new SQSException(e.code, errorMessage = Some(e.message))
+        case Right(_) =>
       }
     }
   }

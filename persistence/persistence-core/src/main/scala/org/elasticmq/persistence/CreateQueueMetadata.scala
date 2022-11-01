@@ -1,6 +1,6 @@
 package org.elasticmq.persistence
 
-import org.elasticmq.{CreateQueueDefaults, DeadLettersQueueData, MillisVisibilityTimeout, QueueData}
+import org.elasticmq.{CreateQueueData, DeadLettersQueueData, MillisVisibilityTimeout, QueueData}
 import org.joda.time.{DateTime, Duration}
 
 case class CreateQueueMetadata(
@@ -18,18 +18,14 @@ case class CreateQueueMetadata(
     tags: Map[String, String] = Map[String, String]()
 ) {
 
-  def toQueueData: QueueData = {
-    QueueData(
+  def toCreateQueueData: CreateQueueData = {
+    CreateQueueData(
       name = name,
-      defaultVisibilityTimeout = MillisVisibilityTimeout.fromSeconds(
-        defaultVisibilityTimeoutSeconds.getOrElse(CreateQueueDefaults.DefaultVisibilityTimeout)
-      ),
-      delay = Duration.standardSeconds(delaySeconds.getOrElse(CreateQueueDefaults.DefaultDelay)),
-      receiveMessageWait = Duration.standardSeconds(
-        receiveMessageWaitSeconds.getOrElse(CreateQueueDefaults.DefaultReceiveMessageWait)
-      ),
-      created = new DateTime(created),
-      lastModified = new DateTime(lastModified),
+      defaultVisibilityTimeoutSeconds.map(sec => MillisVisibilityTimeout.fromSeconds(sec)),
+      delaySeconds.map(sec => Duration.standardSeconds(sec)),
+      receiveMessageWaitSeconds.map(sec => Duration.standardSeconds(sec)),
+      created = Some(new DateTime(created)),
+      lastModified = Some(new DateTime(lastModified)),
       deadLettersQueue = deadLettersQueue.map(dlq => DeadLettersQueueData(dlq.name, dlq.maxReceiveCount)),
       isFifo = isFifo,
       hasContentBasedDeduplication = hasContentBasedDeduplication,

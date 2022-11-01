@@ -1,19 +1,11 @@
 package org.elasticmq.rest.sqs
 
-import java.io.ByteArrayOutputStream
-import java.lang.management.ManagementFactory
-import java.nio.ByteBuffer
-import java.security.MessageDigest
-import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicReference
 import akka.actor.{ActorRef, ActorSystem, Props}
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.server.{Directive1, Directives}
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
 import com.typesafe.config.ConfigFactory
-
-import javax.management.ObjectName
 import org.elasticmq._
 import org.elasticmq.actor.QueueManagerActor
 import org.elasticmq.metrics.QueuesMetrics
@@ -21,13 +13,20 @@ import org.elasticmq.rest.sqs.Constants._
 import org.elasticmq.rest.sqs.directives.{ElasticMQDirectives, UnmatchedActionRoutes}
 import org.elasticmq.util.{Logging, NowProvider}
 
+import java.io.ByteArrayOutputStream
+import java.lang.management.ManagementFactory
+import java.nio.ByteBuffer
+import java.security.MessageDigest
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicReference
+import javax.management.ObjectName
 import scala.collection.immutable.TreeMap
 import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
-import scala.util.{Failure, Success, Try}
 import scala.util.control.NonFatal
-import scala.xml.{EntityRef, _}
+import scala.util.{Failure, Success, Try}
+import scala.xml._
 
 /** By default: <li> <ul>for `socketAddress`: when started, the server will bind to `localhost:9324`</ul> <ul>for
   * `serverAddress`: returned queue addresses will use `http://localhost:9324` as the base address.</ul> <ul>for
@@ -445,8 +444,8 @@ trait QueueURLModule {
     baseAddress.map(_ + "/" + postfix)
   }
 
-  def queueURL(queueData: QueueData): Directive1[String] = {
-    baseQueueURL.map(base => base + "/" + queueData.name)
+  def queueURL(queueName: String): Directive1[String] = {
+    baseQueueURL.map(base => base + "/" + queueName)
   }
 }
 
