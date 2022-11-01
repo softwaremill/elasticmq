@@ -2,8 +2,6 @@ package org.elasticmq.actor.test
 
 import org.elasticmq._
 import org.joda.time.{DateTime, Duration}
-import org.elasticmq.MessageId
-import org.elasticmq.MillisNextDelivery
 
 trait DataCreationHelpers {
   def createQueueData(
@@ -16,13 +14,13 @@ trait DataCreationHelpers {
       isFifo: Boolean = false,
       hasContentBasedDeduplication: Boolean = false
   ) =
-    QueueData(
+    CreateQueueRequest(
       name = name,
-      defaultVisibilityTimeout = defaultVisibilityTimeout,
-      delay = Duration.ZERO,
-      receiveMessageWait = Duration.ZERO,
-      created = new DateTime(0),
-      lastModified = new DateTime(0),
+      defaultVisibilityTimeout = Some(defaultVisibilityTimeout),
+      delay = Some(Duration.ZERO),
+      receiveMessageWait = Some(Duration.ZERO),
+      created = Some(new DateTime(0)),
+      lastModified = Some(new DateTime(0)),
       deadLettersQueue = deadLettersQueue,
       copyMessagesTo = copyMessagesToQueue,
       moveMessagesTo = moveMessagesToQueue,

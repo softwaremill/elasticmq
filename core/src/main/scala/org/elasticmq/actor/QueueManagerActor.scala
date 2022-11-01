@@ -15,34 +15,44 @@ class QueueManagerActor(nowProvider: NowProvider, limits: Limits, queueEventList
   type M[X] = QueueManagerMsg[X]
   val ev: ClassTag[QueueManagerMsg[Unit]] = classTag[M[Unit]]
 
-  private val queues = collection.mutable.HashMap[String, ActorRef]()
+  case class QueueMetadata(actorRef: ActorRef, queueData: QueueData)
+  private val queues = collection.mutable.HashMap[String, QueueMetadata]()
 
   def receiveAndReply[T](msg: QueueManagerMsg[T]): ReplyAction[T] =
     msg match {
-      case CreateQueue(queueData) =>
-        if (queues.contains(queueData.name)) {
-          logger.debug(s"Cannot create queue, as it already exists: $queueData")
-          Left(new QueueAlreadyExists(queueData.name))
-        } else {
-          logger.info(s"Creating queue $queueData")
-          Limits.verifyQueueName(queueData.name, queueData.isFifo, limits) match {
-            case Left(error) =>
-              Left(InvalidParameterValue(queueData.name, error))
-            case Right(_) =>
-              val actor = createQueueActor(nowProvider, queueData, queueEventListener)
-              queues(queueData.name) = actor
-              queueEventListener.foreach(_ ! QueueEvent.QueueCreated(queueData))
-              Right(actor)
-          }
+      case CreateQueue(request) =>
+        queues.get(request.name) match {
+          case Some(metadata) =>
+            if (sameCreateQueueData(metadata.queueData, request)) {
+              logger.debug(s"Queue already exists: $request, returning existing actor")
+              Right(metadata.actorRef)
+            } else {
+              logger.debug(
+                s"Cannot create a queue with existing name and different parameters: $request, existing: ${metadata.queueData}"
+              )
+              Left(new QueueAlreadyExists(request.name))
+            }
+          case None =>
+            logger.info(s"Creating queue $request")
+            Limits.verifyQueueName(request.name, request.isFifo, limits) match {
+              case Left(error) =>
+                Left(InvalidParameterValue(request.name, error))
+              case Right(_) =>
+                val queueData = request.toQueueData
+                val actor = createQueueActor(nowProvider, queueData, queueEventListener)
+                queues(request.name) = QueueMetadata(actor, queueData)
+                queueEventListener.foreach(_ ! QueueEvent.QueueCreated(queueData))
+                Right(actor)
+            }
         }
 
       case DeleteQueue(queueName) =>
         logger.info(s"Deleting queue $queueName")
-        queues.remove(queueName).foreach(context.stop)
+        queues.remove(queueName).foreach { case QueueMetadata(actorRef, _) => context.stop(actorRef) }
         queueEventListener.foreach(_ ! QueueEvent.QueueDeleted(queueName))
 
       case LookupQueue(queueName) =>
-        val result = queues.get(queueName)
+        val result = queues.get(queueName).map(_.actorRef)
 
         logger.debug(s"Looking up queue $queueName, found?: ${result.isDefined}")
         result
@@ -55,9 +65,13 @@ class QueueManagerActor(nowProvider: NowProvider, limits: Limits, queueEventList
       queueData: QueueData,
       queueEventListener: Option[ActorRef]
   ): ActorRef = {
-    val deadLetterQueueActor = queueData.deadLettersQueue.flatMap { qd => queues.get(qd.name) }
-    val copyMessagesToQueueActor = queueData.copyMessagesTo.flatMap { queueName => queues.get(queueName) }
-    val moveMessagesToQueueActor = queueData.moveMessagesTo.flatMap { queueName => queues.get(queueName) }
+    val deadLetterQueueActor = queueData.deadLettersQueue.flatMap { qd => queues.get(qd.name).map(_.actorRef) }
+    val copyMessagesToQueueActor = queueData.copyMessagesTo.flatMap { queueName =>
+      queues.get(queueName).map(_.actorRef)
+    }
+    val moveMessagesToQueueActor = queueData.moveMessagesTo.flatMap { queueName =>
+      queues.get(queueName).map(_.actorRef)
+    }
 
     context.actorOf(
       Props(
@@ -70,6 +84,19 @@ class QueueManagerActor(nowProvider: NowProvider, limits: Limits, queueEventList
           queueEventListener
         )
       )
+    )
+  }
+
+  private def sameCreateQueueData(existing: QueueData, requested: CreateQueueRequest) = {
+    !(
+      (requested.defaultVisibilityTimeout.isDefined && requested.defaultVisibilityTimeout.get != existing.defaultVisibilityTimeout) ||
+        (requested.delay.isDefined && requested.delay.get != existing.delay) ||
+        (requested.receiveMessageWait.isDefined && requested.receiveMessageWait.get != existing.receiveMessageWait) ||
+        existing.deadLettersQueue != requested.deadLettersQueue ||
+        existing.isFifo != requested.isFifo ||
+        existing.copyMessagesTo != requested.copyMessagesTo ||
+        existing.moveMessagesTo != requested.moveMessagesTo ||
+        existing.tags != requested.tags
     )
   }
 }

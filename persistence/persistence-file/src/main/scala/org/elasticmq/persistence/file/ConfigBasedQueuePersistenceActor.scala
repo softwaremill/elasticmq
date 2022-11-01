@@ -54,7 +54,7 @@ class ConfigBasedQueuePersistenceActor(storagePath: String, baseQueues: List[Cre
     )
 
     val createQueuesFutures = queuesToCreate.map { createQueue =>
-      (queueManagerActor ? CreateQueue(createQueue.toQueueData)).map(_.swap.toOption)
+      (queueManagerActor ? CreateQueue(createQueue.toCreateQueueRequest)).map(_.swap.toOption)
     }
 
     Future.sequence(createQueuesFutures).map { maybeErrors =>

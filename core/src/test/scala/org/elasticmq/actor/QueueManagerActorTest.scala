@@ -1,9 +1,9 @@
 package org.elasticmq.actor
 
-import org.elasticmq.actor.reply._
-import org.elasticmq.msg.{DeleteQueue, LookupQueue, ListQueues, CreateQueue}
 import org.elasticmq.MillisVisibilityTimeout
-import org.elasticmq.actor.test.{DataCreationHelpers, QueueManagerForEachTest, ActorTest}
+import org.elasticmq.actor.reply._
+import org.elasticmq.actor.test.{ActorTest, DataCreationHelpers, QueueManagerForEachTest}
+import org.elasticmq.msg.{CreateQueue, DeleteQueue, ListQueues, LookupQueue}
 
 class QueueManagerActorTest extends ActorTest with QueueManagerForEachTest with DataCreationHelpers {
 
@@ -56,7 +56,7 @@ class QueueManagerActorTest extends ActorTest with QueueManagerForEachTest with 
     }
   }
 
-  test("trying to create an existing queue should throw an exception") {
+  test("trying to create an existing queue should return that queue") {
     // Given
     val q1 = createQueueData("q1", MillisVisibilityTimeout(1L))
 
@@ -65,6 +65,21 @@ class QueueManagerActorTest extends ActorTest with QueueManagerForEachTest with 
 
       // When & then
       result <- queueManagerActor ? CreateQueue(q1)
+    } yield {
+      result should be('right)
+    }
+  }
+
+  test("trying to create an existing queue with different metadata should throw an exception") {
+    // Given
+    val q1 = createQueueData("q1", MillisVisibilityTimeout(1L))
+    val q2 = createQueueData("q1", MillisVisibilityTimeout(10L))
+
+    for {
+      _ <- queueManagerActor ? CreateQueue(q1)
+
+      // When & then
+      result <- queueManagerActor ? CreateQueue(q2)
     } yield {
       result should be('left)
     }

@@ -111,7 +111,7 @@ class SqlQueuePersistenceActor(
       queueManagerActor: ActorRef,
       cq: CreateQueueMetadata
   ): Future[Either[ElasticMQError, ActorRef]] = {
-    queueManagerActor ? CreateQueue(cq.toQueueData)
+    queueManagerActor ? CreateQueue(cq.toCreateQueueRequest)
   }
 
   private def restoreMessages(queueName: String, queueActor: ActorRef): Future[Unit] = {

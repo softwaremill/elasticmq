@@ -8,13 +8,13 @@ import org.elasticmq.actor.reply._
 import org.elasticmq.msg.CreateQueue
 import org.elasticmq.rest.sqs.{ActorSystemModule, ContextPathModule, QueueManagerActorModule}
 import org.elasticmq.util.NowProvider
-import org.elasticmq.{MillisVisibilityTimeout, QueueData, StrictSQSLimits}
+import org.elasticmq.{CreateQueueRequest, MillisVisibilityTimeout, QueueData, StrictSQSLimits}
 import org.joda.time.{DateTime, Duration}
-
-import scala.concurrent.{Await, ExecutionContextExecutor}
-import scala.concurrent.duration._
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
+
+import scala.concurrent.duration._
+import scala.concurrent.{Await, ExecutionContextExecutor}
 
 class QueueDirectivesTest
     extends AnyFlatSpec
@@ -40,7 +40,9 @@ class QueueDirectivesTest
 
   "queueActorAndNameFromRequest" should "return correct queue name based on QueueName" in {
     val future = queueManagerActor ? CreateQueue(
-      QueueData("lol", MillisVisibilityTimeout(1L), Duration.ZERO, Duration.ZERO, DateTime.now(), DateTime.now())
+      CreateQueueRequest.from(
+        QueueData("lol", MillisVisibilityTimeout(1L), Duration.ZERO, Duration.ZERO, DateTime.now(), DateTime.now())
+      )
     )
     Await.result(future, maxDuration)
     val route = {
@@ -56,7 +58,9 @@ class QueueDirectivesTest
 
   "queueActorAndNameFromRequest" should "return correct queue name based on QueueUrl" in {
     val future = queueManagerActor ? CreateQueue(
-      QueueData("lol", MillisVisibilityTimeout(1L), Duration.ZERO, Duration.ZERO, DateTime.now(), DateTime.now())
+      CreateQueueRequest.from(
+        QueueData("lol", MillisVisibilityTimeout(1L), Duration.ZERO, Duration.ZERO, DateTime.now(), DateTime.now())
+      )
     )
     Await.result(future, maxDuration)
     val route = {
@@ -72,7 +76,9 @@ class QueueDirectivesTest
 
   "queueActorAndNameFromRequest" should "return error when invalid QueueUrl" in {
     val future = queueManagerActor ? CreateQueue(
-      QueueData("lol", MillisVisibilityTimeout(1L), Duration.ZERO, Duration.ZERO, DateTime.now(), DateTime.now())
+      CreateQueueRequest.from(
+        QueueData("lol", MillisVisibilityTimeout(1L), Duration.ZERO, Duration.ZERO, DateTime.now(), DateTime.now())
+      )
     )
     Await.result(future, maxDuration)
     val route = {
