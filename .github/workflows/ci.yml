@@ -105,7 +105,7 @@ jobs:
         run: sbt "project nativeServer; assembly; GraalVMNativeImage / packageBin; Docker / publishLocal"
 
   publish-jar:
-    needs: [ci-2-12, ci-2-13, ci-docker]
+#    needs: [ci-2-12, ci-2-13, ci-docker]
     if: github.event_name != 'pull_request' && (startsWith(github.ref, 'refs/tags/v'))
     runs-on: ubuntu-20.04
     steps:
@@ -136,7 +136,7 @@ jobs:
           SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
 
       - name: Upload to S3
-        run: sbt "server / s3Upload"
+        run: sbt "project server; assembly; s3Upload"
         env:
           S3_USER: ${{ secrets.S3_USER }}
           S3_PASSWORD: ${{ secrets.S3_PASSWORD }}
@@ -160,7 +160,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   publish-docker:
-    needs: [ci-2-12, ci-2-13, ci-docker]
+#    needs: [ci-2-12, ci-2-13, ci-docker]
     if: github.event_name != 'pull_request' && (startsWith(github.ref, 'refs/tags/v'))
     runs-on: ubuntu-20.04
     steps:
