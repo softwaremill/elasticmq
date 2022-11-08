@@ -35,7 +35,7 @@ jobs:
 
       - name: Run tests
         id: run-tests
-        run: SCALA_MAJOR_VERSION=${{ env.scala }} sbt core/test persistenceCore/test persistenceFile/test persistenceSql/test restSqs/test restSqsTestingAmazonJavaSdk/test server/test
+        run: SCALA_MAJOR_VERSION=${{ env.scala }} sbt root/test
 
   ci-2-13:
     # run on external PRs, but not on internal PRs since those will be run by push to branch
@@ -66,7 +66,7 @@ jobs:
 
       - name: Run tests
         id: run-tests
-        run: SCALA_MAJOR_VERSION=${{ env.scala }} sbt core/test persistenceCore/test persistenceFile/test persistenceSql/test restSqs/test restSqsTestingAmazonJavaSdk/test server/test
+        run: SCALA_MAJOR_VERSION=${{ env.scala }} sbt root/test
 
   ci-docker:
     # run on external PRs, but not on internal PRs since those will be run by push to branch
@@ -105,7 +105,7 @@ jobs:
         run: sbt "project nativeServer; assembly; GraalVMNativeImage / packageBin; Docker / publishLocal"
 
   publish-jar:
-#    needs: [ci-2-12, ci-2-13, ci-docker]
+    needs: [ci-2-12, ci-2-13, ci-docker]
     if: github.event_name != 'pull_request' && (startsWith(github.ref, 'refs/tags/v'))
     runs-on: ubuntu-20.04
     steps:
@@ -160,7 +160,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   publish-docker:
-#    needs: [ci-2-12, ci-2-13, ci-docker]
+    needs: [ci-2-12, ci-2-13, ci-docker]
     if: github.event_name != 'pull_request' && (startsWith(github.ref, 'refs/tags/v'))
     runs-on: ubuntu-20.04
     steps:
