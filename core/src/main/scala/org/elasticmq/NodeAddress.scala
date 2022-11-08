@@ -10,5 +10,5 @@ case class NodeAddress(
   def fullAddress: String = protocol + "://" + hostAndPort + suffix
   def isWildcard: Boolean = host == "*"
   def contextPathStripped: String = contextPath.stripPrefix("/").stripSuffix("/")
-  def suffix = if (contextPath.isBlank) "" else "/" + contextPathStripped
+  def suffix: String = if (contextPath.trim.isEmpty) "" else "/" + contextPathStripped
 }

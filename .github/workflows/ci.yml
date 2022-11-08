@@ -21,7 +21,7 @@ jobs:
         uses: actions/setup-java@v2
         with:
           distribution: 'temurin'
-          java-version: 11
+          java-version: 8
 
       - name: Cache SBT
         id: cache-sbt
@@ -52,7 +52,7 @@ jobs:
         uses: actions/setup-java@v2
         with:
           distribution: 'temurin'
-          java-version: 11
+          java-version: 8
 
       - name: Cache SBT
         id: cache-sbt
@@ -83,7 +83,7 @@ jobs:
         uses: actions/setup-java@v2
         with:
           distribution: 'temurin'
-          java-version: 11
+          java-version: 8
 
       - name: Cache SBT
         id: cache-sbt
@@ -117,7 +117,7 @@ jobs:
         uses: actions/setup-java@v2
         with:
           distribution: 'temurin'
-          java-version: 11
+          java-version: 8
 
       - name: Cache sbt
         uses: actions/cache@v2
