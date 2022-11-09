@@ -32,7 +32,7 @@ val pureConfig = "com.github.pureconfig" %% "pureconfig" % "0.17.2"
 val scalaXml = "org.scala-lang.modules" %% "scala-xml" % "2.1.0"
 
 val scalalogging = "com.typesafe.scala-logging" %% "scala-logging" % "3.9.5"
-val logback = "ch.qos.logback" % "logback-classic" % "1.4.4"
+val logback = "ch.qos.logback" % "logback-classic" % "1.3.4"
 val jclOverSlf4j = "org.slf4j" % "jcl-over-slf4j" % "2.0.3" // needed form amazon java sdk
 
 val scalatest = "org.scalatest" %% "scalatest" % "3.2.14"
@@ -70,7 +70,7 @@ val buildSettings = commonSmlBuildSettings ++ ossPublishSettings ++ Seq(
     ScmInfo(url("https://github.com/softwaremill/elasticmq"), "scm:git@github.com:softwaremill/elasticmq.git")
   ),
   scalaVersion := resolvedScalaVersion,
-  scalacOptions += "-Xasync",
+  scalacOptions ++= Seq("-Xasync", "-target:jvm-1.8"),
   libraryDependencies += scalaXml,
   dependencyOverrides := akka25Overrides,
   parallelExecution := false,
@@ -89,13 +89,15 @@ val s3Upload = TaskKey[PutObjectResult]("s3-upload", "Uploads files to an S3 buc
 lazy val root: Project = (project in file("."))
   .enablePlugins(GitVersioning)
   .settings(buildSettings)
-  .settings(name := "elasticmq-root", publishArtifact := false)
-  .aggregate(commonTest, core, rest, persistence, server, nativeServer, ui)
+  .settings(name := "elasticmq-root", publish / skip := true)
+  // we want to build the main jar using java 8, but native-server requires java 11, so it's built separately
+  // native-server project is only used for building docker with graalvm native image
+  .aggregate(commonTest, core, rest, persistence, server, ui)
 
 lazy val commonTest: Project = (project in file("common-test"))
   .settings(buildSettings)
   .settings(name := "elasticmq-common-test")
-  .settings(Seq(libraryDependencies ++= Seq(scalatest, awaitility, logback), publishArtifact := false))
+  .settings(Seq(libraryDependencies ++= Seq(scalatest, awaitility, logback), publish / skip := true))
 
 lazy val core: Project = (project in file("core"))
   .settings(buildSettings)
@@ -185,7 +187,7 @@ lazy val restSqsTestingAmazonJavaSdk: Project =
       Seq(
         name := "elasticmq-rest-sqs-testing-amazon-java-sdk",
         libraryDependencies ++= Seq(amazonJavaSdkSqs, jclOverSlf4j) ++ common,
-        publishArtifact := false
+        publish / skip := true
       )
     )
     .dependsOn(restSqs % "test->test", persistenceFile % "test", persistenceSql % "test")
@@ -268,6 +270,7 @@ lazy val nativeServer: Project = (project in file("native-server"))
       libraryDependencies ++= Seq(
         "org.graalvm.nativeimage" % "svm" % graalVmVersion % "compile-internal"
       ),
+      publish / skip := true,
       // configures sbt-native-packager to build app using dockerized graalvm
       // docker image source: https://github.com/graalvm/container/pkgs/container/graalvm-ce/versions
       (GraalVMNativeImage / containerBuildImage) := GraalVMNativeImagePlugin
@@ -344,7 +347,7 @@ lazy val performanceTests: Project = (project in file("performance-tests"))
     Seq(
       name := "elasticmq-performance-tests",
       libraryDependencies ++= Seq(amazonJavaSdkSqs, jclOverSlf4j, logback) ++ common,
-      publishArtifact := false
+      publish / skip := true
     )
   )
   .dependsOn(core, restSqs, commonTest % "test")
@@ -407,7 +410,8 @@ lazy val ui = (project in file("ui"))
       (Compile / compile).value
     },
     cleanFiles += baseDirectory.value / "build",
-    Compile / unmanagedResourceDirectories += baseDirectory.value / "build"
+    Compile / unmanagedResourceDirectories += baseDirectory.value / "build",
+    publish / skip := true
   )
 
 def haltOnCmdResultError(result: Int) {
