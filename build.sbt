@@ -33,7 +33,7 @@ val scalaXml = "org.scala-lang.modules" %% "scala-xml" % "2.1.0"
 
 val scalalogging = "com.typesafe.scala-logging" %% "scala-logging" % "3.9.5"
 val logback = "ch.qos.logback" % "logback-classic" % "1.3.5"
-val jclOverSlf4j = "org.slf4j" % "jcl-over-slf4j" % "2.0.4" // needed form amazon java sdk
+val jclOverSlf4j = "org.slf4j" % "jcl-over-slf4j" % "2.0.5" // needed form amazon java sdk
 
 val scalatest = "org.scalatest" %% "scalatest" % "3.2.14"
 val awaitility = "org.awaitility" % "awaitility-scala" % "4.2.0"
