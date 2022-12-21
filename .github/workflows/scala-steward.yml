@@ -8,22 +8,16 @@ on:
 
 jobs:
   scala-steward:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Set up JDK 11
-        uses: actions/setup-java@v1
+        uses: actions/setup-java@v3
         with:
+          distribution: 'temurin'
           java-version: 11
-      - name: Cache sbt
-        uses: actions/cache@v2
-        with:
-          path: |
-            ~/.sbt
-            ~/.ivy2/cache
-            ~/.coursier
-          key: sbt-cache-${{ runner.os }}-JVM-${{ hashFiles('project/build.properties') }}
+          cache: 'sbt'
       - name: Launch Scala Steward
         uses: scala-steward-org/scala-steward-action@v2
         with:
@@ -32,10 +26,3 @@ jobs:
           github-token: ${{ secrets.REPO_GITHUB_TOKEN }}
           repo-config: .scala-steward.conf
           ignore-opts-files: false
-      - name: Cleanup
-        run: |
-          rm -rf "$HOME/.ivy2/local" || true
-          find $HOME/.ivy2/cache                       -name "ivydata-*.properties" -delete || true
-          find $HOME/.ivy2/cache                       -name "*-LM-SNAPSHOT*"       -delete || true
-          find $HOME/.cache/coursier/v1                -name "ivydata-*.properties" -delete || true
-          find $HOME/.sbt                              -name "*.lock"               -delete || true
