@@ -295,7 +295,7 @@ lazy val nativeServer: Project = (project in file("native-server"))
       ),
       Compile / mainClass := Some("org.elasticmq.server.Main"),
       // configures sbt-native-packager to build docker image with generated executable
-      dockerBaseImage := "alpine:3.11",
+      dockerBaseImage := "alpine:3.17",
       Docker / mappings := Seq(
         (baseDirectory.value / ".." / "server" / "docker" / "elasticmq.conf") -> "/opt/elasticmq.conf",
         (baseDirectory.value / ".." / "server" / "src" / "main" / "resources" / "logback.xml") -> "/opt/logback.xml",
@@ -314,7 +314,7 @@ lazy val nativeServer: Project = (project in file("native-server"))
         val commands = dockerCommands.value
         val index = commands.indexWhere {
           case Cmd("FROM", args @ _*) =>
-            args.head == "alpine:3.11" && args.last == "mainstage"
+            args.head == "alpine:3.17" && args.last == "mainstage"
           case _ => false
         }
         val (front, back) = commands.splitAt(index + 1)
