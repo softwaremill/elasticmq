@@ -40,6 +40,7 @@ A simple UI is available for viewing real-time queue statistics.
 # Community
 
 * [Issues](https://github.com/adamw/elasticmq/issues)
+* [Discussions & help](https://softwaremill.community/c/elasticmq/7)
 
 # Installation: stand-alone
 
