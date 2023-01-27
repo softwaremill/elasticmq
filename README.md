@@ -604,7 +604,7 @@ UI provides real-time information about the state of messages and attributes of 
 
 ### Using UI in docker image
 
-UI is bundled with both standard and native images. It is exposed on the address that is defined in rest-stats configuration (by default 0:0:0:0:9325).
+UI is bundled with both standard and native images. It is exposed on the address that is defined in rest-stats configuration (by default 0.0.0.0:9325).
 
 In order to turn it off, you have to switch it off via rest-stats.enabled flag.
 
