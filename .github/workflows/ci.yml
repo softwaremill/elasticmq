@@ -23,6 +23,10 @@ jobs:
           distribution: 'temurin'
           java-version: 8
 
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 16
+
       - name: Cache SBT
         id: cache-sbt
         uses: actions/cache@v2
@@ -54,6 +58,10 @@ jobs:
           distribution: 'temurin'
           java-version: 8
 
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 16
+
       - name: Cache SBT
         id: cache-sbt
         uses: actions/cache@v2
@@ -84,6 +92,10 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: 11
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 16
 
       - name: Cache SBT
         id: cache-sbt
@@ -117,6 +129,10 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: 8
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 16
 
       - name: Cache sbt
         uses: actions/cache@v2
@@ -172,6 +188,10 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: 11
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 16
 
       - name: Cache sbt
         uses: actions/cache@v2
