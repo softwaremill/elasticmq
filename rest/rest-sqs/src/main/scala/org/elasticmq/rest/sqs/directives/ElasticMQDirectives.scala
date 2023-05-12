@@ -1,19 +1,19 @@
 package org.elasticmq.rest.sqs.directives
 
 import akka.http.scaladsl.server.{Directives, Route}
-import org.elasticmq.rest.sqs.{ActorSystemModule, ContextPathModule, QueueManagerActorModule}
+import org.elasticmq.rest.sqs.{ActorSystemModule, ContextPathModule, QueueManagerActorModule, QueueURLModule}
 import org.elasticmq.util.Logging
 
 trait ElasticMQDirectives
     extends Directives
     with RespondDirectives
+    with AWSProtocolDirectives
     with FutureDirectives
     with ExceptionDirectives
     with QueueDirectives
     with QueueManagerActorModule
     with ContextPathModule
     with ActorSystemModule
-    with AnyParamDirectives
     with RejectionDirectives
     with Logging {
 

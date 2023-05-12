@@ -5,12 +5,18 @@ import org.elasticmq.actor.reply._
 import org.elasticmq.msg.ListQueues
 import org.elasticmq.rest.sqs.Action.{ListQueues => ListQueuesAction}
 import org.elasticmq.rest.sqs.directives.ElasticMQDirectives
+import spray.json.DefaultJsonProtocol._
+import spray.json.RootJsonFormat
+import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
+import org.elasticmq.rest.sqs.model.RequestPayload
 
 trait ListQueuesDirectives { this: ElasticMQDirectives with QueueURLModule =>
-  def listQueues(p: AnyParams) = {
+  def listQueues(p: RequestPayload, protocol: AWSProtocol) = {
     p.action(ListQueuesAction) {
       rootPath {
-        val prefixOption = p.get("QueueNamePrefix")
+        val payload = p.as[ListQueuesActionRequest]
+
+        val prefixOption = payload.QueueNamePrefix
         for {
           allQueueNames <- queueManagerActor ? ListQueues()
         } yield {
@@ -20,19 +26,52 @@ trait ListQueuesDirectives { this: ElasticMQDirectives with QueueURLModule =>
           }
 
           baseQueueURL { baseURL =>
-            respondWith {
-              <ListQueuesResponse>
-                <ListQueuesResult>
-                  {queueNames.map(queueName => <QueueUrl>{baseURL + "/" + queueName}</QueueUrl>)}
-                </ListQueuesResult>
-                <ResponseMetadata>
-                  <RequestId>{EmptyRequestId}</RequestId>
-                </ResponseMetadata>
-              </ListQueuesResponse>
+            protocol match {
+              case AWSProtocol.`AWSJsonProtocol1.0` =>
+                complete(ListQueuesResponse(queueNames.map(queueName => s"$baseURL/$queueName").toList))
+              case _ =>
+                respondWith {
+                  <ListQueuesResponse>
+                  <ListQueuesResult>
+                    {queueNames.map(queueName => <QueueUrl>{baseURL + "/" + queueName}</QueueUrl>)}
+                  </ListQueuesResult>
+                  <ResponseMetadata>
+                    <RequestId>{EmptyRequestId}</RequestId>
+                  </ResponseMetadata>
+                </ListQueuesResponse>
+                }
             }
           }
         }
       }
     }
   }
+}
+
+case class ListQueuesActionRequest(
+  MaxResults: Option[Int],
+  NextToken: Option[String],
+  QueueNamePrefix: Option[String]
+)
+
+object ListQueuesActionRequest {
+
+  implicit val requestJsonFormat: RootJsonFormat[ListQueuesActionRequest] = jsonFormat3(ListQueuesActionRequest.apply)
+
+  implicit val requestParamReader: FlatParamsReader[ListQueuesActionRequest] = new FlatParamsReader[ListQueuesActionRequest] {
+    override def read(params: Map[String, String]): ListQueuesActionRequest = {
+      new ListQueuesActionRequest(
+        params.get(MaxResultsParameter).map(_.toInt),
+        params.get(NextTokenParameter),
+        params.get(QueueNamePrefixParameter)
+      )
+    }
+  }
+
+}
+
+case class ListQueuesResponse(QueueUrls: List[String])
+
+object ListQueuesResponse {
+  implicit val format: RootJsonFormat[ListQueuesResponse] = jsonFormat1(ListQueuesResponse.apply)
 }

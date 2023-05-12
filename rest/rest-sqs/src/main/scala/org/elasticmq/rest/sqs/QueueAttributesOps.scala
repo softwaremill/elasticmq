@@ -73,11 +73,10 @@ trait QueueAttributesOps extends AttributesModule {
       timeout: Timeout,
       executionContext: ExecutionContext
   ): Future[List[(String, String)]] = {
-    val attributesParams = attributeNamesReader.prepareParametersForRead(QueueReadableAttributeNames.AllAttributeNames)
-    getQueueAttributes(attributesParams, queueActor, queueData)
+    getQueueAttributes(QueueReadableAttributeNames.AllAttributeNames, queueActor, queueData)
   }
 
-  def getQueueAttributes(p: AnyParams, queueActor: ActorRef, queueData: QueueData)(implicit
+  def getQueueAttributes(attributeNames: List[String], queueActor: ActorRef, queueData: QueueData)(implicit
       timeout: Timeout,
       executionContext: ExecutionContext
   ): Future[List[(String, String)]] = {
@@ -146,17 +145,13 @@ trait QueueAttributesOps extends AttributesModule {
       attributeValuesCalculator.calculate(attributeNames, rules: _*)
     }
 
-    val attributeNames = attributeNamesReader.read(p, AllAttributeNames)
     Future.sequence(calculateAttributeValues(attributeNames).map(p => p._2.map((p._1, _))))
-
   }
 
-  def setQueueAttributes(p: AnyParams, queueActor: ActorRef, queueManagerActor: ActorRef)(implicit
+  def setQueueAttributes(attributes: Map[String, String], queueActor: ActorRef, queueManagerActor: ActorRef)(implicit
       timeout: Timeout,
       executionContext: ExecutionContext
   ) = {
-    val attributes = attributeNameAndValuesReader.read(p)
-
     attributes.map({ case (attributeName, attributeValue) =>
       attributeName match {
         case VisibilityTimeoutParameter =>
@@ -167,6 +162,7 @@ trait QueueAttributesOps extends AttributesModule {
           queueActor ? UpdateQueueDelay(Duration.standardSeconds(attributeValue.toLong))
         case ReceiveMessageWaitTimeSecondsAttribute =>
           queueActor ? UpdateQueueReceiveMessageWait(Duration.standardSeconds(attributeValue.toLong))
+
         case RedrivePolicyParameter =>
           val redrivePolicy =
             try {

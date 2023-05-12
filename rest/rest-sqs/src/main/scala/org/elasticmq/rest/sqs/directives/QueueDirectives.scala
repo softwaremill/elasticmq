@@ -7,7 +7,11 @@ import akka.http.scaladsl.server._
 import org.elasticmq.QueueData
 import org.elasticmq.actor.reply._
 import org.elasticmq.msg.{GetQueueData, LookupQueue}
+import org.elasticmq.rest.sqs.Constants.QueueUrlParameter
 import org.elasticmq.rest.sqs._
+import org.elasticmq.rest.sqs.directives.QueueDirectives.AccountIdRegex
+
+import scala.util.matching.Regex
 
 trait QueueDirectives {
   this: Directives
@@ -15,71 +19,39 @@ trait QueueDirectives {
     with ContextPathModule
     with ActorSystemModule
     with FutureDirectives
-    with AnyParamDirectives =>
+   =>
 
-  def queueNameFromParams(p: AnyParams): Directive1[String] =
-    p.requiredParam("QueueName")
+  def queueActorFromUrl(queueUrl: String)(body: ActorRef => Route): Route =
+    getQueueNameFromQueueUrl(queueUrl)(queueName => queueActor(queueName, body))
 
-  def queueDataFromParams(p: AnyParams)(body: QueueData => Route): Route = {
-    queueNameFromParams(p) { queueName => queueActor(queueName, queueData(_, body)) }
-  }
-
-  def queueActorFromRequest(p: AnyParams)(body: ActorRef => Route): Route = {
-    queueNameFromRequest(p) { queueName => queueActor(queueName, body) }
-  }
-
-  def queueActorAndDataFromRequest(p: AnyParams)(body: (ActorRef, QueueData) => Route): Route = {
-    queueNameFromRequest(p) { queueName => queueActor(queueName, qa => queueData(qa, qd => body(qa, qd))) }
-  }
-
-  def queueActorAndNameFromRequest(p: AnyParams)(body: (ActorRef, String) => Route): Route = {
-    queueNameFromRequest(p) { queueName => queueActor(queueName, qa => body(qa, queueName)) }
+  def queueActorAndNameFromUrl(queueUrl: String)(body: (ActorRef, String) => Route): Route = {
+    getQueueNameFromQueueUrl(queueUrl) { queueName => queueActor(queueName, qa => body(qa, queueName)) }
   }
 
   def queueActorAndDataFromQueueName(queueName: String)(body: (ActorRef, QueueData) => Route): Route = {
     queueActor(queueName, qa => queueData(qa, qd => body(qa, qd)))
   }
 
-  private val queueUrlParameter = "QueueUrl"
-
-  private def queueUrlFromParams(p: AnyParams): Directive1[String] =
-    p.requiredParam(queueUrlParameter)
-
-  private val accountIdRegex = "[a-zA-Z0-9]+".r
-
-  private def queueNameFromRequest(p: AnyParams)(body: String => Route): Route = {
-    val pathDirective =
-      if (contextPath.nonEmpty)
-        pathPrefix(contextPath / accountIdRegex / Segment).tmap(_._2) |
-          pathPrefix(contextPath / Segment)
-      else
-        pathPrefix(accountIdRegex / Segment).tmap(_._2) |
-          pathPrefix(Segment)
-
-    val queueNameDirective =
-      checkOnlyOneSegmentInUri() |
-        pathDirective |
-        queueNameFromParams(p) |
-        queueUrlFromParams(p).flatMap { queueUrl => getQueueNameFromQueueUrl(queueUrl) }
-
-    queueNameDirective(body)
+  def queueActorAndDataFromQueueUrl(queueUrl: String)(body: (ActorRef, QueueData) => Route): Route = {
+    getQueueNameFromQueueUrl(queueUrl)(queueName => queueActor(queueName, qa => queueData(qa, qd => body(qa, qd))))
   }
 
   private def getQueueNameFromQueueUrl(queueUrl: String): Directive1[String] = {
 
     val matcher =
-      if (contextPath.nonEmpty)
-        separateOnSlashes(contextPath) / accountIdRegex / "[^/]+".r
-      else
-        Slash ~ accountIdRegex / "[^/]+".r
+      if (contextPath.nonEmpty) {
+        val pathWithContext = separateOnSlashes(contextPath) / AccountIdRegex / "[^/]+".r
+        Slash ~ pathWithContext | pathWithContext
+      } else
+        Slash ~ AccountIdRegex / "[^/]+".r
 
     matcher(Uri(queueUrl).path) match {
-      case Matched(_, extractions) => provide(extractions._2): Directive1[String]
+      case Matched(_, (_, queueName)) => provide(queueName): Directive1[String]
       case Unmatched =>
         reject(
           MalformedQueryParamRejection(
-            queueUrlParameter,
-            "Invalid queue url, the path should be /<accountId>/<queueName> where accountId must match " + accountIdRegex + " regex"
+            QueueUrlParameter,
+            "Invalid queue url, the path should be /<accountId>/<queueName> where accountId must match " + AccountIdRegex + " regex"
           )
         )
     }
@@ -103,12 +75,8 @@ trait QueueDirectives {
       body(queueData)
     }
   }
-
-  private def checkOnlyOneSegmentInUri(): Directive1[String] = {
-    path(Segment).flatMap { _ =>
-      reject(WrongURLFormatRejection("Provided only queueName instead of the full URL")): Directive1[String]
-    }
-  }
 }
 
-final case class WrongURLFormatRejection(fieldName: String) extends Rejection
+object QueueDirectives {
+  val AccountIdRegex: Regex = "[a-zA-Z0-9]+".r
+}

@@ -119,3 +119,5 @@ trait AttributesModule {
     }
   }
 }
+
+object AttributesModule extends AttributesModule

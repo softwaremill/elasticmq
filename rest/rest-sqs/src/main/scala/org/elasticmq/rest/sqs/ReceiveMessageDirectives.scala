@@ -7,7 +7,12 @@ import org.elasticmq.rest.sqs.Action.ReceiveMessage
 import org.elasticmq.rest.sqs.Constants._
 import org.elasticmq.rest.sqs.MD5Util._
 import org.elasticmq.rest.sqs.directives.ElasticMQDirectives
+import org.elasticmq.rest.sqs.model.RequestPayload
 import org.joda.time.Duration
+import spray.json.DefaultJsonProtocol.{StringJsonFormat, jsonFormat7}
+import spray.json.RootJsonFormat
+import spray.json.DefaultJsonProtocol._
+import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 
 import scala.xml.Elem
 
@@ -33,16 +38,17 @@ trait ReceiveMessageDirectives {
       MessageGroupIdAttribute :: AWSTraceHeaderAttribute :: SequenceNumberAttribute :: Nil
   }
 
-  def receiveMessage(p: AnyParams) = {
+  def receiveMessage(p: RequestPayload, protocol: AWSProtocol) = {
     import MessageReadeableAttributeNames._
 
     p.action(ReceiveMessage) {
-      queueActorAndDataFromRequest(p) { (queueActor, queueData) =>
-        val visibilityTimeoutParameterOpt = p.get(VisibilityTimeoutParameter).map(_.toInt)
-        val maxNumberOfMessagesAttributeOpt = p.get(MaxNumberOfMessagesAttribute).map(_.toInt)
-        val waitTimeSecondsAttributeOpt = p.get(WaitTimeSecondsAttribute).map(_.toLong)
+      val requestParameters = p.as[ReceiveMessageActionRequest]
+      queueActorAndDataFromQueueUrl(requestParameters.QueueUrl) { (queueActor, queueData) =>
+        val visibilityTimeoutParameterOpt: Option[Int] = requestParameters.VisibilityTimeout
+        val maxNumberOfMessagesAttributeOpt: Option[Int] = requestParameters.MaxNumberOfMessages
+        val waitTimeSecondsAttributeOpt: Option[Long] = requestParameters.WaitTimeSeconds
 
-        val receiveRequestAttemptId = p.get(ReceiveRequestAttemptIdAttribute) match {
+        val receiveRequestAttemptId = requestParameters.ReceiveRequestAttemptId match {
           // ReceiveRequestAttemptIdAttribute is only supported for FIFO queues
           case Some(v) if !queueData.isFifo =>
             throw SQSException.invalidQueueTypeParameter(v, ReceiveRequestAttemptIdAttribute)
@@ -68,7 +74,7 @@ trait ReceiveMessageDirectives {
         val waitTimeSecondsFromParameters =
           waitTimeSecondsAttributeOpt.map(Duration.standardSeconds)
 
-        val messageAttributeNames = getMessageAttributeNames(p)
+        val messageAttributeNames = requestParameters.MessageAttributeNames.getOrElse(List.empty)
 
         Limits
           .verifyNumberOfMessagesFromParameters(maxNumberOfMessagesFromParameters, sqsLimits)
@@ -87,8 +93,7 @@ trait ReceiveMessageDirectives {
           receiveRequestAttemptId
         )
 
-        val attributeNames = attributeNamesReader.read(p, AllAttributeNames)
-
+        val attributeNames = requestParameters.AttributeNames.getOrElse(List.empty)
         def calculateAttributeValues(msg: MessageData): List[(String, String)] = {
           import AttributeValuesCalculator.Rule
 
@@ -147,30 +152,137 @@ trait ReceiveMessageDirectives {
           }
         }
 
+        def messagesToJson(messages: List[MessageData]): List[Message] =
+          messages.map { message =>
+            val receipt = message.deliveryReceipt
+              .map(_.receipt)
+              .getOrElse(throw new RuntimeException("No receipt for a received msg."))
+            val filteredMessageAttributes = getFilteredAttributeNames(messageAttributeNames, message)
+
+            Message(
+              Attributes = calculateAttributeValues(message).toMap,
+              Body = message.content,
+              MD5OfBody = md5Digest(message.content),
+              MD5OfMessageAttributes =
+                if (filteredMessageAttributes.nonEmpty) Some(md5AttributeDigest(filteredMessageAttributes)) else None,
+              MessageAttributes = filteredMessageAttributes,
+              MessageId = message.id.id,
+              ReceiptHandle = receipt
+            )
+          }
+
         msgsFuture.map { messages =>
-          respondWith {
-            <ReceiveMessageResponse> {
-              if (messages.isEmpty)
-                <ReceiveMessageResult/>
-              else
-                <ReceiveMessageResult>{messagesToXml(messages)}</ReceiveMessageResult>
+          protocol match {
+            case AWSProtocol.AWSQueryProtocol =>
+              respondWith {
+                <ReceiveMessageResponse>
+                  {
+                  if (messages.isEmpty)
+                    <ReceiveMessageResult/>
+                  else
+                    <ReceiveMessageResult>
+                    {messagesToXml(messages)}
+                  </ReceiveMessageResult>
+                }<ResponseMetadata>
+                  <RequestId>
+                    {EmptyRequestId}
+                  </RequestId>
+                </ResponseMetadata>
+                </ReceiveMessageResponse>
+              }
+            case _ => {
+              val jsonMessages: List[Message] = messagesToJson(messages)
+              complete(ReceiveMessageResponse(jsonMessages))
             }
-              <ResponseMetadata>
-                <RequestId>{EmptyRequestId}</RequestId>
-              </ResponseMetadata>
-            </ReceiveMessageResponse>
           }
         }
       }
     }
   }
 
-  def getMessageAttributeNames(p: AnyParams): Iterable[String] = {
-    p.filterKeys(k =>
-      MessageReadeableAttributeNames.MessageAttributeNamePattern
-        .findFirstIn(k)
-        .isDefined
-    ).values
+  case class ReceiveMessageActionRequest(
+      AttributeNames: Option[List[String]],
+      MaxNumberOfMessages: Option[Int],
+      MessageAttributeNames: Option[List[String]],
+      QueueUrl: String,
+      ReceiveRequestAttemptId: Option[String],
+      VisibilityTimeout: Option[Int],
+      WaitTimeSeconds: Option[Long]
+  )
+
+  object ReceiveMessageActionRequest {
+    def apply(
+        AttributeNames: Option[List[String]],
+        MaxNumberOfMessages: Option[Int],
+        MessageAttributeNames: Option[List[String]],
+        QueueUrl: String,
+        ReceiveRequestAttemptId: Option[String],
+        VisibilityTimeout: Option[Int],
+        WaitTimeSeconds: Option[Long]
+    ): ReceiveMessageActionRequest = {
+      new ReceiveMessageActionRequest(
+        AttributeNames =
+          AttributeNames.map(atr => if (atr.contains("All")) MessageReadeableAttributeNames.AllAttributeNames else atr),
+        MaxNumberOfMessages = MaxNumberOfMessages,
+        MessageAttributeNames = MessageAttributeNames,
+        QueueUrl = QueueUrl,
+        ReceiveRequestAttemptId = ReceiveRequestAttemptId,
+        VisibilityTimeout = VisibilityTimeout,
+        WaitTimeSeconds = WaitTimeSeconds
+      )
+    }
+
+    implicit val requestJsonFormat: RootJsonFormat[ReceiveMessageActionRequest] = jsonFormat7(
+      ReceiveMessageActionRequest.apply
+    )
+
+    implicit val requestParamReader: FlatParamsReader[ReceiveMessageActionRequest] =
+      new FlatParamsReader[ReceiveMessageActionRequest] {
+        override def read(params: Map[String, String]): ReceiveMessageActionRequest = {
+          val attributeNames = attributeNamesReader.read(params, MessageReadeableAttributeNames.AllAttributeNames)
+          val maxNumberOfMessages = params.get(MessageReadeableAttributeNames.MaxNumberOfMessagesAttribute).map(_.toInt)
+          val messageAttributeNames = getMessageAttributeNames(params).toList
+          val queueUrl = requiredParameter(params)(QueueUrlParameter)
+          val receiveRequestAttemptId = params.get(MessageReadeableAttributeNames.ReceiveRequestAttemptIdAttribute)
+          val visibilityTimeout = params.get(VisibilityTimeoutParameter).map(_.toInt)
+          val waitTimeSeconds = params.get(MessageReadeableAttributeNames.WaitTimeSecondsAttribute).map(_.toLong)
+          ReceiveMessageActionRequest(
+            Some(attributeNames),
+            maxNumberOfMessages,
+            Some(messageAttributeNames),
+            queueUrl,
+            receiveRequestAttemptId,
+            visibilityTimeout,
+            waitTimeSeconds
+          )
+        }
+      }
+
+    def getMessageAttributeNames(p: Map[String, String]): Iterable[String] = {
+      p.filterKeys(k =>
+        MessageReadeableAttributeNames.MessageAttributeNamePattern
+          .findFirstIn(k)
+          .isDefined
+      ).values
+    }
+  }
+
+  case class ReceiveMessageResponse(Messages: List[Message])
+  object ReceiveMessageResponse {
+    implicit val responseJsonFormat: RootJsonFormat[ReceiveMessageResponse] = jsonFormat1(ReceiveMessageResponse.apply)
+  }
+
+  case class Message(
+      Attributes: Map[String, String],
+      Body: String,
+      MD5OfBody: String,
+      MD5OfMessageAttributes: Option[String],
+      MessageAttributes: Map[String, MessageAttribute],
+      MessageId: String,
+      ReceiptHandle: String
+  )
+  object Message extends MessageAttributesSupport {
+    implicit val responseJsonFormat: RootJsonFormat[Message] = jsonFormat7(Message.apply)
   }
 
 }
