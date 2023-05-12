@@ -10,7 +10,7 @@ import org.elasticmq._
 import org.elasticmq.actor.QueueManagerActor
 import org.elasticmq.metrics.QueuesMetrics
 import org.elasticmq.rest.sqs.Constants._
-import org.elasticmq.rest.sqs.directives.{ElasticMQDirectives, UnmatchedActionRoutes}
+import org.elasticmq.rest.sqs.directives.{AWSProtocolDirectives, ElasticMQDirectives, UnmatchedActionRoutes}
 import org.elasticmq.util.{Logging, NowProvider}
 
 import java.io.ByteArrayOutputStream
@@ -142,6 +142,7 @@ case class TheSQSRestServerBuilder(
       with ElasticMQDirectives
       with CreateQueueDirectives
       with DeleteQueueDirectives
+      with AWSProtocolDirectives
       with QueueAttributesDirectives
       with ListQueuesDirectives
       with SendMessageDirectives
@@ -175,7 +176,7 @@ case class TheSQSRestServerBuilder(
     }
 
     import env._
-    def rawRoutes(p: AnyParams) =
+    def rawRoutes(p: AnyParams, protocol: AWSProtocol) =
       // 1. Sending, receiving, deleting messages
       sendMessage(p) ~
         sendMessageBatch(p) ~
@@ -184,8 +185,8 @@ case class TheSQSRestServerBuilder(
         deleteMessageBatch(p) ~
         // 2. Getting, creating queues
         getQueueUrl(p) ~
-        createQueue(p) ~
-        listQueues(p) ~
+        createQueue(p, protocol) ~
+        listQueues(p, protocol) ~
         purgeQueue(p) ~
         // 3. Other
         changeMessageVisibility(p) ~
@@ -205,14 +206,16 @@ case class TheSQSRestServerBuilder(
     implicit val bindingTimeout = Timeout(10, TimeUnit.SECONDS)
 
     val routes =
-      handleServerExceptions {
-        handleRejectionsWithSQSError {
-          anyParamsMap { p =>
-            if (config.debug) {
-              logRequestResult("") {
-                rawRoutes(p)
-              }
-            } else rawRoutes(p)
+      extractProtocol { protocol =>
+        handleServerExceptions {
+          handleRejectionsWithSQSError {
+            anyParamsMap(protocol) { p =>
+              if (config.debug) {
+                logRequestResult("") {
+                  rawRoutes(p, protocol)
+                }
+              } else rawRoutes(p, protocol)
+            }
           }
         }
       }

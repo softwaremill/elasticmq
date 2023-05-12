@@ -1,5 +1,6 @@
 package org.elasticmq.rest.sqs
 
+import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import org.elasticmq._
 import org.elasticmq.actor.reply._
 import org.elasticmq.msg.{LookupQueue, CreateQueue => CreateQueueMsg}
@@ -9,6 +10,7 @@ import org.elasticmq.rest.sqs.ParametersUtil._
 import org.elasticmq.rest.sqs.directives.ElasticMQDirectives
 import org.elasticmq.rest.sqs.model.RedrivePolicy.BackwardCompatibleRedrivePolicy
 import org.joda.time.Duration
+import spray.json.DefaultJsonProtocol._
 import spray.json.JsonParser.ParsingException
 import spray.json._
 
@@ -18,7 +20,7 @@ import scala.concurrent.Future
 trait CreateQueueDirectives {
   this: ElasticMQDirectives with QueueURLModule with AttributesModule with TagsModule with SQSLimitsModule =>
 
-  def createQueue(p: AnyParams) = {
+  def createQueue(p: AnyParams, protocol: AWSProtocol) = {
     p.action(CreateQueue) {
       rootPath {
         queueNameFromParams(p) { queueName =>
@@ -80,15 +82,19 @@ trait CreateQueueDirectives {
             await(lookupOrCreateQueue(newQueueData))
 
             queueURL(queueName) { url =>
-              respondWith {
-                <CreateQueueResponse>
-                  <CreateQueueResult>
-                    <QueueUrl>{url}</QueueUrl>
-                  </CreateQueueResult>
-                  <ResponseMetadata>
-                    <RequestId>{EmptyRequestId}</RequestId>
-                  </ResponseMetadata>
-                </CreateQueueResponse>
+              protocol match {
+                case AWSProtocol.`AWSJsonProtocol1.0` => complete(CreateQueueResponse(url))
+                case _ =>
+                  respondWith {
+                    <CreateQueueResponse>
+                      <CreateQueueResult>
+                        <QueueUrl>{url}</QueueUrl>
+                      </CreateQueueResult>
+                      <ResponseMetadata>
+                        <RequestId>{EmptyRequestId}</RequestId>
+                      </ResponseMetadata>
+                    </CreateQueueResponse>
+                  }
               }
             }
           }
@@ -107,4 +113,10 @@ trait CreateQueueDirectives {
       }
     }
   }
+}
+
+case class CreateQueueResponse(QueueUrl: String)
+
+object CreateQueueResponse {
+  implicit val format: RootJsonFormat[CreateQueueResponse] = jsonFormat1(CreateQueueResponse.apply)
 }
