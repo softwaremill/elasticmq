@@ -16,15 +16,16 @@ trait AnyParamDirectives {
         provide(FormData.Empty)
     }
 
+  private val actionHeaderPattern = """^AmazonSQS\.(\w+)$""".r
   private def extractActionFromHeader(request: HttpRequest) =
     request.headers
       .find(_.name() == "X-Amz-Target")
-      .map { header =>
-        header.value() match {
-          case s"AmazonSQS.$action" => Map("Action" -> action)
-          case _                    => Map.empty[String, String]
+      .map(
+        _.value() match {
+          case actionHeaderPattern(action) => Map("Action" -> action)
+          case _                           => Map.empty[String, String]
         }
-      }
+      )
       .getOrElse(Map.empty)
   private def extractAwsXRayTracingHeader(request: HttpRequest): Map[String, String] = {
     request.headers
