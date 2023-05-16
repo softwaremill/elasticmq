@@ -7,6 +7,7 @@ import org.elasticmq.util.Logging
 trait ElasticMQDirectives
     extends Directives
     with RespondDirectives
+    with AWSProtocolDirectives
     with FutureDirectives
     with ExceptionDirectives
     with QueueDirectives

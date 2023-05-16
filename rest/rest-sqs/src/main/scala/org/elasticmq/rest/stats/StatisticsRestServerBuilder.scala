@@ -1,13 +1,12 @@
 package org.elasticmq.rest.stats
 
 import java.util.concurrent.TimeUnit
-
 import akka.actor.{ActorRef, ActorSystem}
 import akka.http.scaladsl.Http
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
-import org.elasticmq.rest.sqs.QueueAttributesOps
-import org.elasticmq.rest.sqs.directives.ElasticMQDirectives
+import org.elasticmq.rest.sqs.{AWSProtocol, QueueAttributesOps}
+import org.elasticmq.rest.sqs.directives.{AWSProtocolDirectives, ElasticMQDirectives}
 import org.elasticmq.util.{Logging, NowProvider}
 
 import scala.concurrent.duration._
@@ -72,7 +71,7 @@ case class TheStatisticsRestServerBuilder(
     implicit val implicitActorSystem = providedActorSystem
     implicit val implicitMaterializer = ActorMaterializer()
 
-    val env = new StatisticsDirectives with QueueAttributesOps with ElasticMQDirectives {
+    val env = new StatisticsDirectives with QueueAttributesOps with ElasticMQDirectives with AWSProtocolDirectives {
 
       lazy val actorSystem = providedActorSystem
       lazy val materializer = implicitMaterializer
@@ -87,10 +86,13 @@ case class TheStatisticsRestServerBuilder(
 
     import env._
 
-    val routes =
-      handleServerExceptions {
-        statistics
+    val routes = {
+      extractProtocol{protocol =>
+        handleServerExceptions(protocol) {
+          statistics
+        }
       }
+    }
 
     val appStartFuture = Http().newServerAt(interface, port).bindFlow(routes)
 

@@ -207,8 +207,8 @@ case class TheSQSRestServerBuilder(
 
     val routes =
       extractProtocol { protocol =>
-        handleServerExceptions {
-          handleRejectionsWithSQSError {
+        handleServerExceptions(protocol) {
+          handleRejectionsWithSQSError(protocol) {
             anyParamsMap(protocol) { p =>
               if (config.debug) {
                 logRequestResult("") {
