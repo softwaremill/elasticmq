@@ -28,7 +28,8 @@ class QueueDirectivesTest
     with FutureDirectives
     with ActorSystemModule
     with ExceptionDirectives
-    with RespondDirectives {
+    with RespondDirectives
+    with AWSProtocolDirectives {
 
   private val maxDuration = 1.minute
   implicit val timeout: Timeout = maxDuration
@@ -82,10 +83,12 @@ class QueueDirectivesTest
     )
     Await.result(future, maxDuration)
     val route = {
-      handleServerExceptions {
-        queueActorAndNameFromRequest(
-          Map("QueueUrl" -> "https://eu-central-1.queue.amazonaws.com")
-        ) { (_, name) => _.complete(name) }
+      extractProtocol { protocol =>
+        handleServerExceptions(protocol) {
+          queueActorAndNameFromRequest(
+            Map("QueueUrl" -> "https://eu-central-1.queue.amazonaws.com")
+          ) { (_, name) => _.complete(name) }
+        }
       }
     }
 

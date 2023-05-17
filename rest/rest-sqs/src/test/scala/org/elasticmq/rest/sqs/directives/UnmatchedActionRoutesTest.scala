@@ -13,12 +13,15 @@ class UnmatchedActionRoutesTest
     with Directives
     with RespondDirectives
     with UnmatchedActionRoutes
-    with ExceptionDirectives {
+    with ExceptionDirectives
+    with AWSProtocolDirectives {
 
   "handleUnmatchedAction" should "return invalid action error if an action is unknown" in {
     val route = {
-      handleServerExceptions {
-        unmatchedAction(Map("Action" -> "Whatever"))
+      extractProtocol { protocol =>
+        handleServerExceptions(protocol) {
+          unmatchedAction(Map("Action" -> "Whatever"))
+        }
       }
     }
 
@@ -30,8 +33,10 @@ class UnmatchedActionRoutesTest
 
   it should "return invalid action error if an action is empty" in {
     val route = {
-      handleServerExceptions {
-        unmatchedAction(Map("Action" -> ""))
+      extractProtocol { protocol =>
+        handleServerExceptions(protocol) {
+          unmatchedAction(Map("Action" -> ""))
+        }
       }
     }
 
@@ -43,8 +48,10 @@ class UnmatchedActionRoutesTest
 
   it should "return missing action error if there's no action" in {
     val route = {
-      handleServerExceptions {
-        unmatchedAction(Map.empty)
+      extractProtocol { protocol =>
+        handleServerExceptions(protocol) {
+          unmatchedAction(Map.empty)
+        }
       }
     }
 

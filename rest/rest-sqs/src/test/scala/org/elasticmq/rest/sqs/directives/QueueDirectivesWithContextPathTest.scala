@@ -29,7 +29,8 @@ class QueueDirectivesWithContextPathTest
     with FutureDirectives
     with ActorSystemModule
     with ExceptionDirectives
-    with RespondDirectives {
+    with RespondDirectives
+    with AWSProtocolDirectives {
 
   private val maxDuration = 1.minute
   implicit val timeout: Timeout = maxDuration

@@ -28,24 +28,75 @@ trait SendMessageDirectives { this: ElasticMQDirectives with SQSLimitsModule =>
   val AwsTraceHeaderSystemAttribute = "AWSTraceHeader"
   val AwsTraceIdHeaderName = "X-Amzn-Trace-Id"
 
-  def sendMessage(p: AnyParams): Route = {
+  def sendMessage(p: AnyParams, protocol: AWSProtocol): Route = {
     p.action(SendMessageAction) {
       queueActorAndDataFromRequest(p) { (queueActor, queueData) =>
         val message = createMessage(p, queueData, orderIndex = 0)
 
         doSendMessage(queueActor, message).map { case (message, digest, messageAttributeDigest) =>
-          respondWith {
-            <SendMessageResponse>
-                <SendMessageResult>
-                  {messageAttributeDigest.map(d => <MD5OfMessageAttributes>{d}</MD5OfMessageAttributes>).getOrElse(())}
-                  <MD5OfMessageBody>{digest}</MD5OfMessageBody>
-                  <MessageId>{message.id.id}</MessageId>
-                  {message.sequenceNumber.map(x => <SequenceNumber>{x}</SequenceNumber>).getOrElse(())}
-                </SendMessageResult>
-                <ResponseMetadata>
-                  <RequestId>{EmptyRequestId}</RequestId>
-                </ResponseMetadata>
-              </SendMessageResponse>
+          protocol match {
+            case AWSProtocol.AWSQueryProtocol =>
+              respondWith {
+                <SendMessageResponse>
+                  <SendMessageResult>
+                    {
+                  messageAttributeDigest
+                    .map(d => <MD5OfMessageAttributes>
+                      {d}
+                    </MD5OfMessageAttributes>)
+                    .getOrElse(())
+                }<MD5OfMessageBody>
+                    {digest}
+                  </MD5OfMessageBody>
+                    <MessageId>
+                      {message.id.id}
+                    </MessageId>{
+                  message.sequenceNumber
+                    .map(x => <SequenceNumber>
+                      {x}
+                    </SequenceNumber>)
+                    .getOrElse(())
+                }
+                  </SendMessageResult>
+                  <ResponseMetadata>
+                    <RequestId>
+                      {EmptyRequestId}
+                    </RequestId>
+                  </ResponseMetadata>
+                </SendMessageResponse>
+              }
+            case _ =>
+              //complete(???) //TODO case class for message left for now so it can compile (fixing tests)
+              respondWith {
+                <SendMessageResponse>
+                  <SendMessageResult>
+                    {
+                  messageAttributeDigest
+                    .map(d => <MD5OfMessageAttributes>
+                      {d}
+                    </MD5OfMessageAttributes>)
+                    .getOrElse(())
+                }<MD5OfMessageBody>
+                    {digest}
+                  </MD5OfMessageBody>
+                    <MessageId>
+                      {message.id.id}
+                    </MessageId>{
+                  message.sequenceNumber
+                    .map(x => <SequenceNumber>
+                      {x}
+                    </SequenceNumber>)
+                    .getOrElse(())
+                }
+                  </SendMessageResult>
+                  <ResponseMetadata>
+                    <RequestId>
+                      {EmptyRequestId}
+                    </RequestId>
+                  </ResponseMetadata>
+                </SendMessageResponse>
+              }
+
           }
         }
       }
