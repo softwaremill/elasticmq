@@ -1,5 +1,6 @@
 package org.elasticmq.rest.sqs
 
+import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.actor.ActorRef
 import akka.http.scaladsl.server.Route
 import org.elasticmq._
@@ -16,6 +17,8 @@ import org.elasticmq.rest.sqs.model.{
   NumberMessageSystemAttribute,
   StringMessageSystemAttribute
 }
+import spray.json.DefaultJsonProtocol._
+import spray.json.RootJsonFormat
 
 import scala.concurrent.Future
 
@@ -39,24 +42,10 @@ trait SendMessageDirectives { this: ElasticMQDirectives with SQSLimitsModule =>
               respondWith {
                 <SendMessageResponse>
                   <SendMessageResult>
-                    {
-                  messageAttributeDigest
-                    .map(d => <MD5OfMessageAttributes>
-                      {d}
-                    </MD5OfMessageAttributes>)
-                    .getOrElse(())
-                }<MD5OfMessageBody>
-                    {digest}
-                  </MD5OfMessageBody>
-                    <MessageId>
-                      {message.id.id}
-                    </MessageId>{
-                  message.sequenceNumber
-                    .map(x => <SequenceNumber>
-                      {x}
-                    </SequenceNumber>)
-                    .getOrElse(())
-                }
+                    {messageAttributeDigest.map(d => <MD5OfMessageAttributes>{d}</MD5OfMessageAttributes>).getOrElse(())}
+                    <MD5OfMessageBody>{digest}</MD5OfMessageBody>
+                    <MessageId>{message.id.id}</MessageId>
+                    {message.sequenceNumber.map(x => <SequenceNumber>{x}</SequenceNumber>).getOrElse(())}
                   </SendMessageResult>
                   <ResponseMetadata>
                     <RequestId>
@@ -66,41 +55,23 @@ trait SendMessageDirectives { this: ElasticMQDirectives with SQSLimitsModule =>
                 </SendMessageResponse>
               }
             case _ =>
-              //complete(???) //TODO case class for message left for now so it can compile (fixing tests)
-              respondWith {
-                <SendMessageResponse>
-                  <SendMessageResult>
-                    {
-                  messageAttributeDigest
-                    .map(d => <MD5OfMessageAttributes>
-                      {d}
-                    </MD5OfMessageAttributes>)
-                    .getOrElse(())
-                }<MD5OfMessageBody>
-                    {digest}
-                  </MD5OfMessageBody>
-                    <MessageId>
-                      {message.id.id}
-                    </MessageId>{
-                  message.sequenceNumber
-                    .map(x => <SequenceNumber>
-                      {x}
-                    </SequenceNumber>)
-                    .getOrElse(())
-                }
-                  </SendMessageResult>
-                  <ResponseMetadata>
-                    <RequestId>
-                      {EmptyRequestId}
-                    </RequestId>
-                  </ResponseMetadata>
-                </SendMessageResponse>
-              }
-
+              complete(SendMessageResponse(messageAttributeDigest, digest, messageAttributeDigest, message.id.id, message.sequenceNumber))
           }
         }
       }
     }
+  }
+
+  case class SendMessageResponse(
+      MD5OfMessageAttributes: Option[String],
+      MD5OfMessageBody: String,
+      MD5OfMessageSystemAttributes: Option[String],
+      MessageId: String,
+      SequenceNumber: Option[String]
+  )
+
+  object SendMessageResponse {
+    implicit val format: RootJsonFormat[SendMessageResponse] = jsonFormat5(SendMessageResponse.apply)
   }
 
   def getMessageAttributes(parameters: Map[String, String]): Map[String, MessageAttribute] = {
