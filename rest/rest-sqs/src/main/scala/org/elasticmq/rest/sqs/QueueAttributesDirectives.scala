@@ -1,16 +1,20 @@
 package org.elasticmq.rest.sqs
 
+import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
+import akka.http.scaladsl.model.HttpEntity
 import akka.http.scaladsl.server.Route
 import org.elasticmq.rest.sqs.Action.{GetQueueAttributes, SetQueueAttributes}
 import org.elasticmq.rest.sqs.Constants._
 import org.elasticmq.rest.sqs.directives.ElasticMQDirectives
+import spray.json.RootJsonFormat
+import spray.json.DefaultJsonProtocol._
 
 import scala.concurrent.Future
 
 trait QueueAttributesDirectives {
   this: ElasticMQDirectives with QueueAttributesOps =>
 
-  def getQueueAttributes(p: AnyParams): Route = {
+  def getQueueAttributes(p: AnyParams, protocol: AWSProtocol): Route = {
     p.action(GetQueueAttributes) {
       queueActorAndDataFromRequest(p) { (queueActor, queueData) =>
         val attributesFuture = getQueueAttributes(p, queueActor, queueData)
@@ -27,26 +31,45 @@ trait QueueAttributesDirectives {
         }
 
         attributesFuture.map { attributes =>
-          respondWith {
-            responseXml(attributes)
+          protocol match {
+            case AWSProtocol.AWSQueryProtocol =>
+              respondWith {
+                responseXml(attributes)
+              }
+            case _ => {
+              println(attributes)
+              complete(200, HttpEntity.Empty)
+            }
           }
         }
       }
     }
   }
 
-  def setQueueAttributes(p: AnyParams): Route = {
+  case class GetQueueAttributesResponse(Attributes: List[String])
+
+  object GetQueueAttributesResponse {
+    implicit val format: RootJsonFormat[GetQueueAttributesResponse] = jsonFormat1(GetQueueAttributesResponse.apply)
+  }
+
+  def setQueueAttributes(p: AnyParams, protocol: AWSProtocol): Route = {
     p.action(SetQueueAttributes) {
       queueActorFromRequest(p) { queueActor =>
         val result = setQueueAttributes(p, queueActor, queueManagerActor)
 
         Future.sequence(result).map { _ =>
-          respondWith {
-            <SetQueueAttributesResponse>
-              <ResponseMetadata>
-                <RequestId>{EmptyRequestId}</RequestId>
-              </ResponseMetadata>
-            </SetQueueAttributesResponse>
+          protocol match {
+            case AWSProtocol.AWSQueryProtocol =>
+              respondWith {
+                <SetQueueAttributesResponse>
+                  <ResponseMetadata>
+                    <RequestId>
+                      {EmptyRequestId}
+                    </RequestId>
+                  </ResponseMetadata>
+                </SetQueueAttributesResponse>
+              }
+            case _ => complete(status = 200, HttpEntity.Empty)
           }
         }
       }

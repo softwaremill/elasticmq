@@ -181,19 +181,19 @@ case class TheSQSRestServerBuilder(
       sendMessage(p, protocol) ~
         sendMessageBatch(p) ~
         receiveMessage(p) ~
-        deleteMessage(p) ~
+        deleteMessage(p, protocol) ~
         deleteMessageBatch(p) ~
         // 2. Getting, creating queues
         getQueueUrl(p, protocol) ~
         createQueue(p, protocol) ~
         listQueues(p, protocol) ~
-        purgeQueue(p) ~
+        purgeQueue(p, protocol) ~
         // 3. Other
-        changeMessageVisibility(p) ~
+        changeMessageVisibility(p, protocol) ~
         changeMessageVisibilityBatch(p) ~
-        deleteQueue(p) ~
-        getQueueAttributes(p) ~
-        setQueueAttributes(p) ~
+        deleteQueue(p, protocol) ~
+        getQueueAttributes(p, protocol) ~
+        setQueueAttributes(p, protocol) ~
         addPermission(p) ~
         tagQueue(p) ~
         untagQueue(p) ~

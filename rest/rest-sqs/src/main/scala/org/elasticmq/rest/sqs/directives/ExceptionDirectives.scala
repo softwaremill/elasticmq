@@ -13,7 +13,6 @@ trait ExceptionDirectives extends Logging {
   this: Directives with RespondDirectives =>
 
   private def handleSQSException(e: SQSException, protocol: AWSProtocol): Route = {
-    println(protocol)
     protocol match {
       case AWSProtocol.AWSQueryProtocol =>
         respondWith(e.httpStatusCode) {
