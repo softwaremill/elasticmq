@@ -3,6 +3,7 @@ package org.elasticmq.rest.sqs.directives
 import akka.http.scaladsl.model.StatusCodes.BadRequest
 import akka.http.scaladsl.server.Directives
 import akka.http.scaladsl.testkit.ScalatestRouteTest
+import org.elasticmq.rest.sqs.model.RequestPayload
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
@@ -20,7 +21,7 @@ class UnmatchedActionRoutesTest
     val route = {
       extractProtocol { protocol =>
         handleServerExceptions(protocol) {
-          unmatchedAction(Map("Action" -> "Whatever"))
+          unmatchedAction(RequestPayload.QueryParams(Map("Action" -> "Whatever")))
         }
       }
     }
@@ -35,7 +36,7 @@ class UnmatchedActionRoutesTest
     val route = {
       extractProtocol { protocol =>
         handleServerExceptions(protocol) {
-          unmatchedAction(Map("Action" -> ""))
+          unmatchedAction(RequestPayload.QueryParams(Map("Action" -> "")))
         }
       }
     }
@@ -50,7 +51,7 @@ class UnmatchedActionRoutesTest
     val route = {
       extractProtocol { protocol =>
         handleServerExceptions(protocol) {
-          unmatchedAction(Map.empty)
+          unmatchedAction(RequestPayload.QueryParams(Map.empty))
         }
       }
     }

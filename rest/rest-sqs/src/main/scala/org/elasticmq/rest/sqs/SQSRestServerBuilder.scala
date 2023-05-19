@@ -11,6 +11,8 @@ import org.elasticmq.actor.QueueManagerActor
 import org.elasticmq.metrics.QueuesMetrics
 import org.elasticmq.rest.sqs.Constants._
 import org.elasticmq.rest.sqs.directives.{AWSProtocolDirectives, ElasticMQDirectives, UnmatchedActionRoutes}
+import org.elasticmq.rest.sqs.model.RequestPayload
+import org.elasticmq.rest.sqs.model.RequestPayload.QueryParams
 import org.elasticmq.util.{Logging, NowProvider}
 
 import java.io.ByteArrayOutputStream
@@ -176,28 +178,28 @@ case class TheSQSRestServerBuilder(
     }
 
     import env._
-    def rawRoutes(p: AnyParams, protocol: AWSProtocol) =
+    def rawRoutes(p: RequestPayload, protocol: AWSProtocol) =
       // 1. Sending, receiving, deleting messages
-      sendMessage(p, protocol) ~
-        sendMessageBatch(p) ~
-        receiveMessage(p) ~
-        deleteMessage(p, protocol) ~
-        deleteMessageBatch(p) ~
-        // 2. Getting, creating queues
-        getQueueUrl(p, protocol) ~
+//      sendMessage(p, protocol) ~
+//        sendMessageBatch(p) ~
+//        receiveMessage(p) ~
+//        deleteMessage(p) ~
+//        deleteMessageBatch(p) ~
+//        // 2. Getting, creating queues
+//        getQueueUrl(p, protocol) ~
         createQueue(p, protocol) ~
-        listQueues(p, protocol) ~
-        purgeQueue(p, protocol) ~
-        // 3. Other
-        changeMessageVisibility(p, protocol) ~
-        changeMessageVisibilityBatch(p) ~
-        deleteQueue(p, protocol) ~
-        getQueueAttributes(p, protocol) ~
-        setQueueAttributes(p, protocol) ~
-        addPermission(p) ~
-        tagQueue(p) ~
-        untagQueue(p) ~
-        listQueueTags(p) ~
+//        listQueues(p, protocol) ~
+//        purgeQueue(p) ~
+//        // 3. Other
+//        changeMessageVisibility(p) ~
+//        changeMessageVisibilityBatch(p) ~
+//        deleteQueue(p) ~
+//        getQueueAttributes(p) ~
+//        setQueueAttributes(p) ~
+//        addPermission(p) ~
+//        tagQueue(p, protocol) ~
+//        untagQueue(p, protocol) ~
+//        listQueueTags(p, protocol) ~
         // 4. Unmatched action
         unmatchedAction(p)
 
