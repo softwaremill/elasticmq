@@ -25,7 +25,7 @@ trait CreateQueueDirectives {
     p.action(CreateQueue) {
       rootPath {
 
-        val requestParams = p.as[CreateQueueRequest]
+        val requestParams = p.as[CreateQueueActionRequest]
         val attributes = requestParams.Attributes.getOrElse(Map.empty)
 
         val redrivePolicy =
@@ -117,17 +117,17 @@ trait CreateQueueDirectives {
   }
 }
 
-case class CreateQueueRequest(QueueName: String, Attributes: Option[Map[String, String]], tags: Option[Map[String, String]])
+case class CreateQueueActionRequest(QueueName: String, Attributes: Option[Map[String, String]], tags: Option[Map[String, String]])
 
-object CreateQueueRequest {
-  implicit val format: RootJsonFormat[CreateQueueRequest] = jsonFormat3(CreateQueueRequest.apply)
+object CreateQueueActionRequest {
+  implicit val format: RootJsonFormat[CreateQueueActionRequest] = jsonFormat3(CreateQueueActionRequest.apply)
 
-  implicit val fpr: FlatParamsReader[CreateQueueRequest] = new FlatParamsReader[CreateQueueRequest] {
-    override def read(params: Map[String, String]): CreateQueueRequest = {
+  implicit val fpr: FlatParamsReader[CreateQueueActionRequest] = new FlatParamsReader[CreateQueueActionRequest] {
+    override def read(params: Map[String, String]): CreateQueueActionRequest = {
       val attributes = AttributesModule.attributeNameAndValuesReader.read(params)
       val tags = TagsModule.tagNameAndValuesReader.read(params)
       val queueName = requiredParameter(params)("QueueName")
-      CreateQueueRequest(queueName, Some(attributes), Some(tags))
+      CreateQueueActionRequest(queueName, Some(attributes), Some(tags))
     }
   }
 }

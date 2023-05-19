@@ -8,12 +8,15 @@ import org.elasticmq.rest.sqs.directives.ElasticMQDirectives
 import spray.json.DefaultJsonProtocol._
 import spray.json.RootJsonFormat
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
+import org.elasticmq.rest.sqs.model.RequestPayload
 
 trait ListQueuesDirectives { this: ElasticMQDirectives with QueueURLModule =>
-  def listQueues(p: AnyParams, protocol: AWSProtocol) = {
+  def listQueues(p: RequestPayload, protocol: AWSProtocol) = {
     p.action(ListQueuesAction) {
       rootPath {
-        val prefixOption = p.get("QueueNamePrefix")
+        val payload = p.as[ListQueuesActionRequest]
+
+        val prefixOption = payload.QueueNamePrefix
         for {
           allQueueNames <- queueManagerActor ? ListQueues()
         } yield {
@@ -44,6 +47,29 @@ trait ListQueuesDirectives { this: ElasticMQDirectives with QueueURLModule =>
     }
   }
 }
+
+case class ListQueuesActionRequest(
+  MaxResults: Option[Int],
+  NextToken: Option[String],
+  QueueNamePrefix: Option[String]
+)
+
+object ListQueuesActionRequest {
+
+  implicit val format: RootJsonFormat[ListQueuesActionRequest] = jsonFormat3(ListQueuesActionRequest.apply)
+
+  implicit val fpr: FlatParamsReader[ListQueuesActionRequest] = new FlatParamsReader[ListQueuesActionRequest] {
+    override def read(params: Map[String, String]): ListQueuesActionRequest = {
+      new ListQueuesActionRequest(
+        params.get("MaxResults").flatMap(_.toIntOption),
+        params.get("NextToken"),
+        params.get("QueueNamePrefix")
+      )
+    }
+  }
+
+}
+
 case class ListQueuesResponse(QueueUrls: List[String])
 
 object ListQueuesResponse {
