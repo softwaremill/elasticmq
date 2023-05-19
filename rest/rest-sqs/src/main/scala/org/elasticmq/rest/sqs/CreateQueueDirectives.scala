@@ -120,9 +120,9 @@ trait CreateQueueDirectives {
 case class CreateQueueActionRequest(QueueName: String, Attributes: Option[Map[String, String]], tags: Option[Map[String, String]])
 
 object CreateQueueActionRequest {
-  implicit val format: RootJsonFormat[CreateQueueActionRequest] = jsonFormat3(CreateQueueActionRequest.apply)
+  implicit val requestJsonFormat: RootJsonFormat[CreateQueueActionRequest] = jsonFormat3(CreateQueueActionRequest.apply)
 
-  implicit val fpr: FlatParamsReader[CreateQueueActionRequest] = new FlatParamsReader[CreateQueueActionRequest] {
+  implicit val requestParamReader: FlatParamsReader[CreateQueueActionRequest] = new FlatParamsReader[CreateQueueActionRequest] {
     override def read(params: Map[String, String]): CreateQueueActionRequest = {
       val attributes = AttributesModule.attributeNameAndValuesReader.read(params)
       val tags = TagsModule.tagNameAndValuesReader.read(params)

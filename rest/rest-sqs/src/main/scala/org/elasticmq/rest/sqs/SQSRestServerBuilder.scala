@@ -188,7 +188,7 @@ case class TheSQSRestServerBuilder(
 //        // 2. Getting, creating queues
 //        getQueueUrl(p, protocol) ~
         createQueue(p, protocol) ~
-//        listQueues(p, protocol) ~
+        listQueues(p, protocol) ~
 //        purgeQueue(p) ~
 //        // 3. Other
 //        changeMessageVisibility(p) ~

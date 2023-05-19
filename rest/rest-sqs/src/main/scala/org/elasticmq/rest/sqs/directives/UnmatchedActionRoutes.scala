@@ -10,14 +10,11 @@ trait UnmatchedActionRoutes {
 
   def unmatchedAction(p: RequestPayload): Route = {
     extractRequestContext { _ =>
-      p.maybeAction match {
-        case Some(action) if Action.values.forall(_.toString != action) =>
-          logger.warn(s"Unknown action: $action")
-          throw new SQSException("InvalidAction")
-        case None =>
-          throw new SQSException("MissingAction")
-        case _ =>
-          reject
+      if (Action.values.forall(_.toString != p.action)) {
+        logger.warn(s"Unknown action: ${p.action}")
+        throw new SQSException("InvalidAction")
+      } else {
+        reject
       }
     }
   }

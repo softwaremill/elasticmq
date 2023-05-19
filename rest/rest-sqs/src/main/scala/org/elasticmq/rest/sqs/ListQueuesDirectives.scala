@@ -56,12 +56,12 @@ case class ListQueuesActionRequest(
 
 object ListQueuesActionRequest {
 
-  implicit val format: RootJsonFormat[ListQueuesActionRequest] = jsonFormat3(ListQueuesActionRequest.apply)
+  implicit val requestJsonFormat: RootJsonFormat[ListQueuesActionRequest] = jsonFormat3(ListQueuesActionRequest.apply)
 
-  implicit val fpr: FlatParamsReader[ListQueuesActionRequest] = new FlatParamsReader[ListQueuesActionRequest] {
+  implicit val requestParamReader: FlatParamsReader[ListQueuesActionRequest] = new FlatParamsReader[ListQueuesActionRequest] {
     override def read(params: Map[String, String]): ListQueuesActionRequest = {
       new ListQueuesActionRequest(
-        params.get("MaxResults").flatMap(_.toIntOption),
+        params.get("MaxResults").map(_.toInt),
         params.get("NextToken"),
         params.get("QueueNamePrefix")
       )
