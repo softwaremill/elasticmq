@@ -10,13 +10,15 @@ import spray.json.DefaultJsonProtocol.jsonFormat1
 import spray.json.RootJsonFormat
 import spray.json.DefaultJsonProtocol._
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
+import org.elasticmq.rest.sqs.model.RequestPayload
 
 trait TagQueueDirectives {
   this: ElasticMQDirectives with TagsModule =>
 
-  def listQueueTags(p: AnyParams, protocol: AWSProtocol) = {
+  def listQueueTags(p: RequestPayload, protocol: AWSProtocol) = {
     p.action(ListQueueTags) {
-      queueActorAndDataFromRequest(p) { (_, queueData) =>
+      val queueUrl = p.as[ListQueueTagsActionRequest].QueueUrl
+      queueActorAndDataFromQueueUrl(queueUrl) { (_, queueData) =>
         protocol match {
           case AWSProtocol.`AWSJsonProtocol1.0` =>
             complete(ListQueueTagsResponse(queueData.tags))
@@ -36,10 +38,11 @@ trait TagQueueDirectives {
     }
   }
 
-  def untagQueue(p: AnyParams, protocol: AWSProtocol) = {
+  def untagQueue(p: RequestPayload, protocol: AWSProtocol) = {
     p.action(UntagQueue) {
-      queueActorFromRequest(p) { queueActor =>
-        val tags = tagNamesReader.read(p)
+      val params = p.as[UntagQueueActionRequest]
+      queueActorFromUrl(params.QueueUrl) { queueActor =>
+        val tags = params.TagKeys
         queueActor ? RemoveQueueTags(tags)
         protocol match {
           case AWSProtocol.`AWSJsonProtocol1.0` =>
@@ -53,15 +56,15 @@ trait TagQueueDirectives {
           case _ =>
             complete(HttpEntity.Empty)
         }
-
       }
     }
   }
 
-  def tagQueue(p: AnyParams, protocol: AWSProtocol) = {
+  def tagQueue(p: RequestPayload, protocol: AWSProtocol) = {
     p.action(TagQueue) {
-      queueActorFromRequest(p) { queueActor =>
-        val tags = tagNameAndValuesReader.read(p)
+      val params = p.as[TagQueueActionRequest]
+      queueActorFromUrl(params.QueueUrl) { queueActor =>
+        val tags = params.Tags
         queueActor ? UpdateQueueTags(tags)
         protocol match {
           case AWSProtocol.`AWSJsonProtocol1.0` =>
@@ -77,6 +80,52 @@ trait TagQueueDirectives {
         }
       }
     }
+  }
+}
+
+case class TagQueueActionRequest(
+    QueueUrl: String,
+    Tags: Map[String, String]
+)
+
+object TagQueueActionRequest {
+  implicit val requestJsonFormat: RootJsonFormat[TagQueueActionRequest] = jsonFormat2(TagQueueActionRequest.apply)
+
+  implicit val requestParamReader: FlatParamsReader[TagQueueActionRequest] = new FlatParamsReader[TagQueueActionRequest] {
+    override def read(params: Map[String, String]): TagQueueActionRequest = {
+      val tags = TagsModule.tagNameAndValuesReader.read(params)
+      val queueUrl = requiredParameter(params)("QueueUrl")
+      TagQueueActionRequest(queueUrl, tags)
+    }
+  }
+}
+
+case class UntagQueueActionRequest(
+    QueueUrl: String,
+    TagKeys: List[String]
+)
+
+object UntagQueueActionRequest {
+  implicit val requestJsonFormat: RootJsonFormat[UntagQueueActionRequest] = jsonFormat2(UntagQueueActionRequest.apply)
+
+  implicit val requestParamReader: FlatParamsReader[UntagQueueActionRequest] = new FlatParamsReader[UntagQueueActionRequest] {
+    override def read(params: Map[String, String]): UntagQueueActionRequest = {
+      val tags = TagsModule.tagNamesReader.read(params)
+      val queueUrl = requiredParameter(params)("QueueUrl")
+      UntagQueueActionRequest(queueUrl, tags)
+    }
+  }
+}
+
+case class ListQueueTagsActionRequest(
+    QueueUrl: String
+)
+
+object ListQueueTagsActionRequest {
+  implicit val requestJsonFormat: RootJsonFormat[ListQueueTagsActionRequest] = jsonFormat1(ListQueueTagsActionRequest.apply)
+
+  implicit val requestParamReader: FlatParamsReader[ListQueueTagsActionRequest] = new FlatParamsReader[ListQueueTagsActionRequest] {
+    override def read(params: Map[String, String]): ListQueueTagsActionRequest = ListQueueTagsActionRequest(requiredParameter(params)("QueueUrl"))
   }
 }
 
