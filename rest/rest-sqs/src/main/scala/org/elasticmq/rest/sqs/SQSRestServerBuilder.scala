@@ -197,9 +197,9 @@ case class TheSQSRestServerBuilder(
 //        getQueueAttributes(p) ~
 //        setQueueAttributes(p) ~
 //        addPermission(p) ~
-//        tagQueue(p, protocol) ~
-//        untagQueue(p, protocol) ~
-//        listQueueTags(p, protocol) ~
+        tagQueue(p, protocol) ~
+        untagQueue(p, protocol) ~
+        listQueueTags(p, protocol) ~
         // 4. Unmatched action
         unmatchedAction(p)
 

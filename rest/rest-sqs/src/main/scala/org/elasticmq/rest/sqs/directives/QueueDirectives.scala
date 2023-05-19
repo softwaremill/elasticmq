@@ -28,6 +28,12 @@ trait QueueDirectives {
     queueNameFromRequest(p) { queueName => queueActor(queueName, body) }
   }
 
+  def queueActorFromName(queueName: String)(body: ActorRef => Route): Route =
+    queueActor(queueName, body)
+
+  def queueActorFromUrl(queueUrl: String)(body: ActorRef => Route): Route =
+    getQueueNameFromQueueUrl(queueUrl)(queueName => queueActor(queueName, body))
+
   def queueActorAndDataFromRequest(p: AnyParams)(body: (ActorRef, QueueData) => Route): Route = {
     queueNameFromRequest(p) { queueName => queueActor(queueName, qa => queueData(qa, qd => body(qa, qd))) }
   }
@@ -38,6 +44,10 @@ trait QueueDirectives {
 
   def queueActorAndDataFromQueueName(queueName: String)(body: (ActorRef, QueueData) => Route): Route = {
     queueActor(queueName, qa => queueData(qa, qd => body(qa, qd)))
+  }
+
+  def queueActorAndDataFromQueueUrl(queueUrl: String)(body: (ActorRef, QueueData) => Route): Route = {
+    getQueueNameFromQueueUrl(queueUrl)(queueName => queueActor(queueName, qa => queueData(qa, qd => body(qa, qd))))
   }
 
   private val queueUrlParameter = "QueueUrl"
