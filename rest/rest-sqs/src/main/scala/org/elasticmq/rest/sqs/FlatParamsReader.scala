@@ -5,6 +5,9 @@ trait FlatParamsReader[A] {
 
   protected def requiredParameter(params: Map[String, String])(n: String): String =
     params.getOrElse(n, throw new SQSException(s"Missing required field: $n"))
+
+  protected def optionalParameter(params: Map[String, String])(n: String): Option[String] =
+    params.get(n)
 }
 
 object FlatParamsReader {
