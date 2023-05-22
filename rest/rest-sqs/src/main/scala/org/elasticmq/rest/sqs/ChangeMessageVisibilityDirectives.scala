@@ -30,9 +30,7 @@ trait ChangeMessageVisibilityDirectives { this: ElasticMQDirectives =>
                 respondWith {
                   <ChangeMessageVisibilityResponse>
                     <ResponseMetadata>
-                      <RequestId>
-                        {EmptyRequestId}
-                      </RequestId>
+                      <RequestId>{EmptyRequestId}</RequestId>
                     </ResponseMetadata>
                   </ChangeMessageVisibilityResponse>
                 }
