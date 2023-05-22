@@ -29,12 +29,12 @@ trait ChangeMessageVisibilityDirectives { this: ElasticMQDirectives =>
               case AWSProtocol.AWSQueryProtocol =>
                 respondWith {
                   <ChangeMessageVisibilityResponse>
-                        <ResponseMetadata>
-                          <RequestId>
-                            {EmptyRequestId}
-                          </RequestId>
-                        </ResponseMetadata>
-                      </ChangeMessageVisibilityResponse>
+                    <ResponseMetadata>
+                      <RequestId>
+                        {EmptyRequestId}
+                      </RequestId>
+                    </ResponseMetadata>
+                  </ChangeMessageVisibilityResponse>
                 }
               case _ => complete(status = 200, HttpEntity.Empty)
             }
