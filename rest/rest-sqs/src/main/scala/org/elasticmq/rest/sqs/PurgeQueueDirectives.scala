@@ -42,7 +42,7 @@ trait PurgeQueueDirectives { this: ElasticMQDirectives with QueueURLModule =>
 
     implicit val requestParamReader: FlatParamsReader[PurgeQueueActionRequest] = new FlatParamsReader[PurgeQueueActionRequest] {
       override def read(params: Map[String, String]): PurgeQueueActionRequest = {
-        val queueUrl = requiredParameter(params)("QueueUrl")
+        val queueUrl = requiredParameter(params)(QueueUrlParameter)
         PurgeQueueActionRequest(queueUrl)
       }
     }

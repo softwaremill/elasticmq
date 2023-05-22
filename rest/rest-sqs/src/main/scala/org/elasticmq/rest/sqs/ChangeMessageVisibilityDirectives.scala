@@ -51,7 +51,7 @@ trait ChangeMessageVisibilityDirectives { this: ElasticMQDirectives =>
     implicit val requestParamReader: FlatParamsReader[ChangeMessageVisibilityActionRequest] =
       new FlatParamsReader[ChangeMessageVisibilityActionRequest] {
         override def read(params: Map[String, String]): ChangeMessageVisibilityActionRequest = {
-          val queueUrl = requiredParameter(params)("QueueUrl")
+          val queueUrl = requiredParameter(params)(QueueUrlParameter)
           val receiptHandle = requiredParameter(params)(ReceiptHandleParameter)
           val visibilityTimeout = requiredParameter(params)(VisibilityTimeoutParameter).toInt
           ChangeMessageVisibilityActionRequest(queueUrl, receiptHandle, visibilityTimeout)

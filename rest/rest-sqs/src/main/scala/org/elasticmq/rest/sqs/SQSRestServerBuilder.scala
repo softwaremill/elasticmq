@@ -309,6 +309,7 @@ object Constants {
   val InvalidParameterValueErrorName = "InvalidParameterValue"
   val MissingParameterName = "MissingParameter"
   val QueueUrlContext = "queue"
+  val QueueUrlParameter = "QueueUrl"
 }
 
 object ParametersUtil {

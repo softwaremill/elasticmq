@@ -94,7 +94,7 @@ object TagQueueActionRequest {
   implicit val requestParamReader: FlatParamsReader[TagQueueActionRequest] = new FlatParamsReader[TagQueueActionRequest] {
     override def read(params: Map[String, String]): TagQueueActionRequest = {
       val tags = TagsModule.tagNameAndValuesReader.read(params)
-      val queueUrl = requiredParameter(params)("QueueUrl")
+      val queueUrl = requiredParameter(params)(QueueUrlParameter)
       TagQueueActionRequest(queueUrl, tags)
     }
   }
@@ -111,7 +111,7 @@ object UntagQueueActionRequest {
   implicit val requestParamReader: FlatParamsReader[UntagQueueActionRequest] = new FlatParamsReader[UntagQueueActionRequest] {
     override def read(params: Map[String, String]): UntagQueueActionRequest = {
       val tags = TagsModule.tagNamesReader.read(params)
-      val queueUrl = requiredParameter(params)("QueueUrl")
+      val queueUrl = requiredParameter(params)(QueueUrlParameter)
       UntagQueueActionRequest(queueUrl, tags)
     }
   }
@@ -125,7 +125,7 @@ object ListQueueTagsActionRequest {
   implicit val requestJsonFormat: RootJsonFormat[ListQueueTagsActionRequest] = jsonFormat1(ListQueueTagsActionRequest.apply)
 
   implicit val requestParamReader: FlatParamsReader[ListQueueTagsActionRequest] = new FlatParamsReader[ListQueueTagsActionRequest] {
-    override def read(params: Map[String, String]): ListQueueTagsActionRequest = ListQueueTagsActionRequest(requiredParameter(params)("QueueUrl"))
+    override def read(params: Map[String, String]): ListQueueTagsActionRequest = ListQueueTagsActionRequest(requiredParameter(params)(QueueUrlParameter))
   }
 }
 

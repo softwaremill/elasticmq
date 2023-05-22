@@ -46,7 +46,7 @@ object DeleteQueueActionRequest {
   implicit val requestParamReader: FlatParamsReader[DeleteQueueActionRequest] = new FlatParamsReader[DeleteQueueActionRequest] {
     override def read(params: Map[String, String]): DeleteQueueActionRequest = {
       new DeleteQueueActionRequest(
-        requiredParameter(params)("QueueUrl")
+        requiredParameter(params)(QueueUrlParameter)
       )
     }
   }
