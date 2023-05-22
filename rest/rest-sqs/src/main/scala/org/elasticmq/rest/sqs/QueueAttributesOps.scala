@@ -151,12 +151,10 @@ trait QueueAttributesOps extends AttributesModule {
 
   }
 
-  def setQueueAttributes(p: AnyParams, queueActor: ActorRef, queueManagerActor: ActorRef)(implicit
+  def setQueueAttributes(attributes: Map[String, String], queueActor: ActorRef, queueManagerActor: ActorRef)(implicit
       timeout: Timeout,
       executionContext: ExecutionContext
   ) = {
-    val attributes = attributeNameAndValuesReader.read(p)
-
     attributes.map({ case (attributeName, attributeValue) =>
       attributeName match {
         case VisibilityTimeoutParameter =>
@@ -167,6 +165,7 @@ trait QueueAttributesOps extends AttributesModule {
           queueActor ? UpdateQueueDelay(Duration.standardSeconds(attributeValue.toLong))
         case ReceiveMessageWaitTimeSecondsAttribute =>
           queueActor ? UpdateQueueReceiveMessageWait(Duration.standardSeconds(attributeValue.toLong))
+
         case RedrivePolicyParameter =>
           val redrivePolicy =
             try {
