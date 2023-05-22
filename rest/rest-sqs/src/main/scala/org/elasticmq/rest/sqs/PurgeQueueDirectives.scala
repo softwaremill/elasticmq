@@ -24,9 +24,7 @@ trait PurgeQueueDirectives { this: ElasticMQDirectives with QueueURLModule =>
               respondWith {
                 <PurgeQueueResponse>
                   <ResponseMetadata>
-                    <RequestId>
-                      {EmptyRequestId}
-                    </RequestId>
+                    <RequestId>{EmptyRequestId}</RequestId>
                   </ResponseMetadata>
                 </PurgeQueueResponse>
               }
