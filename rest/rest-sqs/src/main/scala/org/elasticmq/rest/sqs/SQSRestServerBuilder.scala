@@ -194,7 +194,7 @@ case class TheSQSRestServerBuilder(
         changeMessageVisibility(p, protocol) ~
 //        changeMessageVisibilityBatch(p) ~
         deleteQueue(p, protocol) ~
-//        getQueueAttributes(p, protocol) ~
+        getQueueAttributes(p, protocol) ~
         setQueueAttributes(p, protocol) ~
 //        addPermission(p) ~
         tagQueue(p, protocol) ~

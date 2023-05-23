@@ -73,11 +73,10 @@ trait QueueAttributesOps extends AttributesModule {
       timeout: Timeout,
       executionContext: ExecutionContext
   ): Future[List[(String, String)]] = {
-    val attributesParams = attributeNamesReader.prepareParametersForRead(QueueReadableAttributeNames.AllAttributeNames)
-    getQueueAttributes(attributesParams, queueActor, queueData)
+    getQueueAttributes(QueueReadableAttributeNames.AllAttributeNames, queueActor, queueData)
   }
 
-  def getQueueAttributes(p: AnyParams, queueActor: ActorRef, queueData: QueueData)(implicit
+  def getQueueAttributes(attributeNames: List[String], queueActor: ActorRef, queueData: QueueData)(implicit
       timeout: Timeout,
       executionContext: ExecutionContext
   ): Future[List[(String, String)]] = {
@@ -146,9 +145,7 @@ trait QueueAttributesOps extends AttributesModule {
       attributeValuesCalculator.calculate(attributeNames, rules: _*)
     }
 
-    val attributeNames = attributeNamesReader.read(p, AllAttributeNames)
     Future.sequence(calculateAttributeValues(attributeNames).map(p => p._2.map((p._1, _))))
-
   }
 
   def setQueueAttributes(attributes: Map[String, String], queueActor: ActorRef, queueManagerActor: ActorRef)(implicit

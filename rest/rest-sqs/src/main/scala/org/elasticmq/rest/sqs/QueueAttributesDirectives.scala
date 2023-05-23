@@ -15,13 +15,12 @@ import scala.concurrent.Future
 trait QueueAttributesDirectives {
   this: ElasticMQDirectives with QueueAttributesOps =>
 
-  //TODO
   def getQueueAttributes(p: RequestPayload, protocol: AWSProtocol): Route = {
-
     p.action(GetQueueAttributes) {
       val requestParams = p.as[GetQueueAttributesActionRequest]
-      queueActorFromUrl(requestParams.QueueUrl) { (queueActor) =>
-//        val attributesFuture: Future[List[(String, String)]] = getQueueAttributes(p, queueActor, queueData)
+      queueActorAndDataFromQueueUrl(requestParams.QueueUrl) { (queueActor, queueData) =>
+        val attributesFuture: Future[List[(String, String)]] =
+          getQueueAttributes(requestParams.AttributeNames.getOrElse(List.empty), queueActor, queueData)
 
         def responseXml(attributes: List[(String, String)]) = {
           <GetQueueAttributesResponse>
@@ -34,24 +33,22 @@ trait QueueAttributesDirectives {
           </GetQueueAttributesResponse>
         }
 
-//        attributesFuture.map { attributes =>
-        protocol match {
-          case AWSProtocol.AWSQueryProtocol =>
-            respondWith {
-              <test></test>
-//                responseXml(attributes)
+        attributesFuture.map { attributes =>
+          protocol match {
+            case AWSProtocol.AWSQueryProtocol =>
+              respondWith {
+                responseXml(attributes)
+              }
+            case _ => {
+              complete(GetQueueAttributesResponse(attributes.toMap))
             }
-          case _ => {
-//              println(attributes)
-            complete(200, HttpEntity.Empty)
           }
         }
-//        }
       }
     }
   }
 
-  case class GetQueueAttributesActionRequest(Attributes: Option[List[String]], QueueUrl: String)
+  case class GetQueueAttributesActionRequest(AttributeNames: Option[List[String]], QueueUrl: String)
 
   object GetQueueAttributesActionRequest {
     implicit val responseJsonFormat: RootJsonFormat[GetQueueAttributesActionRequest] = jsonFormat2(
@@ -62,13 +59,19 @@ trait QueueAttributesDirectives {
       new FlatParamsReader[GetQueueAttributesActionRequest] {
         override def read(params: Map[String, String]): GetQueueAttributesActionRequest = {
           val queueUrl = requiredParameter(params)(QueueUrlParameter)
-//        val attributes = AttributesModule.attributeNameAndValuesReader.read(params)
-          val attributes = AttributesModule.attributeNameAndValuesReader.read(params).keySet.toList
-          val test = GetQueueAttributesActionRequest(Some(attributes), queueUrl)
-          println(test)
-          test
+          val attributeNames =
+            AttributesModule.attributeNamesReader.read(params, QueueReadableAttributeNames.AllAttributeNames)
+          GetQueueAttributesActionRequest(Some(attributeNames), queueUrl)
         }
       }
+  }
+
+  case class GetQueueAttributesResponse(Attributes: Map[String, String])
+
+  object GetQueueAttributesResponse {
+    implicit val responseJsonFormat: RootJsonFormat[GetQueueAttributesResponse] = jsonFormat1(
+      GetQueueAttributesResponse.apply
+    )
   }
 
   def setQueueAttributes(p: RequestPayload, protocol: AWSProtocol): Route = {
