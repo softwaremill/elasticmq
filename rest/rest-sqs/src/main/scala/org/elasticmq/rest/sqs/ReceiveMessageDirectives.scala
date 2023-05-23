@@ -98,7 +98,7 @@ trait ReceiveMessageDirectives {
         def calculateAttributeValues(msg: MessageData): List[(String, String)] = {
           import AttributeValuesCalculator.Rule
 
-          possiblyEmptyAttributeValuesCalculator.calculate[String](
+          val x = possiblyEmptyAttributeValuesCalculator.calculate[String](
             attributeNames,
             Rule(SenderIdAttribute, () => Some("127.0.0.1")),
             Rule(SentTimestampAttribute, () => Some(msg.created.getMillis.toString)),
@@ -213,6 +213,24 @@ trait ReceiveMessageDirectives {
   )
 
   object ReceiveMessageActionRequest {
+    def apply(
+        AttributeNames: Option[List[String]],
+        MaxNumberOfMessages: Option[Int],
+        MessageAttributeNames: Option[List[String]],
+        QueueUrl: String,
+        ReceiveRequestAttemptId: Option[String],
+        VisibilityTimeout: Option[Int],
+        WaitTimeSeconds: Option[Long]
+    ): ReceiveMessageActionRequest = new ReceiveMessageActionRequest(
+      AttributeNames = AttributeNames.map(atr => if(atr.contains("All")) MessageReadeableAttributeNames.AllAttributeNames else atr),
+      MaxNumberOfMessages = MaxNumberOfMessages,
+      MessageAttributeNames = MessageAttributeNames,
+      QueueUrl = QueueUrl,
+      ReceiveRequestAttemptId = ReceiveRequestAttemptId,
+      VisibilityTimeout = VisibilityTimeout,
+      WaitTimeSeconds = WaitTimeSeconds
+    )
+
     implicit val requestJsonFormat: RootJsonFormat[ReceiveMessageActionRequest] = jsonFormat7(
       ReceiveMessageActionRequest.apply
     )
