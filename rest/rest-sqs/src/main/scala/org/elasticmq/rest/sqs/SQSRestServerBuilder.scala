@@ -178,28 +178,28 @@ case class TheSQSRestServerBuilder(
 
     import env._
     def rawRoutes(p: RequestPayload, protocol: AWSProtocol) =
-      // 1. Sending, receiving, deleting messages
+        // 1. Sending, receiving, deleting messages
         sendMessage(p, protocol) ~
         sendMessageBatch(p, protocol) ~
 //        receiveMessage(p) ~
         deleteMessage(p, protocol) ~
-//        deleteMessageBatch(p) ~
-//        // 2. Getting, creating queues
+        deleteMessageBatch(p, protocol) ~
+        // 2. Getting, creating queues
         getQueueUrl(p, protocol) ~
         createQueue(p, protocol) ~
         listQueues(p, protocol) ~
         purgeQueue(p, protocol) ~
-//        // 3. Other
+        // 3. Other
         changeMessageVisibility(p, protocol) ~
         changeMessageVisibilityBatch(p, protocol) ~
         deleteQueue(p, protocol) ~
         getQueueAttributes(p, protocol) ~
         setQueueAttributes(p, protocol) ~
-        //addPermission(p, protocol) ~
+        addPermission(p, protocol) ~
         tagQueue(p, protocol) ~
         untagQueue(p, protocol) ~
         listQueueTags(p, protocol) ~
-        // 4. Unmatched action
+        //4. Unmatched action
         unmatchedAction(p)
 
     val config = new ElasticMQConfig
