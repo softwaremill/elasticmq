@@ -121,7 +121,7 @@ case class TheSQSRestServerBuilder(
     this.copy(queueEventListener = Some(_queueEventListener))
 
   def start(): SQSRestServer = {
-    val (theActorSystem, stopActorSystem) = getOrCreateActorSystem
+    val (theActorSystem, _) = getOrCreateActorSystem
     val theQueueManagerActor = getOrCreateQueueManagerActor(theActorSystem)
     val theServerAddress =
       if (generateServerAddress)
@@ -314,7 +314,9 @@ object Constants {
   val MessageGroupIdParameter = "MessageGroupId"
   val MessageDeduplicationIdParameter = "MessageDeduplicationId"
   val AwsTraceHeaderSystemAttribute = "AWSTraceHeader"
-  val AwsTraceIdHeaderName = "X-Amzn-Trace-Id"
+  val MaxResultsParameter = "MaxResults"
+  val NextTokenParameter = "NextToken"
+  val QueueNamePrefixParameter = "QueueNamePrefix"
 }
 
 object ParametersUtil {

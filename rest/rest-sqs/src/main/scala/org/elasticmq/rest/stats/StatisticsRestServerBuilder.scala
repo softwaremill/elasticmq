@@ -5,7 +5,7 @@ import akka.actor.{ActorRef, ActorSystem}
 import akka.http.scaladsl.Http
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
-import org.elasticmq.rest.sqs.{AWSProtocol, QueueAttributesOps}
+import org.elasticmq.rest.sqs.QueueAttributesOps
 import org.elasticmq.rest.sqs.directives.{AWSProtocolDirectives, ElasticMQDirectives}
 import org.elasticmq.util.{Logging, NowProvider}
 

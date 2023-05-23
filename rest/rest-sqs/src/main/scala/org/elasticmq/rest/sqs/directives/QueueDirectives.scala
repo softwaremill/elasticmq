@@ -7,6 +7,7 @@ import akka.http.scaladsl.server._
 import org.elasticmq.QueueData
 import org.elasticmq.actor.reply._
 import org.elasticmq.msg.{GetQueueData, LookupQueue}
+import org.elasticmq.rest.sqs.Constants.QueueUrlParameter
 import org.elasticmq.rest.sqs._
 
 trait QueueDirectives {
@@ -17,30 +18,8 @@ trait QueueDirectives {
     with FutureDirectives
     with AnyParamDirectives =>
 
-  def queueNameFromParams(p: AnyParams): Directive1[String] =
-    p.requiredParam("QueueName")
-
-  def queueDataFromParams(p: AnyParams)(body: QueueData => Route): Route = {
-    queueNameFromParams(p) { queueName => queueActor(queueName, queueData(_, body)) }
-  }
-
-  def queueActorFromRequest(p: AnyParams)(body: ActorRef => Route): Route = {
-    queueNameFromRequest(p) { queueName => queueActor(queueName, body) }
-  }
-
-  def queueActorFromName(queueName: String)(body: ActorRef => Route): Route =
-    queueActor(queueName, body)
-
   def queueActorFromUrl(queueUrl: String)(body: ActorRef => Route): Route =
     getQueueNameFromQueueUrl(queueUrl)(queueName => queueActor(queueName, body))
-
-  def queueActorAndDataFromRequest(p: AnyParams)(body: (ActorRef, QueueData) => Route): Route = {
-    queueNameFromRequest(p) { queueName => queueActor(queueName, qa => queueData(qa, qd => body(qa, qd))) }
-  }
-
-  def queueActorAndNameFromRequest(p: AnyParams)(body: (ActorRef, String) => Route): Route = {
-    queueNameFromRequest(p) { queueName => queueActor(queueName, qa => body(qa, queueName)) }
-  }
 
   def queueActorAndNameFromUrl(queueUrl: String)(body: (ActorRef, String) => Route): Route = {
     queueNameFromUrl(queueUrl) { queueName => queueActor(queueName, qa => body(qa, queueName)) }
@@ -54,34 +33,11 @@ trait QueueDirectives {
     getQueueNameFromQueueUrl(queueUrl)(queueName => queueActor(queueName, qa => queueData(qa, qd => body(qa, qd))))
   }
 
-  def queueNameFromUrl(queueUrl: String)(body: String => Route): Route = {
+  private def queueNameFromUrl(queueUrl: String)(body: String => Route): Route = {
     getQueueNameFromQueueUrl(queueUrl)(body)
   }
 
-  private val queueUrlParameter = "QueueUrl"
-
-  private def queueUrlFromParams(p: AnyParams): Directive1[String] =
-    p.requiredParam(queueUrlParameter)
-
   private val accountIdRegex = "[a-zA-Z0-9]+".r
-
-  private def queueNameFromRequest(p: AnyParams)(body: String => Route): Route = {
-    val pathDirective =
-      if (contextPath.nonEmpty)
-        pathPrefix(contextPath / accountIdRegex / Segment).tmap(_._2) |
-          pathPrefix(contextPath / Segment)
-      else
-        pathPrefix(accountIdRegex / Segment).tmap(_._2) |
-          pathPrefix(Segment)
-
-    val queueNameDirective =
-      checkOnlyOneSegmentInUri() |
-        pathDirective |
-        queueNameFromParams(p) |
-        queueUrlFromParams(p).flatMap { queueUrl => getQueueNameFromQueueUrl(queueUrl) }
-
-    queueNameDirective(body)
-  }
 
   private def getQueueNameFromQueueUrl(queueUrl: String): Directive1[String] = {
 
@@ -96,7 +52,7 @@ trait QueueDirectives {
       case Unmatched =>
         reject(
           MalformedQueryParamRejection(
-            queueUrlParameter,
+            QueueUrlParameter,
             "Invalid queue url, the path should be /<accountId>/<queueName> where accountId must match " + accountIdRegex + " regex"
           )
         )
@@ -121,12 +77,4 @@ trait QueueDirectives {
       body(queueData)
     }
   }
-
-  private def checkOnlyOneSegmentInUri(): Directive1[String] = {
-    path(Segment).flatMap { _ =>
-      reject(WrongURLFormatRejection("Provided only queueName instead of the full URL")): Directive1[String]
-    }
-  }
 }
-
-final case class WrongURLFormatRejection(fieldName: String) extends Rejection

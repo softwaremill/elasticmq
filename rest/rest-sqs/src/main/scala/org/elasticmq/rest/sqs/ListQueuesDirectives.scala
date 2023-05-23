@@ -61,9 +61,9 @@ object ListQueuesActionRequest {
   implicit val requestParamReader: FlatParamsReader[ListQueuesActionRequest] = new FlatParamsReader[ListQueuesActionRequest] {
     override def read(params: Map[String, String]): ListQueuesActionRequest = {
       new ListQueuesActionRequest(
-        params.get("MaxResults").map(_.toInt),
-        params.get("NextToken"),
-        params.get("QueueNamePrefix")
+        params.get(MaxResultsParameter).map(_.toInt),
+        params.get(NextTokenParameter),
+        params.get(QueueNamePrefixParameter)
       )
     }
   }

@@ -98,7 +98,7 @@ trait ReceiveMessageDirectives {
         def calculateAttributeValues(msg: MessageData): List[(String, String)] = {
           import AttributeValuesCalculator.Rule
 
-          val x = possiblyEmptyAttributeValuesCalculator.calculate[String](
+          possiblyEmptyAttributeValuesCalculator.calculate[String](
             attributeNames,
             Rule(SenderIdAttribute, () => Some("127.0.0.1")),
             Rule(SentTimestampAttribute, () => Some(msg.created.getMillis.toString)),
