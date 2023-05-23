@@ -240,7 +240,7 @@ trait ReceiveMessageDirectives {
       }
 
     def getMessageAttributeNames(params: Map[String, String]): List[String] = {
-      params.view
+      params
         .filterKeys(k =>
           MessageReadeableAttributeNames.MessageAttributeNamePattern
             .findFirstIn(k)
