@@ -4,9 +4,6 @@ import Constants._
 import akka.http.scaladsl.model.HttpEntity
 import org.elasticmq.rest.sqs.Action.AddPermission
 import org.elasticmq.rest.sqs.directives.ElasticMQDirectives
-import spray.json.RootJsonFormat
-import spray.json.DefaultJsonProtocol._
-import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import org.elasticmq.rest.sqs.model.RequestPayload
 
 trait AddPermissionDirectives { this: ElasticMQDirectives with QueueURLModule =>

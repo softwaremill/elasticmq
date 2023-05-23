@@ -28,7 +28,7 @@ trait ChangeMessageVisibilityBatchDirectives {
             )
 
             result.flatMap{
-              case Right(_) => Future.successful(SuccessfulBatchChangeMessageVisibility(id))
+              case Right(_) => Future.successful(BatchChangeMessageVisibilityResponseEntry(id))
               case Left(invalidHandle) =>
                 Future.failed(new SQSException(invalidHandle.code, errorMessage = Some(invalidHandle.message)))
             }
@@ -38,46 +38,38 @@ trait ChangeMessageVisibilityBatchDirectives {
           case AWSProtocol.`AWSJsonProtocol1.0` =>
             complete(resultsFuture)
           case _ =>
-          resultsFuture.map {
-            case BatchResponse(failed, succeeded) =>
+            resultsFuture.map {
+              case BatchResponse(failed, succeeded) =>
 
-              val successEntries = succeeded.map {
-                case SuccessfulBatchChangeMessageVisibility(id) =>
-                  <ChangeMessageVisibilityBatchResultEntry>
-                    <Id>
-                      {id}
-                    </Id>
-                  </ChangeMessageVisibilityBatchResultEntry>
-              }
+                val successEntries = succeeded.map {
+                  case BatchChangeMessageVisibilityResponseEntry(id) =>
+                    <ChangeMessageVisibilityBatchResultEntry>
+                      <Id>{id}</Id>
+                    </ChangeMessageVisibilityBatchResultEntry>
+                }
 
-              val failureEntries = failed.map {
-                case Failed(code, id, message, _) =>
-                  <BatchResultErrorEntry>
-                    <Id>
-                      {id}
-                    </Id>
-                    <SenderFault>true</SenderFault>
-                    <Code>
-                      {code}
-                    </Code>
-                    <Message>
-                      {message}
-                    </Message>
-                  </BatchResultErrorEntry>
-              }
+                val failureEntries = failed.map {
+                  case Failed(code, id, message, _) =>
+                    <BatchResultErrorEntry>
+                      <Id>{id}</Id>
+                      <SenderFault>true</SenderFault>
+                      <Code>{code}</Code>
+                      <Message>{message}</Message>
+                    </BatchResultErrorEntry>
+                }
 
-              respondWith {
-                <ChangeMessageVisibilityBatchResponse>
-                  <ChangeMessageVisibilityBatchResult>
-                    {successEntries ++ failureEntries}
-                  </ChangeMessageVisibilityBatchResult>
-                  <ResponseMetadata>
-                    <RequestId>
-                      {EmptyRequestId}
-                    </RequestId>
-                  </ResponseMetadata>
-                </ChangeMessageVisibilityBatchResponse>
-              }
+                respondWith {
+                  <ChangeMessageVisibilityBatchResponse>
+                    <ChangeMessageVisibilityBatchResult>
+                      {successEntries ++ failureEntries}
+                    </ChangeMessageVisibilityBatchResult>
+                    <ResponseMetadata>
+                      <RequestId>
+                        {EmptyRequestId}
+                      </RequestId>
+                    </ResponseMetadata>
+                  </ChangeMessageVisibilityBatchResponse>
+                }
           }
         }
       }
@@ -85,10 +77,10 @@ trait ChangeMessageVisibilityBatchDirectives {
   }
 }
 
-case class SuccessfulBatchChangeMessageVisibility(Id: String)
+case class BatchChangeMessageVisibilityResponseEntry(Id: String)
 
-object SuccessfulBatchChangeMessageVisibility {
-  implicit val jsonFormat: RootJsonFormat[SuccessfulBatchChangeMessageVisibility] = jsonFormat1(SuccessfulBatchChangeMessageVisibility.apply)
+object BatchChangeMessageVisibilityResponseEntry {
+  implicit val jsonFormat: RootJsonFormat[BatchChangeMessageVisibilityResponseEntry] = jsonFormat1(BatchChangeMessageVisibilityResponseEntry.apply)
 }
 
 case class ChangeMessageVisibilityBatchEntry(Id: String, ReceiptHandle: String, VisibilityTimeout: Long) extends BatchEntry
