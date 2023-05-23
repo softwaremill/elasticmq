@@ -15,23 +15,25 @@ trait BatchRequestsModule {
       single: (M, String, Int) => Future[R]
   ): Future[BatchResponse[R]] = {
 
-    val (succeeded, failed) = messagesData.zipWithIndex.foldLeft((List.empty[Future[R]], List.empty[Future[Failed]])) {
-      case ((successful, failed), (messageData, index)) => {
+    val result = messagesData.zipWithIndex.map {
+      case (messageData, index) => {
         val id = messageData.Id
 
-        try {
-          (successful :+ single(messageData, id, index), failed)
-        } catch {
+        single(messageData, id, index).map(
+          Right(_)
+        ).recoverWith {
           case e: SQSException =>
-            (successful, failed :+ Future.successful(Failed(e.code, id, e.message, SenderFault = true)))
+            Future(Left(Failed(e.code, id, e.message, SenderFault = true)))
         }
       }
     }
 
-    for {
-      s <- Future.sequence(succeeded)
-      f <- Future.sequence(failed)
-    } yield BatchResponse(f, s)
+    Future.sequence(result).map(
+      _.foldLeft((List.empty[Failed], List.empty[R])){
+        case ((failures, successes), Left(failed)) => (failures :+ failed, successes)
+        case ((failures, successes), Right(success)) => (failures, successes :+ success)
+      }
+    ).map((BatchResponse.apply[R] _).tupled)
   }
 }
 
