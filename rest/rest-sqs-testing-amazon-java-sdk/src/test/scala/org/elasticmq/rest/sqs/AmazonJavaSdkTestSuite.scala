@@ -1788,7 +1788,7 @@ class AmazonJavaSdkTestSuite extends SqsClientServerCommunication with Matchers 
 
     // When
     val redrivePolicy = RedrivePolicy("dlq1", awsRegion, awsAccountId, 1).toJson.toString()
-    println(redrivePolicy)
+
     val createQueueResult = client.createQueue(
       new CreateQueueRequest("q1")
         .withAttributes(Map(defaultVisibilityTimeoutAttribute -> "1", redrivePolicyAttribute -> redrivePolicy).asJava)

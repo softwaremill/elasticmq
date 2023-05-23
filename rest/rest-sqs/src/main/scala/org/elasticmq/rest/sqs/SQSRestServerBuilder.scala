@@ -12,7 +12,6 @@ import org.elasticmq.metrics.QueuesMetrics
 import org.elasticmq.rest.sqs.Constants._
 import org.elasticmq.rest.sqs.directives.{AWSProtocolDirectives, ElasticMQDirectives, UnmatchedActionRoutes}
 import org.elasticmq.rest.sqs.model.RequestPayload
-import org.elasticmq.rest.sqs.model.RequestPayload.QueryParams
 import org.elasticmq.util.{Logging, NowProvider}
 
 import java.io.ByteArrayOutputStream
@@ -180,8 +179,8 @@ case class TheSQSRestServerBuilder(
     import env._
     def rawRoutes(p: RequestPayload, protocol: AWSProtocol) =
       // 1. Sending, receiving, deleting messages
-//      sendMessage(p, protocol) ~
-//        sendMessageBatch(p) ~
+        sendMessage(p, protocol) ~
+        sendMessageBatch(p, protocol) ~
 //        receiveMessage(p) ~
         deleteMessage(p, protocol) ~
 //        deleteMessageBatch(p) ~
@@ -310,6 +309,12 @@ object Constants {
   val MissingParameterName = "MissingParameter"
   val QueueUrlContext = "queue"
   val QueueUrlParameter = "QueueUrl"
+  val MessageBodyParameter = "MessageBody"
+  val DelaySecondsParameter = "DelaySeconds"
+  val MessageGroupIdParameter = "MessageGroupId"
+  val MessageDeduplicationIdParameter = "MessageDeduplicationId"
+  val AwsTraceHeaderSystemAttribute = "AWSTraceHeader"
+  val AwsTraceIdHeaderName = "X-Amzn-Trace-Id"
 }
 
 object ParametersUtil {

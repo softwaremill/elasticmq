@@ -5,6 +5,15 @@ import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 
 class BatchRequestsModuleTest extends AnyFunSuite with Matchers {
+
+  val prefix =  "SomePrefix"
+
+  implicit val fpr = new BatchFlatParamsReader[Map[String, String]] {
+    override def batchPrefix: String = prefix
+
+    override def read(params: Map[String, String]): Map[String, String] = params
+  }
+
   test("should correctly find sub parameters") {
     // Given
     val parameters = Map(
@@ -20,7 +29,7 @@ class BatchRequestsModuleTest extends AnyFunSuite with Matchers {
     )
 
     // When
-    val subParameters = BatchRequestsModule.subParametersMaps("SomePrefix", parameters)
+    val subParameters = BatchRequestsModule.subParametersMaps(parameters)
 
     // Then
     subParameters should have length (3)
@@ -44,7 +53,7 @@ class BatchRequestsModuleTest extends AnyFunSuite with Matchers {
     )
 
     // When
-    val subParameters = BatchRequestsModule.subParametersMaps("SomePrefix", parameters)
+    val subParameters = BatchRequestsModule.subParametersMaps(parameters)
 
     // Then
     subParameters should contain theSameElementsInOrderAs List(
@@ -56,7 +65,6 @@ class BatchRequestsModuleTest extends AnyFunSuite with Matchers {
 
   test("should preserve the order for sub parameters with a size greater than 10") {
     // Given
-    val prefix = "SomePrefix"
 
     // SomePrefix.1.Key1 -> Value1-1
     // SomePrefix.1.Key2 -> Value1-2
@@ -71,7 +79,7 @@ class BatchRequestsModuleTest extends AnyFunSuite with Matchers {
       .toMap
 
     // When
-    val subParameters = BatchRequestsModule.subParametersMaps(prefix, parameters)
+    val subParameters = BatchRequestsModule.subParametersMaps(parameters)
 
     // Then
     // Key4 -> Value1-4

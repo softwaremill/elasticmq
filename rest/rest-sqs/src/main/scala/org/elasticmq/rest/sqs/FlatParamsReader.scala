@@ -10,6 +10,10 @@ trait FlatParamsReader[A] {
     params.get(n)
 }
 
-object FlatParamsReader {
-  def apply[A](implicit fpr: FlatParamsReader[A]): FlatParamsReader[A] = fpr
+object BatchFlatParamsReader {
+  def apply[A](implicit fpr: BatchFlatParamsReader[A]): BatchFlatParamsReader[A] = fpr
+}
+
+trait BatchFlatParamsReader[A] extends FlatParamsReader[A] {
+  def batchPrefix: String
 }

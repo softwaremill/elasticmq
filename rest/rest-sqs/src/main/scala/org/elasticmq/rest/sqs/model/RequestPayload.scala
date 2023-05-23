@@ -3,12 +3,12 @@ package org.elasticmq.rest.sqs.model
 import akka.http.scaladsl.server.Directive0
 import akka.http.scaladsl.server.Directives._
 import org.elasticmq.rest.sqs.{Action, FlatParamsReader, SQSException}
-import org.elasticmq.rest.sqs.model.RequestPayload.QueryParams
 import spray.json.{JsObject, RootJsonFormat}
 
 sealed trait RequestPayload {
   def action(requiredAction: Action.Value): Directive0 = if (requiredAction.toString == action) pass else reject
 
+  def xRayTracingHeader: Option[String]
   def action: String
 
   def as[A: RootJsonFormat: FlatParamsReader]: A = this match {
@@ -23,7 +23,7 @@ object RequestPayload {
     override def action: String = params.getOrElse("Action", throw new SQSException("MissingAction"))
   }
 
-  final case class JsonParams(params: JsObject, action: String, xRayTracingHeader: Option[String]) extends RequestPayload {
+  final case class JsonParams(params: JsObject, action: String, xRayTracingHeader: Option[String] = None) extends RequestPayload {
     def readAs[A: RootJsonFormat](implicit fpr: FlatParamsReader[A]) = params.convertTo[A]
   }
 }

@@ -2,57 +2,137 @@ package org.elasticmq.rest.sqs
 
 import Constants._
 import akka.http.scaladsl.server.Route
+import org.elasticmq.MessageAttribute
 import org.elasticmq.rest.sqs.Action.SendMessageBatch
+import org.elasticmq.rest.sqs.ParametersUtil.ParametersParser
 import org.elasticmq.rest.sqs.directives.ElasticMQDirectives
+import org.elasticmq.rest.sqs.model.RequestPayload
+import spray.json.DefaultJsonProtocol._
+import spray.json.RootJsonFormat
+import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 
 trait SendMessageBatchDirectives {
   this: ElasticMQDirectives with SendMessageDirectives with BatchRequestsModule =>
-  val SendMessageBatchPrefix = "SendMessageBatchRequestEntry"
 
-  def sendMessageBatch(p: AnyParams): Route = {
+  def sendMessageBatch(p: RequestPayload, protocol: AWSProtocol): Route = {
     p.action(SendMessageBatch) {
-      queueActorAndDataFromRequest(p) { (queueActor, queueData) =>
-        verifyMessagesNotTooLong(p)
+      val batch = p.as[BatchRequest[SendMessageBatchActionRequest]]
 
-        val resultsFuture = batchRequest(SendMessageBatchPrefix, p) { (messageData, id, index) =>
-          val maybeTraceId = p.find { case (key, _) =>
-            key.equalsIgnoreCase(AwsTraceIdHeaderName)
-          }.toMap
-          val message = createMessage(messageData ++ maybeTraceId, queueData, index)
+      queueActorAndDataFromQueueUrl(batch.QueueUrl) { (queueActor, queueData) =>
+        verifyMessagesNotTooLong(batch.Entries)
+
+        val resultsFuture = batchRequest(batch.Entries) { (messageData, id, index) =>
+          val message =
+            createMessage(messageData.toSendMessageActionRequest(batch.QueueUrl), queueData, index, p.xRayTracingHeader)
 
           doSendMessage(queueActor, message).map { case (message, digest, messageAttributeDigest) =>
-            <SendMessageBatchResultEntry>
-                <Id>{id}</Id>
-                {messageAttributeDigest.map(d => <MD5OfMessageAttributes>{d}</MD5OfMessageAttributes>).getOrElse(())}
-                <MD5OfMessageBody>{digest}</MD5OfMessageBody>
-                <MessageId>{message.id.id}</MessageId>
-              </SendMessageBatchResultEntry>
+            SuccessfulBatchMessageSend(id, messageAttributeDigest, digest, None, message.id.id, None)
           }
+        }
+        protocol match {
+          case AWSProtocol.`AWSJsonProtocol1.0` =>
+            complete(resultsFuture)
+          case _ =>
+            resultsFuture.map {
+              case BatchResponse(failed, succeeded) =>
+              val successEntries = succeeded.map {
+                case SuccessfulBatchMessageSend(id, messageAttributeDigest, digest, _, messageId, _) =>
+                  <SendMessageBatchResultEntry>
+                    <Id>{id}</Id>
+                    {messageAttributeDigest.map(d => <MD5OfMessageAttributes>{d}</MD5OfMessageAttributes>).getOrElse(())}
+                    <MD5OfMessageBody>{digest}</MD5OfMessageBody>
+                    <MessageId>{messageId}</MessageId>
+                  </SendMessageBatchResultEntry>
+              }
+              val failureEntries = failed.map {
+                case Failed(code, id, message, _) =>
+                  <BatchResultErrorEntry>
+                    <Id>{id}</Id>
+                    <SenderFault>true</SenderFault>
+                    <Code>{code}</Code>
+                    <Message>{message}</Message>
+                  </BatchResultErrorEntry>
+              }
+
+              respondWith {
+                <SendMessageBatchResponse>
+                  <SendMessageBatchResult>
+                    {failureEntries ++ successEntries}
+                  </SendMessageBatchResult>
+                  <ResponseMetadata>
+                    <RequestId>
+                      {EmptyRequestId}
+                    </RequestId>
+                  </ResponseMetadata>
+                </SendMessageBatchResponse>
+              }
+            }
         }
 
-        resultsFuture.map { results =>
-          respondWith {
-            <SendMessageBatchResponse>
-              <SendMessageBatchResult>
-                {results}
-              </SendMessageBatchResult>
-              <ResponseMetadata>
-                <RequestId>{EmptyRequestId}</RequestId>
-              </ResponseMetadata>
-            </SendMessageBatchResponse>
-          }
-        }
+
       }
     }
   }
 
-  def verifyMessagesNotTooLong(parameters: Map[String, String]): Unit = {
-    val messageLengths = for {
-      parameterMap <- batchParametersMap(SendMessageBatchPrefix, parameters)
-    } yield {
-      parameterMap(MessageBodyParameter).length
-    }
-
+  def verifyMessagesNotTooLong(requests: List[SendMessageBatchActionRequest]): Unit = {
+    val messageLengths = requests.map(_.MessageBody.length)
     verifyMessageNotTooLong(messageLengths.sum)
   }
+
+  case class SendMessageBatchActionRequest(
+      Id: String,
+      DelaySeconds: Option[Long],
+      MessageBody: String,
+      MessageDeduplicationId: Option[String],
+      MessageGroupId: Option[String],
+      MessageSystemAttributes: Option[Map[String, MessageAttribute]],
+      MessageAttributes: Option[Map[String, MessageAttribute]]
+  ) extends BatchEntry {
+    def toSendMessageActionRequest(queueUrl: String): SendMessageActionRequest = SendMessageActionRequest(
+      DelaySeconds,
+      MessageBody,
+      MessageDeduplicationId,
+      MessageGroupId,
+      MessageSystemAttributes,
+      MessageAttributes,
+      queueUrl
+    )
+  }
+
+  object SendMessageBatchActionRequest extends MessageAttributesSupport {
+
+    implicit val jsonFormat: RootJsonFormat[SendMessageBatchActionRequest] = jsonFormat7(
+      SendMessageBatchActionRequest.apply
+    )
+
+    implicit val queryFormat: BatchFlatParamsReader[SendMessageBatchActionRequest] =
+      new BatchFlatParamsReader[SendMessageBatchActionRequest] {
+        override def read(params: Map[String, String]): SendMessageBatchActionRequest =
+          SendMessageBatchActionRequest(
+            requiredParameter(params)(IdSubParameter),
+            params.parseOptionalLong(DelaySecondsParameter),
+            requiredParameter(params)(MessageBodyParameter),
+            params.get(MessageDeduplicationIdParameter),
+            params.get(MessageGroupIdParameter),
+            Some(getMessageAttributes(params)),
+            Some(getMessageSystemAttributes(params))
+          )
+
+        override def batchPrefix: String = "SendMessageBatchRequestEntry"
+      }
+  }
+
+  case class SuccessfulBatchMessageSend(
+      Id: String,
+      MD5OfMessageAttributes: Option[String],
+      MD5OfMessageBody: String,
+      MD5OfMessageSystemAttributes: Option[String],
+      MessageId: String,
+      SequenceNumber: Option[Long]
+  )
+
+  object SuccessfulBatchMessageSend {
+    implicit val format: RootJsonFormat[SuccessfulBatchMessageSend] = jsonFormat6(SuccessfulBatchMessageSend.apply)
+  }
+
 }

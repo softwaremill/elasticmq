@@ -11,30 +11,21 @@ import org.elasticmq.rest.sqs.Constants._
 import org.elasticmq.rest.sqs.MD5Util._
 import org.elasticmq.rest.sqs.ParametersUtil._
 import org.elasticmq.rest.sqs.directives.ElasticMQDirectives
-import org.elasticmq.rest.sqs.model.{
-  BinaryMessageSystemAttribute,
-  MessageSystemAttribute,
-  NumberMessageSystemAttribute,
-  StringMessageSystemAttribute
-}
+import org.elasticmq.rest.sqs.model.RequestPayload
 import spray.json.DefaultJsonProtocol._
-import spray.json.RootJsonFormat
+import spray.json.{JsObject, JsString, JsValue, JsonReader, RootJsonFormat}
 
 import scala.concurrent.Future
 
 trait SendMessageDirectives { this: ElasticMQDirectives with SQSLimitsModule =>
   private val messageSystemAttributeNamePattern = """MessageSystemAttribute\.(\d+)\.Name""".r
-  val MessageBodyParameter = "MessageBody"
-  val DelaySecondsParameter = "DelaySeconds"
-  val MessageGroupIdParameter = "MessageGroupId"
-  val MessageDeduplicationIdParameter = "MessageDeduplicationId"
-  val AwsTraceHeaderSystemAttribute = "AWSTraceHeader"
-  val AwsTraceIdHeaderName = "X-Amzn-Trace-Id"
 
-  def sendMessage(p: AnyParams, protocol: AWSProtocol): Route = {
+  def sendMessage(p: RequestPayload, protocol: AWSProtocol): Route = {
     p.action(SendMessageAction) {
-      queueActorAndDataFromRequest(p) { (queueActor, queueData) =>
-        val message = createMessage(p, queueData, orderIndex = 0)
+      val params = p.as[SendMessageActionRequest]
+
+      queueActorAndDataFromQueueUrl(params.QueueUrl) { (queueActor, queueData) =>
+        val message = createMessage(params, queueData, orderIndex = 0, p.xRayTracingHeader)
 
         doSendMessage(queueActor, message).map { case (message, digest, messageAttributeDigest) =>
           protocol match {
@@ -42,7 +33,9 @@ trait SendMessageDirectives { this: ElasticMQDirectives with SQSLimitsModule =>
               respondWith {
                 <SendMessageResponse>
                   <SendMessageResult>
-                    {messageAttributeDigest.map(d => <MD5OfMessageAttributes>{d}</MD5OfMessageAttributes>).getOrElse(())}
+                    {
+                  messageAttributeDigest.map(d => <MD5OfMessageAttributes>{d}</MD5OfMessageAttributes>).getOrElse(())
+                }
                     <MD5OfMessageBody>{digest}</MD5OfMessageBody>
                     <MessageId>{message.id.id}</MessageId>
                     {message.sequenceNumber.map(x => <SequenceNumber>{x}</SequenceNumber>).getOrElse(())}
@@ -55,23 +48,19 @@ trait SendMessageDirectives { this: ElasticMQDirectives with SQSLimitsModule =>
                 </SendMessageResponse>
               }
             case _ =>
-              complete(SendMessageResponse(messageAttributeDigest, digest, messageAttributeDigest, message.id.id, message.sequenceNumber))
+              complete(
+                SendMessageResponse(
+                  messageAttributeDigest,
+                  digest,
+                  messageAttributeDigest,
+                  message.id.id,
+                  message.sequenceNumber
+                )
+              )
           }
         }
       }
     }
-  }
-
-  case class SendMessageResponse(
-      MD5OfMessageAttributes: Option[String],
-      MD5OfMessageBody: String,
-      MD5OfMessageSystemAttributes: Option[String],
-      MessageId: String,
-      SequenceNumber: Option[String]
-  )
-
-  object SendMessageResponse {
-    implicit val format: RootJsonFormat[SendMessageResponse] = jsonFormat5(SendMessageResponse.apply)
   }
 
   def getMessageAttributes(parameters: Map[String, String]): Map[String, MessageAttribute] = {
@@ -85,7 +74,7 @@ trait SendMessageDirectives { this: ElasticMQDirectives with SQSLimitsModule =>
         }
       }
       .toList
-      .union(List(0))
+      .concat(List(0))
       .max // even if nothing, return 0
 
     Limits
@@ -130,29 +119,34 @@ trait SendMessageDirectives { this: ElasticMQDirectives with SQSLimitsModule =>
     }.toMap
   }
 
-  private def getMessageSystemAttributes(parameters: Map[String, String]): Map[String, MessageSystemAttribute] = {
+  def getMessageSystemAttributes(parameters: Map[String, String]): Map[String, MessageAttribute] = {
     parameters.flatMap {
       case (messageSystemAttributeNamePattern(index), parameterName) =>
         val parameterDataType = parameters(s"MessageSystemAttribute.$index.Value.DataType")
         val parameterValue = parameterDataType match {
-          case "String" => StringMessageSystemAttribute(parameters(s"MessageSystemAttribute.$index.Value.StringValue"))
-          case "Number" => NumberMessageSystemAttribute(parameters(s"MessageSystemAttribute.$index.Value.StringValue"))
+          case "String" => StringMessageAttribute(parameters(s"MessageSystemAttribute.$index.Value.StringValue"))
+          case "Number" => NumberMessageAttribute(parameters(s"MessageSystemAttribute.$index.Value.StringValue"))
           case "Binary" =>
-            BinaryMessageSystemAttribute.fromString(parameters(s"MessageAttribute.$index.Value.BinaryValue"))
+            BinaryMessageAttribute.fromBase64(parameters(s"MessageAttribute.$index.Value.BinaryValue"))
         }
         Some((parameterName, parameterValue))
       case _ => None
     }
   }
 
-  def createMessage(parameters: Map[String, String], queueData: QueueData, orderIndex: Int): NewMessageData = {
-    val body = parameters(MessageBodyParameter)
-    val messageAttributes = getMessageAttributes(parameters)
-    val messageSystemAttributes = getMessageSystemAttributes(parameters)
+  def createMessage(
+      parameters: SendMessageActionRequest,
+      queueData: QueueData,
+      orderIndex: Int,
+      xRayTracingHeder: Option[String]
+  ): NewMessageData = {
+    val body = parameters.MessageBody
+    val messageAttributes = parameters.MessageAttributes.getOrElse(Map.empty)
+    val messageSystemAttributes = parameters.MessageSystemAttributes.getOrElse(Map.empty)
 
     Limits.verifyMessageBody(body, sqsLimits).fold(error => throw new SQSException(error), identity)
 
-    val messageGroupId = parameters.get(MessageGroupIdParameter) match {
+    val messageGroupId = parameters.MessageGroupId match {
       // MessageGroupId is only supported for FIFO queues
       case Some(v) if !queueData.isFifo => throw SQSException.invalidQueueTypeParameter(v, MessageGroupIdParameter)
 
@@ -167,7 +161,7 @@ trait SendMessageDirectives { this: ElasticMQDirectives with SQSLimitsModule =>
       case m => m
     }
 
-    val messageDeduplicationId = parameters.get(MessageDeduplicationIdParameter) match {
+    val messageDeduplicationId = parameters.MessageDeduplicationId match {
       // MessageDeduplicationId is only supported for FIFO queues
       case Some(v) if !queueData.isFifo =>
         throw SQSException.invalidQueueTypeParameter(v, MessageDeduplicationIdParameter)
@@ -196,7 +190,7 @@ trait SendMessageDirectives { this: ElasticMQDirectives with SQSLimitsModule =>
       case None => None
     }
 
-    val delaySecondsOption = parameters.parseOptionalLong(DelaySecondsParameter) match {
+    val delaySecondsOption = parameters.DelaySeconds match {
       case Some(v) if v < 0 || v > 900 =>
         // Messages can at most be delayed for 15 minutes
         throw SQSException.invalidParameter(
@@ -218,15 +212,15 @@ trait SendMessageDirectives { this: ElasticMQDirectives with SQSLimitsModule =>
     val maybeTracingId = messageSystemAttributes
       .get(AwsTraceHeaderSystemAttribute)
       .map {
-        case StringMessageSystemAttribute(value) => TracingId(value)
-        case NumberMessageSystemAttribute(_) =>
+        case StringMessageAttribute(value, _) => TracingId(value)
+        case NumberMessageAttribute(_, _) =>
           throw new SQSException(
             InvalidParameterValueErrorName,
             errorMessage = Some(
               s"$AwsTraceHeaderSystemAttribute should be declared as a String, instead it was recognized as a Number"
             )
           )
-        case BinaryMessageSystemAttribute(_) =>
+        case BinaryMessageAttribute(_, _) =>
           throw new SQSException(
             InvalidParameterValueErrorName,
             errorMessage = Some(
@@ -234,7 +228,7 @@ trait SendMessageDirectives { this: ElasticMQDirectives with SQSLimitsModule =>
             )
           )
       }
-      .orElse(parameters.get(AwsTraceIdHeaderName).map(TracingId.apply))
+      .orElse(xRayTracingHeder.map(TracingId.apply))
 
     NewMessageData(
       None,
@@ -267,4 +261,46 @@ trait SendMessageDirectives { this: ElasticMQDirectives with SQSLimitsModule =>
 
   def verifyMessageNotTooLong(messageLength: Int): Unit =
     Limits.verifyMessageLength(messageLength, sqsLimits).fold(error => throw new SQSException(error), identity)
+
+  case class SendMessageActionRequest(
+      DelaySeconds: Option[Long],
+      MessageBody: String,
+      MessageDeduplicationId: Option[String],
+      MessageGroupId: Option[String],
+      MessageSystemAttributes: Option[Map[String, MessageAttribute]],
+      MessageAttributes: Option[Map[String, MessageAttribute]],
+      QueueUrl: String
+  )
+
+  object SendMessageActionRequest extends MessageAttributesSupport {
+
+    implicit val jsonFormat: RootJsonFormat[SendMessageActionRequest] = jsonFormat7(SendMessageActionRequest.apply)
+
+    implicit val queryFormat: FlatParamsReader[SendMessageActionRequest] =
+      new FlatParamsReader[SendMessageActionRequest] {
+        override def read(params: Map[String, String]): SendMessageActionRequest =
+          SendMessageActionRequest(
+            params.parseOptionalLong(DelaySecondsParameter),
+            requiredParameter(params)(MessageBodyParameter),
+            params.get(MessageDeduplicationIdParameter),
+            params.get(MessageGroupIdParameter),
+            Some(getMessageAttributes(params)),
+            Some(getMessageSystemAttributes(params)),
+            requiredParameter(params)(QueueUrlParameter)
+          )
+      }
+  }
+
+  case class SendMessageResponse(
+      MD5OfMessageAttributes: Option[String],
+      MD5OfMessageBody: String,
+      MD5OfMessageSystemAttributes: Option[String],
+      MessageId: String,
+      SequenceNumber: Option[String]
+  )
+
+  object SendMessageResponse {
+    implicit val jsonFormat: RootJsonFormat[SendMessageResponse] = jsonFormat5(SendMessageResponse.apply)
+  }
+
 }
