@@ -13,7 +13,7 @@ import org.elasticmq.rest.sqs.ParametersUtil._
 import org.elasticmq.rest.sqs.directives.ElasticMQDirectives
 import org.elasticmq.rest.sqs.model.RequestPayload
 import spray.json.DefaultJsonProtocol._
-import spray.json.{JsObject, JsString, JsValue, JsonReader, RootJsonFormat}
+import spray.json.RootJsonFormat
 
 import scala.concurrent.Future
 
@@ -33,9 +33,7 @@ trait SendMessageDirectives { this: ElasticMQDirectives with SQSLimitsModule =>
               respondWith {
                 <SendMessageResponse>
                   <SendMessageResult>
-                    {
-                  messageAttributeDigest.map(d => <MD5OfMessageAttributes>{d}</MD5OfMessageAttributes>).getOrElse(())
-                }
+                    {messageAttributeDigest.map(d => <MD5OfMessageAttributes>{d}</MD5OfMessageAttributes>).getOrElse(())}
                     <MD5OfMessageBody>{digest}</MD5OfMessageBody>
                     <MessageId>{message.id.id}</MessageId>
                     {message.sequenceNumber.map(x => <SequenceNumber>{x}</SequenceNumber>).getOrElse(())}
@@ -52,7 +50,7 @@ trait SendMessageDirectives { this: ElasticMQDirectives with SQSLimitsModule =>
                 SendMessageResponse(
                   messageAttributeDigest,
                   digest,
-                  messageAttributeDigest,
+                  None,
                   message.id.id,
                   message.sequenceNumber
                 )
@@ -248,6 +246,7 @@ trait SendMessageDirectives { this: ElasticMQDirectives with SQSLimitsModule =>
       message: NewMessageData
   ): Future[(MessageData, String, Option[String])] = {
     val digest = md5Digest(message.content)
+
     val messageAttributeDigest = if (message.messageAttributes.isEmpty) {
       None
     } else {

@@ -1,6 +1,7 @@
 package org.elasticmq.rest.sqs
 
 import Constants.QueueUrlParameter
+import org.elasticmq.Limits
 
 import java.util.regex.Pattern
 import spray.json.DefaultJsonProtocol._
@@ -14,6 +15,13 @@ trait BatchRequestsModule {
   def batchRequest[M <: BatchEntry, R](messagesData: List[M])(
       single: (M, String, Int) => Future[R]
   ): Future[BatchResponse[R]] = {
+
+    val uniqueIds = messagesData.map(_.Id).toSet
+    if (uniqueIds.size != messagesData.size) {
+      throw new SQSException("AWS.SimpleQueueService.BatchEntryIdsNotDistinct")
+    }
+
+    Limits.verifyBatchSize(uniqueIds.size, sqsLimits).fold(error => throw new SQSException(error), identity)
 
     val result = messagesData.zipWithIndex.map {
       case (messageData, index) => {
