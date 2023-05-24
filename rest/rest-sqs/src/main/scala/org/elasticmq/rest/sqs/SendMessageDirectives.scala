@@ -278,16 +278,17 @@ trait SendMessageDirectives { this: ElasticMQDirectives with SQSLimitsModule =>
 
     implicit val queryFormat: FlatParamsReader[SendMessageActionRequest] =
       new FlatParamsReader[SendMessageActionRequest] {
-        override def read(params: Map[String, String]): SendMessageActionRequest =
+        override def read(params: Map[String, String]): SendMessageActionRequest = {
           SendMessageActionRequest(
             params.parseOptionalLong(DelaySecondsParameter),
             requiredParameter(params)(MessageBodyParameter),
             params.get(MessageDeduplicationIdParameter),
             params.get(MessageGroupIdParameter),
-            Some(getMessageAttributes(params)),
             Some(getMessageSystemAttributes(params)),
+            Some(getMessageAttributes(params)),
             requiredParameter(params)(QueueUrlParameter)
           )
+        }
       }
   }
 
