@@ -45,7 +45,7 @@ object GetQueueUrlRequest {
   implicit val requestParamReader: FlatParamsReader[GetQueueUrlActionRequest] =
     new FlatParamsReader[GetQueueUrlActionRequest] {
       override def read(params: Map[String, String]): GetQueueUrlActionRequest = {
-        val queueName = requiredParameter(params)("QueueName")
+        val queueName = requiredParameter(params)(QueueNameParameter)
         val queueOwnerAWSAccountId = optionalParameter(params)("QueueOwnerAWSAccountId")
         GetQueueUrlActionRequest(queueName, queueOwnerAWSAccountId)
       }

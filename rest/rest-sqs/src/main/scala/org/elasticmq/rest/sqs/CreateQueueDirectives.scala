@@ -126,7 +126,7 @@ object CreateQueueActionRequest {
     override def read(params: Map[String, String]): CreateQueueActionRequest = {
       val attributes = AttributesModule.attributeNameAndValuesReader.read(params)
       val tags = TagsModule.tagNameAndValuesReader.read(params)
-      val queueName = requiredParameter(params)("QueueName")
+      val queueName = requiredParameter(params)(QueueNameParameter)
       CreateQueueActionRequest(queueName, Some(attributes), Some(tags))
     }
   }

@@ -9,6 +9,9 @@ import org.elasticmq.actor.reply._
 import org.elasticmq.msg.{GetQueueData, LookupQueue}
 import org.elasticmq.rest.sqs.Constants.QueueUrlParameter
 import org.elasticmq.rest.sqs._
+import org.elasticmq.rest.sqs.directives.QueueDirectives.AccountIdRegex
+
+import scala.util.matching.Regex
 
 trait QueueDirectives {
   this: Directives
@@ -37,15 +40,13 @@ trait QueueDirectives {
     getQueueNameFromQueueUrl(queueUrl)(body)
   }
 
-  private val accountIdRegex = "[a-zA-Z0-9]+".r
-
   private def getQueueNameFromQueueUrl(queueUrl: String): Directive1[String] = {
 
     val matcher =
       if (contextPath.nonEmpty)
-        separateOnSlashes(contextPath) / accountIdRegex / "[^/]+".r
+        separateOnSlashes(contextPath) / AccountIdRegex / "[^/]+".r
       else
-        Slash ~ accountIdRegex / "[^/]+".r
+        Slash ~ AccountIdRegex / "[^/]+".r
 
     matcher(Uri(queueUrl).path) match {
       case Matched(_, extractions) => provide(extractions._2): Directive1[String]
@@ -53,7 +54,7 @@ trait QueueDirectives {
         reject(
           MalformedQueryParamRejection(
             QueueUrlParameter,
-            "Invalid queue url, the path should be /<accountId>/<queueName> where accountId must match " + accountIdRegex + " regex"
+            "Invalid queue url, the path should be /<accountId>/<queueName> where accountId must match " + AccountIdRegex + " regex"
           )
         )
     }
@@ -77,4 +78,8 @@ trait QueueDirectives {
       body(queueData)
     }
   }
+}
+
+object QueueDirectives {
+  val AccountIdRegex: Regex = "[a-zA-Z0-9]+".r
 }

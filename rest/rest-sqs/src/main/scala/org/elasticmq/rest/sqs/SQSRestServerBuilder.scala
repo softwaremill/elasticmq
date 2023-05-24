@@ -309,6 +309,7 @@ object Constants {
   val MissingParameterName = "MissingParameter"
   val QueueUrlContext = "queue"
   val QueueUrlParameter = "QueueUrl"
+  val QueueNameParameter = "QueueName"
   val MessageBodyParameter = "MessageBody"
   val DelaySecondsParameter = "DelaySeconds"
   val MessageGroupIdParameter = "MessageGroupId"
