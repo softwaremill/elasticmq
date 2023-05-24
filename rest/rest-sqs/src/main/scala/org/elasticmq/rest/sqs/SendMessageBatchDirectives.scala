@@ -114,8 +114,8 @@ trait SendMessageBatchDirectives {
             requiredParameter(params)(MessageBodyParameter),
             params.get(MessageDeduplicationIdParameter),
             params.get(MessageGroupIdParameter),
-            Some(getMessageAttributes(params)),
-            Some(getMessageSystemAttributes(params))
+            Some(getMessageSystemAttributes(params)),
+            Some(getMessageAttributes(params))
           )
 
         override def batchPrefix: String = "SendMessageBatchRequestEntry"
