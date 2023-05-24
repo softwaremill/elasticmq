@@ -72,7 +72,7 @@ trait SendMessageDirectives { this: ElasticMQDirectives with SQSLimitsModule =>
         }
       }
       .toList
-      .concat(List(0))
+      .union(List(0))
       .max // even if nothing, return 0
 
     Limits
