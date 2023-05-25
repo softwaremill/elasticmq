@@ -27,21 +27,24 @@ trait BatchRequestsModule {
       case (messageData, index) => {
         val id = messageData.Id
 
-        single(messageData, id, index).map(
-          Right(_)
-        ).recoverWith {
-          case e: SQSException =>
+        Future
+          .delegate(single(messageData, id, index))
+          .map(Right(_))
+          .recoverWith { case e: SQSException =>
             Future(Left(Failed(e.code, id, e.message, SenderFault = true)))
-        }
+          }
       }
     }
 
-    Future.sequence(result).map(
-      _.foldLeft((List.empty[Failed], List.empty[R])){
-        case ((failures, successes), Left(failed)) => (failures :+ failed, successes)
-        case ((failures, successes), Right(success)) => (failures, successes :+ success)
-      }
-    ).map((BatchResponse.apply[R] _).tupled)
+    Future
+      .sequence(result)
+      .map(
+        _.foldLeft((List.empty[Failed], List.empty[R])) {
+          case ((failures, successes), Left(failed))   => (failures :+ failed, successes)
+          case ((failures, successes), Right(success)) => (failures, successes :+ success)
+        }
+      )
+      .map((BatchResponse.apply[R] _).tupled)
   }
 }
 
