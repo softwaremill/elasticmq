@@ -19,13 +19,13 @@ trait QueueDirectives {
     with ContextPathModule
     with ActorSystemModule
     with FutureDirectives
-    with AnyParamDirectives =>
+   =>
 
   def queueActorFromUrl(queueUrl: String)(body: ActorRef => Route): Route =
     getQueueNameFromQueueUrl(queueUrl)(queueName => queueActor(queueName, body))
 
   def queueActorAndNameFromUrl(queueUrl: String)(body: (ActorRef, String) => Route): Route = {
-    queueNameFromUrl(queueUrl) { queueName => queueActor(queueName, qa => body(qa, queueName)) }
+    getQueueNameFromQueueUrl(queueUrl) { queueName => queueActor(queueName, qa => body(qa, queueName)) }
   }
 
   def queueActorAndDataFromQueueName(queueName: String)(body: (ActorRef, QueueData) => Route): Route = {
@@ -34,10 +34,6 @@ trait QueueDirectives {
 
   def queueActorAndDataFromQueueUrl(queueUrl: String)(body: (ActorRef, QueueData) => Route): Route = {
     getQueueNameFromQueueUrl(queueUrl)(queueName => queueActor(queueName, qa => queueData(qa, qd => body(qa, qd))))
-  }
-
-  private def queueNameFromUrl(queueUrl: String)(body: String => Route): Route = {
-    getQueueNameFromQueueUrl(queueUrl)(body)
   }
 
   private def getQueueNameFromQueueUrl(queueUrl: String): Directive1[String] = {

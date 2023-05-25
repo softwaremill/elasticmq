@@ -65,8 +65,6 @@ class UnmatchedActionRoutesTest
     }
 
     Post("/").withEntity(AWSProtocolDirectives.`AWSJsonProtocol1.0ContentType`, ByteString.empty) ~> route ~> check {
-      println(responseAs[String])
-
       status shouldBe BadRequest
       responseAs[String] should include(""""Code":"MissingAction"""")
     }

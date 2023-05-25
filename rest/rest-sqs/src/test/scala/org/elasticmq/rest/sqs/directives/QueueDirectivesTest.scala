@@ -23,7 +23,6 @@ class QueueDirectivesTest
     with Directives
     with QueueDirectives
     with ContextPathModule
-    with AnyParamDirectives
     with QueueManagerActorModule
     with FutureDirectives
     with ActorSystemModule

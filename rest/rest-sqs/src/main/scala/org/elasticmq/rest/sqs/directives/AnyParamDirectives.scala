@@ -3,13 +3,13 @@ package org.elasticmq.rest.sqs.directives
 import akka.http.scaladsl.model.{FormData, HttpRequest}
 import akka.http.scaladsl.server.{Directives, Route, UnsupportedRequestContentTypeRejection}
 import akka.stream.Materializer
-import org.elasticmq.rest.sqs.{AWSProtocol, ContextPathModule}
+import org.elasticmq.rest.sqs.{AWSProtocol, ContextPathModule, QueueURLModule}
 import org.elasticmq.rest.sqs.Constants.{QueueNameParameter, QueueUrlParameter}
 import org.elasticmq.rest.sqs.directives.QueueDirectives.AccountIdRegex
 import org.elasticmq.rest.sqs.model.{JsonData, RequestPayload}
 
 trait AnyParamDirectives {
-  this: Directives with ContextPathModule =>
+  this: Directives with ContextPathModule with QueueURLModule =>
 
   private def formDataOrEmpty =
     entity(as[FormData]).recoverPF {
@@ -27,7 +27,8 @@ trait AnyParamDirectives {
           case actionHeaderPattern(action) => Some(action)
           case _                           => None
         }
-      ).getOrElse(throw new IllegalArgumentException("Couldn't find header X-Amz-Target"))
+      )
+      .getOrElse(throw new IllegalArgumentException("Couldn't find header X-Amz-Target"))
   private def extractAwsXRayTracingHeader(request: HttpRequest): Option[String] = {
     request.headers
       .find(_.name().equalsIgnoreCase("X-Amzn-Trace-Id"))
@@ -37,19 +38,23 @@ trait AnyParamDirectives {
   def extractQueueNameAndUrlFromRequest(body: Map[String, String] => Route): Route = {
 
     val pathDirective = {
-      if (contextPath.nonEmpty)
-        pathPrefix(contextPath / AccountIdRegex / Segment.?).tmap(_._2) | provide(Option.empty[String])
-      else {
-        pathPrefix(AccountIdRegex / Segment.?).tmap(_._2) |
-          provide(Option.empty[String])
-      }
-    }.flatMap {
-      case Some(name) =>
-        extractUri.flatMap { uri =>
-          provide(Map(QueueNameParameter -> name, QueueUrlParameter -> uri.toString))
+        if (contextPath.nonEmpty) {
+          pathPrefix(contextPath / AccountIdRegex / Segment).tmap(t => Option(t._2)) |
+            pathPrefix(contextPath / Segment).map(Option(_)) |
+            provide(Option.empty[String])
         }
-      case None => provide(Map.empty[String, String])
-    }
+        else {
+          pathPrefix(AccountIdRegex / Segment).tmap(t => Option(t._2)) |
+            pathPrefix(Segment).map(Option(_)) |
+            provide(Option.empty[String])
+        }
+    }.flatMap {
+        case Some(name) =>
+          queueURL(name).map { url =>
+              Map(QueueNameParameter -> name, QueueUrlParameter -> url)
+          }
+        case None => provide(Map.empty[String, String])
+      }
 
     pathDirective(body)
   }
@@ -75,7 +80,6 @@ trait AnyParamDirectives {
             formDataOrEmpty { fd =>
               extractQueueNameAndUrlFromRequest { queueNameAndUrl =>
                 val params = queryParameters ++ fd.fields.toMap ++ queueNameAndUrl
-
                 body(
                   RequestPayload.QueryParams(
                     params.filter(_._1 != ""),

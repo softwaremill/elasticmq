@@ -4,7 +4,8 @@ import akka.http.scaladsl.model.FormData
 import akka.http.scaladsl.model.headers.RawHeader
 import akka.http.scaladsl.server.Directives
 import akka.http.scaladsl.testkit.ScalatestRouteTest
-import org.elasticmq.rest.sqs.{AWSProtocol, ContextPathModule}
+import org.elasticmq.NodeAddress
+import org.elasticmq.rest.sqs.{AWSProtocol, ContextPathModule, QueueURLModule}
 import org.elasticmq.rest.sqs.model.JsonData
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -16,6 +17,7 @@ class AnyParamDirectivesTest
     with ScalatestRouteTest
     with Directives
     with AnyParamDirectives
+    with QueueURLModule
     with ContextPathModule {
 
   "anyParamsMap" should "extract both query and form parameters for query protocol" in {
@@ -56,4 +58,6 @@ class AnyParamDirectivesTest
   }
 
   override def contextPath: String = ""
+  override def serverAddress: NodeAddress = NodeAddress()
+  override def awsAccountId: String = "123123333"
 }

@@ -10,7 +10,7 @@ import org.elasticmq._
 import org.elasticmq.actor.QueueManagerActor
 import org.elasticmq.metrics.QueuesMetrics
 import org.elasticmq.rest.sqs.Constants._
-import org.elasticmq.rest.sqs.directives.{AWSProtocolDirectives, ElasticMQDirectives, UnmatchedActionRoutes}
+import org.elasticmq.rest.sqs.directives.{AWSProtocolDirectives, AnyParamDirectives, ElasticMQDirectives, UnmatchedActionRoutes}
 import org.elasticmq.rest.sqs.model.RequestPayload
 import org.elasticmq.util.{Logging, NowProvider}
 
@@ -141,6 +141,7 @@ case class TheSQSRestServerBuilder(
       with SQSLimitsModule
       with BatchRequestsModule
       with ElasticMQDirectives
+      with AnyParamDirectives
       with CreateQueueDirectives
       with DeleteQueueDirectives
       with AWSProtocolDirectives
