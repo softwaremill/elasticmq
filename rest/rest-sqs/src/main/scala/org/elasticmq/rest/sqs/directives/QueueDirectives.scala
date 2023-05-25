@@ -40,7 +40,7 @@ trait QueueDirectives {
 
     val matcher =
       if (contextPath.nonEmpty)
-        separateOnSlashes(contextPath) / AccountIdRegex / "[^/]+".r
+        Slash ~ separateOnSlashes(contextPath) / AccountIdRegex / "[^/]+".r
       else
         Slash ~ AccountIdRegex / "[^/]+".r
 
