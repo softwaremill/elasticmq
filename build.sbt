@@ -38,7 +38,7 @@ val jclOverSlf4j = "org.slf4j" % "jcl-over-slf4j" % "2.0.7" // needed form amazo
 val scalatest = "org.scalatest" %% "scalatest" % "3.2.16"
 val awaitility = "org.awaitility" % "awaitility-scala" % "4.2.0"
 
-val amazonJavaSdkSqs = "com.amazonaws" % "aws-java-sdk-sqs" % "1.12.468" exclude ("commons-logging", "commons-logging")
+val amazonJavaSdkSqs = "com.amazonaws" % "aws-java-sdk-sqs" % "1.11.1026" exclude ("commons-logging", "commons-logging")
 
 val akkaVersion = "2.6.20"
 val akkaHttpVersion = "10.2.10"
