@@ -27,8 +27,8 @@ trait BatchRequestsModule {
       case (messageData, index) => {
         val id = messageData.Id
 
-        Future
-          .delegate(single(messageData, id, index))
+        Future.unit
+          .flatMap(_ => single(messageData, id, index))
           .map(Right(_))
           .recoverWith { case e: SQSException =>
             Future(Left(Failed(e.code, id, e.message, SenderFault = true)))

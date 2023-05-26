@@ -18,7 +18,7 @@ trait ExceptionDirectives extends Logging {
         respondWith(e.httpStatusCode) {
           e.toXml(EmptyRequestId)
         }
-      case _ => complete(e.httpStatusCode, ErrorResponse(Error(e.errorType, e.code, e.message), EmptyRequestId))
+      case _ => complete(e.httpStatusCode, ErrorResponse(e.errorType, e.message))
     }
   }
 

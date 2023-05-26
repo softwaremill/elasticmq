@@ -39,9 +39,10 @@ trait QueueDirectives {
   private def getQueueNameFromQueueUrl(queueUrl: String): Directive1[String] = {
 
     val matcher =
-      if (contextPath.nonEmpty)
-        Slash ~ separateOnSlashes(contextPath) / AccountIdRegex / "[^/]+".r
-      else
+      if (contextPath.nonEmpty) {
+        val pathWithContext = separateOnSlashes(contextPath) / AccountIdRegex / "[^/]+".r
+        Slash ~ pathWithContext | pathWithContext
+      } else
         Slash ~ AccountIdRegex / "[^/]+".r
 
     matcher(Uri(queueUrl).path) match {
