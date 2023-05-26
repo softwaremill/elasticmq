@@ -34,13 +34,7 @@ trait ExceptionDirectives extends Logging {
 
   def handleServerExceptions(protocol: AWSProtocol): Directive0 = handleExceptions(exceptionHandler(protocol))
 
-  case class ErrorResponse(Error: Error, RequestId: String)
-  case class Error(Type: String, Code: String, Message: String)
-
-  object Error {
-    implicit val format: RootJsonFormat[Error] = jsonFormat3(Error.apply)
-  }
-
+  case class ErrorResponse(`__type`: String, Message: String)
   object ErrorResponse {
     implicit val format: RootJsonFormat[ErrorResponse] = jsonFormat2(ErrorResponse.apply)
   }

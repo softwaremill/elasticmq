@@ -45,7 +45,7 @@ trait QueueDirectives {
         Slash ~ AccountIdRegex / "[^/]+".r
 
     matcher(Uri(queueUrl).path) match {
-      case Matched(_, extractions) => provide(extractions._2): Directive1[String]
+      case Matched(_, (_, queueName)) => provide(queueName): Directive1[String]
       case Unmatched =>
         reject(
           MalformedQueryParamRejection(
