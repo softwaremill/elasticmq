@@ -1,6 +1,5 @@
 package org.elasticmq.rest.sqs
 
-import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import org.elasticmq.rest.sqs.Action.GetQueueUrl
 import org.elasticmq.rest.sqs.Constants._
 import org.elasticmq.rest.sqs.GetQueueUrlRequest.{requestJsonFormat, requestParamReader}
@@ -9,28 +8,13 @@ import spray.json.DefaultJsonProtocol._
 import spray.json.RootJsonFormat
 import org.elasticmq.rest.sqs.model.RequestPayload
 
-trait GetQueueUrlDirectives { this: ElasticMQDirectives with QueueURLModule =>
-  def getQueueUrl(p: RequestPayload, protocol: AWSProtocol) = {
+trait GetQueueUrlDirectives { this: ElasticMQDirectives with QueueURLModule with AkkaSupport =>
+  def getQueueUrl(p: RequestPayload)(implicit protocol: AWSProtocol) = {
     p.action(GetQueueUrl) {
       rootPath {
         val requestParams = p.as[GetQueueUrlActionRequest]
-
         queueURL(requestParams.QueueName) { url =>
-          protocol match {
-            case AWSProtocol.`AWSJsonProtocol1.0` =>
-              complete(GetQueueURLResponse(url))
-            case _ =>
-              respondWith {
-                <GetQueueUrlResponse>
-                  <GetQueueUrlResult>
-                    <QueueUrl>{url}</QueueUrl>
-                  </GetQueueUrlResult>
-                  <ResponseMetadata>
-                    <RequestId>{EmptyRequestId}</RequestId>
-                  </ResponseMetadata>
-                </GetQueueUrlResponse>
-              }
-          }
+          complete(GetQueueURLResponse(url))
         }
       }
     }
@@ -56,4 +40,14 @@ case class GetQueueURLResponse(QueueUrl: String)
 
 object GetQueueURLResponse {
   implicit val format: RootJsonFormat[GetQueueURLResponse] = jsonFormat1(GetQueueURLResponse.apply)
+
+  implicit val xmlSerializer: XmlSerializer[GetQueueURLResponse] = t =>
+    <GetQueueUrlResponse>
+      <GetQueueUrlResult>
+        <QueueUrl>{t.QueueUrl}</QueueUrl>
+      </GetQueueUrlResult>
+      <ResponseMetadata>
+        <RequestId>{EmptyRequestId}</RequestId>
+      </ResponseMetadata>
+    </GetQueueUrlResponse>
 }

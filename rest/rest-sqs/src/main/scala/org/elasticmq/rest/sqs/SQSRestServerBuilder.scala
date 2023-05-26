@@ -161,6 +161,7 @@ case class TheSQSRestServerBuilder(
       with TagQueueDirectives
       with TagsModule
       with UnmatchedActionRoutes
+      with AkkaSupport
       with QueueAttributesOps {
 
       def serverAddress = currentServerAddress.get()
@@ -186,7 +187,7 @@ case class TheSQSRestServerBuilder(
         deleteMessage(p, protocol) ~
         deleteMessageBatch(p, protocol) ~
         // 2. Getting, creating queues
-        getQueueUrl(p, protocol) ~
+        getQueueUrl(p)(protocol) ~
         createQueue(p, protocol) ~
         listQueues(p, protocol) ~
         purgeQueue(p, protocol) ~

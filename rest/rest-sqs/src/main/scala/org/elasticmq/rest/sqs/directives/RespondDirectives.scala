@@ -30,7 +30,7 @@ trait RespondDirectives {
   private def namespace(route: UnprefixedAttribute => Route): Route =
     parameter("Version" ?) { versionOpt =>
       val version = versionOpt match {
-        case Some(v) if !v.isEmpty => v
+        case Some(v) if v.nonEmpty => v
         case _                     => SqsDefaultVersion
       }
 
