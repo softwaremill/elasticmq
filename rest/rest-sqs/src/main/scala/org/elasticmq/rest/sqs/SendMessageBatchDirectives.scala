@@ -2,7 +2,7 @@ package org.elasticmq.rest.sqs
 
 import Constants._
 import akka.http.scaladsl.server.Route
-import org.elasticmq.MessageAttribute
+import org.elasticmq.{BinaryMessageAttribute, Limits, MessageAttribute, NumberMessageAttribute, StringMessageAttribute}
 import org.elasticmq.rest.sqs.Action.SendMessageBatch
 import org.elasticmq.rest.sqs.ParametersUtil.ParametersParser
 import org.elasticmq.rest.sqs.directives.ElasticMQDirectives
@@ -12,16 +12,17 @@ import spray.json.RootJsonFormat
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 
 trait SendMessageBatchDirectives {
-  this: ElasticMQDirectives with SendMessageDirectives with BatchRequestsModule =>
+  this: ElasticMQDirectives with SendMessageDirectives with BatchRequestsModule with SQSLimitsModule =>
 
   def sendMessageBatch(p: RequestPayload, protocol: AWSProtocol): Route = {
     p.action(SendMessageBatch) {
       val batch = p.as[BatchRequest[SendMessageBatchActionRequest]]
-
       queueActorAndDataFromQueueUrl(batch.QueueUrl) { (queueActor, queueData) =>
         verifyMessagesNotTooLong(batch.Entries)
 
         val resultsFuture = batchRequest(batch.Entries) { (messageData, id, index) =>
+          validateMessageAttributes(messageData.MessageAttributes.getOrElse(Map.empty))
+
           val message =
             createMessage(messageData.toSendMessageActionRequest(batch.QueueUrl), queueData, index, p.xRayTracingHeader)
 
@@ -33,20 +34,20 @@ trait SendMessageBatchDirectives {
           case AWSProtocol.`AWSJsonProtocol1.0` =>
             complete(resultsFuture)
           case _ =>
-            resultsFuture.map {
-              case BatchResponse(failed, succeeded) =>
+            resultsFuture.map { case BatchResponse(failed, succeeded) =>
               val successEntries = succeeded.map {
                 case BatchMessageSendResponseEntry(id, messageAttributeDigest, digest, _, messageId, _) =>
                   <SendMessageBatchResultEntry>
                     <Id>{id}</Id>
-                    {messageAttributeDigest.map(d => <MD5OfMessageAttributes>{d}</MD5OfMessageAttributes>).getOrElse(())}
+                    {
+                    messageAttributeDigest.map(d => <MD5OfMessageAttributes>{d}</MD5OfMessageAttributes>).getOrElse(())
+                  }
                     <MD5OfMessageBody>{digest}</MD5OfMessageBody>
                     <MessageId>{messageId}</MessageId>
                   </SendMessageBatchResultEntry>
               }
-              val failureEntries = failed.map {
-                case Failed(code, id, message, _) =>
-                  <BatchResultErrorEntry>
+              val failureEntries = failed.map { case Failed(code, id, message, _) =>
+                <BatchResultErrorEntry>
                     <Id>{id}</Id>
                     <SenderFault>true</SenderFault>
                     <Code>{code}</Code>
@@ -68,7 +69,6 @@ trait SendMessageBatchDirectives {
               }
             }
         }
-
 
       }
     }
@@ -105,9 +105,9 @@ trait SendMessageBatchDirectives {
       SendMessageBatchActionRequest.apply
     )
 
-    implicit val queryFormat: BatchFlatParamsReader[SendMessageBatchActionRequest] =
+    implicit val queryFormat: BatchFlatParamsReader[SendMessageBatchActionRequest] = {
       new BatchFlatParamsReader[SendMessageBatchActionRequest] {
-        override def read(params: Map[String, String]): SendMessageBatchActionRequest =
+        override def read(params: Map[String, String]): SendMessageBatchActionRequest = {
           SendMessageBatchActionRequest(
             requiredParameter(params)(IdSubParameter),
             params.parseOptionalLong(DelaySecondsParameter),
@@ -117,9 +117,11 @@ trait SendMessageBatchDirectives {
             Some(getMessageSystemAttributes(params)),
             Some(getMessageAttributes(params))
           )
+        }
 
         override def batchPrefix: String = "SendMessageBatchRequestEntry"
       }
+    }
   }
 
   case class BatchMessageSendResponseEntry(
@@ -132,7 +134,9 @@ trait SendMessageBatchDirectives {
   )
 
   object BatchMessageSendResponseEntry {
-    implicit val format: RootJsonFormat[BatchMessageSendResponseEntry] = jsonFormat6(BatchMessageSendResponseEntry.apply)
+    implicit val format: RootJsonFormat[BatchMessageSendResponseEntry] = jsonFormat6(
+      BatchMessageSendResponseEntry.apply
+    )
   }
 
 }

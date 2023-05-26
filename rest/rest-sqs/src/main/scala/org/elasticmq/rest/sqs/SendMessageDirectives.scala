@@ -27,13 +27,17 @@ trait SendMessageDirectives { this: ElasticMQDirectives with SQSLimitsModule =>
       queueActorAndDataFromQueueUrl(params.QueueUrl) { (queueActor, queueData) =>
         val message = createMessage(params, queueData, orderIndex = 0, p.xRayTracingHeader)
 
+        validateMessageAttributes(params.MessageAttributes.getOrElse(Map.empty))
+
         doSendMessage(queueActor, message).map { case (message, digest, messageAttributeDigest) =>
           protocol match {
             case AWSProtocol.AWSQueryProtocol =>
               respondWith {
                 <SendMessageResponse>
                   <SendMessageResult>
-                    {messageAttributeDigest.map(d => <MD5OfMessageAttributes>{d}</MD5OfMessageAttributes>).getOrElse(())}
+                    {
+                  messageAttributeDigest.map(d => <MD5OfMessageAttributes>{d}</MD5OfMessageAttributes>).getOrElse(())
+                }
                     <MD5OfMessageBody>{digest}</MD5OfMessageBody>
                     <MessageId>{message.id.id}</MessageId>
                     {message.sequenceNumber.map(x => <SequenceNumber>{x}</SequenceNumber>).getOrElse(())}
@@ -75,10 +79,6 @@ trait SendMessageDirectives { this: ElasticMQDirectives with SQSLimitsModule =>
       .union(List(0))
       .max // even if nothing, return 0
 
-    Limits
-      .verifyMessageAttributesNumber(numAttributes, sqsLimits)
-      .fold(error => throw new SQSException(error), identity)
-
     (1 to numAttributes).map { i =>
       val name = parameters("MessageAttribute." + i + ".Name")
       val dataType = parameters("MessageAttribute." + i + ".Value.DataType")
@@ -90,20 +90,12 @@ trait SendMessageDirectives { this: ElasticMQDirectives with SQSLimitsModule =>
         None
       }
 
-      val value = primaryDataType match {
+      val value: MessageAttribute = primaryDataType match {
         case "String" =>
-          val strValue =
-            parameters("MessageAttribute." + i + ".Value.StringValue")
-          Limits
-            .verifyMessageStringAttribute(name, strValue, sqsLimits)
-            .fold(error => throw new SQSException(error), identity)
+          val strValue = parameters("MessageAttribute." + i + ".Value.StringValue")
           StringMessageAttribute(strValue, customDataType)
         case "Number" =>
-          val strValue =
-            parameters("MessageAttribute." + i + ".Value.StringValue")
-          Limits
-            .verifyMessageNumberAttribute(strValue, name, sqsLimits)
-            .fold(error => throw new SQSException(error), identity)
+          val strValue = parameters("MessageAttribute." + i + ".Value.StringValue")
           NumberMessageAttribute(strValue, customDataType)
         case "Binary" =>
           BinaryMessageAttribute.fromBase64(parameters("MessageAttribute." + i + ".Value.BinaryValue"), customDataType)
@@ -260,6 +252,33 @@ trait SendMessageDirectives { this: ElasticMQDirectives with SQSLimitsModule =>
 
   def verifyMessageNotTooLong(messageLength: Int): Unit =
     Limits.verifyMessageLength(messageLength, sqsLimits).fold(error => throw new SQSException(error), identity)
+
+  def validateMessageAttributes(messageAttributes: Map[String, MessageAttribute]): Unit = {
+
+    messageAttributes.foreach { case (name, value) =>
+      Limits
+        .verifyMessageAttributesNumber(messageAttributes.size, sqsLimits)
+        .fold(error => throw new SQSException(error), identity)
+
+      val availableDataTypes = Set("String", "Number", "Binary")
+      if (value.getDataType().isEmpty)
+        throw throw new SQSException(s"Attribute '$name' must contain a non-empty attribute type")
+      if (!availableDataTypes.contains(value.getDataType()))
+        throw new Exception("Currently only handles String, Number and Binary typed attributes")
+
+      value match {
+        case StringMessageAttribute(stringValue, _) =>
+          Limits
+            .verifyMessageStringAttribute(name, stringValue, sqsLimits)
+            .fold(error => throw new SQSException(error), identity)
+        case NumberMessageAttribute(stringValue, _) =>
+          Limits
+            .verifyMessageNumberAttribute(stringValue, name, sqsLimits)
+            .fold(error => throw new SQSException(error), identity)
+        case BinaryMessageAttribute(_, _) => ()
+      }
+    }
+  }
 
   case class SendMessageActionRequest(
       DelaySeconds: Option[Long],
