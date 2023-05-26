@@ -35,7 +35,7 @@ trait AnyParamDirectives {
       .map(_.value())
   }
 
-  def extractQueueNameAndUrlFromRequest(body: Map[String, String] => Route): Route = {
+  private def extractQueueNameAndUrlFromRequest(body: Map[String, String] => Route): Route = {
 
     val pathDirective = {
         if (contextPath.nonEmpty) {
@@ -79,6 +79,7 @@ trait AnyParamDirectives {
           extractRequest { request =>
             formDataOrEmpty { fd =>
               extractQueueNameAndUrlFromRequest { queueNameAndUrl =>
+
                 val params = queryParameters ++ fd.fields.toMap ++ queueNameAndUrl
                 body(
                   RequestPayload.QueryParams(

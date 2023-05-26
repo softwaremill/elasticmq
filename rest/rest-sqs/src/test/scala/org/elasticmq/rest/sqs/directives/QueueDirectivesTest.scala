@@ -10,11 +10,12 @@ import org.elasticmq.rest.sqs.{ActorSystemModule, ContextPathModule, QueueManage
 import org.elasticmq.util.NowProvider
 import org.elasticmq.{CreateQueueData, MillisVisibilityTimeout, QueueData, StrictSQSLimits}
 import org.joda.time.{DateTime, Duration}
+import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 import scala.concurrent.duration._
-import scala.concurrent.{Await, ExecutionContextExecutor}
+import scala.concurrent.ExecutionContextExecutor
 
 class QueueDirectivesTest
     extends AnyFlatSpec
@@ -28,6 +29,7 @@ class QueueDirectivesTest
     with ActorSystemModule
     with ExceptionDirectives
     with RespondDirectives
+    with ScalaFutures
     with AWSProtocolDirectives {
 
   private val maxDuration = 1.minute
@@ -44,7 +46,7 @@ class QueueDirectivesTest
         QueueData("lol", MillisVisibilityTimeout(1L), Duration.ZERO, Duration.ZERO, DateTime.now(), DateTime.now())
       )
     )
-    Await.result(future, maxDuration)
+    future.value
     val route = {
       queueActorAndNameFromUrl(
         "https://eu-central-1.queue.amazonaws.com/906175111765/lol"
@@ -62,7 +64,7 @@ class QueueDirectivesTest
         QueueData("lol", MillisVisibilityTimeout(1L), Duration.ZERO, Duration.ZERO, DateTime.now(), DateTime.now())
       )
     )
-    Await.result(future, maxDuration)
+    future.value
     val route = {
       queueActorAndNameFromUrl(
         "https://eu-central-1.queue.amazonaws.com/906175111765/lol"
@@ -80,7 +82,7 @@ class QueueDirectivesTest
         QueueData("lol", MillisVisibilityTimeout(1L), Duration.ZERO, Duration.ZERO, DateTime.now(), DateTime.now())
       )
     )
-    Await.result(future, maxDuration)
+    future.value
     val route = {
       extractProtocol { protocol =>
         handleServerExceptions(protocol) {

@@ -1,8 +1,6 @@
 package org.elasticmq.rest.sqs.directives
 
-import akka.http.scaladsl.model.ContentType
 import akka.http.scaladsl.model.StatusCodes.BadRequest
-import akka.http.scaladsl.model.headers.{RawHeader, `Content-Type`}
 import akka.http.scaladsl.server.Directives
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import akka.util.ByteString
@@ -33,6 +31,7 @@ class UnmatchedActionRoutesTest
       status shouldBe BadRequest
       responseAs[String] should include("<Code>InvalidAction</Code>")
     }
+
   }
 
   it should "return invalid action error if an action is empty" in {
