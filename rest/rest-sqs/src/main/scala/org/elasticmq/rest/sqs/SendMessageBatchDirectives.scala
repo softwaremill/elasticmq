@@ -2,19 +2,20 @@ package org.elasticmq.rest.sqs
 
 import Constants._
 import akka.http.scaladsl.server.Route
-import org.elasticmq.{BinaryMessageAttribute, Limits, MessageAttribute, NumberMessageAttribute, StringMessageAttribute}
+import org.elasticmq.MessageAttribute
 import org.elasticmq.rest.sqs.Action.SendMessageBatch
 import org.elasticmq.rest.sqs.ParametersUtil.ParametersParser
 import org.elasticmq.rest.sqs.directives.ElasticMQDirectives
 import org.elasticmq.rest.sqs.model.RequestPayload
 import spray.json.DefaultJsonProtocol._
 import spray.json.RootJsonFormat
-import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
+
+import scala.xml.Elem
 
 trait SendMessageBatchDirectives {
-  this: ElasticMQDirectives with SendMessageDirectives with BatchRequestsModule with SQSLimitsModule =>
+  this: ElasticMQDirectives with SendMessageDirectives with BatchRequestsModule with SQSLimitsModule with AkkaSupport =>
 
-  def sendMessageBatch(p: RequestPayload, protocol: AWSProtocol): Route = {
+  def sendMessageBatch(p: RequestPayload)(implicit protocol: AWSProtocol): Route = {
     p.action(SendMessageBatch) {
       val batch = p.as[BatchRequest[SendMessageBatchActionRequest]]
       queueActorAndDataFromQueueUrl(batch.QueueUrl) { (queueActor, queueData) =>
@@ -30,46 +31,7 @@ trait SendMessageBatchDirectives {
             BatchMessageSendResponseEntry(id, messageAttributeDigest, digest, None, message.id.id, None)
           }
         }
-        protocol match {
-          case AWSProtocol.`AWSJsonProtocol1.0` =>
-            complete(resultsFuture)
-          case _ =>
-            resultsFuture.map { case BatchResponse(failed, succeeded) =>
-              val successEntries = succeeded.map {
-                case BatchMessageSendResponseEntry(id, messageAttributeDigest, digest, _, messageId, _) =>
-                  <SendMessageBatchResultEntry>
-                    <Id>{id}</Id>
-                    {
-                    messageAttributeDigest.map(d => <MD5OfMessageAttributes>{d}</MD5OfMessageAttributes>).getOrElse(())
-                  }
-                    <MD5OfMessageBody>{digest}</MD5OfMessageBody>
-                    <MessageId>{messageId}</MessageId>
-                  </SendMessageBatchResultEntry>
-              }
-              val failureEntries = failed.map { case Failed(code, id, message, _) =>
-                <BatchResultErrorEntry>
-                    <Id>{id}</Id>
-                    <SenderFault>true</SenderFault>
-                    <Code>{code}</Code>
-                    <Message>{message}</Message>
-                  </BatchResultErrorEntry>
-              }
-
-              respondWith {
-                <SendMessageBatchResponse>
-                  <SendMessageBatchResult>
-                    {failureEntries ++ successEntries}
-                  </SendMessageBatchResult>
-                  <ResponseMetadata>
-                    <RequestId>
-                      {EmptyRequestId}
-                    </RequestId>
-                  </ResponseMetadata>
-                </SendMessageBatchResponse>
-              }
-            }
-        }
-
+        complete(resultsFuture)
       }
     }
   }
@@ -137,6 +99,28 @@ trait SendMessageBatchDirectives {
     implicit val format: RootJsonFormat[BatchMessageSendResponseEntry] = jsonFormat6(
       BatchMessageSendResponseEntry.apply
     )
-  }
+
+    implicit val entryXmlSerializer: XmlSerializer[BatchMessageSendResponseEntry] =
+      t =>
+        <SendMessageBatchResultEntry>
+          <Id>{t.Id}</Id>
+          {t.MD5OfMessageAttributes.map(d => <MD5OfMessageAttributes>{d}</MD5OfMessageAttributes>).getOrElse(())}
+          <MD5OfMessageBody>{t.MD5OfMessageBody}</MD5OfMessageBody>
+          <MessageId>{t.MessageId}</MessageId>
+        </SendMessageBatchResultEntry>
+    }
+    implicit def batchXmlSerializer[T](implicit successSerializer: XmlSerializer[T]): XmlSerializer[BatchResponse[T]] = new XmlSerializer[BatchResponse[T]] {
+      override def toXml(t: BatchResponse[T]): Elem =
+        <SendMessageBatchResponse>
+          <SendMessageBatchResult>
+            {t.Successful.map(successSerializer.toXml) ++ t.Failed.map(XmlSerializer[Failed].toXml)}
+          </SendMessageBatchResult>
+          <ResponseMetadata>
+            <RequestId>
+              {EmptyRequestId}
+            </RequestId>
+          </ResponseMetadata>
+        </SendMessageBatchResponse>
+    }
 
 }

@@ -1,6 +1,6 @@
 package org.elasticmq.rest.sqs
 
-import Constants.QueueUrlParameter
+import Constants.{EmptyRequestId, QueueUrlParameter}
 import org.elasticmq.Limits
 
 import java.util.regex.Pattern
@@ -8,6 +8,7 @@ import spray.json.DefaultJsonProtocol._
 import spray.json.{JsonFormat, RootJsonFormat}
 
 import scala.concurrent.Future
+import scala.xml.Elem
 
 trait BatchRequestsModule {
   this: SQSLimitsModule with ActorSystemModule =>
@@ -105,4 +106,14 @@ case class Failed(Code: String, Id: String, Message: String, SenderFault: Boolea
 
 object Failed {
   implicit val format: RootJsonFormat[Failed] = jsonFormat4(Failed.apply)
+
+  implicit val xmlSerializer: XmlSerializer[Failed] = new XmlSerializer[Failed] {
+    override def toXml(t: Failed): Elem =
+      <BatchResultErrorEntry>
+        <Id>{t.Id}</Id>
+        <SenderFault>true</SenderFault>
+        <Code>{t.Code}</Code>
+        <Message>{t.Message}</Message>
+      </BatchResultErrorEntry>
+  }
 }
