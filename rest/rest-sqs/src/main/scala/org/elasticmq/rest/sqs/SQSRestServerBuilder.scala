@@ -191,7 +191,7 @@ case class TheSQSRestServerBuilder(
         getQueueUrl(p) ~
         createQueue(p) ~
         listQueues(p) ~
-        purgeQueue(p, protocol) ~
+        purgeQueue(p)(protocol) ~
         // 3. Other
         changeMessageVisibility(p, protocol) ~
         changeMessageVisibilityBatch(p, protocol) ~
