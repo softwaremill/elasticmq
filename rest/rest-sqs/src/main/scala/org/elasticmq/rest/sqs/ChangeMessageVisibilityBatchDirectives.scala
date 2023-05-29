@@ -9,13 +9,12 @@ import org.elasticmq.rest.sqs.directives.ElasticMQDirectives
 import org.elasticmq.rest.sqs.model.RequestPayload
 import spray.json.DefaultJsonProtocol._
 import spray.json.RootJsonFormat
-import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
-
 import scala.concurrent.Future
+import scala.xml.Elem
 
 trait ChangeMessageVisibilityBatchDirectives {
-  this: ElasticMQDirectives with BatchRequestsModule =>
-  def changeMessageVisibilityBatch(p: RequestPayload, protocol: AWSProtocol) = {
+  this: ElasticMQDirectives with BatchRequestsModule with AkkaSupport =>
+  def changeMessageVisibilityBatch(p: RequestPayload)(implicit protocol: AWSProtocol, xmlNsVersion: XmlNsVersion) = {
     p.action(ChangeMessageVisibilityBatch) {
       val batch = p.as[BatchRequest[ChangeMessageVisibilityBatchEntry]]
 
@@ -34,44 +33,7 @@ trait ChangeMessageVisibilityBatchDirectives {
             }
           }
 
-        protocol match {
-          case AWSProtocol.`AWSJsonProtocol1.0` =>
-            complete(resultsFuture)
-          case _ =>
-            resultsFuture.map {
-              case BatchResponse(failed, succeeded) =>
-
-                val successEntries = succeeded.map {
-                  case BatchChangeMessageVisibilityResponseEntry(id) =>
-                    <ChangeMessageVisibilityBatchResultEntry>
-                      <Id>{id}</Id>
-                    </ChangeMessageVisibilityBatchResultEntry>
-                }
-
-                val failureEntries = failed.map {
-                  case Failed(code, id, message, _) =>
-                    <BatchResultErrorEntry>
-                      <Id>{id}</Id>
-                      <SenderFault>true</SenderFault>
-                      <Code>{code}</Code>
-                      <Message>{message}</Message>
-                    </BatchResultErrorEntry>
-                }
-
-                respondWith {
-                  <ChangeMessageVisibilityBatchResponse>
-                    <ChangeMessageVisibilityBatchResult>
-                      {successEntries ++ failureEntries}
-                    </ChangeMessageVisibilityBatchResult>
-                    <ResponseMetadata>
-                      <RequestId>
-                        {EmptyRequestId}
-                      </RequestId>
-                    </ResponseMetadata>
-                  </ChangeMessageVisibilityBatchResponse>
-                }
-          }
-        }
+        resultsFuture.map(complete(_))
       }
     }
   }
@@ -81,6 +43,28 @@ case class BatchChangeMessageVisibilityResponseEntry(Id: String)
 
 object BatchChangeMessageVisibilityResponseEntry {
   implicit val jsonFormat: RootJsonFormat[BatchChangeMessageVisibilityResponseEntry] = jsonFormat1(BatchChangeMessageVisibilityResponseEntry.apply)
+
+  implicit val xmlSerializer: XmlSerializer[BatchChangeMessageVisibilityResponseEntry] = new XmlSerializer[BatchChangeMessageVisibilityResponseEntry] {
+    override def toXml(t: BatchChangeMessageVisibilityResponseEntry): Elem =
+      <ChangeMessageVisibilityBatchResultEntry>
+        <Id>{t.Id}</Id>
+      </ChangeMessageVisibilityBatchResultEntry>
+  }
+
+  implicit def batchXmlSerializer(implicit successSerializer: XmlSerializer[BatchChangeMessageVisibilityResponseEntry]): XmlSerializer[BatchResponse[BatchChangeMessageVisibilityResponseEntry]]
+    = new XmlSerializer[BatchResponse[BatchChangeMessageVisibilityResponseEntry]] {
+      override def toXml(t: BatchResponse[BatchChangeMessageVisibilityResponseEntry]): Elem =
+        <ChangeMessageVisibilityBatchResponse>
+          <ChangeMessageVisibilityBatchResult>
+            {t.Successful.map(successSerializer.toXml) ++ t.Failed.map(XmlSerializer[Failed].toXml)}
+          </ChangeMessageVisibilityBatchResult>
+          <ResponseMetadata>
+            <RequestId>
+              {EmptyRequestId}
+            </RequestId>
+          </ResponseMetadata>
+        </ChangeMessageVisibilityBatchResponse>
+    }
 }
 
 case class ChangeMessageVisibilityBatchEntry(Id: String, ReceiptHandle: String, VisibilityTimeout: Long) extends BatchEntry
