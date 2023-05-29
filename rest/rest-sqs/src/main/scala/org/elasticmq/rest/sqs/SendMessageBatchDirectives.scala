@@ -112,8 +112,9 @@ trait SendMessageBatchDirectives {
       }
     }
 
-    implicit def batchXmlSerializer[T](implicit successSerializer: XmlSerializer[T]): XmlSerializer[BatchResponse[T]] = new XmlSerializer[BatchResponse[T]] {
-      override def toXml(t: BatchResponse[T]): Elem =
+    implicit def batchXmlSerializer(implicit successSerializer: XmlSerializer[BatchMessageSendResponseEntry]): XmlSerializer[BatchResponse[BatchMessageSendResponseEntry]]
+    = new XmlSerializer[BatchResponse[BatchMessageSendResponseEntry]] {
+      override def toXml(t: BatchResponse[BatchMessageSendResponseEntry]): Elem =
         <SendMessageBatchResponse>
           <SendMessageBatchResult>
             {t.Successful.map(successSerializer.toXml) ++ t.Failed.map(XmlSerializer[Failed].toXml)}
