@@ -186,7 +186,7 @@ case class TheSQSRestServerBuilder(
         sendMessageBatch(p) ~
         receiveMessage(p, protocol) ~
         deleteMessage(p)(protocol) ~
-        deleteMessageBatch(p, protocol) ~
+        deleteMessageBatch(p) ~
         // 2. Getting, creating queues
         getQueueUrl(p) ~
         createQueue(p) ~
