@@ -1,7 +1,5 @@
 package org.elasticmq.rest.sqs
 
-import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
-import akka.http.scaladsl.model.HttpEntity
 import akka.http.scaladsl.server.Route
 import org.elasticmq.rest.sqs.Action.{GetQueueAttributes, SetQueueAttributes}
 import org.elasticmq.rest.sqs.Constants._
@@ -11,38 +9,20 @@ import spray.json.RootJsonFormat
 import spray.json.DefaultJsonProtocol._
 
 import scala.concurrent.Future
+import scala.xml.Elem
 
 trait QueueAttributesDirectives {
-  this: ElasticMQDirectives with QueueAttributesOps =>
+  this: ElasticMQDirectives with QueueAttributesOps with AkkaSupport =>
 
-  def getQueueAttributes(p: RequestPayload, protocol: AWSProtocol): Route = {
+  def getQueueAttributes(p: RequestPayload)(implicit protocol: AWSProtocol, xmlNsVersion: XmlNsVersion): Route = {
     p.action(GetQueueAttributes) {
       val requestParams = p.as[GetQueueAttributesActionRequest]
       queueActorAndDataFromQueueUrl(requestParams.QueueUrl) { (queueActor, queueData) =>
         val attributesFuture: Future[List[(String, String)]] =
           getQueueAttributes(requestParams.AttributeNames.getOrElse(List.empty), queueActor, queueData)
 
-        def responseXml(attributes: List[(String, String)]) = {
-          <GetQueueAttributesResponse>
-            <GetQueueAttributesResult>
-              {attributesToXmlConverter.convert(attributes)}
-            </GetQueueAttributesResult>
-            <ResponseMetadata>
-              <RequestId>{EmptyRequestId}</RequestId>
-            </ResponseMetadata>
-          </GetQueueAttributesResponse>
-        }
-
         attributesFuture.map { attributes =>
-          protocol match {
-            case AWSProtocol.AWSQueryProtocol =>
-              respondWith {
-                responseXml(attributes)
-              }
-            case _ => {
-              complete(GetQueueAttributesResponse(attributes.toMap))
-            }
-          }
+            complete(GetQueueAttributesResponse(attributes.toMap))
         }
       }
     }
@@ -72,25 +52,27 @@ trait QueueAttributesDirectives {
     implicit val responseJsonFormat: RootJsonFormat[GetQueueAttributesResponse] = jsonFormat1(
       GetQueueAttributesResponse.apply
     )
+
+    implicit val xmlSerializer: XmlSerializer[GetQueueAttributesResponse] = new XmlSerializer[GetQueueAttributesResponse] {
+      override def toXml(t: GetQueueAttributesResponse): Elem =
+        <GetQueueAttributesResponse>
+          <GetQueueAttributesResult>
+            {attributesToXmlConverter.convert(t.Attributes.toList)}
+          </GetQueueAttributesResult>
+          <ResponseMetadata>
+            <RequestId>{EmptyRequestId}</RequestId>
+          </ResponseMetadata>
+        </GetQueueAttributesResponse>
+    }
   }
 
-  def setQueueAttributes(p: RequestPayload, protocol: AWSProtocol): Route = {
+  def setQueueAttributes(p: RequestPayload)(implicit protocol: AWSProtocol): Route = {
     p.action(SetQueueAttributes) {
       val requestParameters = p.as[SetQueueAttributesActionRequest]
       queueActorFromUrl(requestParameters.QueueUrl) { queueActor =>
         val result = setQueueAttributes(requestParameters.Attributes, queueActor, queueManagerActor)
         Future.sequence(result).map { _ =>
-          protocol match {
-            case AWSProtocol.AWSQueryProtocol =>
-              respondWith {
-                <SetQueueAttributesResponse>
-                  <ResponseMetadata>
-                    <RequestId>{EmptyRequestId}</RequestId>
-                  </ResponseMetadata>
-                </SetQueueAttributesResponse>
-              }
-            case _ => complete(status = 200, HttpEntity.Empty)
-          }
+          emptyResponse("SetQueueAttributesResponse")
         }
       }
     }
