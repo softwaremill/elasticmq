@@ -19,18 +19,11 @@ import scala.xml.{Null, UnprefixedAttribute}
 trait AkkaSupport {
   _: RespondDirectives =>
 
-  private def namespace[T](
-      body: UnprefixedAttribute => Marshaller[T, RequestEntity]
-  )(implicit v: XmlNsVersion): Marshaller[T, RequestEntity] = {
+  private def namespace[T](body: UnprefixedAttribute => Marshaller[T, RequestEntity])(implicit v: XmlNsVersion): Marshaller[T, RequestEntity] = {
     body(new UnprefixedAttribute("xmlns", "http://queue.amazonaws.com/doc/%s/".format(v.version), Null))
   }
 
-  implicit def elasticMQMarshaller[T](implicit
-      xmlSerializer: XmlSerializer[T],
-      json: RootJsonFormat[T],
-      protocol: AWSProtocol,
-      version: XmlNsVersion
-  ): Marshaller[T, RequestEntity] =
+  implicit def elasticMQMarshaller[T](implicit xmlSerializer: XmlSerializer[T], json: RootJsonFormat[T], protocol: AWSProtocol, version: XmlNsVersion) =
     protocol match {
       case AWSProtocol.`AWSJsonProtocol1.0` => sprayJsonMarshaller[T]
       case _ =>
@@ -42,9 +35,9 @@ trait AkkaSupport {
         }
     }
 
-  def emptyResponse(xmlTagName: String)(implicit protocol: AWSProtocol): RequestContext => Future[RouteResult] = {
+  def emptyResponse(xmlTagName: String)(implicit protocol: AWSProtocol) = {
     protocol match {
-      case AWSProtocol.`AWSJsonProtocol1.0` => complete(200, HttpEntity.Empty)
+      case AWSProtocol.`AWSJsonProtocol1.0` =>complete(200, HttpEntity.Empty)
       case _ =>
         respondWith {
           <wrapper>
