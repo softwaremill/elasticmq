@@ -1,83 +1,48 @@
 package org.elasticmq.rest.sqs
 
-import akka.http.scaladsl.model.HttpEntity
 import org.elasticmq.actor.reply._
 import org.elasticmq.msg._
 import org.elasticmq.rest.sqs.Action.{ListQueueTags, TagQueue, UntagQueue}
 import org.elasticmq.rest.sqs.Constants._
+import org.elasticmq.rest.sqs.TagsModule.tagsToXmlConverter
 import org.elasticmq.rest.sqs.directives.ElasticMQDirectives
 import spray.json.DefaultJsonProtocol.jsonFormat1
 import spray.json.RootJsonFormat
 import spray.json.DefaultJsonProtocol._
-import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import org.elasticmq.rest.sqs.model.RequestPayload
 
-trait TagQueueDirectives {
-  this: ElasticMQDirectives with TagsModule =>
+import scala.xml.Elem
 
-  def listQueueTags(p: RequestPayload, protocol: AWSProtocol) = {
+trait TagQueueDirectives {
+  this: ElasticMQDirectives with TagsModule with AkkaSupport =>
+
+  def listQueueTags(p: RequestPayload)(implicit protocol: AWSProtocol) = {
     p.action(ListQueueTags) {
       val queueUrl = p.as[ListQueueTagsActionRequest].QueueUrl
       queueActorAndDataFromQueueUrl(queueUrl) { (_, queueData) =>
-        protocol match {
-          case AWSProtocol.`AWSJsonProtocol1.0` =>
-            complete(ListQueueTagsResponse(queueData.tags))
-          case _ =>
-            respondWith {
-              <ListQueueTagsResponse>
-                <ListQueueTagsResult>
-                  {tagsToXmlConverter.convert(queueData.tags)}
-                </ListQueueTagsResult>
-                <ResponseMetadata>
-                  <RequestId>{EmptyRequestId}</RequestId>
-                </ResponseMetadata>
-              </ListQueueTagsResponse>
-            }
-        }
+        complete(ListQueueTagsResponse(queueData.tags))
       }
     }
   }
 
-  def untagQueue(p: RequestPayload, protocol: AWSProtocol) = {
+  def untagQueue(p: RequestPayload)(implicit protocol: AWSProtocol) = {
     p.action(UntagQueue) {
       val params = p.as[UntagQueueActionRequest]
       queueActorFromUrl(params.QueueUrl) { queueActor =>
         val tags = params.TagKeys
         queueActor ? RemoveQueueTags(tags)
-        protocol match {
-          case AWSProtocol.`AWSJsonProtocol1.0` =>
-            respondWith {
-              <UntagQueueResponse>
-                <ResponseMetadata>
-                  <RequestId>{EmptyRequestId}</RequestId>
-                </ResponseMetadata>
-              </UntagQueueResponse>
-            }
-          case _ =>
-            complete(HttpEntity.Empty)
-        }
+        emptyResponse("UntagQueueResponse")
       }
     }
   }
 
-  def tagQueue(p: RequestPayload, protocol: AWSProtocol) = {
+  def tagQueue(p: RequestPayload)(implicit protocol: AWSProtocol) = {
     p.action(TagQueue) {
       val params = p.as[TagQueueActionRequest]
       queueActorFromUrl(params.QueueUrl) { queueActor =>
         val tags = params.Tags
         queueActor ? UpdateQueueTags(tags)
-        protocol match {
-          case AWSProtocol.`AWSJsonProtocol1.0` =>
-            respondWith(
-              <TagQueueResponse>
-                <ResponseMetadata>
-                  <RequestId>{EmptyRequestId}</RequestId>
-                </ResponseMetadata>
-              </TagQueueResponse>
-            )
-          case _ =>
-            complete(HttpEntity.Empty)
-        }
+        emptyResponse("TagQueueResponse")
       }
     }
   }
@@ -131,6 +96,22 @@ object ListQueueTagsActionRequest {
 
 case class ListQueueTagsResponse(Tags: Map[String, String])
 
+
+
 object ListQueueTagsResponse {
   implicit val format: RootJsonFormat[ListQueueTagsResponse] = jsonFormat1(ListQueueTagsResponse.apply)
+
+  implicit val xmlSerializer: XmlSerializer[ListQueueTagsResponse] = new XmlSerializer[ListQueueTagsResponse] {
+    override def toXml(t: ListQueueTagsResponse): Elem =
+      <ListQueueTagsResponse>
+        <ListQueueTagsResult>
+          {tagsToXmlConverter.convert(t.Tags)}
+        </ListQueueTagsResult>
+        <ResponseMetadata>
+          <RequestId>
+            {EmptyRequestId}
+          </RequestId>
+        </ResponseMetadata>
+      </ListQueueTagsResponse>
+  }
 }

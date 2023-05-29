@@ -100,15 +100,18 @@ trait SendMessageBatchDirectives {
       BatchMessageSendResponseEntry.apply
     )
 
-    implicit val entryXmlSerializer: XmlSerializer[BatchMessageSendResponseEntry] =
-      t =>
-        <SendMessageBatchResultEntry>
-          <Id>{t.Id}</Id>
-          {t.MD5OfMessageAttributes.map(d => <MD5OfMessageAttributes>{d}</MD5OfMessageAttributes>).getOrElse(())}
-          <MD5OfMessageBody>{t.MD5OfMessageBody}</MD5OfMessageBody>
-          <MessageId>{t.MessageId}</MessageId>
-        </SendMessageBatchResultEntry>
+    implicit val entryXmlSerializer: XmlSerializer[BatchMessageSendResponseEntry] = {
+      new XmlSerializer[BatchMessageSendResponseEntry] {
+        override def toXml(t: BatchMessageSendResponseEntry): Elem =
+          <SendMessageBatchResultEntry>
+            <Id>{t.Id}</Id>
+            {t.MD5OfMessageAttributes.map(d => <MD5OfMessageAttributes>{d}</MD5OfMessageAttributes>).getOrElse(())}
+            <MD5OfMessageBody>{t.MD5OfMessageBody}</MD5OfMessageBody>
+            <MessageId>{t.MessageId}</MessageId>
+          </SendMessageBatchResultEntry>
+      }
     }
+
     implicit def batchXmlSerializer[T](implicit successSerializer: XmlSerializer[T]): XmlSerializer[BatchResponse[T]] = new XmlSerializer[BatchResponse[T]] {
       override def toXml(t: BatchResponse[T]): Elem =
         <SendMessageBatchResponse>
@@ -122,5 +125,5 @@ trait SendMessageBatchDirectives {
           </ResponseMetadata>
         </SendMessageBatchResponse>
     }
-
+  }
 }
