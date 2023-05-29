@@ -31,9 +31,9 @@ trait AkkaSupport {
           }
       }
 
-    def emptyResponse(xmlTagName: String)(implicit protocol: AWSProtocol) =
+    def emptyResponse(xmlTagName: String)(implicit protocol: AWSProtocol) = {
       protocol match {
-        case AWSProtocol.`AWSJsonProtocol1.0` => complete(HttpEntity.Empty)
+        case AWSProtocol.`AWSJsonProtocol1.0` =>complete(200, HttpEntity.Empty)
         case _ =>
           respondWith {
             <wrapper>
@@ -43,4 +43,5 @@ trait AkkaSupport {
             </wrapper> % Attribute(None, "name", Text(xmlTagName), Null)
           }
       }
+    }
 }

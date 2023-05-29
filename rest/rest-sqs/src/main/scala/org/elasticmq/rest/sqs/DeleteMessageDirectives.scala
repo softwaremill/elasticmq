@@ -1,7 +1,6 @@
 package org.elasticmq.rest.sqs
 
 import Constants._
-import akka.http.scaladsl.model.HttpEntity
 import org.elasticmq.DeliveryReceipt
 import org.elasticmq.actor.reply._
 import org.elasticmq.msg.DeleteMessage
@@ -11,8 +10,8 @@ import org.elasticmq.rest.sqs.model.RequestPayload
 import spray.json.DefaultJsonProtocol._
 import spray.json.RootJsonFormat
 
-trait DeleteMessageDirectives { this: ElasticMQDirectives =>
-  def deleteMessage(p: RequestPayload, protocol: AWSProtocol) = {
+trait DeleteMessageDirectives { this: ElasticMQDirectives with AkkaSupport =>
+  def deleteMessage(p: RequestPayload)(implicit protocol: AWSProtocol) = {
     p.action(DeleteMessageAction) {
       val requestParams = p.as[DeleteMessageActionRequest]
 
@@ -20,18 +19,7 @@ trait DeleteMessageDirectives { this: ElasticMQDirectives =>
         val result = queueActor ? DeleteMessage(DeliveryReceipt(requestParams.ReceiptHandle))
         result.map {
           case Left(error) => throw new SQSException(error.code, errorMessage = Some(error.message))
-          case Right(_) =>
-            protocol match {
-              case AWSProtocol.AWSQueryProtocol =>
-                respondWith {
-                  <DeleteMessageResponse>
-                      <ResponseMetadata>
-                        <RequestId>{EmptyRequestId}</RequestId>
-                      </ResponseMetadata>
-                    </DeleteMessageResponse>
-                }
-              case _ => complete(status = 200, HttpEntity.Empty)
-            }
+          case Right(_)    => emptyResponse("DeleteMessageResponse")
         }
       }
     }
