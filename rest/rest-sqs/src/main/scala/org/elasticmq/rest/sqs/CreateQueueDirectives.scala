@@ -1,6 +1,5 @@
 package org.elasticmq.rest.sqs
 
-import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import org.elasticmq._
 import org.elasticmq.actor.reply._
 import org.elasticmq.msg.{LookupQueue, CreateQueue => CreateQueueMsg}
@@ -17,11 +16,12 @@ import spray.json._
 
 import scala.async.Async._
 import scala.concurrent.Future
+import scala.xml.Elem
 
 trait CreateQueueDirectives {
-  this: ElasticMQDirectives with QueueURLModule with SQSLimitsModule =>
+  this: ElasticMQDirectives with QueueURLModule with SQSLimitsModule with AkkaSupport =>
 
-  def createQueue(p: RequestPayload, protocol: AWSProtocol) = {
+  def createQueue(p: RequestPayload)(implicit protocol: AWSProtocol) = {
     p.action(CreateQueue) {
       rootPath {
 
@@ -83,22 +83,7 @@ trait CreateQueueDirectives {
 
           await(lookupOrCreateQueue(newQueueData))
 
-          queueURL(requestParams.QueueName) { url =>
-            protocol match {
-              case AWSProtocol.`AWSJsonProtocol1.0` => complete(CreateQueueResponse(url))
-              case _ =>
-                respondWith {
-                  <CreateQueueResponse>
-                          <CreateQueueResult>
-                            <QueueUrl>{url}</QueueUrl>
-                          </CreateQueueResult>
-                          <ResponseMetadata>
-                            <RequestId>{EmptyRequestId}</RequestId>
-                          </ResponseMetadata>
-                        </CreateQueueResponse>
-                }
-            }
-          }
+          queueURL(requestParams.QueueName) { url => complete(CreateQueueResponse(url)) }
         }
       }
     }
@@ -117,23 +102,40 @@ trait CreateQueueDirectives {
   }
 }
 
-case class CreateQueueActionRequest(QueueName: String, Attributes: Option[Map[String, String]], tags: Option[Map[String, String]])
+case class CreateQueueActionRequest(
+    QueueName: String,
+    Attributes: Option[Map[String, String]],
+    tags: Option[Map[String, String]]
+)
 
 object CreateQueueActionRequest {
   implicit val requestJsonFormat: RootJsonFormat[CreateQueueActionRequest] = jsonFormat3(CreateQueueActionRequest.apply)
 
-  implicit val requestParamReader: FlatParamsReader[CreateQueueActionRequest] = new FlatParamsReader[CreateQueueActionRequest] {
-    override def read(params: Map[String, String]): CreateQueueActionRequest = {
-      val attributes = AttributesModule.attributeNameAndValuesReader.read(params)
-      val tags = TagsModule.tagNameAndValuesReader.read(params)
-      val queueName = requiredParameter(params)(QueueNameParameter)
-      CreateQueueActionRequest(queueName, Some(attributes), Some(tags))
+  implicit val requestParamReader: FlatParamsReader[CreateQueueActionRequest] =
+    new FlatParamsReader[CreateQueueActionRequest] {
+      override def read(params: Map[String, String]): CreateQueueActionRequest = {
+        val attributes = AttributesModule.attributeNameAndValuesReader.read(params)
+        val tags = TagsModule.tagNameAndValuesReader.read(params)
+        val queueName = requiredParameter(params)(QueueNameParameter)
+        CreateQueueActionRequest(queueName, Some(attributes), Some(tags))
+      }
     }
-  }
 }
 
 case class CreateQueueResponse(QueueUrl: String)
 
 object CreateQueueResponse {
   implicit val format: RootJsonFormat[CreateQueueResponse] = jsonFormat1(CreateQueueResponse.apply)
+
+  implicit val xmlSerializer: XmlSerializer[CreateQueueResponse] = new XmlSerializer[CreateQueueResponse] {
+    override def toXml(t: CreateQueueResponse): Elem =
+      <CreateQueueResponse>
+        <CreateQueueResult>
+          <QueueUrl>{t.QueueUrl}</QueueUrl>
+        </CreateQueueResult>
+        <ResponseMetadata>
+          <RequestId>{EmptyRequestId}</RequestId>
+        </ResponseMetadata>
+      </CreateQueueResponse>
+  }
 }
