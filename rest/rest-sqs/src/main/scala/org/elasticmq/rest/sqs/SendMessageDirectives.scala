@@ -1,6 +1,5 @@
 package org.elasticmq.rest.sqs
 
-import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.actor.ActorRef
 import akka.http.scaladsl.server.Route
 import org.elasticmq._
@@ -16,11 +15,12 @@ import spray.json.DefaultJsonProtocol._
 import spray.json.RootJsonFormat
 
 import scala.concurrent.Future
+import scala.xml.Elem
 
-trait SendMessageDirectives { this: ElasticMQDirectives with SQSLimitsModule =>
+trait SendMessageDirectives { this: ElasticMQDirectives with SQSLimitsModule with AkkaSupport =>
   private val messageSystemAttributeNamePattern = """MessageSystemAttribute\.(\d+)\.Name""".r
 
-  def sendMessage(p: RequestPayload, protocol: AWSProtocol): Route = {
+  def sendMessage(p: RequestPayload)(implicit protocol: AWSProtocol): Route = {
     p.action(SendMessageAction) {
       val params = p.as[SendMessageActionRequest]
 
@@ -30,32 +30,7 @@ trait SendMessageDirectives { this: ElasticMQDirectives with SQSLimitsModule =>
         validateMessageAttributes(params.MessageAttributes.getOrElse(Map.empty))
 
         doSendMessage(queueActor, message).map { case (message, digest, messageAttributeDigest) =>
-          protocol match {
-            case AWSProtocol.AWSQueryProtocol =>
-              respondWith {
-                <SendMessageResponse>
-                  <SendMessageResult>
-                    { messageAttributeDigest.map(d => <MD5OfMessageAttributes>{d}</MD5OfMessageAttributes>).getOrElse(()) }
-                    <MD5OfMessageBody>{digest}</MD5OfMessageBody>
-                    <MessageId>{message.id.id}</MessageId>
-                    {message.sequenceNumber.map(x => <SequenceNumber>{x}</SequenceNumber>).getOrElse(())}
-                  </SendMessageResult>
-                  <ResponseMetadata>
-                    <RequestId>{EmptyRequestId}</RequestId>
-                  </ResponseMetadata>
-                </SendMessageResponse>
-              }
-            case _ =>
-              complete(
-                SendMessageResponse(
-                  messageAttributeDigest,
-                  digest,
-                  None,
-                  message.id.id,
-                  message.sequenceNumber
-                )
-              )
-          }
+          complete(SendMessageResponse(messageAttributeDigest, digest, None, message.id.id, message.sequenceNumber))
         }
       }
     }
@@ -316,6 +291,21 @@ trait SendMessageDirectives { this: ElasticMQDirectives with SQSLimitsModule =>
 
   object SendMessageResponse {
     implicit val jsonFormat: RootJsonFormat[SendMessageResponse] = jsonFormat5(SendMessageResponse.apply)
+
+    implicit val xmlSerializer: XmlSerializer[SendMessageResponse] = new XmlSerializer[SendMessageResponse] {
+      override def toXml(t: SendMessageResponse): Elem =
+        <SendMessageResponse>
+          <SendMessageResult>
+            {t.MD5OfMessageAttributes.map(d => <MD5OfMessageAttributes>{d}</MD5OfMessageAttributes>).getOrElse(())}
+            <MD5OfMessageBody>{t.MD5OfMessageBody}</MD5OfMessageBody>
+            <MessageId>{t.MessageId}</MessageId>
+            {t.SequenceNumber.map(x => <SequenceNumber>{x}</SequenceNumber>).getOrElse(())}
+          </SendMessageResult>
+          <ResponseMetadata>
+            <RequestId>{EmptyRequestId}</RequestId>
+          </ResponseMetadata>
+        </SendMessageResponse>
+    }
   }
 
 }

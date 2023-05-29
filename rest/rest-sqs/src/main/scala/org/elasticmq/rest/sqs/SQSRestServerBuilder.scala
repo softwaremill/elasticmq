@@ -181,7 +181,7 @@ case class TheSQSRestServerBuilder(
     import env._
     def rawRoutes(p: RequestPayload, protocol: AWSProtocol) =
         // 1. Sending, receiving, deleting messages
-        sendMessage(p, protocol) ~
+        sendMessage(p)(protocol) ~
         sendMessageBatch(p)(protocol) ~
         receiveMessage(p, protocol) ~
         deleteMessage(p, protocol) ~
