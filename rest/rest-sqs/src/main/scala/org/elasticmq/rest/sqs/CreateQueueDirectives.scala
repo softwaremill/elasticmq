@@ -21,7 +21,7 @@ import scala.xml.Elem
 trait CreateQueueDirectives {
   this: ElasticMQDirectives with QueueURLModule with SQSLimitsModule with AkkaSupport =>
 
-  def createQueue(p: RequestPayload)(implicit protocol: AWSProtocol) = {
+  def createQueue(p: RequestPayload)(implicit protocol: AWSProtocol, xmlNsVersion: XmlNsVersion) = {
     p.action(CreateQueue) {
       rootPath {
 

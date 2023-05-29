@@ -16,7 +16,7 @@ import scala.xml.Elem
 trait TagQueueDirectives {
   this: ElasticMQDirectives with TagsModule with AkkaSupport =>
 
-  def listQueueTags(p: RequestPayload)(implicit protocol: AWSProtocol) = {
+  def listQueueTags(p: RequestPayload)(implicit protocol: AWSProtocol, xmlNsVersion: XmlNsVersion) = {
     p.action(ListQueueTags) {
       val queueUrl = p.as[ListQueueTagsActionRequest].QueueUrl
       queueActorAndDataFromQueueUrl(queueUrl) { (_, queueData) =>

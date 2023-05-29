@@ -10,6 +10,7 @@ import org.elasticmq._
 import org.elasticmq.actor.QueueManagerActor
 import org.elasticmq.metrics.QueuesMetrics
 import org.elasticmq.rest.sqs.Constants._
+import org.elasticmq.rest.sqs.XmlNsVersion.extractXmlNs
 import org.elasticmq.rest.sqs.directives.{AWSProtocolDirectives, AnyParamDirectives, ElasticMQDirectives, UnmatchedActionRoutes}
 import org.elasticmq.rest.sqs.model.RequestPayload
 import org.elasticmq.util.{Logging, NowProvider}
@@ -179,17 +180,17 @@ case class TheSQSRestServerBuilder(
     }
 
     import env._
-    def rawRoutes(p: RequestPayload, protocol: AWSProtocol) =
+    def rawRoutes(p: RequestPayload)(implicit protocol: AWSProtocol, xmlNsVersion: XmlNsVersion) =
         // 1. Sending, receiving, deleting messages
-        sendMessage(p)(protocol) ~
-        sendMessageBatch(p)(protocol) ~
+        sendMessage(p) ~
+        sendMessageBatch(p) ~
         receiveMessage(p, protocol) ~
         deleteMessage(p, protocol) ~
         deleteMessageBatch(p, protocol) ~
         // 2. Getting, creating queues
-        getQueueUrl(p)(protocol) ~
-        createQueue(p)(protocol) ~
-        listQueues(p)(protocol) ~
+        getQueueUrl(p) ~
+        createQueue(p) ~
+        listQueues(p) ~
         purgeQueue(p, protocol) ~
         // 3. Other
         changeMessageVisibility(p, protocol) ~
@@ -198,9 +199,9 @@ case class TheSQSRestServerBuilder(
         getQueueAttributes(p, protocol) ~
         setQueueAttributes(p, protocol) ~
         addPermission(p, protocol) ~
-        tagQueue(p)(protocol) ~
-        untagQueue(p)(protocol) ~
-        listQueueTags(p)(protocol) ~
+        tagQueue(p) ~
+        untagQueue(p) ~
+        listQueueTags(p) ~
         //4. Unmatched action
         unmatchedAction(p)
 
@@ -209,15 +210,17 @@ case class TheSQSRestServerBuilder(
     implicit val bindingTimeout = Timeout(10, TimeUnit.SECONDS)
 
     val routes =
-      extractProtocol { protocol =>
-        handleServerExceptions(protocol) {
-          handleRejectionsWithSQSError(protocol) {
-            anyParamsMap(protocol) { p =>
-              if (config.debug) {
-                logRequestResult("") {
-                  rawRoutes(p, protocol)
-                }
-              } else rawRoutes(p, protocol)
+      extractXmlNs { implicit version =>
+        extractProtocol { implicit protocol =>
+          handleServerExceptions(protocol) {
+            handleRejectionsWithSQSError(protocol) {
+              anyParamsMap(protocol) { p =>
+                if (config.debug) {
+                  logRequestResult("") {
+                    rawRoutes(p)
+                  }
+                } else rawRoutes(p)
+              }
             }
           }
         }

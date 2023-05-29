@@ -9,7 +9,7 @@ import spray.json.RootJsonFormat
 import org.elasticmq.rest.sqs.model.RequestPayload
 
 trait GetQueueUrlDirectives { this: ElasticMQDirectives with QueueURLModule with AkkaSupport =>
-  def getQueueUrl(p: RequestPayload)(implicit protocol: AWSProtocol) = {
+  def getQueueUrl(p: RequestPayload)(implicit protocol: AWSProtocol, xmlNsVersion: XmlNsVersion) = {
     p.action(GetQueueUrl) {
       rootPath {
         val requestParams = p.as[GetQueueUrlActionRequest]
