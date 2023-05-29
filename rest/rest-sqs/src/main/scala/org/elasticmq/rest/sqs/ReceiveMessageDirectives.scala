@@ -12,12 +12,11 @@ import org.joda.time.Duration
 import spray.json.DefaultJsonProtocol.{StringJsonFormat, jsonFormat7}
 import spray.json.RootJsonFormat
 import spray.json.DefaultJsonProtocol._
-import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 
 import scala.xml.Elem
 
 trait ReceiveMessageDirectives {
-  this: ElasticMQDirectives with AttributesModule with SQSLimitsModule =>
+  this: ElasticMQDirectives with AttributesModule with SQSLimitsModule with AkkaSupport =>
   object MessageReadeableAttributeNames {
     val SentTimestampAttribute = "SentTimestamp"
     val ApproximateReceiveCountAttribute = "ApproximateReceiveCount"
@@ -38,7 +37,7 @@ trait ReceiveMessageDirectives {
       MessageGroupIdAttribute :: AWSTraceHeaderAttribute :: SequenceNumberAttribute :: Nil
   }
 
-  def receiveMessage(p: RequestPayload, protocol: AWSProtocol) = {
+  def receiveMessage(p: RequestPayload)(implicit protocol: AWSProtocol, xmlNsVersion: XmlNsVersion) = {
     import MessageReadeableAttributeNames._
 
     p.action(ReceiveMessage) {
@@ -130,29 +129,7 @@ trait ReceiveMessageDirectives {
           }
         }
 
-        def messagesToXml(messages: List[MessageData]): List[Elem] = {
-          messages.map { msg =>
-            val receipt = msg.deliveryReceipt
-              .map(_.receipt)
-              .getOrElse(throw new RuntimeException("No receipt for a received msg."))
-            val filteredMessageAttributes = getFilteredAttributeNames(messageAttributeNames, msg)
-            <Message>
-              <MessageId>{msg.id.id}</MessageId>
-              <ReceiptHandle>{receipt}</ReceiptHandle>
-              <MD5OfBody>{md5Digest(msg.content)}</MD5OfBody>
-              <Body>{XmlUtil.convertTexWithCRToNodeSeq(msg.content)}</Body>
-              {attributesToXmlConverter.convert(calculateAttributeValues(msg))}
-              {
-              if (filteredMessageAttributes.nonEmpty) <MD5OfMessageAttributes>{
-                md5AttributeDigest(filteredMessageAttributes)
-              }</MD5OfMessageAttributes>
-            }
-              {messageAttributesToXmlConverter.convert(filteredMessageAttributes.toList)}
-            </Message>
-          }
-        }
-
-        def messagesToJson(messages: List[MessageData]): List[Message] =
+        def mapMessages(messages: List[MessageData]): List[Message] =
           messages.map { message =>
             val receipt = message.deliveryReceipt
               .map(_.receipt)
@@ -171,31 +148,9 @@ trait ReceiveMessageDirectives {
             )
           }
 
-        msgsFuture.map { messages =>
-          protocol match {
-            case AWSProtocol.AWSQueryProtocol =>
-              respondWith {
-                <ReceiveMessageResponse>
-                  {
-                  if (messages.isEmpty)
-                    <ReceiveMessageResult/>
-                  else
-                    <ReceiveMessageResult>
-                    {messagesToXml(messages)}
-                  </ReceiveMessageResult>
-                }<ResponseMetadata>
-                  <RequestId>
-                    {EmptyRequestId}
-                  </RequestId>
-                </ResponseMetadata>
-                </ReceiveMessageResponse>
-              }
-            case _ => {
-              val jsonMessages: List[Message] = messagesToJson(messages)
-              complete(ReceiveMessageResponse(jsonMessages))
-            }
-          }
-        }
+        msgsFuture.map(mapMessages).map(messages =>
+          complete(ReceiveMessageResponse(messages))
+        )
       }
     }
   }
@@ -270,6 +225,22 @@ trait ReceiveMessageDirectives {
   case class ReceiveMessageResponse(Messages: List[Message])
   object ReceiveMessageResponse {
     implicit val responseJsonFormat: RootJsonFormat[ReceiveMessageResponse] = jsonFormat1(ReceiveMessageResponse.apply)
+
+    implicit def xmlSerializer(implicit messageSerializer: XmlSerializer[Message]): XmlSerializer[ReceiveMessageResponse] = new XmlSerializer[ReceiveMessageResponse] {
+      override def toXml(t: ReceiveMessageResponse): Elem = {
+        val messages = t.Messages
+
+        <ReceiveMessageResponse>
+          {if (messages.isEmpty) <ReceiveMessageResult/>
+            else
+          <ReceiveMessageResult>
+            {messages.map(messageSerializer.toXml)}
+          </ReceiveMessageResult>}<ResponseMetadata>
+          <RequestId>{EmptyRequestId}</RequestId>
+        </ResponseMetadata>
+        </ReceiveMessageResponse>
+      }
+    }
   }
 
   case class Message(
@@ -283,6 +254,19 @@ trait ReceiveMessageDirectives {
   )
   object Message extends MessageAttributesSupport {
     implicit val responseJsonFormat: RootJsonFormat[Message] = jsonFormat7(Message.apply)
+
+    implicit val xmlSerializer: XmlSerializer[Message] = new XmlSerializer[Message] {
+      override def toXml(msg: Message): Elem =
+        <Message>
+          <MessageId>{msg.MessageId}</MessageId>
+          <ReceiptHandle>{msg.ReceiptHandle}</ReceiptHandle>
+          <MD5OfBody>{msg.MD5OfBody}</MD5OfBody>
+          <Body>{XmlUtil.convertTexWithCRToNodeSeq(msg.Body)}</Body>
+          {attributesToXmlConverter.convert(msg.Attributes.toList)}
+          {msg.MD5OfMessageAttributes.map(md5 => <MD5OfMessageAttributes>{md5}</MD5OfMessageAttributes>).getOrElse("")}
+          {messageAttributesToXmlConverter.convert(msg.MessageAttributes.toList)}
+        </Message>
+    }
   }
 
 }

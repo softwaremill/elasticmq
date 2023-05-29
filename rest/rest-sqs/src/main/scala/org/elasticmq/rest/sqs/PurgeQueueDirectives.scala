@@ -1,6 +1,5 @@
 package org.elasticmq.rest.sqs
 
-import akka.http.scaladsl.model.HttpEntity
 import org.elasticmq.actor.reply._
 import org.elasticmq.msg.ClearQueue
 import org.elasticmq.rest.sqs.Action.PurgeQueue
