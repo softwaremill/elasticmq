@@ -4,7 +4,7 @@ import akka.http.scaladsl.marshalling.Marshaller
 import akka.http.scaladsl.model.{ContentTypeRange, HttpEntity, RequestEntity}
 import akka.http.scaladsl.unmarshalling.{FromEntityUnmarshaller, Unmarshaller}
 import akka.util.ByteString
-import org.elasticmq.rest.sqs.directives.AWSProtocolDirectives
+import org.elasticmq.rest.sqs.directives.AmzJsonProtocol
 
 import scala.concurrent.Future
 import spray.json._
@@ -14,7 +14,7 @@ object JsonData {
   implicit val AmzJsonUnmarshaller: FromEntityUnmarshaller[JsonData] =
     Unmarshaller.withMaterializer[HttpEntity, JsonData] { implicit ec => implicit materializer => entity =>
       entity.contentType match {
-        case contentType if contentType.mediaType == AWSProtocolDirectives.`AWSJsonProtocol1.0ContentType`.mediaType =>
+        case AmzJsonProtocol(_) =>
           entity.dataBytes
             .runFold(ByteString.empty)(_ ++ _)
             .map(bs => JsonData(bs.utf8String.parseJson.asJsObject))
@@ -22,15 +22,15 @@ object JsonData {
           Future.failed(
             Unmarshaller.UnsupportedContentTypeException(
               entity.contentType,
-              ContentTypeRange(AWSProtocolDirectives.`AWSJsonProtocol1.0ContentType`)
+              ContentTypeRange(entity.contentType)
             )
           )
       }
     }
 
   implicit val AmzJsonMarshaller =
-    Marshaller.withFixedContentType[JsonData, RequestEntity](AWSProtocolDirectives.`AWSJsonProtocol1.0ContentType`) {
+    Marshaller.withFixedContentType[JsonData, RequestEntity](AmzJsonProtocol.contentType("1.0")) {
       data =>
-        HttpEntity(AWSProtocolDirectives.`AWSJsonProtocol1.0ContentType`, ByteString(data.payload.prettyPrint))
+        HttpEntity(AmzJsonProtocol.contentType("1.0"), ByteString(data.payload.prettyPrint))
     }
 }

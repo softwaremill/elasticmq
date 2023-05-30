@@ -63,7 +63,7 @@ class UnmatchedActionRoutesTest
       responseAs[String] should include("<Code>MissingAction</Code>")
     }
 
-    Post("/").withEntity(AWSProtocolDirectives.`AWSJsonProtocol1.0ContentType`, ByteString.empty) ~> route ~> check {
+    Post("/").withEntity(AmzJsonProtocol.contentType("1.0"), ByteString.empty) ~> route ~> check {
       status shouldBe BadRequest
       responseAs[String] should include(""""Message":"MissingAction; see the SQS docs."""")
     }
