@@ -19,7 +19,7 @@ import scala.concurrent.Future
 import scala.xml.Elem
 
 trait CreateQueueDirectives {
-  this: ElasticMQDirectives with QueueURLModule with SQSLimitsModule with AkkaSupport =>
+  this: ElasticMQDirectives with QueueURLModule with SQSLimitsModule with ResponseMarshaller =>
 
   def createQueue(p: RequestPayload)(implicit protocol: AWSProtocol, xmlNsVersion: XmlNsVersion) = {
     p.action(CreateQueue) {

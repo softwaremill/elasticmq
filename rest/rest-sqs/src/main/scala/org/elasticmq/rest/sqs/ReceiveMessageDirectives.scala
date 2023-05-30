@@ -16,7 +16,7 @@ import spray.json.DefaultJsonProtocol._
 import scala.xml.Elem
 
 trait ReceiveMessageDirectives {
-  this: ElasticMQDirectives with AttributesModule with SQSLimitsModule with AkkaSupport =>
+  this: ElasticMQDirectives with AttributesModule with SQSLimitsModule with ResponseMarshaller =>
   object MessageReadeableAttributeNames {
     val SentTimestampAttribute = "SentTimestamp"
     val ApproximateReceiveCountAttribute = "ApproximateReceiveCount"

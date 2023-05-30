@@ -13,7 +13,7 @@ import spray.json.RootJsonFormat
 import scala.xml.Elem
 
 trait SendMessageBatchDirectives {
-  this: ElasticMQDirectives with SendMessageDirectives with BatchRequestsModule with SQSLimitsModule with AkkaSupport =>
+  this: ElasticMQDirectives with SendMessageDirectives with BatchRequestsModule with SQSLimitsModule with ResponseMarshaller =>
 
   def sendMessageBatch(p: RequestPayload)(implicit protocol: AWSProtocol, xmlNsVersion: XmlNsVersion): Route = {
     p.action(SendMessageBatch) {

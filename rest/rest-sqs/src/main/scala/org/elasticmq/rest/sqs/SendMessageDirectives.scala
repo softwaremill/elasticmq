@@ -17,7 +17,7 @@ import spray.json.RootJsonFormat
 import scala.concurrent.Future
 import scala.xml.Elem
 
-trait SendMessageDirectives { this: ElasticMQDirectives with SQSLimitsModule with AkkaSupport =>
+trait SendMessageDirectives { this: ElasticMQDirectives with SQSLimitsModule with ResponseMarshaller =>
   private val messageSystemAttributeNamePattern = """MessageSystemAttribute\.(\d+)\.Name""".r
 
   def sendMessage(p: RequestPayload)(implicit protocol: AWSProtocol, xmlNsVersion: XmlNsVersion): Route = {

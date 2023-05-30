@@ -12,7 +12,7 @@ import scala.concurrent.Future
 import scala.xml.Elem
 
 trait QueueAttributesDirectives {
-  this: ElasticMQDirectives with QueueAttributesOps with AkkaSupport =>
+  this: ElasticMQDirectives with QueueAttributesOps with ResponseMarshaller =>
 
   def getQueueAttributes(p: RequestPayload)(implicit protocol: AWSProtocol, xmlNsVersion: XmlNsVersion): Route = {
     p.action(GetQueueAttributes) {

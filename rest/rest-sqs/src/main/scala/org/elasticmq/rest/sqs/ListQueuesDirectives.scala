@@ -11,7 +11,7 @@ import org.elasticmq.rest.sqs.model.RequestPayload
 
 import scala.xml.Elem
 
-trait ListQueuesDirectives { this: ElasticMQDirectives with QueueURLModule with AkkaSupport =>
+trait ListQueuesDirectives { this: ElasticMQDirectives with QueueURLModule with ResponseMarshaller =>
   def listQueues(p: RequestPayload)(implicit protocol: AWSProtocol, xmlNsVersion: XmlNsVersion) = {
     p.action(ListQueuesAction) {
       rootPath {

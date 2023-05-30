@@ -14,7 +14,7 @@ import org.elasticmq.rest.sqs.model.RequestPayload
 import scala.xml.Elem
 
 trait TagQueueDirectives {
-  this: ElasticMQDirectives with TagsModule with AkkaSupport =>
+  this: ElasticMQDirectives with TagsModule with ResponseMarshaller =>
 
   def listQueueTags(p: RequestPayload)(implicit protocol: AWSProtocol, xmlNsVersion: XmlNsVersion) = {
     p.action(ListQueueTags) {

@@ -9,7 +9,7 @@ import org.elasticmq.rest.sqs.model.RequestPayload
 import spray.json.DefaultJsonProtocol.{StringJsonFormat, jsonFormat1}
 import spray.json.RootJsonFormat
 
-trait PurgeQueueDirectives { this: ElasticMQDirectives with QueueURLModule with AkkaSupport =>
+trait PurgeQueueDirectives { this: ElasticMQDirectives with QueueURLModule with ResponseMarshaller =>
   def purgeQueue(p: RequestPayload)(implicit protocol: AWSProtocol) = {
     p.action(PurgeQueue) {
       val requestParams = p.as[PurgeQueueActionRequest]

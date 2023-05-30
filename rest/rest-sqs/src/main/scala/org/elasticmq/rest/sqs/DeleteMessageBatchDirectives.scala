@@ -14,7 +14,7 @@ import scala.concurrent.Future
 import scala.xml.Elem
 
 trait DeleteMessageBatchDirectives {
-  this: ElasticMQDirectives with BatchRequestsModule with AkkaSupport =>
+  this: ElasticMQDirectives with BatchRequestsModule with ResponseMarshaller =>
   def deleteMessageBatch(p: RequestPayload)(implicit protocol: AWSProtocol, xmlNsVersion: XmlNsVersion) = {
     p.action(DeleteMessageBatch) {
 

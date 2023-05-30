@@ -162,7 +162,7 @@ case class TheSQSRestServerBuilder(
       with TagQueueDirectives
       with TagsModule
       with UnmatchedActionRoutes
-      with AkkaSupport
+      with ResponseMarshaller
       with QueueAttributesOps {
 
       def serverAddress = currentServerAddress.get()

@@ -12,7 +12,7 @@ import spray.json.DefaultJsonProtocol._
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import org.elasticmq.rest.sqs.model.RequestPayload
 
-trait ChangeMessageVisibilityDirectives { this: ElasticMQDirectives with AkkaSupport =>
+trait ChangeMessageVisibilityDirectives { this: ElasticMQDirectives with ResponseMarshaller =>
   def changeMessageVisibility(p: RequestPayload)(implicit protocol: AWSProtocol) = {
     p.action(ChangeMessageVisibility) {
       val requestParams = p.as[ChangeMessageVisibilityActionRequest]

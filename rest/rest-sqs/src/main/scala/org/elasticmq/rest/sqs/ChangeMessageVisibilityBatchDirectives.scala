@@ -13,7 +13,7 @@ import scala.concurrent.Future
 import scala.xml.Elem
 
 trait ChangeMessageVisibilityBatchDirectives {
-  this: ElasticMQDirectives with BatchRequestsModule with AkkaSupport =>
+  this: ElasticMQDirectives with BatchRequestsModule with ResponseMarshaller =>
   def changeMessageVisibilityBatch(p: RequestPayload)(implicit protocol: AWSProtocol, xmlNsVersion: XmlNsVersion) = {
     p.action(ChangeMessageVisibilityBatch) {
       val batch = p.as[BatchRequest[ChangeMessageVisibilityBatchEntry]]

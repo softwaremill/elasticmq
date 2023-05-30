@@ -11,7 +11,7 @@ import org.elasticmq.rest.sqs.model.RequestPayload
 import spray.json.DefaultJsonProtocol._
 import spray.json.RootJsonFormat
 
-trait DeleteQueueDirectives { this: ElasticMQDirectives with QueueURLModule with AkkaSupport =>
+trait DeleteQueueDirectives { this: ElasticMQDirectives with QueueURLModule with ResponseMarshaller =>
   def deleteQueue(p: RequestPayload)(implicit protocol: AWSProtocol) = {
     p.action(DeleteQueueAction) {
       queueActorAndNameFromUrl(p.as[DeleteQueueActionRequest].QueueUrl) {
