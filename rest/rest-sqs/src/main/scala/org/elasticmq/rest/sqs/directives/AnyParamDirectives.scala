@@ -19,42 +19,45 @@ trait AnyParamDirectives {
     }
 
   private val actionHeaderPattern = """^AmazonSQS\.(\w+)$""".r
-  private def extractActionFromHeader(request: HttpRequest) =
-    request.headers
-      .find(_.name() == "X-Amz-Target")
-      .flatMap(
-        _.value() match {
-          case actionHeaderPattern(action) => Some(action)
-          case _                           => None
-        }
-      )
-      .getOrElse(throw new IllegalArgumentException("Couldn't find header X-Amz-Target"))
-  private def extractAwsXRayTracingHeader(request: HttpRequest): Option[String] = {
-    request.headers
-      .find(_.name().equalsIgnoreCase("X-Amzn-Trace-Id"))
-      .map(_.value())
-  }
+  private def extractActionFromHeader =
+    extractRequest.map(request =>
+      request.headers
+        .find(_.name() == "X-Amz-Target")
+        .flatMap(
+          _.value() match {
+            case actionHeaderPattern(action) => Some(action)
+            case _                           => None
+          }
+        )
+        .getOrElse(throw new IllegalArgumentException("Couldn't find header X-Amz-Target"))
+    )
+
+  private def extractAwsXRayTracingHeader =
+    extractRequest.map(
+      _.headers
+        .find(_.name().equalsIgnoreCase("X-Amzn-Trace-Id"))
+        .map(_.value())
+    )
 
   private def extractQueueNameAndUrlFromRequest(body: Map[String, String] => Route): Route = {
 
     val pathDirective = {
-        if (contextPath.nonEmpty) {
-          pathPrefix(contextPath / AccountIdRegex / Segment).tmap(t => Option(t._2)) |
-            pathPrefix(contextPath / Segment).map(Option(_)) |
-            provide(Option.empty[String])
-        }
-        else {
-          pathPrefix(AccountIdRegex / Segment).tmap(t => Option(t._2)) |
-            pathPrefix(Segment).map(Option(_)) |
-            provide(Option.empty[String])
-        }
-    }.flatMap {
-        case Some(name) =>
-          queueURL(name).map { url =>
-              Map(QueueNameParameter -> name, QueueUrlParameter -> url)
-          }
-        case None => provide(Map.empty[String, String])
+      if (contextPath.nonEmpty) {
+        pathPrefix(contextPath / AccountIdRegex / Segment).tmap(t => Option(t._2)) |
+          pathPrefix(contextPath / Segment).map(Option(_)) |
+          provide(Option.empty[String])
+      } else {
+        pathPrefix(AccountIdRegex / Segment).tmap(t => Option(t._2)) |
+          pathPrefix(Segment).map(Option(_)) |
+          provide(Option.empty[String])
       }
+    }.flatMap {
+      case Some(name) =>
+        queueURL(name).map { url =>
+          Map(QueueNameParameter -> name, QueueUrlParameter -> url)
+        }
+      case None => provide(Map.empty[String, String])
+    }
 
     pathDirective(body)
   }
@@ -63,28 +66,29 @@ trait AnyParamDirectives {
 
     protocol match {
       case AWSProtocol.`AWSJsonProtocol1.0` =>
-        extractRequest { request =>
-          entity(as[JsonData]) { json =>
-            body(
-              RequestPayload.JsonParams(
-                json.payload,
-                extractActionFromHeader(request),
-                extractAwsXRayTracingHeader(request)
+        extractActionFromHeader { action =>
+          extractAwsXRayTracingHeader { tracingHeader =>
+            entity(as[JsonData]) { json =>
+              body(
+                RequestPayload.JsonParams(
+                  json.payload,
+                  action,
+                  tracingHeader
+                )
               )
-            )
+            }
           }
         }
       case _ =>
         parameterMap { queryParameters =>
-          extractRequest { request =>
+          extractAwsXRayTracingHeader { tracingHeader =>
             formDataOrEmpty { fd =>
               extractQueueNameAndUrlFromRequest { queueNameAndUrl =>
-
                 val params = queryParameters ++ fd.fields.toMap ++ queueNameAndUrl
                 body(
                   RequestPayload.QueryParams(
                     params.filter(_._1 != ""),
-                    extractAwsXRayTracingHeader(request)
+                    tracingHeader
                   )
                 )
               }
