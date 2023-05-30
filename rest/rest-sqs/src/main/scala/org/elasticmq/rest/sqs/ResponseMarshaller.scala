@@ -7,7 +7,8 @@ import akka.http.scaladsl.model.ContentTypes._
 import akka.http.scaladsl.model.{HttpEntity, RequestEntity}
 import akka.util.ByteString
 import org.elasticmq.rest.sqs.directives.RespondDirectives
-import scala.xml.{Null, UnprefixedAttribute}
+
+import scala.xml.{Elem, Null, UnprefixedAttribute}
 
 trait ResponseMarshaller {
   _: RespondDirectives =>
@@ -34,4 +35,14 @@ trait ResponseMarshaller {
           }
         }
     }
+}
+
+trait XmlSerializer[T] {
+
+  def toXml(t: T): Elem
+
+}
+
+object XmlSerializer {
+  def apply[T](implicit instance: XmlSerializer[T]) = instance
 }
