@@ -27,6 +27,20 @@ jobs:
         with:
           node-version: 16
 
+      - name: Install AWS cli 1
+        run: |
+          curl "https://s3.amazonaws.com/aws-cli/awscli-bundle-1.27.127.zip" -o "awscliv1.zip"
+          unzip ./awscliv1.zip
+          ls
+          sudo ./awscli-bundle/install -i /usr/local/aws1 -b /usr/local/bin/aws1
+
+      - name: Install AWS cli 2
+        run: |
+          curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+          unzip ./awscliv2.zip
+          ls
+          sudo ./aws/install -i /usr/local/aws2 -b /usr/local/bin/aws2
+
       - name: Cache SBT
         id: cache-sbt
         uses: actions/cache@v2
@@ -61,6 +75,18 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: 16
+
+      - name: Install AWS cli 1
+        run: |
+          curl "https://s3.amazonaws.com/aws-cli/awscli-bundle-1.27.127.zip" -o "awscliv1.zip"
+          unzip -qq ./awscliv1.zip
+          sudo ./awscli-bundle/install -i /usr/local/aws1 -b /usr/local/bin/aws1
+
+      - name: Install AWS cli 2
+        run: |
+          curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+          unzip -qq ./awscliv2.zip
+          sudo ./aws/install -i /usr/local/aws2 -b /usr/local/bin/aws2
 
       - name: Cache SBT
         id: cache-sbt
