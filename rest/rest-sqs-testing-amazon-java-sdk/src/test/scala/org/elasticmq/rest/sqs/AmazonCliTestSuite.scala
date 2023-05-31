@@ -134,7 +134,7 @@ class AmazonCliTestSuite
       // given
       createQueue("test-queue")
       val queueUrl = getQueueUrl("test-queue").QueueUrl
-      val messageAttributes = "{ \"firstAttribute\": { \"DataType\": \"String\", \"StringValue\": \"hello world\" } }"
+      val messageAttributes = """{ "firstAttribute": { "DataType": "String", "StringValue": "hello world" } }"""
 
       // when
       val message = sendMessageWithAttributes("simpleMessage", queueUrl, messageAttributes)
@@ -153,18 +153,19 @@ class AmazonCliTestSuite
       // given
       createQueue("test-queue")
       val queueUrl = getQueueUrl("test-queue").QueueUrl
-      val messageAttributes = "{ \"firstAttribute\": { \"DataType\": \"String\", \"StringValue\": \"hello world\" } }"
+      val messageAttributes = """{ "firstAttribute": { "DataType": "String", "StringValue": "hello world" } }"""
       val systemAttributes =
-        "{ \"AWSTraceHeader\": { \"DataType\": \"String\", \"StringValue\": \"your-xray-trace-header-string\" } }"
+        """{ "AWSTraceHeader": { "DataType": "String", "StringValue": "your-xray-trace-header-string" } }"""
 
       // when
-      val message = sendMessageWithAttributesAndSystemAttributes("simpleMessage", queueUrl, messageAttributes, systemAttributes)
+      val message =
+        sendMessageWithAttributesAndSystemAttributes("simpleMessage", queueUrl, messageAttributes, systemAttributes)
 
       // then
       message.MessageId.isEmpty shouldBe false
       message.MD5OfMessageBody.isEmpty shouldBe false
       message.MD5OfMessageAttributes.isEmpty shouldBe false
-      //message.MD5OfMessageSystemAttributes.isEmpty shouldBe false TODO it's not calculated atm
+      // message.MD5OfMessageSystemAttributes.isEmpty shouldBe false TODO it's not calculated atm
       message.SequenceNumber shouldBe empty
     }
   }
