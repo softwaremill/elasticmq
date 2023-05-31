@@ -17,7 +17,8 @@ import spray.json.RootJsonFormat
 import scala.concurrent.Future
 import scala.xml.Elem
 
-trait SendMessageDirectives { this: ElasticMQDirectives with SQSLimitsModule with ResponseMarshaller =>
+trait SendMessageDirectives {
+  this: ElasticMQDirectives with SQSLimitsModule with ResponseMarshaller =>
   private val messageSystemAttributeNamePattern = """MessageSystemAttribute\.(\d+)\.Name""".r
 
   def sendMessage(p: RequestPayload)(implicit marshallerDependencies: MarshallerDependencies): Route = {
@@ -280,21 +281,22 @@ trait SendMessageDirectives { this: ElasticMQDirectives with SQSLimitsModule wit
         }
       }
   }
+}
 
-  case class SendMessageResponse(
-      MD5OfMessageAttributes: Option[String],
-      MD5OfMessageBody: String,
-      MD5OfMessageSystemAttributes: Option[String],
-      MessageId: String,
-      SequenceNumber: Option[String]
-  )
+case class SendMessageResponse(
+    MD5OfMessageAttributes: Option[String],
+    MD5OfMessageBody: String,
+    MD5OfMessageSystemAttributes: Option[String],
+    MessageId: String,
+    SequenceNumber: Option[String]
+)
 
-  object SendMessageResponse {
-    implicit val jsonFormat: RootJsonFormat[SendMessageResponse] = jsonFormat5(SendMessageResponse.apply)
+object SendMessageResponse {
+  implicit val jsonFormat: RootJsonFormat[SendMessageResponse] = jsonFormat5(SendMessageResponse.apply)
 
-    implicit val xmlSerializer: XmlSerializer[SendMessageResponse] = new XmlSerializer[SendMessageResponse] {
-      override def toXml(t: SendMessageResponse): Elem =
-        <SendMessageResponse>
+  implicit val xmlSerializer: XmlSerializer[SendMessageResponse] = new XmlSerializer[SendMessageResponse] {
+    override def toXml(t: SendMessageResponse): Elem =
+      <SendMessageResponse>
           <SendMessageResult>
             {t.MD5OfMessageAttributes.map(d => <MD5OfMessageAttributes>{d}</MD5OfMessageAttributes>).getOrElse(())}
             <MD5OfMessageBody>{t.MD5OfMessageBody}</MD5OfMessageBody>
@@ -305,7 +307,5 @@ trait SendMessageDirectives { this: ElasticMQDirectives with SQSLimitsModule wit
             <RequestId>{EmptyRequestId}</RequestId>
           </ResponseMetadata>
         </SendMessageResponse>
-    }
   }
-
 }
