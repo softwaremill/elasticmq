@@ -250,7 +250,18 @@ class AmazonCliTestSuite
       //given
       val url = createQueue("permission-test").QueueUrl
 
+      //when ~> then
       s"""${version.executable} sqs add-permission --label l --aws-account-ids=$awsAccountId --actions=get --endpoint=$ServiceEndpoint --region=us-west-1 --no-sign-request --queue-url=$url""" !!
+    }
+  }
+
+  test("should purge queue") {
+    forAll(cliVersions) { implicit version =>
+      //given
+      val url = createQueue("permission-test").QueueUrl
+
+      //when ~> then
+      s"""${version.executable} sqs purge-queue --endpoint=$ServiceEndpoint --region=us-west-1 --no-sign-request --queue-url=$url""" !!
     }
   }
 
