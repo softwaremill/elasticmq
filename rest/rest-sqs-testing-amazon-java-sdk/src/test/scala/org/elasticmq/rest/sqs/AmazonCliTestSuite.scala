@@ -72,6 +72,10 @@ class AmazonCliTestSuite
     result.parseJson.convertTo[SendMessageResponse]
   }
 
+  def deleteQueue(queueName: String)(implicit cli: AWSCli): Unit = {
+    s"""${cli.executable} sqs delete-queue --endpoint=$ServiceEndpoint --region=us-west-1 --no-sign-request --name=$queueName""" !!
+  }
+
   test("should create a queue and get queue url") {
 
     forAll(cliVersions) { implicit version =>
@@ -167,6 +171,21 @@ class AmazonCliTestSuite
       message.MD5OfMessageAttributes.isEmpty shouldBe false
       // message.MD5OfMessageSystemAttributes.isEmpty shouldBe false TODO it's not calculated atm
       message.SequenceNumber shouldBe empty
+    }
+  }
+
+  test("should delete created queue") {
+    forAll(cliVersions) { implicit version =>
+      //given
+      val queueName = "test-queue"
+      createQueue(queueName)
+
+      //when
+      deleteQueue(queueName)
+
+      //then
+//      val queues = listQueues()
+//      queues.QueueUrls.size shouldBe 0
     }
   }
 
