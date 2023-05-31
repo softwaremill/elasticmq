@@ -15,7 +15,7 @@ import scala.xml.Elem
 trait SendMessageBatchDirectives {
   this: ElasticMQDirectives with SendMessageDirectives with BatchRequestsModule with SQSLimitsModule with ResponseMarshaller =>
 
-  def sendMessageBatch(p: RequestPayload)(implicit protocol: AWSProtocol, xmlNsVersion: XmlNsVersion): Route = {
+  def sendMessageBatch(p: RequestPayload)(implicit marshallerDependencies: MarshallerDependencies): Route = {
     p.action(SendMessageBatch) {
       val batch = p.as[BatchRequest[SendMessageBatchActionRequest]]
       queueActorAndDataFromQueueUrl(batch.QueueUrl) { (queueActor, queueData) =>

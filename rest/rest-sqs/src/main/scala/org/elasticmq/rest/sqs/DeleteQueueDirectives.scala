@@ -12,7 +12,7 @@ import spray.json.DefaultJsonProtocol._
 import spray.json.RootJsonFormat
 
 trait DeleteQueueDirectives { this: ElasticMQDirectives with QueueURLModule with ResponseMarshaller =>
-  def deleteQueue(p: RequestPayload)(implicit protocol: AWSProtocol) = {
+  def deleteQueue(p: RequestPayload)(implicit marshallerDependencies: MarshallerDependencies) = {
     p.action(DeleteQueueAction) {
       queueActorAndNameFromUrl(p.as[DeleteQueueActionRequest].QueueUrl) {
         (_, queueName) => // We need the queue actor just to check that the queue exists

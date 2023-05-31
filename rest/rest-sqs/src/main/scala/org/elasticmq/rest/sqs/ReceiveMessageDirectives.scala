@@ -37,7 +37,7 @@ trait ReceiveMessageDirectives {
       MessageGroupIdAttribute :: AWSTraceHeaderAttribute :: SequenceNumberAttribute :: Nil
   }
 
-  def receiveMessage(p: RequestPayload)(implicit protocol: AWSProtocol, xmlNsVersion: XmlNsVersion) = {
+  def receiveMessage(p: RequestPayload)(implicit marshallerDependencies: MarshallerDependencies) = {
     import MessageReadeableAttributeNames._
 
     p.action(ReceiveMessage) {

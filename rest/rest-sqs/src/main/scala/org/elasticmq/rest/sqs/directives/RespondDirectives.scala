@@ -4,9 +4,10 @@ import akka.http.scaladsl.model.ContentTypes._
 import akka.http.scaladsl.model.HttpEntity
 import akka.http.scaladsl.server.{Directives, RequestContext, Route}
 import org.elasticmq.rest.sqs.Constants._
+
 import scala.language.postfixOps
 import akka.http.scaladsl.server
-import org.elasticmq.rest.sqs.AWSProtocol
+import org.elasticmq.rest.sqs.{AWSProtocol, MarshallerDependencies}
 import org.elasticmq.rest.sqs.Constants.EmptyRequestId
 
 import scala.xml._
@@ -41,8 +42,8 @@ trait RespondDirectives {
       route(new UnprefixedAttribute("xmlns", "http://queue.amazonaws.com/doc/%s/".format(version), Null))
     }
 
-  def emptyResponse(xmlTagName: String)(implicit protocol: AWSProtocol): server.Route = {
-    protocol match {
+  def emptyResponse(xmlTagName: String)(implicit marshallerDependencies: MarshallerDependencies): server.Route = {
+    marshallerDependencies.protocol match {
       case AWSProtocol.`AWSJsonProtocol1.0` => complete(200, HttpEntity.Empty)
       case _ =>
         respondWith {

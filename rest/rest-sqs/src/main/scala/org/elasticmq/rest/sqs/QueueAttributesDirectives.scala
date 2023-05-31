@@ -14,7 +14,7 @@ import scala.xml.Elem
 trait QueueAttributesDirectives {
   this: ElasticMQDirectives with QueueAttributesOps with ResponseMarshaller =>
 
-  def getQueueAttributes(p: RequestPayload)(implicit protocol: AWSProtocol, xmlNsVersion: XmlNsVersion): Route = {
+  def getQueueAttributes(p: RequestPayload)(implicit marshallerDependencies: MarshallerDependencies): Route = {
     p.action(GetQueueAttributes) {
       val requestParams = p.as[GetQueueAttributesActionRequest]
       queueActorAndDataFromQueueUrl(requestParams.QueueUrl) { (queueActor, queueData) =>
@@ -66,7 +66,7 @@ trait QueueAttributesDirectives {
     }
   }
 
-  def setQueueAttributes(p: RequestPayload)(implicit protocol: AWSProtocol): Route = {
+  def setQueueAttributes(p: RequestPayload)(implicit marshallerDependencies: MarshallerDependencies): Route = {
     p.action(SetQueueAttributes) {
       val requestParameters = p.as[SetQueueAttributesActionRequest]
       queueActorFromUrl(requestParameters.QueueUrl) { queueActor =>

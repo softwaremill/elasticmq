@@ -16,7 +16,7 @@ import scala.xml.Elem
 trait TagQueueDirectives {
   this: ElasticMQDirectives with TagsModule with ResponseMarshaller =>
 
-  def listQueueTags(p: RequestPayload)(implicit protocol: AWSProtocol, xmlNsVersion: XmlNsVersion) = {
+  def listQueueTags(p: RequestPayload)(implicit marshallerDependencies: MarshallerDependencies) = {
     p.action(ListQueueTags) {
       val queueUrl = p.as[ListQueueTagsActionRequest].QueueUrl
       queueActorAndDataFromQueueUrl(queueUrl) { (_, queueData) =>
@@ -25,7 +25,7 @@ trait TagQueueDirectives {
     }
   }
 
-  def untagQueue(p: RequestPayload)(implicit protocol: AWSProtocol) = {
+  def untagQueue(p: RequestPayload)(implicit marshallerDependencies: MarshallerDependencies) = {
     p.action(UntagQueue) {
       val params = p.as[UntagQueueActionRequest]
       queueActorFromUrl(params.QueueUrl) { queueActor =>
@@ -36,7 +36,7 @@ trait TagQueueDirectives {
     }
   }
 
-  def tagQueue(p: RequestPayload)(implicit protocol: AWSProtocol) = {
+  def tagQueue(p: RequestPayload)(implicit marshallerDependencies: MarshallerDependencies) = {
     p.action(TagQueue) {
       val params = p.as[TagQueueActionRequest]
       queueActorFromUrl(params.QueueUrl) { queueActor =>
