@@ -9,6 +9,8 @@ import scala.sys.process._
 import scala.language.postfixOps
 import spray.json._
 
+import scala.collection.mutable
+
 class AmazonCliTestSuite
     extends SqsClientServerCommunication
     with Matchers
@@ -27,6 +29,21 @@ class AmazonCliTestSuite
 
     result.parseJson.convertTo[CreateQueueResponse]
   }
+
+  def tag(url: String, tags: String)(implicit cli: AWSCli): Unit =
+      s"""${cli.executable} sqs tag-queue --tags="$tags" --endpoint=$ServiceEndpoint --region=us-west-1 --no-sign-request --queue-url=$url""" !!
+
+  def untag(url: String, tags: String)(implicit cli: AWSCli): Unit =
+    s"""${cli.executable} sqs untag-queue --tag-keys="$tags" --endpoint=$ServiceEndpoint --region=us-west-1 --no-sign-request --queue-url=$url""" !!
+
+  def listTags(url: String)(implicit cli: AWSCli): ListQueueTagsResponse = {
+    val result = s"""${cli.executable} sqs list-queue-tags --endpoint=$ServiceEndpoint --region=us-west-1 --no-sign-request --queue-url=$url""" !!
+
+    result.parseJson.convertTo[ListQueueTagsResponse]
+  }
+
+  def deleteQueue(url: String)(implicit cli: AWSCli) =
+    s"""${cli.executable} sqs list-delete-tags --endpoint=$ServiceEndpoint --region=us-west-1 --no-sign-request --queue-url=$url"""
 
   def getQueueUrl(name: String)(implicit cli: AWSCli): GetQueueURLResponse = {
     val result =
@@ -60,17 +77,27 @@ class AmazonCliTestSuite
     result.parseJson.convertTo[SendMessageResponse]
   }
 
+  def sendMessage(
+      messageBody: String,
+      queueUrl: String,
+      messageAttributes: Option[String],
+      systemAttributes: Option[String]
+  )(implicit cli: AWSCli): SendMessageResponse = {
+    val messageAttributesStr = messageAttributes.fold("")(v => s"--message-attributes='$v'")
+    val systemAttributesStr = systemAttributes.fold("")(v => s"--message-system-attributes='$v'")
+
+    val result =
+      s"""${cli.executable} sqs send-message --endpoint=$ServiceEndpoint --region=us-west-1 --no-sign-request --queue-url=$queueUrl --message-body=$messageBody $messageAttributesStr $systemAttributesStr""" !!
+
+    result.parseJson.convertTo[SendMessageResponse]
+  }
+
   def sendMessageWithAttributesAndSystemAttributes(
       messageBody: String,
       queueUrl: String,
       messageAttributes: String,
       systemAttributes: String
-  )(implicit cli: AWSCli): SendMessageResponse = {
-    val result =
-      s"""${cli.executable} sqs send-message --endpoint=$ServiceEndpoint --region=us-west-1 --no-sign-request --queue-url=$queueUrl --message-body=$messageBody --message-attributes='$messageAttributes' --message-system-attributes='$systemAttributes'""" !!
-
-    result.parseJson.convertTo[SendMessageResponse]
-  }
+  )(implicit cli: AWSCli): SendMessageResponse = sendMessage(messageBody, queueUrl, Some(messageAttributes), Some(systemAttributes))
 
   test("should create a queue and get queue url") {
 
@@ -167,6 +194,63 @@ class AmazonCliTestSuite
       message.MD5OfMessageAttributes.isEmpty shouldBe false
       // message.MD5OfMessageSystemAttributes.isEmpty shouldBe false TODO it's not calculated atm
       message.SequenceNumber shouldBe empty
+    }
+  }
+
+  test("should fail if message is sent to missing queue") {
+    forAll(cliVersions) { implicit version =>
+      //given
+      val outLines = mutable.ListBuffer.empty[String]
+      val errLines = mutable.ListBuffer.empty[String]
+
+      val logger = new ProcessLogger {
+        override def out(s: => String): Unit = outLines.append(s)
+
+        override def err(s: => String): Unit = errLines.append(s)
+
+        override def buffer[T](f: => T): T = f
+      }
+
+      // when
+      val queueUrl = s"$ServiceEndpoint/$awsAccountId/miss"
+
+      intercept[Exception] {
+        s"""${version.executable} sqs send-message --endpoint=$ServiceEndpoint --region=us-west-1 --no-sign-request --message-body=hello --queue-url=$queueUrl""" !! (logger)
+      }
+
+      //then
+      outLines.mkString("\n") shouldBe empty
+      errLines.mkString("\n") should include("AWS.SimpleQueueService.NonExistentQueue; see the SQS docs.")
+    }
+  }
+
+  test("should tag, untag and list queue tags") {
+    forAll(cliVersions) { implicit version =>
+      //given
+      val url = createQueue("test-queue").QueueUrl
+
+      //when
+      tag(url, "a='A', b='B'")
+
+      //then
+      listTags(url).Tags shouldBe Map("a" -> "A", "b" -> "B")
+
+      //when
+      untag(url, "b")
+
+      //then
+      listTags(url).Tags shouldBe Map("a" -> "A")
+
+      deleteQueue(url)
+    }
+  }
+
+  test("should add permission") {
+    forAll(cliVersions) { implicit version =>
+      //given
+      val url = createQueue("permission-test").QueueUrl
+
+      s"""${version.executable} sqs add-permission --label l --aws-account-ids=$awsAccountId --actions=get --endpoint=$ServiceEndpoint --region=us-west-1 --no-sign-request --queue-url=$url""" !!
     }
   }
 
