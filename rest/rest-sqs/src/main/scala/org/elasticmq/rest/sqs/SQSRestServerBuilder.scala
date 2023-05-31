@@ -180,7 +180,7 @@ case class TheSQSRestServerBuilder(
     }
 
     import env._
-    def rawRoutes(p: RequestPayload)(implicit protocol: AWSProtocol, xmlNsVersion: XmlNsVersion) =
+    def rawRoutes(p: RequestPayload)(implicit marshallerDependencies: MarshallerDependencies) =
         // 1. Sending, receiving, deleting messages
         sendMessage(p) ~
         sendMessageBatch(p) ~
@@ -191,7 +191,7 @@ case class TheSQSRestServerBuilder(
         getQueueUrl(p) ~
         createQueue(p) ~
         listQueues(p) ~
-        purgeQueue(p)(protocol) ~
+        purgeQueue(p) ~
         // 3. Other
         changeMessageVisibility(p) ~
         changeMessageVisibilityBatch(p) ~
@@ -215,11 +215,12 @@ case class TheSQSRestServerBuilder(
           handleServerExceptions(protocol) {
             handleRejectionsWithSQSError(protocol) {
               anyParamsMap(protocol) { p =>
+                val marshallerDependencies = MarshallerDependencies(protocol, version)
                 if (config.debug) {
                   logRequestResult("") {
-                    rawRoutes(p)
+                    rawRoutes(p)(marshallerDependencies)
                   }
-                } else rawRoutes(p)
+                } else rawRoutes(p)(marshallerDependencies)
               }
             }
           }

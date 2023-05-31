@@ -21,7 +21,7 @@ import scala.xml.Elem
 trait CreateQueueDirectives {
   this: ElasticMQDirectives with QueueURLModule with SQSLimitsModule with ResponseMarshaller =>
 
-  def createQueue(p: RequestPayload)(implicit protocol: AWSProtocol, xmlNsVersion: XmlNsVersion) = {
+  def createQueue(p: RequestPayload)(implicit marshallerDependencies: MarshallerDependencies) = {
     p.action(CreateQueue) {
       rootPath {
 

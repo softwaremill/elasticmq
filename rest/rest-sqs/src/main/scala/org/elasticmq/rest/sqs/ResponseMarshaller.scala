@@ -22,10 +22,9 @@ trait ResponseMarshaller {
   implicit def elasticMQMarshaller[T](implicit
       xmlSerializer: XmlSerializer[T],
       json: RootJsonFormat[T],
-      protocol: AWSProtocol,
-      version: XmlNsVersion
+      marshallerDependencies: MarshallerDependencies
   ): Marshaller[T, RequestEntity] =
-    protocol match {
+    marshallerDependencies.protocol match {
       case AWSProtocol.`AWSJsonProtocol1.0` => sprayJsonMarshaller[T]
       case _ =>
         namespace { ns =>
@@ -33,7 +32,7 @@ trait ResponseMarshaller {
             val xml = xmlSerializer.toXml(t) % ns
             HttpEntity(`text/xml(UTF-8)`, ByteString(xml.toString()))
           }
-        }
+        }(marshallerDependencies.xmlNsVersion)
     }
 }
 

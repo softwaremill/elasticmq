@@ -14,7 +14,7 @@ import scala.xml.Elem
 
 trait ChangeMessageVisibilityBatchDirectives {
   this: ElasticMQDirectives with BatchRequestsModule with ResponseMarshaller =>
-  def changeMessageVisibilityBatch(p: RequestPayload)(implicit protocol: AWSProtocol, xmlNsVersion: XmlNsVersion) = {
+  def changeMessageVisibilityBatch(p: RequestPayload)(implicit marshallerDependencies: MarshallerDependencies) = {
     p.action(ChangeMessageVisibilityBatch) {
       val batch = p.as[BatchRequest[ChangeMessageVisibilityBatchEntry]]
 

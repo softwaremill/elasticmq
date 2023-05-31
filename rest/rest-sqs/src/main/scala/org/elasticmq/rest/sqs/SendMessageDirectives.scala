@@ -20,7 +20,7 @@ import scala.xml.Elem
 trait SendMessageDirectives { this: ElasticMQDirectives with SQSLimitsModule with ResponseMarshaller =>
   private val messageSystemAttributeNamePattern = """MessageSystemAttribute\.(\d+)\.Name""".r
 
-  def sendMessage(p: RequestPayload)(implicit protocol: AWSProtocol, xmlNsVersion: XmlNsVersion): Route = {
+  def sendMessage(p: RequestPayload)(implicit marshallerDependencies: MarshallerDependencies): Route = {
     p.action(SendMessageAction) {
       val params = p.as[SendMessageActionRequest]
 
