@@ -130,14 +130,14 @@ trait ReceiveMessageDirectives {
           }
         }
 
-        def mapMessages(messages: List[MessageData]): List[Message] =
+        def mapMessages(messages: List[MessageData]): List[ReceivedMessage] =
           messages.map { message =>
             val receipt = message.deliveryReceipt
               .map(_.receipt)
               .getOrElse(throw new RuntimeException("No receipt for a received msg."))
             val filteredMessageAttributes = getFilteredAttributeNames(messageAttributeNames, message)
 
-            Message(
+            ReceivedMessage(
               Attributes = calculateAttributeValues(message).toMap,
               Body = message.content,
               MD5OfBody = md5Digest(message.content),
@@ -222,13 +222,13 @@ trait ReceiveMessageDirectives {
   }
 }
 
-case class ReceiveMessageResponse(Messages: List[Message])
+case class ReceiveMessageResponse(Messages: List[ReceivedMessage])
 
 object ReceiveMessageResponse {
   implicit val responseJsonFormat: RootJsonFormat[ReceiveMessageResponse] = jsonFormat1(ReceiveMessageResponse.apply)
 
   implicit def xmlSerializer(implicit
-      messageSerializer: XmlSerializer[Message]
+      messageSerializer: XmlSerializer[ReceivedMessage]
   ): XmlSerializer[ReceiveMessageResponse] = new XmlSerializer[ReceiveMessageResponse] {
     override def toXml(t: ReceiveMessageResponse): Elem = {
       val messages = t.Messages
@@ -247,7 +247,7 @@ object ReceiveMessageResponse {
   }
 }
 
-case class Message(
+case class ReceivedMessage(
     Attributes: Map[String, String],
     Body: String,
     MD5OfBody: String,
@@ -257,11 +257,11 @@ case class Message(
     ReceiptHandle: String
 )
 
-object Message extends MessageAttributesSupport {
-  implicit val responseJsonFormat: RootJsonFormat[Message] = jsonFormat7(Message.apply)
+object ReceivedMessage extends MessageAttributesSupport {
+  implicit val responseJsonFormat: RootJsonFormat[ReceivedMessage] = jsonFormat7(ReceivedMessage.apply)
 
-  implicit val xmlSerializer: XmlSerializer[Message] = new XmlSerializer[Message] {
-    override def toXml(msg: Message): Elem =
+  implicit val xmlSerializer: XmlSerializer[ReceivedMessage] = new XmlSerializer[ReceivedMessage] {
+    override def toXml(msg: ReceivedMessage): Elem =
       <Message>
         <MessageId>{msg.MessageId}</MessageId>
         <ReceiptHandle>{msg.ReceiptHandle}</ReceiptHandle>

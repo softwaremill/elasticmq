@@ -77,9 +77,11 @@ class AmazonCliTestSuite
     result.parseJson.convertTo[SendMessageResponse]
   }
 
-  def sendMessageWithAttributes(messageBody: String, queueUrl: String, messageAttributes: String)(implicit
-      cli: AWSCli
-  ): SendMessageResponse = {
+  def sendMessageWithAttributes(
+      messageBody: String,
+      queueUrl: String,
+      messageAttributes: String
+  )(implicit cli: AWSCli): SendMessageResponse = {
     val result =
       s"""${cli.executable} sqs send-message --endpoint=$ServiceEndpoint --region=us-west-1 --no-sign-request --queue-url=$queueUrl --message-body=$messageBody --message-attributes='$messageAttributes'""" !!
 
@@ -327,7 +329,7 @@ class AmazonCliTestSuite
 
       // then
       receivedMessage.Messages.size shouldBe 2
-      inside(receivedMessage.Messages.head) { msg =>
+      inside(receivedMessage.Messages.head) { case msg =>
         import msg._
         MessageId shouldBe firstMessage.MessageId
         ReceiptHandle.nonEmpty shouldBe true
@@ -348,7 +350,7 @@ class AmazonCliTestSuite
           }
         }
       }
-      inside(receivedMessage.Messages(1)) { msg =>
+      inside(receivedMessage.Messages(1)) { case msg =>
         import msg._
         MessageId shouldBe secondMessage.MessageId
         ReceiptHandle.nonEmpty shouldBe true
@@ -382,7 +384,7 @@ class AmazonCliTestSuite
 
       // then
       batchMessages.Failed.size shouldBe 1
-      inside(batchMessages.Failed.head) { failedMessage =>
+      inside(batchMessages.Failed.head) { case failedMessage =>
         import failedMessage._
         Id shouldBe "2"
         SenderFault shouldBe true
@@ -391,7 +393,7 @@ class AmazonCliTestSuite
       }
 
       batchMessages.Successful.size shouldBe 1
-      inside(batchMessages.Successful.head) { successfulMessage =>
+      inside(batchMessages.Successful.head) { case successfulMessage =>
         import successfulMessage._
         Id shouldBe "1"
         MessageId.nonEmpty shouldBe true
@@ -438,10 +440,10 @@ class AmazonCliTestSuite
 
       // then
       deleteMessageBatchEntries.size shouldBe 2
-      inside(deleteMessageBatchEntries.head) { deletedMessage =>
+      inside(deleteMessageBatchEntries.head) { case deletedMessage =>
         deletedMessage.Id shouldBe firstMessage.MessageId
       }
-      inside(deleteMessageBatchEntries(1)) { deletedMessage =>
+      inside(deleteMessageBatchEntries(1)) { case deletedMessage =>
         deletedMessage.Id shouldBe secondMessage.MessageId
       }
     }
@@ -498,10 +500,11 @@ class AmazonCliTestSuite
     test(s"should set and get queue attributes with ${version.name}") {
       val queue = createQueue("test")
 
-      //when
+      // when
       s"${version.executable} sqs set-queue-attributes --endpoint=$ServiceEndpoint --region=us-west-1 --no-sign-request --queue-url ${queue.QueueUrl} --attributes='VisibilityTimeout=99'" !!
 
-      val result = s"${version.executable} sqs get-queue-attributes --endpoint=$ServiceEndpoint --region=us-west-1 --no-sign-request --queue-url ${queue.QueueUrl} --attribute-names='VisibilityTimeout'" !!
+      val result =
+        s"${version.executable} sqs get-queue-attributes --endpoint=$ServiceEndpoint --region=us-west-1 --no-sign-request --queue-url ${queue.QueueUrl} --attribute-names='VisibilityTimeout'" !!
 
       result.parseJson.convertTo[GetQueueAttributesResponse].Attributes.get("VisibilityTimeout") shouldBe Some("99")
     }
