@@ -45,7 +45,7 @@ class AmazonCliTestSuite
     result.parseJson.convertTo[ListQueueTagsResponse]
   }
 
-  def deleteQueue(url: String)(implicit cli: AWSCli) = {
+  def deleteQueue(url: String)(implicit cli: AWSCli): Unit = {
     s"""${cli.executable} sqs delete-queue --endpoint=$ServiceEndpoint --region=us-west-1 --no-sign-request --queue-url=$url """ !!
   }
 
@@ -126,8 +126,14 @@ class AmazonCliTestSuite
     result.parseJson.convertTo[ReceiveMessageResponse]
   }
 
-  forAll(cliVersions) { implicit version =>
+  def sendMessageBatch(queueUrl: String, entries: String)(implicit cli: AWSCli): BatchResponse[BatchMessageSendResponseEntry] = {
+    val result =
+      s"""${cli.executable} sqs send-message-batch --endpoint=$ServiceEndpoint --region=us-west-1 --no-sign-request --queue-url=$queueUrl  --entries='[$entries]'""" !!
 
+    result.parseJson.convertTo[BatchResponse[BatchMessageSendResponseEntry]]
+  }
+
+  forAll(cliVersions) { implicit version =>
     test(s"should create a queue and get queue url ${version.name}") {
 
       val create = createQueue("test-queue")
@@ -344,6 +350,34 @@ class AmazonCliTestSuite
             stringMessageAttribute.stringValue shouldBe "hello world two"
           }
         }
+      }
+    }
+
+    test(s"should send message batch with ${version.name}") {
+      //given
+      val queue = createQueue("test-queue")
+      val firstMessageBody = "messageOne"
+      val entries = s"""{"Id": "1", "MessageBody": "$firstMessageBody"}, {"Id": "2", "MessageBody": ""}"""
+
+      //when
+      val batchMessages = sendMessageBatch(queue.QueueUrl, entries)
+
+      //then
+      batchMessages.Failed.size shouldBe 1
+      inside(batchMessages.Failed.head){ failedMessage =>
+        import failedMessage._
+        Id shouldBe "2"
+        SenderFault shouldBe true
+        Code shouldBe "The request must contain the parameter MessageBody."
+        Message shouldBe "The request must contain the parameter MessageBody.; see the SQS docs."
+      }
+
+      batchMessages.Successful.size shouldBe 1
+      inside(batchMessages.Successful.head){ successfulMessage =>
+        import successfulMessage._
+        Id shouldBe "1"
+        MessageId.nonEmpty shouldBe true
+        MD5OfMessageBody.nonEmpty shouldBe true
       }
     }
 
