@@ -1,8 +1,7 @@
 package org.elasticmq.rest.sqs
 
 import org.elasticmq.StringMessageAttribute
-import org.scalatest.Inside.inside
-import org.scalatest.{LoneElement, OptionValues}
+import org.scalatest.{Inside, LoneElement, OptionValues}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.prop.TableDrivenPropertyChecks
 import spray.json.DefaultJsonProtocol.listFormat
@@ -18,6 +17,7 @@ class AmazonCliTestSuite
     with Matchers
     with TableDrivenPropertyChecks
     with OptionValues
+    with Inside
     with LoneElement {
 
   val cliVersions = Table(
@@ -495,6 +495,16 @@ class AmazonCliTestSuite
       s"""${version.executable} sqs change-message-visibility-batch --entries='$entries' --endpoint=$ServiceEndpoint --region=us-west-1 --no-sign-request --queue-url=${queue.QueueUrl}""" !!
     }
 
+    test(s"should set and get queue attributes with ${version.name}") {
+      val queue = createQueue("test")
+
+      //when
+      s"${version.executable} sqs set-queue-attributes --endpoint=$ServiceEndpoint --region=us-west-1 --no-sign-request --queue-url ${queue.QueueUrl} --attributes='VisibilityTimeout=99'" !!
+
+      val result = s"${version.executable} sqs get-queue-attributes --endpoint=$ServiceEndpoint --region=us-west-1 --no-sign-request --queue-url ${queue.QueueUrl} --attribute-names='VisibilityTimeout'" !!
+
+      result.parseJson.convertTo[GetQueueAttributesResponse].Attributes.get("VisibilityTimeout") shouldBe Some("99")
+    }
   }
 }
 
