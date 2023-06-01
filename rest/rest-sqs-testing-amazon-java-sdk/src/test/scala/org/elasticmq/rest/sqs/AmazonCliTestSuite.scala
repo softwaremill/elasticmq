@@ -399,6 +399,17 @@ class AmazonCliTestSuite
       deleteMessage(queue.QueueUrl, receiptHandle)
     }
 
+    test(s"should delete message batch with ${version.name}") {
+      //given
+      val queue = createQueue("test-queue")
+      val firstMessageBody = "messageOne"
+      val secondMessageBody = "messegeTwo"
+      val entries = s"""{"Id": "1", "MessageBody": "$firstMessageBody"}, {"Id": "2", "MessageBody": "$secondMessageBody"}, {"Id": "3", "MessageBody": ""}"""
+      sendMessageBatch(queue.QueueUrl, entries)
+      val receivedMessages = receiveMessage(queue.QueueUrl, Some("All"), Some("All"), Some("10"))
+      println(s"receivedMessages = $receivedMessages")
+    }
+
   }
 }
 
