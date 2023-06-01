@@ -1,11 +1,11 @@
 package org.elasticmq.rest.sqs
 
-import org.elasticmq.{BinaryMessageAttribute, MessageAttribute, NumberMessageAttribute, StringMessageAttribute}
+import org.elasticmq.StringMessageAttribute
 import org.scalatest.Inside.inside
-import org.scalatest.OptionValues
-import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.{LoneElement, OptionValues}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.prop.TableDrivenPropertyChecks
+import spray.json.DefaultJsonProtocol.listFormat
 
 import scala.sys.process._
 import scala.language.postfixOps
@@ -17,7 +17,8 @@ class AmazonCliTestSuite
     extends SqsClientServerCommunication
     with Matchers
     with TableDrivenPropertyChecks
-    with OptionValues {
+    with OptionValues
+    with LoneElement {
 
   val cliVersions = Table(
     "cli version",
@@ -110,15 +111,15 @@ class AmazonCliTestSuite
 
   def receiveMessage(
       queueUrl: String,
-      attributeNames: Option[String],
-      messageAttributeNames: Option[String],
-      maxNumberOfMessages: Option[String]
+      attributeNames: String = "All",
+      messageAttributeNames: String = "All",
+      maxNumberOfMessages: String = "10"
   )(implicit
       cli: AWSCli
   ): ReceiveMessageResponse = {
-    val attributeNamesStr = attributeNames.fold("")(v => s"--attribute-names='$v'")
-    val messageAttributeNamesStr = messageAttributeNames.fold("")(v => s"--message-attribute-names='$v'")
-    val maxNumberOfMessagesStr = maxNumberOfMessages.fold("")(v => s"--max-number-of-messages='$v'")
+    val attributeNamesStr = s"--attribute-names='$attributeNames'"
+    val messageAttributeNamesStr = s"--message-attribute-names='$messageAttributeNames'"
+    val maxNumberOfMessagesStr = s"--max-number-of-messages='$maxNumberOfMessages'"
 
     val result =
       s"""${cli.executable} sqs receive-message --endpoint=$ServiceEndpoint --region=us-west-1 --no-sign-request --queue-url=$queueUrl $attributeNamesStr $messageAttributeNamesStr $maxNumberOfMessagesStr""" !!
@@ -126,7 +127,9 @@ class AmazonCliTestSuite
     result.parseJson.convertTo[ReceiveMessageResponse]
   }
 
-  def sendMessageBatch(queueUrl: String, entries: String)(implicit cli: AWSCli): BatchResponse[BatchMessageSendResponseEntry] = {
+  def sendMessageBatch(queueUrl: String, entries: String)(implicit
+      cli: AWSCli
+  ): BatchResponse[BatchMessageSendResponseEntry] = {
     val result =
       s"""${cli.executable} sqs send-message-batch --endpoint=$ServiceEndpoint --region=us-west-1 --no-sign-request --queue-url=$queueUrl  --entries='[$entries]'""" !!
 
@@ -135,6 +138,17 @@ class AmazonCliTestSuite
 
   def deleteMessage(queueUrl: String, receiptHandle: String)(implicit cli: AWSCli): Unit = {
     s"""${cli.executable} sqs delete-message --endpoint=$ServiceEndpoint --region=us-west-1 --no-sign-request --queue-url=$queueUrl --receipt-handle="$receiptHandle" """ !!
+  }
+
+  def deleteMessageBatch(queueUrl: String, entries: String)(implicit
+      cli: AWSCli
+  ): List[BatchDeleteMessageResponseEntry] = {
+    val result =
+      s"""${cli.executable} sqs delete-message-batch --endpoint=$ServiceEndpoint --region=us-west-1 --no-sign-request --queue-url=$queueUrl --entries='[$entries]'""" !!
+
+    result.parseJson.asJsObject.fields
+      .getOrElse("Successful", fail("couldn't find successful field"))
+      .convertTo[List[BatchDeleteMessageResponseEntry]]
   }
 
   forAll(cliVersions) { implicit version =>
@@ -309,7 +323,7 @@ class AmazonCliTestSuite
       val secondMessage = sendMessageWithAttributes(secondMessageBody, queue.QueueUrl, secondMessageAttributes)
 
       // when
-      val receivedMessage = receiveMessage(queue.QueueUrl, Some("All"), Some("All"), Some("2"))
+      val receivedMessage = receiveMessage(queue.QueueUrl, "All", "All", "2")
 
       // then
       receivedMessage.Messages.size shouldBe 2
@@ -358,17 +372,17 @@ class AmazonCliTestSuite
     }
 
     test(s"should send message batch with ${version.name}") {
-      //given
+      // given
       val queue = createQueue("test-queue")
       val firstMessageBody = "messageOne"
       val entries = s"""{"Id": "1", "MessageBody": "$firstMessageBody"}, {"Id": "2", "MessageBody": ""}"""
 
-      //when
+      // when
       val batchMessages = sendMessageBatch(queue.QueueUrl, entries)
 
-      //then
+      // then
       batchMessages.Failed.size shouldBe 1
-      inside(batchMessages.Failed.head){ failedMessage =>
+      inside(batchMessages.Failed.head) { failedMessage =>
         import failedMessage._
         Id shouldBe "2"
         SenderFault shouldBe true
@@ -377,7 +391,7 @@ class AmazonCliTestSuite
       }
 
       batchMessages.Successful.size shouldBe 1
-      inside(batchMessages.Successful.head){ successfulMessage =>
+      inside(batchMessages.Successful.head) { successfulMessage =>
         import successfulMessage._
         Id shouldBe "1"
         MessageId.nonEmpty shouldBe true
@@ -386,28 +400,99 @@ class AmazonCliTestSuite
     }
 
     test(s"should delete message with ${version.name}") {
-      //given
+      // given
       val queue = createQueue("test-queue")
       val messageAttributes =
         """{ "firstAttribute": { "DataType": "String", "StringValue": "hello world one" } }"""
       sendMessageWithAttributes("simpleMessage", queue.QueueUrl, messageAttributes)
-      val receivedMessage = receiveMessage(queue.QueueUrl, Some("All"), Some("All"), Some("10"))
+      val receivedMessage = receiveMessage(queue.QueueUrl)
       val receiptHandle = receivedMessage.Messages.head.ReceiptHandle
 
-      //when
-      //then
+      // when
+      // then
       deleteMessage(queue.QueueUrl, receiptHandle)
     }
 
     test(s"should delete message batch with ${version.name}") {
-      //given
+      // given
       val queue = createQueue("test-queue")
-      val firstMessageBody = "messageOne"
-      val secondMessageBody = "messegeTwo"
-      val entries = s"""{"Id": "1", "MessageBody": "$firstMessageBody"}, {"Id": "2", "MessageBody": "$secondMessageBody"}, {"Id": "3", "MessageBody": ""}"""
-      sendMessageBatch(queue.QueueUrl, entries)
-      val receivedMessages = receiveMessage(queue.QueueUrl, Some("All"), Some("All"), Some("10"))
-      println(s"receivedMessages = $receivedMessages")
+      val firstMessageBody = "simpleMessageOne"
+      val secondMessageBody = "simpleMessageTwo"
+      val firstMessageAttributes =
+        """{ "firstAttribute": { "DataType": "String", "StringValue": "hello world one" } }"""
+      val secondMessageAttributes =
+        """{ "secondAttribute": { "DataType": "String", "StringValue": "hello world two" } }"""
+      val firstMessage = sendMessageWithAttributes(firstMessageBody, queue.QueueUrl, firstMessageAttributes)
+      val secondMessage = sendMessageWithAttributes(secondMessageBody, queue.QueueUrl, secondMessageAttributes)
+
+      val receivedMessages = receiveMessage(queue.QueueUrl)
+      val receiptHandles = receivedMessages.Messages.map(msg => msg.MessageId -> msg.ReceiptHandle).toMap
+      val entries = receiptHandles
+        .map { case (id, receiptHandle) =>
+          s"""{"Id": "$id", "ReceiptHandle": "$receiptHandle"}"""
+        }
+        .mkString(", ")
+
+      // when
+      val deleteMessageBatchEntries = deleteMessageBatch(queue.QueueUrl, entries)
+
+      // then
+      deleteMessageBatchEntries.size shouldBe 2
+      inside(deleteMessageBatchEntries.head) { deletedMessage =>
+        deletedMessage.Id shouldBe firstMessage.MessageId
+      }
+      inside(deleteMessageBatchEntries(1)) { deletedMessage =>
+        deletedMessage.Id shouldBe secondMessage.MessageId
+      }
+    }
+
+    test(s"change message visibility with ${version.name}") {
+      // given
+      val queue = createQueue("test-queue")
+      sendMessageWithAttributes(
+        "hello",
+        queue.QueueUrl,
+        """{ "firstAttribute": { "DataType": "String", "StringValue": "hello world one" } }"""
+      )
+
+      val msg = receiveMessage(queue.QueueUrl).Messages.loneElement
+
+      // when ~> then
+      s"""${version.executable} sqs change-message-visibility --visibility-timeout=100 --receipt-handle=${msg.ReceiptHandle} --endpoint=$ServiceEndpoint --region=us-west-1 --no-sign-request --queue-url=${queue.QueueUrl}""" !!
+    }
+
+    test(s"change message visibility batch with ${version.name}") {
+      // given
+      val queue = createQueue("test-queue")
+      val attrs = """{ "firstAttribute": { "DataType": "String", "StringValue": "hello world one" } }"""
+      sendMessageWithAttributes(
+        "hello1",
+        queue.QueueUrl,
+        attrs
+      )
+      sendMessageWithAttributes(
+        "hello2",
+        queue.QueueUrl,
+        attrs
+      )
+      sendMessageWithAttributes(
+        "hello3",
+        queue.QueueUrl,
+        attrs
+      )
+
+      val entries = JsArray(
+        receiveMessage(queue.QueueUrl).Messages.map { m =>
+          JsObject(
+            "Id" -> JsString(s"${m.MessageId}"),
+            "ReceiptHandle" -> JsString(s"${m.ReceiptHandle}"),
+            "VisibilityTimeout" -> JsNumber(500)
+          )
+        }.toVector
+      ).compactPrint
+
+      // then
+      s"""${version.executable} sqs change-message-visibility-batch --entries='$entries' --endpoint=$ServiceEndpoint --region=us-west-1 --no-sign-request --queue-url=${queue.QueueUrl}""" !!
     }
 
   }
