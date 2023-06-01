@@ -1,7 +1,9 @@
 package org.elasticmq.rest.sqs
 
-import org.elasticmq.MessageAttribute
+import org.elasticmq.{BinaryMessageAttribute, MessageAttribute, NumberMessageAttribute, StringMessageAttribute}
+import org.scalatest.Inside.inside
 import org.scalatest.OptionValues
+import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.prop.TableDrivenPropertyChecks
 
@@ -106,7 +108,26 @@ class AmazonCliTestSuite
   )(implicit cli: AWSCli): SendMessageResponse =
     sendMessage(messageBody, queueUrl, Some(messageAttributes), Some(systemAttributes))
 
+  def receiveMessage(
+      queueUrl: String,
+      attributeNames: Option[String],
+      messageAttributeNames: Option[String],
+      maxNumberOfMessages: Option[String]
+  )(implicit
+      cli: AWSCli
+  ): ReceiveMessageResponse = {
+    val attributeNamesStr = attributeNames.fold("")(v => s"--attribute-names='$v'")
+    val messageAttributeNamesStr = messageAttributeNames.fold("")(v => s"--message-attribute-names='$v'")
+    val maxNumberOfMessagesStr = maxNumberOfMessages.fold("")(v => s"--max-number-of-messages='$v'")
+
+    val result =
+      s"""${cli.executable} sqs receive-message --endpoint=$ServiceEndpoint --region=us-west-1 --no-sign-request --queue-url=$queueUrl $attributeNamesStr $messageAttributeNamesStr $maxNumberOfMessagesStr""" !!
+
+    result.parseJson.convertTo[ReceiveMessageResponse]
+  }
+
   forAll(cliVersions) { implicit version =>
+
     test(s"should create a queue and get queue url ${version.name}") {
 
       val create = createQueue("test-queue")
@@ -264,6 +285,68 @@ class AmazonCliTestSuite
       // then
       listQueuesAfterDelete.QueueUrls.size shouldBe 0
     }
+
+    test(s"should receive message with ${version.name}") {
+      // given
+      val queue = createQueue("test-queue")
+      val firstMessageBody = "simpleMessageOne"
+      val secondMessageBody = "simpleMessageTwo"
+      val firstMessageAttributes =
+        """{ "firstAttribute": { "DataType": "String", "StringValue": "hello world one" } }"""
+      val secondMessageAttributes =
+        """{ "secondAttribute": { "DataType": "String", "StringValue": "hello world two" } }"""
+      val firstMessage = sendMessageWithAttributes(firstMessageBody, queue.QueueUrl, firstMessageAttributes)
+      val secondMessage = sendMessageWithAttributes(secondMessageBody, queue.QueueUrl, secondMessageAttributes)
+
+      // when
+      val receivedMessage = receiveMessage(queue.QueueUrl, Some("All"), Some("All"), Some("2"))
+
+      // then
+      receivedMessage.Messages.size shouldBe 2
+      inside(receivedMessage.Messages.head) { msg =>
+        import msg._
+        MessageId shouldBe firstMessage.MessageId
+        ReceiptHandle.nonEmpty shouldBe true
+        MD5OfBody shouldBe firstMessage.MD5OfMessageBody
+        Body shouldBe firstMessageBody
+        Attributes.size shouldBe 4
+        Attributes.get("SentTimestamp").map(v => v.nonEmpty shouldBe true)
+        Attributes.get("ApproximateReceiveCount").map(_ shouldBe "1")
+        Attributes.get("ApproximateFirstReceiveTimestamp").map(v => v.nonEmpty shouldBe true)
+        Attributes.get("SenderId").map(_ shouldBe "127.0.0.1")
+        MD5OfMessageAttributes.nonEmpty shouldBe true
+        MessageAttributes.nonEmpty shouldBe true
+        MessageAttributes.get("firstAttribute").map { msgAtt =>
+          msgAtt.getDataType() shouldBe "String"
+          msgAtt shouldBe a[StringMessageAttribute]
+          inside(msgAtt) { case stringMessageAttribute: StringMessageAttribute =>
+            stringMessageAttribute.stringValue shouldBe "hello world one"
+          }
+        }
+      }
+      inside(receivedMessage.Messages(1)) { msg =>
+        import msg._
+        MessageId shouldBe secondMessage.MessageId
+        ReceiptHandle.nonEmpty shouldBe true
+        MD5OfBody shouldBe secondMessage.MD5OfMessageBody
+        Body shouldBe secondMessageBody
+        Attributes.size shouldBe 4
+        Attributes.get("SentTimestamp").map(v => v.nonEmpty shouldBe true)
+        Attributes.get("ApproximateReceiveCount").map(_ shouldBe "1")
+        Attributes.get("ApproximateFirstReceiveTimestamp").map(v => v.nonEmpty shouldBe true)
+        Attributes.get("SenderId").map(_ shouldBe "127.0.0.1")
+        MD5OfMessageAttributes.nonEmpty shouldBe true
+        MessageAttributes.nonEmpty shouldBe true
+        MessageAttributes.get("secondAttribute").map { msgAtt =>
+          msgAtt.getDataType() shouldBe "String"
+          msgAtt shouldBe a[StringMessageAttribute]
+          inside(msgAtt) { case stringMessageAttribute: StringMessageAttribute =>
+            stringMessageAttribute.stringValue shouldBe "hello world two"
+          }
+        }
+      }
+    }
+
   }
 }
 
