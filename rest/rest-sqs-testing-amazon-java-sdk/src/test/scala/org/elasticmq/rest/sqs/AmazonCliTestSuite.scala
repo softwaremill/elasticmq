@@ -133,6 +133,10 @@ class AmazonCliTestSuite
     result.parseJson.convertTo[BatchResponse[BatchMessageSendResponseEntry]]
   }
 
+  def deleteMessage(queueUrl: String, receiptHandle: String)(implicit cli: AWSCli): Unit = {
+    s"""${cli.executable} sqs delete-message --endpoint=$ServiceEndpoint --region=us-west-1 --no-sign-request --queue-url=$queueUrl --receipt-handle="$receiptHandle" """ !!
+  }
+
   forAll(cliVersions) { implicit version =>
     test(s"should create a queue and get queue url ${version.name}") {
 
@@ -379,6 +383,20 @@ class AmazonCliTestSuite
         MessageId.nonEmpty shouldBe true
         MD5OfMessageBody.nonEmpty shouldBe true
       }
+    }
+
+    test(s"should delete message with ${version.name}") {
+      //given
+      val queue = createQueue("test-queue")
+      val messageAttributes =
+        """{ "firstAttribute": { "DataType": "String", "StringValue": "hello world one" } }"""
+      sendMessageWithAttributes("simpleMessage", queue.QueueUrl, messageAttributes)
+      val receivedMessage = receiveMessage(queue.QueueUrl, Some("All"), Some("All"), Some("10"))
+      val receiptHandle = receivedMessage.Messages.head.ReceiptHandle
+
+      //when
+      //then
+      deleteMessage(queue.QueueUrl, receiptHandle)
     }
 
   }
