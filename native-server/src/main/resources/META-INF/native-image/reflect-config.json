@@ -345,6 +345,34 @@
   "name":"char[]"
 },
 {
+  "name":"com.sun.crypto.provider.AESCipher$General",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.sun.crypto.provider.ARCFOURCipher",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.sun.crypto.provider.ChaCha20Cipher$ChaCha20Poly1305",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.sun.crypto.provider.DESCipher",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.sun.crypto.provider.DESedeCipher",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.sun.crypto.provider.DHParameters",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"com.sun.crypto.provider.GaloisCounterMode$AESGCM",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
   "name":"com.sun.crypto.provider.TlsMasterSecretGenerator",
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
@@ -420,10 +448,18 @@
   "fields":[{"name":"TYPE"}]
 },
 {
+  "name":"java.lang.Class",
+  "methods":[{"name":"getModule","parameterTypes":[] }]
+},
+{
   "name":"java.lang.ClassValue"
 },
 {
   "name":"java.lang.Class[]"
+},
+{
+  "name":"java.lang.Deprecated",
+  "queryAllPublicMethods":true
 },
 {
   "name":"java.lang.Double",
@@ -442,6 +478,10 @@
   "fields":[{"name":"TYPE"}]
 },
 {
+  "name":"java.lang.Module",
+  "methods":[{"name":"getDescriptor","parameterTypes":[] }]
+},
+{
   "name":"java.lang.RuntimePermission"
 },
 {
@@ -458,6 +498,10 @@
 },
 {
   "name":"java.lang.String[]"
+},
+{
+  "name":"java.lang.Thread",
+  "methods":[{"name":"isVirtual","parameterTypes":[] }]
 },
 {
   "name":"java.lang.Throwable",
@@ -521,7 +565,8 @@
 },
 {
   "name":"java.lang.management.ThreadInfo",
-  "allPublicMethods":true
+  "allPublicMethods":true,
+  "fields":[{"name":"virtual"}]
 },
 {
   "name":"java.lang.reflect.Field[]"
@@ -605,6 +650,9 @@
   "name":"javax.security.auth.x500.X500Principal",
   "fields":[{"name":"thisX500Name"}],
   "methods":[{"name":"<init>","parameterTypes":["sun.security.x509.X500Name"] }]
+},
+{
+  "name":"javax.smartcardio.CardPermission"
 },
 {
   "name":"jdk.management.jfr.ConfigurationInfo",
@@ -693,6 +741,176 @@
   "name":"org.elasticmq.persistence.sql.package$SerializableAttribute",
   "allDeclaredFields":true,
   "allPublicMethods":true
+},
+{
+  "name":"org.elasticmq.rest.sqs.BatchChangeMessageVisibilityResponseEntry",
+  "allDeclaredFields":true,
+  "queryAllPublicMethods":true
+},
+{
+  "name":"org.elasticmq.rest.sqs.QueueReadableAttributeNames",
+  "allDeclaredFields":true,
+  "queryAllPublicMethods":true
+},
+{
+  "name":"org.elasticmq.rest.sqs.BatchDeleteMessageResponseEntry",
+  "allDeclaredFields":true,
+  "queryAllPublicMethods":true
+},
+{
+  "name":"org.elasticmq.rest.sqs.BatchMessageSendResponseEntry",
+  "allDeclaredFields":true,
+  "queryAllPublicMethods":true
+},
+{
+  "name":"org.elasticmq.rest.sqs.BatchRequest",
+  "allDeclaredFields":true,
+  "queryAllPublicMethods":true
+},
+{
+  "name":"org.elasticmq.rest.sqs.BatchResponse",
+  "allDeclaredFields":true,
+  "queryAllPublicMethods":true
+},
+{
+  "name":"org.elasticmq.rest.sqs.ChangeMessageVisibilityBatchEntry",
+  "allDeclaredFields":true,
+  "queryAllPublicMethods":true
+},
+{
+  "name":"org.elasticmq.rest.sqs.ChangeMessageVisibilityDirectives$ChangeMessageVisibilityActionRequest",
+  "allDeclaredFields":true,
+  "queryAllPublicMethods":true
+},
+{
+  "name":"org.elasticmq.rest.sqs.CreateQueueActionRequest",
+  "allDeclaredFields":true,
+  "queryAllPublicMethods":true
+},
+{
+  "name":"org.elasticmq.rest.sqs.CreateQueueResponse",
+  "allDeclaredFields":true,
+  "queryAllPublicMethods":true
+},
+{
+  "name":"org.elasticmq.rest.sqs.DeleteMessageBatchEntry",
+  "allDeclaredFields":true,
+  "queryAllPublicMethods":true
+},
+{
+  "name":"org.elasticmq.rest.sqs.DeleteMessageDirectives$DeleteMessageActionRequest",
+  "allDeclaredFields":true,
+  "queryAllPublicMethods":true
+},
+{
+  "name":"org.elasticmq.rest.sqs.DeleteQueueActionRequest",
+  "allDeclaredFields":true,
+  "queryAllPublicMethods":true
+},
+{
+  "name":"org.elasticmq.rest.sqs.Failed",
+  "allDeclaredFields":true,
+  "queryAllPublicMethods":true
+},
+{
+  "name":"org.elasticmq.rest.sqs.GetQueueAttributesActionRequest",
+  "allDeclaredFields":true,
+  "queryAllPublicMethods":true
+},
+{
+  "name":"org.elasticmq.rest.sqs.GetQueueAttributesResponse",
+  "allDeclaredFields":true,
+  "queryAllPublicMethods":true
+},
+{
+  "name":"org.elasticmq.rest.sqs.GetQueueURLResponse",
+  "allDeclaredFields":true,
+  "queryAllPublicMethods":true
+},
+{
+  "name":"org.elasticmq.rest.sqs.GetQueueUrlActionRequest",
+  "allDeclaredFields":true,
+  "queryAllPublicMethods":true
+},
+{
+  "name":"org.elasticmq.rest.sqs.ListQueueTagsActionRequest",
+  "allDeclaredFields":true,
+  "queryAllPublicMethods":true
+},
+{
+  "name":"org.elasticmq.rest.sqs.ListQueueTagsResponse",
+  "allDeclaredFields":true,
+  "queryAllPublicMethods":true
+},
+{
+  "name":"org.elasticmq.rest.sqs.ListQueuesActionRequest",
+  "allDeclaredFields":true,
+  "queryAllPublicMethods":true
+},
+{
+  "name":"org.elasticmq.rest.sqs.ListQueuesResponse",
+  "allDeclaredFields":true,
+  "queryAllPublicMethods":true
+},
+{
+  "name":"org.elasticmq.rest.sqs.PurgeQueueDirectives$PurgeQueueActionRequest",
+  "allDeclaredFields":true,
+  "queryAllPublicMethods":true
+},
+{
+  "name":"org.elasticmq.rest.sqs.ReceiveMessageDirectives$ReceiveMessageActionRequest",
+  "allDeclaredFields":true,
+  "queryAllPublicMethods":true
+},
+{
+  "name":"org.elasticmq.rest.sqs.ReceiveMessageResponse",
+  "allDeclaredFields":true,
+  "queryAllPublicMethods":true
+},
+{
+  "name":"org.elasticmq.rest.sqs.ReceivedMessage",
+  "allDeclaredFields":true,
+  "queryAllPublicMethods":true
+},
+{
+  "name":"org.elasticmq.rest.sqs.TagsModule$TagNameAndValuesReader",
+  "allDeclaredFields":true,
+  "queryAllPublicMethods":true
+},
+{
+  "name":"org.elasticmq.rest.sqs.SendMessageBatchDirectives$SendMessageBatchActionRequest",
+  "allDeclaredFields":true,
+  "queryAllPublicMethods":true
+},
+{
+  "name":"org.elasticmq.rest.sqs.SendMessageDirectives$SendMessageActionRequest",
+  "allDeclaredFields":true,
+  "queryAllPublicMethods":true
+},
+{
+  "name":"org.elasticmq.rest.sqs.SendMessageResponse",
+  "allDeclaredFields":true,
+  "queryAllPublicMethods":true
+},
+{
+  "name":"org.elasticmq.rest.sqs.SetQueueAttributesActionRequest",
+  "allDeclaredFields":true,
+  "queryAllPublicMethods":true
+},
+{
+  "name":"org.elasticmq.rest.sqs.TagQueueActionRequest",
+  "allDeclaredFields":true,
+  "queryAllPublicMethods":true
+},
+{
+  "name":"org.elasticmq.rest.sqs.UntagQueueActionRequest",
+  "allDeclaredFields":true,
+  "queryAllPublicMethods":true
+},
+{
+  "name":"org.elasticmq.rest.sqs.directives.ExceptionDirectives$ErrorResponse",
+  "allDeclaredFields":true,
+  "queryAllPublicMethods":true
 },
 {
   "name":"org.h2.Driver"
@@ -882,11 +1100,22 @@
   "allDeclaredFields":true
 },
 {
+  "name":"sun.reflect.Reflection"
+},
+{
   "name":"sun.security.pkcs12.PKCS12KeyStore",
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
 {
   "name":"sun.security.pkcs12.PKCS12KeyStore$DualFormatPKCS12",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"sun.security.provider.DSA$SHA224withDSA",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"sun.security.provider.DSA$SHA256withDSA",
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
 {
@@ -906,7 +1135,19 @@
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
 {
+  "name":"sun.security.provider.SHA2$SHA224",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
   "name":"sun.security.provider.SHA2$SHA256",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"sun.security.provider.SHA5$SHA384",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"sun.security.provider.SHA5$SHA512",
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
 {
@@ -914,7 +1155,19 @@
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
 {
+  "name":"sun.security.rsa.PSSParameters",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
   "name":"sun.security.rsa.RSAKeyFactory$Legacy",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"sun.security.rsa.RSAPSSSignature",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"sun.security.rsa.RSASignature$SHA224withRSA",
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
 {
