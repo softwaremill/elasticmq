@@ -1,7 +1,7 @@
 package org.elasticmq.rest.sqs
 
 import org.elasticmq.StringMessageAttribute
-import org.scalatest.{Inside, LoneElement, OptionValues}
+import org.scalatest.{Inside, LoneElement, OptionValues, Tag}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.prop.TableDrivenPropertyChecks
 import spray.json.DefaultJsonProtocol.listFormat
@@ -12,6 +12,7 @@ import spray.json._
 
 import scala.collection.mutable
 
+object Only213 extends Tag("org.elasticmq.rest.sqs.Only213")
 class AmazonCliTestSuite
     extends SqsClientServerCommunication
     with Matchers
@@ -185,7 +186,7 @@ class AmazonCliTestSuite
       get.QueueUrls should contain allOf (s"$ServiceEndpoint/$awsAccountId/aaa-test-queue2", s"$ServiceEndpoint/$awsAccountId/aaa-test-queue1")
     }
 
-    test(s"should send a single message to queue ${version.name}") {
+    test(s"should send a single message to queue ${version.name}", Only213) {
       // given
       createQueue("test-queue")
       val queueUrl = getQueueUrl("test-queue").QueueUrl
@@ -201,7 +202,7 @@ class AmazonCliTestSuite
       message.SequenceNumber shouldBe empty
     }
 
-    test(s"should send a single message with Attributes to queue ${version.name}") {
+    test(s"should send a single message with Attributes to queue ${version.name}", Only213) {
       // given
       createQueue("test-queue")
       val queueUrl = getQueueUrl("test-queue").QueueUrl
@@ -218,7 +219,7 @@ class AmazonCliTestSuite
       message.SequenceNumber shouldBe empty
     }
 
-    test(s"should send a single message with Attributes and System Attributes to queue ${version.name}") {
+    test(s"should send a single message with Attributes and System Attributes to queue ${version.name}", Only213) {
       // given
       createQueue("test-queue")
       val queueUrl = getQueueUrl("test-queue").QueueUrl
@@ -238,7 +239,7 @@ class AmazonCliTestSuite
       message.SequenceNumber shouldBe empty
     }
 
-    test(s"should fail if message is sent to missing queue ${version.name}") {
+    test(s"should fail if message is sent to missing queue ${version.name}", Only213) {
       // given
       val outLines = mutable.ListBuffer.empty[String]
       val errLines = mutable.ListBuffer.empty[String]
@@ -263,7 +264,7 @@ class AmazonCliTestSuite
       errLines.mkString("\n") should include("AWS.SimpleQueueService.NonExistentQueue; see the SQS docs.")
     }
 
-    test(s"should tag, untag and list queue tags ${version.name}") {
+    test(s"should tag, untag and list queue tags ${version.name}", Only213) {
       // given
       val url = createQueue("test-queue").QueueUrl
 
@@ -312,7 +313,7 @@ class AmazonCliTestSuite
       listQueuesAfterDelete.QueueUrls.size shouldBe 0
     }
 
-    test(s"should receive message with ${version.name}") {
+    test(s"should receive message with ${version.name}", Only213) {
       // given
       val queue = createQueue("test-queue")
       val firstMessageBody = "simpleMessageOne"
@@ -373,7 +374,7 @@ class AmazonCliTestSuite
       }
     }
 
-    test(s"should send message batch with ${version.name}") {
+    test(s"should send message batch with ${version.name}", Only213) {
       // given
       val queue = createQueue("test-queue")
       val firstMessageBody = "messageOne"
@@ -401,7 +402,7 @@ class AmazonCliTestSuite
       }
     }
 
-    test(s"should delete message with ${version.name}") {
+    test(s"should delete message with ${version.name}", Only213) {
       // given
       val queue = createQueue("test-queue")
       val messageAttributes =
@@ -415,7 +416,7 @@ class AmazonCliTestSuite
       deleteMessage(queue.QueueUrl, receiptHandle)
     }
 
-    test(s"should delete message batch with ${version.name}") {
+    test(s"should delete message batch with ${version.name}", Only213) {
       // given
       val queue = createQueue("test-queue")
       val firstMessageBody = "simpleMessageOne"
@@ -448,7 +449,7 @@ class AmazonCliTestSuite
       }
     }
 
-    test(s"change message visibility with ${version.name}") {
+    test(s"change message visibility with ${version.name}", Only213) {
       // given
       val queue = createQueue("test-queue")
       sendMessageWithAttributes(
@@ -463,7 +464,7 @@ class AmazonCliTestSuite
       s"""${version.executable} sqs change-message-visibility --visibility-timeout=100 --receipt-handle=${msg.ReceiptHandle} --endpoint=$ServiceEndpoint --region=us-west-1 --no-sign-request --queue-url=${queue.QueueUrl}""" !!
     }
 
-    test(s"change message visibility batch with ${version.name}") {
+    test(s"change message visibility batch with ${version.name}", Only213) {
       // given
       val queue = createQueue("test-queue")
       val attrs = """{ "firstAttribute": { "DataType": "String", "StringValue": "hello world one" } }"""
@@ -497,7 +498,7 @@ class AmazonCliTestSuite
       s"""${version.executable} sqs change-message-visibility-batch --entries='$entries' --endpoint=$ServiceEndpoint --region=us-west-1 --no-sign-request --queue-url=${queue.QueueUrl}""" !!
     }
 
-    test(s"should set and get queue attributes with ${version.name}") {
+    test(s"should set and get queue attributes with ${version.name}", Only213) {
       val queue = createQueue("test")
 
       // when

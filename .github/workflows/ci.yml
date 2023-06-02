@@ -53,7 +53,7 @@ jobs:
 
       - name: Run tests
         id: run-tests
-        run: SCALA_MAJOR_VERSION=${{ env.scala }} sbt root/test
+        run: SCALA_MAJOR_VERSION=${{ env.scala }} sbt "root/testOnly * -- -l org.elasticmq.rest.sqs.Only213"
 
   ci-2-13:
     # run on external PRs, but not on internal PRs since those will be run by push to branch
