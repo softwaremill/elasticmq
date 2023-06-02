@@ -279,7 +279,7 @@ class AmazonJavaSdkTestSuite extends SqsClientServerCommunication with Matchers 
     )
   }
 
-  test("should reply with a InvalidAction error when uknown action set") {
+  test("should reply with a InvalidAction error when unknown action set") {
     // given
     val httpHost = new HttpHost("localhost", 9321)
     val req = new HttpPost()

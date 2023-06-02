@@ -26,49 +26,6 @@ trait QueueAttributesOps extends AttributesModule {
 
   val attributeValuesCalculator = new AttributeValuesCalculator
 
-  object QueueWriteableAttributeNames {
-    val AllWriteableAttributeNames: List[String] = VisibilityTimeoutParameter :: DelaySecondsAttribute ::
-      ReceiveMessageWaitTimeSecondsAttribute :: RedrivePolicyParameter :: Nil
-  }
-
-  object UnsupportedAttributeNames {
-    val PolicyAttribute = "Policy"
-    val MaximumMessageSizeAttribute = "MaximumMessageSize"
-    val MessageRetentionPeriodAttribute = "MessageRetentionPeriod"
-    val FifoQueueAttribute = "FifoQueue"
-
-    val AllUnsupportedAttributeNames: List[String] = PolicyAttribute :: MaximumMessageSizeAttribute ::
-      MessageRetentionPeriodAttribute :: FifoQueueAttribute :: Nil
-  }
-
-  object FifoAttributeNames {
-    val ContentBasedDeduplication = "ContentBasedDeduplication"
-    val FifoQueue = "FifoQueue"
-
-    val AllFifoAttributeNames: Seq[String] = Seq(
-      ContentBasedDeduplication,
-      FifoQueue
-    )
-  }
-
-  object QueueReadableAttributeNames {
-    val ApproximateNumberOfMessagesAttribute = "ApproximateNumberOfMessages"
-    val ApproximateNumberOfMessagesNotVisibleAttribute =
-      "ApproximateNumberOfMessagesNotVisible"
-    val ApproximateNumberOfMessagesDelayedAttribute =
-      "ApproximateNumberOfMessagesDelayed"
-    val CreatedTimestampAttribute = "CreatedTimestamp"
-    val LastModifiedTimestampAttribute = "LastModifiedTimestamp"
-
-    val AllAttributeNames: List[String] = QueueWriteableAttributeNames.AllWriteableAttributeNames ++
-      (ApproximateNumberOfMessagesAttribute ::
-        ApproximateNumberOfMessagesNotVisibleAttribute ::
-        ApproximateNumberOfMessagesDelayedAttribute ::
-        CreatedTimestampAttribute ::
-        LastModifiedTimestampAttribute ::
-        QueueArnAttribute :: Nil) ++ FifoAttributeNames.AllFifoAttributeNames
-  }
-
   def getAllQueueAttributes(queueActor: ActorRef, queueData: QueueData)(implicit
       timeout: Timeout,
       executionContext: ExecutionContext
@@ -201,4 +158,47 @@ trait QueueAttributesOps extends AttributesModule {
     })
   }
 
+}
+
+object QueueWriteableAttributeNames {
+  val AllWriteableAttributeNames: List[String] = VisibilityTimeoutParameter :: DelaySecondsAttribute ::
+    ReceiveMessageWaitTimeSecondsAttribute :: RedrivePolicyParameter :: Nil
+}
+
+object UnsupportedAttributeNames {
+  val PolicyAttribute = "Policy"
+  val MaximumMessageSizeAttribute = "MaximumMessageSize"
+  val MessageRetentionPeriodAttribute = "MessageRetentionPeriod"
+  val FifoQueueAttribute = "FifoQueue"
+
+  val AllUnsupportedAttributeNames: List[String] = PolicyAttribute :: MaximumMessageSizeAttribute ::
+    MessageRetentionPeriodAttribute :: FifoQueueAttribute :: Nil
+}
+
+object FifoAttributeNames {
+  val ContentBasedDeduplication = "ContentBasedDeduplication"
+  val FifoQueue = "FifoQueue"
+
+  val AllFifoAttributeNames: Seq[String] = Seq(
+    ContentBasedDeduplication,
+    FifoQueue
+  )
+}
+
+object QueueReadableAttributeNames {
+  val ApproximateNumberOfMessagesAttribute = "ApproximateNumberOfMessages"
+  val ApproximateNumberOfMessagesNotVisibleAttribute =
+    "ApproximateNumberOfMessagesNotVisible"
+  val ApproximateNumberOfMessagesDelayedAttribute =
+    "ApproximateNumberOfMessagesDelayed"
+  val CreatedTimestampAttribute = "CreatedTimestamp"
+  val LastModifiedTimestampAttribute = "LastModifiedTimestamp"
+
+  val AllAttributeNames: List[String] = QueueWriteableAttributeNames.AllWriteableAttributeNames ++
+    (ApproximateNumberOfMessagesAttribute ::
+      ApproximateNumberOfMessagesNotVisibleAttribute ::
+      ApproximateNumberOfMessagesDelayedAttribute ::
+      CreatedTimestampAttribute ::
+      LastModifiedTimestampAttribute ::
+      QueueArnAttribute :: Nil) ++ FifoAttributeNames.AllFifoAttributeNames
 }

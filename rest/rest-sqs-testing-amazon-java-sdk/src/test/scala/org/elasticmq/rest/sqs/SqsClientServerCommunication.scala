@@ -26,6 +26,8 @@ trait SqsClientServerCommunication extends AnyFunSuite with BeforeAndAfter with 
   val awsAccountId = "123456789012"
   val awsRegion = "elasticmq"
 
+  val ServiceEndpoint = "http://localhost:9321"
+
   before {
     logger.info(s"\n---\nRunning test: $currentTestName\n---\n")
 
@@ -48,7 +50,7 @@ trait SqsClientServerCommunication extends AnyFunSuite with BeforeAndAfter with 
     client = AmazonSQSClientBuilder
       .standard()
       .withCredentials(new AWSStaticCredentialsProvider(new BasicAWSCredentials("x", "x")))
-      .withEndpointConfiguration(new EndpointConfiguration("http://localhost:9321", "us-east-1"))
+      .withEndpointConfiguration(new EndpointConfiguration(ServiceEndpoint, "us-east-1"))
       .build()
 
     relaxedClient = AmazonSQSClientBuilder

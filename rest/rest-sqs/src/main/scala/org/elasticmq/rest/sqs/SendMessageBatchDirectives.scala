@@ -13,7 +13,11 @@ import spray.json.RootJsonFormat
 import scala.xml.Elem
 
 trait SendMessageBatchDirectives {
-  this: ElasticMQDirectives with SendMessageDirectives with BatchRequestsModule with SQSLimitsModule with ResponseMarshaller =>
+  this: ElasticMQDirectives
+    with SendMessageDirectives
+    with BatchRequestsModule
+    with SQSLimitsModule
+    with ResponseMarshaller =>
 
   def sendMessageBatch(p: RequestPayload)(implicit marshallerDependencies: MarshallerDependencies): Route = {
     p.action(SendMessageBatch) {
@@ -85,35 +89,38 @@ trait SendMessageBatchDirectives {
       }
     }
   }
+}
 
-  case class BatchMessageSendResponseEntry(
-      Id: String,
-      MD5OfMessageAttributes: Option[String],
-      MD5OfMessageBody: String,
-      MD5OfMessageSystemAttributes: Option[String],
-      MessageId: String,
-      SequenceNumber: Option[Long]
+case class BatchMessageSendResponseEntry(
+    Id: String,
+    MD5OfMessageAttributes: Option[String],
+    MD5OfMessageBody: String,
+    MD5OfMessageSystemAttributes: Option[String],
+    MessageId: String,
+    SequenceNumber: Option[Long]
+)
+
+object BatchMessageSendResponseEntry {
+  implicit val format: RootJsonFormat[BatchMessageSendResponseEntry] = jsonFormat6(
+    BatchMessageSendResponseEntry.apply
   )
 
-  object BatchMessageSendResponseEntry {
-    implicit val format: RootJsonFormat[BatchMessageSendResponseEntry] = jsonFormat6(
-      BatchMessageSendResponseEntry.apply
-    )
-
-    implicit val entryXmlSerializer: XmlSerializer[BatchMessageSendResponseEntry] = {
-      new XmlSerializer[BatchMessageSendResponseEntry] {
-        override def toXml(t: BatchMessageSendResponseEntry): Elem =
-          <SendMessageBatchResultEntry>
+  implicit val entryXmlSerializer: XmlSerializer[BatchMessageSendResponseEntry] = {
+    new XmlSerializer[BatchMessageSendResponseEntry] {
+      override def toXml(t: BatchMessageSendResponseEntry): Elem =
+        <SendMessageBatchResultEntry>
             <Id>{t.Id}</Id>
             {t.MD5OfMessageAttributes.map(d => <MD5OfMessageAttributes>{d}</MD5OfMessageAttributes>).getOrElse(())}
             <MD5OfMessageBody>{t.MD5OfMessageBody}</MD5OfMessageBody>
             <MessageId>{t.MessageId}</MessageId>
           </SendMessageBatchResultEntry>
-      }
     }
+  }
 
-    implicit def batchXmlSerializer(implicit successSerializer: XmlSerializer[BatchMessageSendResponseEntry]): XmlSerializer[BatchResponse[BatchMessageSendResponseEntry]]
-    = new XmlSerializer[BatchResponse[BatchMessageSendResponseEntry]] {
+  implicit def batchXmlSerializer(implicit
+      successSerializer: XmlSerializer[BatchMessageSendResponseEntry]
+  ): XmlSerializer[BatchResponse[BatchMessageSendResponseEntry]] =
+    new XmlSerializer[BatchResponse[BatchMessageSendResponseEntry]] {
       override def toXml(t: BatchResponse[BatchMessageSendResponseEntry]): Elem =
         <SendMessageBatchResponse>
           <SendMessageBatchResult>
@@ -126,5 +133,4 @@ trait SendMessageBatchDirectives {
           </ResponseMetadata>
         </SendMessageBatchResponse>
     }
-  }
 }

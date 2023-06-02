@@ -4,6 +4,7 @@ import org.elasticmq._
 import org.elasticmq.actor.reply._
 import org.elasticmq.msg.ReceiveMessages
 import org.elasticmq.rest.sqs.Action.ReceiveMessage
+import org.elasticmq.rest.sqs.AttributesModule.{attributesToXmlConverter, messageAttributesToXmlConverter}
 import org.elasticmq.rest.sqs.Constants._
 import org.elasticmq.rest.sqs.MD5Util._
 import org.elasticmq.rest.sqs.directives.ElasticMQDirectives
@@ -129,14 +130,14 @@ trait ReceiveMessageDirectives {
           }
         }
 
-        def mapMessages(messages: List[MessageData]): List[Message] =
+        def mapMessages(messages: List[MessageData]): List[ReceivedMessage] =
           messages.map { message =>
             val receipt = message.deliveryReceipt
               .map(_.receipt)
               .getOrElse(throw new RuntimeException("No receipt for a received msg."))
             val filteredMessageAttributes = getFilteredAttributeNames(messageAttributeNames, message)
 
-            Message(
+            ReceivedMessage(
               Attributes = calculateAttributeValues(message).toMap,
               Body = message.content,
               MD5OfBody = md5Digest(message.content),
@@ -148,9 +149,7 @@ trait ReceiveMessageDirectives {
             )
           }
 
-        msgsFuture.map(mapMessages).map(messages =>
-          complete(ReceiveMessageResponse(messages))
-        )
+        msgsFuture.map(mapMessages).map(messages => complete(ReceiveMessageResponse(messages)))
       }
     }
   }
@@ -221,52 +220,56 @@ trait ReceiveMessageDirectives {
       ).values
     }
   }
+}
 
-  case class ReceiveMessageResponse(Messages: List[Message])
-  object ReceiveMessageResponse {
-    implicit val responseJsonFormat: RootJsonFormat[ReceiveMessageResponse] = jsonFormat1(ReceiveMessageResponse.apply)
+case class ReceiveMessageResponse(Messages: List[ReceivedMessage])
 
-    implicit def xmlSerializer(implicit messageSerializer: XmlSerializer[Message]): XmlSerializer[ReceiveMessageResponse] = new XmlSerializer[ReceiveMessageResponse] {
-      override def toXml(t: ReceiveMessageResponse): Elem = {
-        val messages = t.Messages
+object ReceiveMessageResponse {
+  implicit val responseJsonFormat: RootJsonFormat[ReceiveMessageResponse] = jsonFormat1(ReceiveMessageResponse.apply)
 
-        <ReceiveMessageResponse>
-          {if (messages.isEmpty) <ReceiveMessageResult/>
-            else
-          <ReceiveMessageResult>
-            {messages.map(messageSerializer.toXml)}
-          </ReceiveMessageResult>}<ResponseMetadata>
-          <RequestId>{EmptyRequestId}</RequestId>
-        </ResponseMetadata>
-        </ReceiveMessageResponse>
+  implicit def xmlSerializer(implicit
+      messageSerializer: XmlSerializer[ReceivedMessage]
+  ): XmlSerializer[ReceiveMessageResponse] = new XmlSerializer[ReceiveMessageResponse] {
+    override def toXml(t: ReceiveMessageResponse): Elem = {
+      val messages = t.Messages
+
+      <ReceiveMessageResponse>
+        {
+        if (messages.isEmpty) <ReceiveMessageResult/>
+        else
+          <ReceiveMessageResult>{messages.map(messageSerializer.toXml)}</ReceiveMessageResult>
       }
+        <ResponseMetadata>
+        <RequestId>{EmptyRequestId}</RequestId>
+      </ResponseMetadata>
+      </ReceiveMessageResponse>
     }
   }
+}
 
-  case class Message(
-      Attributes: Map[String, String],
-      Body: String,
-      MD5OfBody: String,
-      MD5OfMessageAttributes: Option[String],
-      MessageAttributes: Map[String, MessageAttribute],
-      MessageId: String,
-      ReceiptHandle: String
-  )
-  object Message extends MessageAttributesSupport {
-    implicit val responseJsonFormat: RootJsonFormat[Message] = jsonFormat7(Message.apply)
+case class ReceivedMessage(
+    Attributes: Map[String, String],
+    Body: String,
+    MD5OfBody: String,
+    MD5OfMessageAttributes: Option[String],
+    MessageAttributes: Map[String, MessageAttribute],
+    MessageId: String,
+    ReceiptHandle: String
+)
 
-    implicit val xmlSerializer: XmlSerializer[Message] = new XmlSerializer[Message] {
-      override def toXml(msg: Message): Elem =
-        <Message>
-          <MessageId>{msg.MessageId}</MessageId>
-          <ReceiptHandle>{msg.ReceiptHandle}</ReceiptHandle>
-          <MD5OfBody>{msg.MD5OfBody}</MD5OfBody>
-          <Body>{XmlUtil.convertTexWithCRToNodeSeq(msg.Body)}</Body>
-          {attributesToXmlConverter.convert(msg.Attributes.toList)}
-          {msg.MD5OfMessageAttributes.map(md5 => <MD5OfMessageAttributes>{md5}</MD5OfMessageAttributes>).getOrElse("")}
-          {messageAttributesToXmlConverter.convert(msg.MessageAttributes.toList)}
-        </Message>
-    }
+object ReceivedMessage extends MessageAttributesSupport {
+  implicit val responseJsonFormat: RootJsonFormat[ReceivedMessage] = jsonFormat7(ReceivedMessage.apply)
+
+  implicit val xmlSerializer: XmlSerializer[ReceivedMessage] = new XmlSerializer[ReceivedMessage] {
+    override def toXml(msg: ReceivedMessage): Elem =
+      <Message>
+        <MessageId>{msg.MessageId}</MessageId>
+        <ReceiptHandle>{msg.ReceiptHandle}</ReceiptHandle>
+        <MD5OfBody>{msg.MD5OfBody}</MD5OfBody>
+        <Body>{XmlUtil.convertTexWithCRToNodeSeq(msg.Body)}</Body>
+        {attributesToXmlConverter.convert(msg.Attributes.toList)}
+        {msg.MD5OfMessageAttributes.map(md5 => <MD5OfMessageAttributes>{md5}</MD5OfMessageAttributes>).getOrElse("")}
+        {messageAttributesToXmlConverter.convert(msg.MessageAttributes.toList)}
+      </Message>
   }
-
 }
