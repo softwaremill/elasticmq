@@ -15,6 +15,7 @@ object Action extends Enumeration {
   val GetQueueAttributes = Value("GetQueueAttributes")
   val SetQueueAttributes = Value("SetQueueAttributes")
   val ReceiveMessage = Value("ReceiveMessage")
+  val RemovePermission = Value("RemovePermission")
   val SendMessageBatch = Value("SendMessageBatch")
   val SendMessage = Value("SendMessage")
   val TagQueue = Value("TagQueue")
