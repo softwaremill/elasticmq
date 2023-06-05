@@ -36,7 +36,7 @@ trait QueueDirectives {
     getQueueNameFromQueueUrl(queueUrl)(queueName => queueActor(queueName, qa => queueData(qa, qd => body(qa, qd))))
   }
 
-  private def getQueueNameFromQueueUrl(queueUrl: String): Directive1[String] = {
+  protected def getQueueNameFromQueueUrl(queueUrl: String): Directive1[String] = {
 
     val matcher =
       if (contextPath.nonEmpty) {

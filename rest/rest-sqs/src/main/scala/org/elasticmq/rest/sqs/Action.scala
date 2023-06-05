@@ -9,6 +9,7 @@ object Action extends Enumeration {
   val DeleteMessage = Value("DeleteMessage")
   val DeleteQueue = Value("DeleteQueue")
   val GetQueueUrl = Value("GetQueueUrl")
+  val ListDeadLetterSourceQueues = Value("ListDeadLetterSourceQueues")
   val ListQueueTags = Value("ListQueueTags")
   val ListQueues = Value("ListQueues")
   val PurgeQueue = Value("PurgeQueue")

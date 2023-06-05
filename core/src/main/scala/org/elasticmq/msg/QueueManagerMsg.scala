@@ -10,3 +10,4 @@ case class CreateQueue(request: CreateQueueData) extends QueueManagerMsg[Either[
 case class DeleteQueue(queueName: String) extends QueueManagerMsg[Unit]
 case class LookupQueue(queueName: String) extends QueueManagerMsg[Option[ActorRef]]
 case class ListQueues() extends QueueManagerMsg[Seq[String]]
+case class ListDeadLetterSourceQueues(queueName: String) extends QueueManagerMsg[List[String]]
