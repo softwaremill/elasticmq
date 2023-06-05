@@ -13,8 +13,10 @@ trait GetQueueUrlDirectives { this: ElasticMQDirectives with QueueURLModule with
     p.action(GetQueueUrl) {
       rootPath {
         val requestParams = p.as[GetQueueUrlActionRequest]
-        queueURL(requestParams.QueueName) { url =>
-          complete(GetQueueURLResponse(url))
+        queueActorAndDataFromQueueName(requestParams.QueueName) { (_, _) => // We need the queue actor just to check that the queue exists
+          queueURL(requestParams.QueueName) { url =>
+            complete(GetQueueURLResponse(url))
+          }
         }
       }
     }

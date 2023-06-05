@@ -43,6 +43,16 @@ class AmazonJavaSdkTestSuite extends SqsClientServerCommunication with Matchers 
     queueUrl shouldEqual "http://localhost:9321/123456789012/testQueue1"
   }
 
+  test("should fail to get queue url if queue doesn't exist") {
+    // When
+    val thrown = intercept[QueueDoesNotExistException] {
+      client.getQueueUrl(new GetQueueUrlRequest("testQueue1")).getQueueUrl
+    }
+
+    // Then
+    thrown.getStatusCode shouldBe 400
+  }
+
   test("should create a queue with the specified visibility timeout") {
     // When
     client.createQueue(
