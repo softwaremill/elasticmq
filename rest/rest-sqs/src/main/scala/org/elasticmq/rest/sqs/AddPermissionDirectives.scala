@@ -1,19 +1,13 @@
 package org.elasticmq.rest.sqs
 
-import Constants._
 import org.elasticmq.rest.sqs.Action.AddPermission
 import org.elasticmq.rest.sqs.directives.ElasticMQDirectives
+import org.elasticmq.rest.sqs.model.RequestPayload
 
-trait AddPermissionDirectives { this: ElasticMQDirectives with QueueURLModule =>
-  def addPermission(p: AnyParams) = {
+trait AddPermissionDirectives { this: ElasticMQDirectives with QueueURLModule with ResponseMarshaller =>
+  def addPermission(p: RequestPayload)(implicit marshallerDependencies: MarshallerDependencies) = {
     p.action(AddPermission) {
-      respondWith {
-        <AddPermissionResponse>
-          <ResponseMetadata>
-            <RequestId>{EmptyRequestId}</RequestId>
-          </ResponseMetadata>
-        </AddPermissionResponse>
-      }
+      emptyResponse("AddPermissionResponse")
     }
   }
 }

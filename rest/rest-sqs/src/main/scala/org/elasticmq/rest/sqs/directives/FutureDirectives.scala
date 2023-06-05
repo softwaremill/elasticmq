@@ -9,11 +9,14 @@ import akka.http.scaladsl.server.Directives._
 import scala.util.{Failure, Success}
 
 trait FutureDirectives {
-  this: ExceptionDirectives with ActorSystemModule =>
+  this: ExceptionDirectives with ActorSystemModule with AWSProtocolDirectives =>
 
-  implicit def futureRouteToRoute(futureRoute: Future[Route]): Route =
-    onComplete(futureRoute) {
-      case Success(r) => r
-      case Failure(f) => exceptionHandlerPF(f)
+  implicit def futureRouteToRoute(futureRoute: Future[Route]): Route = {
+    extractProtocol{ protocol =>
+      onComplete(futureRoute) {
+        case Success(r) => r
+        case Failure(f) => exceptionHandlerPF(protocol)(f)
+      }
     }
+  }
 }

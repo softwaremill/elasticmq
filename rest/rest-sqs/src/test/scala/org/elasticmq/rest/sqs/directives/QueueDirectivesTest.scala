@@ -10,11 +10,12 @@ import org.elasticmq.rest.sqs.{ActorSystemModule, ContextPathModule, QueueManage
 import org.elasticmq.util.NowProvider
 import org.elasticmq.{CreateQueueData, MillisVisibilityTimeout, QueueData, StrictSQSLimits}
 import org.joda.time.{DateTime, Duration}
+import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 import scala.concurrent.duration._
-import scala.concurrent.{Await, ExecutionContextExecutor}
+import scala.concurrent.ExecutionContextExecutor
 
 class QueueDirectivesTest
     extends AnyFlatSpec
@@ -23,12 +24,13 @@ class QueueDirectivesTest
     with Directives
     with QueueDirectives
     with ContextPathModule
-    with AnyParamDirectives
     with QueueManagerActorModule
     with FutureDirectives
     with ActorSystemModule
     with ExceptionDirectives
-    with RespondDirectives {
+    with RespondDirectives
+    with ScalaFutures
+    with AWSProtocolDirectives {
 
   private val maxDuration = 1.minute
   implicit val timeout: Timeout = maxDuration
@@ -38,16 +40,16 @@ class QueueDirectivesTest
     actorSystem.actorOf(Props(new QueueManagerActor(new NowProvider(), StrictSQSLimits, None)))
   lazy val contextPath = ""
 
-  "queueActorAndNameFromRequest" should "return correct queue name based on QueueName" in {
+  "queueActorFromUrl" should "return correct queue name based on QueueName" in {
     val future = queueManagerActor ? CreateQueue(
       CreateQueueData.from(
         QueueData("lol", MillisVisibilityTimeout(1L), Duration.ZERO, Duration.ZERO, DateTime.now(), DateTime.now())
       )
     )
-    Await.result(future, maxDuration)
+    future.value
     val route = {
-      queueActorAndNameFromRequest(
-        Map("QueueName" -> "lol", "QueueUrl" -> "https://eu-central-1.queue.amazonaws.com/906175111765/lol")
+      queueActorAndNameFromUrl(
+        "https://eu-central-1.queue.amazonaws.com/906175111765/lol"
       ) { (_, name) => _.complete(name) }
     }
 
@@ -56,16 +58,16 @@ class QueueDirectivesTest
     }
   }
 
-  "queueActorAndNameFromRequest" should "return correct queue name based on QueueUrl" in {
+  "queueActorAndNameFromUrl" should "return correct queue name based on QueueUrl" in {
     val future = queueManagerActor ? CreateQueue(
       CreateQueueData.from(
         QueueData("lol", MillisVisibilityTimeout(1L), Duration.ZERO, Duration.ZERO, DateTime.now(), DateTime.now())
       )
     )
-    Await.result(future, maxDuration)
+    future.value
     val route = {
-      queueActorAndNameFromRequest(
-        Map("QueueUrl" -> "https://eu-central-1.queue.amazonaws.com/906175111765/lol")
+      queueActorAndNameFromUrl(
+        "https://eu-central-1.queue.amazonaws.com/906175111765/lol"
       ) { (_, name) => _.complete(name) }
     }
 
@@ -74,18 +76,20 @@ class QueueDirectivesTest
     }
   }
 
-  "queueActorAndNameFromRequest" should "return error when invalid QueueUrl" in {
+  "queueActorAndNameFromUrl" should "return error when invalid QueueUrl" in {
     val future = queueManagerActor ? CreateQueue(
       CreateQueueData.from(
         QueueData("lol", MillisVisibilityTimeout(1L), Duration.ZERO, Duration.ZERO, DateTime.now(), DateTime.now())
       )
     )
-    Await.result(future, maxDuration)
+    future.value
     val route = {
-      handleServerExceptions {
-        queueActorAndNameFromRequest(
-          Map("QueueUrl" -> "https://eu-central-1.queue.amazonaws.com")
-        ) { (_, name) => _.complete(name) }
+      extractProtocol { protocol =>
+        handleServerExceptions(protocol) {
+          queueActorAndNameFromUrl(
+            "https://eu-central-1.queue.amazonaws.com"
+          ) { (_, name) => _.complete(name) }
+        }
       }
     }
 

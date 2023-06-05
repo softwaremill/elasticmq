@@ -10,7 +10,9 @@ import org.elasticmq._
 import org.elasticmq.actor.QueueManagerActor
 import org.elasticmq.metrics.QueuesMetrics
 import org.elasticmq.rest.sqs.Constants._
-import org.elasticmq.rest.sqs.directives.{ElasticMQDirectives, UnmatchedActionRoutes}
+import org.elasticmq.rest.sqs.XmlNsVersion.extractXmlNs
+import org.elasticmq.rest.sqs.directives.{AWSProtocolDirectives, AnyParamDirectives, ElasticMQDirectives, UnmatchedActionRoutes}
+import org.elasticmq.rest.sqs.model.RequestPayload
 import org.elasticmq.util.{Logging, NowProvider}
 
 import java.io.ByteArrayOutputStream
@@ -120,7 +122,7 @@ case class TheSQSRestServerBuilder(
     this.copy(queueEventListener = Some(_queueEventListener))
 
   def start(): SQSRestServer = {
-    val (theActorSystem, stopActorSystem) = getOrCreateActorSystem
+    val (theActorSystem, _) = getOrCreateActorSystem
     val theQueueManagerActor = getOrCreateQueueManagerActor(theActorSystem)
     val theServerAddress =
       if (generateServerAddress)
@@ -140,8 +142,10 @@ case class TheSQSRestServerBuilder(
       with SQSLimitsModule
       with BatchRequestsModule
       with ElasticMQDirectives
+      with AnyParamDirectives
       with CreateQueueDirectives
       with DeleteQueueDirectives
+      with AWSProtocolDirectives
       with QueueAttributesDirectives
       with ListQueuesDirectives
       with SendMessageDirectives
@@ -158,6 +162,7 @@ case class TheSQSRestServerBuilder(
       with TagQueueDirectives
       with TagsModule
       with UnmatchedActionRoutes
+      with ResponseMarshaller
       with QueueAttributesOps {
 
       def serverAddress = currentServerAddress.get()
@@ -175,9 +180,9 @@ case class TheSQSRestServerBuilder(
     }
 
     import env._
-    def rawRoutes(p: AnyParams) =
-      // 1. Sending, receiving, deleting messages
-      sendMessage(p) ~
+    def rawRoutes(p: RequestPayload)(implicit marshallerDependencies: MarshallerDependencies) =
+        // 1. Sending, receiving, deleting messages
+        sendMessage(p) ~
         sendMessageBatch(p) ~
         receiveMessage(p) ~
         deleteMessage(p) ~
@@ -197,7 +202,7 @@ case class TheSQSRestServerBuilder(
         tagQueue(p) ~
         untagQueue(p) ~
         listQueueTags(p) ~
-        // 4. Unmatched action
+        //4. Unmatched action
         unmatchedAction(p)
 
     val config = new ElasticMQConfig
@@ -205,14 +210,19 @@ case class TheSQSRestServerBuilder(
     implicit val bindingTimeout = Timeout(10, TimeUnit.SECONDS)
 
     val routes =
-      handleServerExceptions {
-        handleRejectionsWithSQSError {
-          anyParamsMap { p =>
-            if (config.debug) {
-              logRequestResult("") {
-                rawRoutes(p)
+      extractXmlNs { implicit version =>
+        extractProtocol { implicit protocol =>
+          handleServerExceptions(protocol) {
+            handleRejectionsWithSQSError(protocol) {
+              anyParamsMap(protocol) { p =>
+                val marshallerDependencies = MarshallerDependencies(protocol, version)
+                if (config.debug) {
+                  logRequestResult("") {
+                    rawRoutes(p)(marshallerDependencies)
+                  }
+                } else rawRoutes(p)(marshallerDependencies)
               }
-            } else rawRoutes(p)
+            }
           }
         }
       }
@@ -304,6 +314,16 @@ object Constants {
   val InvalidParameterValueErrorName = "InvalidParameterValue"
   val MissingParameterName = "MissingParameter"
   val QueueUrlContext = "queue"
+  val QueueUrlParameter = "QueueUrl"
+  val QueueNameParameter = "QueueName"
+  val MessageBodyParameter = "MessageBody"
+  val DelaySecondsParameter = "DelaySeconds"
+  val MessageGroupIdParameter = "MessageGroupId"
+  val MessageDeduplicationIdParameter = "MessageDeduplicationId"
+  val AwsTraceHeaderSystemAttribute = "AWSTraceHeader"
+  val MaxResultsParameter = "MaxResults"
+  val NextTokenParameter = "NextToken"
+  val QueueNamePrefixParameter = "QueueNamePrefix"
 }
 
 object ParametersUtil {

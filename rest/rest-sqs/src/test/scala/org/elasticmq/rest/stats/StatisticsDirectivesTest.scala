@@ -25,7 +25,6 @@ class StatisticsDirectivesTest
     with ScalatestRouteTest
     with Directives
     with QueueDirectives
-    with AnyParamDirectives
     with QueueManagerActorModule
     with FutureDirectives
     with ActorSystemModule

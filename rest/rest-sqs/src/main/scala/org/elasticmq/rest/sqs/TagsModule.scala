@@ -49,3 +49,5 @@ trait TagsModule {
     }
   }
 }
+
+object TagsModule extends TagsModule

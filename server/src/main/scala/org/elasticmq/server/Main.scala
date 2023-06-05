@@ -5,8 +5,6 @@ import com.typesafe.config.ConfigFactory
 import org.elasticmq.server.config.ElasticMQServerConfig
 import org.elasticmq.util.Logging
 
-import scala.concurrent.duration.Duration.Inf
-import scala.concurrent.{Await, Future}
 import scala.io.Source
 
 object Main extends Logging {
