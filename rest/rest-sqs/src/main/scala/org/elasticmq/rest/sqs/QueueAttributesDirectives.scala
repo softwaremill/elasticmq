@@ -2,54 +2,98 @@ package org.elasticmq.rest.sqs
 
 import akka.http.scaladsl.server.Route
 import org.elasticmq.rest.sqs.Action.{GetQueueAttributes, SetQueueAttributes}
+import org.elasticmq.rest.sqs.AttributesModule.attributesToXmlConverter
 import org.elasticmq.rest.sqs.Constants._
 import org.elasticmq.rest.sqs.directives.ElasticMQDirectives
+import org.elasticmq.rest.sqs.model.RequestPayload
+import spray.json.RootJsonFormat
+import spray.json.DefaultJsonProtocol._
+
 
 import scala.concurrent.Future
+import scala.xml.Elem
 
 trait QueueAttributesDirectives {
-  this: ElasticMQDirectives with QueueAttributesOps =>
+  this: ElasticMQDirectives with QueueAttributesOps with ResponseMarshaller =>
 
-  def getQueueAttributes(p: AnyParams): Route = {
+  def getQueueAttributes(p: RequestPayload)(implicit marshallerDependencies: MarshallerDependencies): Route = {
     p.action(GetQueueAttributes) {
-      queueActorAndDataFromRequest(p) { (queueActor, queueData) =>
-        val attributesFuture = getQueueAttributes(p, queueActor, queueData)
-
-        def responseXml(attributes: List[(String, String)]) = {
-          <GetQueueAttributesResponse>
-            <GetQueueAttributesResult>
-              {attributesToXmlConverter.convert(attributes)}
-            </GetQueueAttributesResult>
-            <ResponseMetadata>
-              <RequestId>{EmptyRequestId}</RequestId>
-            </ResponseMetadata>
-          </GetQueueAttributesResponse>
-        }
+      val requestParams = p.as[GetQueueAttributesActionRequest]
+      queueActorAndDataFromQueueUrl(requestParams.QueueUrl) { (queueActor, queueData) =>
+        val attributesFuture: Future[List[(String, String)]] =
+          getQueueAttributes(requestParams.AttributeNames.getOrElse(List.empty), queueActor, queueData)
 
         attributesFuture.map { attributes =>
-          respondWith {
-            responseXml(attributes)
-          }
+            complete(GetQueueAttributesResponse(attributes.toMap))
         }
       }
     }
   }
 
-  def setQueueAttributes(p: AnyParams): Route = {
+  def setQueueAttributes(p: RequestPayload)(implicit marshallerDependencies: MarshallerDependencies): Route = {
     p.action(SetQueueAttributes) {
-      queueActorFromRequest(p) { queueActor =>
-        val result = setQueueAttributes(p, queueActor, queueManagerActor)
-
+      val requestParameters = p.as[SetQueueAttributesActionRequest]
+      queueActorFromUrl(requestParameters.QueueUrl) { queueActor =>
+        val result = setQueueAttributes(requestParameters.Attributes, queueActor, queueManagerActor)
         Future.sequence(result).map { _ =>
-          respondWith {
-            <SetQueueAttributesResponse>
-              <ResponseMetadata>
-                <RequestId>{EmptyRequestId}</RequestId>
-              </ResponseMetadata>
-            </SetQueueAttributesResponse>
-          }
+          emptyResponse("SetQueueAttributesResponse")
         }
       }
     }
   }
+}
+
+case class GetQueueAttributesActionRequest(AttributeNames: Option[List[String]], QueueUrl: String)
+
+object GetQueueAttributesActionRequest {
+  implicit val responseJsonFormat: RootJsonFormat[GetQueueAttributesActionRequest] = jsonFormat2(
+    GetQueueAttributesActionRequest.apply
+  )
+
+  implicit val requestParamReader: FlatParamsReader[GetQueueAttributesActionRequest] =
+    new FlatParamsReader[GetQueueAttributesActionRequest] {
+      override def read(params: Map[String, String]): GetQueueAttributesActionRequest = {
+        val queueUrl = requiredParameter(params)(QueueUrlParameter)
+        val attributeNames =
+          AttributesModule.attributeNamesReader.read(params, QueueReadableAttributeNames.AllAttributeNames)
+        GetQueueAttributesActionRequest(Some(attributeNames), queueUrl)
+      }
+    }
+}
+
+case class GetQueueAttributesResponse(Attributes: Map[String, String])
+
+object GetQueueAttributesResponse {
+  implicit val responseJsonFormat: RootJsonFormat[GetQueueAttributesResponse] = jsonFormat1(
+    GetQueueAttributesResponse.apply
+  )
+
+  implicit val xmlSerializer: XmlSerializer[GetQueueAttributesResponse] = new XmlSerializer[GetQueueAttributesResponse] {
+    override def toXml(t: GetQueueAttributesResponse): Elem =
+      <GetQueueAttributesResponse>
+        <GetQueueAttributesResult>
+          {attributesToXmlConverter.convert(t.Attributes.toList)}
+        </GetQueueAttributesResult>
+        <ResponseMetadata>
+          <RequestId>{EmptyRequestId}</RequestId>
+        </ResponseMetadata>
+      </GetQueueAttributesResponse>
+  }
+}
+
+case class SetQueueAttributesActionRequest(Attributes: Map[String, String], QueueUrl: String)
+
+object SetQueueAttributesActionRequest {
+  implicit val jsonRequestFormat: RootJsonFormat[SetQueueAttributesActionRequest] = jsonFormat2(
+    SetQueueAttributesActionRequest.apply
+  )
+
+  implicit val requestParamReader: FlatParamsReader[SetQueueAttributesActionRequest] =
+    new FlatParamsReader[SetQueueAttributesActionRequest] {
+      override def read(params: Map[String, String]): SetQueueAttributesActionRequest = {
+        val queueUrl = requiredParameter(params)(QueueUrlParameter)
+        val attributes = AttributesModule.attributeNameAndValuesReader.read(params)
+        SetQueueAttributesActionRequest(attributes, queueUrl)
+      }
+    }
 }

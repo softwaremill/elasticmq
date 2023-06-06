@@ -24,12 +24,12 @@ class QueueDirectivesWithContextPathTest
     with Directives
     with QueueDirectives
     with ContextPathModule
-    with AnyParamDirectives
     with QueueManagerActorModule
     with FutureDirectives
     with ActorSystemModule
     with ExceptionDirectives
-    with RespondDirectives {
+    with RespondDirectives
+    with AWSProtocolDirectives {
 
   private val maxDuration = 1.minute
   implicit val timeout: Timeout = maxDuration
@@ -39,7 +39,7 @@ class QueueDirectivesWithContextPathTest
     actorSystem.actorOf(Props(new QueueManagerActor(new NowProvider(), StrictSQSLimits, None)))
   lazy val contextPath = "/test-context"
 
-  "queueActorAndNameFromRequest" should "return correct queue name based on QueueName" in {
+  "queueActorAndNameFromUrl" should "return correct queue name based on QueueName" in {
     val future = queueManagerActor ? CreateQueue(
       CreateQueueData.from(
         QueueData("lol", MillisVisibilityTimeout(1L), Duration.ZERO, Duration.ZERO, DateTime.now(), DateTime.now())
@@ -47,11 +47,8 @@ class QueueDirectivesWithContextPathTest
     )
     Await.result(future, maxDuration)
     val route = {
-      queueActorAndNameFromRequest(
-        Map(
-          "QueueName" -> "lol",
-          "QueueUrl" -> "https://eu-central-1.queue.amazonaws.com/test-context/906175111765/lol"
-        )
+      queueActorAndNameFromUrl(
+        "https://eu-central-1.queue.amazonaws.com/test-context/906175111765/lol"
       ) { (_, name) => _.complete(name) }
     }
 
@@ -60,7 +57,7 @@ class QueueDirectivesWithContextPathTest
     }
   }
 
-  "queueActorAndNameFromRequest" should "return correct queue name based on QueueUrl" in {
+  "queueActorAndNameFromUrl" should "return correct queue name based on QueueUrl" in {
     val future = queueManagerActor ? CreateQueue(
       CreateQueueData.from(
         QueueData("lol", MillisVisibilityTimeout(1L), Duration.ZERO, Duration.ZERO, DateTime.now(), DateTime.now())
@@ -68,8 +65,8 @@ class QueueDirectivesWithContextPathTest
     )
     Await.result(future, maxDuration)
     val route = {
-      queueActorAndNameFromRequest(
-        Map("QueueUrl" -> "https://eu-central-1.queue.amazonaws.com/test-context/906175111765/lol")
+      queueActorAndNameFromUrl(
+        "https://eu-central-1.queue.amazonaws.com/test-context/906175111765/lol"
       ) { (_, name) => _.complete(name) }
     }
 

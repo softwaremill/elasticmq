@@ -6,45 +6,80 @@ import org.elasticmq.msg.UpdateVisibilityTimeout
 import org.elasticmq.actor.reply._
 import org.elasticmq.rest.sqs.Action.ChangeMessageVisibilityBatch
 import org.elasticmq.rest.sqs.directives.ElasticMQDirectives
+import org.elasticmq.rest.sqs.model.RequestPayload
+import spray.json.DefaultJsonProtocol._
+import spray.json.RootJsonFormat
+import scala.concurrent.Future
+import scala.xml.Elem
 
 trait ChangeMessageVisibilityBatchDirectives {
-  this: ElasticMQDirectives with BatchRequestsModule =>
-  def changeMessageVisibilityBatch(p: AnyParams) = {
+  this: ElasticMQDirectives with BatchRequestsModule with ResponseMarshaller =>
+  def changeMessageVisibilityBatch(p: RequestPayload)(implicit marshallerDependencies: MarshallerDependencies) = {
     p.action(ChangeMessageVisibilityBatch) {
-      queueActorFromRequest(p) { queueActor =>
-        val resultsFuture =
-          batchRequest("ChangeMessageVisibilityBatchRequestEntry", p) { (messageData, id, _) =>
-            val receiptHandle = messageData(ReceiptHandleParameter)
-            val visibilityTimeout = MillisVisibilityTimeout.fromSeconds(messageData(VisibilityTimeoutParameter).toLong)
-            val result = queueActor ? UpdateVisibilityTimeout(DeliveryReceipt(receiptHandle), visibilityTimeout)
+      val batch = p.as[BatchRequest[ChangeMessageVisibilityBatchEntry]]
 
-            result.map {
-              case Left(error) =>
-                <BatchResultErrorEntry>
-                  <Id>{id}</Id>
-                  <Code>{error.code}</Code>
-                  <Message>{error.message}</Message>
-                </BatchResultErrorEntry>
-              case Right(_) =>
-                <ChangeMessageVisibilityBatchResultEntry>
-                  <Id>{id}</Id>
-                </ChangeMessageVisibilityBatchResultEntry>
+      queueActorFromUrl(batch.QueueUrl) { queueActor =>
+        val resultsFuture =
+          batchRequest(batch.Entries) { (messageData, id, _) =>
+            val result = queueActor ? UpdateVisibilityTimeout(
+              DeliveryReceipt(messageData.ReceiptHandle),
+              MillisVisibilityTimeout.fromSeconds(messageData.VisibilityTimeout)
+            )
+
+            result.flatMap{
+              case Right(_) => Future.successful(BatchChangeMessageVisibilityResponseEntry(id))
+              case Left(invalidHandle) =>
+                Future.failed(new SQSException(invalidHandle.code, errorMessage = Some(invalidHandle.message)))
             }
           }
 
-        resultsFuture.map { results =>
-          respondWith {
-            <ChangeMessageVisibilityBatchResponse>
-              <ChangeMessageVisibilityBatchResult>
-                {results}
-              </ChangeMessageVisibilityBatchResult>
-              <ResponseMetadata>
-                <RequestId>{EmptyRequestId}</RequestId>
-              </ResponseMetadata>
-            </ChangeMessageVisibilityBatchResponse>
-          }
-        }
+        resultsFuture.map(complete(_))
       }
     }
+  }
+}
+
+case class BatchChangeMessageVisibilityResponseEntry(Id: String)
+
+object BatchChangeMessageVisibilityResponseEntry {
+  implicit val jsonFormat: RootJsonFormat[BatchChangeMessageVisibilityResponseEntry] = jsonFormat1(BatchChangeMessageVisibilityResponseEntry.apply)
+
+  implicit val xmlSerializer: XmlSerializer[BatchChangeMessageVisibilityResponseEntry] = new XmlSerializer[BatchChangeMessageVisibilityResponseEntry] {
+    override def toXml(t: BatchChangeMessageVisibilityResponseEntry): Elem =
+      <ChangeMessageVisibilityBatchResultEntry>
+        <Id>{t.Id}</Id>
+      </ChangeMessageVisibilityBatchResultEntry>
+  }
+
+  implicit def batchXmlSerializer(implicit successSerializer: XmlSerializer[BatchChangeMessageVisibilityResponseEntry]): XmlSerializer[BatchResponse[BatchChangeMessageVisibilityResponseEntry]]
+    = new XmlSerializer[BatchResponse[BatchChangeMessageVisibilityResponseEntry]] {
+      override def toXml(t: BatchResponse[BatchChangeMessageVisibilityResponseEntry]): Elem =
+        <ChangeMessageVisibilityBatchResponse>
+          <ChangeMessageVisibilityBatchResult>
+            {t.Successful.map(successSerializer.toXml) ++ t.Failed.map(XmlSerializer[Failed].toXml)}
+          </ChangeMessageVisibilityBatchResult>
+          <ResponseMetadata>
+            <RequestId>
+              {EmptyRequestId}
+            </RequestId>
+          </ResponseMetadata>
+        </ChangeMessageVisibilityBatchResponse>
+    }
+}
+
+case class ChangeMessageVisibilityBatchEntry(Id: String, ReceiptHandle: String, VisibilityTimeout: Long) extends BatchEntry
+
+object ChangeMessageVisibilityBatchEntry {
+  implicit val jsonFormat: RootJsonFormat[ChangeMessageVisibilityBatchEntry] = jsonFormat3(ChangeMessageVisibilityBatchEntry.apply)
+
+  implicit val queryReader: BatchFlatParamsReader[ChangeMessageVisibilityBatchEntry] = new BatchFlatParamsReader[ChangeMessageVisibilityBatchEntry] {
+    override def read(params: Map[String, String]): ChangeMessageVisibilityBatchEntry =
+      ChangeMessageVisibilityBatchEntry(
+        requiredParameter(params)(IdSubParameter),
+        requiredParameter(params)(ReceiptHandleParameter),
+        requiredParameter(params)(VisibilityTimeoutParameter).toLong
+      )
+
+    override def batchPrefix: String = "ChangeMessageVisibilityBatchRequestEntry"
   }
 }

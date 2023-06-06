@@ -1,19 +1,19 @@
 package org.elasticmq.rest.sqs.directives
 
 import akka.http.scaladsl.server.{Directive0, Directives, Rejection, RejectionHandler}
-import org.elasticmq.rest.sqs.SQSException
+import org.elasticmq.rest.sqs.{AWSProtocol, SQSException}
 
 trait RejectionDirectives {
   this: Directives with ExceptionDirectives =>
 
-  val rejectionHandler: RejectionHandler = RejectionHandler
+  def rejectionHandler(protocol: AWSProtocol): RejectionHandler = RejectionHandler
     .newBuilder()
     .handleAll[Rejection] { rejections =>
-      handleServerExceptions { _ =>
+      handleServerExceptions(protocol) { _ =>
         throw new SQSException("Invalid request: " + rejections.map(_.toString).mkString(", "))
       }
     }
     .result()
 
-  def handleRejectionsWithSQSError: Directive0 = handleRejections(rejectionHandler)
+  def handleRejectionsWithSQSError(protocol: AWSProtocol): Directive0 = handleRejections(rejectionHandler(protocol))
 }

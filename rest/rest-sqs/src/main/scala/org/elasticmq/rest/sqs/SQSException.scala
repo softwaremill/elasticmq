@@ -7,7 +7,7 @@ import Constants._
 class SQSException(
     val code: String,
     val httpStatusCode: Int = 400,
-    errorType: String = "Sender",
+    val errorType: String = "Sender",
     errorMessage: Option[String] = None
 ) extends Exception {
   val message: String = errorMessage.getOrElse(code + "; see the SQS docs.")

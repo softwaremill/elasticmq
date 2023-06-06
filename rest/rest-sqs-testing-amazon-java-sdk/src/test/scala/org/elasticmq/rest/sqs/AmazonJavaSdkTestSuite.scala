@@ -43,6 +43,16 @@ class AmazonJavaSdkTestSuite extends SqsClientServerCommunication with Matchers 
     queueUrl shouldEqual "http://localhost:9321/123456789012/testQueue1"
   }
 
+  test("should fail to get queue url if queue doesn't exist") {
+    // When
+    val thrown = intercept[QueueDoesNotExistException] {
+      client.getQueueUrl(new GetQueueUrlRequest("testQueue1")).getQueueUrl
+    }
+
+    // Then
+    thrown.getStatusCode shouldBe 400
+  }
+
   test("should create a queue with the specified visibility timeout") {
     // When
     client.createQueue(
@@ -279,7 +289,7 @@ class AmazonJavaSdkTestSuite extends SqsClientServerCommunication with Matchers 
     )
   }
 
-  test("should reply with a InvalidAction error when uknown action set") {
+  test("should reply with a InvalidAction error when unknown action set") {
     // given
     val httpHost = new HttpHost("localhost", 9321)
     val req = new HttpPost()
@@ -1788,7 +1798,7 @@ class AmazonJavaSdkTestSuite extends SqsClientServerCommunication with Matchers 
 
     // When
     val redrivePolicy = RedrivePolicy("dlq1", awsRegion, awsAccountId, 1).toJson.toString()
-    println(redrivePolicy)
+
     val createQueueResult = client.createQueue(
       new CreateQueueRequest("q1")
         .withAttributes(Map(defaultVisibilityTimeoutAttribute -> "1", redrivePolicyAttribute -> redrivePolicy).asJava)

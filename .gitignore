@@ -8,3 +8,5 @@ target
 out
 project/boot
 /bin/
+
+.bsp
