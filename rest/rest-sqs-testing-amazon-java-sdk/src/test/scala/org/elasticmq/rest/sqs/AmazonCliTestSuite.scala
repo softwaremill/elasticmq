@@ -291,6 +291,15 @@ class AmazonCliTestSuite
       s"""${version.executable} sqs add-permission --label l --aws-account-ids=$awsAccountId --actions=get --endpoint=$ServiceEndpoint --region=us-west-1 --no-sign-request --queue-url=$url""" !!
     }
 
+    test(s"should remove permission ${version.name}") {
+      // given
+      val url = createQueue("permission-test").QueueUrl
+      s"""${version.executable} sqs add-permission --label l --aws-account-ids=$awsAccountId --actions=get --endpoint=$ServiceEndpoint --region=us-west-1 --no-sign-request --queue-url=$url""" !
+
+      // when ~> then
+      s"""${version.executable} sqs remove-permission --label l --endpoint=$ServiceEndpoint --region=us-west-1 --no-sign-request --queue-url=$url""" !!
+    }
+
     test(s"should purge queue ${version.name}") {
       // given
       val url = createQueue("permission-test").QueueUrl
