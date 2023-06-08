@@ -2095,6 +2095,30 @@ class AmazonJavaSdkTestSuite extends SqsClientServerCommunication with Matchers 
     secondReceiveResult.getMessages shouldBe empty
   }
 
+  test("should list all source queues for a dlq") {
+    // given
+    val dlqUrl = client.createQueue(new CreateQueueRequest("testDlq")).getQueueUrl
+    val redrivePolicy = RedrivePolicy("testDlq", awsRegion, awsAccountId, 1).toJson.toString()
+
+    val qUrls = for (i <- 1 to 3) yield {
+      client
+        .createQueue(
+          new CreateQueueRequest("q" + i)
+            .withAttributes(
+              Map(redrivePolicyAttribute -> redrivePolicy).asJava
+            )
+        )
+        .getQueueUrl
+    }
+
+    // when
+    val request = new ListDeadLetterSourceQueuesRequest(dlqUrl)
+    val result = client.listDeadLetterSourceQueues(request).getQueueUrls.asScala
+
+    // then
+    result should contain theSameElementsAs(qUrls)
+  }
+
   def queueDelay(queueUrl: String): Long = getQueueLongAttribute(queueUrl, delaySecondsAttribute)
 
   def getQueueLongAttribute(queueUrl: String, attributeName: String): Long = {
