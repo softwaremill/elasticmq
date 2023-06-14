@@ -294,7 +294,7 @@ class AmazonCliTestSuite
       s"""${version.executable} sqs add-permission --label l --aws-account-ids=$awsAccountId --actions=get --endpoint=$ServiceEndpoint --region=us-west-1 --no-sign-request --queue-url=$url""" !!
     }
 
-    test(s"should remove permission ${version.name}") {
+    test(s"should remove permission ${version.name}", Only213) {
       // given
       val url = createQueue("permission-test").QueueUrl
       s"""${version.executable} sqs add-permission --label l --aws-account-ids=$awsAccountId --actions=get --endpoint=$ServiceEndpoint --region=us-west-1 --no-sign-request --queue-url=$url""" !
@@ -522,7 +522,7 @@ class AmazonCliTestSuite
       result.parseJson.convertTo[GetQueueAttributesResponse].Attributes.get("VisibilityTimeout") shouldBe Some("99")
     }
 
-    test(s"should get source queues of a dlq with ${version.name}") {
+    test(s"should get source queues of a dlq with ${version.name}", Only213) {
       // given
       val dlq = createQueue("testDlq")
       val redrivePolicy = RedrivePolicy("testDlq", awsRegion, awsAccountId, 1).toJson.toString.replaceAll("\"", "\\\\\"")
