@@ -158,12 +158,14 @@ case class TheSQSRestServerBuilder(
       with GetQueueUrlDirectives
       with PurgeQueueDirectives
       with AddPermissionDirectives
+      with RemovePermissionDirectives
       with AttributesModule
       with TagQueueDirectives
       with TagsModule
       with UnmatchedActionRoutes
       with ResponseMarshaller
-      with QueueAttributesOps {
+      with QueueAttributesOps
+      with ListDeadLetterSourceQueuesDirectives {
 
       def serverAddress = currentServerAddress.get()
 
@@ -199,9 +201,11 @@ case class TheSQSRestServerBuilder(
         getQueueAttributes(p) ~
         setQueueAttributes(p) ~
         addPermission(p) ~
+        removePermission(p) ~
         tagQueue(p) ~
         untagQueue(p) ~
         listQueueTags(p) ~
+        listDeadLetterSourceQueues(p) ~
         //4. Unmatched action
         unmatchedAction(p)
 

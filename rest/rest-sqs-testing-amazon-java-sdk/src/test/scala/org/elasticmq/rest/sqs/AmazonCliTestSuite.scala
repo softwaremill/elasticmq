@@ -1,6 +1,8 @@
 package org.elasticmq.rest.sqs
 
 import org.elasticmq.StringMessageAttribute
+import org.elasticmq.rest.sqs.model.RedrivePolicyJson.format
+import org.elasticmq.rest.sqs.model.RedrivePolicy
 import org.scalatest.{Inside, LoneElement, OptionValues, Tag}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.prop.TableDrivenPropertyChecks
@@ -27,9 +29,10 @@ class AmazonCliTestSuite
     AWSCli(Option(System.getenv("AWS_CLI_V2_EXECUTABLE")).getOrElse("aws"), "aws version 2")
   )
 
-  def createQueue(name: String)(implicit cli: AWSCli): CreateQueueResponse = {
+  def createQueue(name: String, attributesJson: Option[String] = None)(implicit cli: AWSCli): CreateQueueResponse = {
+    val attributesOption = attributesJson.fold("")(json => s"--attributes='$json'")
     val result =
-      s"""${cli.executable} sqs create-queue --endpoint=$ServiceEndpoint --region=us-west-1 --no-sign-request --queue-name=$name""" !!
+      s"""${cli.executable} sqs create-queue --endpoint=$ServiceEndpoint --region=us-west-1 --no-sign-request --queue-name=$name $attributesOption""" !!
 
     result.parseJson.convertTo[CreateQueueResponse]
   }
@@ -291,6 +294,15 @@ class AmazonCliTestSuite
       s"""${version.executable} sqs add-permission --label l --aws-account-ids=$awsAccountId --actions=get --endpoint=$ServiceEndpoint --region=us-west-1 --no-sign-request --queue-url=$url""" !!
     }
 
+    test(s"should remove permission ${version.name}", Only213) {
+      // given
+      val url = createQueue("permission-test").QueueUrl
+      s"""${version.executable} sqs add-permission --label l --aws-account-ids=$awsAccountId --actions=get --endpoint=$ServiceEndpoint --region=us-west-1 --no-sign-request --queue-url=$url""" !
+
+      // when ~> then
+      s"""${version.executable} sqs remove-permission --label l --endpoint=$ServiceEndpoint --region=us-west-1 --no-sign-request --queue-url=$url""" !!
+    }
+
     test(s"should purge queue ${version.name}") {
       // given
       val url = createQueue("permission-test").QueueUrl
@@ -508,6 +520,21 @@ class AmazonCliTestSuite
         s"${version.executable} sqs get-queue-attributes --endpoint=$ServiceEndpoint --region=us-west-1 --no-sign-request --queue-url ${queue.QueueUrl} --attribute-names='VisibilityTimeout'" !!
 
       result.parseJson.convertTo[GetQueueAttributesResponse].Attributes.get("VisibilityTimeout") shouldBe Some("99")
+    }
+
+    test(s"should get source queues of a dlq with ${version.name}", Only213) {
+      // given
+      val dlq = createQueue("testDlq")
+      val redrivePolicy = RedrivePolicy("testDlq", awsRegion, awsAccountId, 1).toJson.toString.replaceAll("\"", "\\\\\"")
+      val main = createQueue("main", Some(s"""{"RedrivePolicy":"$redrivePolicy"}"""))
+
+      // when
+      val response =
+        s"""${version.executable} sqs list-dead-letter-source-queues --endpoint=$ServiceEndpoint --region=us-west-1 --no-sign-request --queue-url ${dlq.QueueUrl}""" !!
+
+      // then
+      val result = response.parseJson.convertTo[ListDeadLetterSourceQueuesResponse]
+      result.queueUrls should contain only(main.QueueUrl)
     }
   }
 }

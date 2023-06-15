@@ -58,6 +58,11 @@ class QueueManagerActor(nowProvider: NowProvider, limits: Limits, queueEventList
         result
 
       case ListQueues() => queues.keySet.toSeq
+
+      case ListDeadLetterSourceQueues(queueName) =>
+        queues.collect {
+          case (name, actor) if actor.queueData.deadLettersQueue.exists(_.name == queueName) => name
+        }.toList
     }
 
   protected def createQueueActor(
