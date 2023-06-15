@@ -31,8 +31,8 @@ trait SendMessageBatchDirectives {
           val message =
             createMessage(messageData.toSendMessageActionRequest(batch.QueueUrl), queueData, index, p.xRayTracingHeader)
 
-          doSendMessage(queueActor, message).map { case (message, digest, messageAttributeDigest) =>
-            BatchMessageSendResponseEntry(id, messageAttributeDigest, digest, None, message.id.id, None)
+          doSendMessage(queueActor, message).map { case MessageSendOutcome(message, digest, messageAttributeDigest, systemMessageAttributeDigest) =>
+            BatchMessageSendResponseEntry(id, messageAttributeDigest, digest, systemMessageAttributeDigest, message.id.id, None)
           }
         }
         complete(resultsFuture)
@@ -75,13 +75,13 @@ trait SendMessageBatchDirectives {
       new BatchFlatParamsReader[SendMessageBatchActionRequest] {
         override def read(params: Map[String, String]): SendMessageBatchActionRequest = {
           SendMessageBatchActionRequest(
-            requiredParameter(params)(IdSubParameter),
-            params.parseOptionalLong(DelaySecondsParameter),
-            requiredParameter(params)(MessageBodyParameter),
-            params.get(MessageDeduplicationIdParameter),
-            params.get(MessageGroupIdParameter),
-            Some(getMessageSystemAttributes(params)),
-            Some(getMessageAttributes(params))
+            Id = requiredParameter(params)(IdSubParameter),
+            DelaySeconds = params.parseOptionalLong(DelaySecondsParameter),
+            MessageBody = requiredParameter(params)(MessageBodyParameter),
+            MessageDeduplicationId = params.get(MessageDeduplicationIdParameter),
+            MessageGroupId = params.get(MessageGroupIdParameter),
+            MessageSystemAttributes = Some(getMessageAttributes("MessageSystemAttribute")(params)),
+            MessageAttributes = Some(getMessageAttributes("MessageAttribute")(params))
           )
         }
 

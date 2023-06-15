@@ -107,6 +107,7 @@ class FifoDeduplicationIdsHistoryTest extends AnyFunSuite with Matchers {
       nextDelivery = 100L,
       content = "",
       messageAttributes = Map.empty,
+      messageSystemAttributes = Map.empty,
       created = created,
       orderIndex = 0,
       firstReceive = NeverReceived,

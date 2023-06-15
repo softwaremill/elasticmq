@@ -238,7 +238,7 @@ class AmazonCliTestSuite
       message.MessageId.isEmpty shouldBe false
       message.MD5OfMessageBody.isEmpty shouldBe false
       message.MD5OfMessageAttributes.isEmpty shouldBe false
-      // message.MD5OfMessageSystemAttributes.isEmpty shouldBe false TODO it's not calculated atm
+      message.MD5OfMessageSystemAttributes.isEmpty shouldBe false
       message.SequenceNumber shouldBe empty
     }
 
