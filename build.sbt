@@ -38,7 +38,7 @@ val jclOverSlf4j = "org.slf4j" % "jcl-over-slf4j" % "2.0.7" // needed form amazo
 val scalatest = "org.scalatest" %% "scalatest" % "3.2.16"
 val awaitility = "org.awaitility" % "awaitility-scala" % "4.2.0"
 
-val amazonJavaSdkSqs = "com.amazonaws" % "aws-java-sdk-sqs" % "1.11.1026" exclude ("commons-logging", "commons-logging")
+val amazonJavaSdkSqs = "com.amazonaws" % "aws-java-sdk-sqs" % "1.12.472" exclude ("commons-logging", "commons-logging")
 
 val akkaVersion = "2.6.20"
 val akkaHttpVersion = "10.2.10"
@@ -50,6 +50,12 @@ val akka2Http = "com.typesafe.akka" %% "akka-http" % akkaHttpVersion
 val sprayJson = "io.spray" %% "spray-json" % "1.3.6"
 val akkaHttpSprayJson = "com.typesafe.akka" %% "akka-http-spray-json" % akkaHttpVersion
 val akka2HttpTestkit = "com.typesafe.akka" %% "akka-http-testkit" % akkaHttpVersion % "test"
+
+val awsSpringMessagingVersion = "2.2.6.RELEASE"
+val springVersion = "5.3.28"
+val awsSpringMessaging = "org.springframework.cloud" % "spring-cloud-aws-messaging" % awsSpringMessagingVersion
+val springWeb = "org.springframework" % "spring-web" % springVersion
+
 
 val scalaAsync = "org.scala-lang.modules" %% "scala-async" % "1.0.1"
 
@@ -186,7 +192,7 @@ lazy val restSqsTestingAmazonJavaSdk: Project =
     .settings(
       Seq(
         name := "elasticmq-rest-sqs-testing-amazon-java-sdk",
-        libraryDependencies ++= Seq(amazonJavaSdkSqs, jclOverSlf4j) ++ common,
+        libraryDependencies ++= Seq(amazonJavaSdkSqs, awsSpringMessaging, jclOverSlf4j, springWeb) ++ common,
         publish / skip := true
       )
     )
