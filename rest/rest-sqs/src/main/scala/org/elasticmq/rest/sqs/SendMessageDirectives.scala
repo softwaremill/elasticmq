@@ -235,7 +235,7 @@ trait SendMessageDirectives {
       val availableDataTypes = Set("String", "Number", "Binary")
       if (value.getDataType().isEmpty)
         throw throw new SQSException(s"Attribute '$name' must contain a non-empty attribute type")
-      if (!availableDataTypes.contains(value.getDataType()))
+      if (!availableDataTypes.exists(value.getDataType().startsWith(_)))
         throw new Exception("Currently only handles String, Number and Binary typed attributes")
 
       value match {
