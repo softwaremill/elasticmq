@@ -19,7 +19,6 @@ import scala.xml.Elem
 
 trait SendMessageDirectives {
   this: ElasticMQDirectives with SQSLimitsModule with ResponseMarshaller =>
-  private val messageSystemAttributeNamePattern = """MessageSystemAttribute\.(\d+)\.Name""".r
 
   def sendMessage(p: RequestPayload)(implicit marshallerDependencies: MarshallerDependencies): Route = {
     p.action(SendMessageAction) {
@@ -30,66 +29,30 @@ trait SendMessageDirectives {
 
         validateMessageAttributes(params.MessageAttributes.getOrElse(Map.empty))
 
-        doSendMessage(queueActor, message).map { case (message, digest, messageAttributeDigest) =>
-          complete(SendMessageResponse(messageAttributeDigest, digest, None, message.id.id, message.sequenceNumber))
+        doSendMessage(queueActor, message).map {
+          case MessageSendOutcome(message, digest, messageAttributeDigest, messageSystemAttributeDigest) =>
+            complete(SendMessageResponse(messageAttributeDigest, digest, messageSystemAttributeDigest, message.id.id, message.sequenceNumber))
         }
       }
     }
   }
 
-  def getMessageAttributes(parameters: Map[String, String]): Map[String, MessageAttribute] = {
-    // Determine number of attributes -- there are likely ways to improve this
-    val numAttributes = parameters
-      .map { case (k, _) =>
-        if (k.startsWith("MessageAttribute.")) {
-          k.split("\\.")(1).toInt
-        } else {
-          0
-        }
-      }
-      .toList
-      .union(List(0))
-      .max // even if nothing, return 0
+  def getMessageAttributes(prefix: String)(parameters: Map[String, String]): Map[String, MessageAttribute] = {
+    val messageAttributeNamePattern = s"""$prefix\\.(\\d+)\\.Name""".r
 
-    (1 to numAttributes).map { i =>
-      val name = parameters("MessageAttribute." + i + ".Name")
-      val dataType = parameters("MessageAttribute." + i + ".Value.DataType")
-
-      val primaryDataType = dataType.split('.')(0)
-      val customDataType = if (dataType.contains('.')) {
-        Some(dataType.substring(dataType.indexOf('.') + 1))
-      } else {
-        None
-      }
-
-      val value: MessageAttribute = primaryDataType match {
-        case "String" =>
-          val strValue = parameters("MessageAttribute." + i + ".Value.StringValue")
-          StringMessageAttribute(strValue, customDataType)
-        case "Number" =>
-          val strValue = parameters("MessageAttribute." + i + ".Value.StringValue")
-          NumberMessageAttribute(strValue, customDataType)
-        case "Binary" =>
-          BinaryMessageAttribute.fromBase64(parameters("MessageAttribute." + i + ".Value.BinaryValue"), customDataType)
-        case "" =>
-          throw new SQSException(s"Attribute '$name' must contain a non-empty attribute type")
-        case _ =>
-          throw new Exception("Currently only handles String, Number and Binary typed attributes")
-      }
-
-      (name, value)
-    }.toMap
-  }
-
-  def getMessageSystemAttributes(parameters: Map[String, String]): Map[String, MessageAttribute] = {
     parameters.flatMap {
-      case (messageSystemAttributeNamePattern(index), parameterName) =>
-        val parameterDataType = parameters(s"MessageSystemAttribute.$index.Value.DataType")
+      case (messageAttributeNamePattern(index), parameterName) =>
+        val parameterDataType = parameters(s"$prefix.$index.Value.DataType")
+
         val parameterValue = parameterDataType match {
-          case "String" => StringMessageAttribute(parameters(s"MessageSystemAttribute.$index.Value.StringValue"))
-          case "Number" => NumberMessageAttribute(parameters(s"MessageSystemAttribute.$index.Value.StringValue"))
+          case "String" => StringMessageAttribute(parameters(s"$prefix.$index.Value.StringValue"))
+          case "Number" => NumberMessageAttribute(parameters(s"$prefix.$index.Value.StringValue"))
           case "Binary" =>
             BinaryMessageAttribute.fromBase64(parameters(s"MessageAttribute.$index.Value.BinaryValue"))
+          case "" =>
+            throw new SQSException(s"Attribute '$parameterName' must contain a non-empty attribute type")
+          case _ =>
+            throw new Exception("Currently only handles String, Number and Binary typed attributes")
         }
         Some((parameterName, parameterValue))
       case _ => None
@@ -196,6 +159,7 @@ trait SendMessageDirectives {
       None,
       body,
       messageAttributes,
+      messageSystemAttributes,
       nextDelivery,
       messageGroupId,
       messageDeduplicationId,
@@ -208,7 +172,7 @@ trait SendMessageDirectives {
   def doSendMessage(
       queueActor: ActorRef,
       message: NewMessageData
-  ): Future[(MessageData, String, Option[String])] = {
+  ): Future[MessageSendOutcome] = {
     val digest = md5Digest(message.content)
 
     val messageAttributeDigest = if (message.messageAttributes.isEmpty) {
@@ -217,9 +181,15 @@ trait SendMessageDirectives {
       Some(md5AttributeDigest(message.messageAttributes))
     }
 
+    val systemMessageAttributeDigest = if (message.messageSystemAttributes.isEmpty) {
+      None
+    } else {
+      Some(md5AttributeDigest(message.messageSystemAttributes))
+    }
+
     for {
       message <- queueActor ? SendMessage(message)
-    } yield (message, digest, messageAttributeDigest)
+    } yield MessageSendOutcome(message, digest, messageAttributeDigest, systemMessageAttributeDigest)
   }
 
   def verifyMessageNotTooLong(messageLength: Int): Unit =
@@ -252,6 +222,8 @@ trait SendMessageDirectives {
     }
   }
 
+  case class MessageSendOutcome(data: MessageData, digest: String, messageAttributeDigest: Option[String], systemMessageAttributeDigest: Option[String])
+
   case class SendMessageActionRequest(
       DelaySeconds: Option[Long],
       MessageBody: String,
@@ -274,8 +246,8 @@ trait SendMessageDirectives {
             MessageBody = requiredParameter(params)(MessageBodyParameter),
             MessageDeduplicationId = params.get(MessageDeduplicationIdParameter),
             MessageGroupId = params.get(MessageGroupIdParameter),
-            MessageSystemAttributes = Some(getMessageSystemAttributes(params)),
-            MessageAttributes = Some(getMessageAttributes(params)),
+            MessageSystemAttributes = Some(getMessageAttributes("MessageSystemAttribute")(params)),
+            MessageAttributes = Some(getMessageAttributes("MessageAttribute")(params)),
             QueueUrl = requiredParameter(params)(QueueUrlParameter)
           )
         }
@@ -299,6 +271,7 @@ object SendMessageResponse {
       <SendMessageResponse>
           <SendMessageResult>
             {t.MD5OfMessageAttributes.map(d => <MD5OfMessageAttributes>{d}</MD5OfMessageAttributes>).getOrElse(())}
+            {t.MD5OfMessageSystemAttributes.map(d => <MD5OfMessageSystemAttributes>{d}</MD5OfMessageSystemAttributes>).getOrElse(())}
             <MD5OfMessageBody>{t.MD5OfMessageBody}</MD5OfMessageBody>
             <MessageId>{t.MessageId}</MessageId>
             {t.SequenceNumber.map(x => <SequenceNumber>{x}</SequenceNumber>).getOrElse(())}

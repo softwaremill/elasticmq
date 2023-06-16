@@ -47,6 +47,7 @@ case class DBMessage(
       nextDelivery,
       new String(content),
       serializedAttrs,
+      Map.empty,
       new DateTime(created),
       orderIndex = 0,
       firstReceive,
