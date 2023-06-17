@@ -52,10 +52,9 @@ val akkaHttpSprayJson = "com.typesafe.akka" %% "akka-http-spray-json" % akkaHttp
 val akka2HttpTestkit = "com.typesafe.akka" %% "akka-http-testkit" % akkaHttpVersion % "test"
 
 val awsSpringMessagingVersion = "2.2.6.RELEASE"
-val springVersion = "5.3.28"
+val springVersion = "6.0.10"
 val awsSpringMessaging = "org.springframework.cloud" % "spring-cloud-aws-messaging" % awsSpringMessagingVersion
 val springWeb = "org.springframework" % "spring-web" % springVersion
-
 
 val scalaAsync = "org.scala-lang.modules" %% "scala-async" % "1.0.1"
 
