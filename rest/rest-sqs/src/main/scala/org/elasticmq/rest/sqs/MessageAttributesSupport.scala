@@ -1,10 +1,14 @@
 package org.elasticmq.rest.sqs
 
 import org.elasticmq.{BinaryMessageAttribute, MessageAttribute, NumberMessageAttribute, StringMessageAttribute}
-import spray.json.{JsObject, JsString, JsValue, JsonReader, RootJsonFormat}
 import spray.json.DefaultJsonProtocol._
+import spray.json.{JsObject, JsString, JsValue, JsonReader, RootJsonFormat}
 
 trait MessageAttributesSupport {
+
+  private val SomeString = """String\.?(.*)""".r
+  private val SomeNumber = """Number\.?(.*)""".r
+  private val SomeBinary = """Binary\.?(.*)""".r
 
   implicit val messageAttributeJsonFormat: RootJsonFormat[MessageAttribute] = new RootJsonFormat[MessageAttribute] {
 
@@ -25,11 +29,15 @@ trait MessageAttributesSupport {
 
       val dataType = pickField[String]("DataType")
       dataType match {
-        case "Number" => NumberMessageAttribute(pickField[String]("StringValue"))
-        case "String" => StringMessageAttribute(pickField[String]("StringValue"))
-        case "Binary" => BinaryMessageAttribute(pickField[Array[Byte]]("BinaryValue"))
+        case SomeNumber(ct) => NumberMessageAttribute(pickField[String]("StringValue"), customType(ct))
+        case SomeString(ct) => StringMessageAttribute(pickField[String]("StringValue"), customType(ct))
+        case SomeBinary(ct) => BinaryMessageAttribute(pickField[Array[Byte]]("BinaryValue"), customType(ct))
+        case _ =>
+          throw new Exception("Currently only handles String, Number and Binary typed attributes")
       }
     }
+
+    private def customType(appendix: String) = if (appendix.isEmpty) None else Some(appendix)
   }
 
 }

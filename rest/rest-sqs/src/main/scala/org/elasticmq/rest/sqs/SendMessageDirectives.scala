@@ -20,6 +20,10 @@ import scala.xml.Elem
 trait SendMessageDirectives {
   this: ElasticMQDirectives with SQSLimitsModule with ResponseMarshaller =>
 
+  private val SomeString = """String\.?(.*)""".r
+  private val SomeNumber = """Number\.?(.*)""".r
+  private val SomeBinary = """Binary\.?(.*)""".r
+
   def sendMessage(p: RequestPayload)(implicit marshallerDependencies: MarshallerDependencies): Route = {
     p.action(SendMessageAction) {
       val params = p.as[SendMessageActionRequest]
@@ -45,10 +49,10 @@ trait SendMessageDirectives {
         val parameterDataType = parameters(s"$prefix.$index.Value.DataType")
 
         val parameterValue = parameterDataType match {
-          case "String" => StringMessageAttribute(parameters(s"$prefix.$index.Value.StringValue"))
-          case "Number" => NumberMessageAttribute(parameters(s"$prefix.$index.Value.StringValue"))
-          case "Binary" =>
-            BinaryMessageAttribute.fromBase64(parameters(s"MessageAttribute.$index.Value.BinaryValue"))
+          case SomeString(ct) => StringMessageAttribute(parameters(s"$prefix.$index.Value.StringValue"), customType(ct))
+          case SomeNumber(ct) => NumberMessageAttribute(parameters(s"$prefix.$index.Value.StringValue"), customType(ct))
+          case SomeBinary(ct) =>
+            BinaryMessageAttribute.fromBase64(parameters(s"MessageAttribute.$index.Value.BinaryValue"), customType(ct))
           case "" =>
             throw new SQSException(s"Attribute '$parameterName' must contain a non-empty attribute type")
           case _ =>
@@ -58,6 +62,8 @@ trait SendMessageDirectives {
       case _ => None
     }
   }
+
+  private def customType(appendix: String) = if (appendix.isEmpty) None else Some(appendix)
 
   def createMessage(
       parameters: SendMessageActionRequest,
