@@ -87,7 +87,7 @@ case class TheStatisticsRestServerBuilder(
     import env._
 
     val routes = {
-      extractProtocol{protocol =>
+      extractProtocol { protocol =>
         handleServerExceptions(protocol) {
           statistics
         }

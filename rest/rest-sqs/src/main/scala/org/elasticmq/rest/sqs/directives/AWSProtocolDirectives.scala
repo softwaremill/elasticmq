@@ -8,7 +8,7 @@ trait AWSProtocolDirectives {
   def extractProtocol = extractRequest.map { request =>
     request.entity.contentType match {
       case AmzJsonProtocol(_) => AWSProtocol.`AWSJsonProtocol1.0`
-      case _ => AWSProtocol.AWSQueryProtocol
+      case _                  => AWSProtocol.AWSQueryProtocol
     }
   }
 

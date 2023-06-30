@@ -12,7 +12,7 @@ trait FutureDirectives {
   this: ExceptionDirectives with ActorSystemModule with AWSProtocolDirectives =>
 
   implicit def futureRouteToRoute(futureRoute: Future[Route]): Route = {
-    extractProtocol{ protocol =>
+    extractProtocol { protocol =>
       onComplete(futureRoute) {
         case Success(r) => r
         case Failure(f) => exceptionHandlerPF(protocol)(f)

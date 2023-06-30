@@ -26,7 +26,7 @@ trait ChangeMessageVisibilityBatchDirectives {
               MillisVisibilityTimeout.fromSeconds(messageData.VisibilityTimeout)
             )
 
-            result.flatMap{
+            result.flatMap {
               case Right(_) => Future.successful(BatchChangeMessageVisibilityResponseEntry(id))
               case Left(invalidHandle) =>
                 Future.failed(new SQSException(invalidHandle.code, errorMessage = Some(invalidHandle.message)))
@@ -42,17 +42,22 @@ trait ChangeMessageVisibilityBatchDirectives {
 case class BatchChangeMessageVisibilityResponseEntry(Id: String)
 
 object BatchChangeMessageVisibilityResponseEntry {
-  implicit val jsonFormat: RootJsonFormat[BatchChangeMessageVisibilityResponseEntry] = jsonFormat1(BatchChangeMessageVisibilityResponseEntry.apply)
+  implicit val jsonFormat: RootJsonFormat[BatchChangeMessageVisibilityResponseEntry] = jsonFormat1(
+    BatchChangeMessageVisibilityResponseEntry.apply
+  )
 
-  implicit val xmlSerializer: XmlSerializer[BatchChangeMessageVisibilityResponseEntry] = new XmlSerializer[BatchChangeMessageVisibilityResponseEntry] {
-    override def toXml(t: BatchChangeMessageVisibilityResponseEntry): Elem =
-      <ChangeMessageVisibilityBatchResultEntry>
+  implicit val xmlSerializer: XmlSerializer[BatchChangeMessageVisibilityResponseEntry] =
+    new XmlSerializer[BatchChangeMessageVisibilityResponseEntry] {
+      override def toXml(t: BatchChangeMessageVisibilityResponseEntry): Elem =
+        <ChangeMessageVisibilityBatchResultEntry>
         <Id>{t.Id}</Id>
       </ChangeMessageVisibilityBatchResultEntry>
-  }
+    }
 
-  implicit def batchXmlSerializer(implicit successSerializer: XmlSerializer[BatchChangeMessageVisibilityResponseEntry]): XmlSerializer[BatchResponse[BatchChangeMessageVisibilityResponseEntry]]
-    = new XmlSerializer[BatchResponse[BatchChangeMessageVisibilityResponseEntry]] {
+  implicit def batchXmlSerializer(implicit
+      successSerializer: XmlSerializer[BatchChangeMessageVisibilityResponseEntry]
+  ): XmlSerializer[BatchResponse[BatchChangeMessageVisibilityResponseEntry]] =
+    new XmlSerializer[BatchResponse[BatchChangeMessageVisibilityResponseEntry]] {
       override def toXml(t: BatchResponse[BatchChangeMessageVisibilityResponseEntry]): Elem =
         <ChangeMessageVisibilityBatchResponse>
           <ChangeMessageVisibilityBatchResult>
@@ -67,19 +72,23 @@ object BatchChangeMessageVisibilityResponseEntry {
     }
 }
 
-case class ChangeMessageVisibilityBatchEntry(Id: String, ReceiptHandle: String, VisibilityTimeout: Long) extends BatchEntry
+case class ChangeMessageVisibilityBatchEntry(Id: String, ReceiptHandle: String, VisibilityTimeout: Long)
+    extends BatchEntry
 
 object ChangeMessageVisibilityBatchEntry {
-  implicit val jsonFormat: RootJsonFormat[ChangeMessageVisibilityBatchEntry] = jsonFormat3(ChangeMessageVisibilityBatchEntry.apply)
+  implicit val jsonFormat: RootJsonFormat[ChangeMessageVisibilityBatchEntry] = jsonFormat3(
+    ChangeMessageVisibilityBatchEntry.apply
+  )
 
-  implicit val queryReader: BatchFlatParamsReader[ChangeMessageVisibilityBatchEntry] = new BatchFlatParamsReader[ChangeMessageVisibilityBatchEntry] {
-    override def read(params: Map[String, String]): ChangeMessageVisibilityBatchEntry =
-      ChangeMessageVisibilityBatchEntry(
-        requiredParameter(params)(IdSubParameter),
-        requiredParameter(params)(ReceiptHandleParameter),
-        requiredParameter(params)(VisibilityTimeoutParameter).toLong
-      )
+  implicit val queryReader: BatchFlatParamsReader[ChangeMessageVisibilityBatchEntry] =
+    new BatchFlatParamsReader[ChangeMessageVisibilityBatchEntry] {
+      override def read(params: Map[String, String]): ChangeMessageVisibilityBatchEntry =
+        ChangeMessageVisibilityBatchEntry(
+          requiredParameter(params)(IdSubParameter),
+          requiredParameter(params)(ReceiptHandleParameter),
+          requiredParameter(params)(VisibilityTimeoutParameter).toLong
+        )
 
-    override def batchPrefix: String = "ChangeMessageVisibilityBatchRequestEntry"
-  }
+      override def batchPrefix: String = "ChangeMessageVisibilityBatchRequestEntry"
+    }
 }

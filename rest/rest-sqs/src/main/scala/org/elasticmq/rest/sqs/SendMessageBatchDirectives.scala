@@ -31,8 +31,16 @@ trait SendMessageBatchDirectives {
           val message =
             createMessage(messageData.toSendMessageActionRequest(batch.QueueUrl), queueData, index, p.xRayTracingHeader)
 
-          doSendMessage(queueActor, message).map { case MessageSendOutcome(message, digest, messageAttributeDigest, systemMessageAttributeDigest) =>
-            BatchMessageSendResponseEntry(id, messageAttributeDigest, digest, systemMessageAttributeDigest, message.id.id, None)
+          doSendMessage(queueActor, message).map {
+            case MessageSendOutcome(message, digest, messageAttributeDigest, systemMessageAttributeDigest) =>
+              BatchMessageSendResponseEntry(
+                id,
+                messageAttributeDigest,
+                digest,
+                systemMessageAttributeDigest,
+                message.id.id,
+                None
+              )
           }
         }
         complete(resultsFuture)

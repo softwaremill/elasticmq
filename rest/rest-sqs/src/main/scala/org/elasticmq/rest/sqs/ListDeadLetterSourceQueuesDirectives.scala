@@ -35,7 +35,9 @@ case class ListDeadLetterSourceQueuesActionRequest(
     QueueUrl: String
 )
 object ListDeadLetterSourceQueuesActionRequest {
-  implicit val requestJsonFormat: RootJsonFormat[ListDeadLetterSourceQueuesActionRequest] = jsonFormat3(ListDeadLetterSourceQueuesActionRequest.apply)
+  implicit val requestJsonFormat: RootJsonFormat[ListDeadLetterSourceQueuesActionRequest] = jsonFormat3(
+    ListDeadLetterSourceQueuesActionRequest.apply
+  )
 
   implicit val requestParamReader: FlatParamsReader[ListDeadLetterSourceQueuesActionRequest] =
     new FlatParamsReader[ListDeadLetterSourceQueuesActionRequest] {
@@ -51,12 +53,15 @@ object ListDeadLetterSourceQueuesActionRequest {
 
 case class ListDeadLetterSourceQueuesResponse(queueUrls: List[String])
 object ListDeadLetterSourceQueuesResponse {
-  implicit val format: RootJsonFormat[ListDeadLetterSourceQueuesResponse] = jsonFormat1(ListDeadLetterSourceQueuesResponse.apply)
+  implicit val format: RootJsonFormat[ListDeadLetterSourceQueuesResponse] = jsonFormat1(
+    ListDeadLetterSourceQueuesResponse.apply
+  )
 
-  implicit val xmlSerializer: XmlSerializer[ListDeadLetterSourceQueuesResponse] = new XmlSerializer[ListDeadLetterSourceQueuesResponse] {
-    override def toXml(t: ListDeadLetterSourceQueuesResponse): Elem = {
+  implicit val xmlSerializer: XmlSerializer[ListDeadLetterSourceQueuesResponse] =
+    new XmlSerializer[ListDeadLetterSourceQueuesResponse] {
+      override def toXml(t: ListDeadLetterSourceQueuesResponse): Elem = {
 
-      <ListDeadLetterSourceQueuesResponse>
+        <ListDeadLetterSourceQueuesResponse>
         <ListDeadLetterSourceQueuesResult>
           {t.queueUrls.map(queueUrl => <QueueUrl>{queueUrl}</QueueUrl>)}
         </ListDeadLetterSourceQueuesResult>
@@ -64,6 +69,6 @@ object ListDeadLetterSourceQueuesResponse {
           <RequestId>{EmptyRequestId}</RequestId>
         </ResponseMetadata>
       </ListDeadLetterSourceQueuesResponse>
+      }
     }
-  }
 }

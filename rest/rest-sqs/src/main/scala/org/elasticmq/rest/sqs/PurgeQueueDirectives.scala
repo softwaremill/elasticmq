@@ -14,7 +14,7 @@ trait PurgeQueueDirectives { this: ElasticMQDirectives with QueueURLModule with 
     p.action(PurgeQueue) {
       val requestParams = p.as[PurgeQueueActionRequest]
 
-      queueActorFromUrl(requestParams.QueueUrl){ queueActor =>
+      queueActorFromUrl(requestParams.QueueUrl) { queueActor =>
         for {
           _ <- queueActor ? ClearQueue()
         } yield {
@@ -29,11 +29,12 @@ trait PurgeQueueDirectives { this: ElasticMQDirectives with QueueURLModule with 
   object PurgeQueueActionRequest {
     implicit val requestJsonFormat: RootJsonFormat[PurgeQueueActionRequest] = jsonFormat1(PurgeQueueActionRequest.apply)
 
-    implicit val requestParamReader: FlatParamsReader[PurgeQueueActionRequest] = new FlatParamsReader[PurgeQueueActionRequest] {
-      override def read(params: Map[String, String]): PurgeQueueActionRequest = {
-        val queueUrl = requiredParameter(params)(QueueUrlParameter)
-        PurgeQueueActionRequest(queueUrl)
+    implicit val requestParamReader: FlatParamsReader[PurgeQueueActionRequest] =
+      new FlatParamsReader[PurgeQueueActionRequest] {
+        override def read(params: Map[String, String]): PurgeQueueActionRequest = {
+          val queueUrl = requiredParameter(params)(QueueUrlParameter)
+          PurgeQueueActionRequest(queueUrl)
+        }
       }
-    }
   }
 }

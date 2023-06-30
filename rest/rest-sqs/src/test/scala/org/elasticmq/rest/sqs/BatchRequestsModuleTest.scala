@@ -6,7 +6,7 @@ import org.scalatest.matchers.should.Matchers
 
 class BatchRequestsModuleTest extends AnyFunSuite with Matchers {
 
-  val prefix =  "SomePrefix"
+  val prefix = "SomePrefix"
 
   implicit val fpr = new BatchFlatParamsReader[Map[String, String]] {
     override def batchPrefix: String = prefix
