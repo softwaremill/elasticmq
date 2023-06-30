@@ -56,7 +56,6 @@ val springVersion = "5.3.28"
 val awsSpringMessaging = "org.springframework.cloud" % "spring-cloud-aws-messaging" % awsSpringMessagingVersion
 val springWeb = "org.springframework" % "spring-web" % springVersion
 
-
 val scalaAsync = "org.scala-lang.modules" %% "scala-async" % "1.0.1"
 
 val scalikeJdbc = "org.scalikejdbc" %% "scalikejdbc" % "3.5.0"

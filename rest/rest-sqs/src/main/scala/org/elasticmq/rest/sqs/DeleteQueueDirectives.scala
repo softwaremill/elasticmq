@@ -30,11 +30,12 @@ case class DeleteQueueActionRequest(QueueUrl: String)
 object DeleteQueueActionRequest {
   implicit val requestJsonFormat: RootJsonFormat[DeleteQueueActionRequest] = jsonFormat1(DeleteQueueActionRequest.apply)
 
-  implicit val requestParamReader: FlatParamsReader[DeleteQueueActionRequest] = new FlatParamsReader[DeleteQueueActionRequest] {
-    override def read(params: Map[String, String]): DeleteQueueActionRequest = {
-      new DeleteQueueActionRequest(
-        requiredParameter(params)(QueueUrlParameter)
-      )
+  implicit val requestParamReader: FlatParamsReader[DeleteQueueActionRequest] =
+    new FlatParamsReader[DeleteQueueActionRequest] {
+      override def read(params: Map[String, String]): DeleteQueueActionRequest = {
+        new DeleteQueueActionRequest(
+          requiredParameter(params)(QueueUrlParameter)
+        )
+      }
     }
-  }
 }

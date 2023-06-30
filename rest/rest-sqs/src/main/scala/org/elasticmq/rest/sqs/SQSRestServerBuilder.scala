@@ -11,7 +11,12 @@ import org.elasticmq.actor.QueueManagerActor
 import org.elasticmq.metrics.QueuesMetrics
 import org.elasticmq.rest.sqs.Constants._
 import org.elasticmq.rest.sqs.XmlNsVersion.extractXmlNs
-import org.elasticmq.rest.sqs.directives.{AWSProtocolDirectives, AnyParamDirectives, ElasticMQDirectives, UnmatchedActionRoutes}
+import org.elasticmq.rest.sqs.directives.{
+  AWSProtocolDirectives,
+  AnyParamDirectives,
+  ElasticMQDirectives,
+  UnmatchedActionRoutes
+}
 import org.elasticmq.rest.sqs.model.RequestPayload
 import org.elasticmq.util.{Logging, NowProvider}
 
@@ -183,8 +188,8 @@ case class TheSQSRestServerBuilder(
 
     import env._
     def rawRoutes(p: RequestPayload)(implicit marshallerDependencies: MarshallerDependencies) =
-        // 1. Sending, receiving, deleting messages
-        sendMessage(p) ~
+      // 1. Sending, receiving, deleting messages
+      sendMessage(p) ~
         sendMessageBatch(p) ~
         receiveMessage(p) ~
         deleteMessage(p) ~
@@ -206,7 +211,7 @@ case class TheSQSRestServerBuilder(
         untagQueue(p) ~
         listQueueTags(p) ~
         listDeadLetterSourceQueues(p) ~
-        //4. Unmatched action
+        // 4. Unmatched action
         unmatchedAction(p)
 
     val config = new ElasticMQConfig

@@ -525,7 +525,8 @@ class AmazonCliTestSuite
     test(s"should get source queues of a dlq with ${version.name}", Only213) {
       // given
       val dlq = createQueue("testDlq")
-      val redrivePolicy = RedrivePolicy("testDlq", awsRegion, awsAccountId, 1).toJson.toString.replaceAll("\"", "\\\\\"")
+      val redrivePolicy =
+        RedrivePolicy("testDlq", awsRegion, awsAccountId, 1).toJson.toString.replaceAll("\"", "\\\\\"")
       val main = createQueue("main", Some(s"""{"RedrivePolicy":"$redrivePolicy"}"""))
 
       // when
@@ -534,7 +535,7 @@ class AmazonCliTestSuite
 
       // then
       val result = response.parseJson.convertTo[ListDeadLetterSourceQueuesResponse]
-      result.queueUrls should contain only(main.QueueUrl)
+      result.queueUrls should contain only (main.QueueUrl)
     }
   }
 }

@@ -29,8 +29,7 @@ object JsonData {
     }
 
   implicit val AmzJsonMarshaller =
-    Marshaller.withFixedContentType[JsonData, RequestEntity](AmzJsonProtocol.contentType("1.0")) {
-      data =>
-        HttpEntity(AmzJsonProtocol.contentType("1.0"), ByteString(data.payload.prettyPrint))
+    Marshaller.withFixedContentType[JsonData, RequestEntity](AmzJsonProtocol.contentType("1.0")) { data =>
+      HttpEntity(AmzJsonProtocol.contentType("1.0"), ByteString(data.payload.prettyPrint))
     }
 }

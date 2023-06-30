@@ -13,10 +13,11 @@ trait GetQueueUrlDirectives { this: ElasticMQDirectives with QueueURLModule with
     p.action(GetQueueUrl) {
       rootPath {
         val requestParams = p.as[GetQueueUrlActionRequest]
-        queueActorAndDataFromQueueName(requestParams.QueueName) { (_, _) => // We need the queue actor just to check that the queue exists
-          queueURL(requestParams.QueueName) { url =>
-            complete(GetQueueURLResponse(url))
-          }
+        queueActorAndDataFromQueueName(requestParams.QueueName) {
+          (_, _) => // We need the queue actor just to check that the queue exists
+            queueURL(requestParams.QueueName) { url =>
+              complete(GetQueueURLResponse(url))
+            }
         }
       }
     }
@@ -43,8 +44,7 @@ case class GetQueueURLResponse(QueueUrl: String)
 object GetQueueURLResponse {
   implicit val format: RootJsonFormat[GetQueueURLResponse] = jsonFormat1(GetQueueURLResponse.apply)
 
-  implicit val xmlSerializer: XmlSerializer[GetQueueURLResponse] = t =>
-    <GetQueueUrlResponse>
+  implicit val xmlSerializer: XmlSerializer[GetQueueURLResponse] = t => <GetQueueUrlResponse>
       <GetQueueUrlResult>
         <QueueUrl>{t.QueueUrl}</QueueUrl>
       </GetQueueUrlResult>

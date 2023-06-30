@@ -2116,7 +2116,7 @@ class AmazonJavaSdkTestSuite extends SqsClientServerCommunication with Matchers 
     val result = client.listDeadLetterSourceQueues(request).getQueueUrls.asScala
 
     // then
-    result should contain theSameElementsAs(qUrls)
+    result should contain theSameElementsAs (qUrls)
   }
 
   def queueDelay(queueUrl: String): Long = getQueueLongAttribute(queueUrl, delaySecondsAttribute)

@@ -9,7 +9,6 @@ import org.elasticmq.rest.sqs.model.RequestPayload
 import spray.json.RootJsonFormat
 import spray.json.DefaultJsonProtocol._
 
-
 import scala.concurrent.Future
 import scala.xml.Elem
 
@@ -24,7 +23,7 @@ trait QueueAttributesDirectives {
           getQueueAttributes(requestParams.AttributeNames.getOrElse(List.empty), queueActor, queueData)
 
         attributesFuture.map { attributes =>
-            complete(GetQueueAttributesResponse(attributes.toMap))
+          complete(GetQueueAttributesResponse(attributes.toMap))
         }
       }
     }
@@ -68,9 +67,10 @@ object GetQueueAttributesResponse {
     GetQueueAttributesResponse.apply
   )
 
-  implicit val xmlSerializer: XmlSerializer[GetQueueAttributesResponse] = new XmlSerializer[GetQueueAttributesResponse] {
-    override def toXml(t: GetQueueAttributesResponse): Elem =
-      <GetQueueAttributesResponse>
+  implicit val xmlSerializer: XmlSerializer[GetQueueAttributesResponse] =
+    new XmlSerializer[GetQueueAttributesResponse] {
+      override def toXml(t: GetQueueAttributesResponse): Elem =
+        <GetQueueAttributesResponse>
         <GetQueueAttributesResult>
           {attributesToXmlConverter.convert(t.Attributes.toList)}
         </GetQueueAttributesResult>
@@ -78,7 +78,7 @@ object GetQueueAttributesResponse {
           <RequestId>{EmptyRequestId}</RequestId>
         </ResponseMetadata>
       </GetQueueAttributesResponse>
-  }
+    }
 }
 
 case class SetQueueAttributesActionRequest(Attributes: Map[String, String], QueueUrl: String)

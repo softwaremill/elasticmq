@@ -35,7 +35,15 @@ trait SendMessageDirectives {
 
         doSendMessage(queueActor, message).map {
           case MessageSendOutcome(message, digest, messageAttributeDigest, messageSystemAttributeDigest) =>
-            complete(SendMessageResponse(messageAttributeDigest, digest, messageSystemAttributeDigest, message.id.id, message.sequenceNumber))
+            complete(
+              SendMessageResponse(
+                messageAttributeDigest,
+                digest,
+                messageSystemAttributeDigest,
+                message.id.id,
+                message.sequenceNumber
+              )
+            )
         }
       }
     }
@@ -228,7 +236,12 @@ trait SendMessageDirectives {
     }
   }
 
-  case class MessageSendOutcome(data: MessageData, digest: String, messageAttributeDigest: Option[String], systemMessageAttributeDigest: Option[String])
+  case class MessageSendOutcome(
+      data: MessageData,
+      digest: String,
+      messageAttributeDigest: Option[String],
+      systemMessageAttributeDigest: Option[String]
+  )
 
   case class SendMessageActionRequest(
       DelaySeconds: Option[Long],
@@ -277,7 +290,11 @@ object SendMessageResponse {
       <SendMessageResponse>
           <SendMessageResult>
             {t.MD5OfMessageAttributes.map(d => <MD5OfMessageAttributes>{d}</MD5OfMessageAttributes>).getOrElse(())}
-            {t.MD5OfMessageSystemAttributes.map(d => <MD5OfMessageSystemAttributes>{d}</MD5OfMessageSystemAttributes>).getOrElse(())}
+            {
+        t.MD5OfMessageSystemAttributes
+          .map(d => <MD5OfMessageSystemAttributes>{d}</MD5OfMessageSystemAttributes>)
+          .getOrElse(())
+      }
             <MD5OfMessageBody>{t.MD5OfMessageBody}</MD5OfMessageBody>
             <MessageId>{t.MessageId}</MessageId>
             {t.SequenceNumber.map(x => <SequenceNumber>{x}</SequenceNumber>).getOrElse(())}

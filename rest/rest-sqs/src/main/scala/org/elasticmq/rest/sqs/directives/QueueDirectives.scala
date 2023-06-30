@@ -14,12 +14,7 @@ import org.elasticmq.rest.sqs.directives.QueueDirectives.AccountIdRegex
 import scala.util.matching.Regex
 
 trait QueueDirectives {
-  this: Directives
-    with QueueManagerActorModule
-    with ContextPathModule
-    with ActorSystemModule
-    with FutureDirectives
-   =>
+  this: Directives with QueueManagerActorModule with ContextPathModule with ActorSystemModule with FutureDirectives =>
 
   def queueActorFromUrl(queueUrl: String)(body: ActorRef => Route): Route =
     getQueueNameFromQueueUrl(queueUrl)(queueName => queueActor(queueName, body))

@@ -22,7 +22,9 @@ class AnyParamDirectivesTest
 
   "anyParamsMap" should "extract both query and form parameters for query protocol" in {
     val route = path("test") {
-      anyParamsMap(AWSProtocol.AWSQueryProtocol) { map => _.complete(map.asInstanceOf[QueryParams].params.toList.sorted.toString()) }
+      anyParamsMap(AWSProtocol.AWSQueryProtocol) { map =>
+        _.complete(map.asInstanceOf[QueryParams].params.toList.sorted.toString())
+      }
     }
 
     Get("/test?x=1&y=2") ~> route ~> check {
@@ -40,7 +42,9 @@ class AnyParamDirectivesTest
 
   "anyParamsMap" should "extract params from json and header for aws json protocol 1.0" in {
     val route = path("test") {
-      anyParamsMap(AWSProtocol.`AWSJsonProtocol1.0`) { map => _.complete(map.asInstanceOf[JsonParams].params.prettyPrint) }
+      anyParamsMap(AWSProtocol.`AWSJsonProtocol1.0`) { map =>
+        _.complete(map.asInstanceOf[JsonParams].params.prettyPrint)
+      }
     }
 
     Post("/test", JsonData(JsObject("x" -> JsString("1"), "Tags" -> JsObject("x" -> JsString("123"))))) ~> RawHeader(
