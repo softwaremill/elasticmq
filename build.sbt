@@ -59,7 +59,7 @@ val springWeb = "org.springframework" % "spring-web" % springVersion
 val scalaAsync = "org.scala-lang.modules" %% "scala-async" % "1.0.1"
 
 val scalikeJdbc = "org.scalikejdbc" %% "scalikejdbc" % "3.5.0"
-val h2 = "com.h2database" % "h2" % "2.1.214"
+val h2 = "com.h2database" % "h2" % "2.2.220"
 
 val common = Seq(scalalogging)
 
@@ -83,8 +83,10 @@ val buildSettings = commonSmlBuildSettings ++ ossPublishSettings ++ Seq(
   // workaround for: https://github.com/sbt/sbt/issues/692
   Test / fork := true,
   assembly / assemblyMergeStrategy := {
-    case PathList(ps @ _*) if ps.last == "module-info.class" => MergeStrategy.first
-    case x                                                   => (assembly / assemblyMergeStrategy).value(x)
+    case PathList(ps@_*) if ps.last == "module-info.class" => MergeStrategy.first
+    case PathList(ps@_*) if ps.last == "reflect-config.json" => MergeStrategy.first
+    case PathList(ps@_*) if ps.last == "resource-config.json" => MergeStrategy.first
+    case x => (assembly / assemblyMergeStrategy).value(x)
   }
 )
 
