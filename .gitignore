@@ -10,3 +10,4 @@ project/boot
 /bin/
 
 .bsp
+.db
