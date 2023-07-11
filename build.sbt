@@ -29,7 +29,7 @@ val jodaTime = "joda-time" % "joda-time" % "2.12.5"
 val jodaConvert = "org.joda" % "joda-convert" % "2.2.3"
 val config = "com.typesafe" % "config" % "1.4.2"
 val pureConfig = "com.github.pureconfig" %% "pureconfig" % "0.17.4"
-val scalaXml = "org.scala-lang.modules" %% "scala-xml" % "2.1.0"
+val scalaXml = "org.scala-lang.modules" %% "scala-xml" % "2.2.0"
 
 val scalalogging = "com.typesafe.scala-logging" %% "scala-logging" % "3.9.5"
 val logback = "ch.qos.logback" % "logback-classic" % "1.3.8"
@@ -83,10 +83,10 @@ val buildSettings = commonSmlBuildSettings ++ ossPublishSettings ++ Seq(
   // workaround for: https://github.com/sbt/sbt/issues/692
   Test / fork := true,
   assembly / assemblyMergeStrategy := {
-    case PathList(ps@_*) if ps.last == "module-info.class" => MergeStrategy.first
-    case PathList(ps@_*) if ps.last == "reflect-config.json" => MergeStrategy.first
-    case PathList(ps@_*) if ps.last == "resource-config.json" => MergeStrategy.first
-    case x => (assembly / assemblyMergeStrategy).value(x)
+    case PathList(ps @ _*) if ps.last == "module-info.class"    => MergeStrategy.first
+    case PathList(ps @ _*) if ps.last == "reflect-config.json"  => MergeStrategy.first
+    case PathList(ps @ _*) if ps.last == "resource-config.json" => MergeStrategy.first
+    case x                                                      => (assembly / assemblyMergeStrategy).value(x)
   }
 )
 
