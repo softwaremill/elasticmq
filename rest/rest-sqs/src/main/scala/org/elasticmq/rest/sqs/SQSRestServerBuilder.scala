@@ -11,12 +11,7 @@ import org.elasticmq.actor.QueueManagerActor
 import org.elasticmq.metrics.QueuesMetrics
 import org.elasticmq.rest.sqs.Constants._
 import org.elasticmq.rest.sqs.XmlNsVersion.extractXmlNs
-import org.elasticmq.rest.sqs.directives.{
-  AWSProtocolDirectives,
-  AnyParamDirectives,
-  ElasticMQDirectives,
-  UnmatchedActionRoutes
-}
+import org.elasticmq.rest.sqs.directives.{AWSProtocolDirectives, AnyParamDirectives, ElasticMQDirectives, UnmatchedActionRoutes}
 import org.elasticmq.rest.sqs.model.RequestPayload
 import org.elasticmq.util.{Logging, NowProvider}
 
@@ -127,7 +122,7 @@ case class TheSQSRestServerBuilder(
     this.copy(queueEventListener = Some(_queueEventListener))
 
   def start(): SQSRestServer = {
-    val (theActorSystem, _) = getOrCreateActorSystem
+    val (theActorSystem, stopActorSystem) = getOrCreateActorSystem
     val theQueueManagerActor = getOrCreateQueueManagerActor(theActorSystem)
     val theServerAddress =
       if (generateServerAddress)
@@ -279,7 +274,7 @@ case class TheSQSRestServerBuilder(
 
     SQSRestServer(
       appStartFuture,
-      () => appStartFuture.flatMap(_.terminate(1.minute))
+      () => appStartFuture.flatMap(_.terminate(1.minute)).flatMap(_ => stopActorSystem())
     )
   }
 
