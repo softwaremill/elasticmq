@@ -2,14 +2,15 @@ package org.elasticmq.persistence.file
 
 import com.typesafe.config.{Config, ConfigFactory, ConfigObject, ConfigValue}
 import org.elasticmq.persistence.{CreateQueueMetadata, DeadLettersQueue, QueueSorter}
+import org.elasticmq.util.Logging
 import org.joda.time.DateTime
 
 import java.io.File
 import java.util.concurrent.TimeUnit
 import scala.collection.JavaConverters._
-import scala.util.Try
+import scala.util.{Failure, Success, Try}
 
-object QueueConfigUtil {
+object QueueConfigUtil extends Logging {
 
   def readPersistedQueuesFromPath(queuesStoragePath: String): List[CreateQueueMetadata] =
     Try(ConfigFactory.parseFile(new File(queuesStoragePath)))
@@ -22,11 +23,25 @@ object QueueConfigUtil {
         .getObject("queues")
         .asScala
         .toMap
-    )
-      .map(getQueuesFromConfig(_))
-      .getOrElse(Nil)
+    ) match {
+      case Success(value) => getQueuesFromConfig(value)
+      case Failure(ex) => {
+        logger.error("Failed to extract queue configuration", ex)
+        throw new IllegalStateException(ex)
+      }
+    }
 
-  def getQueuesFromConfig(queuesConfig: Map[String, ConfigValue]): List[CreateQueueMetadata] = {
+  private def getQueuesFromConfig(queuesConfig: Map[String, ConfigValue]): List[CreateQueueMetadata] = {
+    Try(getQueuesFromConfigUnsafe(queuesConfig)) match {
+      case Success(value) => value
+      case Failure(ex) => {
+        logger.error("Failed to create queues from config", ex)
+        throw new IllegalStateException(ex)
+      }
+    }
+  }
+
+  private def getQueuesFromConfigUnsafe(queuesConfig: Map[String, ConfigValue]): List[CreateQueueMetadata] = {
     def getOptionalBoolean(c: Config, k: String) = if (c.hasPath(k)) Some(c.getBoolean(k)) else None
 
     def getOptionalLong(c: Config, k: String) = if (c.hasPath(k)) Some(c.getLong(k)) else None
