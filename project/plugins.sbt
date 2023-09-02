@@ -4,14 +4,10 @@ resolvers += "Era7 maven releases" at "https://s3-eu-west-1.amazonaws.com/releas
 val sbtSoftwaremillVersion = "2.0.17"
 addSbtPlugin("com.softwaremill.sbt-softwaremill" % "sbt-softwaremill-common" % sbtSoftwaremillVersion)
 addSbtPlugin("com.softwaremill.sbt-softwaremill" % "sbt-softwaremill-publish" % sbtSoftwaremillVersion)
-
-addSbtPlugin("com.eed3si9n" % "sbt-assembly" % "2.1.1")
-
-addSbtPlugin("org.scoverage" % "sbt-scoverage" % "2.0.8")
-
 addSbtPlugin("com.github.sbt" % "sbt-native-packager" % "1.9.16")
-
-addSbtPlugin("com.typesafe.sbt" % "sbt-git" % "1.0.2")
+addSbtPlugin("com.github.sbt" % "sbt-git" % "2.0.1")
+addSbtPlugin("com.eed3si9n" % "sbt-assembly" % "2.1.1")
+addSbtPlugin("org.scoverage" % "sbt-scoverage" % "2.0.8")
 
 libraryDependencies += "com.amazonaws" % "aws-java-sdk-s3" % "1.11.601"
 
