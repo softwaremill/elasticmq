@@ -4,10 +4,10 @@ import org.elasticmq._
 import org.elasticmq.actor.reply._
 import org.elasticmq.actor.test.{ActorTest, DataCreationHelpers, QueueManagerForEachTest}
 import org.elasticmq.msg._
-import org.joda.time.DateTime
 import org.scalatest.EitherValues
 import org.scalatest.matchers.should.Matchers
 
+import java.time.OffsetDateTime
 import scala.concurrent.Await
 import scala.concurrent.duration.DurationInt
 
@@ -33,7 +33,7 @@ class DeduplicationTimerTest
       } yield (fifoQueue, firstLookup),
       1.second
     )
-    nowProvider.mutableNowMillis.set(DateTime.now().plusMinutes(5).plusSeconds(1).getMillis)
+    nowProvider.mutableNowMillis.set(OffsetDateTime.now().plusMinutes(5).plusSeconds(1).toInstant.toEpochMilli)
 
     // Timer is scheduled to run each second, to eliminate random time errors we are waiting a little bit longer
     Thread.sleep(1500)

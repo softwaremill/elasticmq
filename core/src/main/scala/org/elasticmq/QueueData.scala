@@ -1,14 +1,14 @@
 package org.elasticmq
 
-import org.joda.time.{Duration, DateTime}
+import java.time.{Duration, OffsetDateTime}
 
 case class QueueData(
     name: String,
     defaultVisibilityTimeout: MillisVisibilityTimeout,
     delay: Duration,
     receiveMessageWait: Duration,
-    created: DateTime,
-    lastModified: DateTime,
+    created: OffsetDateTime,
+    lastModified: OffsetDateTime,
     deadLettersQueue: Option[DeadLettersQueueData] = None,
     isFifo: Boolean = false,
     hasContentBasedDeduplication: Boolean = false,

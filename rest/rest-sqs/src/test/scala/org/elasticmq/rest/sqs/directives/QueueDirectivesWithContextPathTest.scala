@@ -10,10 +10,10 @@ import org.elasticmq.msg.CreateQueue
 import org.elasticmq.rest.sqs.{ActorSystemModule, ContextPathModule, QueueManagerActorModule}
 import org.elasticmq.util.NowProvider
 import org.elasticmq.{CreateQueueData, MillisVisibilityTimeout, QueueData, StrictSQSLimits}
-import org.joda.time.{DateTime, Duration}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
+import java.time.{Duration, OffsetDateTime}
 import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContextExecutor}
 
@@ -42,7 +42,7 @@ class QueueDirectivesWithContextPathTest
   "queueActorAndNameFromUrl" should "return correct queue name based on QueueName" in {
     val future = queueManagerActor ? CreateQueue(
       CreateQueueData.from(
-        QueueData("lol", MillisVisibilityTimeout(1L), Duration.ZERO, Duration.ZERO, DateTime.now(), DateTime.now())
+        QueueData("lol", MillisVisibilityTimeout(1L), Duration.ZERO, Duration.ZERO, OffsetDateTime.now(), OffsetDateTime.now())
       )
     )
     Await.result(future, maxDuration)
@@ -60,7 +60,7 @@ class QueueDirectivesWithContextPathTest
   "queueActorAndNameFromUrl" should "return correct queue name based on QueueUrl" in {
     val future = queueManagerActor ? CreateQueue(
       CreateQueueData.from(
-        QueueData("lol", MillisVisibilityTimeout(1L), Duration.ZERO, Duration.ZERO, DateTime.now(), DateTime.now())
+        QueueData("lol", MillisVisibilityTimeout(1L), Duration.ZERO, Duration.ZERO, OffsetDateTime.now(), OffsetDateTime.now())
       )
     )
     Await.result(future, maxDuration)

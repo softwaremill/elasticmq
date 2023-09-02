@@ -9,13 +9,13 @@ import org.elasticmq.msg.CreateQueue
 import org.elasticmq.rest.sqs.{ActorSystemModule, ContextPathModule, QueueManagerActorModule}
 import org.elasticmq.util.NowProvider
 import org.elasticmq.{CreateQueueData, MillisVisibilityTimeout, QueueData, StrictSQSLimits}
-import org.joda.time.{DateTime, Duration}
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-import scala.concurrent.duration._
+import java.time.{Duration, OffsetDateTime}
 import scala.concurrent.ExecutionContextExecutor
+import scala.concurrent.duration._
 
 class QueueDirectivesTest
     extends AnyFlatSpec
@@ -43,7 +43,7 @@ class QueueDirectivesTest
   "queueActorFromUrl" should "return correct queue name based on QueueName" in {
     val future = queueManagerActor ? CreateQueue(
       CreateQueueData.from(
-        QueueData("lol", MillisVisibilityTimeout(1L), Duration.ZERO, Duration.ZERO, DateTime.now(), DateTime.now())
+        QueueData("lol", MillisVisibilityTimeout(1L), Duration.ZERO, Duration.ZERO, OffsetDateTime.now(), OffsetDateTime.now())
       )
     )
     future.value
@@ -61,7 +61,7 @@ class QueueDirectivesTest
   "queueActorAndNameFromUrl" should "return correct queue name based on QueueUrl" in {
     val future = queueManagerActor ? CreateQueue(
       CreateQueueData.from(
-        QueueData("lol", MillisVisibilityTimeout(1L), Duration.ZERO, Duration.ZERO, DateTime.now(), DateTime.now())
+        QueueData("lol", MillisVisibilityTimeout(1L), Duration.ZERO, Duration.ZERO, OffsetDateTime.now(), OffsetDateTime.now())
       )
     )
     future.value
@@ -79,7 +79,7 @@ class QueueDirectivesTest
   "queueActorAndNameFromUrl" should "return error when invalid QueueUrl" in {
     val future = queueManagerActor ? CreateQueue(
       CreateQueueData.from(
-        QueueData("lol", MillisVisibilityTimeout(1L), Duration.ZERO, Duration.ZERO, DateTime.now(), DateTime.now())
+        QueueData("lol", MillisVisibilityTimeout(1L), Duration.ZERO, Duration.ZERO, OffsetDateTime.now(), OffsetDateTime.now())
       )
     )
     future.value

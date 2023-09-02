@@ -42,8 +42,8 @@ object QueuePersister {
   private def toQueueConfig(queue: QueueData): QueueMetadata =
     QueueMetadata(
       queue.defaultVisibilityTimeout.millis,
-      queue.delay.getMillis,
-      queue.receiveMessageWait.getMillis,
+      queue.delay.toMillis,
+      queue.receiveMessageWait.toMillis,
       queue.deadLettersQueue,
       queue.isFifo,
       queue.hasContentBasedDeduplication,

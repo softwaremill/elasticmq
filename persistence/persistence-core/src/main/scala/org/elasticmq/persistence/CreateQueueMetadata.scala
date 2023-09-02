@@ -1,7 +1,9 @@
 package org.elasticmq.persistence
 
+import org.elasticmq.util.OffsetDateTimeUtil
 import org.elasticmq.{CreateQueueData, DeadLettersQueueData, MillisVisibilityTimeout, QueueData}
-import org.joda.time.{DateTime, Duration}
+
+import java.time.Duration
 
 case class CreateQueueMetadata(
     name: String,
@@ -22,10 +24,10 @@ case class CreateQueueMetadata(
     CreateQueueData(
       name = name,
       defaultVisibilityTimeoutSeconds.map(sec => MillisVisibilityTimeout.fromSeconds(sec)),
-      delaySeconds.map(sec => Duration.standardSeconds(sec)),
-      receiveMessageWaitSeconds.map(sec => Duration.standardSeconds(sec)),
-      created = Some(new DateTime(created)),
-      lastModified = Some(new DateTime(lastModified)),
+      delaySeconds.map(sec => Duration.ofSeconds(sec)),
+      receiveMessageWaitSeconds.map(sec => Duration.ofSeconds(sec)),
+      created = Some(OffsetDateTimeUtil.ofEpochMilli(created)),
+      lastModified = Some(OffsetDateTimeUtil.ofEpochMilli(lastModified)),
       deadLettersQueue = deadLettersQueue.map(dlq => DeadLettersQueueData(dlq.name, dlq.maxReceiveCount)),
       isFifo = isFifo,
       hasContentBasedDeduplication = hasContentBasedDeduplication,
@@ -42,10 +44,10 @@ object CreateQueueMetadata {
     CreateQueueMetadata(
       queueData.name,
       Some(queueData.defaultVisibilityTimeout.seconds),
-      Some(queueData.delay.getStandardSeconds),
-      Some(queueData.receiveMessageWait.getStandardSeconds),
-      queueData.created.toInstant.getMillis,
-      queueData.lastModified.toInstant.getMillis,
+      Some(queueData.delay.toSeconds),
+      Some(queueData.receiveMessageWait.toSeconds),
+      queueData.created.toInstant.toEpochMilli,
+      queueData.lastModified.toInstant.toEpochMilli,
       queueData.deadLettersQueue.map(dlq => DeadLettersQueue(dlq.name, dlq.maxReceiveCount)),
       queueData.isFifo,
       queueData.hasContentBasedDeduplication,

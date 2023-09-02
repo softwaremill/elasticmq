@@ -2,10 +2,10 @@ package org.elasticmq
 
 import org.elasticmq.actor.queue.InternalMessage
 import org.elasticmq.util.NowProvider
-import org.joda.time.DateTime
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 
+import java.time.OffsetDateTime
 import scala.collection.mutable
 
 class FifoDeduplicationIdsHistoryTest extends AnyFunSuite with Matchers {
@@ -13,10 +13,10 @@ class FifoDeduplicationIdsHistoryTest extends AnyFunSuite with Matchers {
   test("Should store added deduplication IDs") {
     val history = FifoDeduplicationIdsHistory.newHistory()
     val updatedHistory = history
-      .addNew(newInternalMessage(Some(DeduplicationId("1")), DateTime.now()))
-      .addNew(newInternalMessage(Some(DeduplicationId("2")), DateTime.now()))
-      .addNew(newInternalMessage(Some(DeduplicationId("3")), DateTime.now()))
-      .addNew(newInternalMessage(Some(DeduplicationId("4")), DateTime.now()))
+      .addNew(newInternalMessage(Some(DeduplicationId("1")), OffsetDateTime.now()))
+      .addNew(newInternalMessage(Some(DeduplicationId("2")), OffsetDateTime.now()))
+      .addNew(newInternalMessage(Some(DeduplicationId("3")), OffsetDateTime.now()))
+      .addNew(newInternalMessage(Some(DeduplicationId("4")), OffsetDateTime.now()))
 
     updatedHistory.messagesByDeduplicationId.keys shouldBe Set(
       DeduplicationId("1"),
@@ -30,26 +30,26 @@ class FifoDeduplicationIdsHistoryTest extends AnyFunSuite with Matchers {
 
   test("History should not override given deduplication ID entry if such one already exists") {
     val history = FifoDeduplicationIdsHistory.newHistory()
-    val dateTimeInPast = DateTime.now().minusMinutes(10)
+    val OffsetDateTimeInPast = OffsetDateTime.now().minusMinutes(10)
     val updatedHistory = history
-      .addNew(newInternalMessage(Some(DeduplicationId("1")), dateTimeInPast))
-      .addNew(newInternalMessage(Some(DeduplicationId("1")), DateTime.now()))
+      .addNew(newInternalMessage(Some(DeduplicationId("1")), OffsetDateTimeInPast))
+      .addNew(newInternalMessage(Some(DeduplicationId("1")), OffsetDateTime.now()))
 
     updatedHistory.messagesByDeduplicationId.keys shouldBe Set(
       DeduplicationId("1")
     )
     updatedHistory.deduplicationIdsByCreationDate shouldBe List(
-      DeduplicationIdWithCreationDate(DeduplicationId("1"), dateTimeInPast)
+      DeduplicationIdWithCreationDate(DeduplicationId("1"), OffsetDateTimeInPast)
     )
   }
 
   test("History should show if given deduplication ID was already used or not") {
     val history = FifoDeduplicationIdsHistory.newHistory()
     val updatedHistory = history
-      .addNew(newInternalMessage(Some(DeduplicationId("1")), DateTime.now()))
-      .addNew(newInternalMessage(Some(DeduplicationId("2")), DateTime.now()))
-      .addNew(newInternalMessage(Some(DeduplicationId("3")), DateTime.now()))
-      .addNew(newInternalMessage(Some(DeduplicationId("4")), DateTime.now()))
+      .addNew(newInternalMessage(Some(DeduplicationId("1")), OffsetDateTime.now()))
+      .addNew(newInternalMessage(Some(DeduplicationId("2")), OffsetDateTime.now()))
+      .addNew(newInternalMessage(Some(DeduplicationId("3")), OffsetDateTime.now()))
+      .addNew(newInternalMessage(Some(DeduplicationId("4")), OffsetDateTime.now()))
 
     updatedHistory.wasRegistered(Some(DeduplicationId("1"))) should be(defined)
     updatedHistory.wasRegistered(Some(DeduplicationId("4"))) should be(defined)
@@ -59,7 +59,7 @@ class FifoDeduplicationIdsHistoryTest extends AnyFunSuite with Matchers {
 
   test("History should erase all entries that were created 5 or more minutes ago") {
     val history = FifoDeduplicationIdsHistory.newHistory()
-    val now = DateTime.now()
+    val now = OffsetDateTime.now()
     val updatedHistory = history
       .addNew(newInternalMessage(Some(DeduplicationId("1")), now.minusMinutes(20)))
       .addNew(newInternalMessage(Some(DeduplicationId("2")), now.minusMinutes(10)))
@@ -77,7 +77,7 @@ class FifoDeduplicationIdsHistoryTest extends AnyFunSuite with Matchers {
 
   test("Cleaning outdated IDs should stop at first ID which was created in last 5 minutes") {
     val history = FifoDeduplicationIdsHistory.newHistory()
-    val now = DateTime.now()
+    val now = OffsetDateTime.now()
     val updatedHistory = history
       .addNew(newInternalMessage(Some(DeduplicationId("1")), now.minusMinutes(20)))
       .addNew(newInternalMessage(Some(DeduplicationId("2")), now.minusMinutes(4)))
@@ -100,7 +100,7 @@ class FifoDeduplicationIdsHistoryTest extends AnyFunSuite with Matchers {
     )
   }
 
-  def newInternalMessage(maybeDeduplicationId: Option[DeduplicationId], created: DateTime): InternalMessage =
+  def newInternalMessage(maybeDeduplicationId: Option[DeduplicationId], created: OffsetDateTime): InternalMessage =
     InternalMessage(
       id = "1",
       deliveryReceipts = mutable.Buffer.empty,

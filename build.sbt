@@ -4,7 +4,7 @@ import com.softwaremill.SbtSoftwareMillCommon.commonSmlBuildSettings
 import com.typesafe.sbt.packager.docker.{Cmd, ExecCmd}
 import sbt.Keys.javaOptions
 import sbt.internal.util.complete.Parsers.spaceDelimited
-import scoverage.ScoverageKeys._
+import scoverage.ScoverageKeys.*
 
 import scala.sys.process.Process
 
@@ -25,8 +25,6 @@ lazy val yarnTask = inputKey[Unit]("Run yarn with arguments")
 lazy val ensureDockerBuildx = taskKey[Unit]("Ensure that docker buildx configuration exists")
 lazy val dockerBuildWithBuildx = taskKey[Unit]("Build docker images using buildx")
 
-val jodaTime = "joda-time" % "joda-time" % "2.12.5"
-val jodaConvert = "org.joda" % "joda-convert" % "2.2.3"
 val config = "com.typesafe" % "config" % "1.4.2"
 val pureConfig = "com.github.pureconfig" %% "pureconfig" % "0.17.4"
 val scalaXml = "org.scala-lang.modules" %% "scala-xml" % "2.2.0"
@@ -111,7 +109,7 @@ lazy val core: Project = (project in file("core"))
   .settings(
     Seq(
       name := "elasticmq-core",
-      libraryDependencies ++= Seq(jodaTime, jodaConvert, akka2Actor, akka2Testkit) ++ common,
+      libraryDependencies ++= Seq(akka2Actor, akka2Testkit) ++ common,
       coverageMinimumStmtTotal := 94
     )
   )
@@ -288,7 +286,6 @@ lazy val nativeServer: Project = (project in file("native-server"))
         "-H:IncludeResources=.*conf",
         "-H:IncludeResources=version",
         "-H:IncludeResources=.*\\.properties",
-        "-H:IncludeResources=org/joda/time/tz/data/.*",
         "-H:+ReportExceptionStackTraces",
         "-H:-ThrowUnsafeOffsetErrors",
         "--enable-http",

@@ -4,14 +4,16 @@ import org.elasticmq._
 import org.elasticmq.actor.reply._
 import org.elasticmq.actor.test.{ActorTest, DataCreationHelpers, QueueManagerForEachTest}
 import org.elasticmq.msg._
-import org.joda.time.{DateTime, Duration}
+import org.elasticmq.util.OffsetDateTimeUtil
+
+import java.time.Duration
 
 class QueueActorQueueOpsTest extends ActorTest with QueueManagerForEachTest with DataCreationHelpers {
 
   test("queue modified and created dates should be stored") {
     // Given
-    val created = new DateTime(1216168602L)
-    val lastModified = new DateTime(1316168602L)
+    val created = OffsetDateTimeUtil.ofEpochMilli(1216168602L)
+    val lastModified = OffsetDateTimeUtil.ofEpochMilli(1316168602L)
 
     for {
       Right(queueActor) <- queueManagerActor ? CreateQueue(

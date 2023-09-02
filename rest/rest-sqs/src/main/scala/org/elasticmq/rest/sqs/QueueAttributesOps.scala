@@ -10,10 +10,10 @@ import org.elasticmq.rest.sqs.model.RedrivePolicy.BackwardCompatibleRedrivePolic
 import org.elasticmq.rest.sqs.model.RedrivePolicyJson._
 import org.elasticmq.util.Logging
 import org.elasticmq.{DeadLettersQueueData, MillisVisibilityTimeout, QueueData}
-import org.joda.time.Duration
 import spray.json.JsonParser.ParsingException
 import spray.json._
 
+import java.time.Duration
 import scala.async.Async.{async, await}
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -49,7 +49,7 @@ trait QueueAttributesOps extends AttributesModule {
           () => Future.successful(queueData.defaultVisibilityTimeout.seconds.toString)
         ),
         AttributeValuesCalculator
-          .Rule(DelaySecondsAttribute, () => Future.successful(queueData.delay.getStandardSeconds.toString)),
+          .Rule(DelaySecondsAttribute, () => Future.successful(queueData.delay.toSeconds.toString)),
         AttributeValuesCalculator
           .Rule(ApproximateNumberOfMessagesAttribute, () => stats.map(_.approximateNumberOfVisibleMessages.toString)),
         AttributeValuesCalculator.Rule(
@@ -61,14 +61,14 @@ trait QueueAttributesOps extends AttributesModule {
           () => stats.map(_.approximateNumberOfMessagesDelayed.toString)
         ),
         AttributeValuesCalculator
-          .Rule(CreatedTimestampAttribute, () => Future.successful((queueData.created.getMillis / 1000L).toString)),
+          .Rule(CreatedTimestampAttribute, () => Future.successful((queueData.created.toInstant.toEpochMilli / 1000L).toString)),
         AttributeValuesCalculator.Rule(
           LastModifiedTimestampAttribute,
-          () => Future.successful((queueData.lastModified.getMillis / 1000L).toString)
+          () => Future.successful((queueData.lastModified.toInstant.toEpochMilli / 1000L).toString)
         ),
         AttributeValuesCalculator.Rule(
           ReceiveMessageWaitTimeSecondsAttribute,
-          () => Future.successful(queueData.receiveMessageWait.getStandardSeconds.toString)
+          () => Future.successful(queueData.receiveMessageWait.toSeconds.toString)
         ),
         AttributeValuesCalculator.Rule(
           QueueArnAttribute,
@@ -116,9 +116,9 @@ trait QueueAttributesOps extends AttributesModule {
             MillisVisibilityTimeout.fromSeconds(attributeValue.toLong)
           )
         case DelaySecondsAttribute =>
-          queueActor ? UpdateQueueDelay(Duration.standardSeconds(attributeValue.toLong))
+          queueActor ? UpdateQueueDelay(Duration.ofSeconds(attributeValue.toLong))
         case ReceiveMessageWaitTimeSecondsAttribute =>
-          queueActor ? UpdateQueueReceiveMessageWait(Duration.standardSeconds(attributeValue.toLong))
+          queueActor ? UpdateQueueReceiveMessageWait(Duration.ofSeconds(attributeValue.toLong))
 
         case RedrivePolicyParameter =>
           val redrivePolicy =
