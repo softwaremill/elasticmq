@@ -59,7 +59,7 @@ val springWeb = "org.springframework" % "spring-web" % springVersion
 val scalaAsync = "org.scala-lang.modules" %% "scala-async" % "1.0.1"
 
 val scalikeJdbc = "org.scalikejdbc" %% "scalikejdbc" % "3.5.0"
-val h2 = "com.h2database" % "h2" % "2.2.220"
+val h2 = "com.h2database" % "h2" % "2.2.222"
 
 val common = Seq(scalalogging)
 
