@@ -44,8 +44,8 @@ object CreateQueueMetadata {
     CreateQueueMetadata(
       queueData.name,
       Some(queueData.defaultVisibilityTimeout.seconds),
-      Some(queueData.delay.toSeconds),
-      Some(queueData.receiveMessageWait.toSeconds),
+      Some(queueData.delay.getSeconds),
+      Some(queueData.receiveMessageWait.getSeconds),
       queueData.created.toInstant.toEpochMilli,
       queueData.lastModified.toInstant.toEpochMilli,
       queueData.deadLettersQueue.map(dlq => DeadLettersQueue(dlq.name, dlq.maxReceiveCount)),

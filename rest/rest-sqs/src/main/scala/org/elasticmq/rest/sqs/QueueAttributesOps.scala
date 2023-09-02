@@ -49,7 +49,7 @@ trait QueueAttributesOps extends AttributesModule {
           () => Future.successful(queueData.defaultVisibilityTimeout.seconds.toString)
         ),
         AttributeValuesCalculator
-          .Rule(DelaySecondsAttribute, () => Future.successful(queueData.delay.toSeconds.toString)),
+          .Rule(DelaySecondsAttribute, () => Future.successful(queueData.delay.getSeconds.toString)),
         AttributeValuesCalculator
           .Rule(ApproximateNumberOfMessagesAttribute, () => stats.map(_.approximateNumberOfVisibleMessages.toString)),
         AttributeValuesCalculator.Rule(
@@ -68,7 +68,7 @@ trait QueueAttributesOps extends AttributesModule {
         ),
         AttributeValuesCalculator.Rule(
           ReceiveMessageWaitTimeSecondsAttribute,
-          () => Future.successful(queueData.receiveMessageWait.toSeconds.toString)
+          () => Future.successful(queueData.receiveMessageWait.getSeconds.toString)
         ),
         AttributeValuesCalculator.Rule(
           QueueArnAttribute,
