@@ -285,6 +285,7 @@ lazy val nativeServer: Project = (project in file("native-server"))
         .value,
       graalVMNativeImageOptions ++= Seq(
         "--static",
+        "--libc=musl",
         "-H:IncludeResources=.*conf",
         "-H:IncludeResources=version",
         "-H:IncludeResources=.*\\.properties",
