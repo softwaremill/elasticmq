@@ -77,11 +77,13 @@
 },
 {
   "name":"akka.actor.LocalActorRefProvider$Guardian",
-  "allDeclaredConstructors":true
+  "allDeclaredConstructors":true,
+  "methods":[{"name":"<init>","parameterTypes":["akka.actor.SupervisorStrategy"] }]
 },
 {
   "name":"akka.actor.LocalActorRefProvider$SystemGuardian",
-  "allDeclaredConstructors":true
+  "allDeclaredConstructors":true,
+  "methods":[{"name":"<init>","parameterTypes":["akka.actor.SupervisorStrategy","akka.actor.ActorRef"] }]
 },
 {
   "name":"akka.actor.Props$EmptyActor",
@@ -158,7 +160,8 @@
 },
 {
   "name":"akka.event.EventStreamUnsubscriber",
-  "allDeclaredConstructors":true
+  "allDeclaredConstructors":true,
+  "methods":[{"name":"<init>","parameterTypes":["akka.event.EventStream","boolean"] }]
 },
 {
   "name":"akka.event.LoggerMailboxType",
@@ -195,7 +198,8 @@
 },
 {
   "name":"akka.io.SelectionHandler",
-  "allDeclaredConstructors":true
+  "allDeclaredConstructors":true,
+  "methods":[{"name":"<init>","parameterTypes":["akka.io.SelectionHandlerSettings"] }]
 },
 {
   "name":"akka.io.TcpIncomingConnection",
@@ -203,11 +207,13 @@
 },
 {
   "name":"akka.io.TcpListener",
-  "allDeclaredConstructors":true
+  "allDeclaredConstructors":true,
+  "methods":[{"name":"<init>","parameterTypes":["akka.actor.ActorRef","akka.io.TcpExt","akka.io.ChannelRegistry","akka.actor.ActorRef","akka.io.Tcp$Bind"] }]
 },
 {
   "name":"akka.io.TcpManager",
-  "allDeclaredConstructors":true
+  "allDeclaredConstructors":true,
+  "methods":[{"name":"<init>","parameterTypes":["akka.io.TcpExt"] }]
 },
 {
   "name":"akka.pattern.PromiseActorRef",
@@ -226,7 +232,8 @@
 },
 {
   "name":"akka.routing.RoutedActorCell$RouterActorCreator",
-  "allDeclaredConstructors":true
+  "allDeclaredConstructors":true,
+  "methods":[{"name":"<init>","parameterTypes":["akka.routing.RouterConfig"] }]
 },
 {
   "name":"akka.serialization.BooleanSerializer",

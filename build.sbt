@@ -264,7 +264,7 @@ lazy val server: Project = (project in file("server"))
   )
   .dependsOn(core, restSqs, persistenceFile, persistenceSql, commonTest % "test")
 
-val graalVmVersion = "22.1.0"
+val graalVmVersion = "22.3.3"
 
 lazy val nativeServer: Project = (project in file("native-server"))
   .enablePlugins(GraalVMNativeImagePlugin, DockerPlugin)
@@ -281,7 +281,7 @@ lazy val nativeServer: Project = (project in file("native-server"))
       // configures sbt-native-packager to build app using dockerized graalvm
       // docker image source: https://github.com/graalvm/container/pkgs/container/graalvm-ce/versions
       (GraalVMNativeImage / containerBuildImage) := GraalVMNativeImagePlugin
-        .generateContainerBuildImage(s"ghcr.io/graalvm/graalvm-ce:ol8-java11-$graalVmVersion")
+        .generateContainerBuildImage(s"ghcr.io/graalvm/graalvm-ce:ol9-java17-$graalVmVersion")
         .value,
       graalVMNativeImageOptions ++= Seq(
         "--static",
