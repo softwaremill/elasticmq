@@ -1,6 +1,6 @@
 package org.elasticmq
 
-import org.joda.time.DateTime
+import java.time.OffsetDateTime
 
 case class MessageStatistics(approximateFirstReceive: Received, approximateReceiveCount: Int)
 
@@ -9,5 +9,5 @@ object MessageStatistics {
 }
 
 sealed trait Received
-case class OnDateTimeReceived(when: DateTime) extends Received
+case class OnDateTimeReceived(when: OffsetDateTime) extends Received
 case object NeverReceived extends Received

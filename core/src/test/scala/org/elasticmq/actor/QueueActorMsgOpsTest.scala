@@ -1,10 +1,12 @@
 package org.elasticmq.actor
 
-import org.elasticmq.actor.reply._
 import org.elasticmq._
-import org.elasticmq.msg._
+import org.elasticmq.actor.reply._
 import org.elasticmq.actor.test.{ActorTest, DataCreationHelpers, QueueManagerForEachTest}
-import org.joda.time.{DateTime, Duration}
+import org.elasticmq.msg._
+import org.elasticmq.util.OffsetDateTimeUtil
+
+import java.time.Duration
 
 class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with DataCreationHelpers {
 
@@ -290,8 +292,8 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
     } yield {
       // Then
       lookupResult.statistics should be(MessageStatistics.empty)
-      receiveResult1.statistics should be(MessageStatistics(OnDateTimeReceived(new DateTime(100L)), 1))
-      receiveResult2.statistics should be(MessageStatistics(OnDateTimeReceived(new DateTime(100L)), 2))
+      receiveResult1.statistics should be(MessageStatistics(OnDateTimeReceived(OffsetDateTimeUtil.ofEpochMilli(100L)), 1))
+      receiveResult2.statistics should be(MessageStatistics(OnDateTimeReceived(OffsetDateTimeUtil.ofEpochMilli(100L)), 2))
     }
   }
 
@@ -352,7 +354,7 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
       Right(queueActor) <- queueManagerActor ? CreateQueue(q1)
 
       // When
-      receiveResults <- queueActor ? ReceiveMessages(DefaultVisibilityTimeout, 5, Some(Duration.millis(500L)), None)
+      receiveResults <- queueActor ? ReceiveMessages(DefaultVisibilityTimeout, 5, Some(Duration.ofMillis(500L)), None)
     } yield {
       // Then
       val end = System.currentTimeMillis()
@@ -375,7 +377,7 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
       receiveResultsFuture = queueActor ? ReceiveMessages(
         DefaultVisibilityTimeout,
         5,
-        Some(Duration.millis(1000L)),
+        Some(Duration.ofMillis(1000L)),
         None
       )
       _ <- {
@@ -404,13 +406,13 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
       receiveResults1Future = queueActor ? ReceiveMessages(
         DefaultVisibilityTimeout,
         5,
-        Some(Duration.millis(1000L)),
+        Some(Duration.ofMillis(1000L)),
         None
       )
       receiveResults2Future = queueActor ? ReceiveMessages(
         DefaultVisibilityTimeout,
         5,
-        Some(Duration.millis(1000L)),
+        Some(Duration.ofMillis(1000L)),
         None
       )
 
@@ -443,19 +445,19 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
       receiveResults1Future = queueActor ? ReceiveMessages(
         DefaultVisibilityTimeout,
         5,
-        Some(Duration.millis(1000L)),
+        Some(Duration.ofMillis(1000L)),
         None
       )
       receiveResults2Future = queueActor ? ReceiveMessages(
         DefaultVisibilityTimeout,
         5,
-        Some(Duration.millis(1000L)),
+        Some(Duration.ofMillis(1000L)),
         None
       )
       receiveResults3Future = queueActor ? ReceiveMessages(
         DefaultVisibilityTimeout,
         5,
-        Some(Duration.millis(1000L)),
+        Some(Duration.ofMillis(1000L)),
         None
       )
 
@@ -585,7 +587,7 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
       _ <- queueActor ? SendMessage(m1)
       _ = nowProvider.mutableNowMillis.set(1000L)
       resultsOriginal <- queueActor ? ReceiveMessages(DefaultVisibilityTimeout, 5, None, None)
-      resultsCopied <- copyToActor ? ReceiveMessages(DefaultVisibilityTimeout, 5, Some(Duration.millis(500)), None)
+      resultsCopied <- copyToActor ? ReceiveMessages(DefaultVisibilityTimeout, 5, Some(Duration.ofMillis(500)), None)
     } yield {
       // Then
       resultsOriginal.map(_.id) should be(List(MessageId(m1ID)))

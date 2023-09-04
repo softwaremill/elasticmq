@@ -3,8 +3,8 @@ package org.elasticmq.actor.queue
 import akka.actor.{ActorRef, Cancellable}
 import org.elasticmq.actor.reply._
 import org.elasticmq.msg.{QueueMessageMsg, ReceiveMessages, SendMessage, UpdateVisibilityTimeout}
-import org.joda.time.Duration
 
+import java.time.Duration
 import scala.annotation.tailrec
 import scala.concurrent.{duration => scd}
 
@@ -41,7 +41,7 @@ trait QueueActorWaitForMessagesOps extends ReplyingActor with QueueActorMessageO
         val result = receiveMessages(visibilityTimeout, count, receiveRequestAttemptId)
         val waitForMessages = waitForMessagesOpt.getOrElse(queueData.receiveMessageWait)
 
-        if (result.result.contains(Nil) && waitForMessages.getMillis > 0) {
+        if (result.result.contains(Nil) && waitForMessages.toMillis > 0) {
           val seq = assignSequenceFor(rm, context.sender())
           logger.debug(s"${queueData.name}: Awaiting messages: start for sequence $seq.")
           scheduleTimeoutReply(seq, waitForMessages)
@@ -90,7 +90,7 @@ trait QueueActorWaitForMessagesOps extends ReplyingActor with QueueActorMessageO
   }
 
   private def scheduleTimeoutReply(seq: Long, waitForMessages: Duration): Unit = {
-    schedule(waitForMessages.getMillis, ReplyIfTimeout(seq, Nil))
+    schedule(waitForMessages.toMillis, ReplyIfTimeout(seq, Nil))
   }
 
   private def scheduleTryReplyWhenAvailable(): Unit = {

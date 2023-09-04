@@ -1,8 +1,8 @@
 package org.elasticmq.util
 
-import org.joda.time.DateTime
+import java.time.OffsetDateTime
 
 class NowProvider {
   def nowMillis: Long = System.currentTimeMillis()
-  def now = new DateTime()
+  def now: OffsetDateTime = OffsetDateTime.now()
 }

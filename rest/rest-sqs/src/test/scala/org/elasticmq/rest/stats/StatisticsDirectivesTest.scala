@@ -11,12 +11,12 @@ import org.elasticmq.rest.sqs.directives._
 import org.elasticmq.rest.sqs.{ActorSystemModule, QueueAttributesOps, QueueManagerActorModule}
 import org.elasticmq.util.MutableNowProvider
 import org.elasticmq.{CreateQueueData, MillisVisibilityTimeout, QueueData, StrictSQSLimits}
-import org.joda.time.{DateTime, Duration}
 import org.scalatest._
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
+import java.time.{Duration, LocalDate, ZoneOffset}
 import scala.concurrent.duration.DurationInt
 
 class StatisticsDirectivesTest
@@ -45,7 +45,7 @@ class StatisticsDirectivesTest
   implicit lazy val actorSystem: ActorSystem = ActorSystem("test-actor-system")
 
   implicit val nowProvider = new MutableNowProvider(
-    new DateTime().withDate(2020, 1, 1).withTimeAtStartOfDay().getMillis
+    LocalDate.of(2020, 1, 1).atStartOfDay(ZoneOffset.UTC).toInstant.toEpochMilli
   )
 
   lazy val queueManagerActor: ActorRef =
