@@ -1,7 +1,9 @@
 package org.elasticmq.actor.test
 
 import org.elasticmq._
-import org.joda.time.{DateTime, Duration}
+import org.elasticmq.util.OffsetDateTimeUtil
+
+import java.time.Duration
 
 trait DataCreationHelpers {
   def createQueueData(
@@ -19,8 +21,8 @@ trait DataCreationHelpers {
       defaultVisibilityTimeout = Some(defaultVisibilityTimeout),
       delay = Some(Duration.ZERO),
       receiveMessageWait = Some(Duration.ZERO),
-      created = Some(new DateTime(0)),
-      lastModified = Some(new DateTime(0)),
+      created = Some(OffsetDateTimeUtil.ofEpochMilli(0)),
+      lastModified = Some(OffsetDateTimeUtil.ofEpochMilli(0)),
       deadLettersQueue = deadLettersQueue,
       copyMessagesTo = copyMessagesToQueue,
       moveMessagesTo = moveMessagesToQueue,
@@ -45,7 +47,7 @@ trait DataCreationHelpers {
       content,
       messageAttributes,
       nextDelivery,
-      new DateTime(0),
+      OffsetDateTimeUtil.ofEpochMilli(0),
       MessageStatistics(NeverReceived, 0),
       messageGroupId,
       messageDeduplicationId,

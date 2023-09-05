@@ -1,15 +1,16 @@
 package org.elasticmq.actor.queue
 
 import org.elasticmq.NeverReceived
-import org.joda.time.DateTime
-
-import scala.collection.mutable
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 
+import java.time.OffsetDateTime
+import java.time.temporal.ChronoUnit
+import scala.collection.mutable
+
 class InternalMessageSpec extends AnyFunSuite with Matchers {
   test("Internal FIFO message should be ordered by their creation time") {
-    val freezedDateTime = new DateTime()
+    val freezedDateTime = OffsetDateTime.now()
 
     val first = InternalMessage(
       id = "id",
@@ -30,14 +31,14 @@ class InternalMessageSpec extends AnyFunSuite with Matchers {
     )
 
     val second = first.copy(
-      created = freezedDateTime.plusMillis(1)
+      created = freezedDateTime.plus(1, ChronoUnit.MILLIS)
     )
 
     first.compareTo(second) shouldBe 1
   }
 
   test("Internal FIFO messages should be ordered by their orderIndex if they share the same creation time") {
-    val freezedDateTime = new DateTime()
+    val freezedDateTime = OffsetDateTime.now()
 
     val first = InternalMessage(
       id = "id",

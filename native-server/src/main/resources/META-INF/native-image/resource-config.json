@@ -24,13 +24,7 @@
     }, 
     {
       "pattern":"\\Qorg/h2/util/data.zip\\E"
-    }, 
-    {
-      "pattern":"\\Qorg/joda/time/tz/data/Europe/Warsaw\\E"
-    }, 
-    {
-      "pattern":"\\Qorg/joda/time/tz/data/ZoneInfoMap\\E"
-    }, 
+    },
     {
       "pattern":"\\Qorg/slf4j/impl/StaticLoggerBinder.class\\E"
     }, 
@@ -47,7 +41,7 @@
   "bundles":[{
       "name":"org.apache.commons.dbcp2.LocalStrings",
       "locales":[
-        "",
+        "", 
         "und"
       ]
     }]

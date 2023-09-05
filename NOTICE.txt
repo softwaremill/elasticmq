@@ -5,7 +5,6 @@ This product uses the following libraries:
 
 For the core system:
 * scala (BSD-like license, http://www.scala-lang.org/node/146)
-* joda-time (Apache 2)
 * slf4j (MIT, http://www.slf4j.org/license.html)
 * logback (EPL 1.0/LGPL 2.1, http://logback.qos.ch/license.html)
 

@@ -1,6 +1,6 @@
 package org.elasticmq
 
-import org.joda.time.DateTime
+import java.time.OffsetDateTime
 
 case class MessageData(
     id: MessageId,
@@ -8,7 +8,7 @@ case class MessageData(
     content: String,
     messageAttributes: Map[String, MessageAttribute],
     nextDelivery: MillisNextDelivery,
-    created: DateTime,
+    created: OffsetDateTime,
     statistics: MessageStatistics,
     messageGroupId: Option[String],
     messageDeduplicationId: Option[DeduplicationId],

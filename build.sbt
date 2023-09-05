@@ -4,7 +4,7 @@ import com.softwaremill.SbtSoftwareMillCommon.commonSmlBuildSettings
 import com.typesafe.sbt.packager.docker.{Cmd, ExecCmd}
 import sbt.Keys.javaOptions
 import sbt.internal.util.complete.Parsers.spaceDelimited
-import scoverage.ScoverageKeys._
+import scoverage.ScoverageKeys.*
 
 import scala.sys.process.Process
 
@@ -25,15 +25,13 @@ lazy val yarnTask = inputKey[Unit]("Run yarn with arguments")
 lazy val ensureDockerBuildx = taskKey[Unit]("Ensure that docker buildx configuration exists")
 lazy val dockerBuildWithBuildx = taskKey[Unit]("Build docker images using buildx")
 
-val jodaTime = "joda-time" % "joda-time" % "2.12.5"
-val jodaConvert = "org.joda" % "joda-convert" % "2.2.3"
 val config = "com.typesafe" % "config" % "1.4.2"
 val pureConfig = "com.github.pureconfig" %% "pureconfig" % "0.17.4"
 val scalaXml = "org.scala-lang.modules" %% "scala-xml" % "2.2.0"
 
 val scalalogging = "com.typesafe.scala-logging" %% "scala-logging" % "3.9.5"
 val logback = "ch.qos.logback" % "logback-classic" % "1.3.11"
-val jclOverSlf4j = "org.slf4j" % "jcl-over-slf4j" % "2.0.7" // needed form amazon java sdk
+val jclOverSlf4j = "org.slf4j" % "jcl-over-slf4j" % "2.0.9" // needed form amazon java sdk
 
 val scalatest = "org.scalatest" %% "scalatest" % "3.2.16"
 val awaitility = "org.awaitility" % "awaitility-scala" % "4.2.0"
@@ -59,7 +57,7 @@ val springWeb = "org.springframework" % "spring-web" % springVersion
 val scalaAsync = "org.scala-lang.modules" %% "scala-async" % "1.0.1"
 
 val scalikeJdbc = "org.scalikejdbc" %% "scalikejdbc" % "3.5.0"
-val h2 = "com.h2database" % "h2" % "2.2.220"
+val h2 = "com.h2database" % "h2" % "2.2.222"
 
 val common = Seq(scalalogging)
 
@@ -111,7 +109,7 @@ lazy val core: Project = (project in file("core"))
   .settings(
     Seq(
       name := "elasticmq-core",
-      libraryDependencies ++= Seq(jodaTime, jodaConvert, akka2Actor, akka2Testkit) ++ common,
+      libraryDependencies ++= Seq(akka2Actor, akka2Testkit) ++ common,
       coverageMinimumStmtTotal := 94
     )
   )
@@ -288,7 +286,6 @@ lazy val nativeServer: Project = (project in file("native-server"))
         "-H:IncludeResources=.*conf",
         "-H:IncludeResources=version",
         "-H:IncludeResources=.*\\.properties",
-        "-H:IncludeResources=org/joda/time/tz/data/.*",
         "-H:+ReportExceptionStackTraces",
         "-H:-ThrowUnsafeOffsetErrors",
         "--enable-http",

@@ -9,11 +9,10 @@ import org.elasticmq.rest.sqs.Constants._
 import org.elasticmq.rest.sqs.MD5Util._
 import org.elasticmq.rest.sqs.directives.ElasticMQDirectives
 import org.elasticmq.rest.sqs.model.RequestPayload
-import org.joda.time.Duration
-import spray.json.DefaultJsonProtocol.{StringJsonFormat, jsonFormat7}
-import spray.json.RootJsonFormat
 import spray.json.DefaultJsonProtocol._
+import spray.json.RootJsonFormat
 
+import java.time.Duration
 import scala.xml.Elem
 
 trait ReceiveMessageDirectives {
@@ -72,7 +71,7 @@ trait ReceiveMessageDirectives {
           maxNumberOfMessagesAttributeOpt.getOrElse(1)
 
         val waitTimeSecondsFromParameters =
-          waitTimeSecondsAttributeOpt.map(Duration.standardSeconds)
+          waitTimeSecondsAttributeOpt.map(Duration.ofSeconds)
 
         val messageAttributeNames = requestParameters.MessageAttributeNames.getOrElse(List.empty)
 
@@ -100,7 +99,7 @@ trait ReceiveMessageDirectives {
           possiblyEmptyAttributeValuesCalculator.calculate[String](
             attributeNames,
             Rule(SenderIdAttribute, () => Some("127.0.0.1")),
-            Rule(SentTimestampAttribute, () => Some(msg.created.getMillis.toString)),
+            Rule(SentTimestampAttribute, () => Some(msg.created.toInstant.toEpochMilli.toString)),
             Rule(ApproximateReceiveCountAttribute, () => Some(msg.statistics.approximateReceiveCount.toString)),
             Rule(MessageDeduplicationIdAttribute, () => msg.messageDeduplicationId.map(_.id)),
             Rule(MessageGroupIdAttribute, () => msg.messageGroupId),
@@ -109,7 +108,7 @@ trait ReceiveMessageDirectives {
               () =>
                 Some((msg.statistics.approximateFirstReceive match {
                   case NeverReceived            => 0
-                  case OnDateTimeReceived(when) => when.getMillis
+                  case OnDateTimeReceived(when) => when.toInstant.toEpochMilli
                 }).toString)
             ),
             Rule(AWSTraceHeaderAttribute, () => msg.tracingId.map(_.id)),

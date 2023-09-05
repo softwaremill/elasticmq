@@ -301,6 +301,10 @@
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
 {
+  "name":"ch.qos.logback.classic.joran.SerializedModelConfigurator",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
   "name":"ch.qos.logback.classic.pattern.DateConverter",
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
@@ -322,6 +326,10 @@
 },
 {
   "name":"ch.qos.logback.classic.pattern.ThreadConverter",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"ch.qos.logback.classic.util.DefaultJoranConfigurator",
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
 {
@@ -748,11 +756,6 @@
   "queryAllPublicMethods":true
 },
 {
-  "name":"org.elasticmq.rest.sqs.QueueReadableAttributeNames",
-  "allDeclaredFields":true,
-  "queryAllPublicMethods":true
-},
-{
   "name":"org.elasticmq.rest.sqs.BatchDeleteMessageResponseEntry",
   "allDeclaredFields":true,
   "queryAllPublicMethods":true
@@ -858,6 +861,11 @@
   "queryAllPublicMethods":true
 },
 {
+  "name":"org.elasticmq.rest.sqs.QueueReadableAttributeNames",
+  "allDeclaredFields":true,
+  "queryAllPublicMethods":true
+},
+{
   "name":"org.elasticmq.rest.sqs.ReceiveMessageDirectives$ReceiveMessageActionRequest",
   "allDeclaredFields":true,
   "queryAllPublicMethods":true
@@ -869,11 +877,6 @@
 },
 {
   "name":"org.elasticmq.rest.sqs.ReceivedMessage",
-  "allDeclaredFields":true,
-  "queryAllPublicMethods":true
-},
-{
-  "name":"org.elasticmq.rest.sqs.TagsModule$TagNameAndValuesReader",
   "allDeclaredFields":true,
   "queryAllPublicMethods":true
 },
@@ -899,6 +902,11 @@
 },
 {
   "name":"org.elasticmq.rest.sqs.TagQueueActionRequest",
+  "allDeclaredFields":true,
+  "queryAllPublicMethods":true
+},
+{
+  "name":"org.elasticmq.rest.sqs.TagsModule$TagNameAndValuesReader",
   "allDeclaredFields":true,
   "queryAllPublicMethods":true
 },

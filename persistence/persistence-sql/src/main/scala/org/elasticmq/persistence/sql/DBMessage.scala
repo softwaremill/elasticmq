@@ -3,7 +3,7 @@ package org.elasticmq.persistence.sql
 import org.elasticmq._
 import org.elasticmq.actor.queue.InternalMessage
 import org.elasticmq.persistence.sql.SerializableAttributeProtocol._
-import org.joda.time.DateTime
+import org.elasticmq.util.OffsetDateTimeUtil
 import scalikejdbc.WrappedResultSet
 import spray.json._
 
@@ -39,7 +39,7 @@ case class DBMessage(
 
     val serializedDeliveryReceipts = new String(deliveryReceipts).parseJson.convertTo[List[String]]
 
-    val firstReceive = received.map(time => OnDateTimeReceived(new DateTime(time))).getOrElse(NeverReceived)
+    val firstReceive = received.map(time => OnDateTimeReceived(OffsetDateTimeUtil.ofEpochMilli(time))).getOrElse(NeverReceived)
 
     InternalMessage(
       messageId,
@@ -48,7 +48,7 @@ case class DBMessage(
       new String(content),
       serializedAttrs,
       Map.empty,
-      new DateTime(created),
+      OffsetDateTimeUtil.ofEpochMilli(created),
       orderIndex = 0,
       firstReceive,
       receiveCount,
@@ -93,7 +93,7 @@ object DBMessage {
 
     val received = message.firstReceive match {
       case NeverReceived            => None
-      case OnDateTimeReceived(when) => Some(when.toInstant.getMillis)
+      case OnDateTimeReceived(when) => Some(when.toInstant.toEpochMilli)
     }
 
     val deduplicationId = message.messageDeduplicationId.map(_.id)
@@ -104,7 +104,7 @@ object DBMessage {
       message.nextDelivery,
       message.content.getBytes,
       attributes.toJson.toString.getBytes,
-      message.created.toInstant.getMillis,
+      message.created.toInstant.toEpochMilli,
       received,
       message.receiveCount,
       message.messageGroupId,
