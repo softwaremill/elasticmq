@@ -25,7 +25,7 @@ lazy val yarnTask = inputKey[Unit]("Run yarn with arguments")
 lazy val ensureDockerBuildx = taskKey[Unit]("Ensure that docker buildx configuration exists")
 lazy val dockerBuildWithBuildx = taskKey[Unit]("Build docker images using buildx")
 
-val config = "com.typesafe" % "config" % "1.4.2"
+val config = "com.typesafe" % "config" % "1.4.3"
 val pureConfig = "com.github.pureconfig" %% "pureconfig" % "0.17.4"
 val scalaXml = "org.scala-lang.modules" %% "scala-xml" % "2.2.0"
 
