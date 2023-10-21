@@ -284,6 +284,7 @@ lazy val nativeServer: Project = (project in file("native-server"))
       Compile / mainClass := Some("org.elasticmq.server.Main"),
       dockerPermissionStrategy := DockerPermissionStrategy.None,
       dockerCommands := {
+        val commands = dockerCommands.value
         val binaryName = name.value
         val className = (Compile / mainClass).value.getOrElse(sys.error("Could not find a main class."))
         val layerMappings = (Docker / dockerLayerMappings).value
@@ -299,7 +300,6 @@ lazy val nativeServer: Project = (project in file("native-server"))
           "-H:IncludeResources=.*conf",
           "-H:IncludeResources=version",
           "-H:IncludeResources=.*\\.properties",
-          "-H:IncludeResources=org/joda/time/tz/data/.*",
           "-H:+ReportExceptionStackTraces",
           "-H:-ThrowUnsafeOffsetErrors",
           s"-H:Name=$binaryName",
@@ -315,7 +315,7 @@ lazy val nativeServer: Project = (project in file("native-server"))
           className
         )
 
-        Seq(
+        val graalVmBuildCommands = Seq(
           Cmd("FROM", s"$graalVmBaseImage:$graalVmTag"),
           Cmd("WORKDIR", "/opt/graalvm"),
           ExecCmd("RUN", "gu", "install", "native-image"),
@@ -324,49 +324,46 @@ lazy val nativeServer: Project = (project in file("native-server"))
           val files = "opt"
           val path = layerId.map(i => s"$i/$files").getOrElse(s"$files")
           Cmd("COPY", s"$path /$files")
-        }) ++
-          Seq(
-            Cmd("RUN", nativeImageCmd: _*),
-            Cmd("FROM", s"alpine:$alpineVersion"),
-            ExecCmd("RUN", "apk", "add", "--no-cache", "tini"),
-            Cmd("COPY", "--from=0", s"/opt/graalvm/$binaryName", s"/opt/elasticmq/$binaryName")
-          ) ++ layerMappings.flatMap(mapping => {
-            mapping.layerId match {
-              case None =>
-                Seq(Cmd("COPY", s"${mapping.path} ${mapping.path}"))
-              case _ => Seq()
-            }
-          }) ++ Seq(
-            ExecCmd(
-              "CMD",
-              "/sbin/tini",
-              "--",
-              s"/opt/elasticmq/$binaryName",
-              "-Dconfig.file=/opt/elasticmq/elasticmq.conf",
-              "-Dlogback.configurationFile=/opt/elasticmq/logback.xml"
-            )
-          )
+        }) ++ Seq(Cmd("RUN", nativeImageCmd: _*))
+
+        val lastIndexOfCopy = commands.lastIndexWhere {
+          case Cmd("COPY", _) => true
+          case _ => false
+        }
+
+        val (front, back) = commands.splitAt(lastIndexOfCopy + 1)
+
+        val updatedCommands = front.filter {
+          case Cmd("COPY", args@_*) =>
+            args.head.startsWith("opt")
+          case _ => true
+        } ++ Seq(
+          Cmd("COPY", "--from=0", s"/opt/graalvm/$binaryName", s"/opt/elasticmq/bin/$binaryName"),
+          ExecCmd("RUN", "apk", "add", "--no-cache", "tini")
+        ) ++ back
+
+        graalVmBuildCommands ++ updatedCommands
       },
       Docker / mappings ++= Seq(
         (baseDirectory.value / ".." / "server" / "docker" / "elasticmq.conf") -> "/opt/elasticmq/elasticmq.conf",
         (baseDirectory.value / ".." / "server" / "src" / "main" / "resources" / "logback.xml") -> "/opt/elasticmq/logback.xml"
-      ),
+      ) ++ sbt.Path.directory(baseDirectory.value / ".." / "ui" / "build"),
       dockerEntrypoint := Seq(
         "/sbin/tini",
         "--",
-        "/opt/docker/bin/elasticmq-native-server",
-        "-Dconfig.file=/opt/elasticmq.conf",
-        "-Dlogback.configurationFile=/opt/logback.xml"
+        "/opt/elasticmq/bin/elasticmq-native-server",
+        "-Dconfig.file=/opt/elasticmq/elasticmq.conf",
+        "-Dlogback.configurationFile=/opt/elasticmq/logback.xml"
       ),
       dockerUpdateLatest := true,
       dockerExposedPorts := Seq(9324, 9325),
-      Docker / packageName := "elasticmq-native",
       dockerUsername := Some("softwaremill"),
-//      GraalVMNativeImage / packageBin := (GraalVMNativeImage / packageBin)
-//        .dependsOn(yarnTask.toTask(" build"))
-//        .value,
-      dockerUpdateLatest := true,
-      dockerExposedVolumes += "/data"
+      dockerExposedVolumes += "/data",
+      dockerBaseImage := "alpine:3.18",
+      Docker / packageName := "elasticmq-native"
+      Compile / packageBin := (Compile / packageBin)
+        .dependsOn(yarnTask.toTask(" build"))
+        .value
     )
   )
   .dependsOn(server)
