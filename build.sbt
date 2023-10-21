@@ -360,7 +360,7 @@ lazy val nativeServer: Project = (project in file("native-server"))
       dockerUsername := Some("softwaremill"),
       dockerExposedVolumes += "/data",
       dockerBaseImage := "alpine:3.18",
-      Docker / packageName := "elasticmq-native"
+      Docker / packageName := "elasticmq-native",
       Compile / packageBin := (Compile / packageBin)
         .dependsOn(yarnTask.toTask(" build"))
         .value
