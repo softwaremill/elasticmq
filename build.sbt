@@ -244,7 +244,10 @@ lazy val server: Project = (project in file("server"))
       dockerBaseImage := "openjdk:11-jdk-stretch",
       Docker / packageName := "elasticmq",
       dockerUsername := Some("softwaremill"),
-      dockerUpdateLatest := true,
+      dockerUpdateLatest := {
+//        !version.value.toLowerCase.contains("rc")
+        false
+      },
       Universal / javaOptions ++= Seq("-Dconfig.file=/opt/elasticmq.conf"),
       Docker / mappings ++= Seq(
         (baseDirectory.value / "docker" / "elasticmq.conf") -> "/opt/elasticmq.conf"
@@ -344,10 +347,13 @@ lazy val nativeServer: Project = (project in file("native-server"))
 
         graalVmBuildCommands ++ updatedCommands
       },
+      Docker / defaultLinuxInstallLocation := "/opt/elasticmq",
       Docker / mappings ++= Seq(
         (baseDirectory.value / ".." / "server" / "docker" / "elasticmq.conf") -> "/opt/elasticmq/elasticmq.conf",
-        (baseDirectory.value / ".." / "server" / "src" / "main" / "resources" / "logback.xml") -> "/opt/elasticmq/logback.xml"
-      ) ++ sbt.Path.directory(baseDirectory.value / ".." / "ui" / "build"),
+        (baseDirectory.value / ".." / "server" / "src" / "main" / "resources" / "logback.xml") -> "/opt/elasticmq/logback.xml",
+      ) ++ sbt.Path.contentOf(baseDirectory.value / ".." / "ui" / "build").map {
+        case (file, mapping) => (file, "/opt/elasticmq/" + mapping)
+      },
       dockerEntrypoint := Seq(
         "/sbin/tini",
         "--",
@@ -355,7 +361,10 @@ lazy val nativeServer: Project = (project in file("native-server"))
         "-Dconfig.file=/opt/elasticmq/elasticmq.conf",
         "-Dlogback.configurationFile=/opt/elasticmq/logback.xml"
       ),
-      dockerUpdateLatest := true,
+      dockerUpdateLatest := {
+//        !version.value.toLowerCase.contains("rc")
+        false
+      },
       dockerExposedPorts := Seq(9324, 9325),
       dockerUsername := Some("softwaremill"),
       dockerExposedVolumes += "/data",
