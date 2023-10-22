@@ -286,10 +286,17 @@ lazy val nativeServer: Project = (project in file("native-server"))
       publish / skip := true,
       Compile / mainClass := Some("org.elasticmq.server.Main"),
       dockerPermissionStrategy := DockerPermissionStrategy.None,
+      // We want to utilize `docker buildx` to create native image in the first stage
+      // and then create the target docker image based on Alpine with just the native image, configuration and ui files.
+      // GraalVMNativeImagePlugin does support such scenario because it uses `docker run` to build the native image
+      // and then simply copies the artifact to the result docker image, which makes it difficult to create ARM native image.
       dockerCommands := {
         val commands = dockerCommands.value
         val binaryName = name.value
         val className = (Compile / mainClass).value.getOrElse(sys.error("Could not find a main class."))
+
+        // This is copied from DockerPlugin - it seems like the layers with id contain the runtime jars
+        // and the layers without id contain custom files defined in Docker / mappings
         val layerMappings = (Docker / dockerLayerMappings).value
         val layerIdsAscending = layerMappings.map(_.layerId).distinct.sortWith { (a, b) =>
           // Make the None (unspecified) layer the last layer
@@ -318,6 +325,7 @@ lazy val nativeServer: Project = (project in file("native-server"))
           className
         )
 
+        // Create build stage based on GraalVM image
         val graalVmBuildCommands = Seq(
           Cmd("FROM", s"$graalVmBaseImage:$graalVmTag"),
           Cmd("WORKDIR", "/opt/graalvm"),
@@ -329,6 +337,7 @@ lazy val nativeServer: Project = (project in file("native-server"))
           Cmd("COPY", s"$path /$files")
         }) ++ Seq(Cmd("RUN", nativeImageCmd: _*))
 
+        // We want to include the image generated in stage0 around the COPY commands
         val lastIndexOfCopy = commands.lastIndexWhere {
           case Cmd("COPY", _) => true
           case _ => false
@@ -338,6 +347,7 @@ lazy val nativeServer: Project = (project in file("native-server"))
 
         val updatedCommands = front.filter {
           case Cmd("COPY", args@_*) =>
+            // We do not want to include jar layers (the one with number based root path: /1, /2, /3, etc.)
             args.head.startsWith("opt")
           case _ => true
         } ++ Seq(
@@ -355,7 +365,7 @@ lazy val nativeServer: Project = (project in file("native-server"))
         case (file, mapping) => (file, "/opt/elasticmq/" + mapping)
       },
       dockerEntrypoint := Seq(
-        "/sbin/tini",
+        "/sbin/tini", // tini makes it possible to kill the process with Cmd+C/Ctrl+C when running in interactive mode (-it)
         "--",
         "/opt/elasticmq/bin/elasticmq-native-server",
         "-Dconfig.file=/opt/elasticmq/elasticmq.conf",
