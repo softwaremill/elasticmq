@@ -270,7 +270,7 @@ lazy val server: Project = (project in file("server"))
 val graalVmVersion = "22.1.0"
 val graalVmTag = s"ol8-java11-$graalVmVersion"
 val graalVmBaseImage = "ghcr.io/graalvm/graalvm-ce"
-val alpineVersion = "3.14"
+val alpineImage = "3.18"
 
 lazy val nativeServer: Project = (project in file("native-server"))
   .enablePlugins(JavaAppPackaging, DockerPlugin)
@@ -368,7 +368,7 @@ lazy val nativeServer: Project = (project in file("native-server"))
       dockerExposedPorts := Seq(9324, 9325),
       dockerUsername := Some("softwaremill"),
       dockerExposedVolumes += "/data",
-      dockerBaseImage := "alpine:3.18",
+      dockerBaseImage := alpineImage,
       Docker / packageName := "elasticmq-native",
       Compile / packageBin := (Compile / packageBin)
         .dependsOn(yarnTask.toTask(" build"))
