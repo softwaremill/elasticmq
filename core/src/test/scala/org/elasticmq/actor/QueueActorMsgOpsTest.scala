@@ -292,8 +292,12 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
     } yield {
       // Then
       lookupResult.statistics should be(MessageStatistics.empty)
-      receiveResult1.statistics should be(MessageStatistics(OnDateTimeReceived(OffsetDateTimeUtil.ofEpochMilli(100L)), 1))
-      receiveResult2.statistics should be(MessageStatistics(OnDateTimeReceived(OffsetDateTimeUtil.ofEpochMilli(100L)), 2))
+      receiveResult1.statistics should be(
+        MessageStatistics(OnDateTimeReceived(OffsetDateTimeUtil.ofEpochMilli(100L)), 1)
+      )
+      receiveResult2.statistics should be(
+        MessageStatistics(OnDateTimeReceived(OffsetDateTimeUtil.ofEpochMilli(100L)), 2)
+      )
     }
   }
 

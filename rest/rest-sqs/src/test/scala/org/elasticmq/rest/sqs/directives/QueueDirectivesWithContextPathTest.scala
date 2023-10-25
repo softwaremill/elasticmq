@@ -42,7 +42,14 @@ class QueueDirectivesWithContextPathTest
   "queueActorAndNameFromUrl" should "return correct queue name based on QueueName" in {
     val future = queueManagerActor ? CreateQueue(
       CreateQueueData.from(
-        QueueData("lol", MillisVisibilityTimeout(1L), Duration.ZERO, Duration.ZERO, OffsetDateTime.now(), OffsetDateTime.now())
+        QueueData(
+          "lol",
+          MillisVisibilityTimeout(1L),
+          Duration.ZERO,
+          Duration.ZERO,
+          OffsetDateTime.now(),
+          OffsetDateTime.now()
+        )
       )
     )
     Await.result(future, maxDuration)
@@ -60,7 +67,14 @@ class QueueDirectivesWithContextPathTest
   "queueActorAndNameFromUrl" should "return correct queue name based on QueueUrl" in {
     val future = queueManagerActor ? CreateQueue(
       CreateQueueData.from(
-        QueueData("lol", MillisVisibilityTimeout(1L), Duration.ZERO, Duration.ZERO, OffsetDateTime.now(), OffsetDateTime.now())
+        QueueData(
+          "lol",
+          MillisVisibilityTimeout(1L),
+          Duration.ZERO,
+          Duration.ZERO,
+          OffsetDateTime.now(),
+          OffsetDateTime.now()
+        )
       )
     )
     Await.result(future, maxDuration)
