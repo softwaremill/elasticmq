@@ -39,7 +39,8 @@ case class DBMessage(
 
     val serializedDeliveryReceipts = new String(deliveryReceipts).parseJson.convertTo[List[String]]
 
-    val firstReceive = received.map(time => OnDateTimeReceived(OffsetDateTimeUtil.ofEpochMilli(time))).getOrElse(NeverReceived)
+    val firstReceive =
+      received.map(time => OnDateTimeReceived(OffsetDateTimeUtil.ofEpochMilli(time))).getOrElse(NeverReceived)
 
     InternalMessage(
       messageId,

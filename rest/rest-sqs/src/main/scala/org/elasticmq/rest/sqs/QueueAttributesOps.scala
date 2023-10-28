@@ -61,7 +61,10 @@ trait QueueAttributesOps extends AttributesModule {
           () => stats.map(_.approximateNumberOfMessagesDelayed.toString)
         ),
         AttributeValuesCalculator
-          .Rule(CreatedTimestampAttribute, () => Future.successful((queueData.created.toInstant.toEpochMilli / 1000L).toString)),
+          .Rule(
+            CreatedTimestampAttribute,
+            () => Future.successful((queueData.created.toInstant.toEpochMilli / 1000L).toString)
+          ),
         AttributeValuesCalculator.Rule(
           LastModifiedTimestampAttribute,
           () => Future.successful((queueData.lastModified.toInstant.toEpochMilli / 1000L).toString)

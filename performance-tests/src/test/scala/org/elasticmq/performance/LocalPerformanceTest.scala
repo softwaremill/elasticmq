@@ -4,7 +4,12 @@ import akka.actor.{ActorRef, ActorSystem, Props}
 import akka.util.Timeout
 import com.amazonaws.auth.{AWSStaticCredentialsProvider, BasicAWSCredentials}
 import com.amazonaws.client.builder.AwsClientBuilder.EndpointConfiguration
-import com.amazonaws.services.sqs.model.{CreateQueueRequest, DeleteMessageRequest, ReceiveMessageRequest, SendMessageRequest}
+import com.amazonaws.services.sqs.model.{
+  CreateQueueRequest,
+  DeleteMessageRequest,
+  ReceiveMessageRequest,
+  SendMessageRequest
+}
 import com.amazonaws.services.sqs.{AmazonSQS, AmazonSQSClientBuilder}
 import org.elasticmq._
 import org.elasticmq.actor.QueueManagerActor

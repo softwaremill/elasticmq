@@ -43,7 +43,14 @@ class QueueDirectivesTest
   "queueActorFromUrl" should "return correct queue name based on QueueName" in {
     val future = queueManagerActor ? CreateQueue(
       CreateQueueData.from(
-        QueueData("lol", MillisVisibilityTimeout(1L), Duration.ZERO, Duration.ZERO, OffsetDateTime.now(), OffsetDateTime.now())
+        QueueData(
+          "lol",
+          MillisVisibilityTimeout(1L),
+          Duration.ZERO,
+          Duration.ZERO,
+          OffsetDateTime.now(),
+          OffsetDateTime.now()
+        )
       )
     )
     future.value
@@ -61,7 +68,14 @@ class QueueDirectivesTest
   "queueActorAndNameFromUrl" should "return correct queue name based on QueueUrl" in {
     val future = queueManagerActor ? CreateQueue(
       CreateQueueData.from(
-        QueueData("lol", MillisVisibilityTimeout(1L), Duration.ZERO, Duration.ZERO, OffsetDateTime.now(), OffsetDateTime.now())
+        QueueData(
+          "lol",
+          MillisVisibilityTimeout(1L),
+          Duration.ZERO,
+          Duration.ZERO,
+          OffsetDateTime.now(),
+          OffsetDateTime.now()
+        )
       )
     )
     future.value
@@ -79,7 +93,14 @@ class QueueDirectivesTest
   "queueActorAndNameFromUrl" should "return error when invalid QueueUrl" in {
     val future = queueManagerActor ? CreateQueue(
       CreateQueueData.from(
-        QueueData("lol", MillisVisibilityTimeout(1L), Duration.ZERO, Duration.ZERO, OffsetDateTime.now(), OffsetDateTime.now())
+        QueueData(
+          "lol",
+          MillisVisibilityTimeout(1L),
+          Duration.ZERO,
+          Duration.ZERO,
+          OffsetDateTime.now(),
+          OffsetDateTime.now()
+        )
       )
     )
     future.value
