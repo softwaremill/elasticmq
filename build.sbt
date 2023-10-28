@@ -243,8 +243,7 @@ lazy val server: Project = (project in file("server"))
       Docker / packageName := "elasticmq",
       dockerUsername := Some("softwaremill"),
       dockerUpdateLatest := {
-//        !version.value.toLowerCase.contains("rc")
-        false
+        !version.value.toLowerCase.contains("rc")
       },
       Universal / javaOptions ++= Seq("-Dconfig.file=/opt/elasticmq.conf"),
       Docker / mappings ++= Seq(
@@ -370,8 +369,7 @@ lazy val nativeServer: Project = (project in file("native-server"))
         "-Dlogback.configurationFile=/opt/elasticmq/logback.xml"
       ),
       dockerUpdateLatest := {
-//        !version.value.toLowerCase.contains("rc")
-        false
+        !version.value.toLowerCase.contains("rc")
       },
       dockerExposedPorts := Seq(9324, 9325),
       dockerUsername := Some("softwaremill"),
