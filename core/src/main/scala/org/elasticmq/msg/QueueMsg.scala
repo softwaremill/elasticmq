@@ -4,7 +4,8 @@ import akka.actor.ActorRef
 import org.elasticmq._
 import org.elasticmq.actor.queue.InternalMessage
 import org.elasticmq.actor.reply.Replyable
-import org.joda.time.Duration
+
+import java.time.Duration
 
 sealed trait QueueMsg[T] extends Replyable[T]
 

@@ -1,11 +1,10 @@
 package org.elasticmq.actor.queue
 
-import java.util.UUID
-
 import org.elasticmq._
 import org.elasticmq.util.NowProvider
-import org.joda.time.DateTime
 
+import java.time.OffsetDateTime
+import java.util.UUID
 import scala.collection.mutable
 
 case class InternalMessage(
@@ -15,7 +14,7 @@ case class InternalMessage(
     content: String,
     messageAttributes: Map[String, MessageAttribute],
     messageSystemAttributes: Map[String, MessageAttribute],
-    created: DateTime,
+    created: OffsetDateTime,
     orderIndex: Int,
     var firstReceive: Received,
     var receiveCount: Int,
@@ -52,7 +51,7 @@ case class InternalMessage(
     receiveCount += 1
 
     if (firstReceive == NeverReceived) {
-      firstReceive = OnDateTimeReceived(new DateTime(nowProvider.nowMillis))
+      firstReceive = OnDateTimeReceived(nowProvider.now)
     }
   }
 
@@ -95,11 +94,11 @@ object InternalMessage {
     new InternalMessage(
       newMessageData.id.getOrElse(generateId()).id,
       mutable.Buffer.empty,
-      newMessageData.nextDelivery.toMillis(now, queueData.delay.getMillis).millis,
+      newMessageData.nextDelivery.toMillis(now, queueData.delay.toMillis).millis,
       newMessageData.content,
       newMessageData.messageAttributes,
       newMessageData.messageSystemAttributes,
-      new DateTime(),
+      OffsetDateTime.now(),
       newMessageData.orderIndex,
       NeverReceived,
       0,

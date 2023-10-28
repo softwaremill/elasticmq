@@ -1,14 +1,14 @@
 package org.elasticmq
 
-import org.joda.time.{DateTime, Duration}
+import java.time.{Duration, OffsetDateTime}
 
 case class CreateQueueData(
     name: String,
     defaultVisibilityTimeout: Option[MillisVisibilityTimeout] = None,
     delay: Option[Duration] = None,
     receiveMessageWait: Option[Duration] = None,
-    created: Option[DateTime] = None,
-    lastModified: Option[DateTime] = None,
+    created: Option[OffsetDateTime] = None,
+    lastModified: Option[OffsetDateTime] = None,
     deadLettersQueue: Option[DeadLettersQueueData] = None,
     isFifo: Boolean = false,
     hasContentBasedDeduplication: Boolean = false,
@@ -17,14 +17,14 @@ case class CreateQueueData(
     tags: Map[String, String] = Map[String, String]()
 ) {
   def toQueueData: QueueData = {
-    val now = new DateTime()
+    val now = OffsetDateTime.now()
     QueueData(
       name,
       defaultVisibilityTimeout.getOrElse(
         MillisVisibilityTimeout.fromSeconds(CreateQueueDefaults.DefaultVisibilityTimeout)
       ),
-      delay.getOrElse(Duration.standardSeconds(CreateQueueDefaults.DefaultDelay)),
-      receiveMessageWait.getOrElse(Duration.standardSeconds(CreateQueueDefaults.DefaultReceiveMessageWait)),
+      delay.getOrElse(Duration.ofSeconds(CreateQueueDefaults.DefaultDelay)),
+      receiveMessageWait.getOrElse(Duration.ofSeconds(CreateQueueDefaults.DefaultReceiveMessageWait)),
       created.getOrElse(now),
       lastModified.getOrElse(now),
       deadLettersQueue,

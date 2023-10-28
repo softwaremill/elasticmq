@@ -9,11 +9,11 @@ import org.elasticmq.rest.sqs.ParametersUtil._
 import org.elasticmq.rest.sqs.directives.ElasticMQDirectives
 import org.elasticmq.rest.sqs.model.RedrivePolicy.BackwardCompatibleRedrivePolicy
 import org.elasticmq.rest.sqs.model.RequestPayload
-import org.joda.time.Duration
 import spray.json.DefaultJsonProtocol._
 import spray.json.JsonParser.ParsingException
 import spray.json._
 
+import java.time.Duration
 import scala.async.Async._
 import scala.concurrent.Future
 import scala.xml.Elem
@@ -65,8 +65,8 @@ trait CreateQueueDirectives {
           val newQueueData = CreateQueueData(
             requestParams.QueueName,
             secondsVisibilityTimeoutOpt.map(sec => MillisVisibilityTimeout.fromSeconds(sec)),
-            secondsDelayOpt.map(sec => Duration.standardSeconds(sec)),
-            secondsReceiveMessageWaitTimeOpt.map(sec => Duration.standardSeconds(sec)),
+            secondsDelayOpt.map(sec => Duration.ofSeconds(sec)),
+            secondsReceiveMessageWaitTimeOpt.map(sec => Duration.ofSeconds(sec)),
             None,
             None,
             redrivePolicy.map(rd => DeadLettersQueueData(rd.queueName, rd.maxReceiveCount)),

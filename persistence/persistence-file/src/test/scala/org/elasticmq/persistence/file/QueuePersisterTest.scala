@@ -1,8 +1,9 @@
 package org.elasticmq.persistence.file
 import org.elasticmq.{MillisVisibilityTimeout, QueueData}
-import org.joda.time.{DateTime, Duration}
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
+
+import java.time.{Duration, OffsetDateTime}
 
 class QueuePersisterTest extends AnyFunSuite with Matchers {
   test("standard queue is converted to config") {
@@ -11,10 +12,10 @@ class QueuePersisterTest extends AnyFunSuite with Matchers {
       QueueData(
         name = "queue1",
         defaultVisibilityTimeout = MillisVisibilityTimeout.fromSeconds(10),
-        delay = Duration.standardSeconds(8),
-        receiveMessageWait = Duration.standardSeconds(3),
-        created = new DateTime(),
-        lastModified = new DateTime()
+        delay = Duration.ofSeconds(8),
+        receiveMessageWait = Duration.ofSeconds(3),
+        created = OffsetDateTime.now(),
+        lastModified = OffsetDateTime.now()
       )
     )
     val actual = QueuePersister.prepareQueuesConfig(queues)
@@ -30,10 +31,10 @@ class QueuePersisterTest extends AnyFunSuite with Matchers {
       QueueData(
         name = "queue2.fifo",
         defaultVisibilityTimeout = MillisVisibilityTimeout.fromSeconds(10),
-        delay = Duration.standardSeconds(8),
-        receiveMessageWait = Duration.standardSeconds(3),
-        created = new DateTime(),
-        lastModified = new DateTime(),
+        delay = Duration.ofSeconds(8),
+        receiveMessageWait = Duration.ofSeconds(3),
+        created = OffsetDateTime.now(),
+        lastModified = OffsetDateTime.now(),
         isFifo = true
       )
     )

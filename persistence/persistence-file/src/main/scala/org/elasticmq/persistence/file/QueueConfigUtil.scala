@@ -3,9 +3,9 @@ package org.elasticmq.persistence.file
 import com.typesafe.config.{Config, ConfigFactory, ConfigObject, ConfigValue}
 import org.elasticmq.persistence.{CreateQueueMetadata, DeadLettersQueue, QueueSorter}
 import org.elasticmq.util.Logging
-import org.joda.time.DateTime
 
 import java.io.File
+import java.time.OffsetDateTime
 import java.util.concurrent.TimeUnit
 import scala.collection.JavaConverters._
 import scala.util.{Failure, Success, Try}
@@ -56,7 +56,7 @@ object QueueConfigUtil extends Logging {
 
     val deadLettersQueueKey = "deadLettersQueue"
 
-    val now = new DateTime().toInstant.getMillis
+    val now = OffsetDateTime.now().toInstant.toEpochMilli
 
     val unsortedQueues = queuesConfig.map { case (n, v) =>
       val c = v.asInstanceOf[ConfigObject].toConfig

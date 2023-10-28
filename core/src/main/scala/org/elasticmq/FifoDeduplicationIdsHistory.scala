@@ -4,8 +4,8 @@ import com.typesafe.scalalogging.LazyLogging
 import org.elasticmq.FifoDeduplicationIdsHistory.DeduplicationIntervalMinutes
 import org.elasticmq.actor.queue.InternalMessage
 import org.elasticmq.util.NowProvider
-import org.joda.time.DateTime
 
+import java.time.OffsetDateTime
 import scala.annotation.tailrec
 
 /** Contains history of used Deduplication IDs associated with incoming messages to FIFO queues
@@ -75,4 +75,4 @@ object FifoDeduplicationIdsHistory {
   def newHistory(): FifoDeduplicationIdsHistory = FifoDeduplicationIdsHistory(Map.empty, List.empty)
 }
 
-case class DeduplicationIdWithCreationDate(id: DeduplicationId, creationDate: DateTime)
+case class DeduplicationIdWithCreationDate(id: DeduplicationId, creationDate: OffsetDateTime)
