@@ -1,6 +1,6 @@
 package org.elasticmq.actor.queue
 
-import akka.actor.{ActorRef, Cancellable}
+import org.apache.pekko.actor.{ActorRef, Cancellable}
 import org.elasticmq.actor.reply._
 import org.elasticmq.msg.{QueueMessageMsg, ReceiveMessages, SendMessage, UpdateVisibilityTimeout}
 

@@ -1,13 +1,13 @@
 package org.elasticmq.rest.sqs.directives
 
-import akka.http.scaladsl.model.{HttpResponse, StatusCodes}
-import akka.http.scaladsl.server.{Directive0, Directives, ExceptionHandler, Route}
+import org.apache.pekko.http.scaladsl.model.{HttpResponse, StatusCodes}
+import org.apache.pekko.http.scaladsl.server.{Directive0, Directives, ExceptionHandler, Route}
 import org.elasticmq.rest.sqs.Constants._
 import org.elasticmq.rest.sqs.{AWSProtocol, SQSException}
 import org.elasticmq.util.Logging
 import spray.json.DefaultJsonProtocol._
 import spray.json.RootJsonFormat
-import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
+import org.apache.pekko.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 
 trait ExceptionDirectives extends Logging {
   this: Directives with RespondDirectives =>

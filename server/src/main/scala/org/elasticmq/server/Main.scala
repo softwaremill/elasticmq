@@ -1,6 +1,6 @@
 package org.elasticmq.server
 
-import akka.actor.Terminated
+import org.apache.pekko.actor.Terminated
 import com.typesafe.config.ConfigFactory
 import org.elasticmq.server.config.ElasticMQServerConfig
 import org.elasticmq.util.Logging

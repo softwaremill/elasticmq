@@ -1,6 +1,6 @@
 package org.elasticmq.rest.sqs
 
-import akka.http.scaladsl.server.Route
+import org.apache.pekko.http.scaladsl.server.Route
 import org.elasticmq.rest.sqs.Action.{GetQueueAttributes, SetQueueAttributes}
 import org.elasticmq.rest.sqs.AttributesModule.attributesToXmlConverter
 import org.elasticmq.rest.sqs.Constants._

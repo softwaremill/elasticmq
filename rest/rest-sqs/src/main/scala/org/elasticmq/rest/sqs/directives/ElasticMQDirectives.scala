@@ -1,6 +1,6 @@
 package org.elasticmq.rest.sqs.directives
 
-import akka.http.scaladsl.server.{Directives, Route}
+import org.apache.pekko.http.scaladsl.server.{Directives, Route}
 import org.elasticmq.rest.sqs.{ActorSystemModule, ContextPathModule, QueueManagerActorModule, QueueURLModule}
 import org.elasticmq.util.Logging
 

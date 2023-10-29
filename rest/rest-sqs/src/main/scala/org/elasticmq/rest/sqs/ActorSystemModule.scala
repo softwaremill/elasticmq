@@ -1,8 +1,8 @@
 package org.elasticmq.rest.sqs
 
-import akka.actor.ActorSystem
-import akka.stream.Materializer
-import akka.util.Timeout
+import org.apache.pekko.actor.ActorSystem
+import org.apache.pekko.stream.Materializer
+import org.apache.pekko.util.Timeout
 
 trait ActorSystemModule {
   implicit def actorSystem: ActorSystem

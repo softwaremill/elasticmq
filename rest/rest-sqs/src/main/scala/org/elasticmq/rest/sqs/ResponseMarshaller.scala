@@ -1,11 +1,11 @@
 package org.elasticmq.rest.sqs
 
-import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
+import org.apache.pekko.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import spray.json.RootJsonFormat
-import akka.http.scaladsl.marshalling.Marshaller
-import akka.http.scaladsl.model.ContentTypes._
-import akka.http.scaladsl.model.{HttpEntity, RequestEntity}
-import akka.util.ByteString
+import org.apache.pekko.http.scaladsl.marshalling.Marshaller
+import org.apache.pekko.http.scaladsl.model.ContentTypes._
+import org.apache.pekko.http.scaladsl.model.{HttpEntity, RequestEntity}
+import org.apache.pekko.util.ByteString
 import org.elasticmq.rest.sqs.directives.RespondDirectives
 
 import scala.xml.{Elem, Null, UnprefixedAttribute}

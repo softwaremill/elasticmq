@@ -1,6 +1,6 @@
 package org.elasticmq.actor.queue
 
-import akka.actor.ActorRef
+import org.apache.pekko.actor.ActorRef
 import org.elasticmq.QueueData
 import org.elasticmq.actor.reply.ReplyingActor
 import org.elasticmq.msg._

@@ -1,6 +1,6 @@
 package org.elasticmq.rest.sqs
 
-import akka.http.scaladsl.server.Directives._
+import org.apache.pekko.http.scaladsl.server.Directives._
 import org.elasticmq.rest.sqs.Constants.SqsDefaultVersion
 import scala.language.postfixOps
 

@@ -1,7 +1,7 @@
 package org.elasticmq.metrics
 
-import akka.actor.ActorRef
-import akka.util.Timeout
+import org.apache.pekko.actor.ActorRef
+import org.apache.pekko.util.Timeout
 import org.elasticmq.QueueStatistics
 import org.elasticmq.actor.reply.ReplyActorRef
 import org.elasticmq.msg.{GetQueueStatistics, ListQueues, LookupQueue}

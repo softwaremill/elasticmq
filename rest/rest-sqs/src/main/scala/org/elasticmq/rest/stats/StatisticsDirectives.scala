@@ -1,10 +1,10 @@
 package org.elasticmq.rest.stats
 
-import akka.actor.ActorRef
-import akka.http.scaladsl.model.StatusCodes.NotFound
-import akka.http.scaladsl.model._
-import akka.http.scaladsl.model.headers.`Access-Control-Allow-Origin`
-import akka.http.scaladsl.server.Route
+import org.apache.pekko.actor.ActorRef
+import org.apache.pekko.http.scaladsl.model.StatusCodes.NotFound
+import org.apache.pekko.http.scaladsl.model._
+import org.apache.pekko.http.scaladsl.model.headers.`Access-Control-Allow-Origin`
+import org.apache.pekko.http.scaladsl.server.Route
 import org.elasticmq.metrics.QueueMetricsOps
 import org.elasticmq.rest.sqs.QueueAttributesOps
 import org.elasticmq.rest.sqs.directives.ElasticMQDirectives

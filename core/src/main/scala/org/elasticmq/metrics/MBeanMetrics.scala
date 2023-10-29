@@ -2,8 +2,8 @@ package org.elasticmq.metrics
 
 import java.util.concurrent.{Executors, TimeUnit}
 
-import akka.actor.ActorRef
-import akka.util.Timeout
+import org.apache.pekko.actor.ActorRef
+import org.apache.pekko.util.Timeout
 import javax.management.openmbean._
 import org.elasticmq.QueueStatistics
 import org.elasticmq.metrics.QueuesMetrics.{queueDataNames, queueStatisticsCompositeType, queueStatisticsTabularType}

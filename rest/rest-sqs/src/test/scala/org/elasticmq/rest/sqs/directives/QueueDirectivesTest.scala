@@ -1,8 +1,8 @@
 package org.elasticmq.rest.sqs.directives
-import akka.actor.{ActorRef, ActorSystem, Props}
-import akka.http.scaladsl.server.Directives
-import akka.http.scaladsl.testkit.ScalatestRouteTest
-import akka.util.Timeout
+import org.apache.pekko.actor.{ActorRef, ActorSystem, Props}
+import org.apache.pekko.http.scaladsl.server.Directives
+import org.apache.pekko.http.scaladsl.testkit.ScalatestRouteTest
+import org.apache.pekko.util.Timeout
 import org.elasticmq.actor.QueueManagerActor
 import org.elasticmq.actor.reply._
 import org.elasticmq.msg.CreateQueue

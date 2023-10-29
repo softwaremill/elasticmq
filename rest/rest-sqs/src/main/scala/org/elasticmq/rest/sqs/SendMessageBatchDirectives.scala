@@ -1,7 +1,7 @@
 package org.elasticmq.rest.sqs
 
 import Constants._
-import akka.http.scaladsl.server.Route
+import org.apache.pekko.http.scaladsl.server.Route
 import org.elasticmq.MessageAttribute
 import org.elasticmq.rest.sqs.Action.SendMessageBatch
 import org.elasticmq.rest.sqs.ParametersUtil.ParametersParser

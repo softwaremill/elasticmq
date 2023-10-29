@@ -1,7 +1,7 @@
 package org.elasticmq.actor.queue
 
-import akka.actor.{ActorContext, ActorRef}
-import akka.util.Timeout
+import org.apache.pekko.actor.{ActorContext, ActorRef}
+import org.apache.pekko.util.Timeout
 import org.elasticmq.actor.reply._
 import org.elasticmq.util.{Logging, NowProvider}
 import org.elasticmq.{FifoDeduplicationIdsHistory, QueueData}

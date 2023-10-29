@@ -1,7 +1,7 @@
 package org.elasticmq.rest.sqs
 
-import akka.actor.ActorRef
-import akka.util.Timeout
+import org.apache.pekko.actor.ActorRef
+import org.apache.pekko.util.Timeout
 import org.elasticmq.actor.reply._
 import org.elasticmq.msg._
 import org.elasticmq.rest.sqs.Constants._

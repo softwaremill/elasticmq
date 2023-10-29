@@ -1,6 +1,6 @@
 package org.elasticmq.rest.sqs
 
-import akka.http.scaladsl.testkit.ScalatestRouteTest
+import org.apache.pekko.http.scaladsl.testkit.ScalatestRouteTest
 import org.elasticmq.rest.sqs.model.{GenericRedrivePolicy, RedrivePolicy}
 import org.elasticmq.rest.sqs.model.RedrivePolicy.BackwardCompatibleRedrivePolicy
 import spray.json._

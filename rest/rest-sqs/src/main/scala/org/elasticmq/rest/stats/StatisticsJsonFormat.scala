@@ -1,6 +1,6 @@
 package org.elasticmq.rest.stats
 
-import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
+import org.apache.pekko.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import spray.json.{DefaultJsonProtocol, JsNumber, JsObject, JsString, JsValue, RootJsonFormat, deserializationError}
 
 trait StatisticsJsonFormat extends SprayJsonSupport with DefaultJsonProtocol {

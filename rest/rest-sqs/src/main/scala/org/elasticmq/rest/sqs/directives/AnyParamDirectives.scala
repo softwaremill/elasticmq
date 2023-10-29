@@ -1,8 +1,8 @@
 package org.elasticmq.rest.sqs.directives
 
-import akka.http.scaladsl.model.{FormData, HttpRequest}
-import akka.http.scaladsl.server.{Directives, Route, UnsupportedRequestContentTypeRejection}
-import akka.stream.Materializer
+import org.apache.pekko.http.scaladsl.model.{FormData, HttpRequest}
+import org.apache.pekko.http.scaladsl.server.{Directives, Route, UnsupportedRequestContentTypeRejection}
+import org.apache.pekko.stream.Materializer
 import org.elasticmq.rest.sqs.{AWSProtocol, ContextPathModule, QueueURLModule}
 import org.elasticmq.rest.sqs.Constants.{QueueNameParameter, QueueUrlParameter}
 import org.elasticmq.rest.sqs.directives.QueueDirectives.AccountIdRegex

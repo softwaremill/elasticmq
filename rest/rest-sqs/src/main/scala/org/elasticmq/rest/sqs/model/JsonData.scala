@@ -1,9 +1,9 @@
 package org.elasticmq.rest.sqs.model
 
-import akka.http.scaladsl.marshalling.Marshaller
-import akka.http.scaladsl.model.{ContentTypeRange, HttpEntity, RequestEntity}
-import akka.http.scaladsl.unmarshalling.{FromEntityUnmarshaller, Unmarshaller}
-import akka.util.ByteString
+import org.apache.pekko.http.scaladsl.marshalling.Marshaller
+import org.apache.pekko.http.scaladsl.model.{ContentTypeRange, HttpEntity, RequestEntity}
+import org.apache.pekko.http.scaladsl.unmarshalling.{FromEntityUnmarshaller, Unmarshaller}
+import org.apache.pekko.util.ByteString
 import org.elasticmq.rest.sqs.directives.AmzJsonProtocol
 
 import scala.concurrent.Future

@@ -1,7 +1,7 @@
 package org.elasticmq.rest.sqs.directives
 
-import akka.http.scaladsl.model.{ContentType, MediaType}
-import akka.http.scaladsl.server.Directives.extractRequest
+import org.apache.pekko.http.scaladsl.model.{ContentType, MediaType}
+import org.apache.pekko.http.scaladsl.server.Directives.extractRequest
 import org.elasticmq.rest.sqs.AWSProtocol
 
 trait AWSProtocolDirectives {

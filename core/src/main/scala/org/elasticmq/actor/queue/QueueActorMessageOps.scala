@@ -1,6 +1,6 @@
 package org.elasticmq.actor.queue
 
-import akka.actor.Timers
+import org.apache.pekko.actor.Timers
 import org.elasticmq.actor.queue.operations._
 import org.elasticmq.actor.reply._
 import org.elasticmq.msg._
@@ -19,7 +19,7 @@ trait QueueActorMessageOps
   this: QueueActorStorage =>
 
   def nowProvider: NowProvider
-  def context: akka.actor.ActorContext
+  def context: org.apache.pekko.actor.ActorContext
 
   timers.startTimerWithFixedDelay(s"Timer: ${queueData.name}", DeduplicationIdsCleanup, 1.second)
 

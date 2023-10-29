@@ -1,6 +1,6 @@
 package org.elasticmq.rest.sqs
 
-import akka.http.scaladsl.model.HttpEntity
+import org.apache.pekko.http.scaladsl.model.HttpEntity
 import org.elasticmq.actor.reply._
 import org.elasticmq.msg.UpdateVisibilityTimeout
 import org.elasticmq.rest.sqs.Action.ChangeMessageVisibility
@@ -9,7 +9,7 @@ import org.elasticmq.rest.sqs.directives.ElasticMQDirectives
 import org.elasticmq.{DeliveryReceipt, MillisVisibilityTimeout}
 import spray.json.RootJsonFormat
 import spray.json.DefaultJsonProtocol._
-import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
+import org.apache.pekko.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import org.elasticmq.rest.sqs.model.RequestPayload
 
 trait ChangeMessageVisibilityDirectives { this: ElasticMQDirectives with ResponseMarshaller =>

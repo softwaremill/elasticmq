@@ -1,6 +1,6 @@
 package org.elasticmq.rest.sqs.directives
 
-import akka.http.scaladsl.server.{Directive0, Directives, Rejection, RejectionHandler}
+import org.apache.pekko.http.scaladsl.server.{Directive0, Directives, Rejection, RejectionHandler}
 import org.elasticmq.rest.sqs.{AWSProtocol, SQSException}
 
 trait RejectionDirectives {
