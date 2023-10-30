@@ -1,7 +1,7 @@
 import com.amazonaws.services.s3.model.PutObjectResult
 import com.softwaremill.Publish.ossPublishSettings
 import com.softwaremill.SbtSoftwareMillCommon.commonSmlBuildSettings
-import com.typesafe.sbt.packager.docker.{Cmd, ExecCmd}
+import com.typesafe.sbt.packager.docker._
 import sbt.Keys.javaOptions
 import sbt.internal.util.complete.Parsers.spaceDelimited
 import scoverage.ScoverageKeys.*
@@ -242,7 +242,9 @@ lazy val server: Project = (project in file("server"))
       dockerBaseImage := "openjdk:11-jdk-stretch",
       Docker / packageName := "elasticmq",
       dockerUsername := Some("softwaremill"),
-      dockerUpdateLatest := true,
+      dockerUpdateLatest := {
+        !version.value.toLowerCase.contains("rc")
+      },
       Universal / javaOptions ++= Seq("-Dconfig.file=/opt/elasticmq.conf"),
       Docker / mappings ++= Seq(
         (baseDirectory.value / "docker" / "elasticmq.conf") -> "/opt/elasticmq.conf"
@@ -263,9 +265,12 @@ lazy val server: Project = (project in file("server"))
   .dependsOn(core, restSqs, persistenceFile, persistenceSql, commonTest % "test")
 
 val graalVmVersion = "22.1.0"
+val graalVmTag = s"ol8-java11-$graalVmVersion"
+val graalVmBaseImage = "ghcr.io/graalvm/graalvm-ce"
+val alpineVersion = "3.18"
 
 lazy val nativeServer: Project = (project in file("native-server"))
-  .enablePlugins(GraalVMNativeImagePlugin, DockerPlugin)
+  .enablePlugins(JavaAppPackaging, DockerPlugin)
   .settings(buildSettings)
   .settings(uiSettings)
   .settings(dockerBuildxSettings)
@@ -276,71 +281,104 @@ lazy val nativeServer: Project = (project in file("native-server"))
         "org.graalvm.nativeimage" % "svm" % graalVmVersion % "compile-internal"
       ),
       publish / skip := true,
-      // configures sbt-native-packager to build app using dockerized graalvm
-      // docker image source: https://github.com/graalvm/container/pkgs/container/graalvm-ce/versions
-      (GraalVMNativeImage / containerBuildImage) := GraalVMNativeImagePlugin
-        .generateContainerBuildImage(s"ghcr.io/graalvm/graalvm-ce:ol8-java11-$graalVmVersion")
-        .value,
-      graalVMNativeImageOptions ++= Seq(
-        "--static",
-        "-H:IncludeResources=.*conf",
-        "-H:IncludeResources=version",
-        "-H:IncludeResources=.*\\.properties",
-        "-H:+ReportExceptionStackTraces",
-        "-H:-ThrowUnsafeOffsetErrors",
-        "--enable-http",
-        "--enable-https",
-        "--enable-url-protocols=https,http",
-        "--report-unsupported-elements-at-runtime",
-        "--initialize-at-build-time=scala.Symbol$",
-        "--allow-incomplete-classpath",
-        "--no-fallback",
-        "--verbose"
-      ),
       Compile / mainClass := Some("org.elasticmq.server.Main"),
-      // configures sbt-native-packager to build docker image with generated executable
-      dockerBaseImage := "alpine:3.17",
-      Docker / mappings := Seq(
-        (baseDirectory.value / ".." / "server" / "docker" / "elasticmq.conf") -> "/opt/elasticmq.conf",
-        (baseDirectory.value / ".." / "server" / "src" / "main" / "resources" / "logback.xml") -> "/opt/logback.xml",
-        ((GraalVMNativeImage / target).value / "elasticmq-native-server") -> "/opt/docker/bin/elasticmq-native-server"
-      ) ++ sbt.Path.directory(baseDirectory.value / ".." / "ui" / "build"),
-      dockerEntrypoint := Seq(
-        "/sbin/tini",
-        "--",
-        "/opt/docker/bin/elasticmq-native-server",
-        "-Dconfig.file=/opt/elasticmq.conf",
-        "-Dlogback.configurationFile=/opt/logback.xml"
-      ),
-      dockerUpdateLatest := true,
-      dockerExposedPorts := Seq(9324, 9325),
+      dockerPermissionStrategy := DockerPermissionStrategy.None,
+      // We want to utilize `docker buildx` to create native image in the first stage
+      // and then create the target docker image based on Alpine with just the native image, configuration and ui files.
+      // GraalVMNativeImagePlugin does support such scenario because it uses `docker run` to build the native image
+      // and then simply copies the artifact to the result docker image, which makes it difficult to create ARM native image.
       dockerCommands := {
         val commands = dockerCommands.value
-        val index = commands.indexWhere {
-          case Cmd("FROM", args @ _*) =>
-            args.head == "alpine:3.17" && args.last == "mainstage"
+        val binaryName = name.value
+        val className = (Compile / mainClass).value.getOrElse(sys.error("Could not find a main class."))
+
+        // This is copied from DockerPlugin - it seems like the layers with id contain the runtime jars
+        // and the layers without id contain custom files defined in Docker / mappings
+        val layerMappings = (Docker / dockerLayerMappings).value
+        val layerIdsAscending = layerMappings.map(_.layerId).distinct.sortWith { (a, b) =>
+          // Make the None (unspecified) layer the last layer
+          a.getOrElse(Int.MaxValue) < b.getOrElse(Int.MaxValue)
+        }
+
+        val nativeImageCmd = Seq(
+          "/usr/local/bin/native-image",
+          "-cp",
+          layerMappings.map(_.path).filter(_.endsWith(".jar")).mkString(":"),
+          "-H:IncludeResources=.*conf",
+          "-H:IncludeResources=version",
+          "-H:IncludeResources=.*\\.properties",
+          "-H:+ReportExceptionStackTraces",
+          "-H:-ThrowUnsafeOffsetErrors",
+          s"-H:Name=$binaryName",
+          "--enable-http",
+          "--enable-https",
+          "--enable-url-protocols=https,http",
+          "--report-unsupported-elements-at-runtime",
+          "--initialize-at-build-time=scala.Symbol$",
+          "--allow-incomplete-classpath",
+          "--no-fallback",
+          "--verbose",
+          "--static",
+          className
+        )
+
+        // Create build stage based on GraalVM image
+        val graalVmBuildCommands = Seq(
+          Cmd("FROM", s"$graalVmBaseImage:$graalVmTag"),
+          Cmd("WORKDIR", "/opt/graalvm"),
+          ExecCmd("RUN", "gu", "install", "native-image"),
+          ExecCmd("RUN", "sh", "-c", "ln -s /opt/graalvm-ce-*/bin/native-image /usr/local/bin/native-image")
+        ) ++ layerIdsAscending.map(layerId => {
+          val files = "opt"
+          val path = layerId.map(i => s"$i/$files").getOrElse(s"$files")
+          Cmd("COPY", s"$path /$files")
+        }) ++ Seq(Cmd("RUN", nativeImageCmd: _*))
+
+        // We want to include the image generated in stage0 around the COPY commands
+        val lastIndexOfCopy = commands.lastIndexWhere {
+          case Cmd("COPY", _) => true
           case _ => false
         }
-        val (front, back) = commands.splitAt(index + 1)
-        // sbt-native-packager by default copies stage0:/opt/docker to the target container; we need to additionally
-        // copy the configuration file
-        val copyConfig = Cmd("COPY", "--from=stage0", "/opt/elasticmq.conf", "/opt")
-        val copyLogback = Cmd("COPY", "--from=stage0", "/opt/logback.xml", "/opt")
-        val copyUI = Cmd(
-          "COPY",
-          "/build/",
-          "/opt/docker"
-        )
-        val tiniCommand = ExecCmd("RUN", "apk", "add", "--no-cache", "tini")
-        front ++ Seq(tiniCommand, copyConfig, copyLogback, copyUI) ++ back
+
+        val (front, back) = commands.splitAt(lastIndexOfCopy + 1)
+
+        val updatedCommands = front.filter {
+          case Cmd("COPY", args@_*) =>
+            // We do not want to include jar layers (the one with number based root path: /1, /2, /3, etc.)
+            args.head.startsWith("opt")
+          case _ => true
+        } ++ Seq(
+          Cmd("COPY", "--from=0", s"/opt/graalvm/$binaryName", s"/opt/elasticmq/bin/$binaryName"),
+          ExecCmd("RUN", "apk", "add", "--no-cache", "tini")
+        ) ++ back
+
+        graalVmBuildCommands ++ updatedCommands
       },
-      Docker / packageName := "elasticmq-native",
+      Docker / defaultLinuxInstallLocation := "/opt/elasticmq",
+      Docker / mappings ++= Seq(
+        (baseDirectory.value / ".." / "server" / "docker" / "elasticmq.conf") -> "/opt/elasticmq/elasticmq.conf",
+        (baseDirectory.value / ".." / "server" / "src" / "main" / "resources" / "logback.xml") -> "/opt/elasticmq/logback.xml",
+      ) ++ sbt.Path.contentOf(baseDirectory.value / ".." / "ui" / "build").map {
+        case (file, mapping) => (file, "/opt/elasticmq/" + mapping)
+      },
+      dockerEntrypoint := Seq(
+        "/sbin/tini", // tini makes it possible to kill the process with Cmd+C/Ctrl+C when running in interactive mode (-it)
+        "--",
+        "/opt/elasticmq/bin/elasticmq-native-server",
+        "-Dconfig.file=/opt/elasticmq/elasticmq.conf",
+        "-Dlogback.configurationFile=/opt/elasticmq/logback.xml"
+      ),
+      dockerUpdateLatest := {
+        !version.value.toLowerCase.contains("rc")
+      },
+      dockerExposedPorts := Seq(9324, 9325),
       dockerUsername := Some("softwaremill"),
-      GraalVMNativeImage / packageBin := (GraalVMNativeImage / packageBin)
+      dockerExposedVolumes += "/data",
+      dockerBaseImage := s"alpine:$alpineVersion",
+      Docker / packageName := "elasticmq-native",
+      Compile / packageBin := (Compile / packageBin)
         .dependsOn(yarnTask.toTask(" build"))
-        .value,
-      dockerUpdateLatest := true,
-      dockerExposedVolumes += "/data"
+        .value
     )
   )
   .dependsOn(server)

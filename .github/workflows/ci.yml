@@ -140,7 +140,7 @@ jobs:
         run: sbt "project server; assembly; Docker / publishLocal"
 
       - name: Build native docker image
-        run: sbt "project nativeServer; assembly; GraalVMNativeImage / packageBin; Docker / publishLocal"
+        run: sbt "project nativeServer; Docker / publishLocal"
 
   publish-jar:
     needs: [ci-2-12, ci-2-13, ci-docker]
@@ -238,4 +238,4 @@ jobs:
         run: sbt "project server; assembly; Docker / publish"
 
       - name: Publish JVM native docker image
-        run: sbt "project nativeServer; assembly; GraalVMNativeImage / packageBin; Docker / publish"
+        run: sbt "project nativeServer; assembly; Docker / publish"
