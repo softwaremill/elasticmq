@@ -1,10 +1,10 @@
 package org.elasticmq.rest.sqs
 
-import akka.actor.{ActorRef, ActorSystem, Props}
-import akka.http.scaladsl.Http
-import akka.http.scaladsl.server.{Directive1, Directives}
-import akka.stream.ActorMaterializer
-import akka.util.Timeout
+import org.apache.pekko.actor.{ActorRef, ActorSystem, Props}
+import org.apache.pekko.http.scaladsl.Http
+import org.apache.pekko.http.scaladsl.server.{Directive1, Directives}
+import org.apache.pekko.stream.ActorMaterializer
+import org.apache.pekko.util.Timeout
 import com.typesafe.config.ConfigFactory
 import org.elasticmq._
 import org.elasticmq.actor.QueueManagerActor

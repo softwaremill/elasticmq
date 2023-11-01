@@ -1,7 +1,7 @@
 package org.elasticmq.actor.reply
 
-import akka.actor.Actor
-import akka.actor.Status.Failure
+import org.apache.pekko.actor.Actor
+import org.apache.pekko.actor.Status.Failure
 import scala.reflect.ClassTag
 import scala.language.higherKinds
 

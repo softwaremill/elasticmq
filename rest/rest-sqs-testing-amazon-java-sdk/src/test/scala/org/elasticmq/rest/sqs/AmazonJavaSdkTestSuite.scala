@@ -1,6 +1,6 @@
 package org.elasticmq.rest.sqs
 
-import akka.http.scaladsl.model.StatusCodes
+import org.apache.pekko.http.scaladsl.model.StatusCodes
 import com.amazonaws.AmazonServiceException
 import com.amazonaws.services.sqs.AmazonSQS
 import com.amazonaws.services.sqs.model._

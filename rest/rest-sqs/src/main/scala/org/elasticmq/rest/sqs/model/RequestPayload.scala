@@ -1,7 +1,7 @@
 package org.elasticmq.rest.sqs.model
 
-import akka.http.scaladsl.server.Directive0
-import akka.http.scaladsl.server.Directives._
+import org.apache.pekko.http.scaladsl.server.Directive0
+import org.apache.pekko.http.scaladsl.server.Directives._
 import org.elasticmq.rest.sqs.{Action, FlatParamsReader, SQSException}
 import spray.json.{JsObject, RootJsonFormat}
 

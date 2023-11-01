@@ -1,10 +1,10 @@
 package org.elasticmq.rest.sqs.directives
 
-import akka.http.scaladsl.server.Route
+import org.apache.pekko.http.scaladsl.server.Route
 
 import scala.concurrent.Future
 import org.elasticmq.rest.sqs.ActorSystemModule
-import akka.http.scaladsl.server.Directives._
+import org.apache.pekko.http.scaladsl.server.Directives._
 
 import scala.util.{Failure, Success}
 

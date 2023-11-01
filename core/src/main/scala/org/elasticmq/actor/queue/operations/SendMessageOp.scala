@@ -1,6 +1,6 @@
 package org.elasticmq.actor.queue.operations
 
-import akka.actor.{ActorContext, ActorRef}
+import org.apache.pekko.actor.{ActorContext, ActorRef}
 import org.elasticmq.actor.queue.{InternalMessage, QueueActorStorage, QueueEvent}
 import org.elasticmq.msg.SendMessage
 import org.elasticmq.util.Logging

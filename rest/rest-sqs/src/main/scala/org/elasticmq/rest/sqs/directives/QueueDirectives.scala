@@ -1,9 +1,9 @@
 package org.elasticmq.rest.sqs.directives
 
-import akka.actor.ActorRef
-import akka.http.scaladsl.model.Uri
-import akka.http.scaladsl.server.PathMatcher.{Matched, Unmatched}
-import akka.http.scaladsl.server._
+import org.apache.pekko.actor.ActorRef
+import org.apache.pekko.http.scaladsl.model.Uri
+import org.apache.pekko.http.scaladsl.server.PathMatcher.{Matched, Unmatched}
+import org.apache.pekko.http.scaladsl.server._
 import org.elasticmq.QueueData
 import org.elasticmq.actor.reply._
 import org.elasticmq.msg.{GetQueueData, LookupQueue}

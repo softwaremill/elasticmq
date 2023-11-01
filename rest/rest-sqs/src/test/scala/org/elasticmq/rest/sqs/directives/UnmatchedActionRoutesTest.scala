@@ -1,9 +1,9 @@
 package org.elasticmq.rest.sqs.directives
 
-import akka.http.scaladsl.model.StatusCodes.BadRequest
-import akka.http.scaladsl.server.Directives
-import akka.http.scaladsl.testkit.ScalatestRouteTest
-import akka.util.ByteString
+import org.apache.pekko.http.scaladsl.model.StatusCodes.BadRequest
+import org.apache.pekko.http.scaladsl.server.Directives
+import org.apache.pekko.http.scaladsl.testkit.ScalatestRouteTest
+import org.apache.pekko.util.ByteString
 import org.elasticmq.rest.sqs.model.RequestPayload
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers

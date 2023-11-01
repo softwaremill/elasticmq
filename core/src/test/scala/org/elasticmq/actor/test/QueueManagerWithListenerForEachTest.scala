@@ -1,7 +1,7 @@
 package org.elasticmq.actor.test
 
-import akka.actor.{ActorRef, ActorSystem, Props}
-import akka.testkit.{TestActor, TestActors, TestProbe}
+import org.apache.pekko.actor.{ActorRef, ActorSystem, Props}
+import org.apache.pekko.testkit.{TestActor, TestActors, TestProbe}
 import org.elasticmq.StrictSQSLimits
 import org.elasticmq.actor.QueueManagerActor
 import org.elasticmq.actor.queue.{OperationSuccessful, QueueEvent}

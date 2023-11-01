@@ -1,7 +1,7 @@
 package org.elasticmq.persistence.sql
 
-import akka.actor.{Actor, ActorRef}
-import akka.util.Timeout
+import org.apache.pekko.actor.{Actor, ActorRef}
+import org.apache.pekko.util.Timeout
 import org.elasticmq.ElasticMQError
 import org.elasticmq.actor.queue._
 import org.elasticmq.actor.reply._

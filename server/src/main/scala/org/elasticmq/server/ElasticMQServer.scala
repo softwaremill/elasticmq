@@ -1,7 +1,7 @@
 package org.elasticmq.server
 
-import akka.actor.{ActorRef, ActorSystem, Props, Terminated}
-import akka.util.Timeout
+import org.apache.pekko.actor.{ActorRef, ActorSystem, Props, Terminated}
+import org.apache.pekko.util.Timeout
 import org.elasticmq.ElasticMQError
 import org.elasticmq.actor.QueueManagerActor
 import org.elasticmq.actor.queue.QueueEvent

@@ -1,12 +1,12 @@
 package org.elasticmq.rest.sqs.directives
 
-import akka.http.scaladsl.model.ContentTypes._
-import akka.http.scaladsl.model.HttpEntity
-import akka.http.scaladsl.server.{Directives, RequestContext, Route}
+import org.apache.pekko.http.scaladsl.model.ContentTypes._
+import org.apache.pekko.http.scaladsl.model.HttpEntity
+import org.apache.pekko.http.scaladsl.server.{Directives, RequestContext, Route}
 import org.elasticmq.rest.sqs.Constants._
 
 import scala.language.postfixOps
-import akka.http.scaladsl.server
+import org.apache.pekko.http.scaladsl.server
 import org.elasticmq.rest.sqs.{AWSProtocol, MarshallerDependencies}
 import org.elasticmq.rest.sqs.Constants.EmptyRequestId
 
