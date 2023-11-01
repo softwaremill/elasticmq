@@ -1,3 +1,11 @@
+import com.amazonaws.services.s3.model.PutObjectResult
+import com.softwaremill.Publish.ossPublishSettings
+import com.softwaremill.SbtSoftwareMillCommon.commonSmlBuildSettings
+import com.typesafe.sbt.packager.docker._
+import sbt.Keys.javaOptions
+import sbt.internal.util.complete.Parsers.spaceDelimited
+import scoverage.ScoverageKeys.*
+
 import scala.sys.process.Process
 
 val v2_12 = "2.12.15"
@@ -205,6 +213,9 @@ lazy val server: Project = (project in file("server"))
       coverageMinimumStmtTotal := 52,
       // s3 upload
       s3Upload := {
+        import com.amazonaws.auth.{AWSStaticCredentialsProvider, BasicAWSCredentials}
+        import com.amazonaws.services.s3.AmazonS3ClientBuilder
+        import com.amazonaws.services.s3.model.{CannedAccessControlList, PutObjectRequest}
 
         val bucketName = "softwaremill-public"
 
