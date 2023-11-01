@@ -337,13 +337,13 @@ lazy val nativeServer: Project = (project in file("native-server"))
         // We want to include the image generated in stage0 around the COPY commands
         val lastIndexOfCopy = commands.lastIndexWhere {
           case Cmd("COPY", _) => true
-          case _ => false
+          case _              => false
         }
 
         val (front, back) = commands.splitAt(lastIndexOfCopy + 1)
 
         val updatedCommands = front.filter {
-          case Cmd("COPY", args@_*) =>
+          case Cmd("COPY", args @ _*) =>
             // We do not want to include jar layers (the one with number based root path: /1, /2, /3, etc.)
             args.head.startsWith("opt")
           case _ => true
@@ -356,17 +356,17 @@ lazy val nativeServer: Project = (project in file("native-server"))
       },
       Docker / defaultLinuxInstallLocation := "/opt/elasticmq",
       Docker / mappings ++= Seq(
-        (baseDirectory.value / ".." / "server" / "docker" / "elasticmq.conf") -> "/opt/elasticmq/elasticmq.conf",
-        (baseDirectory.value / ".." / "server" / "src" / "main" / "resources" / "logback.xml") -> "/opt/elasticmq/logback.xml",
-      ) ++ sbt.Path.contentOf(baseDirectory.value / ".." / "ui" / "build").map {
-        case (file, mapping) => (file, "/opt/elasticmq/" + mapping)
+        (baseDirectory.value / ".." / "server" / "docker" / "elasticmq.conf") -> "/opt/elasticmq.conf",
+        (baseDirectory.value / ".." / "server" / "src" / "main" / "resources" / "logback.xml") -> "/opt/logback.xml"
+      ) ++ sbt.Path.contentOf(baseDirectory.value / ".." / "ui" / "build").map { case (file, mapping) =>
+        (file, "/opt/elasticmq/" + mapping)
       },
       dockerEntrypoint := Seq(
         "/sbin/tini", // tini makes it possible to kill the process with Cmd+C/Ctrl+C when running in interactive mode (-it)
         "--",
         "/opt/elasticmq/bin/elasticmq-native-server",
-        "-Dconfig.file=/opt/elasticmq/elasticmq.conf",
-        "-Dlogback.configurationFile=/opt/elasticmq/logback.xml"
+        "-Dconfig.file=/opt/elasticmq.conf",
+        "-Dlogback.configurationFile=/opt/logback.xml"
       ),
       dockerUpdateLatest := {
         !version.value.toLowerCase.contains("rc")
