@@ -517,7 +517,7 @@ To build a jar-with-dependencies:
 Do not forget to adjust the CPU and memory settings for the Docker process. It was checked with 6CPUs, 8GB of memory and 2GB of swap. Also, make sure that you are running sbt with the graalvm java, as the way the jars are composed seem to differ from other java implementations, and affect the native-image process that is run later! To rebuild the native image, run:
 
 ```
-sbt "project nativeServer; clean; assembly; graalvm-native-image:packageBin; docker:publishLocal"
+sbt "project nativeServer; clean; assembly; docker:publishLocal"
 ```
 
 Generating GraalVM config files is a manual process currently. You need to run the fat-jar using the GraalVM VM (w/ native-image installed using `gu`), and then run the following commands to generate the configs:
