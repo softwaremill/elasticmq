@@ -14,9 +14,6 @@
       "pattern":"\\QMETA-INF/services/org.slf4j.spi.SLF4JServiceProvider\\E"
     }, 
     {
-      "pattern":"\\Qpekko-http-version.conf\\E"
-    }, 
-    {
       "pattern":"\\Qapplication.conf\\E"
     }, 
     {
@@ -24,9 +21,12 @@
     }, 
     {
       "pattern":"\\Qorg/h2/util/data.zip\\E"
-    },
+    }, 
     {
       "pattern":"\\Qorg/slf4j/impl/StaticLoggerBinder.class\\E"
+    }, 
+    {
+      "pattern":"\\Qpekko-http-version.conf\\E"
     }, 
     {
       "pattern":"\\Qreference.conf\\E"
@@ -40,9 +40,6 @@
   ]},
   "bundles":[{
       "name":"org.apache.commons.dbcp2.LocalStrings",
-      "locales":[
-        "", 
-        "und"
-      ]
+      "locales":["und"]
     }]
 }

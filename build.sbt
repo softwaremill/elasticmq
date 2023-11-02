@@ -97,7 +97,7 @@ lazy val root: Project = (project in file("."))
   .settings(name := "elasticmq-root", publish / skip := true)
   // we want to build the main jar using java 8, but native-server requires java 11, so it's built separately
   // native-server project is only used for building docker with graalvm native image
-  .aggregate(commonTest, core, rest, persistence, server, ui)
+  .aggregate(commonTest, core, rest, persistence, server, nativeServer, ui)
 
 lazy val commonTest: Project = (project in file("common-test"))
   .settings(buildSettings)
@@ -316,6 +316,7 @@ lazy val nativeServer: Project = (project in file("native-server"))
           "--report-unsupported-elements-at-runtime",
           "--initialize-at-build-time=scala.Symbol$",
           "--allow-incomplete-classpath",
+          "--install-exit-handlers",
           "--no-fallback",
           "--verbose",
           "--static",
