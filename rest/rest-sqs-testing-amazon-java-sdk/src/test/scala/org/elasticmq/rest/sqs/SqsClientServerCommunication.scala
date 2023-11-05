@@ -28,6 +28,8 @@ trait SqsClientServerCommunication extends AnyFunSuite with BeforeAndAfter with 
 
   val ServiceEndpoint = "http://localhost:9321"
 
+  val redrivePolicyAttribute = "RedrivePolicy"
+
   before {
     logger.info(s"\n---\nRunning test: $currentTestName\n---\n")
 

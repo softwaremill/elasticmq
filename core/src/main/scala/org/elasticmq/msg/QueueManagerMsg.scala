@@ -11,3 +11,8 @@ case class DeleteQueue(queueName: String) extends QueueManagerMsg[Unit]
 case class LookupQueue(queueName: String) extends QueueManagerMsg[Option[ActorRef]]
 case class ListQueues() extends QueueManagerMsg[Seq[String]]
 case class ListDeadLetterSourceQueues(queueName: String) extends QueueManagerMsg[List[String]]
+case class StartMessageMoveTask(
+    sourceQueue: ActorRef,
+    destinationQueue: Option[ActorRef],
+    maxNumberOfMessagesPerSecond: Option[Int]
+) extends QueueManagerMsg[Either[ElasticMQError, StartMessageMoveTaskId]]

@@ -170,7 +170,8 @@ case class TheSQSRestServerBuilder(
       with UnmatchedActionRoutes
       with ResponseMarshaller
       with QueueAttributesOps
-      with ListDeadLetterSourceQueuesDirectives {
+      with ListDeadLetterSourceQueuesDirectives
+      with StartMessageMoveTaskDirectives {
 
       def serverAddress = currentServerAddress.get()
 
@@ -211,6 +212,7 @@ case class TheSQSRestServerBuilder(
         untagQueue(p) ~
         listQueueTags(p) ~
         listDeadLetterSourceQueues(p) ~
+        startMessageMoveTask(p) ~
         // 4. Unmatched action
         unmatchedAction(p)
 
@@ -333,6 +335,9 @@ object Constants {
   val MaxResultsParameter = "MaxResults"
   val NextTokenParameter = "NextToken"
   val QueueNamePrefixParameter = "QueueNamePrefix"
+  val SourceArnParameter = "SourceArn"
+  val DestinationArnParameter = "DestinationArn"
+  val MaxNumberOfMessagesPerSecondParameter = "MaxNumberOfMessagesPerSecond"
 }
 
 object ParametersUtil {

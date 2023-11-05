@@ -1,19 +1,26 @@
 package org.elasticmq.actor
 
 import org.apache.pekko.actor.{ActorRef, Props}
+import org.apache.pekko.util.Timeout
 import org.elasticmq._
 import org.elasticmq.actor.queue.{QueueActor, QueueEvent}
 import org.elasticmq.actor.reply._
 import org.elasticmq.msg._
 import org.elasticmq.util.{Logging, NowProvider}
 
+import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.duration.DurationInt
 import scala.reflect._
+import scala.util.{Failure, Success}
 
 class QueueManagerActor(nowProvider: NowProvider, limits: Limits, queueEventListener: Option[ActorRef])
     extends ReplyingActor
     with Logging {
   type M[X] = QueueManagerMsg[X]
   val ev: ClassTag[QueueManagerMsg[Unit]] = classTag[M[Unit]]
+
+  implicit lazy val ec: ExecutionContext = context.dispatcher
+  implicit lazy val timeout: Timeout = 5.seconds
 
   case class ActorWithQueueData(actorRef: ActorRef, queueData: QueueData)
   private val queues = collection.mutable.HashMap[String, ActorWithQueueData]()
@@ -63,6 +70,29 @@ class QueueManagerActor(nowProvider: NowProvider, limits: Limits, queueEventList
         queues.collect {
           case (name, actor) if actor.queueData.deadLettersQueue.exists(_.name == queueName) => name
         }.toList
+
+      case StartMessageMoveTask(sourceQueue, destinationQueue, maxNumberOfMessagesPerSecond) =>
+        val replyTo = sender()
+        val destination = destinationQueue.map(Future.successful).getOrElse {
+          val queueData = sourceQueue ? GetQueueData()
+          queueData.map { qd =>
+            queues
+              .filter { case (_, data) =>
+                data.queueData.deadLettersQueue.exists(dlqd => dlqd.name == qd.name)
+              }
+              .head
+              ._2
+              .actorRef
+          }
+        }
+        val f = destination.flatMap(destinationQueueActorRef =>
+          sourceQueue ? StartMessageMoveTaskToQueue(destinationQueueActorRef, maxNumberOfMessagesPerSecond)
+        )
+        f.onComplete {
+          case Success(value) => replyTo ! Right(value)
+          case Failure(ex)    => logger.error("Failed to start message move task", ex)
+        }
+        DoNotReply()
     }
 
   protected def createQueueActor(
