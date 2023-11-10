@@ -22,7 +22,7 @@ trait AnyParamDirectives {
   private def extractActionFromHeader =
     extractRequest.map(request =>
       request.headers
-        .find(_.name() == "X-Amz-Target")
+        .find(_.name().equalsIgnoreCase("X-Amz-Target"))
         .flatMap(
           _.value() match {
             case actionHeaderPattern(action) => Some(action)
