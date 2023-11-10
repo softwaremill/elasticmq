@@ -22,7 +22,7 @@ trait AnyParamDirectives {
   private def extractActionFromHeader =
     extractRequest.map(request =>
       request.headers
-        .find(_.name() == "X-Amz-Target")
+        .find(_.is("x-amz-target"))
         .flatMap(
           _.value() match {
             case actionHeaderPattern(action) => Some(action)
@@ -35,7 +35,7 @@ trait AnyParamDirectives {
   private def extractAwsXRayTracingHeader =
     extractRequest.map(
       _.headers
-        .find(_.name().equalsIgnoreCase("X-Amzn-Trace-Id"))
+        .find(_.is("x-amzn-trace-id"))
         .map(_.value())
     )
 
