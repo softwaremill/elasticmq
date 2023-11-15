@@ -264,7 +264,7 @@ class AmazonCliTestSuite
 
       // then
       outLines.mkString("\n") shouldBe empty
-      errLines.mkString("\n") should include("An error occurred (QueueDoesNotExist) when calling the SendMessage operation: The specified queue does not exist.")
+      errLines.mkString("\n") should include("The specified queue does not exist.")
     }
 
     test(s"should tag, untag and list queue tags ${version.name}", Only213) {
