@@ -5,6 +5,7 @@ import org.elasticmq.{NodeAddress, RelaxedSQSLimits}
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.{Args, BeforeAndAfter, Status}
 import software.amazon.awssdk.auth.credentials.{AwsBasicCredentials, StaticCredentialsProvider}
+import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.sqs.{SqsClient, SqsClientBuilder}
 
 import java.net.URI
@@ -45,11 +46,13 @@ trait SqsClientServerWithSdkV2Communication extends AnyFunSuite with BeforeAndAf
 
     clientV2 = SqsClient.builder()
       .credentialsProvider(StaticCredentialsProvider.create(AwsBasicCredentials.create("x", "x")))
+      .region(Region.EU_CENTRAL_1)
       .endpointOverride(new URI("http://localhost:9321"))
       .build()
 
     relaxedClientV2 = SqsClient.builder()
       .credentialsProvider(StaticCredentialsProvider.create(AwsBasicCredentials.create("x", "x")))
+      .region(Region.EU_CENTRAL_1)
       .endpointOverride(new URI("http://localhost:9322"))
       .build()
   }
