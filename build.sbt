@@ -37,7 +37,7 @@ val scalatest = "org.scalatest" %% "scalatest" % "3.2.17"
 val awaitility = "org.awaitility" % "awaitility-scala" % "4.2.0"
 
 val amazonJavaSdkSqs = "com.amazonaws" % "aws-java-sdk-sqs" % "1.12.472" exclude ("commons-logging", "commons-logging")
-val amazonJavaV2SdkSqs = "software.amazon.awssdk" % "sqs" % "2.21.22"
+val amazonJavaV2SdkSqs = "software.amazon.awssdk" % "sqs" % "2.21.24"
 
 val pekkoVersion = "1.0.1"
 val pekkoHttpVersion = "1.0.0"
@@ -192,7 +192,13 @@ lazy val restSqsTestingAmazonJavaSdk: Project =
     .settings(
       Seq(
         name := "elasticmq-rest-sqs-testing-amazon-java-sdk",
-        libraryDependencies ++= Seq(amazonJavaSdkSqs, amazonJavaV2SdkSqs, awsSpringMessaging, jclOverSlf4j, springWeb) ++ common,
+        libraryDependencies ++= Seq(
+          amazonJavaSdkSqs,
+          amazonJavaV2SdkSqs,
+          awsSpringMessaging,
+          jclOverSlf4j,
+          springWeb
+        ) ++ common,
         publish / skip := true
       )
     )
