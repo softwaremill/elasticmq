@@ -71,5 +71,9 @@ object SQSException {
 
   /** Indicates a queue does not exist */
   def nonExistentQueue: SQSException =
-    new SQSException("AWS.SimpleQueueService.NonExistentQueue", errorType = "com.amazonaws.sqs#QueueDoesNotExist", errorMessage = Some("The specified queue does not exist."))
+    new SQSException(
+      "AWS.SimpleQueueService.NonExistentQueue",
+      errorType = "com.amazonaws.sqs#QueueDoesNotExist",
+      errorMessage = Some("The specified queue does not exist.")
+    )
 }
