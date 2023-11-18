@@ -44,13 +44,15 @@ trait SqsClientServerWithSdkV2Communication extends AnyFunSuite with BeforeAndAf
     strictServer.waitUntilStarted()
     relaxedServer.waitUntilStarted()
 
-    clientV2 = SqsClient.builder()
+    clientV2 = SqsClient
+      .builder()
       .credentialsProvider(StaticCredentialsProvider.create(AwsBasicCredentials.create("x", "x")))
       .region(Region.EU_CENTRAL_1)
       .endpointOverride(new URI("http://localhost:9321"))
       .build()
 
-    relaxedClientV2 = SqsClient.builder()
+    relaxedClientV2 = SqsClient
+      .builder()
       .credentialsProvider(StaticCredentialsProvider.create(AwsBasicCredentials.create("x", "x")))
       .region(Region.EU_CENTRAL_1)
       .endpointOverride(new URI("http://localhost:9322"))
