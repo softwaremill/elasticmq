@@ -26,8 +26,6 @@ trait SqsClientServerWithSdkV2Communication extends AnyFunSuite with BeforeAndAf
   val ServiceEndpoint = "http://localhost:9321"
 
   before {
-    logger.info(s"\n---\nRunning test: $currentTestName\n---\n")
-
     strictServer = SQSRestServerBuilder
       .withPort(9321)
       .withServerAddress(NodeAddress(port = 9321))
@@ -65,7 +63,5 @@ trait SqsClientServerWithSdkV2Communication extends AnyFunSuite with BeforeAndAf
 
     Try(strictServer.stopAndWait())
     Try(relaxedServer.stopAndWait())
-
-    logger.info(s"\n---\nTest done: $currentTestName\n---\n")
   }
 }

@@ -348,14 +348,14 @@ class AmazonCliTestSuite
         ReceiptHandle.nonEmpty shouldBe true
         MD5OfBody shouldBe firstMessage.MD5OfMessageBody
         Body shouldBe firstMessageBody
-        Attributes.size shouldBe 4
-        Attributes.get("SentTimestamp").map(v => v.nonEmpty shouldBe true)
-        Attributes.get("ApproximateReceiveCount").map(_ shouldBe "1")
-        Attributes.get("ApproximateFirstReceiveTimestamp").map(v => v.nonEmpty shouldBe true)
-        Attributes.get("SenderId").map(_ shouldBe "127.0.0.1")
+        Attributes.get.size shouldBe 4
+        Attributes.get.get("SentTimestamp").map(v => v.nonEmpty shouldBe true)
+        Attributes.get.get("ApproximateReceiveCount").map(_ shouldBe "1")
+        Attributes.get.get("ApproximateFirstReceiveTimestamp").map(v => v.nonEmpty shouldBe true)
+        Attributes.get.get("SenderId").map(_ shouldBe "127.0.0.1")
         MD5OfMessageAttributes.nonEmpty shouldBe true
-        MessageAttributes.nonEmpty shouldBe true
-        MessageAttributes.get("firstAttribute").map { msgAtt =>
+        MessageAttributes.get.nonEmpty shouldBe true
+        MessageAttributes.get.get("firstAttribute").map { msgAtt =>
           msgAtt.getDataType() shouldBe "String"
           msgAtt shouldBe a[StringMessageAttribute]
           inside(msgAtt) { case stringMessageAttribute: StringMessageAttribute =>
@@ -369,14 +369,14 @@ class AmazonCliTestSuite
         ReceiptHandle.nonEmpty shouldBe true
         MD5OfBody shouldBe secondMessage.MD5OfMessageBody
         Body shouldBe secondMessageBody
-        Attributes.size shouldBe 4
-        Attributes.get("SentTimestamp").map(v => v.nonEmpty shouldBe true)
-        Attributes.get("ApproximateReceiveCount").map(_ shouldBe "1")
-        Attributes.get("ApproximateFirstReceiveTimestamp").map(v => v.nonEmpty shouldBe true)
-        Attributes.get("SenderId").map(_ shouldBe "127.0.0.1")
+        Attributes.get.size shouldBe 4
+        Attributes.get.get("SentTimestamp").map(v => v.nonEmpty shouldBe true)
+        Attributes.get.get("ApproximateReceiveCount").map(_ shouldBe "1")
+        Attributes.get.get("ApproximateFirstReceiveTimestamp").map(v => v.nonEmpty shouldBe true)
+        Attributes.get.get("SenderId").map(_ shouldBe "127.0.0.1")
         MD5OfMessageAttributes.nonEmpty shouldBe true
-        MessageAttributes.nonEmpty shouldBe true
-        MessageAttributes.get("secondAttribute").map { msgAtt =>
+        MessageAttributes.get.nonEmpty shouldBe true
+        MessageAttributes.get.get("secondAttribute").map { msgAtt =>
           msgAtt.getDataType() shouldBe "String"
           msgAtt shouldBe a[StringMessageAttribute]
           inside(msgAtt) { case stringMessageAttribute: StringMessageAttribute =>

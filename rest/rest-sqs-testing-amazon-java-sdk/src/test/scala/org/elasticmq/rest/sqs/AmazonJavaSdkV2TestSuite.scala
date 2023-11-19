@@ -31,4 +31,17 @@ class AmazonJavaSdkV2TestSuite extends SqsClientServerWithSdkV2Communication wit
     thrown.awsErrorDetails().errorCode() shouldBe "QueueDoesNotExist"
     thrown.awsErrorDetails().errorMessage() shouldBe "The specified queue does not exist."
   }
+
+  test("should send and receive message") {
+    val queue = clientV2.createQueue(CreateQueueRequest.builder().queueName("testQueue1").build())
+
+    clientV2.sendMessage(SendMessageRequest.builder().queueUrl(queue.queueUrl()).messageBody("test msg 123").build())
+
+    val messages = clientV2.receiveMessage(ReceiveMessageRequest.builder().queueUrl(queue.queueUrl()).build())
+
+    System.err.println(messages)
+
+    messages.messages().size() shouldBe 1
+    messages.messages().get(0).body() shouldBe "test msg 123"
+  }
 }
