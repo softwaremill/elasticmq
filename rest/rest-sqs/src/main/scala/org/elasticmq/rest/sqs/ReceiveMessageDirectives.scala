@@ -135,14 +135,15 @@ trait ReceiveMessageDirectives {
               .map(_.receipt)
               .getOrElse(throw new RuntimeException("No receipt for a received msg."))
             val filteredMessageAttributes = getFilteredAttributeNames(messageAttributeNames, message)
+            val calculatedAttributes = calculateAttributeValues(message).toMap
 
             ReceivedMessage(
-              Attributes = calculateAttributeValues(message).toMap,
+              Attributes = if (calculatedAttributes.nonEmpty) Some(calculatedAttributes) else None,
               Body = message.content,
               MD5OfBody = md5Digest(message.content),
               MD5OfMessageAttributes =
                 if (filteredMessageAttributes.nonEmpty) Some(md5AttributeDigest(filteredMessageAttributes)) else None,
-              MessageAttributes = filteredMessageAttributes,
+              MessageAttributes = if (filteredMessageAttributes.nonEmpty) Some(filteredMessageAttributes) else None,
               MessageId = message.id.id,
               ReceiptHandle = receipt
             )
@@ -247,11 +248,11 @@ object ReceiveMessageResponse {
 }
 
 case class ReceivedMessage(
-    Attributes: Map[String, String],
+    Attributes: Option[Map[String, String]],
     Body: String,
     MD5OfBody: String,
     MD5OfMessageAttributes: Option[String],
-    MessageAttributes: Map[String, MessageAttribute],
+    MessageAttributes: Option[Map[String, MessageAttribute]],
     MessageId: String,
     ReceiptHandle: String
 )
@@ -266,9 +267,9 @@ object ReceivedMessage extends MessageAttributesSupport {
         <ReceiptHandle>{msg.ReceiptHandle}</ReceiptHandle>
         <MD5OfBody>{msg.MD5OfBody}</MD5OfBody>
         <Body>{XmlUtil.convertTexWithCRToNodeSeq(msg.Body)}</Body>
-        {attributesToXmlConverter.convert(msg.Attributes.toList)}
+        {attributesToXmlConverter.convert(msg.Attributes.getOrElse(Map.empty).toList)}
         {msg.MD5OfMessageAttributes.map(md5 => <MD5OfMessageAttributes>{md5}</MD5OfMessageAttributes>).getOrElse("")}
-        {messageAttributesToXmlConverter.convert(msg.MessageAttributes.toList)}
+        {messageAttributesToXmlConverter.convert(msg.MessageAttributes.getOrElse(Map.empty).toList)}
       </Message>
   }
 }
