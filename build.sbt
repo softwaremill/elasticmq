@@ -51,7 +51,7 @@ val pekkoHttpSprayJson = "org.apache.pekko" %% "pekko-http-spray-json" % pekkoHt
 val pekkoHttpTestkit = "org.apache.pekko" %% "pekko-http-testkit" % pekkoHttpVersion % "test"
 
 val awsSpringMessagingVersion = "2.2.6.RELEASE"
-val springVersion = "5.3.31"
+val springVersion = "6.1.1"
 val awsSpringMessaging = "org.springframework.cloud" % "spring-cloud-aws-messaging" % awsSpringMessagingVersion
 val springWeb = "org.springframework" % "spring-web" % springVersion
 
