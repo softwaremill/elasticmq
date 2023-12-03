@@ -2,6 +2,7 @@ package org.elasticmq.actor.queue
 
 import org.elasticmq.{FifoDeduplicationIdsHistory, QueueStatistics}
 import org.elasticmq.actor.reply.ReplyAction
+import org.elasticmq.actor.reply.valueToReplyWith
 import org.elasticmq.msg._
 import org.elasticmq.util.Logging
 

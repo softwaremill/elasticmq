@@ -18,6 +18,7 @@ import org.elasticmq.rest.sqs.directives.{
   UnmatchedActionRoutes
 }
 import org.elasticmq.rest.sqs.model.RequestPayload
+import org.elasticmq.rest.sqs.{AWSProtocol, XmlNsVersion}
 import org.elasticmq.util.{Logging, NowProvider}
 
 import java.io.ByteArrayOutputStream
@@ -135,8 +136,8 @@ case class TheSQSRestServerBuilder(
       else serverAddress
     val theLimits = sqsLimits
 
-    implicit val implicitActorSystem = theActorSystem
-    implicit val implicitMaterializer = ActorMaterializer()
+    implicit val implicitActorSystem: ActorSystem = theActorSystem
+    implicit val implicitMaterializer: ActorMaterializer = ActorMaterializer()
 
     val currentServerAddress =
       new AtomicReference[NodeAddress](theServerAddress)
@@ -216,11 +217,13 @@ case class TheSQSRestServerBuilder(
 
     val config = new ElasticMQConfig
 
-    implicit val bindingTimeout = Timeout(10, TimeUnit.SECONDS)
+    implicit val bindingTimeout: Timeout = Timeout(10, TimeUnit.SECONDS)
 
     val routes =
-      extractXmlNs { implicit version =>
-        extractProtocol { implicit protocol =>
+      extractXmlNs { (_version: XmlNsVersion) =>
+        implicit val version: XmlNsVersion = _version
+        extractProtocol { (_protocol: AWSProtocol) =>
+          implicit val protocol: AWSProtocol = _protocol
           handleServerExceptions(protocol) {
             handleRejectionsWithSQSError(protocol) {
               anyParamsMap(protocol) { p =>
@@ -236,9 +239,13 @@ case class TheSQSRestServerBuilder(
         }
       }
 
-    val appStartFuture = Http().newServerAt(interface, port).bindFlow(routes)
+    val appStartFuture = {
+      // Scala 3 fix: implicit resolution conflict
+      implicit val _implicitActorSystem: ActorSystem = implicitActorSystem
+      Http()(_implicitActorSystem).newServerAt(interface, port).bindFlow(routes)
+    }
 
-    appStartFuture.foreach { sb: Http.ServerBinding =>
+    appStartFuture.foreach { (sb: Http.ServerBinding) =>
       if (generateServerAddress && port != sb.localAddress.getPort) {
         currentServerAddress.set(theServerAddress.copy(port = sb.localAddress.getPort))
       }

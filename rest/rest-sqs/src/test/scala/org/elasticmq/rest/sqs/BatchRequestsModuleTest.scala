@@ -8,7 +8,7 @@ class BatchRequestsModuleTest extends AnyFunSuite with Matchers {
 
   val prefix = "SomePrefix"
 
-  implicit val fpr = new BatchFlatParamsReader[Map[String, String]] {
+  implicit val fpr: BatchFlatParamsReader[Map[String, String]] = new BatchFlatParamsReader[Map[String, String]] {
     override def batchPrefix: String = prefix
 
     override def read(params: Map[String, String]): Map[String, String] = params

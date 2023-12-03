@@ -9,7 +9,7 @@ import org.springframework.cloud.aws.messaging.core.QueueMessagingTemplate
 
 class SpringAWSTestSuite extends SqsClientServerCommunication with Matchers {
 
-  def withSpringClient(body: QueueMessagingTemplate => Unit) {
+  def withSpringClient(body: QueueMessagingTemplate => Unit) = {
     val sqs = AmazonSQSAsyncClient
       .asyncBuilder()
       .withCredentials(new AWSCredentialsProvider {

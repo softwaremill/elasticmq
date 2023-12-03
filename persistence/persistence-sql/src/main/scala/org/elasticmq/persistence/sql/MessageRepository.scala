@@ -62,7 +62,7 @@ class MessageRepository(queueName: String, db: DB) extends Logging {
                    ${message.groupId},
                    ${message.deduplicationId},
                    ${message.tracingId},
-                   ${message.sequenceNumber})""".update.apply
+                   ${message.sequenceNumber})""".update.apply()
   }
 
   def update(internalMessage: InternalMessage): Int = {
@@ -75,10 +75,10 @@ class MessageRepository(queueName: String, db: DB) extends Logging {
                     receive_count = ${message.receiveCount},
                     tracing_id = ${message.tracingId},
                     sequence_number = ${message.sequenceNumber}
-              where message_id = ${message.messageId}""".update.apply
+              where message_id = ${message.messageId}""".update.apply()
   }
 
   def remove(messageId: String): Int = {
-    sql"delete from $tableName where message_id = $messageId".update.apply
+    sql"delete from $tableName where message_id = $messageId".update.apply()
   }
 }

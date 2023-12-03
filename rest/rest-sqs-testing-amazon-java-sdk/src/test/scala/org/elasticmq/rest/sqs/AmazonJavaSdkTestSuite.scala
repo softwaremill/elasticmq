@@ -84,8 +84,8 @@ class AmazonJavaSdkTestSuite extends SqsClientServerCommunication with Matchers 
     queueUrls.size() should be(2)
 
     val setOfQueueUrls = Set() ++ queueUrls.asScala
-    setOfQueueUrls.find(_.contains("testQueue1")) should be('defined)
-    setOfQueueUrls.find(_.contains("testQueue2")) should be('defined)
+    setOfQueueUrls.find(_.contains("testQueue1")) should be(Symbol("defined"))
+    setOfQueueUrls.find(_.contains("testQueue2")) should be(Symbol("defined"))
   }
 
   test("should list queues with the specified prefix") {
@@ -546,7 +546,7 @@ class AmazonJavaSdkTestSuite extends SqsClientServerCommunication with Matchers 
     val deadLetterUrl = client.createQueue(deadLetterQueue).getQueueUrl
 
     val redrivePolicy =
-      RedrivePolicy("dead-testFifoQueue-long-poll.fifo", awsRegion, awsAccountId, 1).toJson.toString()
+      RedrivePolicy("dead-testFifoQueue-long-poll.fifo", awsRegion, awsAccountId, 1).toJson.toString
 
     val fifoQueue = new CreateQueueRequest(s"testFifoQueue-long-poll.fifo")
       .addAttributesEntry("FifoQueue", "true")
@@ -1797,7 +1797,7 @@ class AmazonJavaSdkTestSuite extends SqsClientServerCommunication with Matchers 
     val deadLetterQueueAttributes = client.getQueueAttributes(deadLetterQueueUrl, List("All").asJava).getAttributes
 
     // When
-    val redrivePolicy = RedrivePolicy("dlq1", awsRegion, awsAccountId, 1).toJson.toString()
+    val redrivePolicy = RedrivePolicy("dlq1", awsRegion, awsAccountId, 1).toJson.toString
 
     val createQueueResult = client.createQueue(
       new CreateQueueRequest("q1")
@@ -1827,7 +1827,7 @@ class AmazonJavaSdkTestSuite extends SqsClientServerCommunication with Matchers 
 
     // Given
     val deadLetterQueueUrl = client.createQueue(new CreateQueueRequest("dlq1")).getQueueUrl
-    val redrivePolicy = RedrivePolicy("dlq1", awsRegion, awsAccountId, 2).toJson.toString()
+    val redrivePolicy = RedrivePolicy("dlq1", awsRegion, awsAccountId, 2).toJson.toString
     val createQueueResult = client.createQueue(
       new CreateQueueRequest("q1")
         .withAttributes(Map(defaultVisibilityTimeoutAttribute -> "1", redrivePolicyAttribute -> redrivePolicy).asJava)
@@ -1879,7 +1879,7 @@ class AmazonJavaSdkTestSuite extends SqsClientServerCommunication with Matchers 
         new CreateQueueRequest("q1").withAttributes(
           Map(
             redrivePolicyAttribute -> RedrivePolicy("queueDoesNotExist", awsRegion, awsAccountId, 1).toJson
-              .toString()
+              .toString
           ).asJava
         )
       )
@@ -2014,7 +2014,7 @@ class AmazonJavaSdkTestSuite extends SqsClientServerCommunication with Matchers 
 
     val deadLetterQueueUrl = client.createQueue(new CreateQueueRequest("dlq2")).getQueueUrl
     val deadLetterQueueAttributes = client.getQueueAttributes(deadLetterQueueUrl, List("All").asJava).getAttributes
-    val redrivePolicy = RedrivePolicy("dlq2", awsRegion, awsAccountId, 1).toJson.toString()
+    val redrivePolicy = RedrivePolicy("dlq2", awsRegion, awsAccountId, 1).toJson.toString
     val createQueueResult = client.createQueue(
       new CreateQueueRequest("q2")
         .withAttributes(Map(defaultVisibilityTimeoutAttribute -> "1", redrivePolicyAttribute -> redrivePolicy).asJava)
@@ -2027,7 +2027,7 @@ class AmazonJavaSdkTestSuite extends SqsClientServerCommunication with Matchers 
     newQueueAttributes(redrivePolicyAttribute) should be(redrivePolicy)
 
     client.createQueue(new CreateQueueRequest("dlq2a"))
-    val newRedrivePolicy = RedrivePolicy("dlq2a", awsRegion, awsAccountId, 1).toJson.toString()
+    val newRedrivePolicy = RedrivePolicy("dlq2a", awsRegion, awsAccountId, 1).toJson.toString
     client.setQueueAttributes(
       new SetQueueAttributesRequest()
         .withQueueUrl(createQueueResult.getQueueUrl)
@@ -2042,7 +2042,7 @@ class AmazonJavaSdkTestSuite extends SqsClientServerCommunication with Matchers 
 
   test("should not create queue with redrive policy if dlq does not exist") {
 
-    val redrivePolicy = RedrivePolicy("notaqueue", awsRegion, awsAccountId, 1).toJson.toString()
+    val redrivePolicy = RedrivePolicy("notaqueue", awsRegion, awsAccountId, 1).toJson.toString
     a[AmazonSQSException] shouldBe thrownBy {
       client.createQueue(
         new CreateQueueRequest("q3")
@@ -2055,7 +2055,7 @@ class AmazonJavaSdkTestSuite extends SqsClientServerCommunication with Matchers 
 
     val createQueueResult = client.createQueue(new CreateQueueRequest("q4"))
 
-    val redrivePolicy = RedrivePolicy("notaqueue", awsRegion, awsAccountId, 1).toJson.toString()
+    val redrivePolicy = RedrivePolicy("notaqueue", awsRegion, awsAccountId, 1).toJson.toString
     a[AmazonSQSException] shouldBe thrownBy {
       client.setQueueAttributes(
         new SetQueueAttributesRequest()
@@ -2070,7 +2070,7 @@ class AmazonJavaSdkTestSuite extends SqsClientServerCommunication with Matchers 
     // given
     val messageBody = "Message 1"
     val deadLetterQueueUrl = client.createQueue(new CreateQueueRequest("testDlq")).getQueueUrl
-    val redrivePolicy = RedrivePolicy("testDlq", awsRegion, awsAccountId, 1).toJson.toString()
+    val redrivePolicy = RedrivePolicy("testDlq", awsRegion, awsAccountId, 1).toJson.toString
 
     val createQueueResult = client
       .createQueue(
@@ -2098,7 +2098,7 @@ class AmazonJavaSdkTestSuite extends SqsClientServerCommunication with Matchers 
   test("should list all source queues for a dlq") {
     // given
     val dlqUrl = client.createQueue(new CreateQueueRequest("testDlq")).getQueueUrl
-    val redrivePolicy = RedrivePolicy("testDlq", awsRegion, awsAccountId, 1).toJson.toString()
+    val redrivePolicy = RedrivePolicy("testDlq", awsRegion, awsAccountId, 1).toJson.toString
 
     val qUrls = for (i <- 1 to 3) yield {
       client

@@ -7,6 +7,7 @@ import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.BeforeAndAfterAll
 
 import scala.concurrent.duration._
+import scala.concurrent.ExecutionContext
 import org.scalatest.funsuite.AsyncFunSuiteLike
 import org.scalatest.matchers.should.Matchers
 
@@ -18,7 +19,7 @@ abstract class ActorTest
     with BeforeAndAfterAll {
   private val maxDuration = 1.minute
   implicit val timeout: Timeout = maxDuration
-  implicit val ec = system.dispatcher
+  implicit val ec: ExecutionContext = system.dispatcher
 
   override protected def afterAll(): Unit = {
     system.terminate().futureValue

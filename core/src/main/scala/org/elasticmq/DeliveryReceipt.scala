@@ -13,5 +13,5 @@ object DeliveryReceipt {
   private val Separator = "#"
 
   def generate(id: MessageId) =
-    new DeliveryReceipt(id + Separator + UUID.randomUUID().toString)
+    new DeliveryReceipt(String.valueOf(id) + Separator + UUID.randomUUID().toString)
 }
