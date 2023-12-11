@@ -10,8 +10,7 @@ import org.elasticmq.rest.sqs.directives.RespondDirectives
 
 import scala.xml.{Elem, Null, UnprefixedAttribute}
 
-trait ResponseMarshaller {
-  _: RespondDirectives =>
+trait ResponseMarshaller { this: RespondDirectives =>
 
   private def namespace[T](
       body: UnprefixedAttribute => Marshaller[T, RequestEntity]

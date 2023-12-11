@@ -2,18 +2,22 @@ package org.elasticmq.persistence.file
 
 import com.typesafe.config.ConfigRenderOptions
 import org.elasticmq.{DeadLettersQueueData, QueueData}
-import pureconfig.generic.ProductHint
-import pureconfig.generic.auto._
-import pureconfig.{CamelCase, ConfigFieldMapping, ConfigWriter}
+import pureconfig.ConfigWriter
 
 import java.io.PrintWriter
 
 object QueuePersister {
 
-  private implicit val queueMetadataHint: ProductHint[QueueMetadata] =
-    ProductHint[QueueMetadata](ConfigFieldMapping(CamelCase, CamelCase))
-  private implicit val deadLettersHint: ProductHint[DeadLettersQueueData] =
-    ProductHint[DeadLettersQueueData](ConfigFieldMapping(CamelCase, CamelCase))
+  private implicit val deadLettersWriter: ConfigWriter[DeadLettersQueueData] =
+    ConfigWriter.forProduct2[DeadLettersQueueData, String, Int]("name", "maxReceiveCount")(deadLetterQueueData => 
+      (deadLetterQueueData.name, deadLetterQueueData.maxReceiveCount)
+    )
+  private implicit val queueMetadataWriter: ConfigWriter[QueueMetadata] = 
+    ConfigWriter.forProduct9[QueueMetadata, Long, Long, Long, Option[DeadLettersQueueData], Boolean, Boolean, String, String, Map[String,String]](
+      "defaultVisibilityTimeout", "delay", "receiveMessageWait", "deadLettersQueue", "fifo", "contentBasedDeduplication", "copyTo", "moveTo", "tags"
+    )(qm =>
+      (qm.defaultVisibilityTimeout, qm.delay, qm.receiveMessageWait, qm.deadLettersQueue, qm.fifo, qm.contentBasedDeduplication, qm.copyTo, qm.moveTo, qm.tags)
+    )
 
   def saveToConfigFile(queues: List[QueueData], storagePath: String): Unit = {
     val queuesConfig: String = prepareQueuesConfig(queues)

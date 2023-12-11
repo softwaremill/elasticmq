@@ -10,11 +10,13 @@ import scala.sys.process.Process
 
 val v2_12 = "2.12.15"
 val v2_13 = "2.13.8"
+val v3    = "3.3.1"
 
 lazy val resolvedScalaVersion =
   sys.env.get("SCALA_MAJOR_VERSION") match {
     case Some("2.12")      => v2_12
     case Some("2.13")      => v2_13
+    case Some("3")         => v3
     case Some(unsupported) => throw new IllegalArgumentException(s"Unsupported SCALA_MAJOR_VERSION: $unsupported")
     case _                 => v2_13
   }
@@ -26,7 +28,7 @@ lazy val ensureDockerBuildx = taskKey[Unit]("Ensure that docker buildx configura
 lazy val dockerBuildWithBuildx = taskKey[Unit]("Build docker images using buildx")
 
 val config = "com.typesafe" % "config" % "1.4.3"
-val pureConfig = "com.github.pureconfig" %% "pureconfig" % "0.17.4"
+val pureConfig = "com.github.pureconfig" %% "pureconfig-core" % "0.17.4"
 val scalaXml = "org.scala-lang.modules" %% "scala-xml" % "2.2.0"
 
 val scalalogging = "com.typesafe.scala-logging" %% "scala-logging" % "3.9.5"
@@ -55,9 +57,10 @@ val springVersion = "5.3.31"
 val awsSpringMessaging = "org.springframework.cloud" % "spring-cloud-aws-messaging" % awsSpringMessagingVersion
 val springWeb = "org.springframework" % "spring-web" % springVersion
 
-val scalaAsync = "org.scala-lang.modules" %% "scala-async" % "1.0.1"
+val scala2Async = "org.scala-lang.modules" %% "scala-async" % "1.0.1"
+val scala3Async = "com.github.rssh" %% "shim-scala-async-dotty-cps-async" % "0.9.19" // allows cross compilation w/o changes in source code
 
-val scalikeJdbc = "org.scalikejdbc" %% "scalikejdbc" % "3.5.0"
+val scalikeJdbc = "org.scalikejdbc" %% "scalikejdbc" % "4.1.0"
 val h2 = "com.h2database" % "h2" % "2.2.224"
 
 val common = Seq(scalalogging)
@@ -74,7 +77,12 @@ val buildSettings = commonSmlBuildSettings ++ ossPublishSettings ++ Seq(
     ScmInfo(url("https://github.com/softwaremill/elasticmq"), "scm:git@github.com:softwaremill/elasticmq.git")
   ),
   scalaVersion := resolvedScalaVersion,
-  scalacOptions ++= Seq("-Xasync", "-target:jvm-1.8"),
+  scalacOptions ++= {
+    CrossVersion.partialVersion(scalaVersion.value) match {
+      case Some((3, _)) => Seq("-Xtarget:8")
+      case _            => Seq("-Xasync", "-target:jvm-1.8")
+    }
+  },
   libraryDependencies += scalaXml,
   dependencyOverrides := pekko100verrides,
   parallelExecution := false,
@@ -131,7 +139,10 @@ lazy val persistenceCore: Project = (project in file("persistence/persistence-co
         pekkoSlf4j,
         config,
         pekkoTestkit,
-        scalaAsync
+        CrossVersion.partialVersion(scalaVersion.value) match {
+          case Some((3, _)) => scala3Async
+          case _            => scala2Async
+        }
       ) ++ common
     )
   )
@@ -180,7 +191,10 @@ lazy val restSqs: Project = (project in file("rest/rest-sqs"))
         pekkoHttpSprayJson,
         pekkoTestkit,
         pekkoHttpTestkit,
-        scalaAsync
+        CrossVersion.partialVersion(scalaVersion.value) match {
+          case Some((3, _)) => scala3Async
+          case _            => scala2Async
+        }
       ) ++ common
     )
   )

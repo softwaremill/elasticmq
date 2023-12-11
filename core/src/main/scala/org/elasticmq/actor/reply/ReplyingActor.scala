@@ -17,11 +17,11 @@ trait ReplyingActor extends Actor {
   private def doReceiveAndReply[T](msg: M[T]): Unit = {
     try {
       receiveAndReply(msg) match {
-        case ReplyWith(t) => sender ! t
+        case ReplyWith(t) => sender() ! t
         case DoNotReply() => // do nothing
       }
     } catch {
-      case e: Exception => sender ! Failure(e)
+      case e: Exception => sender() ! Failure(e)
     }
   }
 

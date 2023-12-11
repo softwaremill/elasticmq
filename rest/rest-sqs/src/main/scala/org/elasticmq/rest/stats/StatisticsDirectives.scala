@@ -15,6 +15,7 @@ import java.io.File
 import scala.concurrent.Future
 import scala.io.Source
 import scala.util.{Failure, Success, Try}
+import scala.concurrent.duration.FiniteDuration
 
 final case class QueuesResponse(
     name: String,
@@ -49,7 +50,7 @@ trait StatisticsDirectives extends StatisticsJsonFormat {
     else if (Try(Source.fromResource("index.html")).toOption.isDefined) ResourceBased
     else throw new RuntimeException("Could not find UI files")
 
-  implicit val duration = timeout.duration
+  implicit val duration: FiniteDuration = timeout.duration
 
   def statistics(implicit np: NowProvider) = {
     pathPrefix("statistics" / "queues") {

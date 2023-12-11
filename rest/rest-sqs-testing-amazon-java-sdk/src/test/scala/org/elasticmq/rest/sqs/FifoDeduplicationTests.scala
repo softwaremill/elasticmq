@@ -202,7 +202,7 @@ class FifoDeduplicationTests extends SqsClientServerCommunication with Matchers 
       )
       .getQueueUrl
 
-    val redrivePolicy = RedrivePolicy("dlq.fifo", awsRegion, awsAccountId, maxReceiveCount).toJson.toString()
+    val redrivePolicy = RedrivePolicy("dlq.fifo", awsRegion, awsAccountId, maxReceiveCount).toJson.toString
     val queueUrl =
       client
         .createQueue(

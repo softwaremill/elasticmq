@@ -40,7 +40,7 @@ class ElasticMQServer(config: ElasticMQServerConfig) extends Logging {
       Await.result(eventualTerminated, Inf)
     }
 
-    val logErrorsAndShutdown = { errors: List[ElasticMQError] =>
+    val logErrorsAndShutdown = { (errors: List[ElasticMQError]) =>
       errors.foreach(error => logger.error(s"Could not start server because $error"))
       shutdown()
     }
