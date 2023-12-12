@@ -10,7 +10,7 @@ import scala.sys.process.Process
 
 val v2_12 = "2.12.15"
 val v2_13 = "2.13.8"
-val v3    = "3.3.1"
+val v3 = "3.3.1"
 
 lazy val resolvedScalaVersion =
   sys.env.get("SCALA_MAJOR_VERSION") match {
@@ -39,7 +39,7 @@ val scalatest = "org.scalatest" %% "scalatest" % "3.2.17"
 val awaitility = "org.awaitility" % "awaitility-scala" % "4.2.0"
 
 val amazonJavaSdkSqs = "com.amazonaws" % "aws-java-sdk-sqs" % "1.12.472" exclude ("commons-logging", "commons-logging")
-val amazonJavaV2SdkSqs = "software.amazon.awssdk" % "sqs" % "2.21.42"
+val amazonJavaV2SdkSqs = "software.amazon.awssdk" % "sqs" % "2.21.43"
 
 val pekkoVersion = "1.0.2"
 val pekkoHttpVersion = "1.0.0"
@@ -58,7 +58,8 @@ val awsSpringMessaging = "org.springframework.cloud" % "spring-cloud-aws-messagi
 val springWeb = "org.springframework" % "spring-web" % springVersion
 
 val scala2Async = "org.scala-lang.modules" %% "scala-async" % "1.0.1"
-val scala3Async = "com.github.rssh" %% "shim-scala-async-dotty-cps-async" % "0.9.19" // allows cross compilation w/o changes in source code
+val scala3Async =
+  "com.github.rssh" %% "shim-scala-async-dotty-cps-async" % "0.9.19" // allows cross compilation w/o changes in source code
 
 val scalikeJdbc = "org.scalikejdbc" %% "scalikejdbc" % "4.1.0"
 val h2 = "com.h2database" % "h2" % "2.2.224"
