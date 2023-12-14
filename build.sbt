@@ -78,6 +78,7 @@ val buildSettings = commonSmlBuildSettings ++ ossPublishSettings ++ Seq(
     ScmInfo(url("https://github.com/softwaremill/elasticmq"), "scm:git@github.com:softwaremill/elasticmq.git")
   ),
   scalaVersion := resolvedScalaVersion,
+  crossScalaVersions := List(v2_12, v2_13, v3),
   scalacOptions ++= {
     CrossVersion.partialVersion(scalaVersion.value) match {
       case Some((3, _)) => Seq("-Xtarget:8")
