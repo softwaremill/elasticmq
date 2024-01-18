@@ -166,7 +166,8 @@ class AmazonJavaSdkTestSuite extends SqsClientServerCommunication with Matchers 
         "red" -> StringMessageAttribute("fish"),
         "blue" -> StringMessageAttribute("cat"),
         "green" -> BinaryMessageAttribute("dog".getBytes("UTF-8")),
-        "yellow" -> NumberMessageAttribute("1234567890")
+        "yellow" -> NumberMessageAttribute("1234567890"),
+        "orange" -> NumberMessageAttribute("0987654321", Some("custom"))
       )
     )
   }
@@ -178,9 +179,10 @@ class AmazonJavaSdkTestSuite extends SqsClientServerCommunication with Matchers 
         "red" -> StringMessageAttribute("fish"),
         "blue" -> StringMessageAttribute("cat"),
         "green" -> BinaryMessageAttribute("dog".getBytes("UTF-8")),
-        "yellow" -> NumberMessageAttribute("1234567890")
+        "yellow" -> NumberMessageAttribute("1234567890"),
+        "orange" -> NumberMessageAttribute("0987654321", Some("custom"))
       ),
-      List("red", "green")
+      List("red", "green", "orange")
     )
   }
 
@@ -191,7 +193,8 @@ class AmazonJavaSdkTestSuite extends SqsClientServerCommunication with Matchers 
         "red" -> StringMessageAttribute("fish"),
         "blue" -> StringMessageAttribute("cat"),
         "green" -> BinaryMessageAttribute("dog".getBytes("UTF-8")),
-        "yellow" -> NumberMessageAttribute("1234567890")
+        "yellow" -> NumberMessageAttribute("1234567890"),
+        "orange" -> NumberMessageAttribute("0987654321", Some("custom"))
       ),
       List()
     )

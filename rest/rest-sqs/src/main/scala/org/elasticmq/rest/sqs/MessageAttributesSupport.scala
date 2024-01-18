@@ -13,12 +13,12 @@ trait MessageAttributesSupport {
   implicit val messageAttributeJsonFormat: RootJsonFormat[MessageAttribute] = new RootJsonFormat[MessageAttribute] {
 
     override def write(obj: MessageAttribute): JsValue = obj match {
-      case NumberMessageAttribute(value, _) =>
-        JsObject("DataType" -> JsString("Number"), "StringValue" -> JsString(value))
-      case StringMessageAttribute(value, _) =>
-        JsObject("DataType" -> JsString("String"), "StringValue" -> JsString(value))
+      case NumberMessageAttribute(value, customType) =>
+        JsObject("DataType" -> JsString("Number" + customTypeAsString(customType)), "StringValue" -> JsString(value))
+      case StringMessageAttribute(value, customType) =>
+        JsObject("DataType" -> JsString("String" + customTypeAsString(customType)), "StringValue" -> JsString(value))
       case msg: BinaryMessageAttribute =>
-        JsObject("DataType" -> JsString("Binary"), "BinaryValue" -> JsString(msg.asBase64))
+        JsObject("DataType" -> JsString("Binary" + customTypeAsString(msg.customType)), "BinaryValue" -> JsString(msg.asBase64))
     }
 
     override def read(json: JsValue): MessageAttribute = {
@@ -38,6 +38,8 @@ trait MessageAttributesSupport {
     }
 
     private def customType(appendix: String) = if (appendix.isEmpty) None else Some(appendix)
+
+    private def customTypeAsString(customType: Option[String]) = customType.fold("")(t => s".$t")
   }
 
 }
