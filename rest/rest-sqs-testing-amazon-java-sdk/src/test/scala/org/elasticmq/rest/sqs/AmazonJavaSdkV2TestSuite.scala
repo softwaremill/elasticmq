@@ -188,7 +188,7 @@ class AmazonJavaSdkV2TestSuite extends SqsClientServerWithSdkV2Communication wit
     if (requestedAttributes.contains("All")) {
       messageAttributes
     } else {
-      messageAttributes.view.filterKeys(k => requestedAttributes.contains(k)).toMap
+      messageAttributes.filterKeys(k => requestedAttributes.contains(k)).toMap
     }
   }
 }
