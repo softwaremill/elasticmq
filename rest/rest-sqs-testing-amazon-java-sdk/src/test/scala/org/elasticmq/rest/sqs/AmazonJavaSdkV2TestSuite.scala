@@ -2,11 +2,10 @@ package org.elasticmq.rest.sqs
 
 import org.elasticmq.{BinaryMessageAttribute, MessageAttribute, NumberMessageAttribute, StringMessageAttribute}
 import org.scalatest.matchers.should.Matchers
+import software.amazon.awssdk.core.SdkBytes
+import software.amazon.awssdk.services.sqs.model.{GetQueueUrlRequest => AwsSdkGetQueueUrlRequest, _}
 
 import scala.collection.JavaConverters._
-import software.amazon.awssdk.core.SdkBytes
-import software.amazon.awssdk.services.sqs.model._
-import software.amazon.awssdk.services.sqs.model.{GetQueueUrlRequest => AwsSdkGetQueueUrlRequest}
 
 class AmazonJavaSdkV2TestSuite extends SqsClientServerWithSdkV2Communication with Matchers {
 
@@ -46,8 +45,7 @@ class AmazonJavaSdkV2TestSuite extends SqsClientServerWithSdkV2Communication wit
       Map(
         "red" -> StringMessageAttribute("fish"),
         "blue" -> StringMessageAttribute("cat"),
-        // affected by https://github.com/softwaremill/elasticmq/issues/946
-        // "green" -> BinaryMessageAttribute("dog".getBytes("UTF-8")),
+        "green" -> BinaryMessageAttribute("dog".getBytes("UTF-8")),
         "yellow" -> NumberMessageAttribute("1234567890"),
         "orange" -> NumberMessageAttribute("0987654321", Some("custom"))
       )
@@ -60,8 +58,7 @@ class AmazonJavaSdkV2TestSuite extends SqsClientServerWithSdkV2Communication wit
       Map(
         "red" -> StringMessageAttribute("fish"),
         "blue" -> StringMessageAttribute("cat"),
-        // affected by https://github.com/softwaremill/elasticmq/issues/946
-        // "green" -> BinaryMessageAttribute("dog".getBytes("UTF-8")),
+        "green" -> BinaryMessageAttribute("dog".getBytes("UTF-8")),
         "yellow" -> NumberMessageAttribute("1234567890"),
         "orange" -> NumberMessageAttribute("0987654321", Some("custom"))
       ),
@@ -75,8 +72,7 @@ class AmazonJavaSdkV2TestSuite extends SqsClientServerWithSdkV2Communication wit
       Map(
         "red" -> StringMessageAttribute("fish"),
         "blue" -> StringMessageAttribute("cat"),
-        // affected by https://github.com/softwaremill/elasticmq/issues/946
-        // "green" -> BinaryMessageAttribute("dog".getBytes("UTF-8")),
+        "green" -> BinaryMessageAttribute("dog".getBytes("UTF-8")),
         "yellow" -> NumberMessageAttribute("1234567890"),
         "orange" -> NumberMessageAttribute("0987654321", Some("custom"))
       ),
@@ -89,17 +85,17 @@ class AmazonJavaSdkV2TestSuite extends SqsClientServerWithSdkV2Communication wit
   }
 
   private def doTestSendAndReceiveMessageWithAttributes(
-                                                         content: String,
-                                                         messageAttributes: Map[String, MessageAttribute]
-                                                       ): Unit = {
+      content: String,
+      messageAttributes: Map[String, MessageAttribute]
+  ): Unit = {
     doTestSendAndReceiveMessageWithAttributes(content, messageAttributes, List("All"))
   }
 
   private def doTestSendAndReceiveMessageWithAttributes(
-                                                         content: String,
-                                                         messageAttributes: Map[String, MessageAttribute],
-                                                         requestedAttributes: List[String]
-                                                       ): Unit = {
+      content: String,
+      messageAttributes: Map[String, MessageAttribute],
+      requestedAttributes: List[String]
+  ): Unit = {
     // Given
     val queue = clientV2.createQueue(CreateQueueRequest.builder().queueName("testQueue1").build())
 
@@ -148,11 +144,11 @@ class AmazonJavaSdkV2TestSuite extends SqsClientServerWithSdkV2Communication wit
   }
 
   private def checkMessageAttributesMatchRequestedAttributes(
-                                                              messageAttributes: Map[String, MessageAttribute],
-                                                              requestedAttributes: List[String],
-                                                              sendMessageRequest: SendMessageRequest,
-                                                              message: Message
-                                                            ) = {
+      messageAttributes: Map[String, MessageAttribute],
+      requestedAttributes: List[String],
+      sendMessageRequest: SendMessageRequest,
+      message: Message
+  ) = {
     val filteredSendMessageAttr =
       filterBasedOnRequestedAttributes(requestedAttributes, sendMessageRequest.messageAttributes.asScala.toMap).asJava
     val filteredMessageAttributes = filterBasedOnRequestedAttributes(requestedAttributes, messageAttributes)
@@ -182,9 +178,9 @@ class AmazonJavaSdkV2TestSuite extends SqsClientServerWithSdkV2Communication wit
   }
 
   private def filterBasedOnRequestedAttributes[T](
-                                                   requestedAttributes: List[String],
-                                                   messageAttributes: Map[String, T]
-                                                 ): Map[String, T] = {
+      requestedAttributes: List[String],
+      messageAttributes: Map[String, T]
+  ): Map[String, T] = {
     if (requestedAttributes.contains("All")) {
       messageAttributes
     } else {

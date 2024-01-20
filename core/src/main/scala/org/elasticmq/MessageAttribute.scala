@@ -29,6 +29,7 @@ case class BinaryMessageAttribute(binaryValue: Array[Byte], override val customT
 
   def asBase64: String = Base64.getEncoder.encodeToString(binaryValue)
 }
+
 object BinaryMessageAttribute {
   def fromBase64(base64Str: String, customType: Option[String] = None): BinaryMessageAttribute =
     BinaryMessageAttribute(
@@ -36,7 +37,7 @@ object BinaryMessageAttribute {
       customType = customType
     )
 
-  def fromByteBuffer(byteBuffer: ByteBuffer, customType: Option[String] = None) =
+  def fromByteBuffer(byteBuffer: ByteBuffer, customType: Option[String] = None): BinaryMessageAttribute =
     BinaryMessageAttribute(
       binaryValue = {
         byteBuffer.clear()
