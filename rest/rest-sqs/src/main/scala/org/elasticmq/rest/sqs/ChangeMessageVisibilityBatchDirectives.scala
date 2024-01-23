@@ -61,7 +61,7 @@ object BatchChangeMessageVisibilityResponseEntry {
       override def toXml(t: BatchResponse[BatchChangeMessageVisibilityResponseEntry]): Elem =
         <ChangeMessageVisibilityBatchResponse>
           <ChangeMessageVisibilityBatchResult>
-            {t.Successful.map(successSerializer.toXml) ++ t.Failed.map(XmlSerializer[Failed].toXml)}
+            {t.Successful.map(successSerializer.toXml) ++ t.Failed.toList.flatMap(_.map(XmlSerializer[Failed].toXml))}
           </ChangeMessageVisibilityBatchResult>
           <ResponseMetadata>
             <RequestId>

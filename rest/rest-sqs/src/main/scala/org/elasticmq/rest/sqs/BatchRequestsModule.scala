@@ -40,8 +40,9 @@ trait BatchRequestsModule {
     Future
       .sequence(result)
       .map(
-        _.foldLeft((List.empty[Failed], List.empty[R])) {
-          case ((failures, successes), Left(failed))   => (failures :+ failed, successes)
+        _.foldLeft(Option.empty[List[Failed]], List.empty[R]) {
+          case ((failures, successes), Left(failed)) =>
+            (failures.map(_ :+ failed).orElse(Some(List(failed))), successes)
           case ((failures, successes), Right(success)) => (failures, successes :+ success)
         }
       )
@@ -83,7 +84,7 @@ case class BatchRequest[M](
     QueueUrl: String
 )
 
-case class BatchResponse[R](Failed: List[Failed], Successful: List[R])
+case class BatchResponse[R](Failed: Option[List[Failed]], Successful: List[R])
 
 object BatchResponse {
   implicit def jsonFormat[R: JsonFormat]: RootJsonFormat[BatchResponse[R]] = jsonFormat2(BatchResponse.apply[R])
