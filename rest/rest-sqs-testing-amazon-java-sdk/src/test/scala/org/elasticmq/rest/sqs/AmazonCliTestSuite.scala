@@ -396,8 +396,9 @@ class AmazonCliTestSuite
       val batchMessages = sendMessageBatch(queue.QueueUrl, entries)
 
       // then
-      batchMessages.Failed.size shouldBe 1
-      inside(batchMessages.Failed.head) { case failedMessage =>
+      val failed = batchMessages.Failed.toList.flatten
+      failed.size shouldBe 1
+      inside(failed.head) { case failedMessage =>
         import failedMessage._
         Id shouldBe "2"
         SenderFault shouldBe true

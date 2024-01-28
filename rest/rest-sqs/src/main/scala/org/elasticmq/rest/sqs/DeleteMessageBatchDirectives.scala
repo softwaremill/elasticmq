@@ -57,7 +57,7 @@ object BatchDeleteMessageResponseEntry {
       override def toXml(t: BatchResponse[T]): Elem =
         <DeleteMessageBatchResponse>
         <DeleteMessageBatchResult>
-          {t.Successful.map(successSerializer.toXml) ++ t.Failed.map(XmlSerializer[Failed].toXml)}
+          {t.Successful.map(successSerializer.toXml) ++ t.Failed.toList.flatMap(_.map(XmlSerializer[Failed].toXml))}
         </DeleteMessageBatchResult>
         <ResponseMetadata>
           <RequestId>{EmptyRequestId}</RequestId>

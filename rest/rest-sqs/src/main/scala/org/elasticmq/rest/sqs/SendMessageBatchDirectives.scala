@@ -132,7 +132,7 @@ object BatchMessageSendResponseEntry {
       override def toXml(t: BatchResponse[BatchMessageSendResponseEntry]): Elem =
         <SendMessageBatchResponse>
           <SendMessageBatchResult>
-            {t.Successful.map(successSerializer.toXml) ++ t.Failed.map(XmlSerializer[Failed].toXml)}
+            {t.Successful.map(successSerializer.toXml) ++ t.Failed.toList.flatMap(_.map(XmlSerializer[Failed].toXml))}
           </SendMessageBatchResult>
           <ResponseMetadata>
             <RequestId>
