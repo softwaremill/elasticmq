@@ -42,7 +42,7 @@ val amazonJavaSdkSqs = "com.amazonaws" % "aws-java-sdk-sqs" % "1.12.472" exclude
 val amazonJavaV2SdkSqs = "software.amazon.awssdk" % "sqs" % "2.21.43"
 
 val pekkoVersion = "1.0.2"
-val pekkoHttpVersion = "1.0.0"
+val pekkoHttpVersion = "1.0.1"
 val pekkoActor = "org.apache.pekko" %% "pekko-actor" % pekkoVersion
 val pekkoSlf4j = "org.apache.pekko" %% "pekko-slf4j" % pekkoVersion
 val pekkoStreams = "org.apache.pekko" %% "pekko-stream" % pekkoVersion
