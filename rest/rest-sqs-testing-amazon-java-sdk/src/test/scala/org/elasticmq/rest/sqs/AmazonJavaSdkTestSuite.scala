@@ -1881,8 +1881,7 @@ class AmazonJavaSdkTestSuite extends SqsClientServerCommunication with Matchers 
       client.createQueue(
         new CreateQueueRequest("q1").withAttributes(
           Map(
-            redrivePolicyAttribute -> RedrivePolicy("queueDoesNotExist", awsRegion, awsAccountId, 1).toJson
-              .toString
+            redrivePolicyAttribute -> RedrivePolicy("queueDoesNotExist", awsRegion, awsAccountId, 1).toJson.toString
           ).asJava
         )
       )
