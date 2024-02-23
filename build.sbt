@@ -28,7 +28,7 @@ lazy val ensureDockerBuildx = taskKey[Unit]("Ensure that docker buildx configura
 lazy val dockerBuildWithBuildx = taskKey[Unit]("Build docker images using buildx")
 
 val config = "com.typesafe" % "config" % "1.4.3"
-val pureConfig = "com.github.pureconfig" %% "pureconfig-core" % "0.17.5"
+val pureConfig = "com.github.pureconfig" %% "pureconfig-core" % "0.17.6"
 val scalaXml = "org.scala-lang.modules" %% "scala-xml" % "2.2.0"
 
 val scalalogging = "com.typesafe.scala-logging" %% "scala-logging" % "3.9.5"
