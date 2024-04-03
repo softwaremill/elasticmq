@@ -2097,6 +2097,35 @@ class AmazonJavaSdkTestSuite extends SqsClientServerCommunication with Matchers 
     secondReceiveResult.getMessages shouldBe empty
   }
 
+  test("should return DeadLetterQueueSourceArn in receive message attributes") {
+    // given
+    val messageBody = "Message 1"
+    client.createQueue(new CreateQueueRequest("testDlq")).getQueueUrl
+    val redrivePolicy = RedrivePolicy("testDlq", awsRegion, awsAccountId, 1).toJson.toString
+
+    val createQueueResult = client
+      .createQueue(
+        new CreateQueueRequest("main")
+          .withAttributes(
+            Map(redrivePolicyAttribute -> redrivePolicy).asJava
+          )
+      )
+      .getQueueUrl
+
+    // when
+    client.sendMessage(createQueueResult, messageBody)
+    val receiveResult = client.receiveMessage(
+      new ReceiveMessageRequest()
+        .withQueueUrl(createQueueResult)
+        .withAttributeNames("All")
+    )
+
+    // then
+    receiveResult.getMessages.asScala.toList.flatMap(_.getAttributes.asScala.toList) should contain(
+      ("DeadLetterQueueSourceArn", s"arn:aws:sqs:$awsRegion:$awsAccountId:testDlq")
+    )
+  }
+
   test("should list all source queues for a dlq") {
     // given
     val dlqUrl = client.createQueue(new CreateQueueRequest("testDlq")).getQueueUrl

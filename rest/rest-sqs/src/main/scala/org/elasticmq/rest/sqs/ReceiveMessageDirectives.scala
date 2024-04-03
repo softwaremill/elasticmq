@@ -16,7 +16,7 @@ import java.time.Duration
 import scala.xml.Elem
 
 trait ReceiveMessageDirectives {
-  this: ElasticMQDirectives with AttributesModule with SQSLimitsModule with ResponseMarshaller =>
+  this: ElasticMQDirectives with AttributesModule with SQSLimitsModule with ResponseMarshaller with AwsConfiguration =>
   object MessageReadeableAttributeNames {
     val SentTimestampAttribute = "SentTimestamp"
     val ApproximateReceiveCountAttribute = "ApproximateReceiveCount"
@@ -31,10 +31,11 @@ trait ReceiveMessageDirectives {
     val MessageGroupIdAttribute = "MessageGroupId"
     val AWSTraceHeaderAttribute = "AWSTraceHeader"
     val SequenceNumberAttribute = "SequenceNumber"
+    val DeadLetterQueueSourceArn = "DeadLetterQueueSourceArn"
 
     val AllAttributeNames = SentTimestampAttribute :: ApproximateReceiveCountAttribute ::
       ApproximateFirstReceiveTimestampAttribute :: SenderIdAttribute :: MessageDeduplicationIdAttribute ::
-      MessageGroupIdAttribute :: AWSTraceHeaderAttribute :: SequenceNumberAttribute :: Nil
+      MessageGroupIdAttribute :: AWSTraceHeaderAttribute :: SequenceNumberAttribute :: DeadLetterQueueSourceArn :: Nil
   }
 
   def receiveMessage(p: RequestPayload)(implicit marshallerDependencies: MarshallerDependencies) = {
@@ -112,7 +113,8 @@ trait ReceiveMessageDirectives {
                 }).toString)
             ),
             Rule(AWSTraceHeaderAttribute, () => msg.tracingId.map(_.id)),
-            Rule(SequenceNumberAttribute, () => msg.sequenceNumber)
+            Rule(SequenceNumberAttribute, () => msg.sequenceNumber),
+            Rule(DeadLetterQueueSourceArn, () => queueData.deadLettersQueue.map(qd => getArn(qd.name)))
           )
         }
 
