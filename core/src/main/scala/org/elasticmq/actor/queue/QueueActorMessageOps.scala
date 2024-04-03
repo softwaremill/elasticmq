@@ -20,7 +20,6 @@ trait QueueActorMessageOps
   this: QueueActorStorage =>
 
   def nowProvider: NowProvider
-  def context: org.apache.pekko.actor.ActorContext
 
   timers.startTimerWithFixedDelay(s"Timer: ${queueData.name}", DeduplicationIdsCleanup, 1.second)
 

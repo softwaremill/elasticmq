@@ -31,7 +31,7 @@ class QueueManagerActorTest extends ActorTest with QueueManagerForEachTest with 
       lookupResult <- queueManagerActor ? LookupQueue("q2")
     } yield {
       // Then
-      lookupResult should be('defined)
+      lookupResult should be(Symbol("defined"))
     }
   }
 
@@ -52,7 +52,7 @@ class QueueManagerActorTest extends ActorTest with QueueManagerForEachTest with 
       r2 <- queueManagerActor ? LookupQueue(q2.name)
     } yield {
       r1 should be(None)
-      r2 should be('defined)
+      r2 should be(Symbol("defined"))
     }
   }
 
@@ -66,7 +66,7 @@ class QueueManagerActorTest extends ActorTest with QueueManagerForEachTest with 
       // When & then
       result <- queueManagerActor ? CreateQueue(q1)
     } yield {
-      result should be('right)
+      result should be(Symbol("right"))
     }
   }
 
@@ -81,7 +81,7 @@ class QueueManagerActorTest extends ActorTest with QueueManagerForEachTest with 
       // When & then
       result <- queueManagerActor ? CreateQueue(q2)
     } yield {
-      result should be('left)
+      result should be(Symbol("left"))
     }
   }
 

@@ -142,7 +142,7 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
       val lookedUpReceipt = lookupAfterReceiving.flatMap(_.deliveryReceipt)
 
       receivedReceipt.size should be > (0)
-      lookedUpReceipt should be('defined)
+      lookedUpReceipt should be(Symbol("defined"))
 
       receivedReceipt.headOption should be(lookedUpReceipt)
     }

@@ -39,15 +39,15 @@ class QueueRepository(db: DB) extends Logging {
     val db = DBQueue.from(createQueue)
     sql"""insert into $tableName (name, data)
            values (${db.name},
-                   ${db.data})""".update.apply
+                   ${db.data})""".update.apply()
   }
 
   def update(createQueue: CreateQueueMetadata): Int = {
     val db = DBQueue.from(createQueue)
-    sql"""update $tableName set data = ${db.data} where name = ${db.name}""".update.apply
+    sql"""update $tableName set data = ${db.data} where name = ${db.name}""".update.apply()
   }
 
   def remove(queueName: String): Int = {
-    sql"delete from $tableName where name = $queueName".update.apply
+    sql"delete from $tableName where name = $queueName".update.apply()
   }
 }

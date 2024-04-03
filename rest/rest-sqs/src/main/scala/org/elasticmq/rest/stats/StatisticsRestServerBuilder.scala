@@ -68,8 +68,8 @@ case class TheStatisticsRestServerBuilder(
 
     implicit val nowProvider = new NowProvider()
 
-    implicit val implicitActorSystem = providedActorSystem
-    implicit val implicitMaterializer = ActorMaterializer()
+    implicit val implicitActorSystem: ActorSystem = providedActorSystem
+    implicit val implicitMaterializer: ActorMaterializer = ActorMaterializer()
 
     val env = new StatisticsDirectives with QueueAttributesOps with ElasticMQDirectives with AWSProtocolDirectives {
 
@@ -94,9 +94,13 @@ case class TheStatisticsRestServerBuilder(
       }
     }
 
-    val appStartFuture = Http().newServerAt(interface, port).bindFlow(routes)
+    val appStartFuture = {
+      // Scala 3 fix: implicit resolution conflict
+      implicit val _implicitActorSystem: ActorSystem = implicitActorSystem
+      Http()(_implicitActorSystem).newServerAt(interface, port).bindFlow(routes)
+    }
 
-    appStartFuture.foreach { sb: Http.ServerBinding =>
+    appStartFuture.foreach { (sb: Http.ServerBinding) =>
       TheStatisticsRestServerBuilder.this.logger.info(
         "Started statistics rest server, bind address %s:%d"
           .format(

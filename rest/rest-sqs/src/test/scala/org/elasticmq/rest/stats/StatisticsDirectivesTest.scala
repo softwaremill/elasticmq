@@ -44,7 +44,7 @@ class StatisticsDirectivesTest
   implicit lazy val timeout: Timeout = 1.minute
   implicit lazy val actorSystem: ActorSystem = ActorSystem("test-actor-system")
 
-  implicit val nowProvider = new MutableNowProvider(
+  implicit val nowProvider: MutableNowProvider = new MutableNowProvider(
     LocalDate.of(2020, 1, 1).atStartOfDay(ZoneOffset.UTC).toInstant.toEpochMilli
   )
 

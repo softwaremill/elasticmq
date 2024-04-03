@@ -264,7 +264,7 @@ class AmazonCliTestSuite
 
       // then
       outLines.mkString("\n") shouldBe empty
-      errLines.mkString("\n") should include("AWS.SimpleQueueService.NonExistentQueue; see the SQS docs.")
+      errLines.mkString("\n") should include("The specified queue does not exist.")
     }
 
     test(s"should tag, untag and list queue tags ${version.name}", Only213) {
@@ -348,14 +348,14 @@ class AmazonCliTestSuite
         ReceiptHandle.nonEmpty shouldBe true
         MD5OfBody shouldBe firstMessage.MD5OfMessageBody
         Body shouldBe firstMessageBody
-        Attributes.size shouldBe 4
-        Attributes.get("SentTimestamp").map(v => v.nonEmpty shouldBe true)
-        Attributes.get("ApproximateReceiveCount").map(_ shouldBe "1")
-        Attributes.get("ApproximateFirstReceiveTimestamp").map(v => v.nonEmpty shouldBe true)
-        Attributes.get("SenderId").map(_ shouldBe "127.0.0.1")
+        Attributes.get.size shouldBe 4
+        Attributes.get.get("SentTimestamp").map(v => v.nonEmpty shouldBe true)
+        Attributes.get.get("ApproximateReceiveCount").map(_ shouldBe "1")
+        Attributes.get.get("ApproximateFirstReceiveTimestamp").map(v => v.nonEmpty shouldBe true)
+        Attributes.get.get("SenderId").map(_ shouldBe "127.0.0.1")
         MD5OfMessageAttributes.nonEmpty shouldBe true
-        MessageAttributes.nonEmpty shouldBe true
-        MessageAttributes.get("firstAttribute").map { msgAtt =>
+        MessageAttributes.get.nonEmpty shouldBe true
+        MessageAttributes.get.get("firstAttribute").map { msgAtt =>
           msgAtt.getDataType() shouldBe "String"
           msgAtt shouldBe a[StringMessageAttribute]
           inside(msgAtt) { case stringMessageAttribute: StringMessageAttribute =>
@@ -369,14 +369,14 @@ class AmazonCliTestSuite
         ReceiptHandle.nonEmpty shouldBe true
         MD5OfBody shouldBe secondMessage.MD5OfMessageBody
         Body shouldBe secondMessageBody
-        Attributes.size shouldBe 4
-        Attributes.get("SentTimestamp").map(v => v.nonEmpty shouldBe true)
-        Attributes.get("ApproximateReceiveCount").map(_ shouldBe "1")
-        Attributes.get("ApproximateFirstReceiveTimestamp").map(v => v.nonEmpty shouldBe true)
-        Attributes.get("SenderId").map(_ shouldBe "127.0.0.1")
+        Attributes.get.size shouldBe 4
+        Attributes.get.get("SentTimestamp").map(v => v.nonEmpty shouldBe true)
+        Attributes.get.get("ApproximateReceiveCount").map(_ shouldBe "1")
+        Attributes.get.get("ApproximateFirstReceiveTimestamp").map(v => v.nonEmpty shouldBe true)
+        Attributes.get.get("SenderId").map(_ shouldBe "127.0.0.1")
         MD5OfMessageAttributes.nonEmpty shouldBe true
-        MessageAttributes.nonEmpty shouldBe true
-        MessageAttributes.get("secondAttribute").map { msgAtt =>
+        MessageAttributes.get.nonEmpty shouldBe true
+        MessageAttributes.get.get("secondAttribute").map { msgAtt =>
           msgAtt.getDataType() shouldBe "String"
           msgAtt shouldBe a[StringMessageAttribute]
           inside(msgAtt) { case stringMessageAttribute: StringMessageAttribute =>
@@ -396,8 +396,9 @@ class AmazonCliTestSuite
       val batchMessages = sendMessageBatch(queue.QueueUrl, entries)
 
       // then
-      batchMessages.Failed.size shouldBe 1
-      inside(batchMessages.Failed.head) { case failedMessage =>
+      val failed = batchMessages.Failed.toList.flatten
+      failed.size shouldBe 1
+      inside(failed.head) { case failedMessage =>
         import failedMessage._
         Id shouldBe "2"
         SenderFault shouldBe true

@@ -17,12 +17,8 @@ import java.time.Duration
 import scala.async.Async.{async, await}
 import scala.concurrent.{ExecutionContext, Future}
 
-trait QueueAttributesOps extends AttributesModule {
+trait QueueAttributesOps extends AttributesModule with AwsConfiguration {
   this: Logging =>
-
-  def awsRegion: String
-
-  def awsAccountId: String
 
   val attributeValuesCalculator = new AttributeValuesCalculator
 
@@ -75,7 +71,7 @@ trait QueueAttributesOps extends AttributesModule {
         ),
         AttributeValuesCalculator.Rule(
           QueueArnAttribute,
-          () => Future.successful(s"arn:aws:sqs:$awsRegion:$awsAccountId:${queueData.name}")
+          () => Future.successful(getArn(queueData.name))
         )
       )
 

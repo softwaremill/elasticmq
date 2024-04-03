@@ -101,6 +101,52 @@ jobs:
       - name: Run tests
         id: run-tests
         run: SCALA_MAJOR_VERSION=${{ env.scala }} sbt root/test
+  ci-3:
+    # run on external PRs, but not on internal PRs since those will be run by push to branch
+    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
+    runs-on: ubuntu-20.04
+    env:
+      scala: 3
+    steps:
+      - name: Check-out repository
+        id: repo-checkout
+        uses: actions/checkout@v2
+
+      - name: Set up JDK
+        uses: actions/setup-java@v2
+        with:
+          distribution: 'temurin'
+          java-version: 8
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 16
+
+      - name: Install AWS cli 1
+        run: |
+          curl "https://s3.amazonaws.com/aws-cli/awscli-bundle-1.27.127.zip" -o "awscliv1.zip"
+          unzip -qq ./awscliv1.zip
+          sudo ./awscli-bundle/install -i /usr/local/aws1 -b /usr/local/bin/aws1
+
+      - name: Install AWS cli 2
+        run: |
+          curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+          unzip -qq ./awscliv2.zip
+          sudo ./aws/install -i /usr/local/aws2 -b /usr/local/bin/aws2
+
+      - name: Cache SBT
+        id: cache-sbt
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.sbt
+            ~/.ivy2/cache
+            ~/.coursier
+          key: ${{ runner.os }}-sbt-${{ env.scala }}-${{ hashFiles('**/build.sbt') }}
+
+      - name: Run tests
+        id: run-tests
+        run: SCALA_MAJOR_VERSION=${{ env.scala }} sbt root/test
 
   ci-docker:
     # run on external PRs, but not on internal PRs since those will be run by push to branch
@@ -143,7 +189,7 @@ jobs:
         run: sbt "project nativeServer; Docker / publishLocal"
 
   publish-jar:
-    needs: [ci-2-12, ci-2-13, ci-docker]
+    needs: [ci-2-12, ci-2-13, ci-3, ci-docker]
     if: github.event_name != 'pull_request' && (startsWith(github.ref, 'refs/tags/v'))
     runs-on: ubuntu-20.04
     steps:
@@ -202,7 +248,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   publish-docker:
-    needs: [ci-2-12, ci-2-13, ci-docker]
+    needs: [ci-2-12, ci-2-13, ci-3, ci-docker]
     if: github.event_name != 'pull_request' && (startsWith(github.ref, 'refs/tags/v'))
     runs-on: ubuntu-20.04
     steps:
