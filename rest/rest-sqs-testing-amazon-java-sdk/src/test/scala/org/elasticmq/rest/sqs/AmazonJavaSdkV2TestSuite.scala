@@ -1,9 +1,12 @@
 package org.elasticmq.rest.sqs
 
+import org.elasticmq.rest.sqs.model.RedrivePolicy
 import org.elasticmq.{BinaryMessageAttribute, MessageAttribute, NumberMessageAttribute, StringMessageAttribute}
+import org.elasticmq.rest.sqs.model.RedrivePolicyJson.format
 import org.scalatest.matchers.should.Matchers
 import software.amazon.awssdk.core.SdkBytes
 import software.amazon.awssdk.services.sqs.model.{GetQueueUrlRequest => AwsSdkGetQueueUrlRequest, _}
+import spray.json.enrichAny
 
 import scala.collection.JavaConverters._
 
@@ -77,6 +80,30 @@ class AmazonJavaSdkV2TestSuite extends SqsClientServerWithSdkV2Communication wit
         "orange" -> NumberMessageAttribute("0987654321", Some("custom"))
       ),
       List()
+    )
+  }
+
+  test("should return DeadLetterQueueSourceArn in receive message attributes") {
+    // Given
+    clientV2.createQueue(CreateQueueRequest.builder().queueName("testDlq").build())
+    val queue = clientV2.createQueue(CreateQueueRequest.builder()
+      .queueName("testQueue1")
+      .attributes(Map(QueueAttributeName.REDRIVE_POLICY -> RedrivePolicy("testDlq", awsRegion, awsAccountId, 1).toJson.toString).asJava)
+      .build())
+
+    // When
+    clientV2.sendMessage(SendMessageRequest.builder()
+      .queueUrl(queue.queueUrl())
+      .messageBody("test123")
+      .build())
+    val receiveResult = clientV2.receiveMessage(ReceiveMessageRequest.builder()
+      .queueUrl(queue.queueUrl())
+      .attributeNamesWithStrings("All")
+      .build())
+
+    // Then
+    receiveResult.messages().asScala.toList.flatMap(_.attributes().asScala.toList) should contain(
+      (MessageSystemAttributeName.DEAD_LETTER_QUEUE_SOURCE_ARN, s"arn:aws:sqs:$awsRegion:$awsAccountId:testDlq")
     )
   }
 
