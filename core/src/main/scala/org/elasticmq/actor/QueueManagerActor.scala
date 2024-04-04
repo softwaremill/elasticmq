@@ -111,9 +111,17 @@ class QueueManagerActor(nowProvider: NowProvider, limits: Limits, queueEventList
         logger.info("Cancelling message move task {}", taskHandle)
         messageMoveTasks.get(taskHandle) match {
           case Some(sourceQueue) =>
-            sourceQueue ! CancelMovingMessages()
-            messageMoveTasks.remove(taskHandle)
-            ReplyWith(Right(0))
+            val replyTo = context.sender()
+            sourceQueue ? CancelMovingMessages() onComplete {
+              case Success(numMessageMoved) =>
+                logger.debug("Message move task {} cancelled", taskHandle)
+                messageMoveTasks.remove(taskHandle)
+                replyTo ! Right(numMessageMoved)
+              case Failure(ex) =>
+                logger.error("Failed to cancel message move task", ex)
+                replyTo ! Left(ex)
+            }
+            DoNotReply()
           case None =>
             ReplyWith(Left(new InvalidMessageMoveTaskId(taskHandle)))
         }
