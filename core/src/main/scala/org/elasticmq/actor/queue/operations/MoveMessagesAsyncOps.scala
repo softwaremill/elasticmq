@@ -1,6 +1,7 @@
 package org.elasticmq.actor.queue.operations
 
 import org.apache.pekko.actor.ActorRef
+import org.apache.pekko.pattern.ask
 import org.elasticmq.actor.queue.{InternalMessage, QueueActorStorage, QueueEvent}
 import org.elasticmq.msg.{MoveFirstMessageToQueue, SendMessage, StartMessageMoveTaskId}
 import org.elasticmq.util.Logging
@@ -17,7 +18,7 @@ trait MoveMessagesAsyncOps extends Logging {
       maxNumberOfMessagesPerSecond: Option[Int]
   ): StartMessageMoveTaskId = {
     val taskId = UUID.randomUUID().toString
-    println("XXXX Start")
+    logger.debug("Starting message move task to queue {} (task id: {})", destinationQueue, taskId)
     context.self ! MoveFirstMessageToQueue(destinationQueue, maxNumberOfMessagesPerSecond)
     taskId
   }
@@ -26,7 +27,7 @@ trait MoveMessagesAsyncOps extends Logging {
       destinationQueue: ActorRef,
       maxNumberOfMessagesPerSecond: Option[Int]
   ): ResultWithEvents[Unit] = {
-    println("XXX " + messageQueue.all.toList.size)
+    logger.debug("Trying to move a single message to {} ({} messages left)", destinationQueue, messageQueue.size)
     messageQueue.pop match {
       case Some(internalMessage) =>
         destinationQueue ! SendMessage(internalMessage.toNewMessageData)

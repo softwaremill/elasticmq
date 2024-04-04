@@ -36,6 +36,8 @@ sealed trait MessageQueue {
     */
   def all: Iterable[InternalMessage]
 
+  def size: Long
+
   /** Drop all messages on the queue
     */
   def clear(): Unit
@@ -155,6 +157,8 @@ object MessageQueue {
     }
 
     override def all: Iterable[InternalMessage] = messagesById.values
+
+    override def size: Long = messageQueue.size
 
     override def clear(): Unit = {
       messagesById.clear()

@@ -1,8 +1,8 @@
 package org.elasticmq.actor.queue
 
-import org.apache.pekko.actor.ActorRef
+import org.apache.pekko.actor.{ActorLogging, ActorRef}
 import org.elasticmq.QueueData
-import org.elasticmq.actor.reply.ReplyingActor
+import org.elasticmq.actor.reply.{ReplyAction, ReplyingActor}
 import org.elasticmq.msg._
 import org.elasticmq.util.{Logging, NowProvider}
 
@@ -24,7 +24,7 @@ class QueueActor(
   type M[X] = QueueMsg[X]
   val ev = classTag[M[Unit]]
 
-  def receiveAndReply[T](msg: QueueMsg[T]) =
+  def receiveAndReply[T](msg: QueueMsg[T]): ReplyAction[T] =
     msg match {
       case m: QueueQueueMsg[T] =>
         val replyAction = receiveAndReplyQueueMsg(m)

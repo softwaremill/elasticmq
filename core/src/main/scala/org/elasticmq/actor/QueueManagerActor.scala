@@ -74,23 +74,25 @@ class QueueManagerActor(nowProvider: NowProvider, limits: Limits, queueEventList
       case StartMessageMoveTask(sourceQueue, destinationQueue, maxNumberOfMessagesPerSecond) =>
         val replyTo = sender()
         val destination = destinationQueue.map(Future.successful).getOrElse {
-          val queueData = sourceQueue ? GetQueueData()
-          queueData.map { qd =>
+          val queueDataF = sourceQueue ? GetQueueData()
+          queueDataF.map { queueData =>
             queues
               .filter { case (_, data) =>
-                data.queueData.deadLettersQueue.exists(dlqd => dlqd.name == qd.name)
+                data.queueData.deadLettersQueue.exists(dlqData => dlqData.name == queueData.name)
               }
               .head
               ._2
               .actorRef
           }
         }
-        val f = destination.flatMap(destinationQueueActorRef =>
-          sourceQueue ? StartMessageMoveTaskToQueue(destinationQueueActorRef, maxNumberOfMessagesPerSecond)
-        )
-        f.onComplete {
-          case Success(value) => replyTo ! Right(value)
-          case Failure(ex)    => logger.error("Failed to start message move task", ex)
+        destination.flatMap(destinationQueueActorRef => {
+          val taskIdF = sourceQueue ? StartMessageMoveTaskToQueue(destinationQueueActorRef, maxNumberOfMessagesPerSecond)
+          taskIdF.map(taskId => (taskId, destinationQueueActorRef))
+        }).onComplete {
+          case Success((taskId, destinationQueueActorRef)) =>
+            logger.debug("Message move task {} => {} created", sourceQueue, destinationQueueActorRef)
+            replyTo ! Right(taskId)
+          case Failure(ex) => logger.error("Failed to start message move task", ex)
         }
         DoNotReply()
     }
@@ -118,7 +120,8 @@ class QueueManagerActor(nowProvider: NowProvider, limits: Limits, queueEventList
           moveMessagesToQueueActor,
           queueEventListener
         )
-      )
+      ),
+      s"queue-${queueData.name}"
     )
   }
 
