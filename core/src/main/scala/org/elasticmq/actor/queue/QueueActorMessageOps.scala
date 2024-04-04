@@ -39,10 +39,12 @@ trait QueueActorMessageOps
         fifoMessagesHistory = fifoMessagesHistory.cleanOutdatedMessages(nowProvider)
         DoNotReply()
       case RestoreMessages(messages) => restoreMessages(messages)
-      case StartMessageMoveTaskToQueue(destinationQueue, maxNumberOfMessagesPerSecond) =>
-        startMovingMessages(destinationQueue, maxNumberOfMessagesPerSecond)
-      case MoveFirstMessageToQueue(destinationQueue, maxNumberOfMessagesPerSecond) =>
-        moveFirstMessage(destinationQueue, maxNumberOfMessagesPerSecond).send()
+      case StartMovingMessages(destinationQueue, maxNumberOfMessagesPerSecond, queueManager) =>
+        startMovingMessages(destinationQueue, maxNumberOfMessagesPerSecond, queueManager)
+      case CancelMovingMessages() =>
+        cancelMovingMessages()
+      case MoveFirstMessage(taskId, destinationQueue, maxNumberOfMessagesPerSecond, queueManager) =>
+        moveFirstMessage(taskId, destinationQueue, maxNumberOfMessagesPerSecond, queueManager).send()
     }
   }
 }

@@ -1,24 +1,18 @@
 package org.elasticmq.rest.sqs
 
+import com.typesafe.config.ConfigFactory
 import org.apache.pekko.actor.{ActorRef, ActorSystem, Props}
 import org.apache.pekko.http.scaladsl.Http
 import org.apache.pekko.http.scaladsl.server.{Directive1, Directives}
 import org.apache.pekko.stream.ActorMaterializer
 import org.apache.pekko.util.Timeout
-import com.typesafe.config.ConfigFactory
 import org.elasticmq._
 import org.elasticmq.actor.QueueManagerActor
 import org.elasticmq.metrics.QueuesMetrics
 import org.elasticmq.rest.sqs.Constants._
 import org.elasticmq.rest.sqs.XmlNsVersion.extractXmlNs
-import org.elasticmq.rest.sqs.directives.{
-  AWSProtocolDirectives,
-  AnyParamDirectives,
-  ElasticMQDirectives,
-  UnmatchedActionRoutes
-}
+import org.elasticmq.rest.sqs.directives.{AWSProtocolDirectives, AnyParamDirectives, ElasticMQDirectives, UnmatchedActionRoutes}
 import org.elasticmq.rest.sqs.model.RequestPayload
-import org.elasticmq.rest.sqs.{AWSProtocol, XmlNsVersion}
 import org.elasticmq.util.{Logging, NowProvider}
 
 import java.io.ByteArrayOutputStream
@@ -172,7 +166,8 @@ case class TheSQSRestServerBuilder(
       with ResponseMarshaller
       with QueueAttributesOps
       with ListDeadLetterSourceQueuesDirectives
-      with StartMessageMoveTaskDirectives {
+      with StartMessageMoveTaskDirectives
+      with CancelMessageMoveTaskDirectives {
 
       def serverAddress = currentServerAddress.get()
 
@@ -214,6 +209,7 @@ case class TheSQSRestServerBuilder(
         listQueueTags(p) ~
         listDeadLetterSourceQueues(p) ~
         startMessageMoveTask(p) ~
+        cancelMessageMoveTask(p) ~
         // 4. Unmatched action
         unmatchedAction(p)
 
@@ -345,6 +341,7 @@ object Constants {
   val SourceArnParameter = "SourceArn"
   val DestinationArnParameter = "DestinationArn"
   val MaxNumberOfMessagesPerSecondParameter = "MaxNumberOfMessagesPerSecond"
+  val TaskHandleParameter = "TaskHandle"
 }
 
 object ParametersUtil {

@@ -54,8 +54,12 @@ case class DeleteMessage(deliveryReceipt: DeliveryReceipt) extends QueueMessageM
 case class LookupMessage(messageId: MessageId) extends QueueMessageMsg[Option[MessageData]]
 case object DeduplicationIdsCleanup extends QueueMessageMsg[Unit]
 case class RestoreMessages(messages: List[InternalMessage]) extends QueueMessageMsg[Unit]
-case class StartMessageMoveTaskToQueue(destinationQueue: ActorRef, maxNumberOfMessagesPerSecond: Option[Int])
-    extends QueueMessageMsg[StartMessageMoveTaskId]
-
-case class MoveFirstMessageToQueue(destinationQueue: ActorRef, maxNumberOfMessagesPerSecond: Option[Int])
-  extends QueueMessageMsg[Unit]
+case class StartMovingMessages(destinationQueue: ActorRef, maxNumberOfMessagesPerSecond: Option[Int], queueManager: ActorRef)
+    extends QueueMessageMsg[MessageMoveTaskId]
+case class CancelMovingMessages() extends QueueMessageMsg[Int]
+case class MoveFirstMessage(
+    taskId: MessageMoveTaskId,
+    destinationQueue: ActorRef,
+    maxNumberOfMessagesPerSecond: Option[Int],
+    queueManager: ActorRef
+) extends QueueMessageMsg[Unit]

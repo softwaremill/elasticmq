@@ -1,4 +1,5 @@
 package org.elasticmq
+import org.elasticmq.msg.MessageMoveTaskId
 
 trait ElasticMQError {
   val queueName: String
@@ -29,4 +30,11 @@ class MessageDoesNotExist(val queueName: String, messageId: MessageId) extends E
 class InvalidReceiptHandle(val queueName: String, receiptHandle: String) extends ElasticMQError {
   val code = "ReceiptHandleIsInvalid"
   val message = s"""The receipt handle "$receiptHandle" is not valid."""
+}
+
+class InvalidMessageMoveTaskId(val taskId: MessageMoveTaskId) extends ElasticMQError {
+  val code = "InvalidMessageMoveTaskId"
+  val message = s"""The task id "$taskId" is not valid or does not exist"""
+
+  override val queueName: String = "invalid"
 }

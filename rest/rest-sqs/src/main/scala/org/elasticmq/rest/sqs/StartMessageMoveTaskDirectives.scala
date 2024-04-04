@@ -1,18 +1,18 @@
 package org.elasticmq.rest.sqs
 
-import Constants._
 import org.apache.pekko.actor.ActorRef
-import org.apache.pekko.http.scaladsl.server.{Directive1, Route}
+import org.apache.pekko.http.scaladsl.server.Route
 import org.elasticmq.ElasticMQError
 import org.elasticmq.actor.reply._
-
-import scala.async.Async._
 import org.elasticmq.msg.StartMessageMoveTask
 import org.elasticmq.rest.sqs.Action.{StartMessageMoveTask => StartMessageMoveTaskAction}
+import org.elasticmq.rest.sqs.Constants._
 import org.elasticmq.rest.sqs.directives.ElasticMQDirectives
 import org.elasticmq.rest.sqs.model.RequestPayload
 import spray.json.DefaultJsonProtocol._
 import spray.json.RootJsonFormat
+
+import scala.async.Async._
 
 trait StartMessageMoveTaskDirectives { this: ElasticMQDirectives with QueueURLModule with ResponseMarshaller =>
 
@@ -51,9 +51,7 @@ trait StartMessageMoveTaskDirectives { this: ElasticMQDirectives with QueueURLMo
         queueManagerActor ? StartMessageMoveTask(sourceQueue, destinationQueue, maxNumberOfMessagesPerSecond)
       ) match {
         case Left(e: ElasticMQError) => throw new SQSException(e.code, errorMessage = Some(e.message))
-        case Right(taskHandle) =>
-          println("XXX" + taskHandle)
-          complete(StartMessageMoveTaskResponse(taskHandle))
+        case Right(taskHandle)       => complete(StartMessageMoveTaskResponse(taskHandle))
       }
     }
 }

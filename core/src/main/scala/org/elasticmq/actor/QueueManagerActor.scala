@@ -8,8 +8,8 @@ import org.elasticmq.actor.reply._
 import org.elasticmq.msg._
 import org.elasticmq.util.{Logging, NowProvider}
 
-import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.duration.DurationInt
+import scala.concurrent.{ExecutionContext, Future}
 import scala.reflect._
 import scala.util.{Failure, Success}
 
@@ -24,8 +24,10 @@ class QueueManagerActor(nowProvider: NowProvider, limits: Limits, queueEventList
 
   case class ActorWithQueueData(actorRef: ActorRef, queueData: QueueData)
   private val queues = collection.mutable.HashMap[String, ActorWithQueueData]()
+  private val messageMoveTasks = collection.mutable.HashMap[MessageMoveTaskId, ActorRef]()
 
-  def receiveAndReply[T](msg: QueueManagerMsg[T]): ReplyAction[T] =
+  def receiveAndReply[T](msg: QueueManagerMsg[T]): ReplyAction[T] = {
+    val self = context.self
     msg match {
       case CreateQueue(request) =>
         queues.get(request.name) match {
@@ -85,17 +87,38 @@ class QueueManagerActor(nowProvider: NowProvider, limits: Limits, queueEventList
               .actorRef
           }
         }
-        destination.flatMap(destinationQueueActorRef => {
-          val taskIdF = sourceQueue ? StartMessageMoveTaskToQueue(destinationQueueActorRef, maxNumberOfMessagesPerSecond)
-          taskIdF.map(taskId => (taskId, destinationQueueActorRef))
-        }).onComplete {
-          case Success((taskId, destinationQueueActorRef)) =>
-            logger.debug("Message move task {} => {} created", sourceQueue, destinationQueueActorRef)
-            replyTo ! Right(taskId)
-          case Failure(ex) => logger.error("Failed to start message move task", ex)
-        }
+        destination
+          .flatMap(destinationQueueActorRef => {
+            val taskIdF =
+              sourceQueue ? StartMovingMessages(destinationQueueActorRef, maxNumberOfMessagesPerSecond, self)
+            taskIdF.map(taskId => (taskId, destinationQueueActorRef))
+          })
+          .onComplete {
+            case Success((taskId, destinationQueueActorRef)) =>
+              logger.debug("Message move task {} => {} created", sourceQueue, destinationQueueActorRef)
+              messageMoveTasks.put(taskId, sourceQueue)
+              replyTo ! Right(taskId)
+            case Failure(ex) => logger.error("Failed to start message move task", ex)
+          }
         DoNotReply()
+
+      case MessageMoveTaskFinished(taskHandle) =>
+        logger.debug("Message move task {} finished", taskHandle)
+        messageMoveTasks.remove(taskHandle)
+        DoNotReply()
+
+      case CancelMessageMoveTask(taskHandle) =>
+        logger.info("Cancelling message move task {}", taskHandle)
+        messageMoveTasks.get(taskHandle) match {
+          case Some(sourceQueue) =>
+            sourceQueue ! CancelMovingMessages()
+            messageMoveTasks.remove(taskHandle)
+            ReplyWith(Right(0))
+          case None =>
+            ReplyWith(Left(new InvalidMessageMoveTaskId(taskHandle)))
+        }
     }
+  }
 
   protected def createQueueActor(
       nowProvider: NowProvider,

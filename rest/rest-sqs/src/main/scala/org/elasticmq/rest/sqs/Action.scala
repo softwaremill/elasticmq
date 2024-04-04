@@ -22,4 +22,5 @@ object Action extends Enumeration {
   val TagQueue = Value("TagQueue")
   val UntagQueue = Value("UntagQueue")
   val StartMessageMoveTask = Value("StartMessageMoveTask")
+  val CancelMessageMoveTask = Value("CancelMessageMoveTask")
 }
