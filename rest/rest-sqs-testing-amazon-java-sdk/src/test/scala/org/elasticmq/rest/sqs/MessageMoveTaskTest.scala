@@ -1,7 +1,7 @@
 package org.elasticmq.rest.sqs
 
 import com.amazonaws.services.sqs.model.QueueAttributeName.ApproximateNumberOfMessages
-import com.amazonaws.services.sqs.model._
+import com.amazonaws.services.sqs.model.{CancelMessageMoveTaskRequest => AWSCancelMessageMoveTaskRequest, ListMessageMoveTasksRequest => AWSListMessageMoveTasksRequest, _}
 import org.elasticmq.rest.sqs.model.RedrivePolicy
 import org.elasticmq.rest.sqs.model.RedrivePolicyJson.format
 import org.scalatest.concurrent.Eventually
@@ -93,7 +93,9 @@ class MessageMoveTaskTest extends SqsClientServerCommunication with Matchers wit
 
     // and
     val results =
-      client.listMessageMoveTasks(new ListMessageMoveTasksRequest().withSourceArn(DlqArn).withMaxResults(10)).getResults
+      client
+        .listMessageMoveTasks(new AWSListMessageMoveTasksRequest().withSourceArn(DlqArn).withMaxResults(10))
+        .getResults
 
     // then
     results.size shouldEqual 1
@@ -127,7 +129,9 @@ class MessageMoveTaskTest extends SqsClientServerCommunication with Matchers wit
 
     // and
     val results =
-      client.listMessageMoveTasks(new ListMessageMoveTasksRequest().withSourceArn(DlqArn).withMaxResults(10)).getResults
+      client
+        .listMessageMoveTasks(new AWSListMessageMoveTasksRequest().withSourceArn(DlqArn).withMaxResults(10))
+        .getResults
 
     // then
     results.size shouldEqual 2
@@ -140,7 +144,7 @@ class MessageMoveTaskTest extends SqsClientServerCommunication with Matchers wit
   test("should fail to list tasks for non-existing source ARN") {
     intercept[QueueDoesNotExistException] {
       client.listMessageMoveTasks(
-        new ListMessageMoveTasksRequest()
+        new AWSListMessageMoveTasksRequest()
           .withSourceArn(s"arn:aws:sqs:$awsRegion:$awsAccountId:nonExistingQueue")
           .withMaxResults(10)
       )
@@ -150,7 +154,7 @@ class MessageMoveTaskTest extends SqsClientServerCommunication with Matchers wit
   test("should fail to list tasks for invalid ARN") {
     intercept[QueueDoesNotExistException] {
       client.listMessageMoveTasks(
-        new ListMessageMoveTasksRequest()
+        new AWSListMessageMoveTasksRequest()
           .withSourceArn("invalidArn")
           .withMaxResults(10)
       )
@@ -173,7 +177,7 @@ class MessageMoveTaskTest extends SqsClientServerCommunication with Matchers wit
     // and: cancel the task after 2 seconds
     Thread.sleep(2000)
     val numMessagesMoved = client
-      .cancelMessageMoveTask(new CancelMessageMoveTaskRequest().withTaskHandle(taskHandle))
+      .cancelMessageMoveTask(new AWSCancelMessageMoveTaskRequest().withTaskHandle(taskHandle))
       .getApproximateNumberOfMessagesMoved
 
     // and: fetch ApproximateNumberOfMessages
@@ -192,14 +196,14 @@ class MessageMoveTaskTest extends SqsClientServerCommunication with Matchers wit
   test("should fail to cancel non-existing task") {
     intercept[ResourceNotFoundException] {
       client
-        .cancelMessageMoveTask(new CancelMessageMoveTaskRequest().withTaskHandle(UUID.randomUUID().toString))
+        .cancelMessageMoveTask(new AWSCancelMessageMoveTaskRequest().withTaskHandle(UUID.randomUUID().toString))
         .getApproximateNumberOfMessagesMoved
     }
   }
 
   private def createQueuesAndPopulateDlq(): (CreateQueueResult, CreateQueueResult) = {
     val dlq = client.createQueue(new CreateQueueRequest("testQueue-dlq"))
-    val redrivePolicy = RedrivePolicy("testQueue-dlq", awsRegion, awsAccountId, 1).toJson.toString()
+    val redrivePolicy = RedrivePolicy("testQueue-dlq", awsRegion, awsAccountId, 1).toJson.compactPrint
     val queue =
       client.createQueue(
         new CreateQueueRequest("testQueue")
