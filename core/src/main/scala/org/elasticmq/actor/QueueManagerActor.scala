@@ -1,31 +1,27 @@
 package org.elasticmq.actor
 
 import org.apache.pekko.actor.{ActorRef, Props}
-import org.apache.pekko.util.Timeout
 import org.elasticmq._
 import org.elasticmq.actor.queue.{QueueActor, QueueEvent}
 import org.elasticmq.actor.reply._
 import org.elasticmq.msg._
 import org.elasticmq.util.{Logging, NowProvider}
 
-import scala.concurrent.duration.DurationInt
-import scala.concurrent.{ExecutionContext, Future}
+import scala.collection.mutable
 import scala.reflect._
-import scala.util.{Failure, Success}
 
 class QueueManagerActor(nowProvider: NowProvider, limits: Limits, queueEventListener: Option[ActorRef])
     extends ReplyingActor
+    with QueueManagerActorStorage
+    with QueueManagerMessageMoveOps
     with Logging {
+
   type M[X] = QueueManagerMsg[X]
   val ev: ClassTag[QueueManagerMsg[Unit]] = classTag[M[Unit]]
 
-  implicit lazy val ec: ExecutionContext = context.dispatcher
-  implicit lazy val timeout: Timeout = 5.seconds
+  val queues: mutable.Map[MessageMoveTaskId, ActorWithQueueData] = mutable.HashMap[String, ActorWithQueueData]()
 
-  case class ActorWithQueueData(actorRef: ActorRef, queueData: QueueData)
-  private val queues = collection.mutable.HashMap[String, ActorWithQueueData]()
-  private val messageMoveTasks = collection.mutable.HashMap[MessageMoveTaskId, ActorRef]()
-
+  // TODO: create *Ops class like in QueueActor
   def receiveAndReply[T](msg: QueueManagerMsg[T]): ReplyAction[T] = {
     val self = context.self
     msg match {
@@ -80,69 +76,9 @@ class QueueManagerActor(nowProvider: NowProvider, limits: Limits, queueEventList
             destinationArn,
             maxNumberOfMessagesPerSecond
           ) =>
-        val replyTo = sender()
-        val destination = destinationQueue.map(Future.successful).getOrElse {
-          val queueDataF = sourceQueue ? GetQueueData()
-          queueDataF.map { queueData =>
-            queues
-              .filter { case (_, data) =>
-                data.queueData.deadLettersQueue.exists(dlqData => dlqData.name == queueData.name)
-              }
-              .head
-              ._2
-              .actorRef
-          }
-        }
-        destination
-          .flatMap(destinationQueueActorRef => {
-            val resultF =
-              sourceQueue ? StartMovingMessages(
-                destinationQueueActorRef,
-                destinationArn,
-                sourceArn,
-                maxNumberOfMessagesPerSecond,
-                self
-              )
-            resultF.map(result => (result, destinationQueueActorRef))
-          })
-          .onComplete {
-            case Success((result, destinationQueueActorRef)) =>
-              result match {
-                case Right(taskId) =>
-                  logger.debug("Message move task {} => {} created", sourceQueue, destinationQueueActorRef)
-                  messageMoveTasks.put(taskId, sourceQueue)
-                  replyTo ! Right(taskId)
-                case Left(error)  =>
-                  logger.error("Failed to start message move task: {}", error)
-                  replyTo ! Left(error)
-              }
-            case Failure(ex) => logger.error("Failed to start message move task", ex)
-          }
-        DoNotReply()
-
-      case MessageMoveTaskFinished(taskHandle) =>
-        logger.debug("Message move task {} finished", taskHandle)
-        messageMoveTasks.remove(taskHandle)
-        DoNotReply()
-
-      case CancelMessageMoveTask(taskHandle) =>
-        logger.info("Cancelling message move task {}", taskHandle)
-        messageMoveTasks.get(taskHandle) match {
-          case Some(sourceQueue) =>
-            val replyTo = context.sender()
-            sourceQueue ? CancelMovingMessages() onComplete {
-              case Success(numMessageMoved) =>
-                logger.debug("Message move task {} cancelled", taskHandle)
-                messageMoveTasks.remove(taskHandle)
-                replyTo ! Right(numMessageMoved)
-              case Failure(ex) =>
-                logger.error("Failed to cancel message move task", ex)
-                replyTo ! Left(ex)
-            }
-            DoNotReply()
-          case None =>
-            ReplyWith(Left(new InvalidMessageMoveTaskId(taskHandle)))
-        }
+        startMessageMoveTask(sourceQueue, sourceArn, destinationQueue, destinationArn, maxNumberOfMessagesPerSecond)
+      case MessageMoveTaskFinished(taskHandle) => onMessageMoveTaskFinished(taskHandle)
+      case CancelMessageMoveTask(taskHandle)   => cancelMessageMoveTask(taskHandle)
     }
   }
 
