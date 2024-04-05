@@ -84,31 +84,28 @@ object ListMessageMoveTasksResponse {
     ListMessageMoveTasksResponse.apply
   )
 
-  implicit val xmlSerializer: XmlSerializer[ListMessageMoveTasksResponse] = t =>
-    <ListMessageMoveTasksResponse>
-    <ListMessageMoveTasksResult>{
-      t.Results.map(task =>
-        <ListMessageMoveTasksResultEntry>
-          <ApproximateNumberOfMessagesMoved>{task.ApproximateNumberOfMessagesMoved}</ApproximateNumberOfMessagesMoved>
-          <ApproximateNumberOfMessagesToMove>{
-          task.ApproximateNumberOfMessagesToMove
-        }</ApproximateNumberOfMessagesToMove>
-          {task.DestinationArn.map(arn => <DestinationArn>{arn}</DestinationArn>).getOrElse("")}
-          {
-          task.MaxNumberOfMessagesPerSecond
-            .map(v => <MaxNumberOfMessagesPerSecond>{v}</MaxNumberOfMessagesPerSecond>)
-            .getOrElse("")
-        }
-          <SourceArn>{task.SourceArn}</SourceArn>
-          <StartedTimestamp>{task.StartedTimestamp}</StartedTimestamp>
-          <Status>{task.Status}</Status>
-          <TaskHandle>{task.TaskHandle}</TaskHandle>
-        </ListMessageMoveTasksResultEntry>
-      )
-    }
+  implicit val xmlSerializer: XmlSerializer[ListMessageMoveTasksResponse] = t => <ListMessageMoveTasksResponse>
+    <ListMessageMoveTasksResult>
+      {t.Results.map(taskToEntry)}
     </ListMessageMoveTasksResult>
     <ResponseMetadata>
       <RequestId>{EmptyRequestId}</RequestId>
     </ResponseMetadata>
   </ListMessageMoveTasksResponse>
+
+  private def taskToEntry(task: MessageMoveTaskResponse) =
+    <ListMessageMoveTasksResultEntry>
+      <ApproximateNumberOfMessagesMoved>{task.ApproximateNumberOfMessagesMoved}</ApproximateNumberOfMessagesMoved>
+      <ApproximateNumberOfMessagesToMove>{task.ApproximateNumberOfMessagesToMove}</ApproximateNumberOfMessagesToMove>
+      {task.DestinationArn.map(arn => <DestinationArn>{arn}</DestinationArn>).getOrElse("")}
+      {
+      task.MaxNumberOfMessagesPerSecond
+        .map(v => <MaxNumberOfMessagesPerSecond>{v}</MaxNumberOfMessagesPerSecond>)
+        .getOrElse("")
+    }
+      <SourceArn>{task.SourceArn}</SourceArn>
+      <StartedTimestamp>{task.StartedTimestamp}</StartedTimestamp>
+      <Status>{task.Status}</Status>
+      <TaskHandle>{task.TaskHandle}</TaskHandle>
+    </ListMessageMoveTasksResultEntry>
 }
