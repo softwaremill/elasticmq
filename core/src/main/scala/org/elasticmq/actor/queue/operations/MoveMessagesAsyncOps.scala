@@ -2,7 +2,7 @@ package org.elasticmq.actor.queue.operations
 
 import org.apache.pekko.actor.ActorRef
 import org.elasticmq.actor.queue.{QueueActorStorage, QueueEvent}
-import org.elasticmq.msg.{MessageMoveTaskFinished, MessageMoveTaskId, MoveFirstMessage, SendMessage}
+import org.elasticmq.msg.{MessageMoveTaskFinished, MessageMoveTaskHandle, MoveFirstMessage, SendMessage}
 import org.elasticmq.util.Logging
 import org.elasticmq.{ElasticMQError, MessageMoveTaskAlreadyRunning}
 
@@ -18,7 +18,7 @@ case class MovingMessagesInProgress(
     maxNumberOfMessagesPerSecond: Option[Int],
     sourceArn: String,
     startedTimestamp: Long,
-    taskHandle: MessageMoveTaskId
+    taskHandle: MessageMoveTaskHandle
 ) extends MessageMoveTaskState
 
 case class MessageMoveTaskData(
@@ -29,7 +29,7 @@ case class MessageMoveTaskData(
     sourceArn: String,
     startedTimestamp: Long,
     status: String, // RUNNING, COMPLETED, CANCELLING, CANCELLED, and FAILED
-    taskHandle: MessageMoveTaskId
+    taskHandle: MessageMoveTaskHandle
 )
 
 trait MoveMessagesAsyncOps extends Logging {
@@ -44,7 +44,7 @@ trait MoveMessagesAsyncOps extends Logging {
       sourceArn: String,
       maxNumberOfMessagesPerSecond: Option[Int],
       queueManager: ActorRef
-  ): Either[ElasticMQError, MessageMoveTaskId] = {
+  ): Either[ElasticMQError, MessageMoveTaskHandle] = {
     messageMoveTaskState match {
       case NotMovingMessages =>
         val taskHandle = UUID.randomUUID().toString

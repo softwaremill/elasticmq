@@ -17,10 +17,10 @@ case class StartMessageMoveTask(
     destinationQueue: Option[ActorRef],
     destinationArn: Option[String],
     maxNumberOfMessagesPerSecond: Option[Int]
-) extends QueueManagerMsg[Either[ElasticMQError, MessageMoveTaskId]]
+) extends QueueManagerMsg[Either[ElasticMQError, MessageMoveTaskHandle]]
 case class MessageMoveTaskFinished(
-    taskHandle: MessageMoveTaskId
+    taskHandle: MessageMoveTaskHandle
 ) extends QueueManagerMsg[Unit]
 case class CancelMessageMoveTask(
-    taskHandle: MessageMoveTaskId
+    taskHandle: MessageMoveTaskHandle
 ) extends QueueManagerMsg[Either[ElasticMQError, Long]]

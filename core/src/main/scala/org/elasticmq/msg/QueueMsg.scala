@@ -61,7 +61,7 @@ case class StartMovingMessages(
     sourceArn: String,
     maxNumberOfMessagesPerSecond: Option[Int],
     queueManager: ActorRef
-) extends QueueMessageMsg[Either[ElasticMQError, MessageMoveTaskId]]
+) extends QueueMessageMsg[Either[ElasticMQError, MessageMoveTaskHandle]]
 case class CancelMovingMessages() extends QueueMessageMsg[Long]
 case class MoveFirstMessage(
     destinationQueue: ActorRef,

@@ -1,5 +1,5 @@
 package org.elasticmq
-import org.elasticmq.msg.MessageMoveTaskId
+import org.elasticmq.msg.MessageMoveTaskHandle
 
 trait ElasticMQError {
   val queueName: String
@@ -32,9 +32,9 @@ class InvalidReceiptHandle(val queueName: String, receiptHandle: String) extends
   val message = s"""The receipt handle "$receiptHandle" is not valid."""
 }
 
-class InvalidMessageMoveTaskId(val taskId: MessageMoveTaskId) extends ElasticMQError {
+class InvalidMessageMoveTaskHandle(val taskHandle: MessageMoveTaskHandle) extends ElasticMQError {
   val code = "ResourceNotFoundException"
-  val message = s"""The task id "$taskId" is not valid or does not exist"""
+  val message = s"""The task handle "$taskHandle" is not valid or does not exist"""
 
   override val queueName: String = "invalid"
 }

@@ -2,9 +2,9 @@ package org.elasticmq.actor
 import org.apache.pekko.actor.ActorRef
 import org.apache.pekko.util.Timeout
 import org.elasticmq.actor.reply._
-import org.elasticmq.msg.{CancelMovingMessages, GetQueueData, MessageMoveTaskId, StartMovingMessages}
+import org.elasticmq.msg.{CancelMovingMessages, GetQueueData, MessageMoveTaskHandle, StartMovingMessages}
 import org.elasticmq.util.Logging
-import org.elasticmq.{ElasticMQError, InvalidMessageMoveTaskId}
+import org.elasticmq.{ElasticMQError, InvalidMessageMoveTaskHandle}
 
 import scala.collection.mutable
 import scala.concurrent.Future
@@ -13,7 +13,7 @@ import scala.util.{Failure, Success}
 trait QueueManagerMessageMoveOps extends Logging {
   this: QueueManagerActorStorage =>
 
-  private val messageMoveTasks = mutable.HashMap[MessageMoveTaskId, ActorRef]()
+  private val messageMoveTasks = mutable.HashMap[MessageMoveTaskHandle, ActorRef]()
 
   def startMessageMoveTask(
       sourceQueue: ActorRef,
@@ -21,7 +21,7 @@ trait QueueManagerMessageMoveOps extends Logging {
       destinationQueue: Option[ActorRef],
       destinationArn: Option[String],
       maxNumberOfMessagesPerSecond: Option[Int]
-  )(implicit timeout: Timeout): ReplyAction[Either[ElasticMQError, MessageMoveTaskId]] = {
+  )(implicit timeout: Timeout): ReplyAction[Either[ElasticMQError, MessageMoveTaskHandle]] = {
     val self = context.self
     val replyTo = context.sender()
     (for {
@@ -38,10 +38,10 @@ trait QueueManagerMessageMoveOps extends Logging {
     } yield (result, destinationQueueActorRef)).onComplete {
       case Success((result, destinationQueueActorRef)) =>
         result match {
-          case Right(taskId) =>
+          case Right(taskHandle) =>
             logger.debug("Message move task {} => {} created", sourceQueue, destinationQueueActorRef)
-            messageMoveTasks.put(taskId, sourceQueue)
-            replyTo ! Right(taskId)
+            messageMoveTasks.put(taskHandle, sourceQueue)
+            replyTo ! Right(taskHandle)
           case Left(error) =>
             logger.error("Failed to start message move task: {}", error)
             replyTo ! Left(error)
@@ -51,13 +51,13 @@ trait QueueManagerMessageMoveOps extends Logging {
     DoNotReply()
   }
 
-  def onMessageMoveTaskFinished(taskHandle: MessageMoveTaskId): ReplyAction[Unit] = {
+  def onMessageMoveTaskFinished(taskHandle: MessageMoveTaskHandle): ReplyAction[Unit] = {
     logger.debug("Message move task {} finished", taskHandle)
     messageMoveTasks.remove(taskHandle)
     DoNotReply()
   }
 
-  def cancelMessageMoveTask(taskHandle: MessageMoveTaskId): ReplyAction[Either[ElasticMQError, Long]] = {
+  def cancelMessageMoveTask(taskHandle: MessageMoveTaskHandle): ReplyAction[Either[ElasticMQError, Long]] = {
     logger.info("Cancelling message move task {}", taskHandle)
     messageMoveTasks.get(taskHandle) match {
       case Some(sourceQueue) =>
@@ -73,7 +73,7 @@ trait QueueManagerMessageMoveOps extends Logging {
         }
         DoNotReply()
       case None =>
-        ReplyWith(Left(new InvalidMessageMoveTaskId(taskHandle)))
+        ReplyWith(Left(new InvalidMessageMoveTaskHandle(taskHandle)))
     }
   }
 

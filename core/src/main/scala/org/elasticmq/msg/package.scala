@@ -1,5 +1,5 @@
 package org.elasticmq
 
 package object msg {
-  type MessageMoveTaskId = String
+  type MessageMoveTaskHandle = String
 }

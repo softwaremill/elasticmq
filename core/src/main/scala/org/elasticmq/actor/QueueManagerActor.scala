@@ -19,7 +19,7 @@ class QueueManagerActor(nowProvider: NowProvider, limits: Limits, queueEventList
   type M[X] = QueueManagerMsg[X]
   val ev: ClassTag[QueueManagerMsg[Unit]] = classTag[M[Unit]]
 
-  val queues: mutable.Map[MessageMoveTaskId, ActorWithQueueData] = mutable.HashMap[String, ActorWithQueueData]()
+  val queues: mutable.Map[MessageMoveTaskHandle, ActorWithQueueData] = mutable.HashMap[String, ActorWithQueueData]()
 
   // TODO: create *Ops class like in QueueActor
   def receiveAndReply[T](msg: QueueManagerMsg[T]): ReplyAction[T] = {
