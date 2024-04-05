@@ -12,48 +12,48 @@ import org.elasticmq.rest.sqs.model.RequestPayload
 import spray.json.DefaultJsonProtocol._
 import spray.json.RootJsonFormat
 
-import scala.async.Async._
-
-trait StartMessageMoveTaskDirectives { this: ElasticMQDirectives with QueueURLModule with ResponseMarshaller =>
-
-  private val Arn = "(?:.+:(.+)?:(.+)?:)?(.+)".r
+trait StartMessageMoveTaskDirectives extends ArnSupport {
+  this: ElasticMQDirectives with QueueURLModule with ResponseMarshaller =>
 
   def startMessageMoveTask(p: RequestPayload)(implicit marshallerDependencies: MarshallerDependencies): Route = {
     p.action(StartMessageMoveTaskAction) {
       val params = p.as[StartMessageMoveTaskActionRequest]
-      val sourceQueueName = arnToQueueName(params.SourceArn)
+      val sourceQueueName = extractQueueName(params.SourceArn)
       queueActorAndDataFromQueueName(sourceQueueName) { (sourceQueue, _) =>
         params.DestinationArn match {
           case Some(destinationQueueArn) =>
-            val destinationQueueName = arnToQueueName(destinationQueueArn)
+            val destinationQueueName = extractQueueName(destinationQueueArn)
             queueActorAndDataFromQueueName(destinationQueueName) { (destinationQueue, _) =>
-              startMessageMoveTask(sourceQueue, Some(destinationQueue), params.MaxNumberOfMessagesPerSecond)
+              startMessageMoveTask(sourceQueue, params.SourceArn, Some(destinationQueue), params.DestinationArn, params.MaxNumberOfMessagesPerSecond)
             }
-          case None => startMessageMoveTask(sourceQueue, None, params.MaxNumberOfMessagesPerSecond)
+          case None => startMessageMoveTask(sourceQueue, params.SourceArn, None, None, params.MaxNumberOfMessagesPerSecond)
         }
       }
     }
   }
 
-  private def arnToQueueName(arn: String): String =
-    arn match {
-      case Arn(_, _, queueName) => queueName
-      case _                    => throw new SQSException("InvalidParameterValue")
-    }
-
   private def startMessageMoveTask(
       sourceQueue: ActorRef,
+      sourceArn: String,
       destinationQueue: Option[ActorRef],
+      destinationArn: Option[String],
       maxNumberOfMessagesPerSecond: Option[Int]
-  )(implicit marshallerDependencies: MarshallerDependencies): Route =
-    async {
-      await(
-        queueManagerActor ? StartMessageMoveTask(sourceQueue, destinationQueue, maxNumberOfMessagesPerSecond)
-      ) match {
+  )(implicit marshallerDependencies: MarshallerDependencies): Route = {
+    for {
+      res <- queueManagerActor ? StartMessageMoveTask(
+        sourceQueue,
+        sourceArn,
+        destinationQueue,
+        destinationArn,
+        maxNumberOfMessagesPerSecond
+      )
+    } yield {
+      res match {
         case Left(e: ElasticMQError) => throw new SQSException(e.code, errorMessage = Some(e.message))
         case Right(taskHandle)       => complete(StartMessageMoveTaskResponse(taskHandle))
       }
     }
+  }
 }
 
 case class StartMessageMoveTaskActionRequest(

@@ -13,7 +13,9 @@ case class ListQueues() extends QueueManagerMsg[Seq[String]]
 case class ListDeadLetterSourceQueues(queueName: String) extends QueueManagerMsg[List[String]]
 case class StartMessageMoveTask(
     sourceQueue: ActorRef,
+    sourceArn: String,
     destinationQueue: Option[ActorRef],
+    destinationArn: Option[String],
     maxNumberOfMessagesPerSecond: Option[Int]
 ) extends QueueManagerMsg[Either[ElasticMQError, MessageMoveTaskId]]
 case class MessageMoveTaskFinished(
@@ -21,4 +23,4 @@ case class MessageMoveTaskFinished(
 ) extends QueueManagerMsg[Unit]
 case class CancelMessageMoveTask(
     taskHandle: MessageMoveTaskId
-) extends QueueManagerMsg[Either[ElasticMQError, Int]]
+) extends QueueManagerMsg[Either[ElasticMQError, Long]]

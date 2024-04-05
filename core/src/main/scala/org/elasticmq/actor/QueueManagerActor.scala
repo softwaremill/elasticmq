@@ -73,7 +73,13 @@ class QueueManagerActor(nowProvider: NowProvider, limits: Limits, queueEventList
           case (name, actor) if actor.queueData.deadLettersQueue.exists(_.name == queueName) => name
         }.toList
 
-      case StartMessageMoveTask(sourceQueue, destinationQueue, maxNumberOfMessagesPerSecond) =>
+      case StartMessageMoveTask(
+            sourceQueue,
+            sourceArn,
+            destinationQueue,
+            destinationArn,
+            maxNumberOfMessagesPerSecond
+          ) =>
         val replyTo = sender()
         val destination = destinationQueue.map(Future.successful).getOrElse {
           val queueDataF = sourceQueue ? GetQueueData()
@@ -89,15 +95,27 @@ class QueueManagerActor(nowProvider: NowProvider, limits: Limits, queueEventList
         }
         destination
           .flatMap(destinationQueueActorRef => {
-            val taskIdF =
-              sourceQueue ? StartMovingMessages(destinationQueueActorRef, maxNumberOfMessagesPerSecond, self)
-            taskIdF.map(taskId => (taskId, destinationQueueActorRef))
+            val resultF =
+              sourceQueue ? StartMovingMessages(
+                destinationQueueActorRef,
+                destinationArn,
+                sourceArn,
+                maxNumberOfMessagesPerSecond,
+                self
+              )
+            resultF.map(result => (result, destinationQueueActorRef))
           })
           .onComplete {
-            case Success((taskId, destinationQueueActorRef)) =>
-              logger.debug("Message move task {} => {} created", sourceQueue, destinationQueueActorRef)
-              messageMoveTasks.put(taskId, sourceQueue)
-              replyTo ! Right(taskId)
+            case Success((result, destinationQueueActorRef)) =>
+              result match {
+                case Right(taskId) =>
+                  logger.debug("Message move task {} => {} created", sourceQueue, destinationQueueActorRef)
+                  messageMoveTasks.put(taskId, sourceQueue)
+                  replyTo ! Right(taskId)
+                case Left(error)  =>
+                  logger.error("Failed to start message move task: {}", error)
+                  replyTo ! Left(error)
+              }
             case Failure(ex) => logger.error("Failed to start message move task", ex)
           }
         DoNotReply()

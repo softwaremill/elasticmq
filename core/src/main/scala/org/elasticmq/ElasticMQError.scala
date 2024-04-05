@@ -3,7 +3,7 @@ import org.elasticmq.msg.MessageMoveTaskId
 
 trait ElasticMQError {
   val queueName: String
-  val code: String
+  val code: String // TODO: code should be handled in rest-sqs module
   val message: String
 }
 
@@ -33,8 +33,13 @@ class InvalidReceiptHandle(val queueName: String, receiptHandle: String) extends
 }
 
 class InvalidMessageMoveTaskId(val taskId: MessageMoveTaskId) extends ElasticMQError {
-  val code = "InvalidMessageMoveTaskId"
+  val code = "ResourceNotFoundException"
   val message = s"""The task id "$taskId" is not valid or does not exist"""
 
   override val queueName: String = "invalid"
+}
+
+class MessageMoveTaskAlreadyRunning(val queueName: String) extends ElasticMQError {
+  val code = "AWS.SimpleQueueService.UnsupportedOperation"
+  val message = s"""A message move task is already running on queue "$queueName""""
 }

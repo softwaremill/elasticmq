@@ -167,7 +167,8 @@ case class TheSQSRestServerBuilder(
       with QueueAttributesOps
       with ListDeadLetterSourceQueuesDirectives
       with StartMessageMoveTaskDirectives
-      with CancelMessageMoveTaskDirectives {
+      with CancelMessageMoveTaskDirectives
+      with ListMessageMoveTasksDirectives {
 
       def serverAddress = currentServerAddress.get()
 
@@ -210,6 +211,7 @@ case class TheSQSRestServerBuilder(
         listDeadLetterSourceQueues(p) ~
         startMessageMoveTask(p) ~
         cancelMessageMoveTask(p) ~
+        listMessageMoveTasks(p) ~
         // 4. Unmatched action
         unmatchedAction(p)
 

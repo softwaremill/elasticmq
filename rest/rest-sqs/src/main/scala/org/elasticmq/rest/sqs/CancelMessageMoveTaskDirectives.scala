@@ -50,7 +50,7 @@ object CancelMessageMoveTaskRequest {
     }
 }
 
-case class CancelMessageMoveTaskResponse(ApproximateNumberOfMessagesMoved: Int)
+case class CancelMessageMoveTaskResponse(ApproximateNumberOfMessagesMoved: Long)
 
 object CancelMessageMoveTaskResponse {
   implicit val format: RootJsonFormat[CancelMessageMoveTaskResponse] = jsonFormat1(CancelMessageMoveTaskResponse.apply)
