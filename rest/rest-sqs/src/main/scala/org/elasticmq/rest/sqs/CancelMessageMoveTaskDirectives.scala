@@ -6,6 +6,7 @@ import org.elasticmq.actor.reply._
 import org.elasticmq.msg.CancelMessageMoveTask
 import org.elasticmq.rest.sqs.Action.{CancelMessageMoveTask => CancelMessageMoveTaskAction}
 import org.elasticmq.rest.sqs.Constants._
+import org.elasticmq.rest.sqs.SQSException.ElasticMQErrorOps
 import org.elasticmq.rest.sqs.directives.ElasticMQDirectives
 import org.elasticmq.rest.sqs.model.RequestPayload
 import spray.json.DefaultJsonProtocol._
@@ -22,7 +23,7 @@ trait CancelMessageMoveTaskDirectives { this: ElasticMQDirectives with QueueURLM
         await(
           queueManagerActor ? CancelMessageMoveTask(params.TaskHandle)
         ) match {
-          case Left(e: ElasticMQError) => throw new SQSException(e.code, errorMessage = Some(e.message))
+          case Left(e: ElasticMQError) => throw e.toSQSException
           case Right(approximateNumberOfMessagesMoved) =>
             complete(CancelMessageMoveTaskResponse(approximateNumberOfMessagesMoved))
         }

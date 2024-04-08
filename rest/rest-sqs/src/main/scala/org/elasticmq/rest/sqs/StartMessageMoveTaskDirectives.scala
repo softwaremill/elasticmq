@@ -7,6 +7,7 @@ import org.elasticmq.actor.reply._
 import org.elasticmq.msg.StartMessageMoveTask
 import org.elasticmq.rest.sqs.Action.{StartMessageMoveTask => StartMessageMoveTaskAction}
 import org.elasticmq.rest.sqs.Constants._
+import org.elasticmq.rest.sqs.SQSException.ElasticMQErrorOps
 import org.elasticmq.rest.sqs.directives.ElasticMQDirectives
 import org.elasticmq.rest.sqs.model.RequestPayload
 import spray.json.DefaultJsonProtocol._
@@ -24,9 +25,16 @@ trait StartMessageMoveTaskDirectives extends ArnSupport {
           case Some(destinationQueueArn) =>
             val destinationQueueName = extractQueueName(destinationQueueArn)
             queueActorAndDataFromQueueName(destinationQueueName) { (destinationQueue, _) =>
-              startMessageMoveTask(sourceQueue, params.SourceArn, Some(destinationQueue), params.DestinationArn, params.MaxNumberOfMessagesPerSecond)
+              startMessageMoveTask(
+                sourceQueue,
+                params.SourceArn,
+                Some(destinationQueue),
+                params.DestinationArn,
+                params.MaxNumberOfMessagesPerSecond
+              )
             }
-          case None => startMessageMoveTask(sourceQueue, params.SourceArn, None, None, params.MaxNumberOfMessagesPerSecond)
+          case None =>
+            startMessageMoveTask(sourceQueue, params.SourceArn, None, None, params.MaxNumberOfMessagesPerSecond)
         }
       }
     }
@@ -49,7 +57,7 @@ trait StartMessageMoveTaskDirectives extends ArnSupport {
       )
     } yield {
       res match {
-        case Left(e: ElasticMQError) => throw new SQSException(e.code, errorMessage = Some(e.message))
+        case Left(e: ElasticMQError) => throw e.toSQSException
         case Right(taskHandle)       => complete(StartMessageMoveTaskResponse(taskHandle))
       }
     }
