@@ -1,7 +1,7 @@
 package org.elasticmq.rest.sqs.client
 import software.amazon.awssdk.services.sqs.model.{CancelMessageMoveTaskRequest, CreateQueueRequest, GetQueueAttributesRequest, ListMessageMoveTasksRequest, QueueDoesNotExistException, ReceiveMessageRequest, ResourceNotFoundException, SendMessageRequest, StartMessageMoveTaskRequest, UnsupportedOperationException, QueueAttributeName => AwsQueueAttributeName}
 
-import scala.jdk.CollectionConverters.{iterableAsScalaIterableConverter, mapAsJavaMapConverter, mapAsScalaMapConverter, seqAsJavaListConverter}
+import scala.collection.JavaConverters._
 
 class AwsSdkV2SqsClient(client: software.amazon.awssdk.services.sqs.SqsClient) extends SqsClient {
 
