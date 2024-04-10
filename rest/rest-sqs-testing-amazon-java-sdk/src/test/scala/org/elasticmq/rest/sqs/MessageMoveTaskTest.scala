@@ -43,9 +43,10 @@ abstract class MessageMoveTaskTest
     testClient.startMessageMoveTask(DlqArn, maxNumberOfMessagesPerSecond = Some(1))
 
     // then: ensure that not all messages were moved back to the original queue after 2 seconds
-    Thread.sleep(2000)
-    fetchApproximateNumberOfMessages(queue) should (be > 1 and be < 6)
-    fetchApproximateNumberOfMessages(dlq) should (be > 1 and be < 6)
+    eventually(timeout(5.seconds), interval(100.millis)) {
+      fetchApproximateNumberOfMessages(queue) should (be > 1 and be < 6)
+      fetchApproximateNumberOfMessages(dlq) should (be > 1 and be < 6)
+    }
   }
 
   test("should not run two message move tasks in parallel") {
@@ -67,9 +68,10 @@ abstract class MessageMoveTaskTest
     )
 
     // and: ensure that not all messages were moved back to the original queue after 2 seconds
-    Thread.sleep(2000)
-    fetchApproximateNumberOfMessages(queue) should (be > 1 and be < 6)
-    fetchApproximateNumberOfMessages(dlq) should (be > 1 and be < 6)
+    eventually(timeout(5.seconds), interval(100.millis)) {
+      fetchApproximateNumberOfMessages(queue) should (be > 1 and be < 6)
+      fetchApproximateNumberOfMessages(dlq) should (be > 1 and be < 6)
+    }
   }
 
   test("should run message move task and list it") {
