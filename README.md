@@ -170,7 +170,15 @@ all messages could be either duplicated (using `copyTo` attribute) or redirected
 
 ### FIFO queue creation
 To create FIFO queue set value of `fifo` config parameter to `true`.
-You can add `.fifo` suffix to queue name yourself. 
+You can add `.fifo` suffix to queue name yourself (a name containing `.` has to be surrounded with quotes), for example:
+```
+queues {
+  "testQueue.fifo" {
+    fifo = true
+    contentBasedDeduplication = true
+  }
+}
+```
 If not then suffix will be added automatically during queue creation.
 
 # Persisting queues configuration
