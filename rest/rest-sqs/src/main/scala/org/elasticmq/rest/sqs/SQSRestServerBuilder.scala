@@ -3,15 +3,15 @@ package org.elasticmq.rest.sqs
 import com.typesafe.config.ConfigFactory
 import org.apache.pekko.actor.{ActorRef, ActorSystem, Props}
 import org.apache.pekko.http.scaladsl.Http
-import org.apache.pekko.http.scaladsl.server.{Directive1, Directives}
-import org.apache.pekko.stream.ActorMaterializer
+import org.apache.pekko.http.scaladsl.server.Directive1
+import org.apache.pekko.stream.Materializer
 import org.apache.pekko.util.Timeout
 import org.elasticmq._
 import org.elasticmq.actor.QueueManagerActor
 import org.elasticmq.metrics.QueuesMetrics
 import org.elasticmq.rest.sqs.Constants._
 import org.elasticmq.rest.sqs.XmlNsVersion.extractXmlNs
-import org.elasticmq.rest.sqs.directives.{AWSProtocolDirectives, AnyParamDirectives, ElasticMQDirectives, UnmatchedActionRoutes}
+import org.elasticmq.rest.sqs.directives.{ AnyParamDirectives,AWSProtocolDirectives, ElasticMQDirectives, UnmatchedActionRoutes}
 import org.elasticmq.rest.sqs.model.RequestPayload
 import org.elasticmq.util.{Logging, NowProvider}
 
@@ -24,10 +24,10 @@ import java.util.concurrent.atomic.AtomicReference
 import javax.management.ObjectName
 import scala.collection.immutable.TreeMap
 import scala.collection.mutable.ArrayBuffer
-import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
-import scala.util.control.NonFatal
+import scala.concurrent.duration._
 import scala.util.{Failure, Success, Try}
+import scala.util.control.NonFatal
 import scala.xml._
 
 /** By default: <li> <ul>for `socketAddress`: when started, the server will bind to `localhost:9324`</ul> <ul>for
@@ -131,7 +131,7 @@ case class TheSQSRestServerBuilder(
     val theLimits = sqsLimits
 
     implicit val implicitActorSystem: ActorSystem = theActorSystem
-    implicit val implicitMaterializer: ActorMaterializer = ActorMaterializer()
+    implicit val implicitMaterializer: Materializer = Materializer(theActorSystem)
 
     val currentServerAddress =
       new AtomicReference[NodeAddress](theServerAddress)
@@ -216,8 +216,6 @@ case class TheSQSRestServerBuilder(
         unmatchedAction(p)
 
     val config = new ElasticMQConfig
-
-    implicit val bindingTimeout: Timeout = Timeout(10, TimeUnit.SECONDS)
 
     val routes =
       extractXmlNs { (_version: XmlNsVersion) =>
@@ -409,8 +407,6 @@ object MD5Util {
         case b: BinaryMessageAttribute =>
           byteStream.write(2)
           addEncodedByteArray(byteStream, b.binaryValue)
-        case _ =>
-          throw new IllegalArgumentException(s"Unsupported message attribute type: ${v.getClass.getName}")
       }
     }
 
@@ -459,7 +455,7 @@ trait QueueURLModule {
   def serverAddress: NodeAddress
   def awsAccountId: String
 
-  import Directives._
+  import org.apache.pekko.http.scaladsl.server.Directives._
 
   def baseQueueURL: Directive1[String] = {
     val postfix = if (awsAccountId.nonEmpty) awsAccountId else QueueUrlContext

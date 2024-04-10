@@ -41,7 +41,7 @@ object QueuePersister {
 
   def saveToConfigFile(queues: List[QueueData], storagePath: String): Unit = {
     val queuesConfig: String = prepareQueuesConfig(queues)
-    new PrintWriter(storagePath) {
+    val _: PrintWriter = new PrintWriter(storagePath) {
       write(queuesConfig)
       close()
     }

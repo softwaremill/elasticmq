@@ -56,7 +56,7 @@ case class DBMessage(
       isFifo = false,
       groupId,
       deduplicationId.map(id => DeduplicationId(id)),
-      tracingId.map(TracingId),
+      tracingId.map(TracingId.apply),
       sequenceNumber
     )
   }

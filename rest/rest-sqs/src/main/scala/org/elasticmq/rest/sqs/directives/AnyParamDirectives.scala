@@ -1,6 +1,6 @@
 package org.elasticmq.rest.sqs.directives
 
-import org.apache.pekko.http.scaladsl.model.{FormData, HttpRequest}
+import org.apache.pekko.http.scaladsl.model.FormData
 import org.apache.pekko.http.scaladsl.server.{Directives, Route, UnsupportedRequestContentTypeRejection}
 import org.apache.pekko.stream.Materializer
 import org.elasticmq.rest.sqs.{AWSProtocol, ContextPathModule, QueueURLModule}

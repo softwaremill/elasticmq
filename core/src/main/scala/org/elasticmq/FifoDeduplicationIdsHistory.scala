@@ -65,7 +65,7 @@ case class FifoDeduplicationIdsHistory(
 }
 
 object FifoDeduplicationIdsHistory {
-  val DeduplicationIntervalMinutes = 5
+  val DeduplicationIntervalMinutes = 5L
 
   private def apply(
       messagesByDeduplicationId: Map[DeduplicationId, InternalMessage],

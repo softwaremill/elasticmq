@@ -2,8 +2,8 @@ package org.elasticmq.actor.reply
 
 import org.apache.pekko.actor.Actor
 import org.apache.pekko.actor.Status.Failure
+
 import scala.reflect.ClassTag
-import scala.language.higherKinds
 
 trait ReplyingActor extends Actor {
   type M[X] <: Replyable[X]

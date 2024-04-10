@@ -1,26 +1,24 @@
-package org.elasticmq.persistence
+package org.elasticmq.persistence.sql
+import org.elasticmq.persistence.{CreateQueueMetadata, DeadLettersQueue}
 import spray.json.{DefaultJsonProtocol, JsonFormat}
 
-package object sql {
+case class SerializableAttribute(
+    key: String,
+    primaryDataType: String,
+    stringValue: String,
+    customType: Option[String]
+)
 
-  case class SerializableAttribute(
-      key: String,
-      primaryDataType: String,
-      stringValue: String,
-      customType: Option[String]
-  )
+object SerializableAttributeProtocol extends DefaultJsonProtocol {
+  implicit val colorFormat: JsonFormat[SerializableAttribute] = jsonFormat4(SerializableAttribute.apply)
+}
 
-  object SerializableAttributeProtocol extends DefaultJsonProtocol {
-    implicit val colorFormat: JsonFormat[SerializableAttribute] = jsonFormat4(SerializableAttribute)
-  }
+object DeadLettersQueueProtocol extends DefaultJsonProtocol {
+  implicit val DeadLettersQueueFormat: JsonFormat[DeadLettersQueue] = jsonFormat2(DeadLettersQueue.apply)
+}
 
-  object DeadLettersQueueProtocol extends DefaultJsonProtocol {
-    implicit val DeadLettersQueueFormat: JsonFormat[DeadLettersQueue] = jsonFormat2(DeadLettersQueue)
-  }
+import org.elasticmq.persistence.sql.DeadLettersQueueProtocol._
 
-  import DeadLettersQueueProtocol._
-
-  object CreateQueueProtocol extends DefaultJsonProtocol {
-    implicit val CreateQueueFormat: JsonFormat[CreateQueueMetadata] = jsonFormat12(CreateQueueMetadata.apply)
-  }
+object CreateQueueProtocol extends DefaultJsonProtocol {
+  implicit val CreateQueueFormat: JsonFormat[CreateQueueMetadata] = jsonFormat12(CreateQueueMetadata.apply)
 }

@@ -6,11 +6,11 @@ import org.elasticmq.rest.sqs.Action.{ListQueueTags, TagQueue, UntagQueue}
 import org.elasticmq.rest.sqs.Constants._
 import org.elasticmq.rest.sqs.TagsModule.tagsToXmlConverter
 import org.elasticmq.rest.sqs.directives.ElasticMQDirectives
-import spray.json.DefaultJsonProtocol.jsonFormat1
-import spray.json.RootJsonFormat
-import spray.json.DefaultJsonProtocol._
 import org.elasticmq.rest.sqs.model.RequestPayload
+import spray.json.DefaultJsonProtocol._
+import spray.json.RootJsonFormat
 
+import scala.concurrent.Future
 import scala.xml.Elem
 
 trait TagQueueDirectives {
@@ -30,7 +30,7 @@ trait TagQueueDirectives {
       val params = p.as[UntagQueueActionRequest]
       queueActorFromUrl(params.QueueUrl) { queueActor =>
         val tags = params.TagKeys
-        queueActor ? RemoveQueueTags(tags)
+        val _: Future[Unit] = queueActor ? RemoveQueueTags(tags)
         emptyResponse("UntagQueueResponse")
       }
     }
@@ -41,7 +41,7 @@ trait TagQueueDirectives {
       val params = p.as[TagQueueActionRequest]
       queueActorFromUrl(params.QueueUrl) { queueActor =>
         val tags = params.Tags
-        queueActor ? UpdateQueueTags(tags)
+        val _: Future[Unit] = queueActor ? UpdateQueueTags(tags)
         emptyResponse("TagQueueResponse")
       }
     }

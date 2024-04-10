@@ -10,8 +10,8 @@ import org.elasticmq.persistence.CreateQueueMetadata
 import org.elasticmq.util.Logging
 
 import scala.collection.mutable
-import scala.concurrent.duration.DurationInt
 import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.duration.DurationInt
 import scala.util.{Failure, Success}
 
 case class GetAllMessages(queueName: String) extends Replyable[List[InternalMessage]]
@@ -34,15 +34,16 @@ class SqlQueuePersistenceActor(
       logger.debug(s"Storing queue data: $queueData")
 
       if (repos.contains(queueData.name)) {
-        queueRepo.update(CreateQueueMetadata.from(queueData))
+        val _: Int = queueRepo.update(CreateQueueMetadata.from(queueData))
       } else {
         queueRepo.add(CreateQueueMetadata.from(queueData))
         repos.put(queueData.name, new MessageRepository(queueData.name, db))
+        ()
       }
 
     case QueueEvent.QueueDeleted(queueName) =>
       logger.debug(s"Removing queue data for queue $queueName")
-      queueRepo.remove(queueName)
+      val _: Int = queueRepo.remove(queueName)
       repos.remove(queueName).foreach(_.drop())
 
     case QueueEvent.QueueMetadataUpdated(queueData) =>
@@ -50,6 +51,7 @@ class SqlQueuePersistenceActor(
         logger.debug(s"Updating queue: $queueData")
       }
       queueRepo.update(CreateQueueMetadata.from(queueData))
+      ()
 
     case QueueEvent.MessageAdded(queueName, message) =>
       logger.whenDebugEnabled {
@@ -85,7 +87,7 @@ class SqlQueuePersistenceActor(
 
   private def createQueues(
       queueManagerActor: ActorRef
-  )(implicit timeout: Timeout): Future[Either[List[ElasticMQError], OperationStatus]] = {
+  ): Future[Either[List[ElasticMQError], OperationStatus]] = {
     val persistedQueues = queueRepo.findAll()
     val allQueues = CreateQueueMetadata.mergePersistedAndBaseQueues(persistedQueues, baseQueues)
 

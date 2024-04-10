@@ -1,6 +1,6 @@
 package org.elasticmq.rest.sqs
 
-import org.elasticmq.{NumberMessageAttribute, BinaryMessageAttribute, StringMessageAttribute, MessageAttribute}
+import org.elasticmq.{BinaryMessageAttribute, MessageAttribute, NumberMessageAttribute, StringMessageAttribute}
 
 trait AttributesModule {
   val attributeNamesReader = new AttributeNamesReader
