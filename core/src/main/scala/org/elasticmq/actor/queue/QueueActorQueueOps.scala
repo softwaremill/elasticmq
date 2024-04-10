@@ -1,8 +1,7 @@
 package org.elasticmq.actor.queue
 
 import org.elasticmq.{FifoDeduplicationIdsHistory, QueueStatistics}
-import org.elasticmq.actor.reply.ReplyAction
-import org.elasticmq.actor.reply.valueToReplyWith
+import org.elasticmq.actor.reply.{valueToReplyWith, ReplyAction}
 import org.elasticmq.msg._
 import org.elasticmq.util.Logging
 
@@ -54,9 +53,9 @@ trait QueueActorQueueOps extends Logging {
     }
 
   private def getQueueStatistics(deliveryTime: Long) = {
-    var visible = 0
-    var invisible = 0
-    var delayed = 0
+    var visible = 0L
+    var invisible = 0L
+    var delayed = 0L
 
     messageQueue.all.foreach { internalMessage =>
       if (internalMessage.nextDelivery < deliveryTime) {

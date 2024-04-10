@@ -1,16 +1,16 @@
 package org.elasticmq.rest.stats
 
-import java.util.concurrent.TimeUnit
 import org.apache.pekko.actor.{ActorRef, ActorSystem}
 import org.apache.pekko.http.scaladsl.Http
-import org.apache.pekko.stream.ActorMaterializer
+import org.apache.pekko.stream.Materializer
 import org.apache.pekko.util.Timeout
 import org.elasticmq.rest.sqs.QueueAttributesOps
 import org.elasticmq.rest.sqs.directives.{AWSProtocolDirectives, ElasticMQDirectives}
 import org.elasticmq.util.{Logging, NowProvider}
 
-import scala.concurrent.duration._
+import java.util.concurrent.TimeUnit
 import scala.concurrent.{Await, Future}
+import scala.concurrent.duration._
 import scala.util.control.NonFatal
 
 case class TheStatisticsRestServerBuilder(
@@ -69,7 +69,7 @@ case class TheStatisticsRestServerBuilder(
     implicit val nowProvider = new NowProvider()
 
     implicit val implicitActorSystem: ActorSystem = providedActorSystem
-    implicit val implicitMaterializer: ActorMaterializer = ActorMaterializer()
+    implicit val implicitMaterializer: Materializer = Materializer(providedActorSystem)
 
     val env = new StatisticsDirectives with QueueAttributesOps with ElasticMQDirectives with AWSProtocolDirectives {
 

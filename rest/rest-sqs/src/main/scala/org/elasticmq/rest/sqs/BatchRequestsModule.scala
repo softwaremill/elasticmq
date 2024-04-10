@@ -1,12 +1,11 @@
 package org.elasticmq.rest.sqs
 
-import Constants.{EmptyRequestId, QueueUrlParameter}
+import org.elasticmq.rest.sqs.Constants.QueueUrlParameter
 import org.elasticmq.Limits
+import spray.json.{JsonFormat, RootJsonFormat}
+import spray.json.DefaultJsonProtocol._
 
 import java.util.regex.Pattern
-import spray.json.DefaultJsonProtocol._
-import spray.json.{JsonFormat, RootJsonFormat}
-
 import scala.concurrent.Future
 import scala.xml.Elem
 
@@ -40,7 +39,7 @@ trait BatchRequestsModule {
     Future
       .sequence(result)
       .map(
-        _.foldLeft(Option.empty[List[Failed]], List.empty[R]) {
+        _.foldLeft((Option.empty[List[Failed]], List.empty[R])) {
           case ((failures, successes), Left(failed)) =>
             (failures.map(_ :+ failed).orElse(Some(List(failed))), successes)
           case ((failures, successes), Right(success)) => (failures, successes :+ success)

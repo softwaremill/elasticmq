@@ -14,7 +14,7 @@ class MessageRepository(queueName: String, db: DB) extends Logging {
 
   if (db.persistenceConfig.pruneDataOnInit) {
     logger.debug(s"Deleting stored messages for queue $queueName")
-    sql"drop table if exists $tableName".execute.apply()
+    val _: Boolean = sql"drop table if exists $tableName".execute.apply()
   }
 
   sql"""
@@ -34,7 +34,7 @@ class MessageRepository(queueName: String, db: DB) extends Logging {
     )""".execute.apply()
 
   def drop(): Unit = {
-    sql"drop table if exists $tableName".execute.apply()
+    val _: Boolean = sql"drop table if exists $tableName".execute.apply()
   }
 
   def findAll(): List[InternalMessage] = {

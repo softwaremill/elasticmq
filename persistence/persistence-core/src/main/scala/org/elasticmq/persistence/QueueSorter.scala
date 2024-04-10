@@ -3,7 +3,7 @@ package org.elasticmq.persistence
 import org.elasticmq.persistence.TopologicalSorter.Node
 import org.elasticmq.util.Logging
 
-import scala.collection.mutable
+import scala.collection.immutable.ListMap
 
 object QueueSorter extends Logging {
 
@@ -22,7 +22,7 @@ object QueueSorter extends Logging {
   private def createReferencedQueuesEdges(
       nodes: List[CreateQueueMetadata]
   ): Map[CreateQueueMetadata, Set[CreateQueueMetadata]] = {
-    val edges = new mutable.ListMap[CreateQueueMetadata, Set[CreateQueueMetadata]]
+    var edges = new ListMap[CreateQueueMetadata, Set[CreateQueueMetadata]]
 
     // create map to look up queues by name
     val queueMap = nodes.map { cq => cq.name -> cq }.toMap
@@ -43,7 +43,7 @@ object QueueSorter extends Logging {
         queueMap.get(queueName) match {
           case Some(queue) =>
             val edgesForNode = edges.getOrElse(cq, Set.empty)
-            edges.put(cq, edgesForNode + queue)
+            edges = edges.updated(cq, edgesForNode + queue)
           case None => logger.error("{} queue {} not found", label, queueName)
         }
       }
