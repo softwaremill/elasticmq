@@ -5,15 +5,18 @@ import com.amazonaws.client.builder.AwsClientBuilder.EndpointConfiguration
 import com.amazonaws.services.sqs.model.{Message, ReceiveMessageRequest}
 import com.amazonaws.services.sqs.{AmazonSQS, AmazonSQSClientBuilder}
 import org.apache.http.impl.client.{CloseableHttpClient, HttpClients}
+import org.elasticmq.rest.sqs.client.{AwsSdkV1SqsClient, SqsClient}
 import org.elasticmq.util.Logging
 import org.elasticmq.{NodeAddress, RelaxedSQSLimits}
-import org.scalatest.{Args, BeforeAndAfter, Status}
 import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.{Args, BeforeAndAfter, Status}
 
 import scala.collection.JavaConverters._
 import scala.util.Try
 
 trait SqsClientServerCommunication extends AnyFunSuite with BeforeAndAfter with Logging {
+
+  var testClient: SqsClient = _
 
   var client: AmazonSQS = _ // strict server
   var relaxedClient: AmazonSQS = _
@@ -27,6 +30,8 @@ trait SqsClientServerCommunication extends AnyFunSuite with BeforeAndAfter with 
   val awsRegion = "elasticmq"
 
   val ServiceEndpoint = "http://localhost:9321"
+
+  val redrivePolicyAttribute = "RedrivePolicy"
 
   before {
     logger.info(s"\n---\nRunning test: $currentTestName\n---\n")
@@ -52,6 +57,8 @@ trait SqsClientServerCommunication extends AnyFunSuite with BeforeAndAfter with 
       .withCredentials(new AWSStaticCredentialsProvider(new BasicAWSCredentials("x", "x")))
       .withEndpointConfiguration(new EndpointConfiguration(ServiceEndpoint, "us-east-1"))
       .build()
+
+    testClient = new AwsSdkV1SqsClient(client)
 
     relaxedClient = AmazonSQSClientBuilder
       .standard()

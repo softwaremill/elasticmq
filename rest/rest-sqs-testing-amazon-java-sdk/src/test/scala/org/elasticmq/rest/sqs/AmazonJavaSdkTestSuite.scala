@@ -24,7 +24,6 @@ import scala.util.control.Exception._
 class AmazonJavaSdkTestSuite extends SqsClientServerCommunication with Matchers {
   val visibilityTimeoutAttribute = "VisibilityTimeout"
   val defaultVisibilityTimeoutAttribute = "VisibilityTimeout"
-  val redrivePolicyAttribute = "RedrivePolicy"
   val delaySecondsAttribute = "DelaySeconds"
   val receiveMessageWaitTimeSecondsAttribute = "ReceiveMessageWaitTimeSeconds"
 

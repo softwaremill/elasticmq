@@ -7,18 +7,23 @@ import org.elasticmq.actor.reply._
 import org.elasticmq.msg._
 import org.elasticmq.util.{Logging, NowProvider}
 
+import scala.collection.mutable
 import scala.reflect._
 
 class QueueManagerActor(nowProvider: NowProvider, limits: Limits, queueEventListener: Option[ActorRef])
     extends ReplyingActor
+    with QueueManagerActorStorage
+    with QueueManagerMessageMoveOps
     with Logging {
+
   type M[X] = QueueManagerMsg[X]
   val ev: ClassTag[QueueManagerMsg[Unit]] = classTag[M[Unit]]
 
-  case class ActorWithQueueData(actorRef: ActorRef, queueData: QueueData)
-  private val queues = collection.mutable.HashMap[String, ActorWithQueueData]()
+  val queues: mutable.Map[MessageMoveTaskHandle, ActorWithQueueData] = mutable.HashMap[String, ActorWithQueueData]()
 
-  def receiveAndReply[T](msg: QueueManagerMsg[T]): ReplyAction[T] =
+  // TODO: create *Ops class like in QueueActor
+  def receiveAndReply[T](msg: QueueManagerMsg[T]): ReplyAction[T] = {
+    val self = context.self
     msg match {
       case CreateQueue(request) =>
         queues.get(request.name) match {
@@ -63,7 +68,19 @@ class QueueManagerActor(nowProvider: NowProvider, limits: Limits, queueEventList
         queues.collect {
           case (name, actor) if actor.queueData.deadLettersQueue.exists(_.name == queueName) => name
         }.toList
+
+      case StartMessageMoveTask(
+            sourceQueue,
+            sourceArn,
+            destinationQueue,
+            destinationArn,
+            maxNumberOfMessagesPerSecond
+          ) =>
+        startMessageMoveTask(sourceQueue, sourceArn, destinationQueue, destinationArn, maxNumberOfMessagesPerSecond)
+      case MessageMoveTaskFinished(taskHandle) => onMessageMoveTaskFinished(taskHandle)
+      case CancelMessageMoveTask(taskHandle)   => cancelMessageMoveTask(taskHandle)
     }
+  }
 
   protected def createQueueActor(
       nowProvider: NowProvider,
@@ -88,7 +105,8 @@ class QueueManagerActor(nowProvider: NowProvider, limits: Limits, queueEventList
           moveMessagesToQueueActor,
           queueEventListener
         )
-      )
+      ),
+      s"queue-${queueData.name}"
     )
   }
 

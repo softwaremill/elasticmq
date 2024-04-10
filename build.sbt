@@ -38,7 +38,7 @@ val jclOverSlf4j = "org.slf4j" % "jcl-over-slf4j" % "2.0.12" // needed form amaz
 val scalatest = "org.scalatest" %% "scalatest" % "3.2.18"
 val awaitility = "org.awaitility" % "awaitility-scala" % "4.2.1"
 
-val amazonJavaSdkSqs = "com.amazonaws" % "aws-java-sdk-sqs" % "1.12.472" exclude ("commons-logging", "commons-logging")
+val amazonJavaSdkSqs = "com.amazonaws" % "aws-java-sdk-sqs" % "1.12.580" exclude ("commons-logging", "commons-logging")
 val amazonJavaV2SdkSqs = "software.amazon.awssdk" % "sqs" % "2.21.43"
 
 val pekkoVersion = "1.0.2"

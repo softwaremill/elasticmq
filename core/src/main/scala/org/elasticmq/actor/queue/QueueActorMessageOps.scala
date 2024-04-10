@@ -15,6 +15,7 @@ trait QueueActorMessageOps
     with DeleteMessageOps
     with ReceiveMessageOps
     with MoveMessageOps
+    with MoveMessagesAsyncOps
     with Timers {
   this: QueueActorStorage =>
 
@@ -38,6 +39,20 @@ trait QueueActorMessageOps
         fifoMessagesHistory = fifoMessagesHistory.cleanOutdatedMessages(nowProvider)
         DoNotReply()
       case RestoreMessages(messages) => restoreMessages(messages)
+      case StartMovingMessages(
+            destinationQueue,
+            destinationArn,
+            sourceArn,
+            maxNumberOfMessagesPerSecond,
+            queueManager
+          ) =>
+        startMovingMessages(destinationQueue, destinationArn, sourceArn, maxNumberOfMessagesPerSecond, queueManager)
+      case CancelMovingMessages() =>
+        cancelMovingMessages()
+      case MoveFirstMessage(destinationQueue, queueManager) =>
+        moveFirstMessage(destinationQueue, queueManager).send()
+      case GetMovingMessagesTasks() =>
+        getMovingMessagesTasks
     }
   }
 }

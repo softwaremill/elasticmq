@@ -1,20 +1,23 @@
 package org.elasticmq.rest.sqs
 
+import org.elasticmq.rest.sqs.client.{AwsSdkV2SqsClient, SqsClient}
 import org.elasticmq.util.Logging
 import org.elasticmq.{NodeAddress, RelaxedSQSLimits}
+import org.scalatest.BeforeAndAfter
 import org.scalatest.funsuite.AnyFunSuite
-import org.scalatest.{Args, BeforeAndAfter, Status}
 import software.amazon.awssdk.auth.credentials.{AwsBasicCredentials, StaticCredentialsProvider}
 import software.amazon.awssdk.regions.Region
-import software.amazon.awssdk.services.sqs.{SqsClient, SqsClientBuilder}
+import software.amazon.awssdk.services.sqs.{SqsClient => AwsSqsClient}
 
 import java.net.URI
 import scala.util.Try
 
 trait SqsClientServerWithSdkV2Communication extends AnyFunSuite with BeforeAndAfter with Logging {
 
-  var clientV2: SqsClient = _ // strict server
-  var relaxedClientV2: SqsClient = _
+  var testClient: SqsClient = _
+
+  var clientV2: AwsSqsClient = _ // strict server
+  var relaxedClientV2: AwsSqsClient = _
 
   var currentTestName: String = _
 
@@ -42,14 +45,16 @@ trait SqsClientServerWithSdkV2Communication extends AnyFunSuite with BeforeAndAf
     strictServer.waitUntilStarted()
     relaxedServer.waitUntilStarted()
 
-    clientV2 = SqsClient
+    clientV2 = AwsSqsClient
       .builder()
       .credentialsProvider(StaticCredentialsProvider.create(AwsBasicCredentials.create("x", "x")))
       .region(Region.EU_CENTRAL_1)
       .endpointOverride(new URI("http://localhost:9321"))
       .build()
 
-    relaxedClientV2 = SqsClient
+    testClient = new AwsSdkV2SqsClient(clientV2)
+
+    relaxedClientV2 = AwsSqsClient
       .builder()
       .credentialsProvider(StaticCredentialsProvider.create(AwsBasicCredentials.create("x", "x")))
       .region(Region.EU_CENTRAL_1)

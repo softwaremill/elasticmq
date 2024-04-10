@@ -22,12 +22,21 @@ sealed trait MessageQueue {
     */
   def getById(id: String): Option[InternalMessage]
 
+  /** Remove the first message from the queue
+    *
+    * @return
+    *   The message or None if not exists
+    */
+  def pop: Option[InternalMessage]
+
   /** Get all messages in queue
     *
     * @return
     *   All messages in queue
     */
   def all: Iterable[InternalMessage]
+
+  def size: Long
 
   /** Drop all messages on the queue
     */
@@ -137,7 +146,19 @@ object MessageQueue {
 
     override def getById(id: String): Option[InternalMessage] = messagesById.get(id)
 
+    override def pop: Option[InternalMessage] = {
+      if (messageQueue.isEmpty) {
+        None
+      } else {
+        val firstMessage = messageQueue.dequeue()
+        remove(firstMessage.id)
+        Some(firstMessage)
+      }
+    }
+
     override def all: Iterable[InternalMessage] = messagesById.values
+
+    override def size: Long = messageQueue.size
 
     override def clear(): Unit = {
       messagesById.clear()

@@ -3,6 +3,7 @@ package org.elasticmq.msg
 import org.apache.pekko.actor.ActorRef
 import org.elasticmq._
 import org.elasticmq.actor.queue.InternalMessage
+import org.elasticmq.actor.queue.operations.MessageMoveTaskData
 import org.elasticmq.actor.reply.Replyable
 
 import java.time.Duration
@@ -54,3 +55,16 @@ case class DeleteMessage(deliveryReceipt: DeliveryReceipt) extends QueueMessageM
 case class LookupMessage(messageId: MessageId) extends QueueMessageMsg[Option[MessageData]]
 case object DeduplicationIdsCleanup extends QueueMessageMsg[Unit]
 case class RestoreMessages(messages: List[InternalMessage]) extends QueueMessageMsg[Unit]
+case class StartMovingMessages(
+    destinationQueue: ActorRef,
+    destinationArn: Option[String],
+    sourceArn: String,
+    maxNumberOfMessagesPerSecond: Option[Int],
+    queueManager: ActorRef
+) extends QueueMessageMsg[Either[ElasticMQError, MessageMoveTaskHandle]]
+case class CancelMovingMessages() extends QueueMessageMsg[Long]
+case class MoveFirstMessage(
+    destinationQueue: ActorRef,
+    queueManager: ActorRef
+) extends QueueMessageMsg[Unit]
+case class GetMovingMessagesTasks() extends QueueMessageMsg[List[MessageMoveTaskData]]

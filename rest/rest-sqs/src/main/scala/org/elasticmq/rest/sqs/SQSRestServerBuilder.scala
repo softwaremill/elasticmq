@@ -11,7 +11,7 @@ import org.elasticmq.actor.QueueManagerActor
 import org.elasticmq.metrics.QueuesMetrics
 import org.elasticmq.rest.sqs.Constants._
 import org.elasticmq.rest.sqs.XmlNsVersion.extractXmlNs
-import org.elasticmq.rest.sqs.directives.{AnyParamDirectives, AWSProtocolDirectives, ElasticMQDirectives, UnmatchedActionRoutes}
+import org.elasticmq.rest.sqs.directives.{ AnyParamDirectives,AWSProtocolDirectives, ElasticMQDirectives, UnmatchedActionRoutes}
 import org.elasticmq.rest.sqs.model.RequestPayload
 import org.elasticmq.util.{Logging, NowProvider}
 
@@ -165,7 +165,10 @@ case class TheSQSRestServerBuilder(
       with UnmatchedActionRoutes
       with ResponseMarshaller
       with QueueAttributesOps
-      with ListDeadLetterSourceQueuesDirectives {
+      with ListDeadLetterSourceQueuesDirectives
+      with StartMessageMoveTaskDirectives
+      with CancelMessageMoveTaskDirectives
+      with ListMessageMoveTasksDirectives {
 
       def serverAddress = currentServerAddress.get()
 
@@ -206,6 +209,9 @@ case class TheSQSRestServerBuilder(
         untagQueue(p) ~
         listQueueTags(p) ~
         listDeadLetterSourceQueues(p) ~
+        startMessageMoveTask(p) ~
+        cancelMessageMoveTask(p) ~
+        listMessageMoveTasks(p) ~
         // 4. Unmatched action
         unmatchedAction(p)
 
@@ -332,6 +338,10 @@ object Constants {
   val MaxResultsParameter = "MaxResults"
   val NextTokenParameter = "NextToken"
   val QueueNamePrefixParameter = "QueueNamePrefix"
+  val SourceArnParameter = "SourceArn"
+  val DestinationArnParameter = "DestinationArn"
+  val MaxNumberOfMessagesPerSecondParameter = "MaxNumberOfMessagesPerSecond"
+  val TaskHandleParameter = "TaskHandle"
 }
 
 object ParametersUtil {

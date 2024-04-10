@@ -1,8 +1,9 @@
 package org.elasticmq.rest.sqs
 
-import scala.xml.Elem
+import org.elasticmq.ElasticMQError
+import org.elasticmq.rest.sqs.Constants._
 
-import Constants._
+import scala.xml.Elem
 
 class SQSException(
     val code: String,
@@ -76,4 +77,15 @@ object SQSException {
       errorType = "com.amazonaws.sqs#QueueDoesNotExist",
       errorMessage = Some("The specified queue does not exist.")
     )
+
+  implicit class ElasticMQErrorOps(e: ElasticMQError) {
+    def toSQSException: SQSException = {
+      val errorType = e.code match {
+        case "AWS.SimpleQueueService.UnsupportedOperation" => Some("com.amazonaws.sqs#UnsupportedOperation")
+        case "ResourceNotFoundException" => Some("com.amazonaws.sqs#ResourceNotFoundException")
+        case _                                             => None
+      }
+      new SQSException(e.code, errorType = errorType.getOrElse("Sender"), errorMessage = Some(e.message))
+    }
+  }
 }
