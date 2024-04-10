@@ -1,6 +1,7 @@
 package org.elasticmq.server
 
 import org.apache.pekko.actor.{ActorRef, ActorSystem, Props, Terminated}
+import org.apache.pekko.http.scaladsl.Http
 import org.apache.pekko.util.Timeout
 import org.elasticmq.ElasticMQError
 import org.elasticmq.actor.QueueManagerActor
@@ -13,9 +14,9 @@ import org.elasticmq.rest.stats.{StatisticsRestServer, TheStatisticsRestServerBu
 import org.elasticmq.server.config.ElasticMQServerConfig
 import org.elasticmq.util.{Logging, NowProvider}
 
-import scala.concurrent.duration.Duration.Inf
-import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContextExecutor, Future}
+import scala.concurrent.duration._
+import scala.concurrent.duration.Duration.Inf
 
 class ElasticMQServer(config: ElasticMQServerConfig) extends Logging {
   private val actorSystem = ActorSystem("elasticmq")
@@ -94,7 +95,7 @@ class ElasticMQServer(config: ElasticMQServerConfig) extends Logging {
         queueConfigStore
       ).start()
 
-      server.waitUntilStarted()
+      val _: Http.ServerBinding = server.waitUntilStarted()
 
       Some(server)
     } else {
@@ -115,7 +116,7 @@ class ElasticMQServer(config: ElasticMQServerConfig) extends Logging {
         config.nodeAddress.contextPath
       ).start()
 
-      server.waitUntilStarted()
+      val _: Http.ServerBinding = server.waitUntilStarted()
 
       Some(server)
     } else {

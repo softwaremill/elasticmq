@@ -17,7 +17,7 @@ object QueueConfigUtil extends Logging {
       .map(readPersistedQueuesFromConfig)
       .getOrElse(Nil)
 
-  def readPersistedQueuesFromConfig(persistedQueuesConfig: Config): List[CreateQueueMetadata] =
+  def readPersistedQueuesFromConfig(persistedQueuesConfig: Config): List[CreateQueueMetadata] = {
     Try(
       persistedQueuesConfig
         .getObject("queues")
@@ -30,6 +30,7 @@ object QueueConfigUtil extends Logging {
         throw new IllegalStateException(ex)
       }
     }
+  }
 
   private def getQueuesFromConfig(queuesConfig: Map[String, ConfigValue]): List[CreateQueueMetadata] = {
     Try(getQueuesFromConfigUnsafe(queuesConfig)) match {

@@ -1,14 +1,15 @@
 package org.elasticmq.rest.sqs
 
-import Constants._
 import org.elasticmq.{DeliveryReceipt, MillisVisibilityTimeout}
-import org.elasticmq.msg.UpdateVisibilityTimeout
 import org.elasticmq.actor.reply._
+import org.elasticmq.msg.UpdateVisibilityTimeout
 import org.elasticmq.rest.sqs.Action.ChangeMessageVisibilityBatch
+import org.elasticmq.rest.sqs.Constants._
 import org.elasticmq.rest.sqs.directives.ElasticMQDirectives
 import org.elasticmq.rest.sqs.model.RequestPayload
 import spray.json.DefaultJsonProtocol._
 import spray.json.RootJsonFormat
+
 import scala.concurrent.Future
 import scala.xml.Elem
 

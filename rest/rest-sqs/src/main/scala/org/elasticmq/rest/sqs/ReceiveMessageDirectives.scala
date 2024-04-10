@@ -44,7 +44,7 @@ trait ReceiveMessageDirectives {
     p.action(ReceiveMessage) {
       val requestParameters = p.as[ReceiveMessageActionRequest]
       queueActorAndDataFromQueueUrl(requestParameters.QueueUrl) { (queueActor, queueData) =>
-        val visibilityTimeoutParameterOpt: Option[Int] = requestParameters.VisibilityTimeout
+        val visibilityTimeoutParameterOpt: Option[Long] = requestParameters.VisibilityTimeout
         val maxNumberOfMessagesAttributeOpt: Option[Int] = requestParameters.MaxNumberOfMessages
         val waitTimeSecondsAttributeOpt: Option[Long] = requestParameters.WaitTimeSeconds
 
@@ -162,7 +162,7 @@ trait ReceiveMessageDirectives {
       MessageAttributeNames: Option[List[String]],
       QueueUrl: String,
       ReceiveRequestAttemptId: Option[String],
-      VisibilityTimeout: Option[Int],
+      VisibilityTimeout: Option[Long],
       WaitTimeSeconds: Option[Long]
   )
 
@@ -173,7 +173,7 @@ trait ReceiveMessageDirectives {
         MessageAttributeNames: Option[List[String]],
         QueueUrl: String,
         ReceiveRequestAttemptId: Option[String],
-        VisibilityTimeout: Option[Int],
+        VisibilityTimeout: Option[Long],
         WaitTimeSeconds: Option[Long]
     ): ReceiveMessageActionRequest = {
       new ReceiveMessageActionRequest(
@@ -200,7 +200,7 @@ trait ReceiveMessageDirectives {
           val messageAttributeNames = getMessageAttributeNames(params).toList
           val queueUrl = requiredParameter(params)(QueueUrlParameter)
           val receiveRequestAttemptId = params.get(MessageReadeableAttributeNames.ReceiveRequestAttemptIdAttribute)
-          val visibilityTimeout = params.get(VisibilityTimeoutParameter).map(_.toInt)
+          val visibilityTimeout = params.get(VisibilityTimeoutParameter).map(_.toLong)
           val waitTimeSeconds = params.get(MessageReadeableAttributeNames.WaitTimeSecondsAttribute).map(_.toLong)
           ReceiveMessageActionRequest(
             Some(attributeNames),

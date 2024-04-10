@@ -144,7 +144,9 @@ object MessageQueue {
       messageQueue.clear()
     }
 
-    override def remove(messageId: String): Unit = messagesById.remove(messageId)
+    override def remove(messageId: String): Unit = {
+      val _: Option[InternalMessage] = messagesById.remove(messageId)
+    }
 
     override def filterNot(p: InternalMessage => Boolean): MessageQueue = {
       val newMessageQueue = new SimpleMessageQueue
@@ -180,7 +182,7 @@ object MessageQueue {
       messagesById += message.id -> message
       val messageGroupId = getMessageGroupIdUnsafe(message)
       val groupMessages = messagesbyMessageGroupId.getOrElseUpdate(messageGroupId, mutable.PriorityQueue.empty)
-      messagesbyMessageGroupId.put(messageGroupId, groupMessages += message)
+      val _ = messagesbyMessageGroupId.put(messageGroupId, groupMessages += message)
     }
 
     override def clear(): Unit = {

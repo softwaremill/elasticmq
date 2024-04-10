@@ -1,7 +1,7 @@
 package org.elasticmq.rest.stats
 
 import org.apache.pekko.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
-import spray.json.{DefaultJsonProtocol, JsNumber, JsObject, JsString, JsValue, RootJsonFormat, deserializationError}
+import spray.json.{deserializationError, DefaultJsonProtocol, JsNumber, JsObject, JsString, JsValue, RootJsonFormat}
 
 trait StatisticsJsonFormat extends SprayJsonSupport with DefaultJsonProtocol {
   implicit object queueStatisticsFormat extends RootJsonFormat[QueueStatisticsResponse] {
@@ -38,7 +38,7 @@ trait StatisticsJsonFormat extends SprayJsonSupport with DefaultJsonProtocol {
       "attributes" -> JsObject(
         obj.attributes.map { case (key, value) =>
           key -> JsString(value)
-        }.toList
+        }
       )
     )
 

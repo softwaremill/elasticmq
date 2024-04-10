@@ -1,10 +1,10 @@
 package org.elasticmq.actor.queue
 
-import scala.collection.mutable
-
 import org.elasticmq.actor.queue.ReceiveRequestAttemptCache.ReceiveFailure
 import org.elasticmq.actor.queue.ReceiveRequestAttemptCache.ReceiveFailure.{Expired, Invalid}
 import org.elasticmq.util.NowProvider
+
+import scala.collection.mutable
 
 class ReceiveRequestAttemptCache {
 
@@ -15,7 +15,7 @@ class ReceiveRequestAttemptCache {
 
   def add(attemptId: String, messages: List[InternalMessage])(implicit nowProvider: NowProvider): Unit = {
     // Cache the given attempt
-    cache.put(attemptId, (nowProvider.nowMillis, messages))
+    val _ = cache.put(attemptId, (nowProvider.nowMillis, messages))
 
     // Remove attempts that are older than fifteen minutes
     // TODO: Rather than do this on every add, maybe this could be done periodically?
@@ -27,7 +27,7 @@ class ReceiveRequestAttemptCache {
   ): Either[ReceiveFailure, Option[List[InternalMessage]]] = {
     cache.get(attemptId) match {
       case Some((cacheTime, _)) if cacheTime + FIVE_MINUTES < nowProvider.nowMillis =>
-        cache.remove(attemptId)
+        val _ = cache.remove(attemptId)
         Left(Expired)
       case Some((_, messages)) if !allValid(messages, messageQueue) =>
         Left(Invalid)

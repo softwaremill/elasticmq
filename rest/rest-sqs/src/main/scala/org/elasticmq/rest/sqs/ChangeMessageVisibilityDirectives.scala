@@ -1,16 +1,14 @@
 package org.elasticmq.rest.sqs
 
-import org.apache.pekko.http.scaladsl.model.HttpEntity
+import org.elasticmq.{DeliveryReceipt, MillisVisibilityTimeout}
 import org.elasticmq.actor.reply._
 import org.elasticmq.msg.UpdateVisibilityTimeout
 import org.elasticmq.rest.sqs.Action.ChangeMessageVisibility
 import org.elasticmq.rest.sqs.Constants._
 import org.elasticmq.rest.sqs.directives.ElasticMQDirectives
-import org.elasticmq.{DeliveryReceipt, MillisVisibilityTimeout}
-import spray.json.RootJsonFormat
-import spray.json.DefaultJsonProtocol._
-import org.apache.pekko.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import org.elasticmq.rest.sqs.model.RequestPayload
+import spray.json.DefaultJsonProtocol._
+import spray.json.RootJsonFormat
 
 trait ChangeMessageVisibilityDirectives { this: ElasticMQDirectives with ResponseMarshaller =>
   def changeMessageVisibility(p: RequestPayload)(implicit marshallerDependencies: MarshallerDependencies) = {
@@ -31,7 +29,7 @@ trait ChangeMessageVisibilityDirectives { this: ElasticMQDirectives with Respons
     }
   }
 
-  case class ChangeMessageVisibilityActionRequest(QueueUrl: String, ReceiptHandle: String, VisibilityTimeout: Int)
+  case class ChangeMessageVisibilityActionRequest(QueueUrl: String, ReceiptHandle: String, VisibilityTimeout: Long)
 
   object ChangeMessageVisibilityActionRequest {
     implicit val requestJsonFormat: RootJsonFormat[ChangeMessageVisibilityActionRequest] = jsonFormat3(
@@ -43,7 +41,7 @@ trait ChangeMessageVisibilityDirectives { this: ElasticMQDirectives with Respons
         override def read(params: Map[String, String]): ChangeMessageVisibilityActionRequest = {
           val queueUrl = requiredParameter(params)(QueueUrlParameter)
           val receiptHandle = requiredParameter(params)(ReceiptHandleParameter)
-          val visibilityTimeout = requiredParameter(params)(VisibilityTimeoutParameter).toInt
+          val visibilityTimeout = requiredParameter(params)(VisibilityTimeoutParameter).toLong
           ChangeMessageVisibilityActionRequest(queueUrl, receiptHandle, visibilityTimeout)
         }
       }

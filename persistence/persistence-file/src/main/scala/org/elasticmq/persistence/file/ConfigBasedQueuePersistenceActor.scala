@@ -2,16 +2,16 @@ package org.elasticmq.persistence.file
 
 import org.apache.pekko.actor.{Actor, ActorRef}
 import org.apache.pekko.util.Timeout
+import org.elasticmq.{ElasticMQError, QueueData}
 import org.elasticmq.actor.queue._
 import org.elasticmq.actor.reply._
 import org.elasticmq.msg.CreateQueue
 import org.elasticmq.persistence.CreateQueueMetadata
 import org.elasticmq.util.Logging
-import org.elasticmq.{ElasticMQError, QueueData}
 
 import scala.collection.mutable
-import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.duration._
 import scala.util.{Failure, Success}
 
 class ConfigBasedQueuePersistenceActor(storagePath: String, baseQueues: List[CreateQueueMetadata])
@@ -25,15 +25,15 @@ class ConfigBasedQueuePersistenceActor(storagePath: String, baseQueues: List[Cre
 
   def receive: Receive = {
     case QueueEvent.QueueCreated(queue) =>
-      queues.put(queue.name, queue)
+      val _: Option[QueueData] = queues.put(queue.name, queue)
       QueuePersister.saveToConfigFile(queues.values.toList, storagePath)
 
     case QueueEvent.QueueDeleted(queueName) =>
-      queues.remove(queueName)
+      val _: Option[QueueData] = queues.remove(queueName)
       QueuePersister.saveToConfigFile(queues.values.toList, storagePath)
 
     case QueueEvent.QueueMetadataUpdated(queue) =>
-      queues.put(queue.name, queue)
+      val _: Option[QueueData] = queues.put(queue.name, queue)
       QueuePersister.saveToConfigFile(queues.values.toList, storagePath)
 
     case _: QueueEvent.MessageAdded | _: QueueEvent.MessageUpdated | _: QueueEvent.MessageRemoved =>

@@ -1,7 +1,6 @@
 package org.elasticmq
 
 import java.io.File
-
 import scala.util.Random
 
 package object test {
@@ -30,5 +29,6 @@ package object test {
     dir.listFiles().filter(_.isDirectory).foreach(deleteDirRecursively)
     dir.listFiles().filter(!_.isDirectory).foreach(_.delete())
     dir.delete()
+    ()
   }
 }

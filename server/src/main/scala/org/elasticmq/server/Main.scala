@@ -1,7 +1,7 @@
 package org.elasticmq.server
 
-import org.apache.pekko.actor.Terminated
 import com.typesafe.config.ConfigFactory
+import org.apache.pekko.actor.Terminated
 import org.elasticmq.server.config.ElasticMQServerConfig
 import org.elasticmq.util.Logging
 
@@ -39,7 +39,7 @@ object Main extends Logging {
     Runtime.getRuntime.addShutdownHook(new Thread() {
       override def run(): Unit = {
         logger.info("ElasticMQ server stopping ...")
-        shutdown()
+        val _: Terminated = shutdown()
         logger.info("=== ElasticMQ server stopped ===")
       }
     })

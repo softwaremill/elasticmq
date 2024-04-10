@@ -31,7 +31,7 @@ trait QueueActorWaitForMessagesOps extends ReplyingActor with QueueActorMessageO
 
   override def receiveAndReplyMessageMsg[T](msg: QueueMessageMsg[T]): ReplyAction[T] = {
     msg match {
-      case SendMessage(message) =>
+      case SendMessage(_) =>
         val result = super.receiveAndReplyMessageMsg(msg)
         tryReply()
         scheduleTryReplyWhenAvailable()
@@ -50,7 +50,7 @@ trait QueueActorWaitForMessagesOps extends ReplyingActor with QueueActorMessageO
         } else
           result.send()
 
-      case uvm: UpdateVisibilityTimeout =>
+      case _: UpdateVisibilityTimeout =>
         val result = super.receiveAndReplyMessageMsg(msg)
         tryReply()
         scheduleTryReplyWhenAvailable()
@@ -91,6 +91,7 @@ trait QueueActorWaitForMessagesOps extends ReplyingActor with QueueActorMessageO
 
   private def scheduleTimeoutReply(seq: Long, waitForMessages: Duration): Unit = {
     schedule(waitForMessages.toMillis, ReplyIfTimeout(seq, Nil))
+    ()
   }
 
   private def scheduleTryReplyWhenAvailable(): Unit = {
