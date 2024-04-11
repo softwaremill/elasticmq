@@ -1,18 +1,17 @@
 package org.elasticmq.rest.sqs
 
 import org.elasticmq.StringMessageAttribute
-import org.elasticmq.rest.sqs.model.RedrivePolicyJson.format
 import org.elasticmq.rest.sqs.model.RedrivePolicy
-import org.scalatest.{Inside, LoneElement, OptionValues, Tag}
+import org.elasticmq.rest.sqs.model.RedrivePolicyJson.format
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.prop.TableDrivenPropertyChecks
+import org.scalatest.{Inside, LoneElement, OptionValues, Tag}
 import spray.json.DefaultJsonProtocol.listFormat
-
-import scala.sys.process._
-import scala.language.postfixOps
 import spray.json._
 
 import scala.collection.mutable
+import scala.language.postfixOps
+import scala.sys.process._
 
 object Only213 extends Tag("org.elasticmq.rest.sqs.Only213")
 class AmazonCliTestSuite
@@ -402,8 +401,8 @@ class AmazonCliTestSuite
         import failedMessage._
         Id shouldBe "2"
         SenderFault shouldBe true
-        Code shouldBe "The request must contain the parameter MessageBody."
-        Message shouldBe "The request must contain the parameter MessageBody.; see the SQS docs."
+        Code shouldBe "InvalidAttributeValue"
+        Message shouldBe "The request must contain the parameter MessageBody."
       }
 
       batchMessages.Successful.size shouldBe 1
