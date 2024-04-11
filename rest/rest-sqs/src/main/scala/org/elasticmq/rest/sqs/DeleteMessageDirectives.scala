@@ -5,6 +5,7 @@ import org.elasticmq.DeliveryReceipt
 import org.elasticmq.actor.reply._
 import org.elasticmq.msg.DeleteMessage
 import org.elasticmq.rest.sqs.Action.{DeleteMessage => DeleteMessageAction}
+import org.elasticmq.rest.sqs.SQSException.ElasticMQErrorOps
 import org.elasticmq.rest.sqs.directives.ElasticMQDirectives
 import org.elasticmq.rest.sqs.model.RequestPayload
 import spray.json.DefaultJsonProtocol._
@@ -18,7 +19,7 @@ trait DeleteMessageDirectives { this: ElasticMQDirectives with ResponseMarshalle
       queueActorFromUrl(requestParams.QueueUrl) { queueActor =>
         val result = queueActor ? DeleteMessage(DeliveryReceipt(requestParams.ReceiptHandle))
         result.map {
-          case Left(error) => throw new SQSException(error.code, errorMessage = Some(error.message))
+          case Left(error) => throw error.toSQSException
           case Right(_)    => emptyResponse("DeleteMessageResponse")
         }
       }

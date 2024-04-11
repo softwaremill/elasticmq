@@ -18,10 +18,10 @@ trait BatchRequestsModule {
 
     val uniqueIds = messagesData.map(_.Id).toSet
     if (uniqueIds.size != messagesData.size) {
-      throw new SQSException("AWS.SimpleQueueService.BatchEntryIdsNotDistinct")
+      throw SQSException.batchEntryIdsNotDistinct
     }
 
-    Limits.verifyBatchSize(uniqueIds.size, sqsLimits).fold(error => throw new SQSException(error), identity)
+    Limits.verifyBatchSize(uniqueIds.size, sqsLimits).fold(_ => throw SQSException.tooManyEntriesInBatchRequest, identity)
 
     val result = messagesData.zipWithIndex.map {
       case (messageData, index) => {

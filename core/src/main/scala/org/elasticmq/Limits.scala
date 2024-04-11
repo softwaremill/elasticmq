@@ -62,7 +62,7 @@ object Limits {
   def verifyBatchSize(batchSize: Int, limits: Limits): Either[String, Unit] =
     validateWhenLimitAvailable(limits.batchSizeLimit)(
       limit => batchSize <= limit,
-      "AWS.SimpleQueueService.TooManyEntriesInBatchRequest"
+      "Too many entries in batch request"
     )
 
   def verifyMessageAttributesNumber(n: Int, limits: Limits): Either[String, Unit] = {

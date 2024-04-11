@@ -126,10 +126,10 @@ trait QueueAttributesOps extends AttributesModule with AwsConfiguration {
             } catch {
               case e: DeserializationException =>
                 logger.warn("Cannot deserialize the redrive policy attribute", e)
-                throw new SQSException("MalformedQueryString")
+                throw SQSException.invalidAttributeValue(Some(RedrivePolicyParameter))
               case e: ParsingException =>
                 logger.warn("Cannot parse the redrive policy attribute", e)
-                throw new SQSException("MalformedQueryString")
+                throw SQSException.invalidAttributeValue(Some(RedrivePolicyParameter))
             }
           async {
             val deadLettersQueueActor = await(queueManagerActor ? LookupQueue(redrivePolicy.queueName))
@@ -152,7 +152,7 @@ trait QueueAttributesOps extends AttributesModule with AwsConfiguration {
           Future.successful(())
         case attr =>
           logger.warn("Unsupported attribute \"" + attr + "\" (failing on ElasticMQ)")
-          Future.failed(new SQSException("InvalidAttributeName"))
+          Future.failed(SQSException.invalidAttributeName(attr))
       }
     })
   }

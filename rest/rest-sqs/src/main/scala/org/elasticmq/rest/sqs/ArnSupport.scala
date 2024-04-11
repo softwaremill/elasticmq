@@ -7,6 +7,6 @@ trait ArnSupport {
   def extractQueueName(arn: String): String =
     arn match {
       case ArnPattern(_, _, queueName) => queueName
-      case _                           => throw new SQSException("InvalidParameterValue")
+      case _                           => throw SQSException.invalidAttributeValue()
     }
 }

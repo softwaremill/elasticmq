@@ -5,6 +5,7 @@ import org.elasticmq.actor.reply._
 import org.elasticmq.msg.UpdateVisibilityTimeout
 import org.elasticmq.rest.sqs.Action.ChangeMessageVisibility
 import org.elasticmq.rest.sqs.Constants._
+import org.elasticmq.rest.sqs.SQSException.ElasticMQErrorOps
 import org.elasticmq.rest.sqs.directives.ElasticMQDirectives
 import org.elasticmq.rest.sqs.model.RequestPayload
 import spray.json.DefaultJsonProtocol._
@@ -21,7 +22,7 @@ trait ChangeMessageVisibilityDirectives { this: ElasticMQDirectives with Respons
           MillisVisibilityTimeout.fromSeconds(requestParams.VisibilityTimeout)
         )
         result.map {
-          case Left(error) => throw new SQSException(error.code, errorMessage = Some(error.message))
+          case Left(error) => throw error.toSQSException
           case Right(_) =>
             emptyResponse("ChangeMessageVisibilityResponse")
         }

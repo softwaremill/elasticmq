@@ -50,12 +50,12 @@ trait ReceiveMessageDirectives {
 
         val receiveRequestAttemptId = requestParameters.ReceiveRequestAttemptId match {
           // ReceiveRequestAttemptIdAttribute is only supported for FIFO queues
-          case Some(v) if !queueData.isFifo =>
-            throw SQSException.invalidQueueTypeParameter(v, ReceiveRequestAttemptIdAttribute)
+          case Some(_) if !queueData.isFifo =>
+            throw SQSException.invalidQueueTypeParameter(ReceiveRequestAttemptIdAttribute)
 
           // Validate values
           case Some(attemptId) if !isValidFifoPropertyValue(attemptId) =>
-            throw SQSException.invalidAlphanumericalPunctualParameterValue(attemptId, ReceiveRequestAttemptIdAttribute)
+            throw SQSException.invalidAlphanumericalPunctualParameterValue(ReceiveRequestAttemptIdAttribute)
 
           // The docs at https://docs.aws.amazon.com/cli/latest/reference/sqs/receive-message.html quote:
           //   > If a caller of the receive-message action doesn't provide a ReceiveRequestAttemptId , Amazon SQS
@@ -78,12 +78,12 @@ trait ReceiveMessageDirectives {
 
         Limits
           .verifyNumberOfMessagesFromParameters(maxNumberOfMessagesFromParameters, sqsLimits)
-          .fold(error => throw new SQSException(error), identity)
+          .fold(_ => throw SQSException.invalidAttributeValue(Some("MaxNumberOfMessages")), identity)
 
         waitTimeSecondsAttributeOpt.foreach(messageWaitTime =>
           Limits
             .verifyMessageWaitTime(messageWaitTime, sqsLimits)
-            .fold(error => throw new SQSException(error), identity)
+            .fold(_ => throw SQSException.invalidAttributeValue(Some("WaitTimeSeconds")), identity)
         )
 
         val msgsFuture = queueActor ? ReceiveMessages(

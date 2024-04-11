@@ -2182,7 +2182,7 @@ class AmazonJavaSdkTestSuite extends SqsClientServerCommunication with Matchers 
     val ex = the[AmazonSQSException] thrownBy f
     ex.getErrorCode should be("InvalidParameterValue")
     ex.getMessage should include(parameterName)
-    ex.getMessage should include("The request include parameter that is not valid for this queue type")
+    ex.getMessage should include(s"The request includes parameter $parameterName that is not valid for this queue type")
   }
 
   def assertMissingParameterException(parameterName: String)(f: => Any): Unit = {

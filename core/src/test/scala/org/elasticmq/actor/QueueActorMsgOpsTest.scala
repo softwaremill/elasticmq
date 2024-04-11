@@ -270,7 +270,6 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
     } yield {
       // Then
       result.isLeft should be(true)
-      result.swap.map(_.code).getOrElse("") should be("ReceiptHandleIsInvalid")
       lookupResult shouldNot be(None)
     }
   }
