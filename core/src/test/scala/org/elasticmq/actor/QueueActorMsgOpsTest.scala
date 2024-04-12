@@ -15,7 +15,7 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
     val q1 = createQueueData("q1", MillisVisibilityTimeout(1L))
 
     for {
-      Right(queueActor) <- queueManagerActor ? CreateQueue(q1)
+      case Right(queueActor) <- queueManagerActor ? CreateQueue(q1)
 
       // When
       lookupResult <- queueActor ? LookupMessage(MessageId("xyz"))
@@ -32,7 +32,7 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
       createNewMessageData("xyz", "123", Map(), MillisNextDelivery(123L))
 
     for {
-      Right(queueActor) <- queueManagerActor ? CreateQueue(q1)
+      case Right(queueActor) <- queueManagerActor ? CreateQueue(q1)
       _ <- queueActor ? SendMessage(message)
 
       // When
@@ -51,7 +51,7 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
     val m = createNewMessageData("xyz", maxMessageContent, Map(), MillisNextDelivery(123L))
 
     for {
-      Right(queueActor) <- queueManagerActor ? CreateQueue(q1)
+      case Right(queueActor) <- queueManagerActor ? CreateQueue(q1)
       _ <- queueActor ? SendMessage(m)
 
       // When
@@ -68,8 +68,8 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
     val q2 = createQueueData("q2", MillisVisibilityTimeout(2L))
 
     for {
-      Right(queueActor1) <- queueManagerActor ? CreateQueue(q1)
-      Right(queueActor2) <- queueManagerActor ? CreateQueue(q2)
+      case Right(queueActor1) <- queueManagerActor ? CreateQueue(q1)
+      case Right(queueActor2) <- queueManagerActor ? CreateQueue(q2)
       _ <- queueActor1 ? SendMessage(createNewMessageData("xyz", "123", Map(), MillisNextDelivery(50L)))
 
       // When
@@ -88,8 +88,8 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
     val m = createNewMessageData("xyz", "123", Map(), MillisNextDelivery(50L))
 
     for {
-      Right(queueActor1) <- queueManagerActor ? CreateQueue(q1)
-      Right(queueActor2) <- queueManagerActor ? CreateQueue(q2)
+      case Right(queueActor1) <- queueManagerActor ? CreateQueue(q1)
+      case Right(queueActor2) <- queueManagerActor ? CreateQueue(q2)
       _ <- queueActor1 ? SendMessage(m)
 
       // When
@@ -107,7 +107,7 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
     val m = createNewMessageData("xyz", "123", Map(), MillisNextDelivery(50L))
 
     for {
-      Right(queueActor) <- queueManagerActor ? CreateQueue(q1)
+      case Right(queueActor) <- queueManagerActor ? CreateQueue(q1)
       _ <- queueActor ? SendMessage(m)
 
       // When
@@ -126,7 +126,7 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
     val q1 = createQueueData("q1", MillisVisibilityTimeout(1L))
 
     for {
-      Right(queueActor) <- queueManagerActor ? CreateQueue(q1)
+      case Right(queueActor) <- queueManagerActor ? CreateQueue(q1)
 
       _ <- queueActor ? SendMessage(createNewMessageData("xyz", "123", Map(), MillisNextDelivery(50L)))
 
@@ -153,7 +153,7 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
     val q1 = createQueueData("q1", MillisVisibilityTimeout(1L))
 
     for {
-      Right(queueActor) <- queueManagerActor ? CreateQueue(q1)
+      case Right(queueActor) <- queueManagerActor ? CreateQueue(q1)
       _ <- queueActor ? SendMessage(createNewMessageData("xyz", "123", Map(), MillisNextDelivery(50L)))
 
       // When
@@ -177,7 +177,7 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
     val q1 = createQueueData("q1", MillisVisibilityTimeout(100L))
 
     for {
-      Right(queueActor) <- queueManagerActor ? CreateQueue(q1)
+      case Right(queueActor) <- queueManagerActor ? CreateQueue(q1)
       _ <- queueActor ? SendMessage(createNewMessageData("xyz", "123", Map(), MillisNextDelivery(123L)))
 
       // When
@@ -194,7 +194,7 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
     val m = createNewMessageData("xyz", "1234", Map(), MillisNextDelivery(100L))
 
     for {
-      Right(queueActor) <- queueManagerActor ? CreateQueue(q1)
+      case Right(queueActor) <- queueManagerActor ? CreateQueue(q1)
       _ <- queueActor ? SendMessage(m)
       List(mdata) <- queueActor ? ReceiveMessages(DefaultVisibilityTimeout, 1, None, None)
 
@@ -218,7 +218,7 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
       createNewMessageData("xyz2", "1234", Map(), MillisNextDelivery(100L))
 
     for {
-      Right(queueActor) <- queueManagerActor ? CreateQueue(q1)
+      case Right(queueActor) <- queueManagerActor ? CreateQueue(q1)
       _ <- queueActor ? SendMessage(m1)
       _ <- queueActor ? SendMessage(m2)
 
@@ -241,7 +241,7 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
     val m1 = createNewMessageData("xyz", "123", Map(), MillisNextDelivery(50L))
 
     for {
-      Right(queueActor) <- queueManagerActor ? CreateQueue(q1)
+      case Right(queueActor) <- queueManagerActor ? CreateQueue(q1)
       _ <- queueActor ? SendMessage(m1)
       List(m1data) <- queueActor ? ReceiveMessages(DefaultVisibilityTimeout, 1, None, None)
 
@@ -260,7 +260,7 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
     val m1 = createNewMessageData("xyz", "123", Map(), MillisNextDelivery(50L))
 
     for {
-      Right(queueActor) <- queueManagerActor ? CreateQueue(q1)
+      case Right(queueActor) <- queueManagerActor ? CreateQueue(q1)
       _ <- queueActor ? SendMessage(m1)
       List(m1data) <- queueActor ? ReceiveMessages(DefaultVisibilityTimeout, 1, None, None)
 
@@ -280,11 +280,11 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
     val m1 = createNewMessageData("xyz", "123", Map(), MillisNextDelivery(50L))
 
     for {
-      Right(queueActor) <- queueManagerActor ? CreateQueue(q1)
+      case Right(queueActor) <- queueManagerActor ? CreateQueue(q1)
       _ <- queueActor ? SendMessage(m1)
 
       // When
-      Some(lookupResult) <- queueActor ? LookupMessage(m1.id.get)
+      case Some(lookupResult) <- queueActor ? LookupMessage(m1.id.get)
       List(receiveResult1) <- queueActor ? ReceiveMessages(DefaultVisibilityTimeout, 1, None, None)
       _ = nowProvider.mutableNowMillis.set(110L)
       List(receiveResult2) <- queueActor ? ReceiveMessages(DefaultVisibilityTimeout, 1, None, None)
@@ -307,7 +307,7 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
     val List(m1, m2, m3, m4, m5) = msgs
 
     for {
-      Right(queueActor) <- queueManagerActor ? CreateQueue(q1)
+      case Right(queueActor) <- queueManagerActor ? CreateQueue(q1)
       _ <- queueActor ? SendMessage(m1)
       _ <- queueActor ? SendMessage(m2)
       _ <- queueActor ? SendMessage(m3)
@@ -333,7 +333,7 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
     val List(m1, m2, m3) = msgs
 
     for {
-      Right(queueActor) <- queueManagerActor ? CreateQueue(q1)
+      case Right(queueActor) <- queueManagerActor ? CreateQueue(q1)
       _ <- queueActor ? SendMessage(m1)
       _ <- queueActor ? SendMessage(m2)
       _ <- queueActor ? SendMessage(m3)
@@ -354,7 +354,7 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
     val start = System.currentTimeMillis()
 
     for {
-      Right(queueActor) <- queueManagerActor ? CreateQueue(q1)
+      case Right(queueActor) <- queueManagerActor ? CreateQueue(q1)
 
       // When
       receiveResults <- queueActor ? ReceiveMessages(DefaultVisibilityTimeout, 5, Some(Duration.ofMillis(500L)), None)
@@ -374,7 +374,7 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
       createNewMessageData("xyz", "123", Map(), MillisNextDelivery(200L))
 
     for {
-      Right(queueActor) <- queueManagerActor ? CreateQueue(q1)
+      case Right(queueActor) <- queueManagerActor ? CreateQueue(q1)
 
       // When
       receiveResultsFuture = queueActor ? ReceiveMessages(
@@ -403,7 +403,7 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
     val start = System.currentTimeMillis()
 
     for {
-      Right(queueActor) <- queueManagerActor ? CreateQueue(q1)
+      case Right(queueActor) <- queueManagerActor ? CreateQueue(q1)
 
       // When
       receiveResults1Future = queueActor ? ReceiveMessages(
@@ -442,7 +442,7 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
       createNewMessageData("xyz2", "123b", Map(), MillisNextDelivery(100))
 
     for {
-      Right(queueActor) <- queueManagerActor ? CreateQueue(q1)
+      case Right(queueActor) <- queueManagerActor ? CreateQueue(q1)
 
       // When
       receiveResults1Future = queueActor ? ReceiveMessages(
@@ -493,8 +493,8 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
     val m1 = createNewMessageData(m1ID, "123", Map(), MillisNextDelivery(100))
 
     for {
-      Right(deadLettersQueueActor) <- queueManagerActor ? CreateQueue(dlq1)
-      Right(queueActor) <- queueManagerActor ? CreateQueue(q1)
+      case Right(deadLettersQueueActor) <- queueManagerActor ? CreateQueue(dlq1)
+      case Right(queueActor) <- queueManagerActor ? CreateQueue(q1)
       _ <- queueActor ? SendMessage(m1)
 
       // When
@@ -527,8 +527,8 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
     val m1 = createNewMessageData(m1ID, "123", Map(), MillisNextDelivery(100))
 
     for {
-      Right(deadLettersQueueActor) <- queueManagerActor ? CreateQueue(dlq1)
-      Right(queueActor) <- queueManagerActor ? CreateQueue(q1)
+      case Right(deadLettersQueueActor) <- queueManagerActor ? CreateQueue(dlq1)
+      case Right(queueActor) <- queueManagerActor ? CreateQueue(q1)
       _ <- queueActor ? UpdateQueueDeadLettersQueue(
         Some(DeadLettersQueueData(deadLettersQueueName, 1)),
         Some(deadLettersQueueActor)
@@ -559,8 +559,8 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
     val m1 = createNewMessageData(m1ID, "123", Map(), MillisNextDelivery(100))
 
     for {
-      Right(redirectToActor) <- queueManagerActor ? CreateQueue(redirectToQueue)
-      Right(queueActor) <- queueManagerActor ? CreateQueue(q1)
+      case Right(redirectToActor) <- queueManagerActor ? CreateQueue(redirectToQueue)
+      case Right(queueActor) <- queueManagerActor ? CreateQueue(q1)
 
       // When
       sendAck <- queueActor ? SendMessage(m1)
@@ -583,8 +583,8 @@ class QueueActorMsgOpsTest extends ActorTest with QueueManagerForEachTest with D
     val m1 = createNewMessageData(m1ID, "123", Map(), MillisNextDelivery(100))
 
     for {
-      Right(copyToActor) <- queueManagerActor ? CreateQueue(copyToQueue)
-      Right(queueActor) <- queueManagerActor ? CreateQueue(q1)
+      case Right(copyToActor) <- queueManagerActor ? CreateQueue(copyToQueue)
+      case Right(queueActor) <- queueManagerActor ? CreateQueue(q1)
 
       // When
       _ <- queueActor ? SendMessage(m1)

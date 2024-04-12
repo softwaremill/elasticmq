@@ -28,7 +28,7 @@ class QueueEventListenerTest extends ActorTest with QueueManagerWithListenerForE
 
   test("QueueMetadataUpdated event should be triggerred") {
     for {
-      Right(queue) <- queueManagerActor ? CreateQueue(createQueueData("q1", MillisVisibilityTimeout(1L)))
+      case Right(queue) <- queueManagerActor ? CreateQueue(createQueueData("q1", MillisVisibilityTimeout(1L)))
       _ <- queue ? UpdateQueueDefaultVisibilityTimeout(MillisVisibilityTimeout(1000))
     } yield {
       queueEventListener.expectMsgType[QueueEvent.QueueCreated].queue.name shouldBe "q1"
@@ -42,7 +42,7 @@ class QueueEventListenerTest extends ActorTest with QueueManagerWithListenerForE
 
   test("QueueMessageAdded event should be triggerred") {
     for {
-      Right(queue) <- queueManagerActor ? CreateQueue(createQueueData("q1", MillisVisibilityTimeout(1L)))
+      case Right(queue) <- queueManagerActor ? CreateQueue(createQueueData("q1", MillisVisibilityTimeout(1L)))
       _ <- queue ? SendMessage(createNewMessageData("abc", "xyz", Map.empty, MillisNextDelivery(100)))
     } yield {
       queueEventListener.expectMsgType[QueueEvent.QueueCreated].queue.name shouldBe "q1"
@@ -52,7 +52,7 @@ class QueueEventListenerTest extends ActorTest with QueueManagerWithListenerForE
 
   test("QueueMessageUpdated event should be triggerred") {
     for {
-      Right(queue) <- queueManagerActor ? CreateQueue(createQueueData("q1", MillisVisibilityTimeout(1L)))
+      case Right(queue) <- queueManagerActor ? CreateQueue(createQueueData("q1", MillisVisibilityTimeout(1L)))
       _ <- queue ? SendMessage(createNewMessageData("abc", "xyz", Map.empty, MillisNextDelivery(100)))
       List(msg) <- queue ? ReceiveMessages(MillisVisibilityTimeout(1), 1, None, None)
       _ <- queue ? UpdateVisibilityTimeout(msg.deliveryReceipt.get, MillisVisibilityTimeout(2000))
@@ -65,7 +65,7 @@ class QueueEventListenerTest extends ActorTest with QueueManagerWithListenerForE
 
   test("QueueMessageRemoved event should be triggerred") {
     for {
-      Right(queue) <- queueManagerActor ? CreateQueue(createQueueData("q1", MillisVisibilityTimeout(1L)))
+      case Right(queue) <- queueManagerActor ? CreateQueue(createQueueData("q1", MillisVisibilityTimeout(1L)))
       _ <- queue ? SendMessage(createNewMessageData("abc", "xyz", Map.empty, MillisNextDelivery(1)))
       List(msg) <- queue ? ReceiveMessages(MillisVisibilityTimeout(1), 1, None, None)
       _ <- queue ? DeleteMessage(msg.deliveryReceipt.get)

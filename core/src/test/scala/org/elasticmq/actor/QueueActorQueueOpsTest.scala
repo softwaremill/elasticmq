@@ -16,7 +16,7 @@ class QueueActorQueueOpsTest extends ActorTest with QueueManagerForEachTest with
     val lastModified = OffsetDateTimeUtil.ofEpochMilli(1316168602L)
 
     for {
-      Right(queueActor) <- queueManagerActor ? CreateQueue(
+      case Right(queueActor) <- queueManagerActor ? CreateQueue(
         CreateQueueData.from(
           QueueData("q1", MillisVisibilityTimeout(1L), Duration.ZERO, Duration.ZERO, created, lastModified)
         )
@@ -38,7 +38,7 @@ class QueueActorQueueOpsTest extends ActorTest with QueueManagerForEachTest with
     val q1Modified = createQueueData("q1", MillisVisibilityTimeout(100L))
 
     for {
-      Right(queueActor) <- queueManagerActor ? CreateQueue(q1)
+      case Right(queueActor) <- queueManagerActor ? CreateQueue(q1)
 
       // When
       _ <- queueActor ? UpdateQueueDefaultVisibilityTimeout(MillisVisibilityTimeout(100L))
@@ -54,7 +54,7 @@ class QueueActorQueueOpsTest extends ActorTest with QueueManagerForEachTest with
     val q1 = createQueueData("q1", MillisVisibilityTimeout(1L), tags = tags)
 
     for {
-      Right(queueActor) <- queueManagerActor ? CreateQueue(q1)
+      case Right(queueActor) <- queueManagerActor ? CreateQueue(q1)
       queueData <- queueActor ? GetQueueData()
     } yield {
       queueData.tags should be(tags)
@@ -66,7 +66,7 @@ class QueueActorQueueOpsTest extends ActorTest with QueueManagerForEachTest with
     val q1 = createQueueData("q1", MillisVisibilityTimeout(1L))
 
     for {
-      Right(queueActor) <- queueManagerActor ? CreateQueue(q1)
+      case Right(queueActor) <- queueManagerActor ? CreateQueue(q1)
       _ <- queueActor ? UpdateQueueTags(tags)
       queueData <- queueActor ? GetQueueData()
     } yield {
@@ -80,7 +80,7 @@ class QueueActorQueueOpsTest extends ActorTest with QueueManagerForEachTest with
     val q1 = createQueueData("q1", MillisVisibilityTimeout(1L), tags = tags)
 
     for {
-      Right(queueActor) <- queueManagerActor ? CreateQueue(q1)
+      case Right(queueActor) <- queueManagerActor ? CreateQueue(q1)
       _ <- queueActor ? UpdateQueueTags(newTag)
       queueData <- queueActor ? GetQueueData()
     } yield {
@@ -94,7 +94,7 @@ class QueueActorQueueOpsTest extends ActorTest with QueueManagerForEachTest with
     val q1 = createQueueData("q1", MillisVisibilityTimeout(1L), tags = tags)
 
     for {
-      Right(queueActor) <- queueManagerActor ? CreateQueue(q1)
+      case Right(queueActor) <- queueManagerActor ? CreateQueue(q1)
       _ <- queueActor ? UpdateQueueTags(newTag)
       queueData <- queueActor ? GetQueueData()
     } yield {
@@ -107,7 +107,7 @@ class QueueActorQueueOpsTest extends ActorTest with QueueManagerForEachTest with
     val queue = createQueueData("q1", MillisVisibilityTimeout(1L))
 
     for {
-      Right(queueActor) <- queueManagerActor ? CreateQueue(queue)
+      case Right(queueActor) <- queueManagerActor ? CreateQueue(queue)
 
       // When
       stats <- queueActor ? GetQueueStatistics(123L)
@@ -136,7 +136,7 @@ class QueueActorQueueOpsTest extends ActorTest with QueueManagerForEachTest with
     nowProvider.mutableNowMillis.set(123L)
 
     for {
-      Right(queueActor) <- queueManagerActor ? CreateQueue(queue)
+      case Right(queueActor) <- queueManagerActor ? CreateQueue(queue)
 
       // Invisible messages - received
       _ <- queueActor ? SendMessage(m1)
@@ -175,7 +175,7 @@ class QueueActorQueueOpsTest extends ActorTest with QueueManagerForEachTest with
     nowProvider.mutableNowMillis.set(123L)
 
     for {
-      Right(queueActor) <- queueManagerActor ? CreateQueue(queue)
+      case Right(queueActor) <- queueManagerActor ? CreateQueue(queue)
 
       // Invisible messages - received
       _ <- queueActor ? SendMessage(m1)
@@ -205,7 +205,7 @@ class QueueActorQueueOpsTest extends ActorTest with QueueManagerForEachTest with
     )
 
     for {
-      Right(queueActor) <- queueManagerActor ? CreateQueue(queue)
+      case Right(queueActor) <- queueManagerActor ? CreateQueue(queue)
 
       _ <- queueActor ? SendMessage(msg)
       firstBatch <- queueActor ? ReceiveMessages(DefaultVisibilityTimeout, 1, None, None)
