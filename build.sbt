@@ -1,16 +1,16 @@
 import com.amazonaws.services.s3.model.PutObjectResult
 import com.softwaremill.Publish.ossPublishSettings
 import com.softwaremill.SbtSoftwareMillCommon.commonSmlBuildSettings
-import com.typesafe.sbt.packager.docker._
+import com.typesafe.sbt.packager.docker.*
 import sbt.Keys.javaOptions
 import sbt.internal.util.complete.Parsers.spaceDelimited
 import scoverage.ScoverageKeys.*
 
 import scala.sys.process.Process
 
-val v2_12 = "2.12.15"
-val v2_13 = "2.13.8"
-val v3 = "3.3.1"
+val v2_12 = "2.12.19"
+val v2_13 = "2.13.13"
+val v3 = "3.4.1"
 
 lazy val resolvedScalaVersion =
   sys.env.get("SCALA_MAJOR_VERSION") match {
