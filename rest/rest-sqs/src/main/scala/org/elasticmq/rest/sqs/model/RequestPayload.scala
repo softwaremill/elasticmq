@@ -21,7 +21,7 @@ object RequestPayload {
   final case class QueryParams(params: Map[String, String], xRayTracingHeader: Option[String] = None)
       extends RequestPayload {
     def readAs[A](implicit fpr: FlatParamsReader[A]) = fpr.read(params)
-    override def action: String = params.getOrElse("Action", throw new SQSException("MissingAction"))
+    override def action: String = params.getOrElse("Action", throw SQSException.missingAction)
   }
 
   final case class JsonParams(params: JsObject, action: String, xRayTracingHeader: Option[String] = None)

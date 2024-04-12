@@ -62,7 +62,7 @@ trait SendMessageDirectives {
           case SomeBinary(ct) =>
             BinaryMessageAttribute.fromBase64(parameters(s"MessageAttribute.$index.Value.BinaryValue"), customType(ct))
           case "" =>
-            throw new SQSException(s"Attribute '$parameterName' must contain a non-empty attribute type")
+            throw SQSException.invalidParameter(s"Attribute '$parameterName' must contain a non-empty attribute type")
           case _ =>
             throw new Exception("Currently only handles String, Number and Binary typed attributes")
         }
@@ -83,18 +83,20 @@ trait SendMessageDirectives {
     val messageAttributes = parameters.MessageAttributes.getOrElse(Map.empty)
     val messageSystemAttributes = parameters.MessageSystemAttributes.getOrElse(Map.empty)
 
-    Limits.verifyMessageBody(body, sqsLimits).fold(error => throw new SQSException(error), identity)
+    Limits
+      .verifyMessageBody(body, sqsLimits)
+      .fold(error => throw SQSException.invalidAttributeValue("MessageBody", Some(error)), identity)
 
     val messageGroupId = parameters.MessageGroupId match {
       // MessageGroupId is only supported for FIFO queues
-      case Some(v) if !queueData.isFifo => throw SQSException.invalidQueueTypeParameter(v, MessageGroupIdParameter)
+      case Some(v) if !queueData.isFifo => throw SQSException.invalidQueueTypeParameter(MessageGroupIdParameter)
 
       // MessageGroupId is required for FIFO queues
       case None if queueData.isFifo => throw SQSException.missingParameter(MessageGroupIdParameter)
 
       // Ensure the given value is valid
       case Some(id) if !isValidFifoPropertyValue(id) =>
-        throw SQSException.invalidAlphanumericalPunctualParameterValue(id, MessageGroupIdParameter)
+        throw SQSException.invalidAlphanumericalPunctualParameterValue(MessageGroupIdParameter)
 
       // This must be a correct value (or this isn't a FIFO queue and no value is required)
       case m => m
@@ -103,22 +105,19 @@ trait SendMessageDirectives {
     val messageDeduplicationId = parameters.MessageDeduplicationId match {
       // MessageDeduplicationId is only supported for FIFO queues
       case Some(v) if !queueData.isFifo =>
-        throw SQSException.invalidQueueTypeParameter(v, MessageDeduplicationIdParameter)
+        throw SQSException.invalidQueueTypeParameter(MessageDeduplicationIdParameter)
 
       // Ensure the given value is valid
       case Some(id) if !isValidFifoPropertyValue(id) =>
-        throw SQSException.invalidAlphanumericalPunctualParameterValue(id, MessageDeduplicationIdParameter)
+        throw SQSException.invalidAlphanumericalPunctualParameterValue(MessageDeduplicationIdParameter)
 
       // If a valid message group id is provided, use it, as it takes priority over the queue's content based deduping
       case Some(id) => Some(DeduplicationId(id))
 
       // MessageDeduplicationId is required for FIFO queues that don't have content based deduplication
       case None if queueData.isFifo && !queueData.hasContentBasedDeduplication =>
-        throw new SQSException(
-          InvalidParameterValueErrorName,
-          errorMessage = Some(
-            s"The queue should either have ContentBasedDeduplication enabled or $MessageDeduplicationIdParameter provided explicitly"
-          )
+        throw SQSException.invalidParameter(
+          s"The queue should either have ContentBasedDeduplication enabled or $MessageDeduplicationIdParameter provided explicitly"
         )
 
       // If no MessageDeduplicationId was provided and content based deduping is enabled for queue, generate one
@@ -132,14 +131,10 @@ trait SendMessageDirectives {
     val delaySecondsOption = parameters.DelaySeconds match {
       case Some(v) if v < 0 || v > 900 =>
         // Messages can at most be delayed for 15 minutes
-        throw SQSException.invalidParameter(
-          v.toString,
-          DelaySecondsParameter,
-          Some("DelaySeconds must be >= 0 and <= 900")
-        )
+        throw SQSException.invalidParameter("DelaySeconds must be >= 0 and <= 900")
       case Some(v) if v > 0 && queueData.isFifo =>
         // FIFO queues don't support delays
-        throw SQSException.invalidQueueTypeParameter(v.toString, DelaySecondsParameter)
+        throw SQSException.invalidQueueTypeParameter(DelaySecondsParameter)
       case d => d
     }
 
@@ -153,18 +148,12 @@ trait SendMessageDirectives {
       .map {
         case StringMessageAttribute(value, _) => TracingId(value)
         case NumberMessageAttribute(_, _) =>
-          throw new SQSException(
-            InvalidParameterValueErrorName,
-            errorMessage = Some(
-              s"$AwsTraceHeaderSystemAttribute should be declared as a String, instead it was recognized as a Number"
-            )
+          throw SQSException.invalidParameter(
+            s"$AwsTraceHeaderSystemAttribute should be declared as a String, instead it was recognized as a Number"
           )
         case BinaryMessageAttribute(_, _) =>
-          throw new SQSException(
-            InvalidParameterValueErrorName,
-            errorMessage = Some(
-              s"$AwsTraceHeaderSystemAttribute should be declared as a String, instead it was recognized as a Binary value"
-            )
+          throw SQSException.invalidParameter(
+            s"$AwsTraceHeaderSystemAttribute should be declared as a String, instead it was recognized as a Binary value"
           )
       }
       .orElse(xRayTracingHeder.map(TracingId.apply))
@@ -207,18 +196,23 @@ trait SendMessageDirectives {
   }
 
   def verifyMessageNotTooLong(messageLength: Int): Unit =
-    Limits.verifyMessageLength(messageLength, sqsLimits).fold(error => throw new SQSException(error), identity)
+    Limits
+      .verifyMessageLength(messageLength, sqsLimits)
+      .fold(error => throw SQSException.invalidAttributeValue("MessageBody", Some(error)), identity)
 
   def validateMessageAttributes(messageAttributes: Map[String, MessageAttribute]): Unit = {
 
     messageAttributes.foreach { case (name, value) =>
       Limits
         .verifyMessageAttributesNumber(messageAttributes.size, sqsLimits)
-        .fold(error => throw new SQSException(error), identity)
+        .fold(error => throw SQSException.invalidAttributeValue(name, Some(error)), identity)
 
       val availableDataTypes = Set("String", "Number", "Binary")
       if (value.getDataType().isEmpty)
-        throw throw new SQSException(s"Attribute '$name' must contain a non-empty attribute type")
+        throw SQSException.invalidAttributeValue(
+          "MessageBody",
+          Some(s"Attribute '$name' must contain a non-empty attribute type")
+        )
       if (!availableDataTypes.exists(value.getDataType().startsWith(_)))
         throw new Exception("Currently only handles String, Number and Binary typed attributes")
 
@@ -226,11 +220,11 @@ trait SendMessageDirectives {
         case StringMessageAttribute(stringValue, _) =>
           Limits
             .verifyMessageStringAttribute(name, stringValue, sqsLimits)
-            .fold(error => throw new SQSException(error), identity)
+            .fold(error => throw SQSException.invalidAttributeValue(name, Some(error)), identity)
         case NumberMessageAttribute(stringValue, _) =>
           Limits
             .verifyMessageNumberAttribute(stringValue, name, sqsLimits)
-            .fold(error => throw new SQSException(error), identity)
+            .fold(error => throw SQSException.invalidAttributeValue(name, Some(error)), identity)
         case BinaryMessageAttribute(_, _) => ()
       }
     }

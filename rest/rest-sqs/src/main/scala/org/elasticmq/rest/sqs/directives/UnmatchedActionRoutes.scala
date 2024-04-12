@@ -12,7 +12,7 @@ trait UnmatchedActionRoutes {
     extractRequestContext { _ =>
       if (Action.values.forall(_.toString != p.action)) {
         logger.warn(s"Unknown action: ${p.action}")
-        throw new SQSException("InvalidAction")
+        throw SQSException.invalidAction(s"Unknown action: ${p.action}")
       } else {
         reject
       }

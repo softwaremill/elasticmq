@@ -28,7 +28,7 @@ trait MessageAttributesSupport {
       val fields = json.asJsObject.fields
 
       def pickFieldRaw(name: String) =
-        fields.getOrElse(name, throw new SQSException(s"Field $name is required"))
+        fields.getOrElse(name, throw SQSException.missingParameter(name))
 
       def pickField[O: JsonReader](name: String) =
         pickFieldRaw(name).convertTo[O]
@@ -41,7 +41,7 @@ trait MessageAttributesSupport {
           pickFieldRaw("BinaryValue") match {
             case arr: JsArray  => BinaryMessageAttribute(arr.convertTo[Array[Byte]], customType(ct))
             case str: JsString => BinaryMessageAttribute.fromBase64(str.convertTo[String], customType(ct))
-            case any: Any      => throw new SQSException(s"Field BinaryValue has unsupported type $any")
+            case any: Any => throw SQSException.invalidParameter(s"Field BinaryValue has unsupported type $any")
           }
         case _ =>
           throw new Exception("Currently only handles String, Number and Binary typed attributes")

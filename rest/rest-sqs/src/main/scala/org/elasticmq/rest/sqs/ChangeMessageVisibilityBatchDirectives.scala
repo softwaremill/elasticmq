@@ -9,6 +9,7 @@ import org.elasticmq.rest.sqs.directives.ElasticMQDirectives
 import org.elasticmq.rest.sqs.model.RequestPayload
 import spray.json.DefaultJsonProtocol._
 import spray.json.RootJsonFormat
+import org.elasticmq.rest.sqs.SQSException.ElasticMQErrorOps
 
 import scala.concurrent.Future
 import scala.xml.Elem
@@ -28,9 +29,8 @@ trait ChangeMessageVisibilityBatchDirectives {
             )
 
             result.flatMap {
-              case Right(_) => Future.successful(BatchChangeMessageVisibilityResponseEntry(id))
-              case Left(invalidHandle) =>
-                Future.failed(new SQSException(invalidHandle.code, errorMessage = Some(invalidHandle.message)))
+              case Right(_)            => Future.successful(BatchChangeMessageVisibilityResponseEntry(id))
+              case Left(invalidHandle) => Future.failed(invalidHandle.toSQSException)
             }
           }
 

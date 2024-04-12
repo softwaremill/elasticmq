@@ -6,6 +6,7 @@ import org.elasticmq.msg.{LookupQueue, CreateQueue => CreateQueueMsg}
 import org.elasticmq.rest.sqs.Action.CreateQueue
 import org.elasticmq.rest.sqs.Constants._
 import org.elasticmq.rest.sqs.ParametersUtil._
+import org.elasticmq.rest.sqs.SQSException.ElasticMQErrorOps
 import org.elasticmq.rest.sqs.directives.ElasticMQDirectives
 import org.elasticmq.rest.sqs.model.RedrivePolicy.BackwardCompatibleRedrivePolicy
 import org.elasticmq.rest.sqs.model.RequestPayload
@@ -37,10 +38,10 @@ trait CreateQueueDirectives {
           } catch {
             case e: DeserializationException =>
               logger.warn("Cannot deserialize the redrive policy attribute", e)
-              throw new SQSException("MalformedQueryString")
+              throw SQSException.invalidAttributeValue()
             case e: ParsingException =>
               logger.warn("Cannot parse the redrive policy attribute", e)
-              throw new SQSException("MalformedQueryString")
+              throw SQSException.invalidAttributeValue()
           }
 
         async {
@@ -51,7 +52,7 @@ trait CreateQueueDirectives {
               }
 
               if (rd.maxReceiveCount < 1 || rd.maxReceiveCount > 1000) {
-                throw SQSException.invalidParameterValue
+                throw SQSException.invalidAttributeValue()
               }
             case None =>
           }
@@ -78,7 +79,12 @@ trait CreateQueueDirectives {
           secondsReceiveMessageWaitTimeOpt.foreach(messageWaitTime =>
             Limits
               .verifyMessageWaitTime(messageWaitTime, sqsLimits)
-              .fold(error => throw new SQSException(error), identity)
+              .fold(
+                _ =>
+                  throw SQSException
+                    .invalidParameter(messageWaitTime.toString, ReceiveMessageWaitTimeSecondsAttribute),
+                identity
+              )
           )
 
           await(lookupOrCreateQueue(newQueueData))
@@ -95,7 +101,7 @@ trait CreateQueueDirectives {
       val createResult = await(queueManagerActor ? CreateQueueMsg(newQueueData))
       createResult match {
         case Left(e: ElasticMQError) =>
-          throw new SQSException(e.code, errorMessage = Some(e.message))
+          throw e.toSQSException
         case Right(_) =>
       }
     }

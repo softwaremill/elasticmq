@@ -65,7 +65,7 @@ class UnmatchedActionRoutesTest
 
     Post("/").withEntity(AmzJsonProtocol.contentType("1.0"), ByteString.empty) ~> route ~> check {
       status shouldBe BadRequest
-      responseAs[String] should include(""""Message":"MissingAction; see the SQS docs."""")
+      responseAs[String] should include(""""Message":"Action is missing in the request parameters"""")
     }
   }
 }

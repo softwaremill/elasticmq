@@ -1,11 +1,10 @@
 package org.elasticmq
 
-import java.math.MathContext
-
 import org.scalatest.EitherValues
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
+import java.math.MathContext
 import scala.util.Random
 
 class LimitsTest extends AnyWordSpec with Matchers with EitherValues {
@@ -17,7 +16,7 @@ class LimitsTest extends AnyWordSpec with Matchers with EitherValues {
 
     "fail if the size of the batch is greater than the limit (10)" in {
       val error = Limits.verifyBatchSize(15, StrictSQSLimits).left.value
-      error shouldBe "AWS.SimpleQueueService.TooManyEntriesInBatchRequest"
+      error shouldBe "Too many entries in batch request"
     }
   }
 

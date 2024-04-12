@@ -10,7 +10,7 @@ trait RejectionDirectives {
     .newBuilder()
     .handleAll[Rejection] { rejections =>
       handleServerExceptions(protocol) { _ =>
-        throw new SQSException("Invalid request: " + rejections.map(_.toString).mkString(", "))
+        throw SQSException.invalidAction("Invalid request: " + rejections.map(_.toString).mkString(", "))
       }
     }
     .result()

@@ -5,6 +5,7 @@ import org.elasticmq.DeliveryReceipt
 import org.elasticmq.msg.DeleteMessage
 import org.elasticmq.actor.reply._
 import org.elasticmq.rest.sqs.Action.DeleteMessageBatch
+import org.elasticmq.rest.sqs.SQSException.ElasticMQErrorOps
 import org.elasticmq.rest.sqs.directives.ElasticMQDirectives
 import org.elasticmq.rest.sqs.model.RequestPayload
 import spray.json.RootJsonFormat
@@ -28,7 +29,7 @@ trait DeleteMessageBatchDirectives {
           result.flatMap {
             case Right(_) => Future.successful(BatchDeleteMessageResponseEntry(id))
             case Left(invalidHandle) =>
-              Future.failed(new SQSException(invalidHandle.code, errorMessage = Some(invalidHandle.message)))
+              Future.failed(invalidHandle.toSQSException)
           }
         }
         complete(resultsFuture)
