@@ -64,6 +64,16 @@ package client {
     }
   }
 
+  case class SendMessageBatchBatchEntry(
+      id: String,
+      messageBody: String,
+      delaySeconds: Option[Int] = None,
+      messageDeduplicationId: Option[String] = None,
+      messageGroupId: Option[String] = None,
+      awsTraceHeader: Option[String] = None,
+      messageAttributes: Map[String, MessageAttribute] = Map.empty
+  )
+
   case class ReceivedMessage(
       messageId: String,
       receiptHandle: String,

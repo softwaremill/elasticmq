@@ -1,20 +1,7 @@
 package org.elasticmq.rest.sqs.client
 
 import com.amazonaws.services.sqs.AmazonSQS
-import com.amazonaws.services.sqs.model.{
-  CancelMessageMoveTaskRequest,
-  CreateQueueRequest,
-  GetQueueAttributesRequest,
-  GetQueueUrlRequest,
-  ListMessageMoveTasksRequest,
-  MessageAttributeValue,
-  QueueDoesNotExistException,
-  ReceiveMessageRequest,
-  ResourceNotFoundException,
-  SendMessageRequest,
-  StartMessageMoveTaskRequest,
-  UnsupportedOperationException
-}
+import com.amazonaws.services.sqs.model.{CancelMessageMoveTaskRequest, CreateQueueRequest, GetQueueAttributesRequest, GetQueueUrlRequest, ListMessageMoveTasksRequest, MessageAttributeValue, MessageSystemAttributeValue, PurgeQueueRequest, QueueDoesNotExistException, ReceiveMessageRequest, ResourceNotFoundException, SendMessageBatchRequest, SendMessageBatchRequestEntry, SendMessageRequest, StartMessageMoveTaskRequest, UnsupportedOperationException}
 import org.elasticmq._
 
 import java.nio.ByteBuffer
@@ -45,25 +32,78 @@ class AwsSdkV1SqsClient(client: AmazonSQS) extends SqsClient {
       .getQueueUrl
   }
 
+  override def purgeQueue(
+      queueUrl: QueueUrl
+  ): Either[SqsClientError, Unit] = interceptErrors {
+    client.purgeQueue(new PurgeQueueRequest().withQueueUrl(queueUrl))
+  }
+
+  override def deleteQueue(
+      queueUrl: QueueUrl
+  ): Either[SqsClientError, Unit] = interceptErrors {
+    client.deleteQueue(queueUrl)
+  }
+
   override def sendMessage(
       queueUrl: QueueUrl,
       messageBody: String,
-      messageAttributes: Map[String, MessageAttribute] = Map.empty
-  ): Unit = client.sendMessage(
-    new SendMessageRequest()
-      .withQueueUrl(queueUrl)
-      .withMessageBody(messageBody)
-      .withMessageAttributes(messageAttributes.map {
-        case (k, v: StringMessageAttribute) =>
-          k -> new MessageAttributeValue().withDataType(v.getDataType()).withStringValue(v.stringValue)
-        case (k, v: NumberMessageAttribute) =>
-          k -> new MessageAttributeValue().withDataType(v.getDataType()).withStringValue(v.stringValue)
-        case (k, v: BinaryMessageAttribute) =>
-          k -> new MessageAttributeValue()
-            .withDataType(v.getDataType())
-            .withBinaryValue(ByteBuffer.wrap(v.binaryValue.toArray))
-      }.asJava)
-  )
+      messageAttributes: Map[String, MessageAttribute] = Map.empty,
+      awsTraceHeader: Option[String] = None
+  ): Either[SqsClientError, Unit] = interceptErrors {
+    client.sendMessage(
+      new SendMessageRequest()
+        .withQueueUrl(queueUrl)
+        .withMessageBody(messageBody)
+        .withMessageSystemAttributes(
+          mapAwsTraceHeader(awsTraceHeader)
+        )
+        .withMessageAttributes(mapMessageAttributes(messageAttributes))
+    )
+  }
+
+  override def sendMessageBatch(
+      queueUrl: QueueUrl,
+      entries: List[SendMessageBatchBatchEntry]
+  ): Either[SqsClientError, Unit] = interceptErrors {
+    client.sendMessageBatch(
+      new SendMessageBatchRequest()
+        .withQueueUrl(queueUrl)
+        .withEntries(entries.map(entry =>
+          new SendMessageBatchRequestEntry()
+            .withId(entry.id)
+            .withMessageBody(entry.messageBody)
+            .withDelaySeconds(entry.delaySeconds.map(Int.box).orNull)
+            .withMessageDeduplicationId(entry.messageDeduplicationId.orNull)
+            .withMessageGroupId(entry.messageGroupId.orNull)
+            .withMessageSystemAttributes(mapAwsTraceHeader(entry.awsTraceHeader))
+            .withMessageAttributes(mapMessageAttributes(entry.messageAttributes))
+        ).asJava)
+    )
+  }
+
+  private def mapAwsTraceHeader(awsTraceHeader: Option[MessageMoveTaskStatus]) = {
+    awsTraceHeader
+      .map(header => Map("AWSTraceHeader" -> new MessageSystemAttributeValue().withStringValue(header)).asJava)
+      .orNull
+  }
+
+  private def mapMessageAttributes(
+      messageAttributes: Map[
+        MessageMoveTaskStatus,
+        MessageAttribute
+      ]
+  ) = {
+    messageAttributes.map {
+      case (k, v: StringMessageAttribute) =>
+        k -> new MessageAttributeValue().withDataType(v.getDataType()).withStringValue(v.stringValue)
+      case (k, v: NumberMessageAttribute) =>
+        k -> new MessageAttributeValue().withDataType(v.getDataType()).withStringValue(v.stringValue)
+      case (k, v: BinaryMessageAttribute) =>
+        k -> new MessageAttributeValue()
+          .withDataType(v.getDataType())
+          .withBinaryValue(ByteBuffer.wrap(v.binaryValue.toArray))
+    }.asJava
+  }
 
   override def receiveMessage(
       queueUrl: QueueUrl,
@@ -130,6 +170,26 @@ class AwsSdkV1SqsClient(client: AmazonSQS) extends SqsClient {
     .asScala
     .toMap
 
+  override def tagQueue(queueUrl: QueueUrl, tags: Map[String, String]): Unit = {
+    client.tagQueue(queueUrl, tags.asJava)
+  }
+
+  override def untagQueue(queueUrl: QueueUrl, tagKeys: List[String]): Unit = {
+    client.untagQueue(queueUrl, tagKeys.asJava)
+  }
+
+  override def listQueueTags(
+      queueUrl: QueueUrl
+  ): Map[String, String] = client.listQueueTags(queueUrl).getTags.asScala.toMap
+
+  override def listQueues(
+      prefix: Option[String]
+  ): List[QueueUrl] = client
+    .listQueues(prefix.orNull)
+    .getQueueUrls
+    .asScala
+    .toList
+
   override def startMessageMoveTask(
       sourceArn: Arn,
       maxNumberOfMessagesPerSecond: Option[Int]
@@ -179,6 +239,18 @@ class AwsSdkV1SqsClient(client: AmazonSQS) extends SqsClient {
       .cancelMessageMoveTask(new CancelMessageMoveTaskRequest().withTaskHandle(taskHandle))
       .getApproximateNumberOfMessagesMoved
   }
+
+  override def addPermission(
+      queueUrl: QueueUrl,
+      label: MessageMoveTaskStatus,
+      awsAccountIds: List[MessageMoveTaskStatus],
+      actions: List[MessageMoveTaskStatus]
+  ): Unit = client.addPermission(queueUrl, label, awsAccountIds.asJava, actions.asJava)
+
+  override def removePermission(
+      queueUrl: QueueUrl,
+      label: MessageMoveTaskStatus
+  ): Unit = client.removePermission(queueUrl, label)
 
   private def interceptErrors[T](f: => T): Either[SqsClientError, T] = {
     try {
