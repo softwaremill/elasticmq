@@ -1,8 +1,23 @@
 package org.elasticmq.rest.sqs.client
 
 import com.amazonaws.services.sqs.AmazonSQS
-import com.amazonaws.services.sqs.model.{CancelMessageMoveTaskRequest, CreateQueueRequest, GetQueueAttributesRequest, ListMessageMoveTasksRequest, QueueDoesNotExistException, ReceiveMessageRequest, ResourceNotFoundException, SendMessageRequest, StartMessageMoveTaskRequest, UnsupportedOperationException}
+import com.amazonaws.services.sqs.model.{
+  CancelMessageMoveTaskRequest,
+  CreateQueueRequest,
+  GetQueueAttributesRequest,
+  GetQueueUrlRequest,
+  ListMessageMoveTasksRequest,
+  MessageAttributeValue,
+  QueueDoesNotExistException,
+  ReceiveMessageRequest,
+  ResourceNotFoundException,
+  SendMessageRequest,
+  StartMessageMoveTaskRequest,
+  UnsupportedOperationException
+}
+import org.elasticmq._
 
+import java.nio.ByteBuffer
 import scala.collection.JavaConverters._
 
 class AwsSdkV1SqsClient(client: AmazonSQS) extends SqsClient {
@@ -21,19 +36,86 @@ class AwsSdkV1SqsClient(client: AmazonSQS) extends SqsClient {
     )
     .getQueueUrl
 
+  override def getQueueUrl(queueName: String): Either[SqsClientError, QueueUrl] = interceptErrors {
+    client
+      .getQueueUrl(
+        new GetQueueUrlRequest()
+          .withQueueName(queueName)
+      )
+      .getQueueUrl
+  }
+
   override def sendMessage(
       queueUrl: QueueUrl,
-      messageBody: String
+      messageBody: String,
+      messageAttributes: Map[String, MessageAttribute] = Map.empty
   ): Unit = client.sendMessage(
     new SendMessageRequest()
       .withQueueUrl(queueUrl)
       .withMessageBody(messageBody)
+      .withMessageAttributes(messageAttributes.map {
+        case (k, v: StringMessageAttribute) =>
+          k -> new MessageAttributeValue().withDataType(v.getDataType()).withStringValue(v.stringValue)
+        case (k, v: NumberMessageAttribute) =>
+          k -> new MessageAttributeValue().withDataType(v.getDataType()).withStringValue(v.stringValue)
+        case (k, v: BinaryMessageAttribute) =>
+          k -> new MessageAttributeValue()
+            .withDataType(v.getDataType())
+            .withBinaryValue(ByteBuffer.wrap(v.binaryValue.toArray))
+      }.asJava)
   )
 
-  override def receiveMessage(queueUrl: QueueUrl): List[ReceivedMessage] =
-    client.receiveMessage(new ReceiveMessageRequest().withQueueUrl(queueUrl)).getMessages.asScala.toList.map { msg =>
-      ReceivedMessage(msg.getMessageId, msg.getReceiptHandle, msg.getBody)
+  override def receiveMessage(
+      queueUrl: QueueUrl,
+      systemAttributes: List[String] = List.empty,
+      messageAttributes: List[String] = List.empty
+  ): List[ReceivedMessage] = {
+    client
+      .receiveMessage(
+        new ReceiveMessageRequest()
+          .withQueueUrl(queueUrl)
+          .withAttributeNames(systemAttributes.asJava)
+          .withMessageAttributeNames(messageAttributes.asJava)
+      )
+      .getMessages
+      .asScala
+      .toList
+      .map { msg =>
+        ReceivedMessage(
+          msg.getMessageId,
+          msg.getReceiptHandle,
+          msg.getBody,
+          mapSystemAttributes(msg.getAttributes),
+          mapMessageAttributes(msg.getMessageAttributes)
+        )
+      }
+  }
+
+  private def mapSystemAttributes(
+      attributes: java.util.Map[String, String]
+  ): Map[MessageSystemAttributeName, String] = {
+    attributes.asScala.toMap.map { case (k, v) => (MessageSystemAttributeName.from(k), v) }
+  }
+
+  private def mapMessageAttributes(
+      attributes: java.util.Map[String, MessageAttributeValue]
+  ): Map[String, MessageAttribute] = {
+    attributes.asScala.toMap.map { case (k, v) => (k, mapMessageAttribute(v)) }
+  }
+
+  private def mapMessageAttribute(attr: MessageAttributeValue): MessageAttribute = {
+    if (attr.getDataType.equals("String") && attr.getStringValue != null) {
+      StringMessageAttribute(attr.getStringValue)
+    } else if (attr.getDataType.startsWith("String.") && attr.getStringValue != null) {
+      StringMessageAttribute(attr.getStringValue, Some(attr.getDataType.stripPrefix("String.")))
+    } else if (attr.getDataType.equals("Number") && attr.getStringValue != null) {
+      NumberMessageAttribute(attr.getStringValue)
+    } else if (attr.getDataType.startsWith("Number.") && attr.getStringValue != null) {
+      NumberMessageAttribute(attr.getStringValue, Some(attr.getDataType.stripPrefix("Number.")))
+    } else {
+      BinaryMessageAttribute.fromByteBuffer(attr.getBinaryValue)
     }
+  }
 
   override def getQueueAttributes(
       queueUrl: QueueUrl,

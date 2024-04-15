@@ -9,6 +9,7 @@ package object client {
 }
 
 package client {
+  import org.elasticmq.MessageAttribute
   sealed abstract class QueueAttributeName(val value: String)
   case object AllAttributeNames extends QueueAttributeName("All")
   case object PolicyAttributeName extends QueueAttributeName("Policy")
@@ -35,7 +36,41 @@ package client {
   case object RedriveAllowPolicyAttributeName extends QueueAttributeName("RedriveAllowPolicy")
   case object SqsManagedSseEnabledAttributeName extends QueueAttributeName("SqsManagedSseEnabled")
 
-  case class ReceivedMessage(messageId: String, receiptHandle: String, body: String)
+  sealed abstract class MessageSystemAttributeName(val value: String)
+  case object SenderId extends MessageSystemAttributeName("SenderId")
+  case object SentTimestamp extends MessageSystemAttributeName("SentTimestamp")
+  case object ApproximateReceiveCount extends MessageSystemAttributeName("ApproximateReceiveCount")
+  case object ApproximateFirstReceiveTimestamp extends MessageSystemAttributeName("ApproximateFirstReceiveTimestamp")
+  case object SequenceNumber extends MessageSystemAttributeName("SequenceNumber")
+  case object MessageDeduplicationId extends MessageSystemAttributeName("MessageDeduplicationId")
+  case object MessageGroupId extends MessageSystemAttributeName("MessageGroupId")
+  case object AWSTraceHeader extends MessageSystemAttributeName("AWSTraceHeader")
+  case object DeadLetterQueueSourceArn extends MessageSystemAttributeName("DeadLetterQueueSourceArn")
+
+  object MessageSystemAttributeName {
+    def from(value: String): MessageSystemAttributeName = {
+      value match {
+        case SenderId.value                         => SenderId
+        case SentTimestamp.value                    => SentTimestamp
+        case ApproximateReceiveCount.value          => ApproximateReceiveCount
+        case ApproximateFirstReceiveTimestamp.value => ApproximateFirstReceiveTimestamp
+        case SequenceNumber.value                   => SequenceNumber
+        case MessageDeduplicationId.value           => MessageDeduplicationId
+        case MessageGroupId.value                   => MessageGroupId
+        case AWSTraceHeader.value                   => AWSTraceHeader
+        case DeadLetterQueueSourceArn.value         => DeadLetterQueueSourceArn
+        case _ => throw new IllegalArgumentException(s"Unknown message system attribute: $value")
+      }
+    }
+  }
+
+  case class ReceivedMessage(
+      messageId: String,
+      receiptHandle: String,
+      body: String,
+      attributes: Map[MessageSystemAttributeName, String],
+      messageAttributes: Map[String, MessageAttribute]
+  )
 
   case class MessageMoveTask(
       taskHandle: TaskHandle,

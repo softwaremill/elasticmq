@@ -11,7 +11,12 @@ import org.elasticmq.actor.QueueManagerActor
 import org.elasticmq.metrics.QueuesMetrics
 import org.elasticmq.rest.sqs.Constants._
 import org.elasticmq.rest.sqs.XmlNsVersion.extractXmlNs
-import org.elasticmq.rest.sqs.directives.{ AnyParamDirectives,AWSProtocolDirectives, ElasticMQDirectives, UnmatchedActionRoutes}
+import org.elasticmq.rest.sqs.directives.{
+  AnyParamDirectives,
+  AWSProtocolDirectives,
+  ElasticMQDirectives,
+  UnmatchedActionRoutes
+}
 import org.elasticmq.rest.sqs.model.RequestPayload
 import org.elasticmq.util.{Logging, NowProvider}
 
@@ -406,7 +411,7 @@ object MD5Util {
           addEncodedString(byteStream, n.stringValue.toString)
         case b: BinaryMessageAttribute =>
           byteStream.write(2)
-          addEncodedByteArray(byteStream, b.binaryValue)
+          addEncodedByteArray(byteStream, b.binaryValue.toArray)
       }
     }
 

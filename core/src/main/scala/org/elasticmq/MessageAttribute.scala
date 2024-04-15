@@ -23,17 +23,17 @@ case class NumberMessageAttribute(stringValue: String, override val customType: 
   protected override val primaryDataType: String = "Number"
 }
 
-case class BinaryMessageAttribute(binaryValue: Array[Byte], override val customType: Option[String] = None)
+case class BinaryMessageAttribute(binaryValue: Seq[Byte], override val customType: Option[String] = None)
     extends MessageAttribute(customType) {
   protected override val primaryDataType: String = "Binary"
 
-  def asBase64: String = Base64.getEncoder.encodeToString(binaryValue)
+  def asBase64: String = Base64.getEncoder.encodeToString(binaryValue.toArray)
 }
 
 object BinaryMessageAttribute {
   def fromBase64(base64Str: String, customType: Option[String] = None): BinaryMessageAttribute =
     BinaryMessageAttribute(
-      binaryValue = Base64.getDecoder.decode(base64Str),
+      binaryValue = Base64.getDecoder.decode(base64Str).toSeq,
       customType = customType
     )
 
@@ -44,7 +44,7 @@ object BinaryMessageAttribute {
         val value = new Array[Byte](byteBuffer.capacity())
         byteBuffer.get(value)
         value
-      },
+      }.toSeq,
       customType = customType
     )
 }
