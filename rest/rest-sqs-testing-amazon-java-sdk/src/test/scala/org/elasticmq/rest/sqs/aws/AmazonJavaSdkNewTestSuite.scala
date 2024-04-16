@@ -278,12 +278,89 @@ abstract class AmazonJavaSdkNewTestSuite
 
     // when
     val result =
-      testClient.deleteMessageBatch(queueUrl, messages.slice(0, 2).map(m => DeleteMessageBatchEntry(m.messageId, m.receiptHandle))).toOption.get
+      testClient
+        .deleteMessageBatch(
+          queueUrl,
+          List(
+            DeleteMessageBatchEntry("A", messages.head.receiptHandle),
+            DeleteMessageBatchEntry("B", messages(1).receiptHandle)
+          )
+        )
+        .toOption
+        .get
 
     // then
     result.successful should have size 2
-    result.successful.map(_.id) shouldBe List(messages.head.messageId, messages(1).messageId)
+    result.successful.map(_.id) shouldBe List("A", "B")
     result.failed shouldBe empty
+  }
+
+  test("should change message visibility") {
+    // given
+    val queueUrl = testClient.createQueue("testQueue1")
+    testClient.sendMessage(queueUrl, "test123")
+    val message = testClient.receiveMessage(queueUrl).head
+
+    // when
+    testClient.changeMessageVisibility(queueUrl, message.receiptHandle, 0)
+    val messagesReceivedAgain = testClient.receiveMessage(queueUrl)
+
+    // then
+    messagesReceivedAgain should have size 1
+  }
+
+  test("should change message visibility batch") {
+    // given
+    val queueUrl = testClient.createQueue("testQueue1")
+    testClient.sendMessage(queueUrl, "test123")
+    testClient.sendMessage(queueUrl, "test234")
+    testClient.sendMessage(queueUrl, "test345")
+    val messages = testClient.receiveMessage(queueUrl, maxNumberOfMessages = Some(3))
+
+    // then
+    messages should have size 3
+
+    // when
+    val result =
+      testClient
+        .changeMessageVisibilityBatch(
+          queueUrl,
+          List(
+            ChangeMessageVisibilityBatchEntry("A", messages.head.receiptHandle, 0),
+            ChangeMessageVisibilityBatchEntry("B", messages(2).receiptHandle, 0)
+          )
+        )
+        .toOption
+        .get
+    val messagesReceivedAgain = testClient.receiveMessage(queueUrl, maxNumberOfMessages = Some(3))
+
+    // then
+    result.successful should have size 2
+    result.successful.map(_.id) shouldBe List("A", "B")
+    result.failed shouldBe empty
+
+    messagesReceivedAgain should have size 2
+  }
+
+  test("should list dead letter source queues") {
+    // given
+    val dlq1Url = testClient.createQueue("testDlq1")
+    val redrivePolicyJson = RedrivePolicy("testDlq1", awsRegion, awsAccountId, 3).toJson.compactPrint
+    val queue1Url = testClient.createQueue("testQueue1", Map(RedrivePolicyAttributeName -> redrivePolicyJson))
+    val queue2Url = testClient.createQueue("testQueue2", Map(RedrivePolicyAttributeName -> redrivePolicyJson))
+    val queue4Url = testClient.createQueue("testQueue4", Map(RedrivePolicyAttributeName -> redrivePolicyJson))
+    testClient.createQueue("testDlq2")
+    testClient.createQueue(
+      "testQueue3",
+      Map(RedrivePolicyAttributeName -> RedrivePolicy("testDlq2", awsRegion, awsAccountId, 3).toJson.compactPrint)
+    )
+    testClient.createQueue("testQueue5")
+
+    // when
+    val result = testClient.listDeadLetterSourceQueues(dlq1Url)
+
+    // then
+    result should contain theSameElementsAs Set(queue1Url, queue2Url, queue4Url)
   }
 
   private def doTestSendAndReceiveMessageWithAttributes(

@@ -1,7 +1,7 @@
 package org.elasticmq.rest.sqs.client
 import org.elasticmq.{BinaryMessageAttribute, MessageAttribute, NumberMessageAttribute, StringMessageAttribute}
 import software.amazon.awssdk.core.SdkBytes
-import software.amazon.awssdk.services.sqs.model.{AddPermissionRequest, BatchResultErrorEntry, CancelMessageMoveTaskRequest, CreateQueueRequest, DeleteMessageBatchRequest, DeleteMessageBatchRequestEntry, DeleteMessageRequest, DeleteQueueRequest, GetQueueAttributesRequest, GetQueueUrlRequest, ListMessageMoveTasksRequest, ListQueueTagsRequest, ListQueuesRequest, MessageAttributeValue, MessageSystemAttributeNameForSends, MessageSystemAttributeValue, PurgeQueueRequest, QueueDoesNotExistException, ReceiveMessageRequest, RemovePermissionRequest, ResourceNotFoundException, SendMessageBatchRequest, SendMessageBatchRequestEntry, SendMessageRequest, StartMessageMoveTaskRequest, TagQueueRequest, UnsupportedOperationException, UntagQueueRequest, MessageSystemAttributeName => SdkMessageSystemAttributeName, QueueAttributeName => AwsQueueAttributeName}
+import software.amazon.awssdk.services.sqs.model.{AddPermissionRequest, BatchResultErrorEntry, CancelMessageMoveTaskRequest, ChangeMessageVisibilityBatchRequest, ChangeMessageVisibilityBatchRequestEntry, ChangeMessageVisibilityRequest, CreateQueueRequest, DeleteMessageBatchRequest, DeleteMessageBatchRequestEntry, DeleteMessageRequest, DeleteQueueRequest, GetQueueAttributesRequest, GetQueueUrlRequest, ListDeadLetterSourceQueuesRequest, ListMessageMoveTasksRequest, ListQueueTagsRequest, ListQueuesRequest, MessageAttributeValue, MessageSystemAttributeNameForSends, MessageSystemAttributeValue, PurgeQueueRequest, QueueDoesNotExistException, ReceiveMessageRequest, RemovePermissionRequest, ResourceNotFoundException, SendMessageBatchRequest, SendMessageBatchRequestEntry, SendMessageRequest, StartMessageMoveTaskRequest, TagQueueRequest, UnsupportedOperationException, UntagQueueRequest, MessageSystemAttributeName => SdkMessageSystemAttributeName, QueueAttributeName => AwsQueueAttributeName}
 
 import scala.collection.JavaConverters._
 
@@ -199,8 +199,55 @@ class AwsSdkV2SqsClient(client: software.amazon.awssdk.services.sqs.SqsClient) e
         )
       }
 
-  override def deleteMessage(queueUrl: QueueUrl, receiptHandle: String) =
+  override def deleteMessage(queueUrl: QueueUrl, receiptHandle: String): Unit =
     client.deleteMessage(DeleteMessageRequest.builder().queueUrl(queueUrl).receiptHandle(receiptHandle).build())
+
+  override def changeMessageVisibility(queueUrl: QueueUrl, receiptHandle: String, visibilityTimeout: Int): Unit =
+    client.changeMessageVisibility(
+      ChangeMessageVisibilityRequest
+        .builder()
+        .queueUrl(queueUrl)
+        .receiptHandle(receiptHandle)
+        .visibilityTimeout(visibilityTimeout)
+        .build()
+    )
+
+  override def changeMessageVisibilityBatch(
+      queueUrl: QueueUrl,
+      entries: List[ChangeMessageVisibilityBatchEntry]
+  ): Either[SqsClientError, ChangeMessageVisibilityBatchResult] = interceptErrors {
+    val result = client.changeMessageVisibilityBatch(
+      ChangeMessageVisibilityBatchRequest
+        .builder()
+        .queueUrl(queueUrl)
+        .entries(
+          entries
+            .map(entry =>
+              ChangeMessageVisibilityBatchRequestEntry
+                .builder()
+                .id(entry.id)
+                .receiptHandle(entry.receiptHandle)
+                .visibilityTimeout(entry.visibilityTimeout)
+                .build()
+            )
+            .asJava
+        )
+        .build()
+    )
+    ChangeMessageVisibilityBatchResult(
+      result.successful().asScala.toList.map { entry =>
+        ChangeMessageVisibilityBatchSuccessEntry(entry.id())
+      },
+      mapBatchResultErrorEntries(result.failed())
+    )
+  }
+
+  override def listDeadLetterSourceQueues(queueUrl: QueueUrl): List[QueueUrl] =
+    client
+      .listDeadLetterSourceQueues(ListDeadLetterSourceQueuesRequest.builder().queueUrl(queueUrl).build())
+      .queueUrls()
+      .asScala
+      .toList
 
   private def mapSystemAttributes(
       attributes: java.util.Map[SdkMessageSystemAttributeName, String]

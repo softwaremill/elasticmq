@@ -1,7 +1,7 @@
 package org.elasticmq.rest.sqs.client
 
 import com.amazonaws.services.sqs.AmazonSQS
-import com.amazonaws.services.sqs.model.{BatchResultErrorEntry, CancelMessageMoveTaskRequest, CreateQueueRequest, DeleteMessageBatchRequest, DeleteMessageBatchRequestEntry, GetQueueAttributesRequest, GetQueueUrlRequest, ListMessageMoveTasksRequest, MessageAttributeValue, MessageSystemAttributeValue, PurgeQueueRequest, QueueDoesNotExistException, ReceiveMessageRequest, ResourceNotFoundException, SendMessageBatchRequest, SendMessageBatchRequestEntry, SendMessageRequest, StartMessageMoveTaskRequest, UnsupportedOperationException}
+import com.amazonaws.services.sqs.model.{BatchResultErrorEntry, CancelMessageMoveTaskRequest, ChangeMessageVisibilityBatchRequest, ChangeMessageVisibilityBatchRequestEntry, CreateQueueRequest, DeleteMessageBatchRequest, DeleteMessageBatchRequestEntry, GetQueueAttributesRequest, GetQueueUrlRequest, ListDeadLetterSourceQueuesRequest, ListMessageMoveTasksRequest, MessageAttributeValue, MessageSystemAttributeValue, PurgeQueueRequest, QueueDoesNotExistException, ReceiveMessageRequest, ResourceNotFoundException, SendMessageBatchRequest, SendMessageBatchRequestEntry, SendMessageRequest, StartMessageMoveTaskRequest, UnsupportedOperationException}
 import org.elasticmq._
 
 import java.nio.ByteBuffer
@@ -144,6 +144,49 @@ class AwsSdkV1SqsClient(client: AmazonSQS) extends SqsClient {
       queueUrl: QueueUrl,
       receiptHandle: MessageMoveTaskStatus
   ): Unit = client.deleteMessage(queueUrl, receiptHandle)
+
+  override def changeMessageVisibility(
+      queueUrl: QueueUrl,
+      receiptHandle: MessageMoveTaskStatus,
+      visibilityTimeout: Int
+  ): Unit = client.changeMessageVisibility(queueUrl, receiptHandle, visibilityTimeout)
+
+  override def changeMessageVisibilityBatch(
+      queueUrl: QueueUrl,
+      entries: List[
+        ChangeMessageVisibilityBatchEntry
+      ]
+  ): Either[
+    SqsClientError,
+    ChangeMessageVisibilityBatchResult
+  ] = interceptErrors {
+    val result = client.changeMessageVisibilityBatch(
+      new ChangeMessageVisibilityBatchRequest()
+        .withQueueUrl(queueUrl)
+        .withEntries(
+          entries
+            .map(entry =>
+              new ChangeMessageVisibilityBatchRequestEntry()
+                .withId(entry.id)
+                .withReceiptHandle(entry.receiptHandle)
+                .withVisibilityTimeout(entry.visibilityTimeout)
+            )
+            .asJava
+        )
+    )
+    ChangeMessageVisibilityBatchResult(
+      result.getSuccessful.asScala.map { entry =>
+        ChangeMessageVisibilityBatchSuccessEntry(entry.getId)
+      }.toList,
+      mapBatchResultErrorEntries(result.getFailed)
+    )
+  }
+
+  override def listDeadLetterSourceQueues(queueUrl: QueueUrl): List[QueueUrl] = client
+    .listDeadLetterSourceQueues(new ListDeadLetterSourceQueuesRequest().withQueueUrl(queueUrl))
+    .getQueueUrls
+    .asScala
+    .toList
 
   private def mapAwsTraceHeader(awsTraceHeader: Option[MessageMoveTaskStatus]) = {
     awsTraceHeader

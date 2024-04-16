@@ -29,6 +29,7 @@ trait SqsClient {
   ): List[ReceivedMessage]
 
   def deleteMessage(queueUrl: QueueUrl, receiptHandle: String): Unit
+  def changeMessageVisibility(queueUrl: QueueUrl, receiptHandle: String, visibilityTimeout: Int): Unit
 
   def sendMessageBatch(
       queueUrl: QueueUrl,
@@ -39,6 +40,11 @@ trait SqsClient {
       queueUrl: QueueUrl,
       entries: List[DeleteMessageBatchEntry]
   ): Either[SqsClientError, DeleteMessageBatchResult]
+
+  def changeMessageVisibilityBatch(
+      queueUrl: QueueUrl,
+      entries: List[ChangeMessageVisibilityBatchEntry]
+  ): Either[SqsClientError, ChangeMessageVisibilityBatchResult]
 
   def startMessageMoveTask(
       sourceArn: Arn,
@@ -52,4 +58,6 @@ trait SqsClient {
 
   def addPermission(queueUrl: QueueUrl, label: String, awsAccountIds: List[String], actions: List[String]): Unit
   def removePermission(queueUrl: QueueUrl, label: String): Unit
+
+  def listDeadLetterSourceQueues(queueUrl: QueueUrl): List[QueueUrl]
 }

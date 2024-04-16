@@ -104,6 +104,19 @@ package client {
       failed: List[BatchOperationErrorEntry]
   )
 
+  case class ChangeMessageVisibilityBatchEntry(
+      id: String,
+      receiptHandle: String,
+      visibilityTimeout: Int
+  )
+
+  case class ChangeMessageVisibilityBatchSuccessEntry(id: String)
+
+  case class ChangeMessageVisibilityBatchResult(
+      successful: List[ChangeMessageVisibilityBatchSuccessEntry],
+      failed: List[BatchOperationErrorEntry]
+  )
+
   case class ReceivedMessage(
       messageId: String,
       receiptHandle: String,
