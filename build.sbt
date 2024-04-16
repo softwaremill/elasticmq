@@ -52,11 +52,6 @@ val sprayJson = "io.spray" %% "spray-json" % "1.3.6"
 val pekkoHttpSprayJson = "org.apache.pekko" %% "pekko-http-spray-json" % pekkoHttpVersion
 val pekkoHttpTestkit = "org.apache.pekko" %% "pekko-http-testkit" % pekkoHttpVersion % "test"
 
-val awsSpringMessagingVersion = "2.2.6.RELEASE"
-val springVersion = "5.3.34"
-val awsSpringMessaging = "org.springframework.cloud" % "spring-cloud-aws-messaging" % awsSpringMessagingVersion
-val springWeb = "org.springframework" % "spring-web" % springVersion
-
 val scala2Async = "org.scala-lang.modules" %% "scala-async" % "1.0.1"
 val scala3Async =
   "com.github.rssh" %% "shim-scala-async-dotty-cps-async" % "0.9.21" // allows cross compilation w/o changes in source code
@@ -211,9 +206,7 @@ lazy val restSqsTestingAmazonJavaSdk: Project =
         libraryDependencies ++= Seq(
           amazonJavaSdkSqs,
           amazonJavaV2SdkSqs,
-          awsSpringMessaging,
-          jclOverSlf4j,
-          springWeb
+          jclOverSlf4j
         ) ++ common,
         publish / skip := true
       )
