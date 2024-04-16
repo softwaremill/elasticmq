@@ -21,16 +21,24 @@ trait SqsClient {
       awsTraceHeader: Option[String] = None
   ): Either[SqsClientError, Unit]
 
-  def sendMessageBatch(
-      queueUrl: QueueUrl,
-      entries: List[SendMessageBatchBatchEntry]
-  ): Either[SqsClientError, Unit]
-
   def receiveMessage(
       queueUrl: QueueUrl,
       systemAttributes: List[String] = List.empty,
-      messageAttributes: List[String] = List.empty
+      messageAttributes: List[String] = List.empty,
+      maxNumberOfMessages: Option[Int] = None
   ): List[ReceivedMessage]
+
+  def deleteMessage(queueUrl: QueueUrl, receiptHandle: String): Unit
+
+  def sendMessageBatch(
+      queueUrl: QueueUrl,
+      entries: List[SendMessageBatchEntry]
+  ): Either[SqsClientError, SendMessageBatchResult]
+
+  def deleteMessageBatch(
+      queueUrl: QueueUrl,
+      entries: List[DeleteMessageBatchEntry]
+  ): Either[SqsClientError, DeleteMessageBatchResult]
 
   def startMessageMoveTask(
       sourceArn: Arn,

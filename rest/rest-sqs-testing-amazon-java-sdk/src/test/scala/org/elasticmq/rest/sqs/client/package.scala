@@ -64,7 +64,7 @@ package client {
     }
   }
 
-  case class SendMessageBatchBatchEntry(
+  case class SendMessageBatchEntry(
       id: String,
       messageBody: String,
       delaySeconds: Option[Int] = None,
@@ -72,6 +72,36 @@ package client {
       messageGroupId: Option[String] = None,
       awsTraceHeader: Option[String] = None,
       messageAttributes: Map[String, MessageAttribute] = Map.empty
+  )
+
+  case class SendMessageBatchSuccessEntry(
+      id: String,
+      messageId: String,
+      md5OfMessageBody: String,
+      md5OfMessageAttributes: Option[String],
+      md5OfMessageSystemAttributes: Option[String],
+      sequenceNumber: Option[String]
+  )
+
+  case class BatchOperationErrorEntry(
+      id: String,
+      senderFault: Boolean,
+      code: String,
+      message: String
+  )
+
+  case class SendMessageBatchResult(
+      successful: List[SendMessageBatchSuccessEntry],
+      failed: List[BatchOperationErrorEntry]
+  )
+
+  case class DeleteMessageBatchEntry(id: String, receiptHandle: String)
+
+  case class DeleteMessageBatchSuccessEntry(id: String)
+
+  case class DeleteMessageBatchResult(
+      successful: List[DeleteMessageBatchSuccessEntry],
+      failed: List[BatchOperationErrorEntry]
   )
 
   case class ReceivedMessage(

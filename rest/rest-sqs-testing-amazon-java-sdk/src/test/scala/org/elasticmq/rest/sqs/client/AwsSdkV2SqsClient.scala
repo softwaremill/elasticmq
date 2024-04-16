@@ -1,7 +1,7 @@
 package org.elasticmq.rest.sqs.client
 import org.elasticmq.{BinaryMessageAttribute, MessageAttribute, NumberMessageAttribute, StringMessageAttribute}
 import software.amazon.awssdk.core.SdkBytes
-import software.amazon.awssdk.services.sqs.model.{AddPermissionRequest, CancelMessageMoveTaskRequest, CreateQueueRequest, DeleteQueueRequest, GetQueueAttributesRequest, GetQueueUrlRequest, ListMessageMoveTasksRequest, ListQueueTagsRequest, ListQueuesRequest, MessageAttributeValue, MessageSystemAttributeNameForSends, MessageSystemAttributeValue, PurgeQueueRequest, QueueDoesNotExistException, ReceiveMessageRequest, RemovePermissionRequest, ResourceNotFoundException, SendMessageBatchRequest, SendMessageBatchRequestEntry, SendMessageRequest, StartMessageMoveTaskRequest, TagQueueRequest, UnsupportedOperationException, UntagQueueRequest, MessageSystemAttributeName => SdkMessageSystemAttributeName, QueueAttributeName => AwsQueueAttributeName}
+import software.amazon.awssdk.services.sqs.model.{AddPermissionRequest, BatchResultErrorEntry, CancelMessageMoveTaskRequest, CreateQueueRequest, DeleteMessageBatchRequest, DeleteMessageBatchRequestEntry, DeleteMessageRequest, DeleteQueueRequest, GetQueueAttributesRequest, GetQueueUrlRequest, ListMessageMoveTasksRequest, ListQueueTagsRequest, ListQueuesRequest, MessageAttributeValue, MessageSystemAttributeNameForSends, MessageSystemAttributeValue, PurgeQueueRequest, QueueDoesNotExistException, ReceiveMessageRequest, RemovePermissionRequest, ResourceNotFoundException, SendMessageBatchRequest, SendMessageBatchRequestEntry, SendMessageRequest, StartMessageMoveTaskRequest, TagQueueRequest, UnsupportedOperationException, UntagQueueRequest, MessageSystemAttributeName => SdkMessageSystemAttributeName, QueueAttributeName => AwsQueueAttributeName}
 
 import scala.collection.JavaConverters._
 
@@ -91,9 +91,9 @@ class AwsSdkV2SqsClient(client: software.amazon.awssdk.services.sqs.SqsClient) e
 
   override def sendMessageBatch(
       queueUrl: QueueUrl,
-      entries: List[SendMessageBatchBatchEntry]
-  ): Either[SqsClientError, Unit] = interceptErrors {
-    client.sendMessageBatch(
+      entries: List[SendMessageBatchEntry]
+  ): Either[SqsClientError, SendMessageBatchResult] = interceptErrors {
+    val result = client.sendMessageBatch(
       SendMessageBatchRequest
         .builder()
         .queueUrl(queueUrl)
@@ -115,12 +115,66 @@ class AwsSdkV2SqsClient(client: software.amazon.awssdk.services.sqs.SqsClient) e
         )
         .build()
     )
+    SendMessageBatchResult(
+      result.successful().asScala.toList.map { entry =>
+        SendMessageBatchSuccessEntry(
+          entry.id(),
+          entry.messageId(),
+          entry.md5OfMessageBody(),
+          Option(entry.md5OfMessageAttributes()),
+          Option(entry.md5OfMessageSystemAttributes()),
+          Option(entry.sequenceNumber())
+        )
+      },
+      mapBatchResultErrorEntries(result.failed())
+    )
+  }
+
+  private def mapBatchResultErrorEntries(failed: java.util.List[BatchResultErrorEntry]) = {
+    failed.asScala.toList.map { entry =>
+      BatchOperationErrorEntry(
+        entry.id(),
+        entry.senderFault(),
+        entry.code(),
+        entry.message()
+      )
+    }
+  }
+
+  override def deleteMessageBatch(
+      queueUrl: QueueUrl,
+      entries: List[DeleteMessageBatchEntry]
+  ): Either[SqsClientError, DeleteMessageBatchResult] = interceptErrors {
+    val result = client.deleteMessageBatch(
+      DeleteMessageBatchRequest
+        .builder()
+        .queueUrl(queueUrl)
+        .entries(
+          entries
+            .map(entry =>
+              DeleteMessageBatchRequestEntry
+                .builder()
+                .id(entry.id)
+                .receiptHandle(entry.receiptHandle)
+                .build()
+            )
+            .asJava
+        )
+        .build()
+    )
+    DeleteMessageBatchResult(
+      result.successful().asScala.toList.map { entry =>
+        DeleteMessageBatchSuccessEntry(entry.id())
+      },
+      mapBatchResultErrorEntries(result.failed())
+    )
   }
 
   override def receiveMessage(
       queueUrl: QueueUrl,
       systemAttributes: List[String] = List.empty,
-      messageAttributes: List[String] = List.empty
+      messageAttributes: List[String] = List.empty,
+      maxNumberOfMessages: Option[Int] = None
   ): List[ReceivedMessage] =
     client
       .receiveMessage(
@@ -129,6 +183,7 @@ class AwsSdkV2SqsClient(client: software.amazon.awssdk.services.sqs.SqsClient) e
           .queueUrl(queueUrl)
           .attributeNamesWithStrings(systemAttributes.asJava)
           .messageAttributeNames(messageAttributes.asJava)
+          .maxNumberOfMessages(maxNumberOfMessages.map(Int.box).orNull)
           .build()
       )
       .messages()
@@ -143,6 +198,9 @@ class AwsSdkV2SqsClient(client: software.amazon.awssdk.services.sqs.SqsClient) e
           mapMessageAttributes(msg.messageAttributes())
         )
       }
+
+  override def deleteMessage(queueUrl: QueueUrl, receiptHandle: String) =
+    client.deleteMessage(DeleteMessageRequest.builder().queueUrl(queueUrl).receiptHandle(receiptHandle).build())
 
   private def mapSystemAttributes(
       attributes: java.util.Map[SdkMessageSystemAttributeName, String]

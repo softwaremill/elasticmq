@@ -1,8 +1,9 @@
-package org.elasticmq.rest.sqs
+package org.elasticmq.rest.sqs.aws
 
 import org.elasticmq.rest.sqs.client._
 import org.elasticmq.rest.sqs.model.RedrivePolicy
 import org.elasticmq.rest.sqs.model.RedrivePolicyJson.format
+import org.elasticmq.rest.sqs.{AwsConfig, SqsClientServerCommunication, SqsClientServerWithSdkV2Communication, client}
 import org.elasticmq.{BinaryMessageAttribute, MessageAttribute, NumberMessageAttribute, StringMessageAttribute}
 import org.scalatest.concurrent.Eventually
 import org.scalatest.funsuite.AnyFunSuite
@@ -23,25 +24,25 @@ abstract class AmazonJavaSdkNewTestSuite
   }
 
   test("should get queue url") {
-    // Given
+    // given
     testClient.createQueue("testQueue1")
 
-    // When
+    // when
     val queueUrl = testClient.getQueueUrl("testQueue1").toOption.get
 
-    // Then
+    // then
     queueUrl shouldEqual "http://localhost:9321/123456789012/testQueue1"
   }
 
   test("should list queues") {
-    // Given
+    // given
     testClient.createQueue("testQueue1")
     testClient.createQueue("testQueue2")
 
-    // When
+    // when
     val queueUrls = testClient.listQueues()
 
-    // Then
+    // then
     queueUrls shouldBe List(
       "http://localhost:9321/123456789012/testQueue1",
       "http://localhost:9321/123456789012/testQueue2"
@@ -49,15 +50,15 @@ abstract class AmazonJavaSdkNewTestSuite
   }
 
   test("should list queues with specified prefix") {
-    // Given
+    // given
     testClient.createQueue("aaa-testQueue1")
     testClient.createQueue("bbb-testQueue2")
     testClient.createQueue("bbb-testQueue3")
 
-    // When
+    // when
     val queueUrls = testClient.listQueues(Some("bbb"))
 
-    // Then
+    // then
     queueUrls shouldBe List(
       "http://localhost:9321/123456789012/bbb-testQueue2",
       "http://localhost:9321/123456789012/bbb-testQueue3"
@@ -133,6 +134,24 @@ abstract class AmazonJavaSdkNewTestSuite
     message.attributes shouldBe Map(AWSTraceHeader -> "abc-123")
   }
 
+  test("should return DeadLetterQueueSourceArn in receive message attributes") {
+    // given
+    testClient.createQueue("testDlq")
+    val queue = testClient.createQueue(
+      "testQueue1",
+      Map(RedrivePolicyAttributeName -> RedrivePolicy("testDlq", awsRegion, awsAccountId, 1).toJson.compactPrint)
+    )
+
+    // when
+    testClient.sendMessage(queue, "test123")
+    val receiveResult = testClient.receiveMessage(queue, List("All"))
+
+    // then
+    receiveResult.flatMap(_.attributes.toList) should contain(
+      (DeadLetterQueueSourceArn, s"arn:aws:sqs:$awsRegion:$awsAccountId:testDlq")
+    )
+  }
+
   test("should fail if message is sent to missing queue") {
     testClient.sendMessage("http://localhost:9321/123456789012/missingQueue", "test123") shouldBe Left(
       SqsClientError(QueueDoesNotExist, "The specified queue does not exist.")
@@ -140,63 +159,63 @@ abstract class AmazonJavaSdkNewTestSuite
   }
 
   test("should tag, untag and list queue tags") {
-    // Given
+    // given
     val queueUrl = testClient.createQueue("testQueue1")
 
-    // When
+    // when
     testClient.tagQueue(queueUrl, Map("tag1" -> "value1", "tag2" -> "value2"))
 
-    // Then
+    // then
     testClient.listQueueTags(queueUrl) shouldBe Map("tag1" -> "value1", "tag2" -> "value2")
 
-    // When
+    // when
     testClient.untagQueue(queueUrl, List("tag1"))
 
-    // Then
+    // then
     testClient.listQueueTags(queueUrl) shouldBe Map("tag2" -> "value2")
   }
 
   test("should add permission") {
-    // Given
+    // given
     val queueUrl = testClient.createQueue("testQueue1")
 
-    // Expect
+    // expect
     testClient.addPermission(queueUrl, "l", List(awsAccountId), List("get"))
   }
 
   test("should remove permission") {
-    // Given
+    // given
     val queueUrl = testClient.createQueue("testQueue1")
     testClient.addPermission(queueUrl, "l", List(awsAccountId), List("get"))
 
-    // Expect
+    // expect
     testClient.removePermission(queueUrl, "l")
   }
 
   test("should delete queue") {
-    // Given
+    // given
     val queueUrl = testClient.createQueue("testQueue1")
 
-    // When
+    // when
     testClient.deleteQueue(queueUrl)
 
-    // Then
+    // then
     eventually(timeout(5.seconds), interval(100.millis)) {
       testClient.listQueues() shouldBe empty
     }
   }
 
   test("should purge queue") {
-    // Given
+    // given
     val queueUrl = testClient.createQueue("testQueue1")
     testClient.sendMessage(queueUrl, "test123")
     testClient.sendMessage(queueUrl, "test234")
     testClient.sendMessage(queueUrl, "test345")
 
-    // When
+    // when
     testClient.purgeQueue(queueUrl)
 
-    // Then
+    // then
     eventually(timeout(5.seconds), interval(100.millis)) {
       testClient
         .getQueueAttributes(queueUrl, ApproximateNumberOfMessagesAttributeName)(
@@ -206,22 +225,65 @@ abstract class AmazonJavaSdkNewTestSuite
     }
   }
 
-  test("should return DeadLetterQueueSourceArn in receive message attributes") {
-    // Given
-    testClient.createQueue("testDlq")
-    val queue = testClient.createQueue(
-      "testQueue1",
-      Map(RedrivePolicyAttributeName -> RedrivePolicy("testDlq", awsRegion, awsAccountId, 1).toJson.compactPrint)
-    )
+  test("should send message batch") {
+    // given
+    val queueUrl = testClient.createQueue("testQueue1")
 
-    // When
-    testClient.sendMessage(queue, "test123")
-    val receiveResult = testClient.receiveMessage(queue, List("All"))
+    // when
+    val response = testClient
+      .sendMessageBatch(queueUrl, List(SendMessageBatchEntry("1", "test123"), SendMessageBatchEntry("2", "")))
+      .toOption
+      .get
 
-    // Then
-    receiveResult.flatMap(_.attributes.toList) should contain(
-      (DeadLetterQueueSourceArn, s"arn:aws:sqs:$awsRegion:$awsAccountId:testDlq")
-    )
+    // then
+    response.successful should have size 1
+    response.successful.head.id shouldBe "1"
+    response.successful.head.messageId should not be empty
+    response.successful.head.md5OfMessageBody should not be empty
+
+    response.failed should have size 1
+    response.failed.head.id shouldBe "2"
+    response.failed.head.senderFault shouldBe true
+    response.failed.head.code shouldBe "InvalidAttributeValue"
+    response.failed.head.message shouldBe "The request must contain the parameter MessageBody."
+  }
+
+  test("should delete message") {
+    // given
+    val queueUrl = testClient.createQueue("testQueue1")
+    testClient.sendMessage(queueUrl, "test123")
+    val message = testClient.receiveMessage(queueUrl).head
+
+    // when
+    testClient.deleteMessage(queueUrl, message.receiptHandle)
+
+    // then
+    eventually(timeout(5.seconds), interval(100.millis)) {
+      val attrs = testClient.getQueueAttributes(queueUrl, AllAttributeNames)
+      attrs(ApproximateNumberOfMessagesAttributeName.value).toInt shouldBe 0
+      attrs(ApproximateNumberOfMessagesNotVisibleAttributeName.value).toInt shouldBe 0
+    }
+  }
+
+  test("should delete message batch") {
+    // given
+    val queueUrl = testClient.createQueue("testQueue1")
+    testClient.sendMessage(queueUrl, "test123")
+    testClient.sendMessage(queueUrl, "test234")
+    testClient.sendMessage(queueUrl, "test345")
+    val messages = testClient.receiveMessage(queueUrl, maxNumberOfMessages = Some(3))
+
+    // then
+    messages should have size 3
+
+    // when
+    val result =
+      testClient.deleteMessageBatch(queueUrl, messages.slice(0, 2).map(m => DeleteMessageBatchEntry(m.messageId, m.receiptHandle))).toOption.get
+
+    // then
+    result.successful should have size 2
+    result.successful.map(_.id) shouldBe List(messages.head.messageId, messages(1).messageId)
+    result.failed shouldBe empty
   }
 
   private def doTestSendAndReceiveMessageWithAttributes(
@@ -231,12 +293,12 @@ abstract class AmazonJavaSdkNewTestSuite
       awsTraceHeader: Option[String] = None,
       requestedSystemAttributes: List[String] = List.empty
   ) = {
-    // Given
+    // given
     val queue = testClient.createQueue("testQueue1")
     testClient.sendMessage(queue, content, messageAttributes, awsTraceHeader)
     val message = receiveSingleMessageObject(queue, requestedAttributes, requestedSystemAttributes).orNull
 
-    // Then
+    // then
     message.body shouldBe content
     checkMessageAttributesMatchRequestedAttributes(messageAttributes, requestedAttributes, message)
 
