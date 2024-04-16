@@ -190,7 +190,7 @@ class AwsSdkV1SqsClient(client: AmazonSQS) extends SqsClient {
 
   private def mapAwsTraceHeader(awsTraceHeader: Option[MessageMoveTaskStatus]) = {
     awsTraceHeader
-      .map(header => Map("AWSTraceHeader" -> new MessageSystemAttributeValue().withStringValue(header)).asJava)
+      .map(header => Map("AWSTraceHeader" -> new MessageSystemAttributeValue().withStringValue(header).withDataType("String")).asJava)
       .orNull
   }
 
