@@ -1,8 +1,11 @@
 package org.elasticmq.rest.sqs.client
 
 import com.amazonaws.services.sqs.AmazonSQS
-import com.amazonaws.services.sqs.model.{CancelMessageMoveTaskRequest, CreateQueueRequest, GetQueueAttributesRequest, ListMessageMoveTasksRequest, QueueDoesNotExistException, ReceiveMessageRequest, ResourceNotFoundException, SendMessageRequest, StartMessageMoveTaskRequest, UnsupportedOperationException}
+import com.amazonaws.services.sqs.model.{BatchResultErrorEntry, CancelMessageMoveTaskRequest, ChangeMessageVisibilityBatchRequest, ChangeMessageVisibilityBatchRequestEntry, CreateQueueRequest, DeleteMessageBatchRequest, DeleteMessageBatchRequestEntry, GetQueueAttributesRequest, GetQueueUrlRequest, ListDeadLetterSourceQueuesRequest, ListMessageMoveTasksRequest, MessageAttributeValue, MessageSystemAttributeValue, PurgeQueueRequest, QueueDoesNotExistException, ReceiveMessageRequest, ResourceNotFoundException, SendMessageBatchRequest, SendMessageBatchRequestEntry, SendMessageRequest, StartMessageMoveTaskRequest, UnsupportedOperationException}
+import org.elasticmq._
 
+import java.nio.ByteBuffer
+import java.util
 import scala.collection.JavaConverters._
 
 class AwsSdkV1SqsClient(client: AmazonSQS) extends SqsClient {
@@ -21,19 +24,247 @@ class AwsSdkV1SqsClient(client: AmazonSQS) extends SqsClient {
     )
     .getQueueUrl
 
+  override def getQueueUrl(queueName: String): Either[SqsClientError, QueueUrl] = interceptErrors {
+    client
+      .getQueueUrl(
+        new GetQueueUrlRequest()
+          .withQueueName(queueName)
+      )
+      .getQueueUrl
+  }
+
+  override def purgeQueue(
+      queueUrl: QueueUrl
+  ): Either[SqsClientError, Unit] = interceptErrors {
+    client.purgeQueue(new PurgeQueueRequest().withQueueUrl(queueUrl))
+  }
+
+  override def deleteQueue(
+      queueUrl: QueueUrl
+  ): Either[SqsClientError, Unit] = interceptErrors {
+    client.deleteQueue(queueUrl)
+  }
+
   override def sendMessage(
       queueUrl: QueueUrl,
-      messageBody: String
-  ): Unit = client.sendMessage(
-    new SendMessageRequest()
-      .withQueueUrl(queueUrl)
-      .withMessageBody(messageBody)
-  )
+      messageBody: String,
+      messageAttributes: Map[String, MessageAttribute] = Map.empty,
+      awsTraceHeader: Option[String] = None
+  ): Either[SqsClientError, Unit] = interceptErrors {
+    client.sendMessage(
+      new SendMessageRequest()
+        .withQueueUrl(queueUrl)
+        .withMessageBody(messageBody)
+        .withMessageSystemAttributes(
+          mapAwsTraceHeader(awsTraceHeader)
+        )
+        .withMessageAttributes(mapMessageAttributes(messageAttributes))
+    )
+  }
 
-  override def receiveMessage(queueUrl: QueueUrl): List[ReceivedMessage] =
-    client.receiveMessage(new ReceiveMessageRequest().withQueueUrl(queueUrl)).getMessages.asScala.toList.map { msg =>
-      ReceivedMessage(msg.getMessageId, msg.getReceiptHandle, msg.getBody)
+  override def sendMessageBatch(
+      queueUrl: QueueUrl,
+      entries: List[SendMessageBatchEntry]
+  ): Either[SqsClientError, SendMessageBatchResult] = interceptErrors {
+    val result = client.sendMessageBatch(
+      new SendMessageBatchRequest()
+        .withQueueUrl(queueUrl)
+        .withEntries(
+          entries
+            .map(entry =>
+              new SendMessageBatchRequestEntry()
+                .withId(entry.id)
+                .withMessageBody(entry.messageBody)
+                .withDelaySeconds(entry.delaySeconds.map(Int.box).orNull)
+                .withMessageDeduplicationId(entry.messageDeduplicationId.orNull)
+                .withMessageGroupId(entry.messageGroupId.orNull)
+                .withMessageSystemAttributes(mapAwsTraceHeader(entry.awsTraceHeader))
+                .withMessageAttributes(mapMessageAttributes(entry.messageAttributes))
+            )
+            .asJava
+        )
+    )
+    SendMessageBatchResult(
+      result.getSuccessful.asScala.map { entry =>
+        SendMessageBatchSuccessEntry(
+          entry.getId,
+          entry.getMessageId,
+          entry.getMD5OfMessageBody,
+          Option(entry.getMD5OfMessageAttributes),
+          Option(entry.getMD5OfMessageSystemAttributes),
+          Option(entry.getSequenceNumber)
+        )
+      }.toList,
+      mapBatchResultErrorEntries(result.getFailed)
+    )
+  }
+
+  override def deleteMessageBatch(
+      queueUrl: QueueUrl,
+      entries: List[DeleteMessageBatchEntry]
+  ): Either[
+    SqsClientError,
+    DeleteMessageBatchResult
+  ] = interceptErrors {
+    val result = client.deleteMessageBatch(
+      new DeleteMessageBatchRequest()
+        .withQueueUrl(queueUrl)
+        .withEntries(
+          entries
+            .map(entry =>
+              new DeleteMessageBatchRequestEntry()
+                .withId(entry.id)
+                .withReceiptHandle(entry.receiptHandle)
+            )
+            .asJava
+        )
+    )
+    DeleteMessageBatchResult(
+      result.getSuccessful.asScala.map { entry =>
+        DeleteMessageBatchSuccessEntry(entry.getId)
+      }.toList,
+      mapBatchResultErrorEntries(result.getFailed)
+    )
+  }
+
+  private def mapBatchResultErrorEntries(
+      failed: util.List[BatchResultErrorEntry]
+  ) = {
+    failed.asScala.map { entry =>
+      BatchOperationErrorEntry(
+        entry.getId,
+        entry.isSenderFault,
+        entry.getCode,
+        entry.getMessage
+      )
+    }.toList
+  }
+
+  override def deleteMessage(
+      queueUrl: QueueUrl,
+      receiptHandle: MessageMoveTaskStatus
+  ): Unit = client.deleteMessage(queueUrl, receiptHandle)
+
+  override def changeMessageVisibility(
+      queueUrl: QueueUrl,
+      receiptHandle: MessageMoveTaskStatus,
+      visibilityTimeout: Int
+  ): Unit = client.changeMessageVisibility(queueUrl, receiptHandle, visibilityTimeout)
+
+  override def changeMessageVisibilityBatch(
+      queueUrl: QueueUrl,
+      entries: List[
+        ChangeMessageVisibilityBatchEntry
+      ]
+  ): Either[
+    SqsClientError,
+    ChangeMessageVisibilityBatchResult
+  ] = interceptErrors {
+    val result = client.changeMessageVisibilityBatch(
+      new ChangeMessageVisibilityBatchRequest()
+        .withQueueUrl(queueUrl)
+        .withEntries(
+          entries
+            .map(entry =>
+              new ChangeMessageVisibilityBatchRequestEntry()
+                .withId(entry.id)
+                .withReceiptHandle(entry.receiptHandle)
+                .withVisibilityTimeout(entry.visibilityTimeout)
+            )
+            .asJava
+        )
+    )
+    ChangeMessageVisibilityBatchResult(
+      result.getSuccessful.asScala.map { entry =>
+        ChangeMessageVisibilityBatchSuccessEntry(entry.getId)
+      }.toList,
+      mapBatchResultErrorEntries(result.getFailed)
+    )
+  }
+
+  override def listDeadLetterSourceQueues(queueUrl: QueueUrl): List[QueueUrl] = client
+    .listDeadLetterSourceQueues(new ListDeadLetterSourceQueuesRequest().withQueueUrl(queueUrl))
+    .getQueueUrls
+    .asScala
+    .toList
+
+  private def mapAwsTraceHeader(awsTraceHeader: Option[MessageMoveTaskStatus]) = {
+    awsTraceHeader
+      .map(header => Map("AWSTraceHeader" -> new MessageSystemAttributeValue().withStringValue(header).withDataType("String")).asJava)
+      .orNull
+  }
+
+  private def mapMessageAttributes(
+      messageAttributes: Map[
+        MessageMoveTaskStatus,
+        MessageAttribute
+      ]
+  ) = {
+    messageAttributes.map {
+      case (k, v: StringMessageAttribute) =>
+        k -> new MessageAttributeValue().withDataType(v.getDataType()).withStringValue(v.stringValue)
+      case (k, v: NumberMessageAttribute) =>
+        k -> new MessageAttributeValue().withDataType(v.getDataType()).withStringValue(v.stringValue)
+      case (k, v: BinaryMessageAttribute) =>
+        k -> new MessageAttributeValue()
+          .withDataType(v.getDataType())
+          .withBinaryValue(ByteBuffer.wrap(v.binaryValue.toArray))
+    }.asJava
+  }
+
+  override def receiveMessage(
+      queueUrl: QueueUrl,
+      systemAttributes: List[String] = List.empty,
+      messageAttributes: List[String] = List.empty,
+      maxNumberOfMessages: Option[Int] = None
+  ): List[ReceivedMessage] = {
+    client
+      .receiveMessage(
+        new ReceiveMessageRequest()
+          .withQueueUrl(queueUrl)
+          .withAttributeNames(systemAttributes.asJava)
+          .withMessageAttributeNames(messageAttributes.asJava)
+          .withMaxNumberOfMessages(maxNumberOfMessages.map(Int.box).orNull)
+      )
+      .getMessages
+      .asScala
+      .toList
+      .map { msg =>
+        ReceivedMessage(
+          msg.getMessageId,
+          msg.getReceiptHandle,
+          msg.getBody,
+          mapSystemAttributes(msg.getAttributes),
+          mapMessageAttributes(msg.getMessageAttributes)
+        )
+      }
+  }
+
+  private def mapSystemAttributes(
+      attributes: java.util.Map[String, String]
+  ): Map[MessageSystemAttributeName, String] = {
+    attributes.asScala.toMap.map { case (k, v) => (MessageSystemAttributeName.from(k), v) }
+  }
+
+  private def mapMessageAttributes(
+      attributes: java.util.Map[String, MessageAttributeValue]
+  ): Map[String, MessageAttribute] = {
+    attributes.asScala.toMap.map { case (k, v) => (k, mapMessageAttribute(v)) }
+  }
+
+  private def mapMessageAttribute(attr: MessageAttributeValue): MessageAttribute = {
+    if (attr.getDataType.equals("String") && attr.getStringValue != null) {
+      StringMessageAttribute(attr.getStringValue)
+    } else if (attr.getDataType.startsWith("String.") && attr.getStringValue != null) {
+      StringMessageAttribute(attr.getStringValue, Some(attr.getDataType.stripPrefix("String.")))
+    } else if (attr.getDataType.equals("Number") && attr.getStringValue != null) {
+      NumberMessageAttribute(attr.getStringValue)
+    } else if (attr.getDataType.startsWith("Number.") && attr.getStringValue != null) {
+      NumberMessageAttribute(attr.getStringValue, Some(attr.getDataType.stripPrefix("Number.")))
+    } else {
+      BinaryMessageAttribute.fromByteBuffer(attr.getBinaryValue)
     }
+  }
 
   override def getQueueAttributes(
       queueUrl: QueueUrl,
@@ -47,6 +278,26 @@ class AwsSdkV1SqsClient(client: AmazonSQS) extends SqsClient {
     .getAttributes
     .asScala
     .toMap
+
+  override def tagQueue(queueUrl: QueueUrl, tags: Map[String, String]): Unit = {
+    client.tagQueue(queueUrl, tags.asJava)
+  }
+
+  override def untagQueue(queueUrl: QueueUrl, tagKeys: List[String]): Unit = {
+    client.untagQueue(queueUrl, tagKeys.asJava)
+  }
+
+  override def listQueueTags(
+      queueUrl: QueueUrl
+  ): Map[String, String] = client.listQueueTags(queueUrl).getTags.asScala.toMap
+
+  override def listQueues(
+      prefix: Option[String]
+  ): List[QueueUrl] = client
+    .listQueues(prefix.orNull)
+    .getQueueUrls
+    .asScala
+    .toList
 
   override def startMessageMoveTask(
       sourceArn: Arn,
@@ -97,6 +348,18 @@ class AwsSdkV1SqsClient(client: AmazonSQS) extends SqsClient {
       .cancelMessageMoveTask(new CancelMessageMoveTaskRequest().withTaskHandle(taskHandle))
       .getApproximateNumberOfMessagesMoved
   }
+
+  override def addPermission(
+      queueUrl: QueueUrl,
+      label: MessageMoveTaskStatus,
+      awsAccountIds: List[MessageMoveTaskStatus],
+      actions: List[MessageMoveTaskStatus]
+  ): Unit = client.addPermission(queueUrl, label, awsAccountIds.asJava, actions.asJava)
+
+  override def removePermission(
+      queueUrl: QueueUrl,
+      label: MessageMoveTaskStatus
+  ): Unit = client.removePermission(queueUrl, label)
 
   private def interceptErrors[T](f: => T): Either[SqsClientError, T] = {
     try {

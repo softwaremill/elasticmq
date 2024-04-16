@@ -335,7 +335,7 @@ class AmazonJavaSdkTestSuite extends SqsClientServerCommunication with Matchers 
       v match {
         case s: StringMessageAttribute => attr.setStringValue(s.stringValue)
         case n: NumberMessageAttribute => attr.setStringValue(n.stringValue)
-        case b: BinaryMessageAttribute => attr.setBinaryValue(ByteBuffer.wrap(b.binaryValue))
+        case b: BinaryMessageAttribute => attr.setBinaryValue(ByteBuffer.wrap(b.binaryValue.toArray))
       }
 
       message.addMessageAttributesEntry(k, attr)

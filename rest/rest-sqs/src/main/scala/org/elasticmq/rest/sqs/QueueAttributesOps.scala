@@ -98,7 +98,12 @@ trait QueueAttributesOps extends AttributesModule with AwsConfiguration {
       }
 
       val rules = alwaysAvailableParameterRules ++ optionalRules.flatten ++ fifoRules
-      attributeValuesCalculator.calculate(attributeNames, rules: _*)
+      val attributeNamesToReturn = if (attributeNames.contains("All")) {
+        QueueReadableAttributeNames.AllAttributeNames
+      } else {
+        attributeNames
+      }
+      attributeValuesCalculator.calculate(attributeNamesToReturn, rules: _*)
     }
 
     Future.sequence(calculateAttributeValues(attributeNames).map(p => p._2.map((p._1, _))))
