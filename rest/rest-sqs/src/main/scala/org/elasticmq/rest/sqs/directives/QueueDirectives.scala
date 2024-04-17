@@ -33,22 +33,33 @@ trait QueueDirectives {
 
   protected def getQueueNameFromQueueUrl(queueUrl: String): Directive1[String] = {
 
-    val matcher =
+    val defaultMatcher =
       if (contextPath.nonEmpty) {
         val pathWithContext = separateOnSlashes(contextPath) / AccountIdRegex / "[^/]+".r
         Slash ~ pathWithContext | pathWithContext
       } else
         Slash ~ AccountIdRegex / "[^/]+".r
 
-    matcher(Uri(queueUrl).path) match {
+    val noAccountIdMatcher =
+      if (contextPath.nonEmpty) {
+        val pathWithContext = separateOnSlashes(contextPath) / "[^/]+".r
+        Slash ~ pathWithContext | pathWithContext
+      } else
+        Slash ~ "[^/]+".r
+
+    defaultMatcher(Uri(queueUrl).path) match {
       case Matched(_, (_, queueName)) => provide(queueName): Directive1[String]
       case Unmatched =>
-        reject(
-          MalformedQueryParamRejection(
-            QueueUrlParameter,
-            "Invalid queue url, the path should be /<accountId>/<queueName> where accountId must match " + AccountIdRegex + " regex"
-          )
-        )
+        noAccountIdMatcher(Uri(queueUrl).path) match {
+          case Matched(_, Tuple1(queueName)) => provide(queueName)
+          case Unmatched =>
+            reject(
+              MalformedQueryParamRejection(
+                QueueUrlParameter,
+                "Invalid queue url, the path should be /<accountId>/<queueName> or /<queueName>"
+              )
+            )
+        }
     }
   }
 

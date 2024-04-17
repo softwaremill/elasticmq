@@ -41,10 +41,10 @@ trait MessageAttributesSupport {
           pickFieldRaw("BinaryValue") match {
             case arr: JsArray  => BinaryMessageAttribute(arr.convertTo[Array[Byte]], customType(ct))
             case str: JsString => BinaryMessageAttribute.fromBase64(str.convertTo[String], customType(ct))
-            case any: Any => throw SQSException.invalidParameter(s"Field BinaryValue has unsupported type $any")
+            case any: Any      => throw SQSException.invalidParameter(s"Field BinaryValue has unsupported type $any")
           }
         case _ =>
-          throw new Exception("Currently only handles String, Number and Binary typed attributes")
+          throw SQSException.invalidParameter("Currently only handles String, Number and Binary typed attributes")
       }
     }
 
