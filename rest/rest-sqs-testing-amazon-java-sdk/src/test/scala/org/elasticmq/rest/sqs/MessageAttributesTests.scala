@@ -38,7 +38,7 @@ class MessageAttributesTests extends SqsClientServerCommunication with Matchers 
         .addMessageAttributesEntry("attribute1", new MessageAttributeValue().withStringValue("value").withDataType(""))
     )
 
-    ex.getMessage should include("Attribute 'attribute1' must contain a non-empty attribute type")
+    ex.getMessage should include("Currently only handles String, Number and Binary typed attributes")
   }
 
   test(
