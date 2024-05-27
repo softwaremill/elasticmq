@@ -72,9 +72,9 @@ class AwsSdkV1SqsClient(client: AmazonSQS) extends SqsClient {
       queueUrl: QueueUrl,
       messageBody: String,
       messageAttributes: Map[String, MessageAttribute] = Map.empty,
+      awsTraceHeader: Option[String] = None,
       messageGroupId: Option[String] = None,
-      messageDeduplicationId: Option[String] = None,
-      awsTraceHeader: Option[String] = None
+      messageDeduplicationId: Option[String] = None
   ): Either[SqsClientError, Unit] = interceptErrors {
     client.sendMessage(
       new SendMessageRequest()
