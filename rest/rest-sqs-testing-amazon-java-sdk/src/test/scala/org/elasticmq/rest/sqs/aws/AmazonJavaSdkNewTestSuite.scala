@@ -363,6 +363,29 @@ abstract class AmazonJavaSdkNewTestSuite
     result should contain theSameElementsAs Set(queue1Url, queue2Url, queue4Url)
   }
 
+  test("should receive system all attributes") {
+    // given
+    val queueUrl = testClient.createQueue(
+      "testQueue2.fifo",
+      Map(FifoQueueAttributeName -> "true", ContentBasedDeduplicationAttributeName -> "false")
+    )
+    testClient.sendMessage(
+      queueUrl,
+      "test123",
+      messageGroupId = Option("gp1"),
+      messageDeduplicationId = Option("dup1")
+    )
+
+    // when
+    val messages = testClient.receiveMessage(queueUrl, systemAttributes = List("All"))
+
+    // then
+    messages should have size 1
+    val messageAttributes = messages.head.attributes
+    messageAttributes(MessageDeduplicationId) shouldBe "dup1"
+    messageAttributes(MessageGroupId) shouldBe "gp1"
+  }
+
   private def doTestSendAndReceiveMessageWithAttributes(
       content: String,
       messageAttributes: Map[String, MessageAttribute] = Map.empty,

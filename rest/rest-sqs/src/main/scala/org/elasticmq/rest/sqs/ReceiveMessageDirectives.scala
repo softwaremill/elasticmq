@@ -94,11 +94,12 @@ trait ReceiveMessageDirectives {
         )
 
         val attributeNames = requestParameters.AttributeNames.getOrElse(List.empty)
+        val systemAttributeNames = requestParameters.MessageSystemAttributeNames.getOrElse(List.empty)
         def calculateAttributeValues(msg: MessageData): List[(String, String)] = {
           import AttributeValuesCalculator.Rule
 
           possiblyEmptyAttributeValuesCalculator.calculate[String](
-            attributeNames,
+            attributeNames ++ systemAttributeNames,
             Rule(SenderIdAttribute, () => Some("127.0.0.1")),
             Rule(SentTimestampAttribute, () => Some(msg.created.toInstant.toEpochMilli.toString)),
             Rule(ApproximateReceiveCountAttribute, () => Some(msg.statistics.approximateReceiveCount.toString)),
@@ -158,6 +159,7 @@ trait ReceiveMessageDirectives {
 
   case class ReceiveMessageActionRequest(
       AttributeNames: Option[List[String]],
+      MessageSystemAttributeNames: Option[List[String]],
       MaxNumberOfMessages: Option[Int],
       MessageAttributeNames: Option[List[String]],
       QueueUrl: String,
@@ -169,6 +171,7 @@ trait ReceiveMessageDirectives {
   object ReceiveMessageActionRequest {
     def apply(
         AttributeNames: Option[List[String]],
+        MessageSystemAttributeNames: Option[List[String]],
         MaxNumberOfMessages: Option[Int],
         MessageAttributeNames: Option[List[String]],
         QueueUrl: String,
@@ -179,6 +182,9 @@ trait ReceiveMessageDirectives {
       new ReceiveMessageActionRequest(
         AttributeNames =
           AttributeNames.map(atr => if (atr.contains("All")) MessageReadeableAttributeNames.AllAttributeNames else atr),
+        MessageSystemAttributeNames = MessageSystemAttributeNames.map(atr =>
+          if (atr.contains("All")) MessageReadeableAttributeNames.AllAttributeNames else atr
+        ),
         MaxNumberOfMessages = MaxNumberOfMessages,
         MessageAttributeNames = MessageAttributeNames,
         QueueUrl = QueueUrl,
@@ -188,7 +194,7 @@ trait ReceiveMessageDirectives {
       )
     }
 
-    implicit val requestJsonFormat: RootJsonFormat[ReceiveMessageActionRequest] = jsonFormat7(
+    implicit val requestJsonFormat: RootJsonFormat[ReceiveMessageActionRequest] = jsonFormat8(
       ReceiveMessageActionRequest.apply
     )
 
@@ -196,6 +202,7 @@ trait ReceiveMessageDirectives {
       new FlatParamsReader[ReceiveMessageActionRequest] {
         override def read(params: Map[String, String]): ReceiveMessageActionRequest = {
           val attributeNames = attributeNamesReader.read(params, MessageReadeableAttributeNames.AllAttributeNames)
+          val systemAttributeNames = attributeNamesReader.read(params, MessageReadeableAttributeNames.AllAttributeNames)
           val maxNumberOfMessages = params.get(MessageReadeableAttributeNames.MaxNumberOfMessagesAttribute).map(_.toInt)
           val messageAttributeNames = getMessageAttributeNames(params).toList
           val queueUrl = requiredParameter(params)(QueueUrlParameter)
@@ -204,6 +211,7 @@ trait ReceiveMessageDirectives {
           val waitTimeSeconds = params.get(MessageReadeableAttributeNames.WaitTimeSecondsAttribute).map(_.toLong)
           ReceiveMessageActionRequest(
             Some(attributeNames),
+            Some(systemAttributeNames),
             maxNumberOfMessages,
             Some(messageAttributeNames),
             queueUrl,
