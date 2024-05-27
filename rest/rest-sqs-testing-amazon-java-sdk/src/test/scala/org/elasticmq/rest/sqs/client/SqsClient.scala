@@ -18,6 +18,8 @@ trait SqsClient {
       queueUrl: QueueUrl,
       messageBody: String,
       messageAttributes: Map[String, MessageAttribute] = Map.empty,
+      messageGroupId: Option[String] = None,
+      messageDeduplicationId: Option[String] = None,
       awsTraceHeader: Option[String] = None
   ): Either[SqsClientError, Unit]
 

@@ -41,6 +41,8 @@ class AwsSdkV2SqsClient(client: software.amazon.awssdk.services.sqs.SqsClient) e
       queueUrl: QueueUrl,
       messageBody: String,
       messageAttributes: Map[String, MessageAttribute] = Map.empty,
+      messageGroupId: Option[String] = None,
+      messageDeduplicationId: Option[String] = None,
       awsTraceHeader: Option[String] = None
   ): Either[SqsClientError, Unit] = interceptErrors {
     client.sendMessage(
@@ -50,6 +52,8 @@ class AwsSdkV2SqsClient(client: software.amazon.awssdk.services.sqs.SqsClient) e
         .messageBody(messageBody)
         .messageSystemAttributes(mapAwsTraceHeader(awsTraceHeader))
         .messageAttributes(mapMessageAttributes(messageAttributes))
+        .messageGroupId(messageGroupId.orNull)
+        .messageDeduplicationId(messageDeduplicationId.orNull)
         .build()
     )
   }
@@ -181,7 +185,7 @@ class AwsSdkV2SqsClient(client: software.amazon.awssdk.services.sqs.SqsClient) e
         ReceiveMessageRequest
           .builder()
           .queueUrl(queueUrl)
-          .attributeNamesWithStrings(systemAttributes.asJava)
+          .messageSystemAttributeNames(systemAttributes.map(SdkMessageSystemAttributeName.fromValue).asJava)
           .messageAttributeNames(messageAttributes.asJava)
           .maxNumberOfMessages(maxNumberOfMessages.map(Int.box).orNull)
           .build()
