@@ -386,6 +386,17 @@ abstract class AmazonJavaSdkNewTestSuite
     messageAttributes(MessageGroupId) shouldBe "gp1"
   }
 
+  test("should not fail when receiving messages from empty queue") {
+    // given
+    val queueUrl = testClient.createQueue("testQueue1")
+
+    // when
+    val messages = testClient.receiveMessage(queueUrl)
+
+    // then
+    messages should have size 0
+  }
+
   private def doTestSendAndReceiveMessageWithAttributes(
       content: String,
       messageAttributes: Map[String, MessageAttribute] = Map.empty,
