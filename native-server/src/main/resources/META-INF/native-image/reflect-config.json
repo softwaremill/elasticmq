@@ -750,6 +750,11 @@
   "allPublicMethods":true
 },
 {
+  "name":"org.elasticmq.persistence.sql.SerializableAttribute",
+  "allDeclaredFields":true,
+  "queryAllPublicMethods":true
+},
+{
   "name":"org.elasticmq.persistence.sql.package$SerializableAttribute",
   "allDeclaredFields":true,
   "allPublicMethods":true
