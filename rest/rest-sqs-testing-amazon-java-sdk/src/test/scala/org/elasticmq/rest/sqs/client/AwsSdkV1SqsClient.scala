@@ -1,30 +1,7 @@
 package org.elasticmq.rest.sqs.client
 
 import com.amazonaws.services.sqs.AmazonSQS
-import com.amazonaws.services.sqs.model.{
-  BatchResultErrorEntry,
-  CancelMessageMoveTaskRequest,
-  ChangeMessageVisibilityBatchRequest,
-  ChangeMessageVisibilityBatchRequestEntry,
-  CreateQueueRequest,
-  DeleteMessageBatchRequest,
-  DeleteMessageBatchRequestEntry,
-  GetQueueAttributesRequest,
-  GetQueueUrlRequest,
-  ListDeadLetterSourceQueuesRequest,
-  ListMessageMoveTasksRequest,
-  MessageAttributeValue,
-  MessageSystemAttributeValue,
-  PurgeQueueRequest,
-  QueueDoesNotExistException,
-  ReceiveMessageRequest,
-  ResourceNotFoundException,
-  SendMessageBatchRequest,
-  SendMessageBatchRequestEntry,
-  SendMessageRequest,
-  StartMessageMoveTaskRequest,
-  UnsupportedOperationException
-}
+import com.amazonaws.services.sqs.model.{BatchResultErrorEntry, CancelMessageMoveTaskRequest, ChangeMessageVisibilityBatchRequest, ChangeMessageVisibilityBatchRequestEntry, CreateQueueRequest, DeleteMessageBatchRequest, DeleteMessageBatchRequestEntry, GetQueueAttributesRequest, GetQueueUrlRequest, ListDeadLetterSourceQueuesRequest, ListMessageMoveTasksRequest, MessageAttributeValue, MessageSystemAttributeValue, PurgeQueueRequest, QueueDoesNotExistException, ReceiveMessageRequest, ResourceNotFoundException, SendMessageBatchRequest, SendMessageBatchRequestEntry, SendMessageRequest, StartMessageMoveTaskRequest, UnsupportedOperationException}
 import org.elasticmq._
 
 import java.nio.ByteBuffer
@@ -70,16 +47,21 @@ class AwsSdkV1SqsClient(client: AmazonSQS) extends SqsClient {
 
   override def sendMessage(
       queueUrl: QueueUrl,
-      messageBody: String,
-      messageAttributes: Map[String, MessageAttribute] = Map.empty,
-      awsTraceHeader: Option[String] = None,
-      messageGroupId: Option[String] = None,
-      messageDeduplicationId: Option[String] = None
+      messageBody: MessageMoveTaskStatus,
+      delaySeconds: Option[Int] = None,
+      messageAttributes: Map[
+        MessageMoveTaskStatus,
+        MessageAttribute
+      ] = Map.empty,
+      awsTraceHeader: Option[MessageMoveTaskStatus] = None,
+      messageGroupId: Option[MessageMoveTaskStatus] = None,
+      messageDeduplicationId: Option[MessageMoveTaskStatus] = None
   ): Either[SqsClientError, Unit] = interceptErrors {
     client.sendMessage(
       new SendMessageRequest()
         .withQueueUrl(queueUrl)
         .withMessageBody(messageBody)
+        .withDelaySeconds(delaySeconds.map(Int.box).orNull)
         .withMessageSystemAttributes(
           mapAwsTraceHeader(awsTraceHeader)
         )

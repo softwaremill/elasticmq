@@ -16,11 +16,15 @@ trait SqsClient {
 
   def sendMessage(
       queueUrl: QueueUrl,
-      messageBody: String,
-      messageAttributes: Map[String, MessageAttribute] = Map.empty,
-      awsTraceHeader: Option[String] = None,
-      messageGroupId: Option[String] = None,
-      messageDeduplicationId: Option[String] = None
+      messageBody: MessageMoveTaskStatus,
+      delaySeconds: Option[Int] = None,
+      messageAttributes: Map[
+        MessageMoveTaskStatus,
+        MessageAttribute
+      ] = Map.empty,
+      awsTraceHeader: Option[MessageMoveTaskStatus] = None,
+      messageGroupId: Option[MessageMoveTaskStatus] = None,
+      messageDeduplicationId: Option[MessageMoveTaskStatus] = None
   ): Either[SqsClientError, Unit]
 
   def receiveMessage(
