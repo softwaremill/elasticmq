@@ -386,6 +386,25 @@ abstract class AmazonJavaSdkNewTestSuite
     messageAttributes(MessageGroupId) shouldBe "gp1"
   }
 
+  test("should ignore zero delay seconds on message level with fifo queue") {
+    // given
+    val queueUrl =
+      testClient.createQueue("testQueue1.fifo", Map(FifoQueueAttributeName -> "true", DelaySecondsAttributeName -> "5"))
+    testClient.sendMessage(
+      queueUrl,
+      "test123",
+      delaySeconds = Some(0),
+      messageGroupId = Option("group1"),
+      messageDeduplicationId = Option("dedup1")
+    )
+
+    // when
+    val messages = testClient.receiveMessage(queueUrl)
+
+    // then
+    messages shouldBe empty
+  }
+
   private def doTestSendAndReceiveMessageWithAttributes(
       content: String,
       messageAttributes: Map[String, MessageAttribute] = Map.empty,
@@ -395,7 +414,7 @@ abstract class AmazonJavaSdkNewTestSuite
   ) = {
     // given
     val queue = testClient.createQueue("testQueue1")
-    testClient.sendMessage(queue, content, messageAttributes, awsTraceHeader)
+    testClient.sendMessage(queue, content, messageAttributes = messageAttributes, awsTraceHeader = awsTraceHeader)
     val message = receiveSingleMessageObject(queue, requestedAttributes, requestedSystemAttributes).orNull
 
     // then
