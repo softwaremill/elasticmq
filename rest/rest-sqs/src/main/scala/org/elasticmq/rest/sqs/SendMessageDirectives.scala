@@ -135,6 +135,7 @@ trait SendMessageDirectives {
       case Some(v) if v > 0 && queueData.isFifo =>
         // FIFO queues don't support delays
         throw SQSException.invalidQueueTypeParameter(DelaySecondsParameter)
+      case Some(v) if v == 0 && queueData.isFifo => None
       case d => d
     }
 
