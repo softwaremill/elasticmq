@@ -58,7 +58,7 @@ trait QueueActorStorage {
             case Some(r) =>
               logger.debug(s"Sending message $r from ${context.self} to $actualSender")
               actualSender ! r
-            case None    =>
+            case None =>
           }
         case Failure(ex) => logger.error(s"Failed to notify queue event listener. The state may be inconsistent.", ex)
       }

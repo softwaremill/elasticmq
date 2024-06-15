@@ -21,7 +21,9 @@ trait BatchRequestsModule {
       throw SQSException.batchEntryIdsNotDistinct
     }
 
-    Limits.verifyBatchSize(uniqueIds.size, sqsLimits).fold(_ => throw SQSException.tooManyEntriesInBatchRequest, identity)
+    Limits
+      .verifyBatchSize(uniqueIds.size, sqsLimits)
+      .fold(_ => throw SQSException.tooManyEntriesInBatchRequest, identity)
 
     val result = messagesData.zipWithIndex.map {
       case (messageData, index) => {
