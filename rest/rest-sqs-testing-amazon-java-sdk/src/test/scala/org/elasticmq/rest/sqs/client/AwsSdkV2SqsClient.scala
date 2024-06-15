@@ -1,7 +1,42 @@
 package org.elasticmq.rest.sqs.client
 import org.elasticmq.{BinaryMessageAttribute, MessageAttribute, NumberMessageAttribute, StringMessageAttribute}
 import software.amazon.awssdk.core.SdkBytes
-import software.amazon.awssdk.services.sqs.model.{AddPermissionRequest, BatchResultErrorEntry, CancelMessageMoveTaskRequest, ChangeMessageVisibilityBatchRequest, ChangeMessageVisibilityBatchRequestEntry, ChangeMessageVisibilityRequest, CreateQueueRequest, DeleteMessageBatchRequest, DeleteMessageBatchRequestEntry, DeleteMessageRequest, DeleteQueueRequest, GetQueueAttributesRequest, GetQueueUrlRequest, ListDeadLetterSourceQueuesRequest, ListMessageMoveTasksRequest, ListQueueTagsRequest, ListQueuesRequest, MessageAttributeValue, MessageSystemAttributeNameForSends, MessageSystemAttributeValue, PurgeQueueRequest, QueueDoesNotExistException, ReceiveMessageRequest, RemovePermissionRequest, ResourceNotFoundException, SendMessageBatchRequest, SendMessageBatchRequestEntry, SendMessageRequest, StartMessageMoveTaskRequest, TagQueueRequest, UnsupportedOperationException, UntagQueueRequest, MessageSystemAttributeName => SdkMessageSystemAttributeName, QueueAttributeName => AwsQueueAttributeName}
+import software.amazon.awssdk.services.sqs.model.{
+  AddPermissionRequest,
+  BatchResultErrorEntry,
+  CancelMessageMoveTaskRequest,
+  ChangeMessageVisibilityBatchRequest,
+  ChangeMessageVisibilityBatchRequestEntry,
+  ChangeMessageVisibilityRequest,
+  CreateQueueRequest,
+  DeleteMessageBatchRequest,
+  DeleteMessageBatchRequestEntry,
+  DeleteMessageRequest,
+  DeleteQueueRequest,
+  GetQueueAttributesRequest,
+  GetQueueUrlRequest,
+  ListDeadLetterSourceQueuesRequest,
+  ListMessageMoveTasksRequest,
+  ListQueueTagsRequest,
+  ListQueuesRequest,
+  MessageAttributeValue,
+  MessageSystemAttributeNameForSends,
+  MessageSystemAttributeValue,
+  PurgeQueueRequest,
+  QueueDoesNotExistException,
+  ReceiveMessageRequest,
+  RemovePermissionRequest,
+  ResourceNotFoundException,
+  SendMessageBatchRequest,
+  SendMessageBatchRequestEntry,
+  SendMessageRequest,
+  StartMessageMoveTaskRequest,
+  TagQueueRequest,
+  UnsupportedOperationException,
+  UntagQueueRequest,
+  MessageSystemAttributeName => SdkMessageSystemAttributeName,
+  QueueAttributeName => AwsQueueAttributeName
+}
 
 import scala.collection.JavaConverters._
 
