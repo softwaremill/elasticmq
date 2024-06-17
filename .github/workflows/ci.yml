@@ -164,6 +164,7 @@ jobs:
 
       - name: Verify native image agent config files not modified
         run: |
+          git --no-pager diff native-server/src/main/resources/META-INF/native-image/
           if [[ -z $(git status native-server/src/main/resources/META-INF/native-image/ --porcelain) ]]; then
             echo "Git status is clean. No changes."
           else
