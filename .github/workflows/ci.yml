@@ -110,6 +110,63 @@ jobs:
         id: run-tests
         run: SCALA_MAJOR_VERSION=${{ env.scala }} sbt root/test
 
+  ci-native-image-agent-config-verification:
+    # run on external PRs, but not on internal PRs since those will be run by push to branch
+    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
+    runs-on: ubuntu-20.04
+    env:
+      scala: 2.13
+    steps:
+      - name: Check-out repository
+        id: repo-checkout
+        uses: actions/checkout@v2
+
+      - name: Set up JDK
+        uses: actions/setup-java@v2
+        with:
+          distribution: 'temurin'
+          java-version: 11
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Cache SBT
+        id: cache-sbt
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.sbt
+            ~/.ivy2/cache
+            ~/.coursier
+          key: ${{ runner.os }}-sbt-${{ env.scala }}-${{ hashFiles('**/build.sbt') }}
+
+      - name: Build fat jar
+        run: sbt "project server; assembly"
+
+      - name: Build docker image for testing
+        run: docker build -t elasticmq-int -f integration-tests/docker/Dockerfile --progress=plain .
+
+      - name: Install dependencies
+        working-directory: ./integration-tests/python
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run integration tests
+        working-directory: ./integration-tests/python
+        run: pytest --log-cli-level=info
+
+      - name: Verify native image agent config files not modified
+        run: |
+          if [[ -z $(git status native-server/src/main/resources/META-INF/native-image/ --porcelain) ]]; then
+            echo "Git status is clean. No changes."
+          else
+            echo "Native image agent config files have been modified. You need to manually commit the changes to the PR"
+            exit 1
+          fi
+
   ci-docker:
     # run on external PRs, but not on internal PRs since those will be run by push to branch
     if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
@@ -151,7 +208,7 @@ jobs:
         run: sbt "project nativeServer; Docker / publishLocal"
 
   publish-jar:
-    needs: [ci-2-12, ci-2-13, ci-3, ci-docker]
+    needs: [ci-2-12, ci-2-13, ci-3, ci-docker, ci-native-image-agent-config-verification]
     if: github.event_name != 'pull_request' && (startsWith(github.ref, 'refs/tags/v'))
     runs-on: ubuntu-20.04
     steps:
@@ -210,7 +267,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   publish-docker:
-    needs: [ci-2-12, ci-2-13, ci-3, ci-docker]
+    needs: [ci-2-12, ci-2-13, ci-3, ci-docker, ci-native-image-agent-config-verification]
     if: github.event_name != 'pull_request' && (startsWith(github.ref, 'refs/tags/v'))
     runs-on: ubuntu-20.04
     steps:
