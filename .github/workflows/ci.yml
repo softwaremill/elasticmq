@@ -263,6 +263,7 @@ jobs:
           COMMIT_MSG: ${{ github.event.head_commit.message }}
 
       - name: Publish release notes
+        id: create_release
         uses: release-drafter/release-drafter@v5
         with:
           config-name: release-drafter.yml
@@ -276,7 +277,7 @@ jobs:
       - name: Publish assembly jar
         uses: actions/upload-release-asset@v1
         with:
-            upload_url: ${{ github.event.release.upload_url }}
+            upload_url: ${{ steps.create_release.outputs.upload_url }}
             asset_path: "server/target/scala-2.13/elasticmq-server-assembly-${{ env.VERSION }}.jar"
             asset_name: "elasticmq-server-${{ env.VERSION }}.jar"
             asset_content_type: application/java-archive
