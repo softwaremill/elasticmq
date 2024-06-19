@@ -248,12 +248,9 @@ jobs:
 #          PGP_SECRET: ${{ secrets.PGP_SECRET }}
 #          SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
 #          SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
-#
-#      - name: Upload to S3
-#        run: sbt "project server; assembly; s3Upload"
-#        env:
-#          S3_USER: ${{ secrets.S3_USER }}
-#          S3_PASSWORD: ${{ secrets.S3_PASSWORD }}
+
+      - name: TMP build uber jar
+        run: sbt "project server; assembly"
 
       - name: Extract version from commit message
         run: |
