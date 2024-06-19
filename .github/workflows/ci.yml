@@ -75,6 +75,7 @@ jobs:
       - name: Run tests
         id: run-tests
         run: SCALA_MAJOR_VERSION=${{ env.scala }} sbt root/test
+
   ci-3:
     # run on external PRs, but not on internal PRs since those will be run by push to branch
     if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
@@ -261,6 +262,7 @@ jobs:
           COMMIT_MSG: ${{ github.event.head_commit.message }}
 
       - name: Publish release notes
+        id: create_release
         uses: release-drafter/release-drafter@v5
         with:
           config-name: release-drafter.yml
@@ -268,6 +270,16 @@ jobs:
           name: "v${{ env.VERSION }}"
           tag: "v${{ env.VERSION }}"
           version: "v${{ env.VERSION }}"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish assembly jar
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: "server/target/scala-2.13/elasticmq-server-assembly-${{ env.VERSION }}.jar"
+          asset_name: "elasticmq-server-all-${{ env.VERSION }}.jar"
+          asset_content_type: application/java-archive
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
