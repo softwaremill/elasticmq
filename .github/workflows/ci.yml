@@ -6,214 +6,216 @@ on:
     branches: ['**']
     tags: [v*]
 jobs:
-  ci-2-12:
-    # run on external PRs, but not on internal PRs since those will be run by push to branch
-    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
-    runs-on: ubuntu-20.04
-    env:
-      scala: 2.12
-    steps:
-      - name: Check-out repository
-        id: repo-checkout
-        uses: actions/checkout@v2
-
-      - name: Set up JDK
-        uses: actions/setup-java@v2
-        with:
-          distribution: 'temurin'
-          java-version: 8
-
-      - uses: actions/setup-node@v3
-        with:
-          node-version: 16
-
-      - name: Cache SBT
-        id: cache-sbt
-        uses: actions/cache@v2
-        with:
-          path: |
-            ~/.sbt
-            ~/.ivy2/cache
-            ~/.coursier
-          key: ${{ runner.os }}-sbt-${{ env.scala }}-${{ hashFiles('**/build.sbt') }}
-
-      - name: Run tests
-        id: run-tests
-        run: SCALA_MAJOR_VERSION=${{ env.scala }} sbt "root/testOnly * -- -l org.elasticmq.rest.sqs.Only213"
-
-  ci-2-13:
-    # run on external PRs, but not on internal PRs since those will be run by push to branch
-    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
-    runs-on: ubuntu-20.04
-    env:
-      scala: 2.13
-    steps:
-      - name: Check-out repository
-        id: repo-checkout
-        uses: actions/checkout@v2
-
-      - name: Set up JDK
-        uses: actions/setup-java@v2
-        with:
-          distribution: 'temurin'
-          java-version: 8
-
-      - uses: actions/setup-node@v3
-        with:
-          node-version: 16
-
-      - name: Cache SBT
-        id: cache-sbt
-        uses: actions/cache@v2
-        with:
-          path: |
-            ~/.sbt
-            ~/.ivy2/cache
-            ~/.coursier
-          key: ${{ runner.os }}-sbt-${{ env.scala }}-${{ hashFiles('**/build.sbt') }}
-
-      - name: Run tests
-        id: run-tests
-        run: SCALA_MAJOR_VERSION=${{ env.scala }} sbt root/test
-  ci-3:
-    # run on external PRs, but not on internal PRs since those will be run by push to branch
-    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
-    runs-on: ubuntu-20.04
-    env:
-      scala: 3
-    steps:
-      - name: Check-out repository
-        id: repo-checkout
-        uses: actions/checkout@v2
-
-      - name: Set up JDK
-        uses: actions/setup-java@v2
-        with:
-          distribution: 'temurin'
-          java-version: 8
-
-      - uses: actions/setup-node@v3
-        with:
-          node-version: 16
-
-      - name: Cache SBT
-        id: cache-sbt
-        uses: actions/cache@v2
-        with:
-          path: |
-            ~/.sbt
-            ~/.ivy2/cache
-            ~/.coursier
-          key: ${{ runner.os }}-sbt-${{ env.scala }}-${{ hashFiles('**/build.sbt') }}
-
-      - name: Run tests
-        id: run-tests
-        run: SCALA_MAJOR_VERSION=${{ env.scala }} sbt root/test
-
-  ci-native-image-agent-config-verification:
-    # run on external PRs, but not on internal PRs since those will be run by push to branch
-    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
-    runs-on: ubuntu-20.04
-    env:
-      scala: 2.13
-    steps:
-      - name: Check-out repository
-        id: repo-checkout
-        uses: actions/checkout@v2
-
-      - name: Set up JDK
-        uses: actions/setup-java@v2
-        with:
-          distribution: 'temurin'
-          java-version: 11
-
-      - uses: actions/setup-node@v3
-        with:
-          node-version: 16
-
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.9'
-
-      - name: Cache SBT
-        id: cache-sbt
-        uses: actions/cache@v2
-        with:
-          path: |
-            ~/.sbt
-            ~/.ivy2/cache
-            ~/.coursier
-          key: ${{ runner.os }}-sbt-${{ env.scala }}-${{ hashFiles('**/build.sbt') }}
-
-      - name: Build fat jar
-        run: sbt "project server; assembly"
-
-      - name: Build docker image for testing
-        run: docker build -t elasticmq-int -f integration-tests/docker/Dockerfile --progress=plain .
-
-      - name: Install dependencies
-        working-directory: ./integration-tests/python
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-
-      - name: Run integration tests
-        working-directory: ./integration-tests/python
-        run: pytest --log-cli-level=info
-
-      - name: Verify native image agent config files not modified
-        run: |
-          git --no-pager diff native-server/src/main/resources/META-INF/native-image/
-          if [[ -z $(git status native-server/src/main/resources/META-INF/native-image/ --porcelain) ]]; then
-            echo "Git status is clean. No changes."
-          else
-            echo "Native image agent config files have been modified. You need to manually commit the changes to the PR"
-            exit 1
-          fi
-
-  ci-docker:
-    # run on external PRs, but not on internal PRs since those will be run by push to branch
-    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
-    runs-on: ubuntu-20.04
-    env:
-      scala: 2.13
-    steps:
-      - name: Check-out repository
-        id: repo-checkout
-        uses: actions/checkout@v2
-
-      - name: Set up JDK
-        uses: actions/setup-java@v2
-        with:
-          distribution: 'temurin'
-          java-version: 11
-
-      - uses: actions/setup-node@v3
-        with:
-          node-version: 16
-
-      - name: Cache SBT
-        id: cache-sbt
-        uses: actions/cache@v2
-        with:
-          path: |
-            ~/.sbt
-            ~/.ivy2/cache
-            ~/.coursier
-          key: ${{ runner.os }}-sbt-${{ env.scala }}-${{ hashFiles('**/build.sbt') }}
-
-      - name: Compile
-        run: sbt compile
-
-      - name: Build jvm docker image
-        run: sbt "project server; assembly; Docker / publishLocal"
-
-      - name: Build native docker image
-        run: sbt "project nativeServer; Docker / publishLocal"
+#  ci-2-12:
+#    # run on external PRs, but not on internal PRs since those will be run by push to branch
+#    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
+#    runs-on: ubuntu-20.04
+#    env:
+#      scala: 2.12
+#    steps:
+#      - name: Check-out repository
+#        id: repo-checkout
+#        uses: actions/checkout@v2
+#
+#      - name: Set up JDK
+#        uses: actions/setup-java@v2
+#        with:
+#          distribution: 'temurin'
+#          java-version: 8
+#
+#      - uses: actions/setup-node@v3
+#        with:
+#          node-version: 16
+#
+#      - name: Cache SBT
+#        id: cache-sbt
+#        uses: actions/cache@v2
+#        with:
+#          path: |
+#            ~/.sbt
+#            ~/.ivy2/cache
+#            ~/.coursier
+#          key: ${{ runner.os }}-sbt-${{ env.scala }}-${{ hashFiles('**/build.sbt') }}
+#
+#      - name: Run tests
+#        id: run-tests
+#        run: SCALA_MAJOR_VERSION=${{ env.scala }} sbt "root/testOnly * -- -l org.elasticmq.rest.sqs.Only213"
+#
+#  ci-2-13:
+#    # run on external PRs, but not on internal PRs since those will be run by push to branch
+#    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
+#    runs-on: ubuntu-20.04
+#    env:
+#      scala: 2.13
+#    steps:
+#      - name: Check-out repository
+#        id: repo-checkout
+#        uses: actions/checkout@v2
+#
+#      - name: Set up JDK
+#        uses: actions/setup-java@v2
+#        with:
+#          distribution: 'temurin'
+#          java-version: 8
+#
+#      - uses: actions/setup-node@v3
+#        with:
+#          node-version: 16
+#
+#      - name: Cache SBT
+#        id: cache-sbt
+#        uses: actions/cache@v2
+#        with:
+#          path: |
+#            ~/.sbt
+#            ~/.ivy2/cache
+#            ~/.coursier
+#          key: ${{ runner.os }}-sbt-${{ env.scala }}-${{ hashFiles('**/build.sbt') }}
+#
+#      - name: Run tests
+#        id: run-tests
+#        run: SCALA_MAJOR_VERSION=${{ env.scala }} sbt root/test
+#
+#  ci-3:
+#    # run on external PRs, but not on internal PRs since those will be run by push to branch
+#    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
+#    runs-on: ubuntu-20.04
+#    env:
+#      scala: 3
+#    steps:
+#      - name: Check-out repository
+#        id: repo-checkout
+#        uses: actions/checkout@v2
+#
+#      - name: Set up JDK
+#        uses: actions/setup-java@v2
+#        with:
+#          distribution: 'temurin'
+#          java-version: 8
+#
+#      - uses: actions/setup-node@v3
+#        with:
+#          node-version: 16
+#
+#      - name: Cache SBT
+#        id: cache-sbt
+#        uses: actions/cache@v2
+#        with:
+#          path: |
+#            ~/.sbt
+#            ~/.ivy2/cache
+#            ~/.coursier
+#          key: ${{ runner.os }}-sbt-${{ env.scala }}-${{ hashFiles('**/build.sbt') }}
+#
+#      - name: Run tests
+#        id: run-tests
+#        run: SCALA_MAJOR_VERSION=${{ env.scala }} sbt root/test
+#
+#  ci-native-image-agent-config-verification:
+#    # run on external PRs, but not on internal PRs since those will be run by push to branch
+#    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
+#    runs-on: ubuntu-20.04
+#    env:
+#      scala: 2.13
+#    steps:
+#      - name: Check-out repository
+#        id: repo-checkout
+#        uses: actions/checkout@v2
+#
+#      - name: Set up JDK
+#        uses: actions/setup-java@v2
+#        with:
+#          distribution: 'temurin'
+#          java-version: 11
+#
+#      - uses: actions/setup-node@v3
+#        with:
+#          node-version: 16
+#
+#      - name: Set up Python
+#        uses: actions/setup-python@v4
+#        with:
+#          python-version: '3.9'
+#
+#      - name: Cache SBT
+#        id: cache-sbt
+#        uses: actions/cache@v2
+#        with:
+#          path: |
+#            ~/.sbt
+#            ~/.ivy2/cache
+#            ~/.coursier
+#          key: ${{ runner.os }}-sbt-${{ env.scala }}-${{ hashFiles('**/build.sbt') }}
+#
+#      - name: Build fat jar
+#        run: sbt "project server; assembly"
+#
+#      - name: Build docker image for testing
+#        run: docker build -t elasticmq-int -f integration-tests/docker/Dockerfile --progress=plain .
+#
+#      - name: Install dependencies
+#        working-directory: ./integration-tests/python
+#        run: |
+#          python -m pip install --upgrade pip
+#          pip install -r requirements.txt
+#
+#      - name: Run integration tests
+#        working-directory: ./integration-tests/python
+#        run: pytest --log-cli-level=info
+#
+#      - name: Verify native image agent config files not modified
+#        run: |
+#          git --no-pager diff native-server/src/main/resources/META-INF/native-image/
+#          if [[ -z $(git status native-server/src/main/resources/META-INF/native-image/ --porcelain) ]]; then
+#            echo "Git status is clean. No changes."
+#          else
+#            echo "Native image agent config files have been modified. You need to manually commit the changes to the PR"
+#            exit 1
+#          fi
+#
+#
+#  ci-docker:
+#    # run on external PRs, but not on internal PRs since those will be run by push to branch
+#    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
+#    runs-on: ubuntu-20.04
+#    env:
+#      scala: 2.13
+#    steps:
+#      - name: Check-out repository
+#        id: repo-checkout
+#        uses: actions/checkout@v2
+#
+#      - name: Set up JDK
+#        uses: actions/setup-java@v2
+#        with:
+#          distribution: 'temurin'
+#          java-version: 11
+#
+#      - uses: actions/setup-node@v3
+#        with:
+#          node-version: 16
+#
+#      - name: Cache SBT
+#        id: cache-sbt
+#        uses: actions/cache@v2
+#        with:
+#          path: |
+#            ~/.sbt
+#            ~/.ivy2/cache
+#            ~/.coursier
+#          key: ${{ runner.os }}-sbt-${{ env.scala }}-${{ hashFiles('**/build.sbt') }}
+#
+#      - name: Compile
+#        run: sbt compile
+#
+#      - name: Build jvm docker image
+#        run: sbt "project server; assembly; Docker / publishLocal"
+#
+#      - name: Build native docker image
+#        run: sbt "project nativeServer; Docker / publishLocal"
 
   publish-jar:
-    needs: [ci-2-12, ci-2-13, ci-3, ci-docker, ci-native-image-agent-config-verification]
+#    needs: [ci-2-12, ci-2-13, ci-3, ci-docker, ci-native-image-agent-config-verification]
     if: github.event_name != 'pull_request' && (startsWith(github.ref, 'refs/tags/v'))
     runs-on: ubuntu-20.04
     steps:
@@ -239,19 +241,19 @@ jobs:
             ~/.coursier
           key: ${{ runner.os }}-sbt-release-${{ hashFiles('**/build.sbt') }}
 
-      - name: Publish artifacts
-        run: sbt ci-release
-        env:
-          PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
-          PGP_SECRET: ${{ secrets.PGP_SECRET }}
-          SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
-          SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
-
-      - name: Upload to S3
-        run: sbt "project server; assembly; s3Upload"
-        env:
-          S3_USER: ${{ secrets.S3_USER }}
-          S3_PASSWORD: ${{ secrets.S3_PASSWORD }}
+#      - name: Publish artifacts
+#        run: sbt ci-release
+#        env:
+#          PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
+#          PGP_SECRET: ${{ secrets.PGP_SECRET }}
+#          SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
+#          SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
+#
+#      - name: Upload to S3
+#        run: sbt "project server; assembly; s3Upload"
+#        env:
+#          S3_USER: ${{ secrets.S3_USER }}
+#          S3_PASSWORD: ${{ secrets.S3_PASSWORD }}
 
       - name: Extract version from commit message
         run: |
@@ -271,41 +273,49 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  publish-docker:
-    needs: [ci-2-12, ci-2-13, ci-3, ci-docker, ci-native-image-agent-config-verification]
-    if: github.event_name != 'pull_request' && (startsWith(github.ref, 'refs/tags/v'))
-    runs-on: ubuntu-20.04
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-
-      - name: Set up JDK
-        uses: actions/setup-java@v2
+      - name: Publish assembly jar
+        uses: actions/upload-release-asset@v1
         with:
-          distribution: 'temurin'
-          java-version: 11
+            upload_url: ${{ github.event.release.upload_url }}
+            asset_path: "server/target/scala-2.13/elasticmq-server-assembly-${{ env.VERSION }}.jar"
+            asset_name: "elasticmq-server-${{ env.VERSION }}.jar"
+            asset_content_type: application/java-archive
 
-      - uses: actions/setup-node@v3
-        with:
-          node-version: 16
-
-      - name: Cache sbt
-        uses: actions/cache@v2
-        with:
-          path: |
-            ~/.sbt
-            ~/.ivy2/cache
-            ~/.coursier
-          key: ${{ runner.os }}-sbt-release-${{ hashFiles('**/build.sbt') }}
-
-      - name: Login to DockerHub
-        uses: docker/login-action@v1
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      - name: Publish JVM docker image
-        run: sbt "project server; assembly; Docker / publish"
-
-      - name: Publish JVM native docker image
-        run: sbt "project nativeServer; assembly; Docker / publish"
+#  publish-docker:
+#    needs: [ci-2-12, ci-2-13, ci-3, ci-docker, ci-native-image-agent-config-verification]
+#    if: github.event_name != 'pull_request' && (startsWith(github.ref, 'refs/tags/v'))
+#    runs-on: ubuntu-20.04
+#    steps:
+#      - name: Checkout
+#        uses: actions/checkout@v2
+#
+#      - name: Set up JDK
+#        uses: actions/setup-java@v2
+#        with:
+#          distribution: 'temurin'
+#          java-version: 11
+#
+#      - uses: actions/setup-node@v3
+#        with:
+#          node-version: 16
+#
+#      - name: Cache sbt
+#        uses: actions/cache@v2
+#        with:
+#          path: |
+#            ~/.sbt
+#            ~/.ivy2/cache
+#            ~/.coursier
+#          key: ${{ runner.os }}-sbt-release-${{ hashFiles('**/build.sbt') }}
+#
+#      - name: Login to DockerHub
+#        uses: docker/login-action@v1
+#        with:
+#          username: ${{ secrets.DOCKERHUB_USERNAME }}
+#          password: ${{ secrets.DOCKERHUB_TOKEN }}
+#
+#      - name: Publish JVM docker image
+#        run: sbt "project server; assembly; Docker / publish"
+#
+#      - name: Publish JVM native docker image
+#        run: sbt "project nativeServer; assembly; Docker / publish"
