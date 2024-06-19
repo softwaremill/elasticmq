@@ -11,12 +11,7 @@ import org.elasticmq.actor.QueueManagerActor
 import org.elasticmq.metrics.QueuesMetrics
 import org.elasticmq.rest.sqs.Constants._
 import org.elasticmq.rest.sqs.XmlNsVersion.extractXmlNs
-import org.elasticmq.rest.sqs.directives.{
-  AnyParamDirectives,
-  AWSProtocolDirectives,
-  ElasticMQDirectives,
-  UnmatchedActionRoutes
-}
+import org.elasticmq.rest.sqs.directives.{AWSProtocolDirectives, AnyParamDirectives, ElasticMQDirectives, UnmatchedActionRoutes}
 import org.elasticmq.rest.sqs.model.RequestPayload
 import org.elasticmq.util.{Logging, NowProvider}
 
@@ -29,10 +24,10 @@ import java.util.concurrent.atomic.AtomicReference
 import javax.management.ObjectName
 import scala.collection.immutable.TreeMap
 import scala.collection.mutable.ArrayBuffer
-import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
-import scala.util.{Failure, Success, Try}
+import scala.concurrent.{Await, Future}
 import scala.util.control.NonFatal
+import scala.util.{Failure, Success, Try}
 import scala.xml._
 
 /** By default: <li> <ul>for `socketAddress`: when started, the server will bind to `localhost:9324`</ul> <ul>for
@@ -222,7 +217,13 @@ case class TheSQSRestServerBuilder(
 
     val config = new ElasticMQConfig
 
-    val routes =
+    val healthCheckRoute = path("health") {
+      get {
+        complete("OK")
+      }
+    }
+
+    val sqsRoute =
       extractXmlNs { (_version: XmlNsVersion) =>
         implicit val version: XmlNsVersion = _version
         extractProtocol { (_protocol: AWSProtocol) =>
@@ -241,6 +242,8 @@ case class TheSQSRestServerBuilder(
           }
         }
       }
+
+    val routes = concat(healthCheckRoute, sqsRoute)
 
     val appStartFuture = {
       // Scala 3 fix: implicit resolution conflict

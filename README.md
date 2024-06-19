@@ -627,6 +627,11 @@ ElasticMQ exposes `Queues` MBean. It contains three operations:
 * `NumberOfMessagesForAllQueues` - returns tabular data that contains information about number of messages per queue
 * `getNumberOfMessagesInQueue` - returns information about number of messages in specified queue
 
+# Health check endpoint
+
+When running the server in a container orchestration environment, it may be useful to have a health check endpoint.
+ElasticMQ provides a simple health check endpoint that can be used for this purpose. The endpoint is available at `/health`.
+
 # Technology
 
 * Core: [Scala](http://scala-lang.org) and [Pekko](https://pekko.apache.org/).
