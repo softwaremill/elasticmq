@@ -1,17 +1,23 @@
 package org.elasticmq.rest.sqs
+import org.apache.pekko.http.scaladsl.Http
+import org.apache.pekko.http.scaladsl.model.{HttpRequest, HttpResponse, StatusCodes}
+import org.apache.pekko.http.scaladsl.testkit.ScalatestRouteTest
 import org.scalatest.matchers.should.Matchers
 
-import java.net.URI
-import java.net.http.{HttpClient, HttpRequest, HttpResponse}
+import scala.concurrent.duration.DurationInt
+import scala.concurrent.{Await, Future}
 
-class HealthCheckTest extends SqsClientServerCommunication with Matchers {
+class HealthCheckTest extends SqsClientServerCommunication with ScalatestRouteTest with Matchers {
 
   test("health check") {
-    val client = HttpClient.newHttpClient
-    val request = HttpRequest.newBuilder.uri(URI.create(s"$ServiceEndpoint/health")).GET.build
-    val response = client.send(request, HttpResponse.BodyHandlers.ofString)
+    val responseFuture: Future[HttpResponse] = Http().singleRequest(HttpRequest(uri = s"$ServiceEndpoint/health"))
+    val response = Await.result(responseFuture, 10.seconds)
 
-    response.statusCode shouldBe 200
-    response.body() shouldBe "OK"
+    response.status shouldBe StatusCodes.OK
+
+    val entityFuture = response.entity.dataBytes.runFold("")(_ ++ _.utf8String)
+    val entity = Await.result(entityFuture, 10.seconds)
+
+    entity shouldBe "OK"
   }
 }
