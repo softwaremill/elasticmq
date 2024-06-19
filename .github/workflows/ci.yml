@@ -274,10 +274,12 @@ jobs:
       - name: Publish assembly jar
         uses: actions/upload-release-asset@v1
         with:
-            upload_url: ${{ steps.create_release.outputs.upload_url }}
-            asset_path: "server/target/scala-2.13/elasticmq-server-assembly-${{ env.VERSION }}.jar"
-            asset_name: "elasticmq-server-${{ env.VERSION }}.jar"
-            asset_content_type: application/java-archive
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: "server/target/scala-2.13/elasticmq-server-assembly-${{ env.VERSION }}.jar"
+          asset_name: "elasticmq-server-${{ env.VERSION }}.jar"
+          asset_content_type: application/java-archive
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 #  publish-docker:
 #    needs: [ci-2-12, ci-2-13, ci-3, ci-docker, ci-native-image-agent-config-verification]
