@@ -321,3 +321,41 @@ jobs:
 
       - name: Publish JVM native docker image
         run: sbt "project nativeServer; assembly; Docker / publish"
+
+  # `automerge` label is attached iff there is exactly one file changed by steward and this file belongs to a
+  # whitelist specified by `labeler.yml`
+  label:
+    name: Attach automerge label
+    # only for PRs by softwaremill-ci
+    if: github.event.pull_request.user.login == 'softwaremill-ci'
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 2
+      # count number of files changed
+      - name: Count number of files changed
+        id: count-changed-files
+        run: |
+          N=$(git diff --name-only -r HEAD^1 HEAD | wc -w)
+          echo "changed_files_num=$N" >> $GITHUB_OUTPUT
+      - name: Launch labeler
+        # skip if more than one file changed
+        if: steps.count-changed-files.outputs.changed_files_num == 1
+        uses: srvaroa/labeler@master
+        env:
+          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+
+  auto-merge:
+    name: Auto merge
+    # only for PRs by softwaremill-ci
+    if: github.event.pull_request.user.login == 'softwaremill-ci'
+    needs: [ci-2-12, ci-2-13, ci-3, ci-docker, ci-native-image-agent-config-verification, label]
+    runs-on: ubuntu-20.04
+    steps:
+      - id: automerge
+        name: automerge
+        uses: "pascalgn/automerge-action@v0.15.6"
+        env:
+          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+          MERGE_METHOD: "squash"
