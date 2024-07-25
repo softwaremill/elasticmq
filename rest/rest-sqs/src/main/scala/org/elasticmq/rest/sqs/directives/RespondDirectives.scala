@@ -1,7 +1,7 @@
 package org.elasticmq.rest.sqs.directives
 
 import org.apache.pekko.http.scaladsl.model.ContentTypes._
-import org.apache.pekko.http.scaladsl.model.HttpEntity
+import org.apache.pekko.http.scaladsl.model.{HttpEntity, HttpResponse, StatusCodes}
 import org.apache.pekko.http.scaladsl.server.{Directives, RequestContext, Route}
 import org.elasticmq.rest.sqs.Constants._
 
@@ -44,7 +44,8 @@ trait RespondDirectives {
 
   def emptyResponse(xmlTagName: String)(implicit marshallerDependencies: MarshallerDependencies): server.Route = {
     marshallerDependencies.protocol match {
-      case AWSProtocol.`AWSJsonProtocol1.0` => complete(200, HttpEntity.Empty)
+      case AWSProtocol.`AWSJsonProtocol1.0` =>
+        complete(HttpResponse(status = StatusCodes.OK, entity = HttpEntity.Empty))
       case _ =>
         respondWith {
           <wrapper>
