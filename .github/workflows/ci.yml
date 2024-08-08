@@ -1,14 +1,17 @@
 name: CI
 on:
   pull_request:
-    branches: ['**']
   push:
     branches: ['**']
     tags: [v*]
 jobs:
   ci-2-12:
-    # run on external PRs, but not on internal PRs since those will be run by push to branch
-    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
+    # run on 1) push, 2) external PRs, 3) softwaremill-ci PRs
+    # do not run on internal, non-steward PRs since those will be run by push to branch
+    if: |
+      github.event_name == 'push' ||
+      github.event.pull_request.head.repo.full_name != github.repository ||
+      github.event.pull_request.user.login == 'softwaremill-ci'
     runs-on: ubuntu-20.04
     env:
       scala: 2.12
@@ -42,8 +45,12 @@ jobs:
         run: SCALA_MAJOR_VERSION=${{ env.scala }} sbt "root/testOnly * -- -l org.elasticmq.rest.sqs.Only213"
 
   ci-2-13:
-    # run on external PRs, but not on internal PRs since those will be run by push to branch
-    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
+    # run on 1) push, 2) external PRs, 3) softwaremill-ci PRs
+    # do not run on internal, non-steward PRs since those will be run by push to branch
+    if: |
+      github.event_name == 'push' ||
+      github.event.pull_request.head.repo.full_name != github.repository ||
+      github.event.pull_request.user.login == 'softwaremill-ci'
     runs-on: ubuntu-20.04
     env:
       scala: 2.13
@@ -77,8 +84,12 @@ jobs:
         run: SCALA_MAJOR_VERSION=${{ env.scala }} sbt root/test
 
   ci-3:
-    # run on external PRs, but not on internal PRs since those will be run by push to branch
-    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
+    # run on 1) push, 2) external PRs, 3) softwaremill-ci PRs
+    # do not run on internal, non-steward PRs since those will be run by push to branch
+    if: |
+      github.event_name == 'push' ||
+      github.event.pull_request.head.repo.full_name != github.repository ||
+      github.event.pull_request.user.login == 'softwaremill-ci'
     runs-on: ubuntu-20.04
     env:
       scala: 3
@@ -112,8 +123,12 @@ jobs:
         run: SCALA_MAJOR_VERSION=${{ env.scala }} sbt root/test
 
   ci-native-image-agent-config-verification:
-    # run on external PRs, but not on internal PRs since those will be run by push to branch
-    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
+    # run on 1) push, 2) external PRs, 3) softwaremill-ci PRs
+    # do not run on internal, non-steward PRs since those will be run by push to branch
+    if: |
+      github.event_name == 'push' ||
+      github.event.pull_request.head.repo.full_name != github.repository ||
+      github.event.pull_request.user.login == 'softwaremill-ci'
     runs-on: ubuntu-20.04
     env:
       scala: 2.13
@@ -174,8 +189,12 @@ jobs:
           fi
 
   ci-docker:
-    # run on external PRs, but not on internal PRs since those will be run by push to branch
-    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
+    # run on 1) push, 2) external PRs, 3) softwaremill-ci PRs
+    # do not run on internal, non-steward PRs since those will be run by push to branch
+    if: |
+      github.event_name == 'push' ||
+      github.event.pull_request.head.repo.full_name != github.repository ||
+      github.event.pull_request.user.login == 'softwaremill-ci'
     runs-on: ubuntu-20.04
     env:
       scala: 2.13
