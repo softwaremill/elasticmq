@@ -845,6 +845,16 @@
   "queryAllPublicMethods":true
 },
 {
+  "name":"org.elasticmq.rest.sqs.ListDeadLetterSourceQueuesActionRequest",
+  "allDeclaredFields":true,
+  "queryAllPublicMethods":true
+},
+{
+  "name":"org.elasticmq.rest.sqs.ListDeadLetterSourceQueuesResponse",
+  "allDeclaredFields":true,
+  "queryAllPublicMethods":true
+},
+{
   "name":"org.elasticmq.rest.sqs.ListQueueTagsActionRequest",
   "allDeclaredFields":true,
   "queryAllPublicMethods":true
