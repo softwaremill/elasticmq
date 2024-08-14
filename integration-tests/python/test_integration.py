@@ -128,3 +128,10 @@ def test_queue_storage(queue_storage_container):
     assert len(messages) == 2
     assert set([message.body for message in messages]) == {'Hello 4', 'Hello 5'}
     assert os.path.exists(os.path.join(os.getcwd(), ".data", "queues.conf"))
+
+def test_list_dead_letter_source_queues(queue_storage_container):
+    sqs = queue_storage_container.create_sqs_client()
+    queue = sqs.get_queue_by_name(QueueName='myDLQ')
+    queues = list(queue.dead_letter_source_queues.all())
+    print(queues)
+    assert len(queues) == 2
