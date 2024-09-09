@@ -920,6 +920,16 @@
   "queryAllPublicMethods":true
 },
 {
+  "name":"org.elasticmq.rest.sqs.StartMessageMoveTaskActionRequest",
+  "allDeclaredFields":true,
+  "queryAllPublicMethods":true
+},
+{
+  "name":"org.elasticmq.rest.sqs.StartMessageMoveTaskResponse",
+  "allDeclaredFields":true,
+  "queryAllPublicMethods":true
+},
+{
   "name":"org.elasticmq.rest.sqs.TagQueueActionRequest",
   "allDeclaredFields":true,
   "queryAllPublicMethods":true
