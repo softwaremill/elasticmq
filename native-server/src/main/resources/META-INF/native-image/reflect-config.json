@@ -577,6 +577,14 @@
   "name":"org.apache.pekko.dispatch.MultipleConsumerSemantics"
 },
 {
+  "name":"org.apache.pekko.dispatch.PekkoJdk9ForkJoinPool",
+  "methods":[{"name":"<init>","parameterTypes":["int","java.util.concurrent.ForkJoinPool$ForkJoinWorkerThreadFactory","int","java.lang.Thread$UncaughtExceptionHandler","boolean"] }]
+},
+{
+  "name":"org.apache.pekko.dispatch.SingleConsumerOnlyUnboundedMailbox",
+  "methods":[{"name":"<init>","parameterTypes":["org.apache.pekko.actor.ActorSystem$Settings","com.typesafe.config.Config"] }]
+},
+{
   "name":"org.apache.pekko.dispatch.UnboundedControlAwareMessageQueueSemantics"
 },
 {
