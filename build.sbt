@@ -41,7 +41,7 @@ val awaitility = "org.awaitility" % "awaitility-scala" % "4.2.2"
 val amazonJavaSdkSqs = "com.amazonaws" % "aws-java-sdk-sqs" % "1.12.699" exclude ("commons-logging", "commons-logging")
 val amazonJavaV2SdkSqs = "software.amazon.awssdk" % "sqs" % "2.25.60"
 
-val pekkoVersion = "1.1.1"
+val pekkoVersion = "1.1.2"
 val pekkoHttpVersion = "1.1.0"
 val pekkoActor = "org.apache.pekko" %% "pekko-actor" % pekkoVersion
 val pekkoSlf4j = "org.apache.pekko" %% "pekko-slf4j" % pekkoVersion
