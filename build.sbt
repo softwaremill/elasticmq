@@ -10,6 +10,7 @@ import scala.sys.process.Process
 
 val v2_12 = "2.12.20"
 val v2_13 = "2.13.14"
+// Don't upgrade past scala 3 LTS release, as it would also enforce clients to do so.
 val v3 = "3.3.4"
 
 lazy val resolvedScalaVersion =
