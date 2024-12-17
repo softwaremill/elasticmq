@@ -325,6 +325,7 @@ lazy val nativeServer: Project = (project in file("native-server"))
           "-H:IncludeResources=.*\\.properties",
           "-H:+ReportExceptionStackTraces",
           "-H:-ThrowUnsafeOffsetErrors",
+          "$(uname -m | grep -Eiq 'arm|aarch64' && echo \"-H:PageSize=64K\")",
           s"-H:Name=$binaryName",
           "--enable-http",
           "--enable-https",
