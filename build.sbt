@@ -9,7 +9,7 @@ import scoverage.ScoverageKeys.*
 import scala.sys.process.Process
 
 val v2_12 = "2.12.20"
-val v2_13 = "2.13.14"
+val v2_13 = "2.13.15"
 val v3 = "3.3.4"
 
 lazy val resolvedScalaVersion =
@@ -54,7 +54,7 @@ val pekkoHttpTestkit = "org.apache.pekko" %% "pekko-http-testkit" % pekkoHttpVer
 
 val scala2Async = "org.scala-lang.modules" %% "scala-async" % "1.0.1"
 val scala3Async =
-  "com.github.rssh" %% "shim-scala-async-dotty-cps-async" % "0.9.21" // allows cross compilation w/o changes in source code
+  "com.github.rssh" %% "shim-scala-async-dotty-cps-async" % "0.9.23" // allows cross compilation w/o changes in source code
 
 val scalikeJdbc = "org.scalikejdbc" %% "scalikejdbc" % "4.3.2"
 val h2 = "com.h2database" % "h2" % "2.2.224"
@@ -325,6 +325,7 @@ lazy val nativeServer: Project = (project in file("native-server"))
           "-H:IncludeResources=.*\\.properties",
           "-H:+ReportExceptionStackTraces",
           "-H:-ThrowUnsafeOffsetErrors",
+          "$(uname -m | grep -Eiq 'arm|aarch64' && echo \"-H:PageSize=64K\")",
           s"-H:Name=$binaryName",
           "--enable-http",
           "--enable-https",
