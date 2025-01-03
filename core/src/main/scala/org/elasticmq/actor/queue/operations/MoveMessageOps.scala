@@ -3,13 +3,14 @@ package org.elasticmq.actor.queue.operations
 import org.elasticmq.actor.queue.{InternalMessage, QueueActorStorage, QueueEvent}
 import org.elasticmq.msg.SendMessage
 import org.elasticmq.util.Logging
-import org.elasticmq.{DeduplicationId, MoveDestination, MoveToDLQ}
+import org.elasticmq.{DeduplicationId, MoveDestination, MoveToDLQ, StringMessageAttribute}
 
 trait MoveMessageOps extends Logging {
   this: QueueActorStorage =>
 
-  def moveMessage(message: InternalMessage, destination: MoveDestination): ResultWithEvents[Unit] = {
+  def moveMessage(message: InternalMessage, destination: MoveDestination, sourceQueueName: String): ResultWithEvents[Unit] = {
 
+    message.messageSystemAttributes.put("sourceQueueName", StringMessageAttribute(sourceQueueName))
     copyMessagesToActorRef.foreach { _ ! SendMessage(message.toNewMessageData) }
 
     destination match {

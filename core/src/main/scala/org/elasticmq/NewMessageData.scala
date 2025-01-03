@@ -1,5 +1,7 @@
 package org.elasticmq
 
+import scala.collection.mutable
+
 case class NewMessageData(
     id: Option[MessageId],
     content: String,

@@ -7,6 +7,7 @@ case class MessageData(
     deliveryReceipt: Option[DeliveryReceipt],
     content: String,
     messageAttributes: Map[String, MessageAttribute],
+    messageSystemAttributes: Map[String, MessageAttribute],
     nextDelivery: MillisNextDelivery,
     created: OffsetDateTime,
     statistics: MessageStatistics,

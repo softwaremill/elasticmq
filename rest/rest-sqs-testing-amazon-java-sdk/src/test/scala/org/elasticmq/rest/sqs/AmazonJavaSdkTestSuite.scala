@@ -2096,17 +2096,17 @@ class AmazonJavaSdkTestSuite extends SqsClientServerCommunication with Matchers 
     secondReceiveResult.getMessages shouldBe empty
   }
 
-  test("should return DeadLetterQueueSourceArn in receive message attributes") {
+  test("should return DeadLetterQueueSourceArn in receive DLQ message attributes") {
     // given
     val messageBody = "Message 1"
-    client.createQueue(new CreateQueueRequest("testDlq")).getQueueUrl
+    val createDlqQueueResult = client.createQueue(new CreateQueueRequest("testDlq")).getQueueUrl
     val redrivePolicy = RedrivePolicy("testDlq", awsRegion, awsAccountId, 1).toJson.toString
 
     val createQueueResult = client
       .createQueue(
         new CreateQueueRequest("main")
           .withAttributes(
-            Map(redrivePolicyAttribute -> redrivePolicy).asJava
+            Map(defaultVisibilityTimeoutAttribute -> "0", redrivePolicyAttribute -> redrivePolicy).asJava
           )
       )
       .getQueueUrl
@@ -2118,10 +2118,23 @@ class AmazonJavaSdkTestSuite extends SqsClientServerCommunication with Matchers 
         .withQueueUrl(createQueueResult)
         .withAttributeNames("All")
     )
+    client.receiveMessage(
+      new ReceiveMessageRequest()
+        .withQueueUrl(createQueueResult)
+        .withAttributeNames("All")
+    )
+    val receiveDlqResult = client.receiveMessage(
+      new ReceiveMessageRequest()
+        .withQueueUrl(createDlqQueueResult)
+        .withAttributeNames("All")
+    )
 
     // then
-    receiveResult.getMessages.asScala.toList.flatMap(_.getAttributes.asScala.toList) should contain(
-      ("DeadLetterQueueSourceArn", s"arn:aws:sqs:$awsRegion:$awsAccountId:testDlq")
+    receiveResult.getMessages.asScala.toList.flatMap(_.getAttributes.asScala.toList) should not contain(
+      "DeadLetterQueueSourceArn"
+    )
+    receiveDlqResult.getMessages.asScala.toList.flatMap(_.getAttributes.asScala.toList) should contain(
+      ("DeadLetterQueueSourceArn", s"arn:aws:sqs:$awsRegion:$awsAccountId:main")
     )
   }
 

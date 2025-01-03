@@ -7,6 +7,8 @@ import org.elasticmq.util.OffsetDateTimeUtil
 import scalikejdbc.WrappedResultSet
 import spray.json._
 
+import scala.collection.mutable
+
 case class DBMessage(
     messageId: String,
     deliveryReceipts: Array[Byte],
@@ -48,7 +50,7 @@ case class DBMessage(
       nextDelivery,
       new String(content),
       serializedAttrs,
-      Map.empty,
+      mutable.HashMap.empty,
       OffsetDateTimeUtil.ofEpochMilli(created),
       orderIndex = 0,
       firstReceive,
