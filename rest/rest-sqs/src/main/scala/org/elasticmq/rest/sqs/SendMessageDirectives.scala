@@ -188,7 +188,7 @@ trait SendMessageDirectives {
     val systemMessageAttributeDigest = if (message.messageSystemAttributes.isEmpty) {
       None
     } else {
-      Some(md5AttributeDigest(message.messageSystemAttributes))
+      Some(md5AttributeDigest(message.messageSystemAttributes.to(Map)))
     }
 
     for {
