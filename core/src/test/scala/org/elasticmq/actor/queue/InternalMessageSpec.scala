@@ -18,7 +18,6 @@ class InternalMessageSpec extends AnyFunSuite with Matchers {
       nextDelivery = 0L,
       content = "content",
       messageAttributes = Map.empty,
-      messageSystemAttributes = Map.empty,
       created = freezedDateTime,
       orderIndex = 100,
       firstReceive = NeverReceived,
@@ -27,7 +26,8 @@ class InternalMessageSpec extends AnyFunSuite with Matchers {
       messageGroupId = None,
       messageDeduplicationId = None,
       tracingId = None,
-      sequenceNumber = None
+      sequenceNumber = None,
+      deadLetterSourceQueueName = None
     )
 
     val second = first.copy(
@@ -46,7 +46,6 @@ class InternalMessageSpec extends AnyFunSuite with Matchers {
       nextDelivery = 0L,
       content = "content",
       messageAttributes = Map.empty,
-      messageSystemAttributes = Map.empty,
       created = freezedDateTime,
       orderIndex = 100,
       firstReceive = NeverReceived,
@@ -55,7 +54,8 @@ class InternalMessageSpec extends AnyFunSuite with Matchers {
       messageGroupId = None,
       messageDeduplicationId = None,
       tracingId = None,
-      sequenceNumber = None
+      sequenceNumber = None,
+      deadLetterSourceQueueName = None
     )
 
     val second = first.copy(

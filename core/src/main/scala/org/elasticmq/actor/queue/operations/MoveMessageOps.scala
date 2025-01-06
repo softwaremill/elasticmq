@@ -8,22 +8,27 @@ import org.elasticmq.{DeduplicationId, MoveDestination, MoveToDLQ}
 trait MoveMessageOps extends Logging {
   this: QueueActorStorage =>
 
-  def moveMessage(message: InternalMessage, destination: MoveDestination): ResultWithEvents[Unit] = {
+  def moveMessage(
+      message: InternalMessage,
+      destination: MoveDestination,
+      sourceQueueName: String
+  ): ResultWithEvents[Unit] = {
 
-    copyMessagesToActorRef.foreach { _ ! SendMessage(message.toNewMessageData) }
+    val messageWithSourceQueueName = message.copy(deadLetterSourceQueueName = Some(sourceQueueName))
+    copyMessagesToActorRef.foreach { _ ! SendMessage(messageWithSourceQueueName.toNewMessageData) }
 
     destination match {
       case MoveToDLQ =>
         if (queueData.isFifo) {
-          CommonOperations.wasRegistered(message.toNewMessageData, fifoMessagesHistory) match {
+          CommonOperations.wasRegistered(messageWithSourceQueueName.toNewMessageData, fifoMessagesHistory) match {
             case Some(_) => ResultWithEvents.empty
             case None =>
-              logger.debug(s"Moved message (${message.id}) from FIFO queue to ${queueData.name}")
-              moveMessageToQueue(regenerateDeduplicationId(message))
+              logger.debug(s"Moved message (${messageWithSourceQueueName.id}) from FIFO queue to ${queueData.name}")
+              moveMessageToQueue(regenerateDeduplicationId(messageWithSourceQueueName))
           }
         } else {
-          logger.debug(s"Moved message (${message.id}) to ${queueData.name}")
-          moveMessageToQueue(message)
+          logger.debug(s"Moved message (${messageWithSourceQueueName.id}) to ${queueData.name}")
+          moveMessageToQueue(messageWithSourceQueueName)
         }
     }
   }

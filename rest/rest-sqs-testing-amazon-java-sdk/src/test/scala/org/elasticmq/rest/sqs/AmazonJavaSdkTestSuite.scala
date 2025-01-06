@@ -2096,32 +2096,46 @@ class AmazonJavaSdkTestSuite extends SqsClientServerCommunication with Matchers 
     secondReceiveResult.getMessages shouldBe empty
   }
 
-  test("should return DeadLetterQueueSourceArn in receive message attributes") {
+  test("should return DeadLetterQueueSourceArn in message received from DLQ") {
     // given
     val messageBody = "Message 1"
-    client.createQueue(new CreateQueueRequest("testDlq")).getQueueUrl
+    val createDlqQueueResult = client.createQueue(new CreateQueueRequest("testDlq")).getQueueUrl
     val redrivePolicy = RedrivePolicy("testDlq", awsRegion, awsAccountId, 1).toJson.toString
 
     val createQueueResult = client
       .createQueue(
         new CreateQueueRequest("main")
           .withAttributes(
-            Map(redrivePolicyAttribute -> redrivePolicy).asJava
+            Map(defaultVisibilityTimeoutAttribute -> "0", redrivePolicyAttribute -> redrivePolicy).asJava
           )
       )
       .getQueueUrl
 
     // when
     client.sendMessage(createQueueResult, messageBody)
-    val receiveResult = client.receiveMessage(
+    val firstReceiveResult = client.receiveMessage(
       new ReceiveMessageRequest()
         .withQueueUrl(createQueueResult)
         .withAttributeNames("All")
     )
+    val secondReceiveResult = client.receiveMessage(
+      new ReceiveMessageRequest()
+        .withQueueUrl(createQueueResult)
+        .withAttributeNames("All")
+    )
+    val receiveDlqResult = client.receiveMessage(
+      new ReceiveMessageRequest()
+        .withQueueUrl(createDlqQueueResult)
+        .withAttributeNames("All")
+    )
 
     // then
-    receiveResult.getMessages.asScala.toList.flatMap(_.getAttributes.asScala.toList) should contain(
-      ("DeadLetterQueueSourceArn", s"arn:aws:sqs:$awsRegion:$awsAccountId:testDlq")
+    firstReceiveResult.getMessages.asScala.toList.flatMap(_.getAttributes.asScala.keys.toList) should not contain (
+      "DeadLetterQueueSourceArn"
+    )
+    secondReceiveResult.getMessages should be(empty)
+    receiveDlqResult.getMessages.asScala.toList.flatMap(_.getAttributes.asScala.toList) should contain(
+      ("DeadLetterQueueSourceArn", s"arn:aws:sqs:$awsRegion:$awsAccountId:main")
     )
   }
 

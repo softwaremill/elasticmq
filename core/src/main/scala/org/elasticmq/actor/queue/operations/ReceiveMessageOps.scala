@@ -85,7 +85,7 @@ trait ReceiveMessageOps extends Logging {
     messageQueue.dequeue(count, deliveryTime).map { internalMessage =>
       if (queueData.deadLettersQueue.map(_.maxReceiveCount).exists(_ <= internalMessage.receiveCount)) {
         logger.debug(s"${queueData.name}: send message $internalMessage to dead letters actor $deadLettersActorRef")
-        deadLettersActorRef.foreach(_ ! MoveMessage(internalMessage, MoveToDLQ))
+        deadLettersActorRef.foreach(_ ! MoveMessage(internalMessage, MoveToDLQ, queueData.name))
         MessageToDelete(internalMessage)
       } else {
         MessageToReturn(internalMessage)

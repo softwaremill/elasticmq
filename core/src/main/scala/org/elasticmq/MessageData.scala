@@ -13,5 +13,6 @@ case class MessageData(
     messageGroupId: Option[String],
     messageDeduplicationId: Option[DeduplicationId],
     tracingId: Option[TracingId],
-    sequenceNumber: Option[String]
+    sequenceNumber: Option[String],
+    deadLetterSourceQueueName: Option[String]
 )

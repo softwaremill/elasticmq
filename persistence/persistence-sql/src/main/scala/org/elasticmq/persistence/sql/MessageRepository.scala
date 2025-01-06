@@ -30,7 +30,8 @@ class MessageRepository(queueName: String, db: DB) extends Logging {
       group_id varchar,
       deduplication_id varchar,
       tracing_id varchar,
-      sequence_number varchar
+      sequence_number varchar,
+      dead_letter_source_queue_name varchar
     )""".execute.apply()
 
   def drop(): Unit = {
@@ -50,7 +51,7 @@ class MessageRepository(queueName: String, db: DB) extends Logging {
   def add(internalMessage: InternalMessage): Int = {
     val message = DBMessage.from(internalMessage)
     sql"""insert into $tableName
-           (message_id, delivery_receipts, next_delivery, content, attributes, created, received, receive_count, group_id, deduplication_id, tracing_id, sequence_number)
+           (message_id, delivery_receipts, next_delivery, content, attributes, created, received, receive_count, group_id, deduplication_id, tracing_id, sequence_number, dead_letter_source_queue_name)
            values (${message.messageId},
                    ${message.deliveryReceipts},
                    ${message.nextDelivery},
@@ -62,7 +63,8 @@ class MessageRepository(queueName: String, db: DB) extends Logging {
                    ${message.groupId},
                    ${message.deduplicationId},
                    ${message.tracingId},
-                   ${message.sequenceNumber})""".update.apply()
+                   ${message.sequenceNumber},
+                   ${message.deadLetterSourceQueueName})""".update.apply()
   }
 
   def update(internalMessage: InternalMessage): Int = {
@@ -74,7 +76,8 @@ class MessageRepository(queueName: String, db: DB) extends Logging {
                     received = ${message.received},
                     receive_count = ${message.receiveCount},
                     tracing_id = ${message.tracingId},
-                    sequence_number = ${message.sequenceNumber}
+                    sequence_number = ${message.sequenceNumber},
+                    dead_letter_source_queue_name = ${message.deadLetterSourceQueueName}
               where message_id = ${message.messageId}""".update.apply()
   }
 

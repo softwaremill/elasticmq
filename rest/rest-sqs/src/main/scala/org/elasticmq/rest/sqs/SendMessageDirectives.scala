@@ -163,13 +163,13 @@ trait SendMessageDirectives {
       None,
       body,
       messageAttributes,
-      messageSystemAttributes,
       nextDelivery,
       messageGroupId,
       messageDeduplicationId,
       orderIndex,
       maybeTracingId,
-      None
+      sequenceNumber = None,
+      deadLetterSourceQueueName = None
     )
   }
 
@@ -185,15 +185,9 @@ trait SendMessageDirectives {
       Some(md5AttributeDigest(message.messageAttributes))
     }
 
-    val systemMessageAttributeDigest = if (message.messageSystemAttributes.isEmpty) {
-      None
-    } else {
-      Some(md5AttributeDigest(message.messageSystemAttributes))
-    }
-
     for {
       message <- queueActor ? SendMessage(message)
-    } yield MessageSendOutcome(message, digest, messageAttributeDigest, systemMessageAttributeDigest)
+    } yield MessageSendOutcome(message, digest, messageAttributeDigest, systemMessageAttributeDigest = None)
   }
 
   def verifyMessageNotTooLong(messageLength: Int): Unit =

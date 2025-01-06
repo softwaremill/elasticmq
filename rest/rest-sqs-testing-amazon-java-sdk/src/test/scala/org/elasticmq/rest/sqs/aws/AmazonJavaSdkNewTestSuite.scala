@@ -136,19 +136,26 @@ abstract class AmazonJavaSdkNewTestSuite
 
   test("should return DeadLetterQueueSourceArn in receive message attributes") {
     // given
-    testClient.createQueue("testDlq")
+    val dlQueue = testClient.createQueue("testDlq")
     val queue = testClient.createQueue(
       "testQueue1",
-      Map(RedrivePolicyAttributeName -> RedrivePolicy("testDlq", awsRegion, awsAccountId, 1).toJson.compactPrint)
+      Map(
+        VisibilityTimeoutAttributeName -> "0",
+        RedrivePolicyAttributeName -> RedrivePolicy("testDlq", awsRegion, awsAccountId, 1).toJson.compactPrint
+      )
     )
 
     // when
     testClient.sendMessage(queue, "test123")
-    val receiveResult = testClient.receiveMessage(queue, List("All"))
+    val firstReceiveResult = testClient.receiveMessage(queue, List("All"))
+    val secondReceiveResult = testClient.receiveMessage(queue, List("All"))
+    val dlqReceiveResult = testClient.receiveMessage(dlQueue, List("All"))
 
     // then
-    receiveResult.flatMap(_.attributes.toList) should contain(
-      (DeadLetterQueueSourceArn, s"arn:aws:sqs:$awsRegion:$awsAccountId:testDlq")
+    firstReceiveResult.flatMap(_.attributes.keys.toList) should not contain DeadLetterQueueSourceArn
+    secondReceiveResult shouldBe empty
+    dlqReceiveResult.flatMap(_.attributes.toList) should contain(
+      (DeadLetterQueueSourceArn, s"arn:aws:sqs:$awsRegion:$awsAccountId:testQueue1")
     )
   }
 

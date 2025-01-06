@@ -52,7 +52,8 @@ trait DataCreationHelpers {
       messageGroupId,
       messageDeduplicationId,
       tracingId,
-      None
+      sequenceNumber = None,
+      deadLetterSourceQueueName = None
     )
 
   def createNewMessageData(
@@ -68,13 +69,13 @@ trait DataCreationHelpers {
       Some(MessageId(id)),
       content,
       messageAttributes,
-      Map.empty,
       nextDelivery,
       messageGroupId,
       messageDeduplicationId,
       orderIndex = 0,
       tracingId,
-      None
+      sequenceNumber = None,
+      deadLetterSourceQueueName = None
     )
 
   def createNewMessageData(messageData: MessageData) =
@@ -82,12 +83,12 @@ trait DataCreationHelpers {
       Some(messageData.id),
       messageData.content,
       messageData.messageAttributes,
-      Map.empty,
       messageData.nextDelivery,
       messageData.messageGroupId,
       messageData.messageDeduplicationId,
       orderIndex = 0,
       messageData.tracingId,
-      messageData.sequenceNumber
+      messageData.sequenceNumber,
+      messageData.deadLetterSourceQueueName
     )
 }

@@ -23,7 +23,6 @@ class ReceiveRequestAttemptCacheTest extends AnyFunSuite with Matchers {
       1L,
       "content",
       Map.empty,
-      Map.empty,
       nowProvider.now,
       orderIndex = 0,
       NeverReceived,
@@ -32,7 +31,8 @@ class ReceiveRequestAttemptCacheTest extends AnyFunSuite with Matchers {
       messageGroupId = None,
       messageDeduplicationId = None,
       tracingId = None,
-      sequenceNumber = None
+      sequenceNumber = None,
+      deadLetterSourceQueueName = None
     )
     val msg2 = msg1.copy(id = "id-2")
     val msg3 = msg1.copy(id = "id-3")
@@ -74,7 +74,6 @@ class ReceiveRequestAttemptCacheTest extends AnyFunSuite with Matchers {
       1L,
       "content",
       Map.empty,
-      Map.empty,
       nowProvider.now,
       orderIndex = 0,
       NeverReceived,
@@ -83,7 +82,8 @@ class ReceiveRequestAttemptCacheTest extends AnyFunSuite with Matchers {
       messageGroupId = None,
       messageDeduplicationId = None,
       tracingId = None,
-      sequenceNumber = None
+      sequenceNumber = None,
+      deadLetterSourceQueueName = None
     )
     val msg2 = msg1.copy(id = "id-2")
     val messageQueue = MessageQueue(isFifo = false)
