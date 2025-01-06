@@ -7,12 +7,12 @@ case class MessageData(
     deliveryReceipt: Option[DeliveryReceipt],
     content: String,
     messageAttributes: Map[String, MessageAttribute],
-    messageSystemAttributes: Map[String, MessageAttribute],
     nextDelivery: MillisNextDelivery,
     created: OffsetDateTime,
     statistics: MessageStatistics,
     messageGroupId: Option[String],
     messageDeduplicationId: Option[DeduplicationId],
     tracingId: Option[TracingId],
-    sequenceNumber: Option[String]
+    sequenceNumber: Option[String],
+    deadLetterSourceQueueName: Option[String]
 )

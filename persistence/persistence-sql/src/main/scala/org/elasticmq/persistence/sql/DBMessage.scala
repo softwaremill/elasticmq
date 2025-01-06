@@ -7,8 +7,6 @@ import org.elasticmq.util.OffsetDateTimeUtil
 import scalikejdbc.WrappedResultSet
 import spray.json._
 
-import scala.collection.mutable
-
 case class DBMessage(
     messageId: String,
     deliveryReceipts: Array[Byte],
@@ -21,7 +19,8 @@ case class DBMessage(
     groupId: Option[String],
     deduplicationId: Option[String],
     tracingId: Option[String],
-    sequenceNumber: Option[String]
+    sequenceNumber: Option[String],
+    deadLetterSourceQueueName: Option[String]
 ) {
 
   def toInternalMessage: InternalMessage = {
@@ -50,7 +49,6 @@ case class DBMessage(
       nextDelivery,
       new String(content),
       serializedAttrs,
-      mutable.HashMap.empty,
       OffsetDateTimeUtil.ofEpochMilli(created),
       orderIndex = 0,
       firstReceive,
@@ -59,7 +57,8 @@ case class DBMessage(
       groupId,
       deduplicationId.map(id => DeduplicationId(id)),
       tracingId.map(TracingId.apply),
-      sequenceNumber
+      sequenceNumber,
+      deadLetterSourceQueueName
     )
   }
 }
@@ -78,7 +77,8 @@ object DBMessage {
     rs.stringOpt("group_id"),
     rs.stringOpt("deduplication_id"),
     rs.stringOpt("tracing_id"),
-    rs.stringOpt("sequence_number")
+    rs.stringOpt("sequence_number"),
+    rs.stringOpt("dead_letter_source_queue_name")
   )
 
   def from(message: InternalMessage): DBMessage = {
@@ -113,7 +113,8 @@ object DBMessage {
       message.messageGroupId,
       deduplicationId,
       message.tracingId.map(_.id),
-      message.sequenceNumber
+      message.sequenceNumber,
+      message.deadLetterSourceQueueName
     )
   }
 }

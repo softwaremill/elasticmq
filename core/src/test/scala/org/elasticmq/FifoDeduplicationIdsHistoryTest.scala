@@ -107,7 +107,6 @@ class FifoDeduplicationIdsHistoryTest extends AnyFunSuite with Matchers {
       nextDelivery = 100L,
       content = "",
       messageAttributes = Map.empty,
-      messageSystemAttributes = mutable.HashMap.empty,
       created = created,
       orderIndex = 0,
       firstReceive = NeverReceived,
@@ -116,7 +115,8 @@ class FifoDeduplicationIdsHistoryTest extends AnyFunSuite with Matchers {
       messageGroupId = None,
       messageDeduplicationId = maybeDeduplicationId,
       tracingId = None,
-      sequenceNumber = None
+      sequenceNumber = None,
+      deadLetterSourceQueueName = None
     )
 
 }

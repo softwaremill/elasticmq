@@ -13,7 +13,6 @@ case class InternalMessage(
     var nextDelivery: Long,
     content: String,
     messageAttributes: Map[String, MessageAttribute],
-    messageSystemAttributes: mutable.HashMap[String, MessageAttribute],
     created: OffsetDateTime,
     orderIndex: Int,
     var firstReceive: Received,
@@ -22,7 +21,8 @@ case class InternalMessage(
     messageGroupId: Option[String],
     messageDeduplicationId: Option[DeduplicationId],
     tracingId: Option[TracingId],
-    sequenceNumber: Option[String]
+    sequenceNumber: Option[String],
+    deadLetterSourceQueueName: Option[String]
 ) extends Comparable[InternalMessage] {
 
   // Priority queues have biggest elements first
@@ -61,14 +61,14 @@ case class InternalMessage(
       deliveryReceipts.lastOption.map(DeliveryReceipt(_)),
       content,
       messageAttributes,
-      messageSystemAttributes.to(Map),
       MillisNextDelivery(nextDelivery),
       created,
       MessageStatistics(firstReceive, receiveCount),
       messageGroupId,
       messageDeduplicationId,
       tracingId,
-      sequenceNumber
+      sequenceNumber,
+      deadLetterSourceQueueName
     )
 
   def toNewMessageData =
@@ -76,13 +76,13 @@ case class InternalMessage(
       Some(MessageId(id)),
       content,
       messageAttributes,
-      messageSystemAttributes.to(Map),
       MillisNextDelivery(nextDelivery),
       messageGroupId,
       messageDeduplicationId,
       orderIndex,
       tracingId,
-      sequenceNumber
+      sequenceNumber,
+      deadLetterSourceQueueName
     )
 
   def deliverable(deliveryTime: Long): Boolean = nextDelivery <= deliveryTime
@@ -98,7 +98,6 @@ object InternalMessage {
       newMessageData.nextDelivery.toMillis(now, queueData.delay.toMillis).millis,
       newMessageData.content,
       newMessageData.messageAttributes,
-      newMessageData.messageSystemAttributes.to(mutable.HashMap),
       OffsetDateTime.now(),
       newMessageData.orderIndex,
       NeverReceived,
@@ -107,7 +106,8 @@ object InternalMessage {
       newMessageData.messageGroupId,
       newMessageData.messageDeduplicationId,
       newMessageData.tracingId,
-      newMessageData.sequenceNumber
+      newMessageData.sequenceNumber,
+      newMessageData.deadLetterSourceQueueName
     )
   }
 

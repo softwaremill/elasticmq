@@ -115,7 +115,7 @@ trait ReceiveMessageDirectives {
             ),
             Rule(AWSTraceHeaderAttribute, () => msg.tracingId.map(_.id)),
             Rule(SequenceNumberAttribute, () => msg.sequenceNumber),
-            Rule(DeadLetterQueueSourceArn, () => msg.messageSystemAttributes.get("sourceQueueName").map(sourceArn => getArn(sourceArn.asInstanceOf[StringMessageAttribute].stringValue)))
+            Rule(DeadLetterQueueSourceArn, () => msg.deadLetterSourceQueueName.map(getArn))
           )
         }
 

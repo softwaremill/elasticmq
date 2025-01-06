@@ -2096,7 +2096,7 @@ class AmazonJavaSdkTestSuite extends SqsClientServerCommunication with Matchers 
     secondReceiveResult.getMessages shouldBe empty
   }
 
-  test("should return DeadLetterQueueSourceArn in receive DLQ message attributes") {
+  test("should return DeadLetterQueueSourceArn in message received from DLQ") {
     // given
     val messageBody = "Message 1"
     val createDlqQueueResult = client.createQueue(new CreateQueueRequest("testDlq")).getQueueUrl
@@ -2113,12 +2113,12 @@ class AmazonJavaSdkTestSuite extends SqsClientServerCommunication with Matchers 
 
     // when
     client.sendMessage(createQueueResult, messageBody)
-    val receiveResult = client.receiveMessage(
+    val firstReceiveResult = client.receiveMessage(
       new ReceiveMessageRequest()
         .withQueueUrl(createQueueResult)
         .withAttributeNames("All")
     )
-    client.receiveMessage(
+    val secondReceiveResult = client.receiveMessage(
       new ReceiveMessageRequest()
         .withQueueUrl(createQueueResult)
         .withAttributeNames("All")
@@ -2130,9 +2130,10 @@ class AmazonJavaSdkTestSuite extends SqsClientServerCommunication with Matchers 
     )
 
     // then
-    receiveResult.getMessages.asScala.toList.flatMap(_.getAttributes.asScala.toList) should not contain(
+    firstReceiveResult.getMessages.asScala.toList.flatMap(_.getAttributes.asScala.keys.toList) should not contain (
       "DeadLetterQueueSourceArn"
     )
+    secondReceiveResult.getMessages should be(empty)
     receiveDlqResult.getMessages.asScala.toList.flatMap(_.getAttributes.asScala.toList) should contain(
       ("DeadLetterQueueSourceArn", s"arn:aws:sqs:$awsRegion:$awsAccountId:main")
     )
