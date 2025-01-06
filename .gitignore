@@ -11,3 +11,4 @@ project/boot
 
 .bsp
 .db
+.env
