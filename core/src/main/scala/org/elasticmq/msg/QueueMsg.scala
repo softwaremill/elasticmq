@@ -42,7 +42,8 @@ case class GetQueueStatistics(deliveryTime: Long) extends QueueQueueMsg[QueueSta
 case class ClearQueue() extends QueueQueueMsg[Unit]
 
 case class SendMessage(message: NewMessageData) extends QueueMessageMsg[MessageData]
-case class MoveMessage(message: InternalMessage, moveDestination: MoveDestination, sourceQueueName: String) extends QueueMessageMsg[Unit]
+case class MoveMessage(message: InternalMessage, moveDestination: MoveDestination, sourceQueueName: String)
+    extends QueueMessageMsg[Unit]
 case class UpdateVisibilityTimeout(deliveryReceipt: DeliveryReceipt, visibilityTimeout: VisibilityTimeout)
     extends QueueMessageMsg[Either[InvalidReceiptHandle, Unit]]
 case class ReceiveMessages(
