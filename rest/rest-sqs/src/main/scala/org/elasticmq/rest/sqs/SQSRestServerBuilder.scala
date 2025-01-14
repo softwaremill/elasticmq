@@ -35,7 +35,7 @@ import scala.util.control.NonFatal
 import scala.util.{Failure, Success, Try}
 import scala.xml._
 
-/** By default: <li> <ul>for `socketAddress`: when started, the server will bind to `localhost:9324`</ul> <ul>for
+/** By default: <li> <ul>for `socketAddress`: when started, the server will bind to `localhost:9324` </ul> <ul>for
   * `serverAddress`: returned queue addresses will use `http://localhost:9324` as the base address.</ul> <ul>for
   * `sqsLimits`: relaxed </li>
   */
