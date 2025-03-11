@@ -32,7 +32,7 @@ jobs:
 
       - name: Cache SBT
         id: cache-sbt
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         with:
           path: |
             ~/.sbt
@@ -71,7 +71,7 @@ jobs:
 
       - name: Cache SBT
         id: cache-sbt
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         with:
           path: |
             ~/.sbt
@@ -110,7 +110,7 @@ jobs:
 
       - name: Cache SBT
         id: cache-sbt
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         with:
           path: |
             ~/.sbt
@@ -154,7 +154,7 @@ jobs:
 
       - name: Cache SBT
         id: cache-sbt
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         with:
           path: |
             ~/.sbt
@@ -215,7 +215,7 @@ jobs:
 
       - name: Cache SBT
         id: cache-sbt
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         with:
           path: |
             ~/.sbt
@@ -251,7 +251,7 @@ jobs:
           node-version: 16
 
       - name: Cache sbt
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         with:
           path: |
             ~/.sbt
@@ -321,7 +321,7 @@ jobs:
           node-version: 16
 
       - name: Cache sbt
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         with:
           path: |
             ~/.sbt
