@@ -3,12 +3,14 @@ labels:
   - label: "automerge"
     authors: ["softwaremill-ci"]
     files:
-      - "build.sbt"
-      - "project/plugins.sbt"
       - ".scalafmt.conf"
+      - "build.sbt"
+      - "project/build.properties"
+      - "project/plugins.sbt"
   - label: "dependency"
     authors: ["softwaremill-ci"]
     files:
-      - "build.sbt"
-      - "project/plugins.sbt"
       - ".scalafmt.conf"
+      - "build.sbt"
+      - "project/build.properties"
+      - "project/plugins.sbt"
