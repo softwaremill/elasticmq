@@ -5,8 +5,10 @@ labels:
     files:
       - "build.sbt"
       - "project/plugins.sbt"
+      - ".scalafmt.conf"
   - label: "dependency"
     authors: ["softwaremill-ci"]
     files:
       - "build.sbt"
       - "project/plugins.sbt"
+      - ".scalafmt.conf"
