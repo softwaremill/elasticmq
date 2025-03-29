@@ -1,9 +1,9 @@
 package org.elasticmq.server.config
 
 import com.typesafe.config.Config
-import org.elasticmq.persistence.sql.SqlQueuePersistenceConfig
 import org.elasticmq.persistence.CreateQueueMetadata
 import org.elasticmq.persistence.file.QueueConfigUtil
+import org.elasticmq.persistence.sql.SqlQueuePersistenceConfig
 import org.elasticmq.util.Logging
 import org.elasticmq.{NodeAddress, RelaxedSQSLimits, StrictSQSLimits}
 

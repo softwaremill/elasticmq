@@ -14,9 +14,9 @@ import org.elasticmq.rest.stats.{StatisticsRestServer, TheStatisticsRestServerBu
 import org.elasticmq.server.config.ElasticMQServerConfig
 import org.elasticmq.util.{Logging, NowProvider}
 
-import scala.concurrent.{Await, ExecutionContextExecutor, Future}
-import scala.concurrent.duration._
 import scala.concurrent.duration.Duration.Inf
+import scala.concurrent.duration._
+import scala.concurrent.{Await, ExecutionContextExecutor, Future}
 
 class ElasticMQServer(config: ElasticMQServerConfig) extends Logging {
   private val actorSystem = ActorSystem("elasticmq")
