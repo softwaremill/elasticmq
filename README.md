@@ -114,7 +114,7 @@ aws {
 You can also provide an alternative [Logback](http://logback.qos.ch/) configuration file (the
 [default](server/src/main/resources/logback.xml) is configured to
 log INFO logs and above to the console):
-                 
+
 ```
 java -Dlogback.configurationFile=my_logback.xml -jar elasticmq-server-$VERSION.jar
 ```
@@ -241,12 +241,47 @@ On startup, any queues and their messages persisted in the database will be recr
 Note that the persisted queues take precedence over the queues defined
 in the main configuration file (as described in the previous section) in the `queues` section.
 
-# Starting an embedded ElasticMQ server with an SQS interface
-
-Add ElasticMQ Server to `build.sbt` dependencies
+# ElasticMQ dependencies in SBT
 
 ```scala
-libraryDependencies += "org.elasticmq" %% "elasticmq-server" % Version
+// Scala 2.13 and 2.12
+val elasticmqSqs        = "org.elasticmq" %% "elasticmq-rest-sqs" % Version
+```
+
+If you don't want the SQS interface, but just use the actors directly, you can add a dependency only to the `core`
+module:
+
+```scala
+val elasticmqCore       = "org.elasticmq" %% "elasticmq-core" % Version
+```
+
+If you want to use a snapshot version, you will need to add the [https://oss.sonatype.org/content/repositories/snapshots/](https://oss.sonatype.org/content/repositories/snapshots/) repository to your configuration.
+
+# ElasticMQ dependencies in Maven
+
+Dependencies:
+
+```xml
+<dependency>
+    <groupId>org.elasticmq</groupId>
+    <artifactId>elasticmq-rest-sqs_2.12</artifactId>
+    <version>${version}</version>
+</dependency>
+```
+
+If you want to use a snapshot version, you will need to add the [https://oss.sonatype.org/content/repositories/snapshots/](https://oss.sonatype.org/content/repositories/snapshots/) repository to your configuration.
+
+# Logging
+
+ElasticMQ uses [Slf4j](http://www.slf4j.org/) for logging. By default, no logger backend is included as a dependency,
+however [Logback](http://logback.qos.ch/) is recommended.
+
+# Starting an embedded ElasticMQ server with an SQS interface
+
+Add ElasticMQ Rest SQS module to `build.sbt` dependencies
+
+```scala
+libraryDependencies += "org.elasticmq" %% "elasticmq-rest-sqs" % Version
 ```
 
 Simply start the server using custom configuration (see examples above):
@@ -434,41 +469,6 @@ ENTRYPOINT [ "/usr/bin/java", "-Dconfig.file=/opt/elasticmq/conf/elasticmq.conf"
 ```
 
 and override the entrypoint passing the required properties.
-
-# ElasticMQ dependencies in SBT
-                    
-```scala
-// Scala 2.13 and 2.12
-val elasticmqSqs        = "org.elasticmq" %% "elasticmq-rest-sqs" % Version
-```
-
-If you don't want the SQS interface, but just use the actors directly, you can add a dependency only to the `core`
-module:
-    
-```scala
-val elasticmqCore       = "org.elasticmq" %% "elasticmq-core" % Version
-```
-
-If you want to use a snapshot version, you will need to add the [https://oss.sonatype.org/content/repositories/snapshots/](https://oss.sonatype.org/content/repositories/snapshots/) repository to your configuration.
-
-# ElasticMQ dependencies in Maven
-
-Dependencies:
-    
-```xml
-<dependency>
-    <groupId>org.elasticmq</groupId>
-    <artifactId>elasticmq-rest-sqs_2.12</artifactId>
-    <version>${version}</version>
-</dependency>
-```
-
-If you want to use a snapshot version, you will need to add the [https://oss.sonatype.org/content/repositories/snapshots/](https://oss.sonatype.org/content/repositories/snapshots/) repository to your configuration.
-
-# Logging
-
-ElasticMQ uses [Slf4j](http://www.slf4j.org/) for logging. By default no logger backend is included as a dependency,
-however [Logback](http://logback.qos.ch/) is recommended.
 
 # Performance
 
