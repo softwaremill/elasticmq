@@ -195,7 +195,7 @@ lazy val restSqs: Project = (project in file("rest/rest-sqs"))
       ) ++ common
     )
   )
-  .dependsOn(core % "compile->compile;test->test", commonTest % "test")
+  .dependsOn(core % "compile->compile;test->test", persistenceFile, persistenceSql, commonTest % "test")
 
 lazy val restSqsTestingAmazonJavaSdk: Project =
   (project in file("rest/rest-sqs-testing-amazon-java-sdk"))
@@ -230,8 +230,8 @@ lazy val server: Project = (project in file("server"))
       // s3 upload
       s3Upload := {
         import com.amazonaws.auth.{AWSStaticCredentialsProvider, BasicAWSCredentials}
-        import com.amazonaws.services.s3.AmazonS3ClientBuilder
-        import com.amazonaws.services.s3.model.{CannedAccessControlList, PutObjectRequest}
+          import com.amazonaws.services.s3.AmazonS3ClientBuilder
+          import com.amazonaws.services.s3.model.{CannedAccessControlList, PutObjectRequest}
 
         val bucketName = "softwaremill-public"
 
@@ -278,7 +278,7 @@ lazy val server: Project = (project in file("server"))
       dockerExposedVolumes += "/data"
     )
   )
-  .dependsOn(core, restSqs, persistenceFile, persistenceSql, commonTest % "test")
+  .dependsOn(core, restSqs)
 
 val graalVmVersion = "22.1.0"
 val graalVmTag = s"ol8-java11-$graalVmVersion"
