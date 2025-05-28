@@ -29,7 +29,7 @@ lazy val dockerBuildWithBuildx = taskKey[Unit]("Build docker images using buildx
 
 val config = "com.typesafe" % "config" % "1.4.3"
 val pureConfig = "com.github.pureconfig" %% "pureconfig-core" % "0.17.8"
-val scalaXml = "org.scala-lang.modules" %% "scala-xml" % "2.3.0"
+val scalaXml = "org.scala-lang.modules" %% "scala-xml" % "2.4.0"
 
 val scalalogging = "com.typesafe.scala-logging" %% "scala-logging" % "3.9.5"
 val logback = "ch.qos.logback" % "logback-classic" % "1.3.15"
@@ -230,8 +230,8 @@ lazy val server: Project = (project in file("server"))
       // s3 upload
       s3Upload := {
         import com.amazonaws.auth.{AWSStaticCredentialsProvider, BasicAWSCredentials}
-          import com.amazonaws.services.s3.AmazonS3ClientBuilder
-          import com.amazonaws.services.s3.model.{CannedAccessControlList, PutObjectRequest}
+        import com.amazonaws.services.s3.AmazonS3ClientBuilder
+        import com.amazonaws.services.s3.model.{CannedAccessControlList, PutObjectRequest}
 
         val bucketName = "softwaremill-public"
 
