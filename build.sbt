@@ -41,7 +41,7 @@ val awaitility = "org.awaitility" % "awaitility-scala" % "4.3.0"
 val amazonJavaSdkSqs = "com.amazonaws" % "aws-java-sdk-sqs" % "1.12.699" exclude ("commons-logging", "commons-logging")
 val amazonJavaV2SdkSqs = "software.amazon.awssdk" % "sqs" % "2.25.60"
 
-val pekkoVersion = "1.1.3"
+val pekkoVersion = "1.1.4"
 val pekkoHttpVersion = "1.1.0"
 val pekkoActor = "org.apache.pekko" %% "pekko-actor" % pekkoVersion
 val pekkoSlf4j = "org.apache.pekko" %% "pekko-slf4j" % pekkoVersion
@@ -230,8 +230,8 @@ lazy val server: Project = (project in file("server"))
       // s3 upload
       s3Upload := {
         import com.amazonaws.auth.{AWSStaticCredentialsProvider, BasicAWSCredentials}
-          import com.amazonaws.services.s3.AmazonS3ClientBuilder
-          import com.amazonaws.services.s3.model.{CannedAccessControlList, PutObjectRequest}
+        import com.amazonaws.services.s3.AmazonS3ClientBuilder
+        import com.amazonaws.services.s3.model.{CannedAccessControlList, PutObjectRequest}
 
         val bucketName = "softwaremill-public"
 
