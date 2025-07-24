@@ -83,7 +83,6 @@ val buildSettings = commonSmlBuildSettings ++ ossPublishSettings ++ Seq(
   libraryDependencies += scalaXml,
   dependencyOverrides := pekko100verrides,
   parallelExecution := false,
-  sonatypeProfileName := "org.elasticmq",
   // workaround for: https://github.com/sbt/sbt/issues/692
   Test / fork := true,
   assembly / assemblyMergeStrategy := {
