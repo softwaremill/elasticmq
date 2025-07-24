@@ -88,17 +88,14 @@ trait SendMessageDirectives {
       .fold(error => throw SQSException.invalidAttributeValue("MessageBody", Some(error)), identity)
 
     val messageGroupId = parameters.MessageGroupId match {
-      // MessageGroupId is only supported for FIFO queues
-      case Some(v) if !queueData.isFifo => throw SQSException.invalidQueueTypeParameter(MessageGroupIdParameter)
-
       // MessageGroupId is required for FIFO queues
       case None if queueData.isFifo => throw SQSException.missingParameter(MessageGroupIdParameter)
 
-      // Ensure the given value is valid
+      // Ensure the given value is valid (for both FIFO and standard queues)
       case Some(id) if !isValidFifoPropertyValue(id) =>
         throw SQSException.invalidAlphanumericalPunctualParameterValue(MessageGroupIdParameter)
 
-      // This must be a correct value (or this isn't a FIFO queue and no value is required)
+      // This must be a correct value or None
       case m => m
     }
 
