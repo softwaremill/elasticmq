@@ -15,6 +15,7 @@
     "@types/yup": "^0.29.8",
     "axios": "^0.21.2",
     "jest-environment-jsdom-sixteen": "^1.0.3",
+    "notistack": "^3.0.2",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
     "react-scripts": "3.4.0",
@@ -44,5 +45,6 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
-  }
+  },
+  "proxy": "http://localhost:9324"
 }
