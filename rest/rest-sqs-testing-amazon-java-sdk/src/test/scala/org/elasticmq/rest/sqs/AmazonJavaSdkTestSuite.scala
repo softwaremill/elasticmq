@@ -445,10 +445,10 @@ class AmazonJavaSdkTestSuite extends SqsClientServerCommunication with Matchers 
       client.sendMessage(new SendMessageRequest(fifoQueueUrl, "A body"))
     )
 
-    // Regular queues don't allow message groups
-    assertInvalidParameterQueueTypeException("MessageGroupId")(
-      client.sendMessage(new SendMessageRequest(regularQueueUrl, "A body").withMessageGroupId("group-1"))
-    )
+    // Regular queues now allow message groups
+    // Test that sending MessageGroupId to regular queue works
+    val result = client.sendMessage(new SendMessageRequest(regularQueueUrl, "A body").withMessageGroupId("group-1"))
+    result should not be null
   }
 
   test("FIFO queues do not support delaying individual messages") {
