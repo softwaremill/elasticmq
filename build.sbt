@@ -9,8 +9,8 @@ import scoverage.ScoverageKeys.*
 import scala.sys.process.Process
 
 val v2_12 = "2.12.20"
-val v2_13 = "2.13.15"
-val v3 = "3.3.4"
+val v2_13 = "2.13.16"
+val v3 = "3.3.6"
 
 lazy val resolvedScalaVersion =
   sys.env.get("SCALA_MAJOR_VERSION") match {
@@ -27,7 +27,7 @@ lazy val yarnTask = inputKey[Unit]("Run yarn with arguments")
 lazy val ensureDockerBuildx = taskKey[Unit]("Ensure that docker buildx configuration exists")
 lazy val dockerBuildWithBuildx = taskKey[Unit]("Build docker images using buildx")
 
-val config = "com.typesafe" % "config" % "1.4.3"
+val config = "com.typesafe" % "config" % "1.4.4"
 val pureConfig = "com.github.pureconfig" %% "pureconfig-core" % "0.17.8"
 val scalaXml = "org.scala-lang.modules" %% "scala-xml" % "2.3.0"
 
@@ -41,7 +41,7 @@ val awaitility = "org.awaitility" % "awaitility-scala" % "4.3.0"
 val amazonJavaSdkSqs = "com.amazonaws" % "aws-java-sdk-sqs" % "1.12.699" exclude ("commons-logging", "commons-logging")
 val amazonJavaV2SdkSqs = "software.amazon.awssdk" % "sqs" % "2.25.60"
 
-val pekkoVersion = "1.1.3"
+val pekkoVersion = "1.1.5"
 val pekkoHttpVersion = "1.1.0"
 val pekkoActor = "org.apache.pekko" %% "pekko-actor" % pekkoVersion
 val pekkoSlf4j = "org.apache.pekko" %% "pekko-slf4j" % pekkoVersion
@@ -83,7 +83,6 @@ val buildSettings = commonSmlBuildSettings ++ ossPublishSettings ++ Seq(
   libraryDependencies += scalaXml,
   dependencyOverrides := pekko100verrides,
   parallelExecution := false,
-  sonatypeProfileName := "org.elasticmq",
   // workaround for: https://github.com/sbt/sbt/issues/692
   Test / fork := true,
   assembly / assemblyMergeStrategy := {
