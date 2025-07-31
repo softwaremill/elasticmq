@@ -29,7 +29,7 @@ lazy val dockerBuildWithBuildx = taskKey[Unit]("Build docker images using buildx
 
 val config = "com.typesafe" % "config" % "1.4.4"
 val pureConfig = "com.github.pureconfig" %% "pureconfig-core" % "0.17.8"
-val scalaXml = "org.scala-lang.modules" %% "scala-xml" % "2.3.0"
+val scalaXml = "org.scala-lang.modules" %% "scala-xml" % "2.4.0"
 
 val scalalogging = "com.typesafe.scala-logging" %% "scala-logging" % "3.9.5"
 val logback = "ch.qos.logback" % "logback-classic" % "1.3.15"
