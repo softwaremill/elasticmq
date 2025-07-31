@@ -9,8 +9,8 @@ import scoverage.ScoverageKeys.*
 import scala.sys.process.Process
 
 val v2_12 = "2.12.20"
-val v2_13 = "2.13.15"
-val v3 = "3.3.4"
+val v2_13 = "2.13.16"
+val v3 = "3.3.6"
 
 lazy val resolvedScalaVersion =
   sys.env.get("SCALA_MAJOR_VERSION") match {
