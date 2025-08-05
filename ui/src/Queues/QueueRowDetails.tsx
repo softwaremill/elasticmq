@@ -7,37 +7,41 @@ import Table from "@material-ui/core/Table";
 import TableHead from "@material-ui/core/TableHead";
 import { TableBody, Tabs, Tab } from "@material-ui/core";
 import React, { useState } from "react";
-import QueueService from "../services/QueueService";
+import { getQueueAttributes } from "../services/QueueService";
 import QueueMessagesList from "./QueueMessagesList";
 import { QueueMessagesData } from "./QueueMessageData";
 
 const RowDetails: React.FC<{
-  props: {
-    isExpanded: boolean;
-    queueName: string;
-    queueData: QueueMessagesData;
-    fetchQueueMessages: (queueName: string) => Promise<void>;
-    deleteMessage: (
-      queueName: string,
-      messageId: string,
-      receiptHandle: string
-    ) => Promise<void>;
-    updateMessageExpandedState: (
-      queueName: string,
-      messageId: string | null
-    ) => void;
-  };
-}> = ({ props }) => {
+  isExpanded: boolean;
+  queueName: string;
+  queueData: QueueMessagesData;
+  fetchQueueMessages: (queueName: string) => Promise<void>;
+  deleteMessage: (
+    queueName: string,
+    messageId: string,
+    receiptHandle: string
+  ) => Promise<void>;
+  updateMessageExpandedState: (
+    queueName: string,
+    messageId: string | null
+  ) => void;
+}> = ({
+  isExpanded,
+  queueName,
+  queueData,
+  fetchQueueMessages,
+  deleteMessage,
+  updateMessageExpandedState,
+}) => {
   const [attributes, setAttributes] = useState<Array<Array<string>>>([]);
   const [activeTab, setActiveTab] = useState(0);
 
-  function getQueueAttributes() {
-    QueueService.getQueueAttributes(props.queueName).then((attributes) =>
-      setAttributes(attributes)
-    );
+  async function fetchQueueAttributes() {
+    const attributes = await getQueueAttributes(queueName);
+    setAttributes(attributes);
   }
 
-  const handleTabChange = (event: React.ChangeEvent<{}>, newValue: number) => {
+  const handleTabChange = (_event: React.ChangeEvent<{}>, newValue: number) => {
     setActiveTab(newValue);
   };
 
@@ -65,15 +69,15 @@ const RowDetails: React.FC<{
 
   return (
     <TableRow
-      key={props.queueName + "-details"}
+      key={`${queueName}-details`}
       style={{ backgroundColor: "#f5f5f5" }}
     >
       <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={6}>
         <Collapse
-          in={props.isExpanded}
+          in={isExpanded}
           timeout="auto"
           unmountOnExit
-          onEnter={() => getQueueAttributes()}
+          onEnter={fetchQueueAttributes}
         >
           <Box margin={1}>
             <Tabs
@@ -122,13 +126,13 @@ const RowDetails: React.FC<{
             <TabPanel value={activeTab} index={1}>
               <Box pt={2}>
                 <QueueMessagesList
-                  queueName={props.queueName}
-                  messages={props.queueData.messages}
-                  loading={props.queueData.messagesLoading}
-                  error={props.queueData.messagesError}
-                  onRefreshMessages={props.fetchQueueMessages}
-                  onDeleteMessage={props.deleteMessage}
-                  updateMessageExpandedState={props.updateMessageExpandedState}
+                  queueName={queueName}
+                  messages={queueData.messages}
+                  loading={queueData.messagesLoading}
+                  error={queueData.messagesError}
+                  onRefreshMessages={fetchQueueMessages}
+                  onDeleteMessage={deleteMessage}
+                  updateMessageExpandedState={updateMessageExpandedState}
                 />
               </Box>
             </TabPanel>

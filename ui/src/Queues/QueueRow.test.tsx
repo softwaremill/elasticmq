@@ -4,12 +4,17 @@ import { act, fireEvent, render, screen } from "@testing-library/react";
 import QueueTableRow from "./QueueRow";
 import { TableBody } from "@material-ui/core";
 import Table from "@material-ui/core/Table";
+import { SnackbarProvider } from "../context/SnackbarContext";
 
 jest.mock("axios");
 
 const mockFetchQueueMessages = jest.fn();
 const mockDeleteMessage = jest.fn();
 const mockUpdateMessageExpandedState = jest.fn();
+
+const renderWithSnackbarProvider = (component: React.ReactElement) => {
+  return render(<SnackbarProvider>{component}</SnackbarProvider>);
+};
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -28,7 +33,7 @@ describe("<QueueRow />", () => {
   };
 
   test("renders cell values", () => {
-    render(
+    renderWithSnackbarProvider(
       <Table>
         <TableBody>
           <QueueTableRow
@@ -59,7 +64,7 @@ describe("<QueueRow />", () => {
     };
     (axios.get as jest.Mock).mockResolvedValueOnce({ data, status: 200 });
 
-    render(
+    renderWithSnackbarProvider(
       <Table>
         <TableBody>
           <QueueTableRow

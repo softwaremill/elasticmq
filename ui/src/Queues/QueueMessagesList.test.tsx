@@ -2,8 +2,14 @@ import React from "react";
 import { render, screen } from "@testing-library/react";
 import QueueMessagesList from "./QueueMessagesList";
 import { QueueMessage } from "./QueueMessageData";
+import { SnackbarProvider } from "../context/SnackbarContext";
 
 const mockUpdateMessageExpandedState = jest.fn();
+const mockOnRefreshMessages = jest.fn();
+
+const renderWithSnackbarProvider = (component: React.ReactElement) => {
+  return render(<SnackbarProvider>{component}</SnackbarProvider>);
+};
 
 describe("<QueueMessagesList /> - New Features", () => {
   describe("HTML Entity Decoding (New Feature)", () => {
@@ -16,7 +22,7 @@ describe("<QueueMessagesList /> - New Features", () => {
         },
       ];
 
-      render(
+      renderWithSnackbarProvider(
         <QueueMessagesList
           queueName="test-queue"
           messages={messageWithEntities}
@@ -39,7 +45,7 @@ describe("<QueueMessagesList /> - New Features", () => {
         },
       ];
 
-      render(
+      renderWithSnackbarProvider(
         <QueueMessagesList
           queueName="test-queue"
           messages={messageWithEntities}
@@ -64,7 +70,7 @@ describe("<QueueMessagesList /> - New Features", () => {
         },
       ];
 
-      render(
+      renderWithSnackbarProvider(
         <QueueMessagesList
           queueName="test-queue"
           messages={propsMessages}
@@ -79,13 +85,14 @@ describe("<QueueMessagesList /> - New Features", () => {
     });
 
     test("shows loading state from props", () => {
-      render(
+      renderWithSnackbarProvider(
         <QueueMessagesList
           queueName="test-queue"
           messages={[]}
           loading={true}
           error={null}
           updateMessageExpandedState={mockUpdateMessageExpandedState}
+          onRefreshMessages={mockOnRefreshMessages}
         />
       );
 
@@ -95,7 +102,7 @@ describe("<QueueMessagesList /> - New Features", () => {
 
     test("shows error state from props", () => {
       const errorMessage = "Failed to fetch messages from parent";
-      render(
+      renderWithSnackbarProvider(
         <QueueMessagesList
           queueName="test-queue"
           messages={[]}

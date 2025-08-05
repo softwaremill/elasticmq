@@ -3,6 +3,7 @@ import { act, render, screen, waitFor } from "@testing-library/react";
 import QueuesTable from "./QueuesTable";
 import axios from "axios";
 import "@testing-library/jest-dom";
+import { SnackbarProvider } from "../context/SnackbarContext";
 
 jest.mock("axios");
 const initialData = {
@@ -26,6 +27,10 @@ const initialData = {
   ],
 };
 
+const renderWithSnackbarProvider = (component: React.ReactElement) => {
+  return render(<SnackbarProvider>{component}</SnackbarProvider>);
+};
+
 beforeEach(() => {
   jest.useFakeTimers();
 });
@@ -39,7 +44,7 @@ describe("<QueuesTable />", () => {
   test("Basic information about queues should be retrieved for first time without waiting for interval", async () => {
     (axios.get as jest.Mock).mockResolvedValueOnce(initialData);
 
-    render(<QueuesTable />);
+    renderWithSnackbarProvider(<QueuesTable />);
 
     await waitFor(() => screen.findByText("queueName1"));
 
@@ -64,7 +69,7 @@ describe("<QueuesTable />", () => {
       .mockResolvedValueOnce(firstUpdate)
       .mockResolvedValue(secondUpdate);
 
-    render(<QueuesTable />);
+    renderWithSnackbarProvider(<QueuesTable />);
 
     expect(await screen.findByText("queueName1")).toBeInTheDocument();
     expect(await screen.findByText("1")).toBeInTheDocument();
@@ -100,7 +105,7 @@ describe("<QueuesTable />", () => {
     const initialData = createResponseDataForQueue("queueName1", 1, 2, 3);
     (axios.get as jest.Mock).mockResolvedValue(initialData);
 
-    render(<QueuesTable />);
+    renderWithSnackbarProvider(<QueuesTable />);
 
     expect(await screen.findByText("queueName1")).toBeInTheDocument();
     expect(await screen.findByText("1")).toBeInTheDocument();

@@ -30,8 +30,8 @@ interface QueueMessage {
   body: string;
   sentTimestamp: string;
   receiptHandle?: string;
-  attributes?: { [key: string]: string };
-  messageAttributes?: { [key: string]: any };
+  attributes?: Record<string, string>;
+  messageAttributes?: Record<string, unknown>;
   isExpanded?: boolean;
 }
 

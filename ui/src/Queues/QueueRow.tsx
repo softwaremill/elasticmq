@@ -11,7 +11,12 @@ import { QueueMessagesData } from "./QueueMessageData";
 import RowDetails from "./QueueRowDetails";
 import NewMessageModal from "./NewMessageModal";
 
-function QueueTableRow(props: {
+function QueueTableRow({
+  row,
+  fetchQueueMessages,
+  deleteMessage,
+  updateMessageExpandedState,
+}: {
   row: QueueMessagesData;
   fetchQueueMessages: (queueName: string) => Promise<void>;
   deleteMessage: (
@@ -27,22 +32,21 @@ function QueueTableRow(props: {
   const [isExpanded, setIsExpanded] = useState<boolean>(false);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
 
-  function ExpandableArrowButton(props: { isExpanded: boolean }) {
+  function ExpandableArrowButton({ isExpanded }: { isExpanded: boolean }) {
     return (
       <IconButton
         aria-label="open-details"
         size="small"
         onClick={() => setIsExpanded((prevState) => !prevState)}
       >
-        {props.isExpanded ? <KeyboardArrowRight /> : <KeyboardArrowDown />}
+        {isExpanded ? <KeyboardArrowRight /> : <KeyboardArrowDown />}
       </IconButton>
     );
   }
 
-  const { row, fetchQueueMessages } = props;
   return (
     <>
-      <TableRow key={row.queueName} className={`queue-row`}>
+      <TableRow key={row.queueName} className={"queue-row"}>
         <TableCell>
           <ExpandableArrowButton isExpanded={isExpanded} />
         </TableCell>
@@ -64,14 +68,12 @@ function QueueTableRow(props: {
         </TableCell>
       </TableRow>
       <RowDetails
-        props={{
-          isExpanded: isExpanded,
-          queueName: row.queueName,
-          queueData: row,
-          fetchQueueMessages: fetchQueueMessages,
-          deleteMessage: props.deleteMessage,
-          updateMessageExpandedState: props.updateMessageExpandedState,
-        }}
+        isExpanded={isExpanded}
+        queueName={row.queueName}
+        queueData={row}
+        fetchQueueMessages={fetchQueueMessages}
+        deleteMessage={deleteMessage}
+        updateMessageExpandedState={updateMessageExpandedState}
       />
       <NewMessageModal
         open={isModalOpen}

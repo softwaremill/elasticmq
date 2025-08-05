@@ -7,9 +7,10 @@ import {
   TextField,
   Button,
 } from "@material-ui/core";
-import { useSnackbar } from "notistack";
+import { useSnackbar } from "../context/SnackbarContext";
 
-import QueueService from "../services/QueueService";
+import { sendMessage } from "../services/QueueService";
+import getErrorMessage from "../utils/getErrorMessage";
 
 interface NewMessageModalProps {
   open: boolean;
@@ -24,29 +25,23 @@ const NewMessageModal: React.FC<NewMessageModalProps> = ({
 }) => {
   const [messageBody, setMessageBody] = useState("");
   const [loading, setLoading] = useState(false);
-  const { enqueueSnackbar } = useSnackbar();
+  const { showSnackbar } = useSnackbar();
 
   const handleSendMessage = async () => {
     if (!messageBody.trim()) {
-      enqueueSnackbar("Message body cannot be empty", {
-        variant: "error",
-      });
+      showSnackbar("Message body cannot be empty");
       return;
     }
 
     setLoading(true);
     try {
-      await QueueService.sendMessage(queueName, messageBody);
-      enqueueSnackbar("Message sent successfully!", {
-        variant: "success",
-      });
+      await sendMessage(queueName, messageBody);
+      showSnackbar("Message sent successfully!");
       setMessageBody("");
       onClose();
     } catch (error) {
-      enqueueSnackbar("Failed to send message", {
-        variant: "error",
-      });
-      console.error("Error sending message:", error);
+      const errorMessage = getErrorMessage(error);
+      showSnackbar(`Failed to send message: ${errorMessage}`);
     } finally {
       setLoading(false);
     }
@@ -58,39 +53,37 @@ const NewMessageModal: React.FC<NewMessageModalProps> = ({
   };
 
   return (
-    <>
-      <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
-        <DialogTitle>New Message - {queueName}</DialogTitle>
-        <DialogContent>
-          <TextField
-            autoFocus
-            margin="dense"
-            label="Message Body"
-            type="text"
-            fullWidth
-            multiline
-            rows={6}
-            variant="outlined"
-            value={messageBody}
-            onChange={(e) => setMessageBody(e.target.value)}
-            placeholder="Enter your message body here..."
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleClose} color="secondary">
-            Cancel
-          </Button>
-          <Button
-            onClick={handleSendMessage}
-            color="primary"
-            variant="contained"
-            disabled={loading}
-          >
-            {loading ? "Sending..." : "Send"}
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </>
+    <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
+      <DialogTitle>New Message - {queueName}</DialogTitle>
+      <DialogContent>
+        <TextField
+          autoFocus
+          margin="dense"
+          label="Message Body"
+          type="text"
+          fullWidth
+          multiline
+          rows={6}
+          variant="outlined"
+          value={messageBody}
+          onChange={(e) => setMessageBody(e.target.value)}
+          placeholder="Enter your message body here..."
+        />
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={handleClose} color="secondary">
+          Cancel
+        </Button>
+        <Button
+          onClick={handleSendMessage}
+          color="primary"
+          variant="contained"
+          disabled={loading}
+        >
+          {loading ? "Sending..." : "Send"}
+        </Button>
+      </DialogActions>
+    </Dialog>
   );
 };
 

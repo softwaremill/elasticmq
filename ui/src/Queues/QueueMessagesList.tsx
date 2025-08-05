@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React from "react";
 import {
   Table,
   TableBody,
@@ -14,8 +14,12 @@ import {
   CircularProgress,
 } from "@material-ui/core";
 import { Refresh, ExpandMore, ExpandLess, Delete } from "@material-ui/icons";
-import { useSnackbar } from "notistack";
+import { useSnackbar } from "../context/SnackbarContext";
 import { QueueMessage } from "./QueueMessageData";
+import getErrorMessage from "../utils/getErrorMessage";
+import formatDate from "../utils/formatDate";
+import truncateText from "../utils/truncateText";
+import decodeHtmlEntities from "../utils/decodeHtml";
 
 interface QueueMessagesListProps {
   queueName: string;
@@ -43,64 +47,28 @@ const QueueMessagesList: React.FC<QueueMessagesListProps> = ({
   onDeleteMessage,
   updateMessageExpandedState,
 }) => {
-  const { enqueueSnackbar } = useSnackbar();
-
-  const formatDate = useMemo(
-    () => (timestamp: string) => {
-      try {
-        const date = new Date(timestamp);
-        return date.toLocaleString();
-      } catch {
-        return timestamp;
-      }
-    },
-    []
-  );
+  const { showSnackbar } = useSnackbar();
 
   const toggleMessageExpansion = (messageId: string) => {
     updateMessageExpandedState(queueName, messageId);
   };
-
-  const truncateText = useMemo(
-    () =>
-      (text: string, maxLength: number = 100) => {
-        if (text.length <= maxLength) return text;
-        return text.substring(0, maxLength) + "...";
-      },
-    []
-  );
-
-  const decodeHtmlEntities = useMemo(
-    () => (text: string) => {
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(text, "text/html");
-      return doc.documentElement.textContent || text;
-    },
-    []
-  );
 
   const handleDeleteMessage = async (
     messageId: string,
     receiptHandle?: string
   ) => {
     if (!receiptHandle) {
-      enqueueSnackbar("Cannot delete message without receiptHandle", {
-        variant: "warning",
-      });
+      showSnackbar("Cannot delete message without receiptHandle");
       return;
     }
 
     if (onDeleteMessage) {
       try {
         await onDeleteMessage(queueName, messageId, receiptHandle);
-        enqueueSnackbar("Message deleted successfully", {
-          variant: "success",
-        });
+        showSnackbar("Message deleted successfully");
       } catch (error) {
-        enqueueSnackbar("Failed to delete message", {
-          variant: "error",
-        });
-        console.error("Failed to delete message:", error);
+        const errorMessage = getErrorMessage(error);
+        showSnackbar(`Failed to delete message: ${errorMessage}`);
       }
     }
   };
@@ -117,24 +85,23 @@ const QueueMessagesList: React.FC<QueueMessagesListProps> = ({
           <Typography
             variant="h6"
             gutterBottom
-            component="div"
             style={{ margin: 0, marginRight: 8 }}
           >
             Messages ({messages?.length || 0})
           </Typography>
           {loading && <CircularProgress size={16} />}
         </Box>
-        <Button
-          startIcon={<Refresh />}
-          onClick={() => {
-            onRefreshMessages?.(queueName);
-          }}
-          disabled={loading}
-          size="small"
-          variant="outlined"
-        >
-          {loading ? "Loading..." : "Refresh"}
-        </Button>
+        {onRefreshMessages && (
+          <Button
+            startIcon={<Refresh />}
+            onClick={() => onRefreshMessages(queueName)}
+            disabled={loading}
+            size="small"
+            variant="outlined"
+          >
+            {loading ? "Loading..." : "Refresh"}
+          </Button>
+        )}
       </Box>
 
       {error && (
@@ -329,7 +296,7 @@ const QueueMessagesList: React.FC<QueueMessagesListProps> = ({
                                       <TableCell
                                         style={{ fontFamily: "monospace" }}
                                       >
-                                        {JSON.stringify(value)}
+                                        {JSON.stringify(value, null, 2)}
                                       </TableCell>
                                     </TableRow>
                                   ))}

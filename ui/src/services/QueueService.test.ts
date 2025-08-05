@@ -1,5 +1,10 @@
 import axios from "axios";
-import QueueService from "./QueueService";
+import {
+  getQueueListWithCorrelatedMessages,
+  getQueueAttributes,
+  deleteMessage,
+  parseReceiveMessageResponse,
+} from "./QueueService";
 
 jest.mock("axios");
 
@@ -29,9 +34,7 @@ test("Get queue list with correlated messages should return basic information ab
 
   (axios.get as jest.Mock).mockResolvedValueOnce({ data });
 
-  await expect(
-    QueueService.getQueueListWithCorrelatedMessages()
-  ).resolves.toEqual(data);
+  await expect(getQueueListWithCorrelatedMessages()).resolves.toEqual(data);
   expect(axios.get).toBeCalledWith("statistics/queues");
 });
 
@@ -40,9 +43,7 @@ test("Get queue list with correlated messages should return empty array if respo
 
   (axios.get as jest.Mock).mockResolvedValueOnce({ data });
 
-  await expect(
-    QueueService.getQueueListWithCorrelatedMessages()
-  ).resolves.toEqual(data);
+  await expect(getQueueListWithCorrelatedMessages()).resolves.toEqual(data);
   expect(axios.get).toBeCalledWith("statistics/queues");
 });
 
@@ -61,7 +62,7 @@ test("Get queue list with correlated messages should return validation error if 
   (axios.get as jest.Mock).mockResolvedValueOnce({ data });
 
   try {
-    await QueueService.getQueueListWithCorrelatedMessages();
+    await getQueueListWithCorrelatedMessages();
   } catch (e) {
     expect(e.errors).toEqual(["Required queueName"]);
   }
@@ -83,7 +84,7 @@ test("Get queue list with correlated messages should return validation error if 
   (axios.get as jest.Mock).mockResolvedValueOnce({ data });
 
   try {
-    await QueueService.getQueueListWithCorrelatedMessages();
+    await getQueueListWithCorrelatedMessages();
   } catch (e) {
     expect(e.errors).toEqual(["Required approximateNumberOfVisibleMessages"]);
   }
@@ -105,7 +106,7 @@ test("Get queue list with correlated messages should return validation error if 
   (axios.get as jest.Mock).mockResolvedValueOnce({ data });
 
   try {
-    await QueueService.getQueueListWithCorrelatedMessages();
+    await getQueueListWithCorrelatedMessages();
   } catch (e) {
     expect(e.errors).toEqual(["Required approximateNumberOfMessagesDelayed"]);
   }
@@ -127,7 +128,7 @@ test("Get queue list with correlated messages should return validation error if 
   (axios.get as jest.Mock).mockResolvedValueOnce({ data });
 
   try {
-    await QueueService.getQueueListWithCorrelatedMessages();
+    await getQueueListWithCorrelatedMessages();
   } catch (e) {
     expect(e.errors).toEqual(["Required approximateNumberOfInvisibleMessages"]);
   }
@@ -139,9 +140,7 @@ test("Getting queue attributes should return empty array if it can't be found", 
 
   (axios.get as jest.Mock).mockResolvedValueOnce({ status: 404 });
 
-  await expect(QueueService.getQueueAttributes("queueName")).resolves.toEqual(
-    []
-  );
+  await expect(getQueueAttributes("queueName")).resolves.toEqual([]);
   expect(axios.get).toBeCalledWith("statistics/queues/queueName");
 });
 
@@ -156,7 +155,7 @@ test("Timestamp related attributes should be converted to human readable dates",
 
   (axios.get as jest.Mock).mockResolvedValueOnce({ status: 200, data: data });
 
-  await expect(QueueService.getQueueAttributes("QueueName")).resolves.toEqual([
+  await expect(getQueueAttributes("QueueName")).resolves.toEqual([
     ["CreatedTimestamp", "2020-11-16T15:08:48.000Z"],
     ["LastModifiedTimestamp", "2020-11-16T15:08:20.000Z"],
   ]);
@@ -174,7 +173,7 @@ test("RedrivePolicy attribute should be converted to easier to read format", asy
 
   (axios.get as jest.Mock).mockResolvedValueOnce({ status: 200, data: data });
 
-  await expect(QueueService.getQueueAttributes("QueueName")).resolves.toEqual([
+  await expect(getQueueAttributes("QueueName")).resolves.toEqual([
     ["RedrivePolicy", "DeadLetterTargetArn: targetArn, MaxReceiveCount: 10"],
   ]);
   expect(axios.get).toBeCalledWith("statistics/queues/QueueName");
@@ -193,7 +192,7 @@ test("Attributes related to amount of messages should be filtered out", async ()
 
   (axios.get as jest.Mock).mockResolvedValueOnce({ status: 200, data: data });
 
-  await expect(QueueService.getQueueAttributes("QueueName")).resolves.toEqual([
+  await expect(getQueueAttributes("QueueName")).resolves.toEqual([
     ["RandomAttribute", "09203"],
   ]);
   expect(axios.get).toBeCalledWith("statistics/queues/QueueName");
@@ -209,7 +208,7 @@ test("Delete message should call SQS DeleteMessage action", async () => {
     data: '<?xml version="1.0"?><DeleteMessageResponse></DeleteMessageResponse>',
   });
 
-  await QueueService.deleteMessage(queueName, messageId, receiptHandle);
+  await deleteMessage(queueName, messageId, receiptHandle);
 
   expect(axios.post).toHaveBeenCalledWith(
     `queue/${queueName}`,
@@ -226,4 +225,199 @@ test("Delete message should call SQS DeleteMessage action", async () => {
 
   expect(params.get("Action")).toBe("DeleteMessage");
   expect(params.get("ReceiptHandle")).toBe(receiptHandle);
+});
+
+test("parseReceiveMessageResponse should parse XML response with single message correctly", () => {
+  const xmlResponse = `<?xml version="1.0"?>
+    <ReceiveMessageResponse>
+      <ReceiveMessageResult>
+        <Message>
+          <MessageId>msg-123</MessageId>
+          <ReceiptHandle>receipt-handle-456</ReceiptHandle>
+          <Body>Test message body</Body>
+          <Attribute>
+            <Name>SentTimestamp</Name>
+            <Value>1609459200000</Value>
+          </Attribute>
+        </Message>
+      </ReceiveMessageResult>
+    </ReceiveMessageResponse>`;
+
+  const result = parseReceiveMessageResponse(xmlResponse);
+
+  expect(result).toHaveLength(1);
+  expect(result[0]).toEqual({
+    messageId: "msg-123",
+    receiptHandle: "receipt-handle-456",
+    body: "Test message body",
+    sentTimestamp: "1609459200000",
+    attributes: {},
+    messageAttributes: {},
+  });
+});
+
+test("parseReceiveMessageResponse should parse XML response with multiple messages correctly", () => {
+  const xmlResponse = `<?xml version="1.0"?>
+    <ReceiveMessageResponse>
+      <ReceiveMessageResult>
+        <Message>
+          <MessageId>msg-123</MessageId>
+          <ReceiptHandle>receipt-handle-456</ReceiptHandle>
+          <Body>First message body</Body>
+          <Attribute>
+            <Name>SentTimestamp</Name>
+            <Value>1609459200000</Value>
+          </Attribute>
+        </Message>
+        <Message>
+          <MessageId>msg-456</MessageId>
+          <ReceiptHandle>receipt-handle-789</ReceiptHandle>
+          <Body>Second message body</Body>
+          <Attribute>
+            <Name>SentTimestamp</Name>
+            <Value>1609459300000</Value>
+          </Attribute>
+        </Message>
+      </ReceiveMessageResult>
+    </ReceiveMessageResponse>`;
+
+  const result = parseReceiveMessageResponse(xmlResponse);
+
+  expect(result).toHaveLength(2);
+  expect(result[0]).toEqual({
+    messageId: "msg-123",
+    receiptHandle: "receipt-handle-456",
+    body: "First message body",
+    sentTimestamp: "1609459200000",
+    attributes: {},
+    messageAttributes: {},
+  });
+  expect(result[1]).toEqual({
+    messageId: "msg-456",
+    receiptHandle: "receipt-handle-789",
+    body: "Second message body",
+    sentTimestamp: "1609459300000",
+    attributes: {},
+    messageAttributes: {},
+  });
+});
+
+test("parseReceiveMessageResponse should handle message without receipt handle", () => {
+  const xmlResponse = `<?xml version="1.0"?>
+    <ReceiveMessageResponse>
+      <ReceiveMessageResult>
+        <Message>
+          <MessageId>msg-123</MessageId>
+          <Body>Test message body</Body>
+          <Attribute>
+            <Name>SentTimestamp</Name>
+            <Value>1609459200000</Value>
+          </Attribute>
+        </Message>
+      </ReceiveMessageResult>
+    </ReceiveMessageResponse>`;
+
+  const result = parseReceiveMessageResponse(xmlResponse);
+
+  expect(result).toHaveLength(1);
+  expect(result[0]).toEqual({
+    messageId: "msg-123",
+    receiptHandle: undefined,
+    body: "Test message body",
+    sentTimestamp: "1609459200000",
+    attributes: {},
+    messageAttributes: {},
+  });
+});
+
+test("parseReceiveMessageResponse should handle message without sent timestamp", () => {
+  const xmlResponse = `<?xml version="1.0"?>
+    <ReceiveMessageResponse>
+      <ReceiveMessageResult>
+        <Message>
+          <MessageId>msg-123</MessageId>
+          <ReceiptHandle>receipt-handle-456</ReceiptHandle>
+          <Body>Test message body</Body>
+        </Message>
+      </ReceiveMessageResult>
+    </ReceiveMessageResponse>`;
+
+  const result = parseReceiveMessageResponse(xmlResponse);
+
+  const {
+    messageId,
+    receiptHandle,
+    body,
+    sentTimestamp,
+    attributes,
+    messageAttributes,
+  } = result[0];
+
+  expect(result).toHaveLength(1);
+  expect(messageId).toBe("msg-123");
+  expect(receiptHandle).toBe("receipt-handle-456");
+  expect(body).toBe("Test message body");
+  expect(sentTimestamp).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/);
+  expect(attributes).toEqual({});
+  expect(messageAttributes).toEqual({});
+});
+
+test("parseReceiveMessageResponse should return empty array for empty XML response", () => {
+  const xmlResponse = `<?xml version="1.0"?>
+    <ReceiveMessageResponse>
+      <ReceiveMessageResult>
+      </ReceiveMessageResult>
+    </ReceiveMessageResponse>`;
+
+  const result = parseReceiveMessageResponse(xmlResponse);
+
+  expect(result).toEqual([]);
+});
+
+test("parseReceiveMessageResponse should return empty array for invalid XML", () => {
+  const xmlResponse = "invalid xml content";
+
+  const result = parseReceiveMessageResponse(xmlResponse);
+
+  expect(result).toEqual([]);
+});
+
+test("parseReceiveMessageResponse should handle message with missing messageId gracefully", () => {
+  const xmlResponse = `<?xml version="1.0"?>
+    <ReceiveMessageResponse>
+      <ReceiveMessageResult>
+        <Message>
+          <ReceiptHandle>receipt-handle-456</ReceiptHandle>
+          <Body>Test message body</Body>
+          <Attribute>
+            <Name>SentTimestamp</Name>
+            <Value>1609459200000</Value>
+          </Attribute>
+        </Message>
+      </ReceiveMessageResult>
+    </ReceiveMessageResponse>`;
+
+  const result = parseReceiveMessageResponse(xmlResponse);
+
+  expect(result).toEqual([]);
+});
+
+test("parseReceiveMessageResponse should handle message with missing body gracefully", () => {
+  const xmlResponse = `<?xml version="1.0"?>
+    <ReceiveMessageResponse>
+      <ReceiveMessageResult>
+        <Message>
+          <MessageId>msg-123</MessageId>
+          <ReceiptHandle>receipt-handle-456</ReceiptHandle>
+          <Attribute>
+            <Name>SentTimestamp</Name>
+            <Value>1609459200000</Value>
+          </Attribute>
+        </Message>
+      </ReceiveMessageResult>
+    </ReceiveMessageResponse>`;
+
+  const result = parseReceiveMessageResponse(xmlResponse);
+
+  expect(result).toEqual([]);
 });

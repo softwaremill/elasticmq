@@ -37,7 +37,9 @@ const queuesBasicInformationSchema = Yup.array().of(
     })
 );
 
-async function getQueueListWithCorrelatedMessages(): Promise<QueueStatistic[]> {
+export async function getQueueListWithCorrelatedMessages(): Promise<
+  QueueStatistic[]
+> {
   const response = await instance.get(`statistics/queues`);
   const result = queuesBasicInformationSchema.validateSync(response.data);
   return result === undefined ? [] : (result as QueueStatistic[]);
@@ -58,15 +60,9 @@ interface AttributeNameValue {
   [name: string]: string;
 }
 
-async function getQueueAttributes(queueName: string) {
+export async function getQueueAttributes(queueName: string) {
   const response = await instance.get(`statistics/queues/${queueName}`);
   if (response.status !== 200) {
-    console.log(
-      "Can't obtain attributes of " +
-        queueName +
-        " queue because of " +
-        response.statusText
-    );
     return [];
   }
   const data: QueueAttributes = response.data as QueueAttributes;
@@ -81,7 +77,10 @@ async function getQueueAttributes(queueName: string) {
     ]);
 }
 
-function trimAttributeValue(attributeName: string, attributeValue: string) {
+export function trimAttributeValue(
+  attributeName: string,
+  attributeValue: string
+) {
   switch (attributeName) {
     case "CreatedTimestamp":
     case "LastModifiedTimestamp":
@@ -89,17 +88,17 @@ function trimAttributeValue(attributeName: string, attributeValue: string) {
     case "RedrivePolicy":
       const redriveAttributeValue: QueueRedrivePolicyAttribute =
         JSON.parse(attributeValue);
-      const deadLetterTargetArn =
-        "DeadLetterTargetArn: " + redriveAttributeValue.deadLetterTargetArn;
-      const maxReceiveCount =
-        "MaxReceiveCount: " + redriveAttributeValue.maxReceiveCount;
-      return deadLetterTargetArn + ", " + maxReceiveCount;
+
+      const deadLetterTargetArn = `DeadLetterTargetArn: ${redriveAttributeValue.deadLetterTargetArn}`;
+      const maxReceiveCount = `MaxReceiveCount: ${redriveAttributeValue.maxReceiveCount}`;
+
+      return `${deadLetterTargetArn}, ${maxReceiveCount}`;
     default:
       return attributeValue;
   }
 }
 
-async function sendMessage(
+export async function sendMessage(
   queueName: string,
   messageBody: string
 ): Promise<void> {
@@ -118,7 +117,7 @@ async function sendMessage(
   }
 }
 
-async function getQueueMessages(
+export async function getQueueMessages(
   queueName: string,
   maxResults: number = 10
 ): Promise<QueueMessage[]> {
@@ -150,7 +149,7 @@ async function getQueueMessages(
   }
 }
 
-function parseReceiveMessageResponse(xmlData: string): QueueMessage[] {
+export function parseReceiveMessageResponse(xmlData: string): QueueMessage[] {
   try {
     const messages: QueueMessage[] = [];
 
@@ -191,7 +190,7 @@ function parseReceiveMessageResponse(xmlData: string): QueueMessage[] {
   }
 }
 
-async function deleteMessage(
+export async function deleteMessage(
   queueName: string,
   messageId: string,
   receiptHandle: string
@@ -218,11 +217,3 @@ async function deleteMessage(
     throw error;
   }
 }
-
-export default {
-  getQueueListWithCorrelatedMessages,
-  getQueueAttributes,
-  sendMessage,
-  getQueueMessages,
-  deleteMessage,
-};
