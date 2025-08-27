@@ -1,9 +1,9 @@
 import React from "react";
-import { act, render, screen, waitFor } from "@testing-library/react";
+import { act, screen, waitFor } from "@testing-library/react";
 import QueuesTable from "./QueuesTable";
 import axios from "axios";
 import "@testing-library/jest-dom";
-import { SnackbarProvider } from "../context/SnackbarContext";
+import { renderWithSnackbarProvider } from "../tests/utils";
 
 jest.mock("axios");
 const initialData = {
@@ -25,10 +25,6 @@ const initialData = {
       },
     },
   ],
-};
-
-const renderWithSnackbarProvider = (component: React.ReactElement) => {
-  return render(<SnackbarProvider>{component}</SnackbarProvider>);
 };
 
 beforeEach(() => {

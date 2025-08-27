@@ -11,7 +11,7 @@ import { getQueueAttributes } from "../services/QueueService";
 import QueueMessagesList from "./QueueMessagesList";
 import { QueueMessagesData } from "./QueueMessageData";
 
-const RowDetails: React.FC<{
+interface RowDetailsProps {
   isExpanded: boolean;
   queueName: string;
   queueData: QueueMessagesData;
@@ -25,7 +25,9 @@ const RowDetails: React.FC<{
     queueName: string,
     messageId: string | null
   ) => void;
-}> = ({
+}
+
+const RowDetails: React.FC<RowDetailsProps> = ({
   isExpanded,
   queueName,
   queueData,
@@ -44,28 +46,6 @@ const RowDetails: React.FC<{
   const handleTabChange = (_event: React.ChangeEvent<{}>, newValue: number) => {
     setActiveTab(newValue);
   };
-
-  interface TabPanelProps {
-    children?: React.ReactNode;
-    index: number;
-    value: number;
-  }
-
-  function TabPanel(props: TabPanelProps) {
-    const { children, value, index, ...other } = props;
-
-    return (
-      <div
-        role="tabpanel"
-        hidden={value !== index}
-        id={`queue-tabpanel-${index}`}
-        aria-labelledby={`queue-tab-${index}`}
-        {...other}
-      >
-        {value === index && <Box>{children}</Box>}
-      </div>
-    );
-  }
 
   return (
     <TableRow
@@ -142,5 +122,27 @@ const RowDetails: React.FC<{
     </TableRow>
   );
 };
+
+interface TabPanelProps {
+  children?: React.ReactNode;
+  index: number;
+  value: number;
+}
+
+function TabPanel(props: TabPanelProps) {
+  const { children, value, index, ...other } = props;
+
+  return (
+    <div
+      role="tabpanel"
+      hidden={value !== index}
+      id={`queue-tabpanel-${index}`}
+      aria-labelledby={`queue-tab-${index}`}
+      {...other}
+    >
+      {value === index && <Box>{children}</Box>}
+    </div>
+  );
+}
 
 export default RowDetails;

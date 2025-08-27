@@ -7,7 +7,7 @@ import {
 import { QueueMessagesData, QueueStatistic } from "./QueueMessageData";
 import getErrorMessage from "../utils/getErrorMessage";
 
-export default function useRefreshedQueueStatistics(): {
+interface UseRefreshedQueueStatisticsResult {
   queuesData: QueueMessagesData[];
   fetchQueueMessages: (queueName: string) => Promise<void>;
   deleteMessage: (
@@ -19,24 +19,23 @@ export default function useRefreshedQueueStatistics(): {
     queueName: string,
     messageId: string | null
   ) => void;
-} {
+}
+
+export default function useRefreshedQueueStatistics(): UseRefreshedQueueStatisticsResult {
   const [queuesOverallData, setQueuesOverallData] = useState<
     QueueMessagesData[]
   >([]);
 
-  const updateQueue = useCallback(
-    (
-      name: string,
-      updater: (queue: QueueMessagesData) => QueueMessagesData
-    ) => {
-      setQueuesOverallData((prevQueues) =>
-        prevQueues.map((queue) =>
-          queue.queueName === name ? updater(queue) : queue
-        )
-      );
-    },
-    []
-  );
+  const updateQueue = (
+    name: string,
+    updater: (queue: QueueMessagesData) => QueueMessagesData
+  ) => {
+    setQueuesOverallData((prevQueues) =>
+      prevQueues.map((queue) =>
+        queue.queueName === name ? updater(queue) : queue
+      )
+    );
+  };
 
   const fetchQueueMessages = useCallback(
     async (queueName: string) => {
@@ -68,25 +67,25 @@ export default function useRefreshedQueueStatistics(): {
     [updateQueue]
   );
 
-  const updateMessageExpandedState = useCallback(
-    (queueName: string, messageId: string | null) => {
-      setQueuesOverallData((prevQueues) =>
-        prevQueues.map((queue) => {
-          if (queue.queueName !== queueName) return queue;
+  const updateMessageExpandedState = (
+    queueName: string,
+    messageId: string | null
+  ) => {
+    setQueuesOverallData((prevQueues) =>
+      prevQueues.map((queue) => {
+        if (queue.queueName !== queueName) return queue;
 
-          return {
-            ...queue,
-            messages: queue.messages?.map((msg) => ({
-              ...msg,
-              isExpanded:
-                msg.messageId === messageId ? !msg.isExpanded : msg.isExpanded,
-            })),
-          };
-        })
-      );
-    },
-    []
-  );
+        return {
+          ...queue,
+          messages: queue.messages?.map((msg) => ({
+            ...msg,
+            isExpanded:
+              msg.messageId === messageId ? !msg.isExpanded : msg.isExpanded,
+          })),
+        };
+      })
+    );
+  };
 
   const deleteMessage = useCallback(
     async (queueName: string, messageId: string, receiptHandle: string) => {
@@ -95,7 +94,7 @@ export default function useRefreshedQueueStatistics(): {
 
         await fetchQueueMessages(queueName);
       } catch (error) {
-        console.error("Erro ao deletar mensagem:", error);
+        console.error("Error deleting message:", error);
       }
     },
     [fetchQueueMessages]

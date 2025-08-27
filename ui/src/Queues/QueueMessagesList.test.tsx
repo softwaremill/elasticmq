@@ -1,15 +1,11 @@
 import React from "react";
-import { render, screen } from "@testing-library/react";
+import { screen } from "@testing-library/react";
 import QueueMessagesList from "./QueueMessagesList";
 import { QueueMessage } from "./QueueMessageData";
-import { SnackbarProvider } from "../context/SnackbarContext";
+import { renderWithSnackbarProvider } from "../tests/utils";
 
 const mockUpdateMessageExpandedState = jest.fn();
 const mockOnRefreshMessages = jest.fn();
-
-const renderWithSnackbarProvider = (component: React.ReactElement) => {
-  return render(<SnackbarProvider>{component}</SnackbarProvider>);
-};
 
 describe("<QueueMessagesList /> - New Features", () => {
   describe("HTML Entity Decoding (New Feature)", () => {

@@ -32,23 +32,17 @@ function QueueTableRow({
   const [isExpanded, setIsExpanded] = useState<boolean>(false);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
 
-  function ExpandableArrowButton({ isExpanded }: { isExpanded: boolean }) {
-    return (
-      <IconButton
-        aria-label="open-details"
-        size="small"
-        onClick={() => setIsExpanded((prevState) => !prevState)}
-      >
-        {isExpanded ? <KeyboardArrowRight /> : <KeyboardArrowDown />}
-      </IconButton>
-    );
-  }
-
   return (
     <>
       <TableRow key={row.queueName} className={"queue-row"}>
         <TableCell>
-          <ExpandableArrowButton isExpanded={isExpanded} />
+          <IconButton
+            aria-label="open-details"
+            size="small"
+            onClick={() => setIsExpanded((prevState) => !prevState)}
+          >
+            {isExpanded ? <KeyboardArrowRight /> : <KeyboardArrowDown />}
+          </IconButton>
         </TableCell>
         <TableCell component="th" scope="row">
           {row.queueName}
