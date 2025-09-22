@@ -282,7 +282,7 @@ lazy val server: Project = (project in file("server"))
 val graalVmVersion = "22.1.0"
 val graalVmTag = s"ol8-java11-$graalVmVersion"
 val graalVmBaseImage = "ghcr.io/graalvm/graalvm-ce"
-val alpineVersion = "3.18"
+val alpineVersion = "3.22"
 
 lazy val nativeServer: Project = (project in file("native-server"))
   .enablePlugins(JavaAppPackaging, DockerPlugin)
