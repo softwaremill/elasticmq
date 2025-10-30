@@ -1,14 +1,14 @@
 version: 1
 labels:
   - label: "automerge"
-    authors: ["softwaremill-ci"]
+    authors: ["github-actions[bot]"]
     files:
       - ".scalafmt.conf"
       - "build.sbt"
       - "project/build.properties"
       - "project/plugins.sbt"
   - label: "dependency"
-    authors: ["softwaremill-ci"]
+    authors: ["github-actions[bot]"]
     files:
       - ".scalafmt.conf"
       - "build.sbt"

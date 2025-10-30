@@ -6,23 +6,14 @@ on:
     - cron: '0 0 * * *'
   workflow_dispatch:
 
+permissions:
+  contents: write        # Required to checkout and push changes
+  pull-requests: write   # Required to create PRs for dependency updates
+
 jobs:
   scala-steward:
-    runs-on: ubuntu-24.04
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-      - name: Set up JDK 11
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: '11'
-          cache: 'sbt'
-      - name: Launch Scala Steward
-        uses: scala-steward-org/scala-steward-action@v2
-        with:
-          author-name: scala-steward
-          author-email: scala-steward
-          github-token: ${{ secrets.REPO_GITHUB_TOKEN }}
-          repo-config: .scala-steward.conf
-          ignore-opts-files: false
+    uses: softwaremill/github-actions-workflows/.github/workflows/scala-steward.yml@main
+    secrets:
+      github-token: ${{ secrets.GITHUB_TOKEN }}
+    with:
+      java-version: '21'

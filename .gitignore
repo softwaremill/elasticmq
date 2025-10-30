@@ -15,3 +15,5 @@ project/boot
 
 .metals
 .bloop
+.vscode
+.cursor
