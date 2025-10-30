@@ -9,12 +9,12 @@ permissions:
   pull-requests: write   # labeler, auto-merge requirement
 jobs:
   ci-2-12:
-    # run on 1) push, 2) external PRs, 3) github-actions[bot] PRs
+    # run on 1) push, 2) external PRs, 3) softwaremill-ci PRs
     # do not run on internal, non-steward PRs since those will be run by push to branch
     if: |
       github.event_name == 'push' ||
       github.event.pull_request.head.repo.full_name != github.repository ||
-      github.event.pull_request.user.login == 'github-actions[bot]'
+      github.event.pull_request.user.login == 'softwaremill-ci'
     runs-on: ubuntu-24.04
     env:
       scala: 2.12
@@ -51,12 +51,12 @@ jobs:
         run: SCALA_MAJOR_VERSION=${{ env.scala }} sbt "root/testOnly * -- -l org.elasticmq.rest.sqs.Only213"
 
   ci-2-13:
-    # run on 1) push, 2) external PRs, 3) github-actions[bot] PRs
+    # run on 1) push, 2) external PRs, 3) softwaremill-ci PRs
     # do not run on internal, non-steward PRs since those will be run by push to branch
     if: |
       github.event_name == 'push' ||
       github.event.pull_request.head.repo.full_name != github.repository ||
-      github.event.pull_request.user.login == 'github-actions[bot]'
+      github.event.pull_request.user.login == 'softwaremill-ci'
     runs-on: ubuntu-24.04
     env:
       scala: 2.13
@@ -93,12 +93,12 @@ jobs:
         run: SCALA_MAJOR_VERSION=${{ env.scala }} sbt root/test
 
   ci-3:
-    # run on 1) push, 2) external PRs, 3) github-actions[bot] PRs
+    # run on 1) push, 2) external PRs, 3) softwaremill-ci PRs
     # do not run on internal, non-steward PRs since those will be run by push to branch
     if: |
       github.event_name == 'push' ||
       github.event.pull_request.head.repo.full_name != github.repository ||
-      github.event.pull_request.user.login == 'github-actions[bot]'
+      github.event.pull_request.user.login == 'softwaremill-ci'
     runs-on: ubuntu-24.04
     env:
       scala: 3
@@ -135,12 +135,12 @@ jobs:
         run: SCALA_MAJOR_VERSION=${{ env.scala }} sbt root/test
 
   ci-native-image-agent-config-verification:
-    # run on 1) push, 2) external PRs, 3) github-actions[bot] PRs
+    # run on 1) push, 2) external PRs, 3) softwaremill-ci PRs
     # do not run on internal, non-steward PRs since those will be run by push to branch
     if: |
       github.event_name == 'push' ||
       github.event.pull_request.head.repo.full_name != github.repository ||
-      github.event.pull_request.user.login == 'github-actions[bot]'
+      github.event.pull_request.user.login == 'softwaremill-ci'
     runs-on: ubuntu-24.04
     env:
       scala: 2.13
@@ -204,12 +204,12 @@ jobs:
           fi
 
   ci-docker:
-    # run on 1) push, 2) external PRs, 3) github-actions[bot] PRs
+    # run on 1) push, 2) external PRs, 3) softwaremill-ci PRs
     # do not run on internal, non-steward PRs since those will be run by push to branch
     if: |
       github.event_name == 'push' ||
       github.event.pull_request.head.repo.full_name != github.repository ||
-      github.event.pull_request.user.login == 'github-actions[bot]'
+      github.event.pull_request.user.login == 'softwaremill-ci'
     runs-on: ubuntu-24.04
     env:
       scala: 2.13
@@ -366,14 +366,14 @@ jobs:
         run: sbt "project nativeServer; assembly; Docker / publish"
 
   label:
-    # only for PRs by github-actions[bot]
-    if: github.event.pull_request.user.login == 'github-actions[bot]'
+    # only for PRs by softwaremill-ci
+    if: github.event.pull_request.user.login == 'softwaremill-ci'
     uses: softwaremill/github-actions-workflows/.github/workflows/label.yml@main
     secrets: inherit
 
   auto-merge:
-    # only for PRs by github-actions[bot]
-    if: github.event.pull_request.user.login == 'github-actions[bot]'
+    # only for PRs by softwaremill-ci
+    if: github.event.pull_request.user.login == 'softwaremill-ci'
     needs: [ci-2-12, ci-2-13, ci-3, ci-docker, ci-native-image-agent-config-verification, label]
     uses: softwaremill/github-actions-workflows/.github/workflows/auto-merge.yml@main
     secrets: inherit          
