@@ -145,7 +145,7 @@ trait SendMessageDirectives {
       .get(AwsTraceHeaderSystemAttribute)
       .map {
         case StringMessageAttribute(value, _) => TracingId(value)
-        case NumberMessageAttribute(_, _) =>
+        case NumberMessageAttribute(_, _)     =>
           throw SQSException.invalidParameter(
             s"$AwsTraceHeaderSystemAttribute should be declared as a String, instead it was recognized as a Number"
           )
