@@ -14,7 +14,7 @@ trait TagsModule {
       }
       def collect(suffix: Int, acc: Map[String, String]): Map[String, String] = {
         parameters.get(tagPrefix + suffix + ".Key") match {
-          case None => acc
+          case None     => acc
           case Some(an) =>
             parameters.get(tagPrefix + suffix + ".Value") match {
               case None           => collect(suffix + 1, acc + (an -> ""))
