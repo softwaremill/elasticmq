@@ -254,7 +254,7 @@ lazy val server: Project = (project in file("server"))
       },
       // docker
       dockerExposedPorts := Seq(9324, 9325),
-      dockerBaseImage := "openjdk:11-jdk-stretch",
+      dockerBaseImage := "eclipse-temurin:11-jdk-noble",
       Docker / packageName := "elasticmq",
       dockerUsername := Some("softwaremill"),
       dockerUpdateLatest := {
