@@ -23,7 +23,7 @@ trait ChangeMessageVisibilityDirectives { this: ElasticMQDirectives with Respons
         )
         result.map {
           case Left(error) => throw error.toSQSException
-          case Right(_) =>
+          case Right(_)    =>
             emptyResponse("ChangeMessageVisibilityResponse")
         }
       }
