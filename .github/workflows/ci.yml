@@ -4,6 +4,9 @@ on:
   push:
     branches: ['**']
     tags: [v*]
+permissions:
+  contents: write        # release-drafter, auto-merge requirement
+  pull-requests: write   # labeler, auto-merge requirement
 jobs:
   ci-2-12:
     # run on 1) push, 2) external PRs, 3) softwaremill-ci PRs
@@ -21,7 +24,7 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Set up SBT
-        uses: sbt/setup-sbt@v1
+        uses: sbt/setup-sbt@3e125ece5c3e5248e18da9ed8d2cce3d335ec8dd # v1, specifically v1.1.14
 
       - name: Set up JDK
         uses: actions/setup-java@v4
@@ -63,7 +66,7 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Set up SBT
-        uses: sbt/setup-sbt@v1
+        uses: sbt/setup-sbt@3e125ece5c3e5248e18da9ed8d2cce3d335ec8dd # v1, specifically v1.1.14
 
       - name: Set up JDK
         uses: actions/setup-java@v4
@@ -105,7 +108,7 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Set up SBT
-        uses: sbt/setup-sbt@v1
+        uses: sbt/setup-sbt@3e125ece5c3e5248e18da9ed8d2cce3d335ec8dd # v1, specifically v1.1.14
 
       - name: Set up JDK
         uses: actions/setup-java@v4
@@ -147,7 +150,7 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Set up SBT
-        uses: sbt/setup-sbt@v1
+        uses: sbt/setup-sbt@3e125ece5c3e5248e18da9ed8d2cce3d335ec8dd # v1, specifically v1.1.14
 
       - name: Set up JDK
         uses: actions/setup-java@v4
@@ -216,7 +219,7 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Set up SBT
-        uses: sbt/setup-sbt@v1
+        uses: sbt/setup-sbt@3e125ece5c3e5248e18da9ed8d2cce3d335ec8dd # v1, specifically v1.1.14
 
       - name: Set up JDK
         uses: actions/setup-java@v4
@@ -256,7 +259,7 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Set up SBT
-        uses: sbt/setup-sbt@v1
+        uses: sbt/setup-sbt@3e125ece5c3e5248e18da9ed8d2cce3d335ec8dd # v1, specifically v1.1.14
 
       - name: Set up JDK
         uses: actions/setup-java@v4
@@ -300,7 +303,7 @@ jobs:
 
       - name: Publish release notes
         id: create_release
-        uses: release-drafter/release-drafter@v5
+        uses: release-drafter/release-drafter@b1476f6e6eb133afa41ed8589daba6dc69b4d3f5 # v6, specifically v6.1.0
         with:
           config-name: release-drafter.yml
           publish: true
@@ -329,7 +332,7 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Set up SBT
-        uses: sbt/setup-sbt@v1
+        uses: sbt/setup-sbt@3e125ece5c3e5248e18da9ed8d2cce3d335ec8dd # v1, specifically v1.1.14
 
       - name: Set up JDK
         uses: actions/setup-java@v4
@@ -351,7 +354,7 @@ jobs:
           key: ${{ runner.os }}-sbt-release-${{ hashFiles('**/build.sbt') }}
 
       - name: Login to DockerHub
-        uses: docker/login-action@v1
+        uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3, specifically v3.6.0
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
@@ -362,40 +365,15 @@ jobs:
       - name: Publish JVM native docker image
         run: sbt "project nativeServer; assembly; Docker / publish"
 
-  # `automerge` label is attached iff there is exactly one file changed by steward and this file belongs to a
-  # whitelist specified by `labeler.yml`
   label:
-    name: Attach automerge label
     # only for PRs by softwaremill-ci
     if: github.event.pull_request.user.login == 'softwaremill-ci'
-    runs-on: ubuntu-24.04
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          fetch-depth: 2
-      # count number of files changed
-      - name: Count number of files changed
-        id: count-changed-files
-        run: |
-          N=$(git diff --name-only -r HEAD^1 HEAD | wc -w)
-          echo "changed_files_num=$N" >> $GITHUB_OUTPUT
-      - name: Launch labeler
-        # skip if more than one file changed
-        if: steps.count-changed-files.outputs.changed_files_num == 1
-        uses: srvaroa/labeler@master
-        env:
-          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+    uses: softwaremill/github-actions-workflows/.github/workflows/label.yml@main
+    secrets: inherit
 
   auto-merge:
-    name: Auto merge
     # only for PRs by softwaremill-ci
     if: github.event.pull_request.user.login == 'softwaremill-ci'
     needs: [ci-2-12, ci-2-13, ci-3, ci-docker, ci-native-image-agent-config-verification, label]
-    runs-on: ubuntu-24.04
-    steps:
-      - id: automerge
-        name: automerge
-        uses: "pascalgn/automerge-action@v0.15.6"
-        env:
-          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
-          MERGE_METHOD: "squash"
+    uses: softwaremill/github-actions-workflows/.github/workflows/auto-merge.yml@main
+    secrets: inherit          
