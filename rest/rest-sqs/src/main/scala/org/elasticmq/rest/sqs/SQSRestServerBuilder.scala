@@ -129,7 +129,7 @@ case class TheSQSRestServerBuilder(
 
   def start(): SQSRestServer = {
     val rootConfig = ConfigFactory.load()
-    val restSqsConfig = rootConfig.getConfig("elasticmq.rest-sqs")
+    val restSqsConfig = rootConfig.getConfig("rest-sqs")
     val credentials = AWSCredentials.fromConfig(restSqsConfig)
 
     val (theActorSystem, stopActorSystem) = getOrCreateActorSystem
