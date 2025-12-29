@@ -14,7 +14,7 @@ trait AWSCredentialDirectives extends Directives {
         accessKeyRegex.findFirstMatchIn(authHeader) match {
           case Some(m) if m.group(1) == awsCredentials.accessKey => pass
           case _ =>
-            complete(
+            failWith(
               SQSException.invalidClientTokenId(
                 "The security token included in the request is invalid."
               )
