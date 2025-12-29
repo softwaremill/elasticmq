@@ -13,12 +13,7 @@ trait AWSCredentialDirectives extends Directives {
       headerValueByName("Authorization").flatMap { authHeader =>
         accessKeyRegex.findFirstMatchIn(authHeader) match {
           case Some(m) if m.group(1) == awsCredentials.accessKey => pass
-          case _ =>
-            failWith(
-              SQSException.invalidClientTokenId(
-                "The security token included in the request is invalid."
-              )
-            )
+          case _ => reject
         }
       } | complete(
         SQSException.invalidClientTokenId(
