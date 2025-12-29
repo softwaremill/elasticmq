@@ -10,16 +10,27 @@ trait AWSCredentialDirectives extends Directives {
 
   def verifyAWSAccessKeyId(protocol: AWSProtocol): Directive0 = {
     if (awsCredentials.accessKey.nonEmpty) {
-      headerValueByName("Authorization").flatMap { authHeader =>
-        accessKeyRegex.findFirstMatchIn(authHeader) match {
-          case Some(m) if m.group(1) == awsCredentials.accessKey => pass
-          case _ => reject
-        }
-      } | complete(
-        SQSException.invalidClientTokenId(
-          "The security token included in the request is invalid."
-        )
-      )
+      // Optional header in case it's missing
+      optionalHeaderValueByName("Authorization").flatMap {
+        case Some(authHeader) =>
+          accessKeyRegex.findFirstMatchIn(authHeader) match {
+            case Some(m) if m.group(1) == awsCredentials.accessKey =>
+              pass
+            case _ =>
+              // Must return a Directive0 here
+              complete(
+                SQSException.invalidClientTokenId(
+                  "The security token included in the request is invalid."
+                )
+              )
+          }
+        case None =>
+          complete(
+            SQSException.invalidClientTokenId(
+              "The security token included in the request is invalid."
+            )
+          )
+      }
     } else {
       pass
     }
