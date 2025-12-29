@@ -17,7 +17,7 @@ class QueueRepository(db: DB) extends Logging {
 
   sql"""
     create table if not exists $tableName (
-      name varchar unique,
+      name varchar(255) not null unique,
       data blob
     )""".execute.apply()
 
