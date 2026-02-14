@@ -40,7 +40,7 @@ class SqlQueuePersistenceTest
       client.sendMessage(new SendMessageRequest(queueUrl, "Message 3"))
 
       val storedMessages = (store ? GetAllMessages("testQueue1")).futureValue
-      storedMessages.map(_.content).toSet shouldBe Set("Message 1", "Message 2", "Message 3")
+      storedMessages.map(_.content.value).toSet shouldBe Set("Message 1", "Message 2", "Message 3")
     }
 
     startServerAndRun(pruneDataOnInit = false) {
