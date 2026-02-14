@@ -134,6 +134,17 @@ abstract class AmazonJavaSdkNewTestSuite
     message.attributes shouldBe Map(AWSTraceHeader -> "abc-123")
   }
 
+  test("should send and receive 1MB message") {
+    doTestSendAndReceiveMessageWithAttributes("x" * 1024 * 1024)
+  }
+
+  test("should fail send 1MB + 1 byte message") {
+    val queue = testClient.createQueue("testQueue1")
+    val content = "x" * (1024 * 1024 + 1)
+    val sendResult = testClient.sendMessage(queue, content)
+    sendResult.isLeft shouldBe true // TODO: check error type returned by SQS
+  }
+
   test("should return DeadLetterQueueSourceArn in receive message attributes") {
     // given
     val dlQueue = testClient.createQueue("testDlq")
@@ -421,7 +432,9 @@ abstract class AmazonJavaSdkNewTestSuite
   ) = {
     // given
     val queue = testClient.createQueue("testQueue1")
-    testClient.sendMessage(queue, content, messageAttributes = messageAttributes, awsTraceHeader = awsTraceHeader)
+    val sendResult =
+      testClient.sendMessage(queue, content, messageAttributes = messageAttributes, awsTraceHeader = awsTraceHeader)
+    sendResult shouldBe Right(())
     val message = receiveSingleMessageObject(queue, requestedAttributes, requestedSystemAttributes).orNull
 
     // then

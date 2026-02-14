@@ -206,15 +206,15 @@ class LimitsTest extends AnyWordSpec with Matchers with EitherValues {
   }
 
   "Validation of message length in strict mode" should {
-    "pass if the length is smaller than the limit (262144)" in {
+    "pass if the length is equal or smaller than the limit (1024 * 1024)" in {
       Limits.verifyMessageLength(-5, StrictSQSLimits) shouldBe Right(())
       Limits.verifyMessageLength(0, StrictSQSLimits) shouldBe Right(())
       Limits.verifyMessageLength(100, StrictSQSLimits) shouldBe Right(())
-      Limits.verifyMessageLength(262144, StrictSQSLimits) shouldBe Right(())
+      Limits.verifyMessageLength(1024 * 1024, StrictSQSLimits) shouldBe Right(())
     }
 
     "fail if the length is bigger than the limit" in {
-      val error = Limits.verifyMessageLength(300000, StrictSQSLimits).left.value
+      val error = Limits.verifyMessageLength(1024 * 1024 + 1, StrictSQSLimits).left.value
       error shouldBe "MessageTooLong"
     }
   }

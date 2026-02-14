@@ -1534,7 +1534,7 @@ class AmazonJavaSdkTestSuite extends SqsClientServerCommunication with Matchers 
       val queueUrl = cli.createQueue(new CreateQueueRequest("testQueue1")).getQueueUrl
 
       // When
-      cli.sendMessage(new SendMessageRequest(queueUrl, "x" * 262145))
+      cli.sendMessage(new SendMessageRequest(queueUrl, "x" * (1024 * 1024 + 1)))
     }
   }
 
@@ -1546,8 +1546,8 @@ class AmazonJavaSdkTestSuite extends SqsClientServerCommunication with Matchers 
       // When
       cli.sendMessageBatch(
         new SendMessageBatchRequest(queueUrl).withEntries(
-          new SendMessageBatchRequestEntry("1", "x" * 140000),
-          new SendMessageBatchRequestEntry("2", "x" * 140000)
+          new SendMessageBatchRequestEntry("1", "x" * (1024 * 1024)),
+          new SendMessageBatchRequestEntry("2", "x")
         )
       )
     }
