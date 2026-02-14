@@ -44,7 +44,7 @@ trait DataCreationHelpers {
     MessageData(
       MessageId(id),
       deliveryReceipt,
-      content,
+      MessageContent(content),
       messageAttributes,
       nextDelivery,
       OffsetDateTimeUtil.ofEpochMilli(0),
@@ -67,7 +67,7 @@ trait DataCreationHelpers {
   ) =
     NewMessageData(
       Some(MessageId(id)),
-      content,
+      MessageContent(content),
       messageAttributes,
       nextDelivery,
       messageGroupId,

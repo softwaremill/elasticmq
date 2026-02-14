@@ -11,7 +11,7 @@ case class InternalMessage(
     id: String,
     deliveryReceipts: mutable.Buffer[String],
     var nextDelivery: Long,
-    content: String,
+    content: MessageContent,
     messageAttributes: Map[String, MessageAttribute],
     created: OffsetDateTime,
     orderIndex: Int,

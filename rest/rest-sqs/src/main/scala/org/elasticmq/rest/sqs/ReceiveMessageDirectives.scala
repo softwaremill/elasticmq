@@ -142,8 +142,8 @@ trait ReceiveMessageDirectives {
 
             ReceivedMessage(
               Attributes = if (calculatedAttributes.nonEmpty) Some(calculatedAttributes) else None,
-              Body = message.content,
-              MD5OfBody = md5Digest(message.content),
+              Body = message.content.value,
+              MD5OfBody = md5Digest(message.content.value),
               MD5OfMessageAttributes =
                 if (filteredMessageAttributes.nonEmpty) Some(md5AttributeDigest(filteredMessageAttributes)) else None,
               MessageAttributes = if (filteredMessageAttributes.nonEmpty) Some(filteredMessageAttributes) else None,
