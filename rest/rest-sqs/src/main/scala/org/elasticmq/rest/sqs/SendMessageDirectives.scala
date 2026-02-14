@@ -158,7 +158,7 @@ trait SendMessageDirectives {
 
     NewMessageData(
       None,
-      body,
+      MessageContent(body),
       messageAttributes,
       nextDelivery,
       messageGroupId,
@@ -174,7 +174,7 @@ trait SendMessageDirectives {
       queueActor: ActorRef,
       message: NewMessageData
   ): Future[MessageSendOutcome] = {
-    val digest = md5Digest(message.content)
+    val digest = md5Digest(message.content.value)
 
     val messageAttributeDigest = if (message.messageAttributes.isEmpty) {
       None

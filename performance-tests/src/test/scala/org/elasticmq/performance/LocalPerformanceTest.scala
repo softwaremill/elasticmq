@@ -127,17 +127,17 @@ object LocalPerformanceTest extends App {
     def sendMessage(m: String): Unit = {
       Await.result(
         currentQueue ? SendMessage(
-          NewMessageData(None, m, Map.empty, ImmediateNextDelivery, None, None, 0, None, None)
+          NewMessageData(None, MessageContent(m), Map.empty, ImmediateNextDelivery, None, None, 0, None, None, None)
         ),
         10.seconds
       )
     }
 
-    def receiveMessage() = {
+    def receiveMessage(): String = {
       val messages = Await.result(currentQueue ? ReceiveMessages(DefaultVisibilityTimeout, 1, None, None), 10.seconds)
       val message = messages.head
       Await.result(currentQueue ? DeleteMessage(message.deliveryReceipt.get), 10.seconds)
-      message.content
+      message.content.value
     }
   }
 
