@@ -130,6 +130,15 @@ object SQSException {
     errorMessage = Some("BatchEntryIdsNotDistinct")
   )
 
+  def invalidClientTokenId(message: String): SQSException = {
+    new SQSException(
+      "InvalidClientTokenId",
+      403,
+      "AuthFailure",
+      Some(message)
+    )
+  }
+
   def tooManyEntriesInBatchRequest: SQSException = new SQSException(
     "AWS.SimpleQueueService.TooManyEntriesInBatchRequest",
     errorType = "com.amazonaws.sqs#TooManyEntriesInBatchRequest",

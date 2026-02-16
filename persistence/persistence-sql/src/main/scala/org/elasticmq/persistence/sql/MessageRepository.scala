@@ -19,7 +19,7 @@ class MessageRepository(queueName: String, db: DB) extends Logging {
 
   sql"""
     create table if not exists $tableName (
-      message_id varchar unique,
+      message_id varchar(255) not null unique,
       delivery_receipts blob,
       next_delivery bigint,
       content blob,
@@ -27,11 +27,11 @@ class MessageRepository(queueName: String, db: DB) extends Logging {
       created bigint,
       received bigint,
       receive_count int,
-      group_id varchar,
-      deduplication_id varchar,
-      tracing_id varchar,
-      sequence_number varchar,
-      dead_letter_source_queue_name varchar
+      group_id varchar(255),
+      deduplication_id varchar(255),
+      tracing_id varchar(255),
+      sequence_number varchar(255),
+      dead_letter_source_queue_name varchar(255)
     )""".execute.apply()
 
   def drop(): Unit = {
