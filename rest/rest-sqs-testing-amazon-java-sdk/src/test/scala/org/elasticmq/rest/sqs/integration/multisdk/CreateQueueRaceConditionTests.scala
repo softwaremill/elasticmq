@@ -1,12 +1,12 @@
-package org.elasticmq.rest.sqs.aws
+package org.elasticmq.rest.sqs.integration.multisdk
 
-import org.elasticmq.rest.sqs.client._
+import org.elasticmq.rest.sqs.integration.client.VisibilityTimeoutAttributeName
 
 import java.util.concurrent.Executors
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, ExecutionContext, ExecutionContextExecutor, Future}
 
-trait CreateQueueRaceConditionTests extends AmazonJavaSdkNewTestBase {
+trait CreateQueueRaceConditionTests extends AmazonJavaMultiSdkTestBase {
 
   test("should create one queue and return its address for every request with the same name and metadata") {
     implicit val ec: ExecutionContextExecutor = ExecutionContext.fromExecutor(Executors.newFixedThreadPool(100))

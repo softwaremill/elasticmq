@@ -1,8 +1,8 @@
-package org.elasticmq.rest.sqs.aws
+package org.elasticmq.rest.sqs.integration.multisdk
 
-import org.elasticmq.rest.sqs.client._
+import org.elasticmq.rest.sqs.integration.client._
 
-trait FifoQueueTests extends AmazonJavaSdkNewTestBase {
+trait FifoQueueTests extends AmazonJavaMultiSdkTestBase {
 
   test("FIFO queues should return an error if the queue's name does not end in .fifo") {
     // expect

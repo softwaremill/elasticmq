@@ -1,6 +1,7 @@
-package org.elasticmq.rest.sqs
+package org.elasticmq.rest.sqs.integration.multisdk
 
-import org.elasticmq.rest.sqs.client.{AwsSdkV2SqsClient, SqsClient}
+import org.elasticmq.rest.sqs.integration.client.{AwsSdkV2SqsClient, SqsClient}
+import org.elasticmq.rest.sqs.{SQSRestServer, SQSRestServerBuilder}
 import org.elasticmq.util.Logging
 import org.elasticmq.{NodeAddress, RelaxedSQSLimits}
 import org.scalatest.BeforeAndAfter
@@ -12,7 +13,7 @@ import software.amazon.awssdk.services.sqs.{SqsClient => AwsSqsClient}
 import java.net.URI
 import scala.util.Try
 
-trait SqsClientServerWithSdkV2Communication extends AnyFunSuite with BeforeAndAfter with Logging {
+trait SQSRestServerWithSdkV2Client extends AnyFunSuite with BeforeAndAfter with Logging {
 
   var testClient: SqsClient = _
 

@@ -1,4 +1,4 @@
-package org.elasticmq.rest.sqs.client
+package org.elasticmq.rest.sqs.integration.client
 
 trait HasSqsTestClient {
 

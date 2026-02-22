@@ -1,8 +1,8 @@
-package org.elasticmq.rest.sqs.aws
+package org.elasticmq.rest.sqs.integration.multisdk
 
-import org.elasticmq.rest.sqs.client._
+import org.elasticmq.rest.sqs.integration.client.{AWSTraceHeader, SendMessageBatchEntry}
 
-trait TracingTests extends AmazonJavaSdkNewTestBase {
+trait TracingTests extends AmazonJavaMultiSdkTestBase {
 
   test("Message should not have assigned trace if such one was not provided") {
     val queueUrl = testClient.createQueue("testQueue1").toOption.get

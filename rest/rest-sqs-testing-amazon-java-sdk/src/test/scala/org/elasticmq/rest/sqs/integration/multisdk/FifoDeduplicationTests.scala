@@ -1,9 +1,9 @@
-package org.elasticmq.rest.sqs.aws
+package org.elasticmq.rest.sqs.integration.multisdk
 
-import org.elasticmq.{BinaryMessageAttribute, StringMessageAttribute}
-import org.elasticmq.rest.sqs.client._
+import org.elasticmq.StringMessageAttribute
+import org.elasticmq.rest.sqs.integration.client._
 
-trait FifoDeduplicationTests extends AmazonJavaSdkNewTestBase {
+trait FifoDeduplicationTests extends AmazonJavaMultiSdkTestBase {
 
   test("FIFO provided message deduplication ids should take priority over content based deduplication") {
     // Given

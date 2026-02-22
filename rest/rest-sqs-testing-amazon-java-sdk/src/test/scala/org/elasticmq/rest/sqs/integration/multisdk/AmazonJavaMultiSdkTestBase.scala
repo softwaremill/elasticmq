@@ -1,17 +1,12 @@
-package org.elasticmq.rest.sqs.aws
+package org.elasticmq.rest.sqs.integration.multisdk
 
-import org.elasticmq.rest.sqs.client._
 import org.elasticmq.MessageAttribute
+import org.elasticmq.rest.sqs.integration.client.{HasSqsTestClient, ReceivedMessage, SqsClientError, SqsClientErrorType}
 import org.scalatest.concurrent.Eventually
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 
-trait AmazonJavaSdkNewTestBase
-    extends AnyFunSuite
-    with HasSqsTestClient
-    with AwsConfig
-    with Matchers
-    with Eventually {
+trait AmazonJavaMultiSdkTestBase extends AnyFunSuite with HasSqsTestClient with AwsConfig with Matchers with Eventually {
 
   protected def assertError(
       result: Either[SqsClientError, _],

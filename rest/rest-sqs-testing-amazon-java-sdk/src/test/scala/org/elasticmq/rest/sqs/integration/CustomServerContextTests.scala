@@ -1,7 +1,8 @@
-package org.elasticmq.rest.sqs.aws
+package org.elasticmq.rest.sqs.integration
 
 import org.elasticmq.NodeAddress
-import org.elasticmq.rest.sqs.client.{AwsSdkV2SqsClient, SqsClient}
+import org.elasticmq.rest.sqs.integration.client.{AwsSdkV2SqsClient, SqsClient}
+import org.elasticmq.rest.sqs.integration.multisdk.AmazonJavaMultiSdkTestBase
 import org.elasticmq.rest.sqs.{SQSRestServer, SQSRestServerBuilder}
 import org.scalatest.BeforeAndAfter
 import software.amazon.awssdk.auth.credentials.{AwsBasicCredentials, StaticCredentialsProvider}
@@ -11,7 +12,7 @@ import software.amazon.awssdk.services.sqs.{SqsClient => AwsSqsClient}
 import java.net.URI
 import scala.util.Try
 
-class CustomServerContextTests extends AmazonJavaSdkNewTestBase with BeforeAndAfter {
+class CustomServerContextTests extends AmazonJavaMultiSdkTestBase with BeforeAndAfter {
 
   var testClient: SqsClient = _
   var clientV2: AwsSqsClient = _

@@ -1,6 +1,7 @@
-package org.elasticmq.rest.sqs.aws
+package org.elasticmq.rest.sqs.integration.multisdk
 
-import org.elasticmq.rest.sqs.client._
+import org.elasticmq.rest.sqs.integration.client.client.QueueUrl
+import org.elasticmq.rest.sqs.integration.client._
 import org.elasticmq.rest.sqs.model.RedrivePolicy
 import org.elasticmq.rest.sqs.model.RedrivePolicyJson.format
 import spray.json.enrichAny
@@ -8,7 +9,7 @@ import spray.json.enrichAny
 import java.util.UUID
 import scala.concurrent.duration.DurationInt
 
-trait MessageMoveTaskTests extends AmazonJavaSdkNewTestBase {
+trait MessageMoveTaskTests extends AmazonJavaMultiSdkTestBase {
 
   private val NumMessages = 6
   private val DlqArn = s"arn:aws:sqs:$awsRegion:$awsAccountId:testQueue-dlq"

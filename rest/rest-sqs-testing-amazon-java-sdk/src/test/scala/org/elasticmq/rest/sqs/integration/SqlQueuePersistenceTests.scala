@@ -1,4 +1,4 @@
-package org.elasticmq.rest.sqs.aws
+package org.elasticmq.rest.sqs.integration
 
 import org.apache.pekko.actor.{ActorRef, ActorSystem, Props}
 import org.apache.pekko.util.Timeout
@@ -6,7 +6,7 @@ import org.elasticmq.actor.QueueManagerActor
 import org.elasticmq.actor.queue.QueueEvent
 import org.elasticmq.actor.reply._
 import org.elasticmq.persistence.sql.{GetAllMessages, SqlQueuePersistenceActor, SqlQueuePersistenceConfig}
-import org.elasticmq.rest.sqs.client._
+import org.elasticmq.rest.sqs.integration.client.{ApproximateNumberOfMessagesAttributeName, AwsSdkV2SqsClient, RedrivePolicyAttributeName, VisibilityTimeoutAttributeName}
 import org.elasticmq.rest.sqs.model.RedrivePolicy
 import org.elasticmq.rest.sqs.model.RedrivePolicyJson.format
 import org.elasticmq.rest.sqs.{SQSRestServer, SQSRestServerBuilder}

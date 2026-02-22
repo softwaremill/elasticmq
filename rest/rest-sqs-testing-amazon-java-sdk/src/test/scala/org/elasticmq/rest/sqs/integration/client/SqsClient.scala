@@ -1,5 +1,7 @@
-package org.elasticmq.rest.sqs.client
+package org.elasticmq.rest.sqs.integration.client
+
 import org.elasticmq.MessageAttribute
+import org.elasticmq.rest.sqs.integration.client.client.{ApproximateNumberOfMessagesMoved, Arn, QueueUrl, TaskHandle}
 
 trait SqsClient {
 

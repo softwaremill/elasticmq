@@ -1,30 +1,8 @@
-package org.elasticmq.rest.sqs.client
+package org.elasticmq.rest.sqs.integration.client
 
 import com.amazonaws.services.sqs.AmazonSQS
-import com.amazonaws.services.sqs.model.{
-  BatchResultErrorEntry,
-  CancelMessageMoveTaskRequest,
-  ChangeMessageVisibilityBatchRequest,
-  ChangeMessageVisibilityBatchRequestEntry,
-  CreateQueueRequest,
-  DeleteMessageBatchRequest,
-  DeleteMessageBatchRequestEntry,
-  GetQueueAttributesRequest,
-  GetQueueUrlRequest,
-  ListDeadLetterSourceQueuesRequest,
-  ListMessageMoveTasksRequest,
-  MessageAttributeValue,
-  MessageSystemAttributeValue,
-  PurgeQueueRequest,
-  QueueDoesNotExistException,
-  ReceiveMessageRequest,
-  ResourceNotFoundException,
-  SendMessageBatchRequest,
-  SendMessageBatchRequestEntry,
-  SendMessageRequest,
-  StartMessageMoveTaskRequest,
-  UnsupportedOperationException
-}
+import com.amazonaws.services.sqs.model.{BatchResultErrorEntry, CancelMessageMoveTaskRequest, ChangeMessageVisibilityBatchRequest, ChangeMessageVisibilityBatchRequestEntry, CreateQueueRequest, DeleteMessageBatchRequest, DeleteMessageBatchRequestEntry, GetQueueAttributesRequest, GetQueueUrlRequest, ListDeadLetterSourceQueuesRequest, ListMessageMoveTasksRequest, MessageAttributeValue, MessageSystemAttributeValue, PurgeQueueRequest, QueueDoesNotExistException, ReceiveMessageRequest, ResourceNotFoundException, SendMessageBatchRequest, SendMessageBatchRequestEntry, SendMessageRequest, StartMessageMoveTaskRequest, UnsupportedOperationException}
+import org.elasticmq.rest.sqs.integration.client.client.{ApproximateNumberOfMessagesMoved, Arn, MessageMoveTaskStatus, QueueUrl, TaskHandle}
 import org.elasticmq.{BinaryMessageAttribute, MessageAttribute, NumberMessageAttribute, StringMessageAttribute}
 
 import java.nio.ByteBuffer
