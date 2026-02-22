@@ -1,7 +1,9 @@
 package org.elasticmq.rest.sqs.integration.multisdk
 
+import org.elasticmq.rest.sqs.integration.common.{IntegrationTestsBase, SQSRestServerWithSdkV1Client, SQSRestServerWithSdkV2Client}
+
 abstract class AmazonJavaMultiSdkTestSuite
-    extends AmazonJavaMultiSdkTestBase
+    extends IntegrationTestsBase
     with QueueOperationsTests
     with QueueAttributesTests
     with MessageOperationsTests

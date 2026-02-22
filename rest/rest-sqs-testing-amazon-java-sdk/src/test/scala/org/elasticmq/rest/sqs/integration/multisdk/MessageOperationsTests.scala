@@ -1,11 +1,12 @@
 package org.elasticmq.rest.sqs.integration.multisdk
 
 import org.elasticmq.rest.sqs.integration.client._
+import org.elasticmq.rest.sqs.integration.common.IntegrationTestsBase
 import org.elasticmq.{BinaryMessageAttribute, NumberMessageAttribute, StringMessageAttribute}
 
 import scala.concurrent.duration.DurationInt
 
-trait MessageOperationsTests extends AmazonJavaMultiSdkTestBase {
+trait MessageOperationsTests extends IntegrationTestsBase {
 
   test("should return error when message body is empty") {
     // given

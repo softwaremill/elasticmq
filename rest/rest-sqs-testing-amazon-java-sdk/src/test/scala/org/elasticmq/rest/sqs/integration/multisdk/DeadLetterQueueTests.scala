@@ -1,15 +1,12 @@
 package org.elasticmq.rest.sqs.integration.multisdk
 
-import org.elasticmq.rest.sqs.integration.client.{
-  DeadLetterQueueSourceArn,
-  RedrivePolicyAttributeName,
-  VisibilityTimeoutAttributeName
-}
+import org.elasticmq.rest.sqs.integration.client.{DeadLetterQueueSourceArn, RedrivePolicyAttributeName, VisibilityTimeoutAttributeName}
+import org.elasticmq.rest.sqs.integration.common.IntegrationTestsBase
 import org.elasticmq.rest.sqs.model.RedrivePolicy
 import org.elasticmq.rest.sqs.model.RedrivePolicyJson.format
 import spray.json.enrichAny
 
-trait DeadLetterQueueTests extends AmazonJavaMultiSdkTestBase {
+trait DeadLetterQueueTests extends IntegrationTestsBase {
 
   test("should list DeadLetterQueueSourceArn in receive message attributes") {
     // given

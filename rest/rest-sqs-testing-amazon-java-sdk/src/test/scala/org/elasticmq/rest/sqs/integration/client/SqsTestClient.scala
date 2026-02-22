@@ -1,6 +1,6 @@
 package org.elasticmq.rest.sqs.integration.client
 
-trait HasSqsTestClient {
+trait SqsTestClient {
 
   def testClient: SqsClient
 }

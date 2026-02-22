@@ -1,4 +1,4 @@
-package org.elasticmq.rest.sqs.integration.multisdk
+package org.elasticmq.rest.sqs.integration.common
 
 trait AwsConfig {
 

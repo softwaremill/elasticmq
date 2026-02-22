@@ -7,10 +7,10 @@ import org.elasticmq.actor.queue.QueueEvent
 import org.elasticmq.actor.reply._
 import org.elasticmq.persistence.sql.{GetAllMessages, SqlQueuePersistenceActor, SqlQueuePersistenceConfig}
 import org.elasticmq.rest.sqs.integration.client.{ApproximateNumberOfMessagesAttributeName, RedrivePolicyAttributeName, VisibilityTimeoutAttributeName}
-import org.elasticmq.rest.sqs.integration.multisdk.{AmazonJavaMultiSdkTestBase, SQSRestServerWithSdkV2Client}
 import org.elasticmq.rest.sqs.model.RedrivePolicy
 import org.elasticmq.rest.sqs.model.RedrivePolicyJson.format
-import org.elasticmq.rest.sqs.{SQSRestServerBuilder}
+import org.elasticmq.rest.sqs.SQSRestServerBuilder
+import org.elasticmq.rest.sqs.integration.common.{IntegrationTestsBase, SQSRestServerWithSdkV2Client}
 import org.elasticmq.util.NowProvider
 import org.elasticmq.{NodeAddress, StrictSQSLimits}
 import org.scalatest.concurrent.ScalaFutures
@@ -20,7 +20,7 @@ import spray.json.enrichAny
 import scala.concurrent.duration._
 
 class SqlQueuePersistenceTests
-    extends AmazonJavaMultiSdkTestBase
+    extends IntegrationTestsBase
     with SQSRestServerWithSdkV2Client
     with ScalaFutures {
 

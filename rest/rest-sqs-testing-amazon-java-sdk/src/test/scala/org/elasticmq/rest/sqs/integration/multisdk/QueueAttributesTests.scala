@@ -1,8 +1,9 @@
 package org.elasticmq.rest.sqs.integration.multisdk
 
 import org.elasticmq.rest.sqs.integration.client._
+import org.elasticmq.rest.sqs.integration.common.IntegrationTestsBase
 
-trait QueueAttributesTests extends AmazonJavaMultiSdkTestBase {
+trait QueueAttributesTests extends IntegrationTestsBase {
 
   test("should create a queue with the default visibility timeout") {
     // given

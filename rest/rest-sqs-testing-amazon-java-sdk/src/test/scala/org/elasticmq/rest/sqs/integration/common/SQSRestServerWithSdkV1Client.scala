@@ -1,4 +1,4 @@
-package org.elasticmq.rest.sqs.integration.multisdk
+package org.elasticmq.rest.sqs.integration.common
 
 import com.amazonaws.auth.{AWSStaticCredentialsProvider, BasicAWSCredentials}
 import com.amazonaws.client.builder.AwsClientBuilder.EndpointConfiguration

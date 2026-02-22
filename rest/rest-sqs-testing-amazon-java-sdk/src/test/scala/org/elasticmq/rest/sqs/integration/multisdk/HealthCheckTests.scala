@@ -3,11 +3,12 @@ package org.elasticmq.rest.sqs.integration.multisdk
 import org.apache.pekko.http.scaladsl.Http
 import org.apache.pekko.http.scaladsl.model.{HttpRequest, StatusCodes}
 import org.apache.pekko.http.scaladsl.testkit.ScalatestRouteTest
+import org.elasticmq.rest.sqs.integration.common.IntegrationTestsBase
 
 import scala.concurrent.Await
 import scala.concurrent.duration.DurationInt
 
-trait HealthCheckTests extends AmazonJavaMultiSdkTestBase with ScalatestRouteTest {
+trait HealthCheckTests extends IntegrationTestsBase with ScalatestRouteTest {
 
   test("health check") {
     val responseFuture = Http().singleRequest(HttpRequest(uri = s"http://localhost:9321/health"))

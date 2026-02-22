@@ -2,8 +2,9 @@ package org.elasticmq.rest.sqs.integration.multisdk
 
 import org.elasticmq.StringMessageAttribute
 import org.elasticmq.rest.sqs.integration.client._
+import org.elasticmq.rest.sqs.integration.common.IntegrationTestsBase
 
-trait FifoDeduplicationTests extends AmazonJavaMultiSdkTestBase {
+trait FifoDeduplicationTests extends IntegrationTestsBase {
 
   test("FIFO provided message deduplication ids should take priority over content based deduplication") {
     // Given

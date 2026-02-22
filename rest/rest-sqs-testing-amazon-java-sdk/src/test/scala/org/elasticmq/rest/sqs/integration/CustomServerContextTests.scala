@@ -1,8 +1,8 @@
 package org.elasticmq.rest.sqs.integration
 
-import org.elasticmq.rest.sqs.integration.multisdk.{AmazonJavaMultiSdkTestBase, SQSRestServerWithSdkV2Client}
+import org.elasticmq.rest.sqs.integration.common.{IntegrationTestsBase, SQSRestServerWithSdkV2Client}
 
-class CustomServerContextTests extends AmazonJavaMultiSdkTestBase with SQSRestServerWithSdkV2Client {
+class CustomServerContextTests extends IntegrationTestsBase with SQSRestServerWithSdkV2Client {
 
   override val awsRegion = "elasticmq"
   override val awsAccountId = "123456789012"

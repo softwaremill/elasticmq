@@ -2,8 +2,9 @@ package org.elasticmq.rest.sqs.integration.multisdk
 
 import org.elasticmq.StringMessageAttribute
 import org.elasticmq.rest.sqs.integration.client._
+import org.elasticmq.rest.sqs.integration.common.IntegrationTestsBase
 
-trait MessageAttributesTests extends AmazonJavaMultiSdkTestBase {
+trait MessageAttributesTests extends IntegrationTestsBase {
 
   test("Sending message with empty attribute value and String data type should result in error") {
     // given

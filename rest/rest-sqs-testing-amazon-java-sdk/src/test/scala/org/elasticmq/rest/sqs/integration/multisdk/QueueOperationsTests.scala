@@ -1,10 +1,11 @@
 package org.elasticmq.rest.sqs.integration.multisdk
 
 import org.elasticmq.rest.sqs.integration.client.{QueueDoesNotExist, SqsClientError}
+import org.elasticmq.rest.sqs.integration.common.IntegrationTestsBase
 
 import scala.concurrent.duration.DurationInt
 
-trait QueueOperationsTests extends AmazonJavaMultiSdkTestBase {
+trait QueueOperationsTests extends IntegrationTestsBase {
 
   test("should create a queue") {
     testClient.createQueue("testQueue1").toOption.get

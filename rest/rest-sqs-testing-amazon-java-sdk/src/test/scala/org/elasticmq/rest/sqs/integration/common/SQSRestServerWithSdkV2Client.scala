@@ -1,4 +1,4 @@
-package org.elasticmq.rest.sqs.integration.multisdk
+package org.elasticmq.rest.sqs.integration.common
 
 import org.elasticmq.rest.sqs.integration.client.{AwsSdkV2SqsClient, SqsClient}
 import org.elasticmq.rest.sqs.{SQSRestServer, SQSRestServerBuilder}
