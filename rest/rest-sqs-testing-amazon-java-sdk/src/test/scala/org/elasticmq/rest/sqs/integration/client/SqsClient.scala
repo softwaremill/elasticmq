@@ -1,9 +1,11 @@
-package org.elasticmq.rest.sqs.client
+package org.elasticmq.rest.sqs.integration.client
+
 import org.elasticmq.MessageAttribute
+import org.elasticmq.rest.sqs.integration.client.client.{ApproximateNumberOfMessagesMoved, Arn, QueueUrl, TaskHandle}
 
 trait SqsClient {
 
-  def createQueue(queueName: String, attributes: Map[QueueAttributeName, String] = Map.empty): QueueUrl
+  def createQueue(queueName: String, attributes: Map[QueueAttributeName, String] = Map.empty): Either[SqsClientError, QueueUrl]
   def getQueueUrl(queueName: String): Either[SqsClientError, QueueUrl]
   def deleteQueue(queueUrl: QueueUrl): Either[SqsClientError, Unit]
   def purgeQueue(queueUrl: QueueUrl): Either[SqsClientError, Unit]
@@ -16,16 +18,17 @@ trait SqsClient {
 
   def sendMessage(
       queueUrl: QueueUrl,
-      messageBody: MessageMoveTaskStatus,
+      messageBody: String,
       delaySeconds: Option[Int] = None,
       messageAttributes: Map[
-        MessageMoveTaskStatus,
+        String,
         MessageAttribute
       ] = Map.empty,
-      awsTraceHeader: Option[MessageMoveTaskStatus] = None,
-      messageGroupId: Option[MessageMoveTaskStatus] = None,
-      messageDeduplicationId: Option[MessageMoveTaskStatus] = None
-  ): Either[SqsClientError, Unit]
+      awsTraceHeader: Option[String] = None,
+      messageGroupId: Option[String] = None,
+      messageDeduplicationId: Option[String] = None,
+      customHeaders: Map[String, String] = Map.empty
+  ): Either[SqsClientError, SendMessageResult]
 
   def receiveMessage(
       queueUrl: QueueUrl,
@@ -39,7 +42,8 @@ trait SqsClient {
 
   def sendMessageBatch(
       queueUrl: QueueUrl,
-      entries: List[SendMessageBatchEntry]
+      entries: List[SendMessageBatchEntry],
+      customHeaders: Map[String, String] = Map.empty
   ): Either[SqsClientError, SendMessageBatchResult]
 
   def deleteMessageBatch(
@@ -51,6 +55,8 @@ trait SqsClient {
       queueUrl: QueueUrl,
       entries: List[ChangeMessageVisibilityBatchEntry]
   ): Either[SqsClientError, ChangeMessageVisibilityBatchResult]
+
+  def setQueueAttributes(queueUrl: QueueUrl, attributes: Map[QueueAttributeName, String]): Unit
 
   def startMessageMoveTask(
       sourceArn: Arn,

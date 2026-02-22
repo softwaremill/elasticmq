@@ -1,42 +1,9 @@
-package org.elasticmq.rest.sqs.client
+package org.elasticmq.rest.sqs.integration.client
+
+import org.elasticmq.rest.sqs.integration.client.client.{ApproximateNumberOfMessagesMoved, Arn, MessageMoveTaskStatus, QueueUrl, TaskHandle}
 import org.elasticmq.{BinaryMessageAttribute, MessageAttribute, NumberMessageAttribute, StringMessageAttribute}
 import software.amazon.awssdk.core.SdkBytes
-import software.amazon.awssdk.services.sqs.model.{
-  AddPermissionRequest,
-  BatchResultErrorEntry,
-  CancelMessageMoveTaskRequest,
-  ChangeMessageVisibilityBatchRequest,
-  ChangeMessageVisibilityBatchRequestEntry,
-  ChangeMessageVisibilityRequest,
-  CreateQueueRequest,
-  DeleteMessageBatchRequest,
-  DeleteMessageBatchRequestEntry,
-  DeleteMessageRequest,
-  DeleteQueueRequest,
-  GetQueueAttributesRequest,
-  GetQueueUrlRequest,
-  ListDeadLetterSourceQueuesRequest,
-  ListMessageMoveTasksRequest,
-  ListQueueTagsRequest,
-  ListQueuesRequest,
-  MessageAttributeValue,
-  MessageSystemAttributeNameForSends,
-  MessageSystemAttributeValue,
-  PurgeQueueRequest,
-  QueueDoesNotExistException,
-  ReceiveMessageRequest,
-  RemovePermissionRequest,
-  ResourceNotFoundException,
-  SendMessageBatchRequest,
-  SendMessageBatchRequestEntry,
-  SendMessageRequest,
-  StartMessageMoveTaskRequest,
-  TagQueueRequest,
-  UnsupportedOperationException,
-  UntagQueueRequest,
-  MessageSystemAttributeName => SdkMessageSystemAttributeName,
-  QueueAttributeName => AwsQueueAttributeName
-}
+import software.amazon.awssdk.services.sqs.model.{AddPermissionRequest, BatchResultErrorEntry, CancelMessageMoveTaskRequest, ChangeMessageVisibilityBatchRequest, ChangeMessageVisibilityBatchRequestEntry, ChangeMessageVisibilityRequest, CreateQueueRequest, DeleteMessageBatchRequest, DeleteMessageBatchRequestEntry, DeleteMessageRequest, DeleteQueueRequest, GetQueueAttributesRequest, GetQueueUrlRequest, ListDeadLetterSourceQueuesRequest, ListMessageMoveTasksRequest, ListQueueTagsRequest, ListQueuesRequest, MessageAttributeValue, MessageSystemAttributeNameForSends, MessageSystemAttributeValue, PurgeQueueRequest, QueueDoesNotExistException, ReceiveMessageRequest, RemovePermissionRequest, ResourceNotFoundException, SendMessageBatchRequest, SendMessageBatchRequestEntry, SendMessageRequest, StartMessageMoveTaskRequest, TagQueueRequest, UnsupportedOperationException, UntagQueueRequest, MessageSystemAttributeName => SdkMessageSystemAttributeName, QueueAttributeName => AwsQueueAttributeName}
 
 import scala.collection.JavaConverters._
 
@@ -48,15 +15,27 @@ class AwsSdkV2SqsClient(client: software.amazon.awssdk.services.sqs.SqsClient) e
         QueueAttributeName,
         String
       ] = Map.empty
-  ): QueueUrl = client
-    .createQueue(
-      CreateQueueRequest
-        .builder()
-        .queueName(queueName)
-        .attributes(attributes.map { case (k, v) => (AwsQueueAttributeName.fromValue(k.value), v) }.asJava)
-        .build()
-    )
-    .queueUrl()
+  ): Either[SqsClientError, QueueUrl] = interceptCreateQueue {
+    client
+      .createQueue(
+        CreateQueueRequest
+          .builder()
+          .queueName(queueName)
+          .attributes(attributes.map { case (k, v) => (AwsQueueAttributeName.fromValue(k.value), v) }.asJava)
+          .build()
+      )
+      .queueUrl()
+  }
+
+  private def interceptCreateQueue[T](f: => T): Either[SqsClientError, T] = {
+    try {
+      Right(f)
+    } catch {
+      case e: software.amazon.awssdk.services.sqs.model.InvalidAttributeNameException =>
+        Left(SqsClientError(InvalidAttributeName, e.awsErrorDetails().errorMessage()))
+      case e: Exception => interceptErrors(f)
+    }
+  }
 
   override def getQueueUrl(queueName: String): Either[SqsClientError, QueueUrl] = interceptErrors {
     client
@@ -74,17 +53,18 @@ class AwsSdkV2SqsClient(client: software.amazon.awssdk.services.sqs.SqsClient) e
 
   override def sendMessage(
       queueUrl: QueueUrl,
-      messageBody: MessageMoveTaskStatus,
+      messageBody: String,
       delaySeconds: Option[Int] = None,
       messageAttributes: Map[
-        MessageMoveTaskStatus,
+        String,
         MessageAttribute
       ] = Map.empty,
-      awsTraceHeader: Option[MessageMoveTaskStatus] = None,
-      messageGroupId: Option[MessageMoveTaskStatus] = None,
-      messageDeduplicationId: Option[MessageMoveTaskStatus] = None
-  ): Either[SqsClientError, Unit] = interceptErrors {
-    client.sendMessage(
+      awsTraceHeader: Option[String] = None,
+      messageGroupId: Option[String] = None,
+      messageDeduplicationId: Option[String] = None,
+      customHeaders: Map[String, String] = Map.empty
+  ): Either[SqsClientError, SendMessageResult] = interceptErrors {
+    val result = client.sendMessage(
       SendMessageRequest
         .builder()
         .queueUrl(queueUrl)
@@ -94,7 +74,14 @@ class AwsSdkV2SqsClient(client: software.amazon.awssdk.services.sqs.SqsClient) e
         .messageAttributes(mapMessageAttributes(messageAttributes))
         .messageGroupId(messageGroupId.orNull)
         .messageDeduplicationId(messageDeduplicationId.orNull)
+        .overrideConfiguration(builder => customHeaders.foreach { case (k, v) => builder.putHeader(k, v) })
         .build()
+    )
+    SendMessageResult(
+      result.messageId(),
+      result.md5OfMessageBody(),
+      Option(result.md5OfMessageAttributes()),
+      Option(result.sequenceNumber())
     )
   }
 
@@ -114,28 +101,37 @@ class AwsSdkV2SqsClient(client: software.amazon.awssdk.services.sqs.SqsClient) e
   }
 
   private def mapMessageAttributes(
-      messageAttributes: Map[
-        String,
-        MessageAttribute
-      ]
-  ) = {
-    messageAttributes.map {
-      case (k, v: StringMessageAttribute) =>
-        k -> MessageAttributeValue.builder().dataType(v.getDataType()).stringValue(v.stringValue).build()
-      case (k, v: NumberMessageAttribute) =>
-        k -> MessageAttributeValue.builder().dataType(v.getDataType()).stringValue(v.stringValue).build()
-      case (k, v: BinaryMessageAttribute) =>
-        k -> MessageAttributeValue
-          .builder()
-          .dataType(v.getDataType())
+      messageAttributes: Map[String, MessageAttribute]
+  ): java.util.Map[String, MessageAttributeValue] = {
+    messageAttributes.map { case (key, attribute) =>
+      key -> buildMessageAttributeValue(attribute)
+    }.asJava
+  }
+
+  private def buildMessageAttributeValue(attribute: MessageAttribute): MessageAttributeValue = {
+    val builder = MessageAttributeValue.builder()
+    val dataType = attribute.getDataType()
+
+    if (dataType.nonEmpty) {
+      builder.dataType(dataType)
+    }
+
+    attribute match {
+      case v: StringMessageAttribute =>
+        builder.stringValue(v.stringValue).build()
+      case v: NumberMessageAttribute =>
+        builder.stringValue(v.stringValue).build()
+      case v: BinaryMessageAttribute =>
+        builder
           .binaryValue(SdkBytes.fromByteArray(v.binaryValue.toArray))
           .build()
-    }.asJava
+    }
   }
 
   override def sendMessageBatch(
       queueUrl: QueueUrl,
-      entries: List[SendMessageBatchEntry]
+      entries: List[SendMessageBatchEntry],
+      customHeaders: Map[String, String] = Map.empty
   ): Either[SqsClientError, SendMessageBatchResult] = interceptErrors {
     val result = client.sendMessageBatch(
       SendMessageBatchRequest
@@ -157,6 +153,7 @@ class AwsSdkV2SqsClient(client: software.amazon.awssdk.services.sqs.SqsClient) e
             )
             .asJava
         )
+        .overrideConfiguration(builder => customHeaders.foreach { case (k, v) => builder.putHeader(k, v) })
         .build()
     )
     SendMessageBatchResult(
@@ -285,6 +282,15 @@ class AwsSdkV2SqsClient(client: software.amazon.awssdk.services.sqs.SqsClient) e
       mapBatchResultErrorEntries(result.failed())
     )
   }
+
+  override def setQueueAttributes(queueUrl: QueueUrl, attributes: Map[QueueAttributeName, String]): Unit =
+    client.setQueueAttributes(
+      software.amazon.awssdk.services.sqs.model.SetQueueAttributesRequest
+        .builder()
+        .queueUrl(queueUrl)
+        .attributes(attributes.map { case (k, v) => (AwsQueueAttributeName.fromValue(k.value), v) }.asJava)
+        .build()
+    )
 
   override def listDeadLetterSourceQueues(queueUrl: QueueUrl): List[QueueUrl] =
     client
@@ -471,13 +477,27 @@ class AwsSdkV2SqsClient(client: software.amazon.awssdk.services.sqs.SqsClient) e
     try {
       Right(f)
     } catch {
+      case e: software.amazon.awssdk.services.sqs.model.SqsException
+          if e
+            .awsErrorDetails()
+            .errorCode() == "InvalidParameterValue" || e.awsErrorDetails().errorCode() == "InvalidAttributeValue" || e
+            .awsErrorDetails()
+            .errorCode() == "InvalidAttributeName" =>
+        Left(SqsClientError(InvalidParameterValue, e.awsErrorDetails().errorMessage()))
+      case e: software.amazon.awssdk.services.sqs.model.SqsException
+          if e.awsErrorDetails().errorCode() == "MissingParameter" =>
+        Left(SqsClientError(MissingParameter, e.awsErrorDetails().errorMessage()))
+      case e: software.amazon.awssdk.core.exception.SdkClientException
+          if e.getMessage.contains("MD5 returned by SQS does not match") =>
+        Left(SqsClientError(InvalidParameterValue, e.getMessage))
       case e: UnsupportedOperationException =>
         Left(SqsClientError(UnsupportedOperation, e.awsErrorDetails().errorMessage()))
       case e: ResourceNotFoundException =>
         Left(SqsClientError(ResourceNotFound, e.awsErrorDetails().errorMessage()))
       case e: QueueDoesNotExistException =>
         Left(SqsClientError(QueueDoesNotExist, e.awsErrorDetails().errorMessage()))
-      case e: Exception => Left(SqsClientError(UnknownSqsClientErrorType, e.getMessage))
+      case e: Exception =>
+        Left(SqsClientError(UnknownSqsClientErrorType, e.getMessage))
     }
   }
 }

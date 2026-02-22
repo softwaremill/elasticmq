@@ -7,6 +7,7 @@ import org.elasticmq.actor.reply._
 import org.elasticmq.msg._
 import org.elasticmq.util.{Logging, NowProvider}
 
+import java.util.UUID
 import scala.collection.mutable
 import scala.reflect._
 
@@ -95,6 +96,9 @@ class QueueManagerActor(nowProvider: NowProvider, limits: Limits, queueEventList
       queues.get(queueName).map(_.actorRef)
     }
 
+    // Generate a random postfix to fix a rare issue with recreating queue with the same name
+    val actorNamePostfix = UUID.randomUUID().toString.take(8)
+
     context.actorOf(
       Props(
         new QueueActor(
@@ -106,7 +110,7 @@ class QueueManagerActor(nowProvider: NowProvider, limits: Limits, queueEventList
           queueEventListener
         )
       ),
-      s"queue-${queueData.name}"
+      s"queue-${queueData.name}-$actorNamePostfix"
     )
   }
 

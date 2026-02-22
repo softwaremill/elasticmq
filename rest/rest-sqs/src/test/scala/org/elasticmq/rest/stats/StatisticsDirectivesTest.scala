@@ -53,6 +53,13 @@ class StatisticsDirectivesTest
 
   lazy val contextPath = ""
 
+  it should "recreate a queue with the same name multiple times" in {
+    for (i <- 1 to 10) {
+      createQueueWithName("firstQueue")
+      deleteQueueWithName("firstQueue")
+    }
+  }
+
   "statisticsRequestForAllQueues" should "return all queues statistics" in {
 
     val route = {
