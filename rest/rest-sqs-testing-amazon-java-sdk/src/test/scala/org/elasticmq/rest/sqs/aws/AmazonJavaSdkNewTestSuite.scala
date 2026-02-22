@@ -14,6 +14,7 @@ abstract class AmazonJavaSdkNewTestSuite
     with FifoDeduplicationTests
     with MessageAttributesTests
     with TracingTests
+    with HealthCheckTests
 
 class AmazonJavaSdkV1TestSuite extends AmazonJavaSdkNewTestSuite with SqsClientServerCommunication
 class AmazonJavaSdkV2TestSuite extends AmazonJavaSdkNewTestSuite with SqsClientServerWithSdkV2Communication
