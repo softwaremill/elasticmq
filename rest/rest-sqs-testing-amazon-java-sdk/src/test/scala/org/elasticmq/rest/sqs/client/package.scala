@@ -64,6 +64,13 @@ package client {
     }
   }
 
+  case class SendMessageResult(
+      messageId: String,
+      md5OfMessageBody: String,
+      md5OfMessageAttributes: Option[String],
+      sequenceNumber: Option[String]
+  )
+
   case class SendMessageBatchEntry(
       id: String,
       messageBody: String,

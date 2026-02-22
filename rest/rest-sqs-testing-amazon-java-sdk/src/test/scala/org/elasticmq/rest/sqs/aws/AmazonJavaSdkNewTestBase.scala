@@ -39,7 +39,7 @@ trait AmazonJavaSdkNewTestBase
     val queue = testClient.createQueue("testQueue1").toOption.get
     val sendResult =
       testClient.sendMessage(queue, content, messageAttributes = messageAttributes, awsTraceHeader = awsTraceHeader)
-    sendResult shouldBe Right(())
+    sendResult.isRight shouldBe true
     val message = receiveSingleMessageObject(queue, requestedAttributes, requestedSystemAttributes).orNull
 
     // then

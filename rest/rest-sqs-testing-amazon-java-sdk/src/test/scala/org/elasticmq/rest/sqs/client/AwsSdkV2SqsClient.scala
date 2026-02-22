@@ -86,17 +86,17 @@ class AwsSdkV2SqsClient(client: software.amazon.awssdk.services.sqs.SqsClient) e
 
   override def sendMessage(
       queueUrl: QueueUrl,
-      messageBody: MessageMoveTaskStatus,
+      messageBody: String,
       delaySeconds: Option[Int] = None,
       messageAttributes: Map[
-        MessageMoveTaskStatus,
+        String,
         MessageAttribute
       ] = Map.empty,
-      awsTraceHeader: Option[MessageMoveTaskStatus] = None,
-      messageGroupId: Option[MessageMoveTaskStatus] = None,
-      messageDeduplicationId: Option[MessageMoveTaskStatus] = None
-  ): Either[SqsClientError, Unit] = interceptErrors {
-    client.sendMessage(
+      awsTraceHeader: Option[String] = None,
+      messageGroupId: Option[String] = None,
+      messageDeduplicationId: Option[String] = None
+  ): Either[SqsClientError, SendMessageResult] = interceptErrors {
+    val result = client.sendMessage(
       SendMessageRequest
         .builder()
         .queueUrl(queueUrl)
@@ -107,6 +107,12 @@ class AwsSdkV2SqsClient(client: software.amazon.awssdk.services.sqs.SqsClient) e
         .messageGroupId(messageGroupId.orNull)
         .messageDeduplicationId(messageDeduplicationId.orNull)
         .build()
+    )
+    SendMessageResult(
+      result.messageId(),
+      result.md5OfMessageBody(),
+      Option(result.md5OfMessageAttributes()),
+      Option(result.sequenceNumber())
     )
   }
 

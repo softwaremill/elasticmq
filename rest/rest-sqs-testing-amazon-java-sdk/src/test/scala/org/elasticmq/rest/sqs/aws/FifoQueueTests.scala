@@ -48,7 +48,7 @@ trait FifoQueueTests extends AmazonJavaSdkNewTestBase {
     )
 
     // Regular queues now allow message groups
-    testClient.sendMessage(regularQueueUrl, "A body", messageGroupId = Some("group-1")) shouldBe Right(())
+    testClient.sendMessage(regularQueueUrl, "A body", messageGroupId = Some("group-1")).isRight shouldBe true
   }
 
   test("FIFO queues do not support delaying individual messages") {
@@ -95,7 +95,7 @@ trait FifoQueueTests extends AmazonJavaSdkNewTestBase {
       delaySeconds = Some(0),
       messageDeduplicationId = Some("2"),
       messageGroupId = Some("1")
-    ) shouldBe Right(())
+    ).isRight shouldBe true
   }
 
   test(
