@@ -24,22 +24,29 @@ trait SQSRestServerWithSdkV2Client extends AnyFunSuite with BeforeAndAfter with 
 
   var strictServer: SQSRestServer = _
   var relaxedServer: SQSRestServer = _
-  val awsAccountId = "123456789012"
-  val awsRegion = "elasticmq"
 
-  val ServiceEndpoint = "http://localhost:9321"
+  def awsAccountId: String = "123456789012"
+  def awsRegion: String = "elasticmq"
+
+  def serverPort: Int = 9321
+  def serverContextPath: String = ""
+
+  def relaxedServerPort: Int = 9322
+  def relaxedServerContextPath: String = ""
+
+  def serviceEndpoint = s"http://localhost:$serverPort${if (serverContextPath.nonEmpty) "/" + serverContextPath else ""}"
 
   before {
     strictServer = SQSRestServerBuilder
-      .withPort(9321)
-      .withServerAddress(NodeAddress(port = 9321))
+      .withPort(serverPort)
+      .withServerAddress(NodeAddress(port = serverPort, contextPath = serverContextPath))
       .withAWSAccountId(awsAccountId)
       .withAWSRegion(awsRegion)
       .start()
 
     relaxedServer = SQSRestServerBuilder
-      .withPort(9322)
-      .withServerAddress(NodeAddress(port = 9322))
+      .withPort(relaxedServerPort)
+      .withServerAddress(NodeAddress(port = relaxedServerPort, contextPath = relaxedServerContextPath))
       .withSQSLimits(RelaxedSQSLimits)
       .start()
 
@@ -50,7 +57,7 @@ trait SQSRestServerWithSdkV2Client extends AnyFunSuite with BeforeAndAfter with 
       .builder()
       .credentialsProvider(StaticCredentialsProvider.create(AwsBasicCredentials.create("x", "x")))
       .region(Region.EU_CENTRAL_1)
-      .endpointOverride(new URI("http://localhost:9321"))
+      .endpointOverride(new URI(serviceEndpoint))
       .build()
 
     testClient = new AwsSdkV2SqsClient(clientV2)
@@ -59,7 +66,7 @@ trait SQSRestServerWithSdkV2Client extends AnyFunSuite with BeforeAndAfter with 
       .builder()
       .credentialsProvider(StaticCredentialsProvider.create(AwsBasicCredentials.create("x", "x")))
       .region(Region.EU_CENTRAL_1)
-      .endpointOverride(new URI("http://localhost:9322"))
+      .endpointOverride(new URI(s"http://localhost:$relaxedServerPort${if (relaxedServerContextPath.nonEmpty) "/" + relaxedServerContextPath else ""}"))
       .build()
   }
 

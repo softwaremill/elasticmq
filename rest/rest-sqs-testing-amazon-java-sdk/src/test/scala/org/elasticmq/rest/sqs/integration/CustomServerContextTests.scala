@@ -1,52 +1,13 @@
 package org.elasticmq.rest.sqs.integration
 
-import org.elasticmq.NodeAddress
-import org.elasticmq.rest.sqs.integration.client.{AwsSdkV2SqsClient, SqsClient}
-import org.elasticmq.rest.sqs.integration.multisdk.AmazonJavaMultiSdkTestBase
-import org.elasticmq.rest.sqs.{SQSRestServer, SQSRestServerBuilder}
-import org.scalatest.BeforeAndAfter
-import software.amazon.awssdk.auth.credentials.{AwsBasicCredentials, StaticCredentialsProvider}
-import software.amazon.awssdk.regions.Region
-import software.amazon.awssdk.services.sqs.{SqsClient => AwsSqsClient}
+import org.elasticmq.rest.sqs.integration.multisdk.{AmazonJavaMultiSdkTestBase, SQSRestServerWithSdkV2Client}
 
-import java.net.URI
-import scala.util.Try
+class CustomServerContextTests extends AmazonJavaMultiSdkTestBase with SQSRestServerWithSdkV2Client {
 
-class CustomServerContextTests extends AmazonJavaMultiSdkTestBase with BeforeAndAfter {
-
-  var testClient: SqsClient = _
-  var clientV2: AwsSqsClient = _
-  var server: SQSRestServer = _
-
-  val awsAccountId = "123456789012"
-  val awsRegion = "elasticmq"
-  val port = 9324
-  val contextPath = "xyz"
-
-  before {
-    server = SQSRestServerBuilder
-      .withPort(port)
-      .withServerAddress(NodeAddress(port = port, contextPath = contextPath))
-      .withAWSAccountId(awsAccountId)
-      .withAWSRegion(awsRegion)
-      .start()
-
-    server.waitUntilStarted()
-
-    clientV2 = AwsSqsClient
-      .builder()
-      .credentialsProvider(StaticCredentialsProvider.create(AwsBasicCredentials.create("x", "x")))
-      .region(Region.US_EAST_1)
-      .endpointOverride(new URI(s"http://localhost:$port/$contextPath"))
-      .build()
-
-    testClient = new AwsSdkV2SqsClient(clientV2)
-  }
-
-  after {
-    clientV2.close()
-    Try(server.stopAndWait())
-  }
+  override val awsRegion = "elasticmq"
+  override val awsAccountId = "123456789012"
+  override val serverPort = 9324
+  override val serverContextPath = "xyz"
 
   test("should create queue when context path is set") {
     val queueUrl = testClient.createQueue("testQueue").toOption.get
