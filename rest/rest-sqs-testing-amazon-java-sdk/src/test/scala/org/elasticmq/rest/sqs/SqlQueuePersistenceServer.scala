@@ -2,9 +2,6 @@ package org.elasticmq.rest.sqs
 
 import org.apache.pekko.actor.{ActorRef, ActorSystem, Props}
 import org.apache.pekko.util.Timeout
-import com.amazonaws.auth.{AWSStaticCredentialsProvider, BasicAWSCredentials}
-import com.amazonaws.client.builder.AwsClientBuilder.EndpointConfiguration
-import com.amazonaws.services.sqs.{AmazonSQS, AmazonSQSClientBuilder}
 import org.elasticmq.actor.QueueManagerActor
 import org.elasticmq.actor.queue.QueueEvent
 import org.elasticmq.actor.reply._
@@ -13,7 +10,11 @@ import org.elasticmq.util.NowProvider
 import org.elasticmq.{NodeAddress, StrictSQSLimits}
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.time.{Seconds, Span}
-
+import software.amazon.awssdk.auth.credentials.{AwsBasicCredentials, StaticCredentialsProvider}
+import software.amazon.awssdk.regions.Region
+import software.amazon.awssdk.services.sqs.{SqsClient => AwsSqsClient}
+import org.elasticmq.rest.sqs.client.AwsSdkV2SqsClient
+import java.net.URI
 import scala.util.Try
 
 trait SqlQueuePersistenceServer extends ScalaFutures {
@@ -21,10 +22,11 @@ trait SqlQueuePersistenceServer extends ScalaFutures {
   private val awsAccountId = "123456789012"
   private val awsRegion = "elasticmq"
 
-  private val actorSystem: ActorSystem = ActorSystem("elasticmq-test")
+  private val actorSystem: ActorSystem = ActorSystem("elasticmq-test-v2")
   private var strictServer: SQSRestServer = _
 
-  var client: AmazonSQS = _
+  var clientV2: AwsSqsClient = _
+  var testClient: AwsSdkV2SqsClient = _
   var store: ActorRef = _
 
   implicit val timeout: Timeout = {
@@ -36,15 +38,18 @@ trait SqlQueuePersistenceServer extends ScalaFutures {
 
   def startServerAndRun(pruneDataOnInit: Boolean)(body: => Unit): Unit = {
     startServerAndSetupClient(pruneDataOnInit)
-    body
-    stopServerAndClient()
+    try {
+      body
+    } finally {
+      stopServerAndClient()
+    }
   }
 
   private def startServerAndSetupClient(pruneDataOnInit: Boolean): Unit = {
     val persistenceConfig = SqlQueuePersistenceConfig(
       enabled = true,
       driverClass = "org.h2.Driver",
-      uri = "jdbc:h2:./elasticmq-h2",
+      uri = "jdbc:h2:./elasticmq-h2-v2",
       pruneDataOnInit = pruneDataOnInit
     )
 
@@ -54,23 +59,26 @@ trait SqlQueuePersistenceServer extends ScalaFutures {
     strictServer = SQSRestServerBuilder
       .withActorSystem(actorSystem)
       .withQueueManagerActor(manager)
-      .withPort(9321)
-      .withServerAddress(NodeAddress(port = 9321))
+      .withPort(9323) // different port to avoid conflicts
+      .withServerAddress(NodeAddress(port = 9323))
       .withAWSAccountId(awsAccountId)
       .withAWSRegion(awsRegion)
       .start()
 
     (store ? QueueEvent.Restore(manager)).futureValue
 
-    client = AmazonSQSClientBuilder
-      .standard()
-      .withCredentials(new AWSStaticCredentialsProvider(new BasicAWSCredentials("x", "x")))
-      .withEndpointConfiguration(new EndpointConfiguration("http://localhost:9321", "us-east-1"))
+    clientV2 = AwsSqsClient
+      .builder()
+      .credentialsProvider(StaticCredentialsProvider.create(AwsBasicCredentials.create("x", "x")))
+      .region(Region.EU_CENTRAL_1)
+      .endpointOverride(new URI("http://localhost:9323"))
       .build()
+
+    testClient = new AwsSdkV2SqsClient(clientV2)
   }
 
   private def stopServerAndClient(): Unit = {
-    client.shutdown()
-    Try(strictServer.stopAndWait())
+    if (clientV2 != null) clientV2.close()
+    if (strictServer != null) Try(strictServer.stopAndWait())
   }
 }
