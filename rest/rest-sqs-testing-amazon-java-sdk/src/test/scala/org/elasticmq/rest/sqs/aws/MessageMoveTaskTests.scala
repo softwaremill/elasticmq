@@ -3,21 +3,12 @@ package org.elasticmq.rest.sqs.aws
 import org.elasticmq.rest.sqs.client._
 import org.elasticmq.rest.sqs.model.RedrivePolicy
 import org.elasticmq.rest.sqs.model.RedrivePolicyJson.format
-import org.elasticmq.rest.sqs.{AwsConfig, SqsClientServerCommunication, SqsClientServerWithSdkV2Communication}
-import org.scalatest.concurrent.Eventually
-import org.scalatest.funsuite.AnyFunSuite
-import org.scalatest.matchers.should.Matchers
 import spray.json.enrichAny
 
 import java.util.UUID
 import scala.concurrent.duration.DurationInt
 
-abstract class MessageMoveTaskTest
-    extends AnyFunSuite
-    with HasSqsTestClient
-    with AwsConfig
-    with Matchers
-    with Eventually {
+trait MessageMoveTaskTests extends AmazonJavaSdkNewTestBase {
 
   private val NumMessages = 6
   private val DlqArn = s"arn:aws:sqs:$awsRegion:$awsAccountId:testQueue-dlq"
@@ -80,10 +71,10 @@ abstract class MessageMoveTaskTest
     val (queue, dlq) = createQueuesAndPopulateDlq()
 
     // when
-    val taskHandle = testClient.startMessageMoveTask(DlqArn, maxNumberOfMessagesPerSecond = Some(1)).right.get
+    val taskHandle = testClient.startMessageMoveTask(DlqArn, maxNumberOfMessagesPerSecond = Some(1)).toOption.get
 
     // and
-    val results = testClient.listMessageMoveTasks(DlqArn, maxResults = Some(10)).right.get
+    val results = testClient.listMessageMoveTasks(DlqArn, maxResults = Some(10)).toOption.get
 
     // then
     results.size shouldEqual 1
@@ -96,16 +87,16 @@ abstract class MessageMoveTaskTest
     val (queue, dlq) = createQueuesAndPopulateDlq()
 
     // when
-    val firstTaskHandle = testClient.startMessageMoveTask(DlqArn).right.get
+    val firstTaskHandle = testClient.startMessageMoveTask(DlqArn).toOption.get
 
     // and
     receiveAllMessagesTwice(queue)
 
     // and
-    val secondTaskHandle = testClient.startMessageMoveTask(DlqArn, maxNumberOfMessagesPerSecond = Some(1)).right.get
+    val secondTaskHandle = testClient.startMessageMoveTask(DlqArn, maxNumberOfMessagesPerSecond = Some(1)).toOption.get
 
     // and
-    val results = testClient.listMessageMoveTasks(DlqArn, maxResults = Some(10)).right.get
+    val results = testClient.listMessageMoveTasks(DlqArn, maxResults = Some(10)).toOption.get
 
     // then
     results.size shouldEqual 2
@@ -132,11 +123,11 @@ abstract class MessageMoveTaskTest
     val (queue, dlq) = createQueuesAndPopulateDlq()
 
     // when: start message move task
-    val taskHandle = testClient.startMessageMoveTask(DlqArn, maxNumberOfMessagesPerSecond = Some(1)).right.get
+    val taskHandle = testClient.startMessageMoveTask(DlqArn, maxNumberOfMessagesPerSecond = Some(1)).toOption.get
 
     // and: cancel the task after 2 seconds
     Thread.sleep(2000)
-    val numMessagesMoved = testClient.cancelMessageMoveTask(taskHandle).right.get
+    val numMessagesMoved = testClient.cancelMessageMoveTask(taskHandle).toOption.get
 
     // and: fetch ApproximateNumberOfMessages
     val numMessagesInMainQueue = fetchApproximateNumberOfMessages(queue)
@@ -206,6 +197,3 @@ abstract class MessageMoveTaskTest
       .toInt
   }
 }
-
-class MessageMoveTaskSdkV1Test extends MessageMoveTaskTest with SqsClientServerCommunication
-class MessageMoveTaskSdkV2Test extends MessageMoveTaskTest with SqsClientServerWithSdkV2Communication
