@@ -36,7 +36,9 @@ trait SQSRestServerWithSdkV2Client extends AnyFunSuite with BeforeAndAfter with 
 
   def serviceEndpoint = s"http://localhost:$serverPort${if (serverContextPath.nonEmpty) "/" + serverContextPath else ""}"
 
-  before {
+  def shouldStartServerAutomatically: Boolean = true
+
+  def createServers(): Unit = {
     strictServer = SQSRestServerBuilder
       .withPort(serverPort)
       .withServerAddress(NodeAddress(port = serverPort, contextPath = serverContextPath))
@@ -52,7 +54,9 @@ trait SQSRestServerWithSdkV2Client extends AnyFunSuite with BeforeAndAfter with 
 
     strictServer.waitUntilStarted()
     relaxedServer.waitUntilStarted()
+  }
 
+  def createClients(): Unit = {
     clientV2 = AwsSqsClient
       .builder()
       .credentialsProvider(StaticCredentialsProvider.create(AwsBasicCredentials.create("x", "x")))
@@ -70,11 +74,27 @@ trait SQSRestServerWithSdkV2Client extends AnyFunSuite with BeforeAndAfter with 
       .build()
   }
 
-  after {
-    clientV2.close()
-    relaxedClientV2.close()
+  def stopServers(): Unit = {
+    if (strictServer != null) Try(strictServer.stopAndWait())
+    if (relaxedServer != null) Try(relaxedServer.stopAndWait())
+  }
 
-    Try(strictServer.stopAndWait())
-    Try(relaxedServer.stopAndWait())
+  def stopClients(): Unit = {
+    if (clientV2 != null) clientV2.close()
+    if (relaxedClientV2 != null) relaxedClientV2.close()
+  }
+
+  before {
+    if (shouldStartServerAutomatically) {
+      createServers()
+      createClients()
+    }
+  }
+
+  after {
+    if (shouldStartServerAutomatically) {
+      stopClients()
+      stopServers()
+    }
   }
 }

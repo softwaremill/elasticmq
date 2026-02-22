@@ -6,40 +6,31 @@ import org.elasticmq.actor.QueueManagerActor
 import org.elasticmq.actor.queue.QueueEvent
 import org.elasticmq.actor.reply._
 import org.elasticmq.persistence.sql.{GetAllMessages, SqlQueuePersistenceActor, SqlQueuePersistenceConfig}
-import org.elasticmq.rest.sqs.integration.client.{ApproximateNumberOfMessagesAttributeName, AwsSdkV2SqsClient, RedrivePolicyAttributeName, VisibilityTimeoutAttributeName}
+import org.elasticmq.rest.sqs.integration.client.{ApproximateNumberOfMessagesAttributeName, RedrivePolicyAttributeName, VisibilityTimeoutAttributeName}
+import org.elasticmq.rest.sqs.integration.multisdk.{AmazonJavaMultiSdkTestBase, SQSRestServerWithSdkV2Client}
 import org.elasticmq.rest.sqs.model.RedrivePolicy
 import org.elasticmq.rest.sqs.model.RedrivePolicyJson.format
-import org.elasticmq.rest.sqs.{SQSRestServer, SQSRestServerBuilder}
-import org.elasticmq.util.{Logging, NowProvider}
+import org.elasticmq.rest.sqs.{SQSRestServerBuilder}
+import org.elasticmq.util.NowProvider
 import org.elasticmq.{NodeAddress, StrictSQSLimits}
-import org.scalatest.BeforeAndAfter
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.funsuite.AnyFunSuite
-import org.scalatest.matchers.should.Matchers
 import org.scalatest.time.{Seconds, Span}
-import software.amazon.awssdk.auth.credentials.{AwsBasicCredentials, StaticCredentialsProvider}
-import software.amazon.awssdk.regions.Region
-import software.amazon.awssdk.services.sqs.{SqsClient => AwsSqsClient}
 import spray.json.enrichAny
 
-import java.net.URI
-import scala.util.Try
+import scala.concurrent.duration._
 
 class SqlQueuePersistenceTests
-    extends AnyFunSuite
-    with ScalaFutures
-    with BeforeAndAfter
-    with Matchers
-    with Logging {
+    extends AmazonJavaMultiSdkTestBase
+    with SQSRestServerWithSdkV2Client
+    with ScalaFutures {
 
-  private val awsAccountId = "123456789012"
-  private val awsRegion = "elasticmq"
+  override val awsAccountId = "123456789012"
+  override val awsRegion = "elasticmq"
+  override val serverPort = 9323
+  override val shouldStartServerAutomatically = false
 
   private val actorSystem: ActorSystem = ActorSystem("elasticmq-test-v2")
-  private var strictServer: SQSRestServer = _
 
-  var clientV2: AwsSqsClient = _
-  var testClient: AwsSdkV2SqsClient = _
   var store: ActorRef = _
 
   implicit val timeout: Timeout = {
@@ -61,7 +52,7 @@ class SqlQueuePersistenceTests
     }
   }
 
-  private def startServerAndSetupClient(pruneDataOnInit: Boolean): Unit = {
+  def startServerAndSetupClient(pruneDataOnInit: Boolean): Unit = {
     val persistenceConfig = SqlQueuePersistenceConfig(
       enabled = true,
       driverClass = "org.h2.Driver",
@@ -75,27 +66,20 @@ class SqlQueuePersistenceTests
     strictServer = SQSRestServerBuilder
       .withActorSystem(actorSystem)
       .withQueueManagerActor(manager)
-      .withPort(9323) // different port to avoid conflicts
-      .withServerAddress(NodeAddress(port = 9323))
+      .withPort(serverPort)
+      .withServerAddress(NodeAddress(port = serverPort))
       .withAWSAccountId(awsAccountId)
       .withAWSRegion(awsRegion)
       .start()
 
     (store ? QueueEvent.Restore(manager)).futureValue
 
-    clientV2 = AwsSqsClient
-      .builder()
-      .credentialsProvider(StaticCredentialsProvider.create(AwsBasicCredentials.create("x", "x")))
-      .region(Region.EU_CENTRAL_1)
-      .endpointOverride(new URI("http://localhost:9323"))
-      .build()
-
-    testClient = new AwsSdkV2SqsClient(clientV2)
+    createClients()
   }
 
   private def stopServerAndClient(): Unit = {
-    if (clientV2 != null) clientV2.close()
-    if (strictServer != null) Try(strictServer.stopAndWait())
+    stopClients()
+    stopServers()
   }
 
   test("should persist the messages and after restart read the messages") {
