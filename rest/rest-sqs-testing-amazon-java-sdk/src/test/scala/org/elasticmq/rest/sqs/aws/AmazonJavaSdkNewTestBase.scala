@@ -1,6 +1,5 @@
 package org.elasticmq.rest.sqs.aws
 
-import org.elasticmq.rest.sqs.AwsConfig
 import org.elasticmq.rest.sqs.client._
 import org.elasticmq.MessageAttribute
 import org.scalatest.concurrent.Eventually

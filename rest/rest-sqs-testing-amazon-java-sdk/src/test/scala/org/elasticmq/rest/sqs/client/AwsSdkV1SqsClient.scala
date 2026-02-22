@@ -430,11 +430,15 @@ class AwsSdkV1SqsClient(client: AmazonSQS) extends SqsClient {
         Left(SqsClientError(ResourceNotFound, e.getErrorMessage))
       case e: QueueDoesNotExistException =>
         Left(SqsClientError(QueueDoesNotExist, e.getErrorMessage))
-      case e: com.amazonaws.services.sqs.model.AmazonSQSException if e.getErrorCode == "InvalidParameterValue" || e.getErrorCode == "InvalidAttributeValue" =>
+      case e: com.amazonaws.services.sqs.model.AmazonSQSException
+          if e.getErrorCode == "InvalidParameterValue" || e.getErrorCode == "InvalidAttributeValue" || e.getErrorCode == "InvalidAttributeName" =>
         Left(SqsClientError(InvalidParameterValue, e.getErrorMessage))
       case e: com.amazonaws.services.sqs.model.AmazonSQSException if e.getErrorCode == "MissingParameter" =>
         Left(SqsClientError(MissingParameter, e.getErrorMessage))
-      case e: Exception => Left(SqsClientError(UnknownSqsClientErrorType, e.getMessage))
+      case e: com.amazonaws.AmazonClientException if e.getMessage.contains("MD5 returned by SQS does not match") =>
+        Left(SqsClientError(InvalidParameterValue, e.getMessage))
+      case e: Exception =>
+        Left(SqsClientError(UnknownSqsClientErrorType, e.getMessage))
     }
   }
 }

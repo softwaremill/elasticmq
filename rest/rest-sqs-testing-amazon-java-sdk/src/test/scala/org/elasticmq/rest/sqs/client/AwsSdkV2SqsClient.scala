@@ -132,23 +132,31 @@ class AwsSdkV2SqsClient(client: software.amazon.awssdk.services.sqs.SqsClient) e
   }
 
   private def mapMessageAttributes(
-      messageAttributes: Map[
-        String,
-        MessageAttribute
-      ]
-  ) = {
-    messageAttributes.map {
-      case (k, v: StringMessageAttribute) =>
-        k -> MessageAttributeValue.builder().dataType(v.getDataType()).stringValue(v.stringValue).build()
-      case (k, v: NumberMessageAttribute) =>
-        k -> MessageAttributeValue.builder().dataType(v.getDataType()).stringValue(v.stringValue).build()
-      case (k, v: BinaryMessageAttribute) =>
-        k -> MessageAttributeValue
-          .builder()
-          .dataType(v.getDataType())
+                                    messageAttributes: Map[String, MessageAttribute]
+                                  ): java.util.Map[String, MessageAttributeValue] = {
+    messageAttributes.map { case (key, attribute) =>
+      key -> buildMessageAttributeValue(attribute)
+    }.asJava
+  }
+
+  private def buildMessageAttributeValue(attribute: MessageAttribute): MessageAttributeValue = {
+    val builder = MessageAttributeValue.builder()
+    val dataType = attribute.getDataType()
+
+    if (dataType.nonEmpty) {
+      builder.dataType(dataType)
+    }
+
+    attribute match {
+      case v: StringMessageAttribute =>
+        builder.stringValue(v.stringValue).build()
+      case v: NumberMessageAttribute =>
+        builder.stringValue(v.stringValue).build()
+      case v: BinaryMessageAttribute =>
+        builder
           .binaryValue(SdkBytes.fromByteArray(v.binaryValue.toArray))
           .build()
-    }.asJava
+    }
   }
 
   override def sendMessageBatch(
@@ -498,17 +506,28 @@ class AwsSdkV2SqsClient(client: software.amazon.awssdk.services.sqs.SqsClient) e
     try {
       Right(f)
     } catch {
-      case e: software.amazon.awssdk.services.sqs.model.SqsException if e.awsErrorDetails().errorCode() == "InvalidParameterValue" || e.awsErrorDetails().errorCode() == "InvalidAttributeValue" =>
+      case e: software.amazon.awssdk.services.sqs.model.SqsException
+          if e.awsErrorDetails().errorCode() == "InvalidParameterValue" || e.awsErrorDetails().errorCode() == "InvalidAttributeValue" || e.awsErrorDetails()
+            .errorCode() == "InvalidAttributeName" =>
         Left(SqsClientError(InvalidParameterValue, e.awsErrorDetails().errorMessage()))
       case e: software.amazon.awssdk.services.sqs.model.SqsException if e.awsErrorDetails().errorCode() == "MissingParameter" =>
         Left(SqsClientError(MissingParameter, e.awsErrorDetails().errorMessage()))
+      case e: software.amazon.awssdk.core.exception.SdkClientException if e.getMessage.contains("MD5 returned by SQS does not match") =>
+        Left(SqsClientError(InvalidParameterValue, e.getMessage))
       case e: UnsupportedOperationException =>
         Left(SqsClientError(UnsupportedOperation, e.awsErrorDetails().errorMessage()))
       case e: ResourceNotFoundException =>
         Left(SqsClientError(ResourceNotFound, e.awsErrorDetails().errorMessage()))
       case e: QueueDoesNotExistException =>
         Left(SqsClientError(QueueDoesNotExist, e.awsErrorDetails().errorMessage()))
-      case e: Exception => Left(SqsClientError(UnknownSqsClientErrorType, e.getMessage))
+      case e: Exception =>
+        println(s"[DEBUG_LOG] Unknown exception in AwsSdkV2SqsClient: ${e.getClass.getName} - ${e.getMessage}")
+        if (e.isInstanceOf[software.amazon.awssdk.services.sqs.model.SqsException]) {
+          println(
+            s"[DEBUG_LOG] Error code: ${e.asInstanceOf[software.amazon.awssdk.services.sqs.model.SqsException].awsErrorDetails().errorCode()}"
+          )
+        }
+        Left(SqsClientError(UnknownSqsClientErrorType, e.getMessage))
     }
   }
 }
