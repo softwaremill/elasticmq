@@ -69,7 +69,7 @@ trait IntegrationTestsBase extends AnyFunSuite with SqsTestClient with AwsConfig
     if (requestedAttributes.contains("All")) {
       messageAttributes
     } else {
-      messageAttributes.filterKeys(k => requestedAttributes.contains(k)).toMap
+      messageAttributes.filter { case (k, _) => requestedAttributes.contains(k) }
     }
   }
 }

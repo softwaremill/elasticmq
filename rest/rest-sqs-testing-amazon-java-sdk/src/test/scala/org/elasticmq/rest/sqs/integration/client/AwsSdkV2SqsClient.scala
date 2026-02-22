@@ -497,12 +497,6 @@ class AwsSdkV2SqsClient(client: software.amazon.awssdk.services.sqs.SqsClient) e
       case e: QueueDoesNotExistException =>
         Left(SqsClientError(QueueDoesNotExist, e.awsErrorDetails().errorMessage()))
       case e: Exception =>
-        println(s"[DEBUG_LOG] Unknown exception in AwsSdkV2SqsClient: ${e.getClass.getName} - ${e.getMessage}")
-        if (e.isInstanceOf[software.amazon.awssdk.services.sqs.model.SqsException]) {
-          println(
-            s"[DEBUG_LOG] Error code: ${e.asInstanceOf[software.amazon.awssdk.services.sqs.model.SqsException].awsErrorDetails().errorCode()}"
-          )
-        }
         Left(SqsClientError(UnknownSqsClientErrorType, e.getMessage))
     }
   }

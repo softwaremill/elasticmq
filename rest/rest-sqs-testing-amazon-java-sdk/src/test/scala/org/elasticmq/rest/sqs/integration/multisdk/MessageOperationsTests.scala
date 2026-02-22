@@ -20,10 +20,7 @@ trait MessageOperationsTests extends IntegrationTestsBase {
     // given
     val queueUrl = testClient.createQueue("testQueue1").toOption.get
 
-    // expect: In strict mode ElasticMQ should throw error for body > 256KB
-    // But since the current server might not be in strict mode, we skip this for now or check if it fails
-    // The previous test run showed it returned Right(()), so strict mode is not enabled.
-    // If strict mode is enabled, it should be:
+    // expect
     assertError(testClient.sendMessage(queueUrl, "x" * (1024 * 1024 + 1)), InvalidParameterValue, "MessageTooLong")
   }
 
