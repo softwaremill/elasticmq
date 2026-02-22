@@ -25,7 +25,7 @@ import com.amazonaws.services.sqs.model.{
   StartMessageMoveTaskRequest,
   UnsupportedOperationException
 }
-import org.elasticmq._
+import org.elasticmq.{BinaryMessageAttribute, MessageAttribute, NumberMessageAttribute, StringMessageAttribute}
 
 import java.nio.ByteBuffer
 import java.util
@@ -39,13 +39,25 @@ class AwsSdkV1SqsClient(client: AmazonSQS) extends SqsClient {
         QueueAttributeName,
         String
       ] = Map.empty
-  ): QueueUrl = client
-    .createQueue(
-      new CreateQueueRequest()
-        .withQueueName(queueName)
-        .withAttributes(attributes.map { case (k, v) => (k.value, v) }.asJava)
-    )
-    .getQueueUrl
+  ): Either[SqsClientError, QueueUrl] = interceptCreateQueue {
+    client
+      .createQueue(
+        new CreateQueueRequest()
+          .withQueueName(queueName)
+          .withAttributes(attributes.map { case (k, v) => (k.value, v) }.asJava)
+      )
+      .getQueueUrl
+  }
+
+  private def interceptCreateQueue[T](f: => T): Either[SqsClientError, T] = {
+    try {
+      Right(f)
+    } catch {
+      case e: com.amazonaws.services.sqs.model.InvalidAttributeNameException =>
+        Left(SqsClientError(InvalidAttributeName, e.getErrorMessage))
+      case e: Exception => interceptErrors(f)
+    }
+  }
 
   override def getQueueUrl(queueName: String): Either[SqsClientError, QueueUrl] = interceptErrors {
     client
@@ -213,6 +225,13 @@ class AwsSdkV1SqsClient(client: AmazonSQS) extends SqsClient {
       mapBatchResultErrorEntries(result.getFailed)
     )
   }
+
+  override def setQueueAttributes(queueUrl: QueueUrl, attributes: Map[QueueAttributeName, String]): Unit =
+    client.setQueueAttributes(
+      new com.amazonaws.services.sqs.model.SetQueueAttributesRequest()
+        .withQueueUrl(queueUrl)
+        .withAttributes(attributes.map { case (k, v) => (k.value, v) }.asJava)
+    )
 
   override def listDeadLetterSourceQueues(queueUrl: QueueUrl): List[QueueUrl] = client
     .listDeadLetterSourceQueues(new ListDeadLetterSourceQueuesRequest().withQueueUrl(queueUrl))
@@ -405,6 +424,10 @@ class AwsSdkV1SqsClient(client: AmazonSQS) extends SqsClient {
         Left(SqsClientError(ResourceNotFound, e.getErrorMessage))
       case e: QueueDoesNotExistException =>
         Left(SqsClientError(QueueDoesNotExist, e.getErrorMessage))
+      case e: com.amazonaws.services.sqs.model.AmazonSQSException if e.getErrorCode == "InvalidParameterValue" || e.getErrorCode == "InvalidAttributeValue" =>
+        Left(SqsClientError(InvalidParameterValue, e.getErrorMessage))
+      case e: com.amazonaws.services.sqs.model.AmazonSQSException if e.getErrorCode == "MissingParameter" =>
+        Left(SqsClientError(MissingParameter, e.getErrorMessage))
       case e: Exception => Left(SqsClientError(UnknownSqsClientErrorType, e.getMessage))
     }
   }

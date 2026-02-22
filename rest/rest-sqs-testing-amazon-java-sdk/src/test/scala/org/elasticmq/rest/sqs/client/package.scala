@@ -133,8 +133,25 @@ package client {
   )
 
   sealed trait SqsClientErrorType
-  case object UnsupportedOperation extends SqsClientErrorType
-  case object ResourceNotFound extends SqsClientErrorType
-  case object QueueDoesNotExist extends SqsClientErrorType
-  case object UnknownSqsClientErrorType extends SqsClientErrorType
+  case object UnsupportedOperation extends SqsClientErrorType {
+    override def toString: String = "UnsupportedOperation"
+  }
+  case object ResourceNotFound extends SqsClientErrorType {
+    override def toString: String = "ResourceNotFound"
+  }
+  case object QueueDoesNotExist extends SqsClientErrorType {
+    override def toString: String = "QueueDoesNotExist"
+  }
+  case object InvalidParameterValue extends SqsClientErrorType {
+    override def toString: String = "InvalidParameterValue"
+  }
+  case object InvalidAttributeName extends SqsClientErrorType {
+    override def toString: String = "InvalidAttributeName"
+  }
+  case object MissingParameter extends SqsClientErrorType {
+    override def toString: String = "MissingParameter"
+  }
+  case object UnknownSqsClientErrorType extends SqsClientErrorType {
+    override def toString: String = "UnknownSqsClientErrorType"
+  }
 }

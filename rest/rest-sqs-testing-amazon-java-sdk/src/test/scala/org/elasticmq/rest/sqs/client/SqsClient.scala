@@ -3,7 +3,7 @@ import org.elasticmq.MessageAttribute
 
 trait SqsClient {
 
-  def createQueue(queueName: String, attributes: Map[QueueAttributeName, String] = Map.empty): QueueUrl
+  def createQueue(queueName: String, attributes: Map[QueueAttributeName, String] = Map.empty): Either[SqsClientError, QueueUrl]
   def getQueueUrl(queueName: String): Either[SqsClientError, QueueUrl]
   def deleteQueue(queueUrl: QueueUrl): Either[SqsClientError, Unit]
   def purgeQueue(queueUrl: QueueUrl): Either[SqsClientError, Unit]
@@ -51,6 +51,8 @@ trait SqsClient {
       queueUrl: QueueUrl,
       entries: List[ChangeMessageVisibilityBatchEntry]
   ): Either[SqsClientError, ChangeMessageVisibilityBatchResult]
+
+  def setQueueAttributes(queueUrl: QueueUrl, attributes: Map[QueueAttributeName, String]): Unit
 
   def startMessageMoveTask(
       sourceArn: Arn,

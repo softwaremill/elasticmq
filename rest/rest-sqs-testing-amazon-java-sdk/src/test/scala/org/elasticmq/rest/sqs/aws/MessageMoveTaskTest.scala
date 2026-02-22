@@ -1,8 +1,9 @@
-package org.elasticmq.rest.sqs
+package org.elasticmq.rest.sqs.aws
 
 import org.elasticmq.rest.sqs.client._
 import org.elasticmq.rest.sqs.model.RedrivePolicy
 import org.elasticmq.rest.sqs.model.RedrivePolicyJson.format
+import org.elasticmq.rest.sqs.{AwsConfig, SqsClientServerCommunication, SqsClientServerWithSdkV2Communication}
 import org.scalatest.concurrent.Eventually
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
@@ -158,7 +159,7 @@ abstract class MessageMoveTaskTest
   }
 
   private def createQueuesAndPopulateDlq(): (QueueUrl, QueueUrl) = {
-    val dlq = testClient.createQueue("testQueue-dlq")
+    val dlq = testClient.createQueue("testQueue-dlq").toOption.get
     val redrivePolicy = RedrivePolicy("testQueue-dlq", awsRegion, awsAccountId, 1).toJson.compactPrint
     val queue =
       testClient.createQueue(
@@ -167,7 +168,7 @@ abstract class MessageMoveTaskTest
           RedrivePolicyAttributeName -> redrivePolicy,
           VisibilityTimeoutAttributeName -> "1"
         )
-      )
+      ).toOption.get
 
     // when: send messages
     for (i <- 0 until NumMessages) {

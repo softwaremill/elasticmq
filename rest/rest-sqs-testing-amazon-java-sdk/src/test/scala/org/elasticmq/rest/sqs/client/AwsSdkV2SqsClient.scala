@@ -48,15 +48,27 @@ class AwsSdkV2SqsClient(client: software.amazon.awssdk.services.sqs.SqsClient) e
         QueueAttributeName,
         String
       ] = Map.empty
-  ): QueueUrl = client
-    .createQueue(
-      CreateQueueRequest
-        .builder()
-        .queueName(queueName)
-        .attributes(attributes.map { case (k, v) => (AwsQueueAttributeName.fromValue(k.value), v) }.asJava)
-        .build()
-    )
-    .queueUrl()
+  ): Either[SqsClientError, QueueUrl] = interceptCreateQueue {
+    client
+      .createQueue(
+        CreateQueueRequest
+          .builder()
+          .queueName(queueName)
+          .attributes(attributes.map { case (k, v) => (AwsQueueAttributeName.fromValue(k.value), v) }.asJava)
+          .build()
+      )
+      .queueUrl()
+  }
+
+  private def interceptCreateQueue[T](f: => T): Either[SqsClientError, T] = {
+    try {
+      Right(f)
+    } catch {
+      case e: software.amazon.awssdk.services.sqs.model.InvalidAttributeNameException =>
+        Left(SqsClientError(InvalidAttributeName, e.awsErrorDetails().errorMessage()))
+      case e: Exception => interceptErrors(f)
+    }
+  }
 
   override def getQueueUrl(queueName: String): Either[SqsClientError, QueueUrl] = interceptErrors {
     client
@@ -286,6 +298,15 @@ class AwsSdkV2SqsClient(client: software.amazon.awssdk.services.sqs.SqsClient) e
     )
   }
 
+  override def setQueueAttributes(queueUrl: QueueUrl, attributes: Map[QueueAttributeName, String]): Unit =
+    client.setQueueAttributes(
+      software.amazon.awssdk.services.sqs.model.SetQueueAttributesRequest
+        .builder()
+        .queueUrl(queueUrl)
+        .attributes(attributes.map { case (k, v) => (AwsQueueAttributeName.fromValue(k.value), v) }.asJava)
+        .build()
+    )
+
   override def listDeadLetterSourceQueues(queueUrl: QueueUrl): List[QueueUrl] =
     client
       .listDeadLetterSourceQueues(ListDeadLetterSourceQueuesRequest.builder().queueUrl(queueUrl).build())
@@ -471,6 +492,10 @@ class AwsSdkV2SqsClient(client: software.amazon.awssdk.services.sqs.SqsClient) e
     try {
       Right(f)
     } catch {
+      case e: software.amazon.awssdk.services.sqs.model.SqsException if e.awsErrorDetails().errorCode() == "InvalidParameterValue" || e.awsErrorDetails().errorCode() == "InvalidAttributeValue" =>
+        Left(SqsClientError(InvalidParameterValue, e.awsErrorDetails().errorMessage()))
+      case e: software.amazon.awssdk.services.sqs.model.SqsException if e.awsErrorDetails().errorCode() == "MissingParameter" =>
+        Left(SqsClientError(MissingParameter, e.awsErrorDetails().errorMessage()))
       case e: UnsupportedOperationException =>
         Left(SqsClientError(UnsupportedOperation, e.awsErrorDetails().errorMessage()))
       case e: ResourceNotFoundException =>
