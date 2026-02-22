@@ -13,6 +13,7 @@ abstract class AmazonJavaSdkNewTestSuite
     with CreateQueueRaceConditionTests
     with FifoDeduplicationTests
     with MessageAttributesTests
+    with TracingTests
 
 class AmazonJavaSdkV1TestSuite extends AmazonJavaSdkNewTestSuite with SqsClientServerCommunication
 class AmazonJavaSdkV2TestSuite extends AmazonJavaSdkNewTestSuite with SqsClientServerWithSdkV2Communication

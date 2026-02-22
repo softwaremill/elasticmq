@@ -24,7 +24,8 @@ trait SqsClient {
       ] = Map.empty,
       awsTraceHeader: Option[String] = None,
       messageGroupId: Option[String] = None,
-      messageDeduplicationId: Option[String] = None
+      messageDeduplicationId: Option[String] = None,
+      customHeaders: Map[String, String] = Map.empty
   ): Either[SqsClientError, SendMessageResult]
 
   def receiveMessage(
@@ -39,7 +40,8 @@ trait SqsClient {
 
   def sendMessageBatch(
       queueUrl: QueueUrl,
-      entries: List[SendMessageBatchEntry]
+      entries: List[SendMessageBatchEntry],
+      customHeaders: Map[String, String] = Map.empty
   ): Either[SqsClientError, SendMessageBatchResult]
 
   def deleteMessageBatch(

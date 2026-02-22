@@ -90,20 +90,23 @@ class AwsSdkV1SqsClient(client: AmazonSQS) extends SqsClient {
       ] = Map.empty,
       awsTraceHeader: Option[String] = None,
       messageGroupId: Option[String] = None,
-      messageDeduplicationId: Option[String] = None
+      messageDeduplicationId: Option[String] = None,
+      customHeaders: Map[String, String] = Map.empty
   ): Either[SqsClientError, SendMessageResult] = interceptErrors {
-    val result = client.sendMessage(
-      new SendMessageRequest()
-        .withQueueUrl(queueUrl)
-        .withMessageBody(messageBody)
-        .withDelaySeconds(delaySeconds.map(Int.box).orNull)
-        .withMessageSystemAttributes(
-          mapAwsTraceHeader(awsTraceHeader)
-        )
-        .withMessageAttributes(mapMessageAttributes(messageAttributes))
-        .withMessageGroupId(messageGroupId.orNull)
-        .withMessageDeduplicationId(messageDeduplicationId.orNull)
-    )
+    val request = new SendMessageRequest()
+      .withQueueUrl(queueUrl)
+      .withMessageBody(messageBody)
+      .withDelaySeconds(delaySeconds.map(Int.box).orNull)
+      .withMessageSystemAttributes(
+        mapAwsTraceHeader(awsTraceHeader)
+      )
+      .withMessageAttributes(mapMessageAttributes(messageAttributes))
+      .withMessageGroupId(messageGroupId.orNull)
+      .withMessageDeduplicationId(messageDeduplicationId.orNull)
+
+    customHeaders.foreach { case (k, v) => request.putCustomRequestHeader(k, v) }
+
+    val result = client.sendMessage(request)
     SendMessageResult(
       result.getMessageId,
       result.getMD5OfMessageBody,
@@ -114,26 +117,29 @@ class AwsSdkV1SqsClient(client: AmazonSQS) extends SqsClient {
 
   override def sendMessageBatch(
       queueUrl: QueueUrl,
-      entries: List[SendMessageBatchEntry]
+      entries: List[SendMessageBatchEntry],
+      customHeaders: Map[String, String] = Map.empty
   ): Either[SqsClientError, SendMessageBatchResult] = interceptErrors {
-    val result = client.sendMessageBatch(
-      new SendMessageBatchRequest()
-        .withQueueUrl(queueUrl)
-        .withEntries(
-          entries
-            .map(entry =>
-              new SendMessageBatchRequestEntry()
-                .withId(entry.id)
-                .withMessageBody(entry.messageBody)
-                .withDelaySeconds(entry.delaySeconds.map(Int.box).orNull)
-                .withMessageDeduplicationId(entry.messageDeduplicationId.orNull)
-                .withMessageGroupId(entry.messageGroupId.orNull)
-                .withMessageSystemAttributes(mapAwsTraceHeader(entry.awsTraceHeader))
-                .withMessageAttributes(mapMessageAttributes(entry.messageAttributes))
-            )
-            .asJava
-        )
-    )
+    val request = new SendMessageBatchRequest()
+      .withQueueUrl(queueUrl)
+      .withEntries(
+        entries
+          .map(entry =>
+            new SendMessageBatchRequestEntry()
+              .withId(entry.id)
+              .withMessageBody(entry.messageBody)
+              .withDelaySeconds(entry.delaySeconds.map(Int.box).orNull)
+              .withMessageDeduplicationId(entry.messageDeduplicationId.orNull)
+              .withMessageGroupId(entry.messageGroupId.orNull)
+              .withMessageSystemAttributes(mapAwsTraceHeader(entry.awsTraceHeader))
+              .withMessageAttributes(mapMessageAttributes(entry.messageAttributes))
+          )
+          .asJava
+      )
+
+    customHeaders.foreach { case (k, v) => request.putCustomRequestHeader(k, v) }
+
+    val result = client.sendMessageBatch(request)
     SendMessageBatchResult(
       result.getSuccessful.asScala.map { entry =>
         SendMessageBatchSuccessEntry(

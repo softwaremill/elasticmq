@@ -94,7 +94,8 @@ class AwsSdkV2SqsClient(client: software.amazon.awssdk.services.sqs.SqsClient) e
       ] = Map.empty,
       awsTraceHeader: Option[String] = None,
       messageGroupId: Option[String] = None,
-      messageDeduplicationId: Option[String] = None
+      messageDeduplicationId: Option[String] = None,
+      customHeaders: Map[String, String] = Map.empty
   ): Either[SqsClientError, SendMessageResult] = interceptErrors {
     val result = client.sendMessage(
       SendMessageRequest
@@ -106,6 +107,7 @@ class AwsSdkV2SqsClient(client: software.amazon.awssdk.services.sqs.SqsClient) e
         .messageAttributes(mapMessageAttributes(messageAttributes))
         .messageGroupId(messageGroupId.orNull)
         .messageDeduplicationId(messageDeduplicationId.orNull)
+        .overrideConfiguration(builder => customHeaders.foreach { case (k, v) => builder.putHeader(k, v) })
         .build()
     )
     SendMessageResult(
@@ -132,8 +134,8 @@ class AwsSdkV2SqsClient(client: software.amazon.awssdk.services.sqs.SqsClient) e
   }
 
   private def mapMessageAttributes(
-                                    messageAttributes: Map[String, MessageAttribute]
-                                  ): java.util.Map[String, MessageAttributeValue] = {
+      messageAttributes: Map[String, MessageAttribute]
+  ): java.util.Map[String, MessageAttributeValue] = {
     messageAttributes.map { case (key, attribute) =>
       key -> buildMessageAttributeValue(attribute)
     }.asJava
@@ -161,7 +163,8 @@ class AwsSdkV2SqsClient(client: software.amazon.awssdk.services.sqs.SqsClient) e
 
   override def sendMessageBatch(
       queueUrl: QueueUrl,
-      entries: List[SendMessageBatchEntry]
+      entries: List[SendMessageBatchEntry],
+      customHeaders: Map[String, String] = Map.empty
   ): Either[SqsClientError, SendMessageBatchResult] = interceptErrors {
     val result = client.sendMessageBatch(
       SendMessageBatchRequest
@@ -183,6 +186,7 @@ class AwsSdkV2SqsClient(client: software.amazon.awssdk.services.sqs.SqsClient) e
             )
             .asJava
         )
+        .overrideConfiguration(builder => customHeaders.foreach { case (k, v) => builder.putHeader(k, v) })
         .build()
     )
     SendMessageBatchResult(
@@ -507,12 +511,17 @@ class AwsSdkV2SqsClient(client: software.amazon.awssdk.services.sqs.SqsClient) e
       Right(f)
     } catch {
       case e: software.amazon.awssdk.services.sqs.model.SqsException
-          if e.awsErrorDetails().errorCode() == "InvalidParameterValue" || e.awsErrorDetails().errorCode() == "InvalidAttributeValue" || e.awsErrorDetails()
+          if e
+            .awsErrorDetails()
+            .errorCode() == "InvalidParameterValue" || e.awsErrorDetails().errorCode() == "InvalidAttributeValue" || e
+            .awsErrorDetails()
             .errorCode() == "InvalidAttributeName" =>
         Left(SqsClientError(InvalidParameterValue, e.awsErrorDetails().errorMessage()))
-      case e: software.amazon.awssdk.services.sqs.model.SqsException if e.awsErrorDetails().errorCode() == "MissingParameter" =>
+      case e: software.amazon.awssdk.services.sqs.model.SqsException
+          if e.awsErrorDetails().errorCode() == "MissingParameter" =>
         Left(SqsClientError(MissingParameter, e.awsErrorDetails().errorMessage()))
-      case e: software.amazon.awssdk.core.exception.SdkClientException if e.getMessage.contains("MD5 returned by SQS does not match") =>
+      case e: software.amazon.awssdk.core.exception.SdkClientException
+          if e.getMessage.contains("MD5 returned by SQS does not match") =>
         Left(SqsClientError(InvalidParameterValue, e.getMessage))
       case e: UnsupportedOperationException =>
         Left(SqsClientError(UnsupportedOperation, e.awsErrorDetails().errorMessage()))
