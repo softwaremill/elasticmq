@@ -12,6 +12,7 @@ import org.elasticmq.metrics.QueuesMetrics
 import org.elasticmq.rest.sqs.Constants._
 import org.elasticmq.rest.sqs.XmlNsVersion.extractXmlNs
 import org.elasticmq.rest.sqs.directives.{
+  AWSCredentialDirectives,
   AWSProtocolDirectives,
   AnyParamDirectives,
   ElasticMQDirectives,
@@ -127,6 +128,10 @@ case class TheSQSRestServerBuilder(
     this.copy(queueEventListener = Some(_queueEventListener))
 
   def start(): SQSRestServer = {
+    val rootConfig = ConfigFactory.load()
+    val restSqsConfig = rootConfig.getConfig("rest-sqs")
+    val credentials = AWSCredentials.fromConfig(restSqsConfig)
+
     val (theActorSystem, stopActorSystem) = getOrCreateActorSystem
     val theQueueManagerActor = getOrCreateQueueManagerActor(theActorSystem)
     val theServerAddress =
@@ -173,7 +178,9 @@ case class TheSQSRestServerBuilder(
       with ListDeadLetterSourceQueuesDirectives
       with StartMessageMoveTaskDirectives
       with CancelMessageMoveTaskDirectives
-      with ListMessageMoveTasksDirectives {
+      with ListMessageMoveTasksDirectives
+      with AWSCredentialsModule
+      with AWSCredentialDirectives {
 
       def serverAddress = currentServerAddress.get()
 
@@ -183,6 +190,7 @@ case class TheSQSRestServerBuilder(
       lazy val sqsLimits = theLimits
       lazy val timeout = Timeout(21, TimeUnit.SECONDS) // see application.conf
       lazy val contextPath = serverAddress.contextPathStripped
+      lazy val awsCredentials: AWSCredentials = credentials
 
       lazy val awsRegion: String = _awsRegion
       lazy val awsAccountId: String = _awsAccountId
@@ -235,13 +243,15 @@ case class TheSQSRestServerBuilder(
           implicit val protocol: AWSProtocol = _protocol
           handleServerExceptions(protocol) {
             handleRejectionsWithSQSError(protocol) {
-              anyParamsMap(protocol) { p =>
-                val marshallerDependencies = MarshallerDependencies(protocol, version)
-                if (config.debug) {
-                  logRequestResult("") {
-                    rawRoutes(p)(marshallerDependencies)
-                  }
-                } else rawRoutes(p)(marshallerDependencies)
+              verifyAWSAccessKeyId(protocol) {
+                anyParamsMap(protocol) { p =>
+                  val marshallerDependencies = MarshallerDependencies(protocol, version)
+                  if (config.debug) {
+                    logRequestResult("") {
+                      rawRoutes(p)(marshallerDependencies)
+                    }
+                  } else rawRoutes(p)(marshallerDependencies)
+                }
               }
             }
           }
@@ -504,6 +514,21 @@ trait ContextPathModule {
 
 trait SQSLimitsModule {
   def sqsLimits: Limits
+}
+
+trait AWSCredentialsModule {
+  def awsCredentials: AWSCredentials
+}
+
+case class AWSCredentials(accessKey: String, secretKey: String)
+
+object AWSCredentials {
+  def fromConfig(config: com.typesafe.config.Config): AWSCredentials = {
+    AWSCredentials(
+      config.getString("aws-access-key-id"),
+      config.getString("aws-secret-access-key")
+    )
+  }
 }
 
 class ElasticMQConfig {
