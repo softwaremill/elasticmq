@@ -21,9 +21,6 @@ lazy val resolvedScalaVersion =
     case _                 => v2_13
   }
 
-lazy val uiDirectory = settingKey[File]("Path to the ui project directory")
-lazy val updateYarn = taskKey[Unit]("Update yarn")
-lazy val yarnTask = inputKey[Unit]("Run yarn with arguments")
 lazy val ensureDockerBuildx = taskKey[Unit]("Ensure that docker buildx configuration exists")
 lazy val dockerBuildWithBuildx = taskKey[Unit]("Build docker images using buildx")
 
@@ -102,7 +99,7 @@ lazy val root: Project = (project in file("."))
   .settings(name := "elasticmq-root", publish / skip := true)
   // we want to build the main jar using java 8, but native-server requires java 11, so it's built separately
   // native-server project is only used for building docker with graalvm native image
-  .aggregate(commonTest, core, rest, persistence, server, ui)
+  .aggregate(commonTest, core, rest, persistence, server)
 
 lazy val commonTest: Project = (project in file("common-test"))
   .settings(buildSettings)
@@ -222,8 +219,6 @@ lazy val server: Project = (project in file("server"))
     Seq(
       name := "elasticmq-server",
       libraryDependencies ++= Seq(logback),
-      Compile / unmanagedResourceDirectories += { baseDirectory.value / ".." / "ui" / "build" },
-      assembly := assembly.dependsOn(yarnTask.toTask(" build")).value,
       assembly / mainClass := Some("org.elasticmq.server.Main"),
       coverageMinimumStmtTotal := 52,
       // s3 upload
@@ -264,9 +259,6 @@ lazy val server: Project = (project in file("server"))
       Docker / mappings ++= Seq(
         (baseDirectory.value / "docker" / "elasticmq.conf") -> "/opt/elasticmq.conf"
       ),
-      Docker / publishLocal := (Docker / publishLocal)
-        .dependsOn(yarnTask.toTask(" build"))
-        .value,
       dockerCommands += Cmd(
         "COPY",
         "--from=stage0",
@@ -299,7 +291,7 @@ lazy val nativeServer: Project = (project in file("native-server"))
       Compile / mainClass := Some("org.elasticmq.server.Main"),
       dockerPermissionStrategy := DockerPermissionStrategy.None,
       // We want to utilize `docker buildx` to create native image in the first stage
-      // and then create the target docker image based on Alpine with just the native image, configuration and ui files.
+      // and then create the target docker image based on Alpine with just the native image and configuration files.
       // GraalVMNativeImagePlugin does support such scenario because it uses `docker run` to build the native image
       // and then simply copies the artifact to the result docker image, which makes it difficult to create ARM native image.
       dockerCommands := {
@@ -375,9 +367,7 @@ lazy val nativeServer: Project = (project in file("native-server"))
       Docker / mappings ++= Seq(
         (baseDirectory.value / ".." / "server" / "docker" / "elasticmq.conf") -> "/opt/elasticmq.conf",
         (baseDirectory.value / ".." / "server" / "src" / "main" / "resources" / "logback.xml") -> "/opt/logback.xml"
-      ) ++ sbt.Path.contentOf(baseDirectory.value / ".." / "ui" / "build").map { case (file, mapping) =>
-        (file, "/opt/elasticmq/" + mapping)
-      },
+      ),
       dockerEntrypoint := Seq(
         "/sbin/tini", // tini makes it possible to kill the process with Cmd+C/Ctrl+C when running in interactive mode (-it)
         "--",
@@ -392,10 +382,7 @@ lazy val nativeServer: Project = (project in file("native-server"))
       dockerUsername := Some("softwaremill"),
       dockerExposedVolumes += "/data",
       dockerBaseImage := s"alpine:$alpineVersion",
-      Docker / packageName := "elasticmq-native",
-      Compile / packageBin := (Compile / packageBin)
-        .dependsOn(yarnTask.toTask(" build"))
-        .value
+      Docker / packageName := "elasticmq-native"
     )
   )
   .dependsOn(server)
@@ -442,36 +429,6 @@ lazy val dockerBuildxSettings = Seq(
     )
     .value
 )
-
-lazy val uiSettings = Seq(
-  uiDirectory := baseDirectory.value.getParentFile / "ui",
-  updateYarn := {
-    streams.value.log("Updating npm/yarn dependencies")
-    haltOnCmdResultError(Process("yarn install", uiDirectory.value).!)
-  },
-  yarnTask := {
-    val taskName = spaceDelimited("<arg>").parsed.mkString(" ")
-    updateYarn.value
-    val localYarnCommand = "yarn " + taskName
-    def runYarnTask() = Process(localYarnCommand, uiDirectory.value).!
-    streams.value.log("Running yarn task: " + taskName)
-    haltOnCmdResultError(runYarnTask())
-  }
-)
-
-lazy val ui = (project in file("ui"))
-  .settings(buildSettings)
-  .settings(uiSettings)
-  .settings(
-    Test / test := (Test / test).dependsOn(yarnTask.toTask(" test:ci")).value,
-    Compile / compile := {
-      yarnTask.toTask(" build").value
-      (Compile / compile).value
-    },
-    cleanFiles += baseDirectory.value / "build",
-    Compile / unmanagedResourceDirectories += baseDirectory.value / "build",
-    publish / skip := true
-  )
 
 def haltOnCmdResultError(result: Int) {
   if (result != 0) {
