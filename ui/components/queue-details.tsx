@@ -83,6 +83,7 @@ export function QueueDetails({ queueName }: QueueDetailsProps) {
   );
 
   return (
+    <>
     <div style={{ animation: 'fadeUp 300ms ease both' }}>
       {navBar}
 
@@ -201,13 +202,15 @@ export function QueueDetails({ queueName }: QueueDetailsProps) {
         </table>
       </div>
 
+    </div>
+
       {showModal && (
         <SendMessageModal queueName={queue.name} queueUrl={queue.url} onClose={() => setShowModal(false)} />
       )}
       {showReceive && (
         <ReceiveMessagesPanel queueName={queue.name} queueUrl={queue.url} onClose={() => setShowReceive(false)} />
       )}
-    </div>
+    </>
   );
 }
 
