@@ -4,6 +4,7 @@ import {
   ListQueuesCommand,
   GetQueueAttributesCommand,
   SendMessageCommand,
+  SendMessageBatchCommand,
   ReceiveMessageCommand,
   DeleteMessageCommand,
   MessageAttributeValue,
@@ -12,6 +13,7 @@ import { sqsClient, extractQueueName } from './sqs-client';
 import {
   QueueData, QueueStats, QueueAttributes,
   SendMessageParams, SendMessageResult,
+  SendBatchParams, SendBatchResult,
   ReceivedMessage, ReceiveMessagesParams,
 } from './types';
 
@@ -179,6 +181,50 @@ export async function receiveMessages(params: ReceiveMessagesParams): Promise<Re
     throw new Error(
       error instanceof Error ? error.message : 'Failed to receive messages'
     );
+  }
+}
+
+export async function sendMessageBatch(params: SendBatchParams): Promise<SendBatchResult> {
+  try {
+    const entries = params.entries.map(entry => {
+      const messageAttributes: Record<string, MessageAttributeValue> = {};
+      for (const attr of entry.messageAttributes ?? []) {
+        if (!attr.name.trim()) continue;
+        messageAttributes[attr.name] = attr.dataType === 'Binary'
+          ? { DataType: 'Binary', BinaryValue: Buffer.from(attr.value) }
+          : { DataType: attr.dataType, StringValue: attr.value };
+      }
+
+      return {
+        Id: entry.id,
+        MessageBody: entry.messageBody,
+        ...(entry.delaySeconds !== undefined && { DelaySeconds: entry.delaySeconds }),
+        ...(Object.keys(messageAttributes).length > 0 && { MessageAttributes: messageAttributes }),
+        ...(entry.messageGroupId && { MessageGroupId: entry.messageGroupId }),
+        ...(entry.messageDeduplicationId && { MessageDeduplicationId: entry.messageDeduplicationId }),
+        ...(params.awsTraceHeader && {
+          MessageSystemAttributes: {
+            AWSTraceHeader: { DataType: 'String', StringValue: params.awsTraceHeader },
+          },
+        }),
+      };
+    });
+
+    const result = await sqsClient.send(new SendMessageBatchCommand({
+      QueueUrl: params.queueUrl,
+      Entries: entries,
+    }));
+
+    return {
+      successful: result.Successful?.length ?? 0,
+      failed: (result.Failed ?? []).map(f => ({
+        id: f.Id ?? '',
+        message: f.Message ?? f.Code ?? 'Unknown error',
+      })),
+    };
+  } catch (error) {
+    console.error('Error sending message batch:', error);
+    throw new Error(error instanceof Error ? error.message : 'Failed to send batch');
   }
 }
 

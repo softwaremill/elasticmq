@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { QueueData } from '@/lib/types';
 import { SendMessageModal } from './send-message-modal';
+import { GenerateMessagesModal } from './generate-messages-modal';
 
 interface QueueCardProps {
   queue: QueueData;
@@ -12,6 +13,7 @@ interface QueueCardProps {
 
 export function QueueCard({ queue, index = 0 }: QueueCardProps) {
   const [showModal, setShowModal] = useState(false);
+  const [showGenerate, setShowGenerate] = useState(false);
   const [hovered, setHovered] = useState(false);
   const hasMessages = queue.stats.approximateNumberOfMessages > 0;
 
@@ -90,44 +92,48 @@ export function QueueCard({ queue, index = 0 }: QueueCardProps) {
           padding: '8px 20px 10px 22px',
           display: 'flex',
           justifyContent: 'flex-end',
+          gap: 8,
           borderTop: '1px solid var(--card-border)',
         }}>
-          <button
-            onClick={e => { e.preventDefault(); setShowModal(true); }}
-            style={{
-              padding: '4px 12px',
-              borderRadius: 6,
-              border: '1px solid var(--accent)',
-              background: 'var(--accent-dim)',
-              color: 'var(--accent)',
-              fontSize: 12,
-              fontWeight: 600,
-              cursor: 'pointer',
-              letterSpacing: '0.02em',
-              transition: 'background 150ms, color 150ms',
-            }}
-            onMouseEnter={e => {
-              (e.currentTarget as HTMLButtonElement).style.background = 'var(--accent)';
-              (e.currentTarget as HTMLButtonElement).style.color = '#fff';
-            }}
-            onMouseLeave={e => {
-              (e.currentTarget as HTMLButtonElement).style.background = 'var(--accent-dim)';
-              (e.currentTarget as HTMLButtonElement).style.color = 'var(--accent)';
-            }}
-          >
-            Send →
-          </button>
+          <CardBtn label="Generate" onClick={() => setShowGenerate(true)} muted />
+          <CardBtn label="Send →" onClick={() => setShowModal(true)} />
         </div>
       </div>
 
       {showModal && (
-        <SendMessageModal
-          queueName={queue.name}
-          queueUrl={queue.url}
-          onClose={() => setShowModal(false)}
-        />
+        <SendMessageModal queueName={queue.name} queueUrl={queue.url} onClose={() => setShowModal(false)} />
+      )}
+      {showGenerate && (
+        <GenerateMessagesModal queueName={queue.name} queueUrl={queue.url} onClose={() => setShowGenerate(false)} />
       )}
     </>
+  );
+}
+
+function CardBtn({ label, onClick, muted }: { label: string; onClick: () => void; muted?: boolean }) {
+  return (
+    <button
+      onClick={e => { e.preventDefault(); onClick(); }}
+      style={{
+        padding: '4px 12px', borderRadius: 6, fontSize: 12, fontWeight: 600, cursor: 'pointer',
+        letterSpacing: '0.02em', transition: 'background 150ms, color 150ms',
+        border: muted ? '1px solid var(--card-border)' : '1px solid var(--accent)',
+        background: muted ? 'transparent' : 'var(--accent-dim)',
+        color: muted ? 'var(--muted)' : 'var(--accent)',
+      }}
+      onMouseEnter={e => {
+        const el = e.currentTarget as HTMLButtonElement;
+        el.style.background = muted ? 'var(--card-bg)' : 'var(--accent)';
+        el.style.color = muted ? 'var(--foreground)' : '#fff';
+      }}
+      onMouseLeave={e => {
+        const el = e.currentTarget as HTMLButtonElement;
+        el.style.background = muted ? 'transparent' : 'var(--accent-dim)';
+        el.style.color = muted ? 'var(--muted)' : 'var(--accent)';
+      }}
+    >
+      {label}
+    </button>
   );
 }
 

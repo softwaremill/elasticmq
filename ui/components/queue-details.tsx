@@ -10,6 +10,7 @@ import { formatAttributeValue, HIDDEN_ATTRIBUTES } from '@/lib/utils';
 import { ThemeSwitcher } from './theme-switcher';
 import { SendMessageModal } from './send-message-modal';
 import { ReceiveMessagesPanel } from './receive-messages-panel';
+import { GenerateMessagesModal } from './generate-messages-modal';
 
 interface QueueDetailsProps {
   queueName: string;
@@ -24,6 +25,7 @@ export function QueueDetails({ queueName }: QueueDetailsProps) {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [showReceive, setShowReceive] = useState(false);
+  const [showGenerate, setShowGenerate] = useState(false);
 
   const fetchQueueDetails = async (showLoading = false) => {
     try {
@@ -128,6 +130,9 @@ export function QueueDetails({ queueName }: QueueDetailsProps) {
           <ActionBtn onClick={() => setShowReceive(true)} variant="ghost">
             ↓ Receive
           </ActionBtn>
+          <ActionBtn onClick={() => setShowGenerate(true)} variant="ghost">
+            ⚡ Generate
+          </ActionBtn>
           <ActionBtn onClick={() => setShowModal(true)} variant="primary">
             ↑ Send Message
           </ActionBtn>
@@ -209,6 +214,9 @@ export function QueueDetails({ queueName }: QueueDetailsProps) {
       )}
       {showReceive && (
         <ReceiveMessagesPanel queueName={queue.name} queueUrl={queue.url} onClose={() => setShowReceive(false)} />
+      )}
+      {showGenerate && (
+        <GenerateMessagesModal queueName={queue.name} queueUrl={queue.url} onClose={() => setShowGenerate(false)} />
       )}
     </>
   );

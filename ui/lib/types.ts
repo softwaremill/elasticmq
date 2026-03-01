@@ -38,6 +38,26 @@ export interface ReceivedMessage {
   messageAttributes: Record<string, ReceivedMessageAttribute>;
 }
 
+export interface BatchEntry {
+  id: string;             // batch-local unique ID (e.g. "msg-0")
+  messageBody: string;    // already $i-substituted
+  delaySeconds?: number;
+  messageAttributes?: MessageAttributeEntry[];
+  messageGroupId?: string;
+  messageDeduplicationId?: string;
+}
+
+export interface SendBatchParams {
+  queueUrl: string;
+  entries: BatchEntry[];
+  awsTraceHeader?: string;
+}
+
+export interface SendBatchResult {
+  successful: number;
+  failed: { id: string; message: string }[];
+}
+
 export interface ReceiveMessagesParams {
   queueUrl: string;
   maxNumberOfMessages?: number;   // 1–10
