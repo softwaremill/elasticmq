@@ -8,6 +8,7 @@ import { LoadingSkeleton } from './loading-skeleton';
 import { ErrorDisplay } from './error-display';
 import { formatAttributeValue, HIDDEN_ATTRIBUTES } from '@/lib/utils';
 import { ThemeSwitcher } from './theme-switcher';
+import { SendMessageModal } from './send-message-modal';
 
 interface QueueDetailsProps {
   queueName: string;
@@ -20,6 +21,7 @@ export function QueueDetails({ queueName }: QueueDetailsProps) {
   const [error, setError] = useState<string | null>(null);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [showModal, setShowModal] = useState(false);
 
   const fetchQueueDetails = async (showLoading = false) => {
     try {
@@ -98,43 +100,46 @@ export function QueueDetails({ queueName }: QueueDetailsProps) {
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-6 flex-wrap gap-4">
+      <div className="flex justify-between items-center mb-6">
         <button
           onClick={() => router.push('/')}
           className="px-4 py-2 rounded font-medium transition-colors"
-          style={{
-            backgroundColor: 'var(--card-bg)',
-            borderColor: 'var(--card-border)',
-            color: 'var(--foreground)',
-          }}
+          style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--card-border)', color: 'var(--foreground)' }}
         >
           ← Back to Queues
         </button>
-        <div className="flex items-center gap-4">
-          <ThemeSwitcher />
+        <ThemeSwitcher />
+      </div>
+
+      <div className="flex items-end justify-between gap-4 mb-6 flex-wrap">
+        <div>
+          <h1 className="text-3xl font-bold" style={{ color: 'var(--foreground)' }}>
+            {queue.name}
+          </h1>
+          {lastUpdate && (
+            <p className="text-sm mt-1" style={{ color: 'var(--muted)' }}>
+              Last updated: {lastUpdate.toLocaleTimeString()}
+            </p>
+          )}
+        </div>
+        <div className="flex items-center gap-3">
           <button
             onClick={handleManualRefresh}
             disabled={isRefreshing}
             className="px-4 py-2 rounded font-medium transition-colors disabled:opacity-50"
-            style={{
-              backgroundColor: 'var(--accent)',
-              color: 'white',
-            }}
+            style={{ backgroundColor: 'var(--card-bg)', color: 'var(--foreground)', border: '1px solid var(--card-border)' }}
           >
             {isRefreshing ? 'Refreshing...' : 'Refresh'}
           </button>
+          <button
+            onClick={() => setShowModal(true)}
+            className="px-4 py-2 rounded font-semibold transition-opacity hover:opacity-80"
+            style={{ backgroundColor: 'var(--accent)', color: 'white' }}
+          >
+            Send Message
+          </button>
         </div>
       </div>
-
-      <h1 className="text-3xl font-bold mb-6" style={{ color: 'var(--foreground)' }}>
-        {queue.name}
-      </h1>
-
-      {lastUpdate && (
-        <p className="text-sm mb-6" style={{ color: 'var(--muted)' }}>
-          Last updated: {lastUpdate.toLocaleTimeString()}
-        </p>
-      )}
 
       {/* Statistics */}
       <div
@@ -222,6 +227,14 @@ export function QueueDetails({ queueName }: QueueDetailsProps) {
           </table>
         </div>
       </div>
+
+      {showModal && queue && (
+        <SendMessageModal
+          queueName={queue.name}
+          queueUrl={queue.url}
+          onClose={() => setShowModal(false)}
+        />
+      )}
     </div>
   );
 }

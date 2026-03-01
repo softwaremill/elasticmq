@@ -3,10 +3,11 @@
 import {
   ListQueuesCommand,
   GetQueueAttributesCommand,
-  GetQueueAttributesCommandOutput
+  SendMessageCommand,
+  MessageAttributeValue,
 } from '@aws-sdk/client-sqs';
 import { sqsClient, extractQueueName } from './sqs-client';
-import { QueueData, QueueStats, QueueAttributes } from './types';
+import { QueueData, QueueStats, QueueAttributes, SendMessageParams, SendMessageResult } from './types';
 
 function parseQueueStats(attributes: Record<string, string>): QueueStats {
   return {
@@ -85,5 +86,51 @@ export async function getQueueDetails(queueName: string): Promise<QueueData | nu
   } catch (error) {
     console.error('Error fetching queue details:', error);
     throw new Error('Failed to fetch queue details. Make sure ElasticMQ is running on localhost:9324');
+  }
+}
+
+export async function sendMessage(params: SendMessageParams): Promise<SendMessageResult> {
+  try {
+    // Build MessageAttributes map
+    const messageAttributes: Record<string, MessageAttributeValue> = {};
+    for (const attr of params.messageAttributes ?? []) {
+      if (!attr.name.trim()) continue;
+      if (attr.dataType === 'Binary') {
+        messageAttributes[attr.name] = {
+          DataType: 'Binary',
+          BinaryValue: Buffer.from(attr.value),
+        };
+      } else {
+        messageAttributes[attr.name] = {
+          DataType: attr.dataType,
+          StringValue: attr.value,
+        };
+      }
+    }
+
+    const command = new SendMessageCommand({
+      QueueUrl: params.queueUrl,
+      MessageBody: params.messageBody,
+      ...(params.delaySeconds !== undefined && { DelaySeconds: params.delaySeconds }),
+      ...(Object.keys(messageAttributes).length > 0 && { MessageAttributes: messageAttributes }),
+      ...(params.awsTraceHeader && {
+        MessageSystemAttributes: {
+          AWSTraceHeader: { DataType: 'String', StringValue: params.awsTraceHeader },
+        },
+      }),
+      ...(params.messageGroupId && { MessageGroupId: params.messageGroupId }),
+      ...(params.messageDeduplicationId && { MessageDeduplicationId: params.messageDeduplicationId }),
+    });
+
+    const result = await sqsClient.send(command);
+    return {
+      messageId: result.MessageId ?? '',
+      sequenceNumber: result.SequenceNumber,
+    };
+  } catch (error) {
+    console.error('Error sending message:', error);
+    throw new Error(
+      error instanceof Error ? error.message : 'Failed to send message'
+    );
   }
 }

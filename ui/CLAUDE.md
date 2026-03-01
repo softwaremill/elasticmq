@@ -250,10 +250,11 @@ aws --endpoint-url=http://localhost:9324 sqs send-message \
 - **Loading States:** Skeleton loaders during data fetch
 - **Responsive Design:** Works on mobile and desktop
 - **Dark Mode:** Automatic via system preference or manual toggle
+- **Send Message:** Full SQS SendMessage support with all options (delay, message attributes, system attributes, FIFO fields)
 
 ### 🚫 Out of Scope (Not Implemented)
 
-- Send/receive messages
+- Receive/browse messages
 - Purge queue action
 - Create/delete queue UI
 - Message browsing
