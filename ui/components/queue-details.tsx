@@ -9,6 +9,7 @@ import { ErrorDisplay } from './error-display';
 import { formatAttributeValue, HIDDEN_ATTRIBUTES } from '@/lib/utils';
 import { ThemeSwitcher } from './theme-switcher';
 import { SendMessageModal } from './send-message-modal';
+import { ReceiveMessagesPanel } from './receive-messages-panel';
 
 interface QueueDetailsProps {
   queueName: string;
@@ -22,6 +23,7 @@ export function QueueDetails({ queueName }: QueueDetailsProps) {
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [showModal, setShowModal] = useState(false);
+  const [showReceive, setShowReceive] = useState(false);
 
   const fetchQueueDetails = async (showLoading = false) => {
     try {
@@ -132,6 +134,13 @@ export function QueueDetails({ queueName }: QueueDetailsProps) {
             {isRefreshing ? 'Refreshing...' : 'Refresh'}
           </button>
           <button
+            onClick={() => setShowReceive(true)}
+            className="px-4 py-2 rounded font-semibold transition-opacity hover:opacity-80"
+            style={{ backgroundColor: 'var(--card-bg)', color: 'var(--foreground)', border: '1px solid var(--card-border)' }}
+          >
+            Receive Messages
+          </button>
+          <button
             onClick={() => setShowModal(true)}
             className="px-4 py-2 rounded font-semibold transition-opacity hover:opacity-80"
             style={{ backgroundColor: 'var(--accent)', color: 'white' }}
@@ -233,6 +242,14 @@ export function QueueDetails({ queueName }: QueueDetailsProps) {
           queueName={queue.name}
           queueUrl={queue.url}
           onClose={() => setShowModal(false)}
+        />
+      )}
+
+      {showReceive && queue && (
+        <ReceiveMessagesPanel
+          queueName={queue.name}
+          queueUrl={queue.url}
+          onClose={() => setShowReceive(false)}
         />
       )}
     </div>

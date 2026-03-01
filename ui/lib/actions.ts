@@ -4,10 +4,16 @@ import {
   ListQueuesCommand,
   GetQueueAttributesCommand,
   SendMessageCommand,
+  ReceiveMessageCommand,
+  DeleteMessageCommand,
   MessageAttributeValue,
 } from '@aws-sdk/client-sqs';
 import { sqsClient, extractQueueName } from './sqs-client';
-import { QueueData, QueueStats, QueueAttributes, SendMessageParams, SendMessageResult } from './types';
+import {
+  QueueData, QueueStats, QueueAttributes,
+  SendMessageParams, SendMessageResult,
+  ReceivedMessage, ReceiveMessagesParams,
+} from './types';
 
 function parseQueueStats(attributes: Record<string, string>): QueueStats {
   return {
@@ -131,6 +137,59 @@ export async function sendMessage(params: SendMessageParams): Promise<SendMessag
     console.error('Error sending message:', error);
     throw new Error(
       error instanceof Error ? error.message : 'Failed to send message'
+    );
+  }
+}
+
+export async function receiveMessages(params: ReceiveMessagesParams): Promise<ReceivedMessage[]> {
+  try {
+    const command = new ReceiveMessageCommand({
+      QueueUrl: params.queueUrl,
+      MaxNumberOfMessages: params.maxNumberOfMessages ?? 10,
+      AttributeNames: ['All'],
+      MessageAttributeNames: ['All'],
+      ...(params.visibilityTimeout !== undefined && { VisibilityTimeout: params.visibilityTimeout }),
+      ...(params.waitTimeSeconds !== undefined && { WaitTimeSeconds: params.waitTimeSeconds }),
+    });
+
+    const result = await sqsClient.send(command);
+
+    return (result.Messages ?? []).map(msg => ({
+      messageId: msg.MessageId ?? '',
+      receiptHandle: msg.ReceiptHandle ?? '',
+      body: msg.Body ?? '',
+      md5OfBody: msg.MD5OfBody ?? '',
+      md5OfMessageAttributes: msg.MD5OfMessageAttributes,
+      systemAttributes: (msg.Attributes ?? {}) as Record<string, string>,
+      messageAttributes: Object.fromEntries(
+        Object.entries(msg.MessageAttributes ?? {}).map(([key, val]) => [
+          key,
+          {
+            dataType: val.DataType ?? 'String',
+            stringValue: val.StringValue,
+            binaryValue: val.BinaryValue
+              ? Buffer.from(val.BinaryValue).toString('base64')
+              : undefined,
+          },
+        ])
+      ),
+    }));
+  } catch (error) {
+    console.error('Error receiving messages:', error);
+    throw new Error(
+      error instanceof Error ? error.message : 'Failed to receive messages'
+    );
+  }
+}
+
+export async function deleteMessage(queueUrl: string, receiptHandle: string): Promise<void> {
+  try {
+    const command = new DeleteMessageCommand({ QueueUrl: queueUrl, ReceiptHandle: receiptHandle });
+    await sqsClient.send(command);
+  } catch (error) {
+    console.error('Error deleting message:', error);
+    throw new Error(
+      error instanceof Error ? error.message : 'Failed to delete message'
     );
   }
 }
