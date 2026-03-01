@@ -214,7 +214,6 @@ lazy val server: Project = (project in file("server"))
   .settings(buildSettings)
   .settings(dockerBuildxSettings)
   .settings(generateVersionFileSettings)
-  .settings(uiSettings)
   .settings(
     Seq(
       name := "elasticmq-server",
@@ -279,7 +278,6 @@ val alpineVersion = "3.22"
 lazy val nativeServer: Project = (project in file("native-server"))
   .enablePlugins(JavaAppPackaging, DockerPlugin)
   .settings(buildSettings)
-  .settings(uiSettings)
   .settings(dockerBuildxSettings)
   .settings(
     Seq(
