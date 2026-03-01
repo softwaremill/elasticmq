@@ -5,41 +5,48 @@ import { useTheme } from '@/lib/theme-provider';
 export function ThemeSwitcher() {
   const { theme, setTheme } = useTheme();
 
-  const themes = [
-    { value: 'light', label: 'Light', icon: '☀️' },
-    { value: 'dark', label: 'Dark', icon: '🌙' },
-    { value: 'auto', label: 'Auto', icon: '💻' },
+  const options = [
+    { value: 'light', label: '☀', title: 'Light' },
+    { value: 'dark',  label: '☾', title: 'Dark'  },
+    { value: 'auto',  label: '⬡', title: 'Auto'  },
   ] as const;
 
   return (
-    <div className="flex gap-2 items-center">
-      <span className="text-sm mr-2" style={{ color: 'var(--muted)' }}>
-        Theme:
-      </span>
-      <div
-        className="flex rounded-lg p-1"
-        style={{
-          backgroundColor: 'var(--card-bg)',
-          borderColor: 'var(--card-border)',
-          border: '1px solid',
-        }}
-      >
-        {themes.map((t) => (
+    <div
+      style={{
+        display: 'flex',
+        background: 'var(--card-bg)',
+        border: '1px solid var(--card-border)',
+        borderRadius: 8,
+        padding: 3,
+        gap: 2,
+      }}
+    >
+      {options.map(o => {
+        const active = theme === o.value;
+        return (
           <button
-            key={t.value}
-            onClick={() => setTheme(t.value)}
-            className="px-3 py-1.5 rounded text-sm font-medium transition-all"
+            key={o.value}
+            onClick={() => setTheme(o.value)}
+            title={o.title}
             style={{
-              backgroundColor: theme === t.value ? 'var(--accent)' : 'transparent',
-              color: theme === t.value ? 'white' : 'var(--foreground)',
+              width: 30, height: 28,
+              borderRadius: 5,
+              border: 'none',
+              cursor: 'pointer',
+              fontSize: 13,
+              fontWeight: active ? 700 : 400,
+              background: active ? 'var(--accent-dim)' : 'transparent',
+              color: active ? 'var(--accent)' : 'var(--muted)',
+              transition: 'all 150ms ease',
+              outline: active ? '1px solid var(--accent)' : 'none',
+              outlineOffset: -1,
             }}
-            title={t.label}
           >
-            <span className="mr-1.5">{t.icon}</span>
-            {t.label}
+            {o.label}
           </button>
-        ))}
-      </div>
+        );
+      })}
     </div>
   );
 }

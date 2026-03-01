@@ -16,9 +16,7 @@ export function QueueList() {
 
   const fetchQueues = async (showLoading = false) => {
     try {
-      if (showLoading) {
-        setIsRefreshing(true);
-      }
+      if (showLoading) setIsRefreshing(true);
       const data = await getQueues();
       setQueues(data);
       setError(null);
@@ -27,9 +25,7 @@ export function QueueList() {
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
       setIsLoading(false);
-      if (showLoading) {
-        setIsRefreshing(false);
-      }
+      if (showLoading) setIsRefreshing(false);
     }
   };
 
@@ -39,40 +35,33 @@ export function QueueList() {
     return () => clearInterval(interval);
   }, []);
 
-  const handleManualRefresh = () => {
-    fetchQueues(true);
-  };
-
-  if (isLoading) {
-    return <LoadingSkeleton />;
-  }
-
-  if (error) {
-    return <ErrorDisplay message={error} onRetry={handleManualRefresh} />;
-  }
+  if (isLoading) return <LoadingSkeleton />;
+  if (error) return <ErrorDisplay message={error} onRetry={() => fetchQueues(true)} />;
 
   if (queues.length === 0) {
     return (
-      <div
-        className="p-8 rounded-lg border text-center"
-        style={{
-          backgroundColor: 'var(--card-bg)',
-          borderColor: 'var(--card-border)',
-        }}
-      >
-        <h3 className="text-lg font-semibold mb-2" style={{ color: 'var(--foreground)' }}>
-          No queues found
-        </h3>
-        <p className="mb-4" style={{ color: 'var(--muted)' }}>
-          Create a queue using the AWS CLI or SDK to get started.
+      <div style={{
+        padding: '48px 32px',
+        borderRadius: 10,
+        border: '1px dashed var(--card-border)',
+        textAlign: 'center',
+        animation: 'fadeUp 300ms ease both',
+      }}>
+        <div style={{ fontSize: 32, marginBottom: 12, opacity: 0.4 }}>⬡</div>
+        <p style={{ fontWeight: 600, color: 'var(--foreground)', marginBottom: 6, fontSize: 15 }}>No queues found</p>
+        <p style={{ color: 'var(--muted)', fontSize: 13, marginBottom: 20 }}>
+          Create a queue to get started.
         </p>
-        <code
-          className="block p-4 rounded text-sm text-left"
-          style={{
-            backgroundColor: 'var(--background)',
-            color: 'var(--foreground)',
-          }}
-        >
+        <code style={{
+          display: 'inline-block',
+          padding: '8px 14px',
+          borderRadius: 6,
+          background: 'var(--card-bg)',
+          border: '1px solid var(--card-border)',
+          color: 'var(--foreground)',
+          fontFamily: 'var(--font-geist-mono), monospace',
+          fontSize: 12,
+        }}>
           aws --endpoint-url=http://localhost:9324 sqs create-queue --queue-name my-queue
         </code>
       </div>
@@ -81,29 +70,56 @@ export function QueueList() {
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          {lastUpdate && (
-            <p className="text-sm" style={{ color: 'var(--muted)' }}>
-              Last updated: {lastUpdate.toLocaleTimeString()}
-            </p>
-          )}
+      {/* Toolbar */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {/* Live dot */}
+          <span style={{
+            display: 'inline-block', width: 7, height: 7, borderRadius: '50%',
+            background: 'var(--green)',
+            boxShadow: '0 0 6px var(--green)',
+            animation: 'pulse-dot 2s ease-in-out infinite',
+          }} />
+          <span style={{ fontSize: 12, color: 'var(--muted)', fontVariantNumeric: 'tabular-nums' }}>
+            {queues.length} queue{queues.length !== 1 ? 's' : ''}
+            {lastUpdate && ` · ${lastUpdate.toLocaleTimeString()}`}
+          </span>
         </div>
+
         <button
-          onClick={handleManualRefresh}
+          onClick={() => fetchQueues(true)}
           disabled={isRefreshing}
-          className="px-4 py-2 rounded font-medium transition-colors disabled:opacity-50"
           style={{
-            backgroundColor: 'var(--accent)',
-            color: 'white',
+            padding: '5px 14px',
+            borderRadius: 6,
+            border: '1px solid var(--card-border)',
+            background: 'var(--card-bg)',
+            color: 'var(--muted)',
+            fontSize: 12,
+            fontWeight: 500,
+            cursor: isRefreshing ? 'not-allowed' : 'pointer',
+            opacity: isRefreshing ? 0.5 : 1,
+            transition: 'color 150ms, border-color 150ms',
+          }}
+          onMouseEnter={e => {
+            if (!isRefreshing) {
+              (e.currentTarget as HTMLButtonElement).style.color = 'var(--foreground)';
+              (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--muted)';
+            }
+          }}
+          onMouseLeave={e => {
+            (e.currentTarget as HTMLButtonElement).style.color = 'var(--muted)';
+            (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--card-border)';
           }}
         >
-          {isRefreshing ? 'Refreshing...' : 'Refresh'}
+          {isRefreshing ? 'Refreshing…' : '↻ Refresh'}
         </button>
       </div>
-      <div className="space-y-4">
-        {queues.map((queue) => (
-          <QueueCard key={queue.url} queue={queue} />
+
+      {/* Queue cards */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {queues.map((queue, i) => (
+          <QueueCard key={queue.url} queue={queue} index={i} />
         ))}
       </div>
     </div>

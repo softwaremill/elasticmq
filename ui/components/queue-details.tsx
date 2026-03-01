@@ -27,14 +27,9 @@ export function QueueDetails({ queueName }: QueueDetailsProps) {
 
   const fetchQueueDetails = async (showLoading = false) => {
     try {
-      if (showLoading) {
-        setIsRefreshing(true);
-      }
+      if (showLoading) setIsRefreshing(true);
       const data = await getQueueDetails(queueName);
-      if (!data) {
-        setError('Queue not found');
-        return;
-      }
+      if (!data) { setError('Queue not found'); return; }
       setQueue(data);
       setError(null);
       setLastUpdate(new Date());
@@ -42,9 +37,7 @@ export function QueueDetails({ queueName }: QueueDetailsProps) {
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
       setIsLoading(false);
-      if (showLoading) {
-        setIsRefreshing(false);
-      }
+      if (showLoading) setIsRefreshing(false);
     }
   };
 
@@ -54,204 +47,245 @@ export function QueueDetails({ queueName }: QueueDetailsProps) {
     return () => clearInterval(interval);
   }, [queueName]);
 
-  const handleManualRefresh = () => {
-    fetchQueueDetails(true);
-  };
+  const navBar = (
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 28 }}>
+      <button
+        onClick={() => router.push('/')}
+        style={{
+          display: 'flex', alignItems: 'center', gap: 6,
+          padding: '5px 12px', borderRadius: 6,
+          border: '1px solid var(--card-border)',
+          background: 'var(--card-bg)',
+          color: 'var(--muted)',
+          fontSize: 13, fontWeight: 500, cursor: 'pointer',
+          transition: 'color 150ms, border-color 150ms',
+        }}
+        onMouseEnter={e => {
+          (e.currentTarget as HTMLButtonElement).style.color = 'var(--foreground)';
+          (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--muted)';
+        }}
+        onMouseLeave={e => {
+          (e.currentTarget as HTMLButtonElement).style.color = 'var(--muted)';
+          (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--card-border)';
+        }}
+      >
+        ← Queues
+      </button>
+      <ThemeSwitcher />
+    </div>
+  );
 
-  if (isLoading) {
-    return (
-      <div>
-        <button
-          onClick={() => router.push('/')}
-          className="mb-6 px-4 py-2 rounded font-medium transition-colors"
-          style={{
-            backgroundColor: 'var(--card-bg)',
-            borderColor: 'var(--card-border)',
-            color: 'var(--foreground)',
-          }}
-        >
-          ← Back to Queues
-        </button>
-        <LoadingSkeleton />
-      </div>
-    );
-  }
-
-  if (error || !queue) {
-    return (
-      <div>
-        <button
-          onClick={() => router.push('/')}
-          className="mb-6 px-4 py-2 rounded font-medium transition-colors"
-          style={{
-            backgroundColor: 'var(--card-bg)',
-            borderColor: 'var(--card-border)',
-            color: 'var(--foreground)',
-          }}
-        >
-          ← Back to Queues
-        </button>
-        <ErrorDisplay message={error || 'Queue not found'} onRetry={handleManualRefresh} />
-      </div>
-    );
-  }
+  if (isLoading) return <div>{navBar}<LoadingSkeleton /></div>;
+  if (error || !queue) return <div>{navBar}<ErrorDisplay message={error || 'Queue not found'} onRetry={() => fetchQueueDetails(true)} /></div>;
 
   const visibleAttributes = Object.entries(queue.attributes).filter(
     ([key]) => !HIDDEN_ATTRIBUTES.includes(key)
   );
 
   return (
-    <div>
-      <div className="flex justify-between items-center mb-6">
-        <button
-          onClick={() => router.push('/')}
-          className="px-4 py-2 rounded font-medium transition-colors"
-          style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--card-border)', color: 'var(--foreground)' }}
-        >
-          ← Back to Queues
-        </button>
-        <ThemeSwitcher />
-      </div>
+    <div style={{ animation: 'fadeUp 300ms ease both' }}>
+      {navBar}
 
-      <div className="flex items-end justify-between gap-4 mb-6 flex-wrap">
+      {/* Queue name + action buttons */}
+      <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 16, marginBottom: 28, flexWrap: 'wrap' }}>
         <div>
-          <h1 className="text-3xl font-bold" style={{ color: 'var(--foreground)' }}>
-            {queue.name}
-          </h1>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 5 }}>
+            <div style={{
+              width: 4, height: 22, borderRadius: 2,
+              background: 'var(--accent)',
+              boxShadow: '0 0 8px var(--accent)',
+            }} />
+            <h1 style={{
+              fontFamily: 'var(--font-geist-mono), monospace',
+              fontSize: 22,
+              fontWeight: 700,
+              color: 'var(--foreground)',
+              letterSpacing: '-0.02em',
+              margin: 0,
+            }}>
+              {queue.name}
+            </h1>
+          </div>
           {lastUpdate && (
-            <p className="text-sm mt-1" style={{ color: 'var(--muted)' }}>
-              Last updated: {lastUpdate.toLocaleTimeString()}
+            <p style={{ fontSize: 11, color: 'var(--muted)', marginLeft: 12, letterSpacing: '0.02em' }}>
+              <span style={{
+                display: 'inline-block', width: 6, height: 6, borderRadius: '50%',
+                background: 'var(--green)',
+                marginRight: 5, verticalAlign: 'middle',
+                boxShadow: '0 0 4px var(--green)',
+                animation: 'pulse-dot 2s ease-in-out infinite',
+              }} />
+              Live · {lastUpdate.toLocaleTimeString()}
             </p>
           )}
         </div>
-        <div className="flex items-center gap-3">
-          <button
-            onClick={handleManualRefresh}
-            disabled={isRefreshing}
-            className="px-4 py-2 rounded font-medium transition-colors disabled:opacity-50"
-            style={{ backgroundColor: 'var(--card-bg)', color: 'var(--foreground)', border: '1px solid var(--card-border)' }}
-          >
-            {isRefreshing ? 'Refreshing...' : 'Refresh'}
-          </button>
-          <button
-            onClick={() => setShowReceive(true)}
-            className="px-4 py-2 rounded font-semibold transition-opacity hover:opacity-80"
-            style={{ backgroundColor: 'var(--card-bg)', color: 'var(--foreground)', border: '1px solid var(--card-border)' }}
-          >
-            Receive Messages
-          </button>
-          <button
-            onClick={() => setShowModal(true)}
-            className="px-4 py-2 rounded font-semibold transition-opacity hover:opacity-80"
-            style={{ backgroundColor: 'var(--accent)', color: 'white' }}
-          >
-            Send Message
-          </button>
+
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <ActionBtn onClick={() => fetchQueueDetails(true)} disabled={isRefreshing} variant="ghost">
+            {isRefreshing ? 'Refreshing…' : '↻ Refresh'}
+          </ActionBtn>
+          <ActionBtn onClick={() => setShowReceive(true)} variant="ghost">
+            ↓ Receive
+          </ActionBtn>
+          <ActionBtn onClick={() => setShowModal(true)} variant="primary">
+            ↑ Send Message
+          </ActionBtn>
         </div>
       </div>
 
-      {/* Statistics */}
-      <div
-        className="p-6 rounded-lg border mb-6"
-        style={{
-          backgroundColor: 'var(--card-bg)',
-          borderColor: 'var(--card-border)',
-        }}
-      >
-        <h2 className="text-xl font-semibold mb-4" style={{ color: 'var(--foreground)' }}>
-          Statistics
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div>
-            <p className="text-sm mb-2" style={{ color: 'var(--muted)' }}>
-              Messages Available
-            </p>
-            <p className="text-3xl font-bold" style={{ color: 'var(--foreground)' }}>
-              {queue.stats.approximateNumberOfMessages}
-            </p>
-          </div>
-          <div>
-            <p className="text-sm mb-2" style={{ color: 'var(--muted)' }}>
-              Messages Delayed
-            </p>
-            <p className="text-3xl font-bold" style={{ color: 'var(--foreground)' }}>
-              {queue.stats.approximateNumberOfMessagesDelayed}
-            </p>
-          </div>
-          <div>
-            <p className="text-sm mb-2" style={{ color: 'var(--muted)' }}>
-              Messages In Flight
-            </p>
-            <p className="text-3xl font-bold" style={{ color: 'var(--foreground)' }}>
-              {queue.stats.approximateNumberOfMessagesNotVisible}
-            </p>
-          </div>
-        </div>
+      {/* Stats */}
+      <div style={{
+        display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, marginBottom: 14,
+      }}>
+        <StatCard label="Available"  value={queue.stats.approximateNumberOfMessages}          accent />
+        <StatCard label="Delayed"    value={queue.stats.approximateNumberOfMessagesDelayed}   />
+        <StatCard label="In Flight"  value={queue.stats.approximateNumberOfMessagesNotVisible} />
       </div>
 
-      {/* Attributes */}
-      <div
-        className="p-6 rounded-lg border"
-        style={{
-          backgroundColor: 'var(--card-bg)',
-          borderColor: 'var(--card-border)',
-        }}
-      >
-        <h2 className="text-xl font-semibold mb-4" style={{ color: 'var(--foreground)' }}>
-          Queue Attributes
-        </h2>
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr style={{ borderBottom: '1px solid var(--card-border)' }}>
-                <th
-                  className="text-left py-3 px-4 font-semibold"
-                  style={{ color: 'var(--foreground)' }}
-                >
-                  Attribute
-                </th>
-                <th
-                  className="text-left py-3 px-4 font-semibold"
-                  style={{ color: 'var(--foreground)' }}
-                >
-                  Value
-                </th>
+      {/* Attributes table */}
+      <div style={{
+        borderRadius: 10,
+        border: '1px solid var(--card-border)',
+        background: 'var(--card-bg)',
+        overflow: 'hidden',
+      }}>
+        <div style={{
+          padding: '12px 20px',
+          borderBottom: '1px solid var(--card-border)',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        }}>
+          <span style={{
+            fontSize: 11, fontWeight: 700, letterSpacing: '0.08em',
+            textTransform: 'uppercase', color: 'var(--muted)',
+          }}>
+            Queue Attributes
+          </span>
+          <span style={{
+            fontSize: 11, color: 'var(--muted)',
+            fontFamily: 'var(--font-geist-mono), monospace',
+          }}>
+            {visibleAttributes.length} fields
+          </span>
+        </div>
+        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <tbody>
+            {visibleAttributes.map(([key, value], i) => (
+              <tr
+                key={key}
+                style={{
+                  borderBottom: i < visibleAttributes.length - 1 ? '1px solid var(--card-border)' : 'none',
+                }}
+              >
+                <td style={{
+                  padding: '9px 20px',
+                  fontFamily: 'var(--font-geist-mono), monospace',
+                  fontSize: 12,
+                  color: 'var(--muted)',
+                  width: '45%',
+                  whiteSpace: 'nowrap',
+                }}>
+                  {key}
+                </td>
+                <td style={{
+                  padding: '9px 20px',
+                  fontFamily: 'var(--font-geist-mono), monospace',
+                  fontSize: 12,
+                  color: 'var(--foreground)',
+                  wordBreak: 'break-word',
+                }}>
+                  {formatAttributeValue(key, value)}
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {visibleAttributes.map(([key, value]) => (
-                <tr
-                  key={key}
-                  style={{ borderBottom: '1px solid var(--card-border)' }}
-                >
-                  <td className="py-3 px-4 font-mono text-sm" style={{ color: 'var(--muted)' }}>
-                    {key}
-                  </td>
-                  <td className="py-3 px-4 font-mono text-sm" style={{ color: 'var(--foreground)' }}>
-                    {formatAttributeValue(key, value)}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+            ))}
+          </tbody>
+        </table>
       </div>
 
-      {showModal && queue && (
-        <SendMessageModal
-          queueName={queue.name}
-          queueUrl={queue.url}
-          onClose={() => setShowModal(false)}
-        />
+      {showModal && (
+        <SendMessageModal queueName={queue.name} queueUrl={queue.url} onClose={() => setShowModal(false)} />
       )}
-
-      {showReceive && queue && (
-        <ReceiveMessagesPanel
-          queueName={queue.name}
-          queueUrl={queue.url}
-          onClose={() => setShowReceive(false)}
-        />
+      {showReceive && (
+        <ReceiveMessagesPanel queueName={queue.name} queueUrl={queue.url} onClose={() => setShowReceive(false)} />
       )}
     </div>
+  );
+}
+
+function StatCard({ label, value, accent }: { label: string; value: number; accent?: boolean }) {
+  return (
+    <div style={{
+      borderRadius: 10,
+      border: '1px solid var(--card-border)',
+      background: 'var(--card-bg)',
+      padding: '16px 20px',
+    }}>
+      <div style={{
+        fontSize: 10, fontWeight: 700, letterSpacing: '0.09em',
+        textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 8,
+      }}>
+        {label}
+      </div>
+      <div style={{
+        fontFamily: 'var(--font-geist-mono), monospace',
+        fontSize: 36,
+        fontWeight: 700,
+        fontVariantNumeric: 'tabular-nums',
+        letterSpacing: '-0.04em',
+        lineHeight: 1,
+        color: accent && value > 0 ? 'var(--accent)' : 'var(--foreground)',
+      }}>
+        {value}
+      </div>
+    </div>
+  );
+}
+
+function ActionBtn({ children, onClick, disabled, variant }: {
+  children: React.ReactNode;
+  onClick: () => void;
+  disabled?: boolean;
+  variant: 'primary' | 'ghost';
+}) {
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      style={{
+        padding: '7px 16px',
+        borderRadius: 7,
+        fontSize: 13,
+        fontWeight: 600,
+        cursor: disabled ? 'not-allowed' : 'pointer',
+        opacity: disabled ? 0.5 : 1,
+        transition: 'all 150ms ease',
+        border: variant === 'primary' ? '1px solid var(--accent)' : '1px solid var(--card-border)',
+        background: variant === 'primary' ? 'var(--accent-dim)' : 'var(--card-bg)',
+        color: variant === 'primary' ? 'var(--accent)' : 'var(--muted)',
+      }}
+      onMouseEnter={e => {
+        if (disabled) return;
+        const el = e.currentTarget as HTMLButtonElement;
+        if (variant === 'primary') {
+          el.style.background = 'var(--accent)';
+          el.style.color = '#fff';
+        } else {
+          el.style.color = 'var(--foreground)';
+          el.style.borderColor = 'var(--muted)';
+        }
+      }}
+      onMouseLeave={e => {
+        if (disabled) return;
+        const el = e.currentTarget as HTMLButtonElement;
+        if (variant === 'primary') {
+          el.style.background = 'var(--accent-dim)';
+          el.style.color = 'var(--accent)';
+        } else {
+          el.style.color = 'var(--muted)';
+          el.style.borderColor = 'var(--card-border)';
+        }
+      }}
+    >
+      {children}
+    </button>
   );
 }

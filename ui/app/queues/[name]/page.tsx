@@ -11,8 +11,8 @@ export default async function QueuePage({ params }: QueuePageProps) {
   const queueName = decodeURIComponent(name);
 
   return (
-    <div className="min-h-screen p-8">
-      <div className="max-w-6xl mx-auto">
+    <div className="min-h-screen" style={{ padding: '32px 24px' }}>
+      <div style={{ maxWidth: 860, margin: '0 auto' }}>
         <QueueDetails queueName={queueName} />
       </div>
     </div>

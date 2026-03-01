@@ -3,8 +3,8 @@ import { PageHeader } from '@/components/page-header';
 
 export default function Home() {
   return (
-    <div className="min-h-screen p-8">
-      <div className="max-w-6xl mx-auto">
+    <div className="min-h-screen" style={{ padding: '32px 24px' }}>
+      <div style={{ maxWidth: 860, margin: '0 auto' }}>
         <PageHeader />
         <QueueList />
       </div>

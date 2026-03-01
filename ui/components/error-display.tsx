@@ -5,52 +5,51 @@ interface ErrorDisplayProps {
 
 export function ErrorDisplay({ message, onRetry }: ErrorDisplayProps) {
   return (
-    <div
-      className="p-6 rounded-lg border text-center"
-      style={{
-        backgroundColor: 'var(--card-bg)',
-        borderColor: 'var(--error)',
-      }}
-    >
-      <div className="mb-4">
-        <svg
-          className="w-12 h-12 mx-auto"
-          style={{ color: 'var(--error)' }}
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-          />
-        </svg>
+    <div style={{
+      padding: '28px 24px',
+      borderRadius: 10,
+      border: '1px solid var(--error)',
+      background: 'rgba(251,75,110,0.05)',
+      animation: 'fadeUp 300ms ease both',
+    }}>
+      <div style={{ display: 'flex', gap: 14, alignItems: 'flex-start' }}>
+        <div style={{
+          width: 32, height: 32, borderRadius: 8, flexShrink: 0,
+          background: 'rgba(251,75,110,0.1)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontSize: 15, color: 'var(--error)',
+        }}>
+          ⚠
+        </div>
+        <div style={{ flex: 1 }}>
+          <p style={{ fontWeight: 600, color: 'var(--error)', marginBottom: 4, fontSize: 14 }}>
+            Connection Error
+          </p>
+          <p style={{ color: 'var(--muted)', fontSize: 13, lineHeight: 1.5, marginBottom: onRetry ? 16 : 0 }}>
+            {message}
+          </p>
+          {onRetry && (
+            <button
+              onClick={onRetry}
+              style={{
+                padding: '6px 16px',
+                borderRadius: 6,
+                border: '1px solid var(--error)',
+                background: 'rgba(251,75,110,0.08)',
+                color: 'var(--error)',
+                fontSize: 13,
+                fontWeight: 600,
+                cursor: 'pointer',
+                transition: 'background 150ms',
+              }}
+              onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(251,75,110,0.18)'; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(251,75,110,0.08)'; }}
+            >
+              Retry
+            </button>
+          )}
+        </div>
       </div>
-      <h3 className="text-lg font-semibold mb-2" style={{ color: 'var(--error)' }}>
-        Error
-      </h3>
-      <p className="mb-4" style={{ color: 'var(--muted)' }}>
-        {message}
-      </p>
-      {message.includes('localhost:9324') && (
-        <p className="text-sm mb-4" style={{ color: 'var(--muted)' }}>
-          Make sure ElasticMQ is running on localhost:9324
-        </p>
-      )}
-      {onRetry && (
-        <button
-          onClick={onRetry}
-          className="px-4 py-2 rounded font-medium transition-colors"
-          style={{
-            backgroundColor: 'var(--accent)',
-            color: 'white',
-          }}
-        >
-          Retry
-        </button>
-      )}
     </div>
   );
 }
