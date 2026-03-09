@@ -4,7 +4,7 @@ FROM ghcr.io/graalvm/graalvm-ce:ol8-java11-22.1.0 AS builder
 WORKDIR /build
 
 RUN gu install native-image && \
-    ln -s /opt/graalvm-ce-22.1.0*/bin/native-image /usr/local/bin/native-image
+    ln -s /opt/graalvm-ce-*/bin/native-image /usr/local/bin/native-image
 
 COPY server/target/elasticmq-server.jar elasticmq.jar
 COPY native-server/target/elasticmq-native-server.jar elasticmq-native.jar
