@@ -29,7 +29,7 @@ export function GenerateMessagesModal({ queueName, queueUrl, onClose }: Generate
   const uid = useId();
   const bodyRef = useRef<HTMLTextAreaElement>(null);
   const onCloseRef = useRef(onClose);
-  onCloseRef.current = onClose;
+  useEffect(() => { onCloseRef.current = onClose; });
   const abortRef = useRef(false);
 
   // Form state
@@ -54,13 +54,13 @@ export function GenerateMessagesModal({ queueName, queueUrl, onClose }: Generate
   const usesIndex = body.includes('$i');
 
   useEffect(() => {
-    setMounted(true);
+    const raf = requestAnimationFrame(() => setMounted(true));
     bodyRef.current?.focus();
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onCloseRef.current(); };
     document.addEventListener('keydown', onKey);
     document.body.style.overflow = 'hidden';
-    return () => { document.removeEventListener('keydown', onKey); document.body.style.overflow = ''; };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    return () => { cancelAnimationFrame(raf); document.removeEventListener('keydown', onKey); document.body.style.overflow = ''; };
+  }, []);
 
   const addAttr = () => setAttrs(prev => [...prev, { name: '', dataType: 'String', value: '' }]);
   const removeAttr = (i: number) => setAttrs(prev => prev.filter((_, idx) => idx !== i));
@@ -287,7 +287,7 @@ export function GenerateMessagesModal({ queueName, queueUrl, onClose }: Generate
                   />
                   {usesIndex && (
                     <p style={{ fontSize: 11, color: 'var(--accent)', marginTop: 5 }}>
-                      <code style={{ fontFamily: 'var(--font-geist-mono), monospace' }}>$i</code> will be replaced with each message's index (1 to {repeatNum})
+                      <code style={{ fontFamily: 'var(--font-geist-mono), monospace' }}>$i</code> will be replaced with each message&apos;s index (1 to {repeatNum})
                     </p>
                   )}
                 </Field>

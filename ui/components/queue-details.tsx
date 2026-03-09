@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { QueueData } from '@/lib/types';
 import { getQueueDetails } from '@/lib/actions';
@@ -27,7 +27,7 @@ export function QueueDetails({ queueName }: QueueDetailsProps) {
   const [showReceive, setShowReceive] = useState(false);
   const [showGenerate, setShowGenerate] = useState(false);
 
-  const fetchQueueDetails = async (showLoading = false) => {
+  const fetchQueueDetails = useCallback(async (showLoading = false) => {
     try {
       if (showLoading) setIsRefreshing(true);
       const data = await getQueueDetails(queueName);
@@ -41,13 +41,13 @@ export function QueueDetails({ queueName }: QueueDetailsProps) {
       setIsLoading(false);
       if (showLoading) setIsRefreshing(false);
     }
-  };
+  }, [queueName]);
 
   useEffect(() => {
     fetchQueueDetails();
     const interval = setInterval(() => fetchQueueDetails(), 1000);
     return () => clearInterval(interval);
-  }, [queueName]);
+  }, [fetchQueueDetails]);
 
   const navBar = (
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 28 }}>

@@ -65,7 +65,7 @@ export function SendMessageModal({ queueName, queueUrl, onClose }: SendMessageMo
       document.removeEventListener('keydown', onKey);
       document.body.style.overflow = '';
     };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
 
   // Attribute helpers
   const addAttr = () =>
