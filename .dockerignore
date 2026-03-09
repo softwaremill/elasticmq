@@ -5,4 +5,3 @@ ui/.next
 ui/.env.local
 integration-tests
 performance-tests
-examples
