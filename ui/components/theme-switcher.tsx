@@ -1,9 +1,12 @@
 'use client'
 
+import { useState, useEffect } from 'react';
 import { useTheme } from '@/lib/theme-provider';
 
 export function ThemeSwitcher() {
   const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { const raf = requestAnimationFrame(() => setMounted(true)); return () => cancelAnimationFrame(raf); }, []);
 
   const options = [
     { value: 'light', label: '☀', title: 'Light' },
@@ -23,7 +26,7 @@ export function ThemeSwitcher() {
       }}
     >
       {options.map(o => {
-        const active = theme === o.value;
+        const active = mounted && theme === o.value;
         return (
           <button
             key={o.value}
