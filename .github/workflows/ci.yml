@@ -34,7 +34,7 @@ jobs:
 
       - uses: actions/setup-node@v3
         with:
-          node-version: 16
+          node-version: 24
 
       - name: Cache SBT
         id: cache-sbt
@@ -76,7 +76,7 @@ jobs:
 
       - uses: actions/setup-node@v3
         with:
-          node-version: 16
+          node-version: 24
 
       - name: Cache SBT
         id: cache-sbt
@@ -118,7 +118,7 @@ jobs:
 
       - uses: actions/setup-node@v3
         with:
-          node-version: 16
+          node-version: 24
 
       - name: Cache SBT
         id: cache-sbt
@@ -160,7 +160,7 @@ jobs:
 
       - uses: actions/setup-node@v3
         with:
-          node-version: 16
+          node-version: 24
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -229,7 +229,7 @@ jobs:
 
       - uses: actions/setup-node@v3
         with:
-          node-version: 16
+          node-version: 24
 
       - name: Cache SBT
         id: cache-sbt
@@ -269,7 +269,7 @@ jobs:
 
       - uses: actions/setup-node@v3
         with:
-          node-version: 16
+          node-version: 24
 
       - name: Cache sbt
         uses: actions/cache@v4
@@ -342,7 +342,7 @@ jobs:
 
       - uses: actions/setup-node@v3
         with:
-          node-version: 16
+          node-version: 24
 
       - name: Cache sbt
         uses: actions/cache@v4

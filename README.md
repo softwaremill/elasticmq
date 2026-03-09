@@ -604,19 +604,7 @@ The aggregate report can be found at target/scala-2.12/scoverage-report/index.ht
 
 # UI
 
-![ElasticMQ-UI](ui.png)
-
-UI provides real-time information about the state of messages and attributes of queue.
-
-### Using UI in docker image
-
-UI is bundled with both standard and native images. It is exposed on the address that is defined in rest-stats configuration (by default 0.0.0.0:9325).
-
-In order to turn it off, you have to switch it off via rest-stats.enabled flag.
-
-### Using UI locally
-
-You can start UI via `yarn start` command in the `ui` directory, which will run on localhost:3000 address.
+WIP: New UI is being built using AI.
 
 # MBeans
 
