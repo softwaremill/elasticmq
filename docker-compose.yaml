@@ -4,8 +4,7 @@ services:
     # Alternatively, use the native (GraalVM) image:
     # image: softwaremill/elasticmq-native:latest
     ports:
-      - "9324:9324"   # SQS-compatible API
-      - "9325:9325"   # stats / legacy UI
+      - "9324:9324"
     volumes:
       - elasticmq-data:/data
     # Mount a custom config file (optional):

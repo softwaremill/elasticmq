@@ -75,17 +75,16 @@ java -jar server/target/scala-2.13/elasticmq-server-*.jar
 **Stand-alone:**
 ```bash
 java -jar elasticmq-server-$VERSION.jar
-# Binds to localhost:9324 (SQS) and localhost:9325 (UI/stats)
+# Binds to localhost:9324 (SQS)
 ```
 
 **Docker:**
 ```bash
-docker run -p 9324:9324 -p 9325:9325 softwaremill/elasticmq
+docker run -p 9324:9324 softwaremill/elasticmq
 ```
 
 **Exposed ports:**
 - `9324` — SQS-compatible REST API
-- `9325` — UI / stats endpoint
 
 ### Configuration
 

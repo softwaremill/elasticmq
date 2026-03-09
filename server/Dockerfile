@@ -7,7 +7,7 @@ WORKDIR /opt/elasticmq
 COPY server/target/elasticmq-server.jar elasticmq-server.jar
 COPY server/docker/elasticmq.conf /opt/elasticmq.conf
 
-EXPOSE 9324 9325
+EXPOSE 9324
 VOLUME /data
 
 USER elasticmq

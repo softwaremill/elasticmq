@@ -35,8 +35,6 @@ As ElasticMQ implements a subset of the [SQS](http://aws.amazon.com/sqs/) query 
 alternative both for testing purposes (ElasticMQ is easily embeddable) and for creating systems which work both within
 and outside of the Amazon infrastructure.
 
-A simple UI is available for viewing real-time queue statistics.
-
 # Community
 
 * [Issues](https://github.com/adamw/elasticmq/issues)
@@ -84,12 +82,6 @@ rest-sqs {
   bind-hostname = "0.0.0.0"
   # Possible values: relaxed, strict
   sqs-limits = strict
-}
-
-rest-stats {
-  enabled = true
-  bind-port = 9325
-  bind-hostname = "0.0.0.0"
 }
 
 # Should the node-address be generated from the bind port/hostname
@@ -303,7 +295,7 @@ server.stopAndWait()
 If you need to bind to a different host/port, there are configuration methods on the builder:
 
 ```scala
-val server = SQSRestServerBuilder.withPort(9325).withInterface("localhost").start()
+val server = SQSRestServerBuilder.withPort(9321).withInterface("localhost").start()
 // ... use ...
 server.stopAndWait()
 ```
@@ -375,10 +367,10 @@ queue = client.get_queue_by_name(QueueName='queue1')
 A Docker image built using GraalVM's [native-image](https://blog.softwaremill.com/small-fast-docker-images-using-graalvms-native-image-99c0bc92e70b),
 is available as [`softwaremill/elasticmq-native`](https://hub.docker.com/r/softwaremill/elasticmq-native/). 
 
-To start, run (9324 is the default REST-SQS API port; 9325 is the default UI port, exposing it is fully optional):
+To start, run:
 
 ```
-docker run -p 9324:9324 -p 9325:9325 softwaremill/elasticmq-native
+docker run -p 9324:9324 softwaremill/elasticmq-native
 ```
 
 The `elasticmq-native` image is much smaller (30MB vs 240MB) and starts up much faster (milliseconds instead of seconds),
@@ -386,20 +378,20 @@ comparing to the full JVM version (see below).  Custom configuration can be prov
 configuration file (see above) and using it when running the container:
 
 ```
-docker run -p 9324:9324 -p 9325:9325 -v `pwd`/custom.conf:/opt/elasticmq.conf softwaremill/elasticmq-native
+docker run -p 9324:9324 -v `pwd`/custom.conf:/opt/elasticmq.conf softwaremill/elasticmq-native
 ```
 
 If messages storage is enabled, the directory containing database files can also be mapped:
 
 ```
-docker run -p 9324:9324 -p 9325:9325 -v `pwd`/custom.conf:/opt/elasticmq.conf -v `pwd`/data:/data softwaremill/elasticmq-native
+docker run -p 9324:9324 -v `pwd`/custom.conf:/opt/elasticmq.conf -v `pwd`/data:/data softwaremill/elasticmq-native
 ```
 
 It is possible to specify custom `logback.xml` config as well to enable additional debug logging for example.
 Some logback features, like console coloring, will not work due to missing classes in the native image. This can only be solved by building a custom image.
 
 ```
-docker run -p 9324:9324 -p 9325:9325 -v `pwd`/custom.conf:/opt/elasticmq.conf -v `pwd`/logback.xml:/opt/logback.xml softwaremill/elasticmq-native
+docker run -p 9324:9324 -v `pwd`/custom.conf:/opt/elasticmq.conf -v `pwd`/logback.xml:/opt/logback.xml softwaremill/elasticmq-native
 ```
 
 As for now to run `elasticmq-native` docker image on ARM based CPU one have to install `Qemu` docker for `amd64`.
@@ -414,19 +406,19 @@ A Docker image is built on each release an pushed as [`softwaremill/elasticmq`](
 Run using:
 
 ```
-docker run -p 9324:9324 -p 9325:9325 softwaremill/elasticmq
+docker run -p 9324:9324 softwaremill/elasticmq
 ```
 
 The image uses default configuration. Custom configuration can be provided (e.g. to change the port, or create queues on startup) by creating a custom configuration file (see above) and using it when running the container:
 
 ```
-docker run -p 9324:9324 -p 9325:9325 -v `pwd`/custom.conf:/opt/elasticmq.conf softwaremill/elasticmq
+docker run -p 9324:9324 -v `pwd`/custom.conf:/opt/elasticmq.conf softwaremill/elasticmq
 ```
 
 If messages storage is enabled, the directory containing database files can also be mapped:
 
 ```
-docker run -p 9324:9324 -p 9325:9325 -v `pwd`/custom.conf:/opt/elasticmq.conf -v `pwd`/data:/data softwaremill/elasticmq
+docker run -p 9324:9324 -v `pwd`/custom.conf:/opt/elasticmq.conf -v `pwd`/data:/data softwaremill/elasticmq
 ```
 
 To pass additional java system properties (`-D`) you need to prepare an `application.ini` file. For instance, to set custom `logback.xml` configuration, `application.ini` should look as follows:
@@ -439,7 +431,7 @@ application.ini:
 
 To run container with customized `application.ini` file (and custom `logback.xml` in this particular case) the following command should be used:
 ```
-docker run -v `pwd`/application.ini:/opt/docker/conf/application.ini -v `pwd`/logback.xml:/opt/docker/conf/logback.xml -p 9324:9324 -p 9325:9325 softwaremill/elasticmq
+docker run -v `pwd`/application.ini:/opt/docker/conf/application.ini -v `pwd`/logback.xml:/opt/docker/conf/logback.xml -p 9324:9324 softwaremill/elasticmq
 ```
 
 In case of problems with file mounting on Windows place the `application.ini` and the configuration file `elasticmq.conf` in the same directory then mount this directory to /opt/docker/conf:

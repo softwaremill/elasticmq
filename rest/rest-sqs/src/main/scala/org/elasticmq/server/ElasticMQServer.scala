@@ -10,7 +10,6 @@ import org.elasticmq.actor.reply._
 import org.elasticmq.persistence.file.ConfigBasedQueuePersistenceActor
 import org.elasticmq.persistence.sql.SqlQueuePersistenceActor
 import org.elasticmq.rest.sqs.{SQSRestServer, TheSQSRestServerBuilder}
-import org.elasticmq.rest.stats.{StatisticsRestServer, TheStatisticsRestServerBuilder}
 import org.elasticmq.server.config.ElasticMQServerConfig
 import org.elasticmq.util.{Logging, NowProvider}
 
@@ -28,14 +27,11 @@ class ElasticMQServer(config: ElasticMQServerConfig) extends Logging {
     val queueConfigStore: Option[ActorRef] = createQueueEventListener
     val queueManagerActor = createBase(queueConfigStore)
     val restServerOpt = optionallyStartRestSqs(queueManagerActor, queueConfigStore)
-    val restStatisticsServerOpt = optionallyStartRestStatistics(queueManagerActor)
 
     val shutdown = () => {
       val futureTerminationRestSQS = restServerOpt.map(_.stopAndGetFuture()).getOrElse(Future.unit)
-      val futureTerminationRestStats = restStatisticsServerOpt.map(_.stopAndGetFuture()).getOrElse(Future.unit)
       val eventualTerminated = for {
         _ <- futureTerminationRestSQS
-        _ <- futureTerminationRestStats
         ac <- actorSystem.terminate()
       } yield ac
       Await.result(eventualTerminated, Inf)
@@ -93,27 +89,6 @@ class ElasticMQServer(config: ElasticMQServerConfig) extends Logging {
         config.awsRegion,
         config.awsAccountId,
         queueConfigStore
-      ).start()
-
-      val _: Http.ServerBinding = server.waitUntilStarted()
-
-      Some(server)
-    } else {
-      None
-    }
-  }
-
-  private def optionallyStartRestStatistics(queueManagerActor: ActorRef): Option[StatisticsRestServer] = {
-    if (config.restStatisticsConfiguration.enabled) {
-
-      val server = TheStatisticsRestServerBuilder(
-        actorSystem,
-        queueManagerActor,
-        config.restStatisticsConfiguration.bindHostname,
-        config.restStatisticsConfiguration.bindPort,
-        config.awsRegion,
-        config.awsAccountId,
-        config.nodeAddress.contextPath
       ).start()
 
       val _: Http.ServerBinding = server.waitUntilStarted()

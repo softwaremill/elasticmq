@@ -42,7 +42,7 @@ COPY --from=builder /build/elasticmq-native-server /opt/elasticmq/bin/elasticmq-
 COPY server/docker/elasticmq.conf /opt/elasticmq.conf
 COPY server/src/main/resources/logback.xml /opt/logback.xml
 
-EXPOSE 9324 9325
+EXPOSE 9324
 VOLUME /data
 
 ENTRYPOINT ["/sbin/tini", "--", "/opt/elasticmq/bin/elasticmq-native-server", \
