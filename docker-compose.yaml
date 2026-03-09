@@ -1,0 +1,25 @@
+services:
+  elasticmq:
+    image: softwaremill/elasticmq:latest
+    # Alternatively, use the native (GraalVM) image:
+    # image: softwaremill/elasticmq-native:latest
+    ports:
+      - "9324:9324"   # SQS-compatible API
+      - "9325:9325"   # stats / legacy UI
+    volumes:
+      - elasticmq-data:/data
+    # Mount a custom config file (optional):
+    # volumes:
+    #   - ./elasticmq.conf:/opt/elasticmq.conf
+
+  elasticmq-ui:
+    image: softwaremill/elasticmq-ui:latest
+    ports:
+      - "3000:3000"
+    environment:
+      SQS_ENDPOINT: http://elasticmq:9324
+    depends_on:
+      - elasticmq
+
+volumes:
+  elasticmq-data:

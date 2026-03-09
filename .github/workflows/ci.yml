@@ -241,14 +241,25 @@ jobs:
             ~/.coursier
           key: ${{ runner.os }}-sbt-${{ env.scala }}-${{ hashFiles('**/build.sbt') }}
 
-      - name: Compile
-        run: sbt compile
+      - name: Build server assembly JAR
+        run: sbt "project server; assembly"
 
-      - name: Build jvm docker image
-        run: sbt "project server; assembly; Docker / publishLocal"
+      - name: Build native-server package JAR
+        run: sbt "project nativeServer; package"
+
+      - name: Normalize JAR filenames
+        run: |
+          cp server/target/scala-2.13/elasticmq-server-assembly-*.jar server/target/elasticmq-server.jar
+          cp native-server/target/scala-2.13/elasticmq-native-server_2.13-*.jar native-server/target/elasticmq-native-server.jar
+
+      - name: Build JVM docker image
+        run: docker build -f server/Dockerfile -t softwaremill/elasticmq:local .
 
       - name: Build native docker image
-        run: sbt "project nativeServer; Docker / publishLocal"
+        run: docker build -f native-server/Dockerfile -t softwaremill/elasticmq-native:local .
+
+      - name: Build UI docker image
+        run: docker build -f ui/Dockerfile -t softwaremill/elasticmq-ui:local ui/
 
   publish-jar:
     needs: [ci-2-12, ci-2-13, ci-3, ci-docker, ci-native-image-agent-config-verification]
@@ -359,11 +370,50 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Publish JVM docker image
-        run: sbt "project server; assembly; Docker / publish"
+      - name: Build server assembly JAR
+        run: sbt "project server; assembly"
 
-      - name: Publish JVM native docker image
-        run: sbt "project nativeServer; assembly; Docker / publish"
+      - name: Build native-server package JAR
+        run: sbt "project nativeServer; package"
+
+      - name: Normalize JAR filenames
+        run: |
+          cp server/target/scala-2.13/elasticmq-server-assembly-*.jar server/target/elasticmq-server.jar
+          cp native-server/target/scala-2.13/elasticmq-native-server_2.13-*.jar native-server/target/elasticmq-native-server.jar
+
+      - name: Extract version from tag
+        run: |
+          VERSION=${GITHUB_REF/refs\/tags\/v/}
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          if [[ "${VERSION,,}" != *rc* ]]; then
+            echo "TAG_LATEST=true" >> $GITHUB_ENV
+          else
+            echo "TAG_LATEST=false" >> $GITHUB_ENV
+          fi
+
+      - name: Set up Docker Buildx
+        run: |
+          if ! docker buildx inspect multi-arch-builder 2>/dev/null; then
+            docker buildx create --use --name multi-arch-builder
+          fi
+
+      - name: Publish JVM docker image
+        run: |
+          TAGS="-t softwaremill/elasticmq:${{ env.VERSION }}"
+          [[ "${{ env.TAG_LATEST }}" == "true" ]] && TAGS="$TAGS -t softwaremill/elasticmq:latest"
+          docker buildx build --platform=linux/arm64,linux/amd64 --push $TAGS -f server/Dockerfile .
+
+      - name: Publish native docker image
+        run: |
+          TAGS="-t softwaremill/elasticmq-native:${{ env.VERSION }}"
+          [[ "${{ env.TAG_LATEST }}" == "true" ]] && TAGS="$TAGS -t softwaremill/elasticmq-native:latest"
+          docker buildx build --platform=linux/arm64,linux/amd64 --push $TAGS -f native-server/Dockerfile .
+
+      - name: Publish UI docker image
+        run: |
+          TAGS="-t softwaremill/elasticmq-ui:${{ env.VERSION }}"
+          [[ "${{ env.TAG_LATEST }}" == "true" ]] && TAGS="$TAGS -t softwaremill/elasticmq-ui:latest"
+          docker buildx build --platform=linux/arm64,linux/amd64 --push $TAGS -f ui/Dockerfile ui/
 
   label:
     # only for PRs by softwaremill-ci
