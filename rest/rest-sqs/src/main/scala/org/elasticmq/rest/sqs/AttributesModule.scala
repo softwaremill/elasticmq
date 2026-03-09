@@ -109,7 +109,7 @@ trait AttributesModule {
     def read(parameters: Map[String, String]): Map[String, String] = {
       def collect(suffix: Int, acc: Map[String, String]): Map[String, String] = {
         parameters.get("Attribute." + suffix + ".Name") match {
-          case None => acc
+          case None     => acc
           case Some(an) =>
             collect(suffix + 1, acc + (an -> parameters("Attribute." + suffix + ".Value")))
         }

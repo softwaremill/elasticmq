@@ -12,3 +12,8 @@ project/boot
 .bsp
 .db
 .env
+
+.metals
+.bloop
+.vscode
+.cursor

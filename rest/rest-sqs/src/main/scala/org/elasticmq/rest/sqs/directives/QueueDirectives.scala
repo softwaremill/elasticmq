@@ -49,10 +49,10 @@ trait QueueDirectives {
 
     defaultMatcher(Uri(queueUrl).path) match {
       case Matched(_, (_, queueName)) => provide(queueName): Directive1[String]
-      case Unmatched =>
+      case Unmatched                  =>
         noAccountIdMatcher(Uri(queueUrl).path) match {
           case Matched(_, Tuple1(queueName)) => provide(queueName)
-          case Unmatched =>
+          case Unmatched                     =>
             reject(
               MalformedQueryParamRejection(
                 QueueUrlParameter,

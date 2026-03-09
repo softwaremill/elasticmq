@@ -1,1 +1,0 @@
-ElasticMQ is a message queue server with Scala, Java and an Amazon SQS-compatible interfaces. Runs stand-alone or embedded, with optional journalling and data replication. For more information see [http://www.elasticmq.org](http://www.elasticmq.org).

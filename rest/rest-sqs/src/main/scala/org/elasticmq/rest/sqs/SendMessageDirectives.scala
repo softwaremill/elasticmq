@@ -145,7 +145,7 @@ trait SendMessageDirectives {
       .get(AwsTraceHeaderSystemAttribute)
       .map {
         case StringMessageAttribute(value, _) => TracingId(value)
-        case NumberMessageAttribute(_, _) =>
+        case NumberMessageAttribute(_, _)     =>
           throw SQSException.invalidParameter(
             s"$AwsTraceHeaderSystemAttribute should be declared as a String, instead it was recognized as a Number"
           )
@@ -158,7 +158,7 @@ trait SendMessageDirectives {
 
     NewMessageData(
       None,
-      body,
+      MessageContent(body),
       messageAttributes,
       nextDelivery,
       messageGroupId,
@@ -174,7 +174,7 @@ trait SendMessageDirectives {
       queueActor: ActorRef,
       message: NewMessageData
   ): Future[MessageSendOutcome] = {
-    val digest = md5Digest(message.content)
+    val digest = md5Digest(message.content.value)
 
     val messageAttributeDigest = if (message.messageAttributes.isEmpty) {
       None

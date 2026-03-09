@@ -462,7 +462,14 @@
   "name":"org.apache.commons.logging.impl.Log4JLogger"
 },
 {
+  "name":"org.apache.commons.logging.impl.Log4jApiLogFactory"
+},
+{
   "name":"org.apache.commons.logging.impl.LogFactoryImpl",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"org.apache.commons.logging.impl.Slf4jLogFactory",
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
 {

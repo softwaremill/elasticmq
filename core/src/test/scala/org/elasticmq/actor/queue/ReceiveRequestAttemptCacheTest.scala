@@ -1,7 +1,7 @@
 package org.elasticmq.actor.queue
 
 import scala.collection.mutable
-import org.elasticmq.NeverReceived
+import org.elasticmq.{MessageContent, NeverReceived}
 import org.elasticmq.actor.queue.ReceiveRequestAttemptCache.ReceiveFailure.Invalid
 import org.elasticmq.util.MutableNowProvider
 import org.scalatest.funsuite.AnyFunSuite
@@ -21,7 +21,7 @@ class ReceiveRequestAttemptCacheTest extends AnyFunSuite with Matchers {
       "id-1",
       mutable.Buffer.empty,
       1L,
-      "content",
+      MessageContent("content"),
       Map.empty,
       nowProvider.now,
       orderIndex = 0,
@@ -72,7 +72,7 @@ class ReceiveRequestAttemptCacheTest extends AnyFunSuite with Matchers {
       "id-1",
       mutable.Buffer.empty,
       1L,
-      "content",
+      MessageContent("content"),
       Map.empty,
       nowProvider.now,
       orderIndex = 0,

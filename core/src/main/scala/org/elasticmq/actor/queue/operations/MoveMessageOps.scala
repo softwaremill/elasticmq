@@ -22,7 +22,7 @@ trait MoveMessageOps extends Logging {
         if (queueData.isFifo) {
           CommonOperations.wasRegistered(messageWithSourceQueueName.toNewMessageData, fifoMessagesHistory) match {
             case Some(_) => ResultWithEvents.empty
-            case None =>
+            case None    =>
               logger.debug(s"Moved message (${messageWithSourceQueueName.id}) from FIFO queue to ${queueData.name}")
               moveMessageToQueue(regenerateDeduplicationId(messageWithSourceQueueName))
           }

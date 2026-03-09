@@ -23,7 +23,7 @@ trait CancelMessageMoveTaskDirectives { this: ElasticMQDirectives with QueueURLM
         await(
           queueManagerActor ? CancelMessageMoveTask(params.TaskHandle)
         ) match {
-          case Left(e: ElasticMQError) => throw e.toSQSException
+          case Left(e: ElasticMQError)                 => throw e.toSQSException
           case Right(approximateNumberOfMessagesMoved) =>
             complete(CancelMessageMoveTaskResponse(approximateNumberOfMessagesMoved))
         }

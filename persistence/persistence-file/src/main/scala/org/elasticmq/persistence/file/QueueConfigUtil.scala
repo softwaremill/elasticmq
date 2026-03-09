@@ -25,7 +25,7 @@ object QueueConfigUtil extends Logging {
         .toMap
     ) match {
       case Success(value) => getQueuesFromConfig(value)
-      case Failure(ex) => {
+      case Failure(ex)    => {
         logger.error("Failed to extract queue configuration", ex)
         throw new IllegalStateException(ex)
       }
@@ -35,7 +35,7 @@ object QueueConfigUtil extends Logging {
   private def getQueuesFromConfig(queuesConfig: Map[String, ConfigValue]): List[CreateQueueMetadata] = {
     Try(getQueuesFromConfigUnsafe(queuesConfig)) match {
       case Success(value) => value
-      case Failure(ex) => {
+      case Failure(ex)    => {
         logger.error("Failed to create queues from config", ex)
         throw new IllegalStateException(ex)
       }

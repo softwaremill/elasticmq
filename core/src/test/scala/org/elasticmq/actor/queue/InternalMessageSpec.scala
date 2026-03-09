@@ -1,6 +1,6 @@
 package org.elasticmq.actor.queue
 
-import org.elasticmq.NeverReceived
+import org.elasticmq.{MessageContent, NeverReceived}
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 
@@ -16,7 +16,7 @@ class InternalMessageSpec extends AnyFunSuite with Matchers {
       id = "id",
       deliveryReceipts = mutable.Buffer.empty,
       nextDelivery = 0L,
-      content = "content",
+      content = MessageContent("content"),
       messageAttributes = Map.empty,
       created = freezedDateTime,
       orderIndex = 100,
@@ -44,7 +44,7 @@ class InternalMessageSpec extends AnyFunSuite with Matchers {
       id = "id",
       deliveryReceipts = mutable.Buffer.empty,
       nextDelivery = 0L,
-      content = "content",
+      content = MessageContent("content"),
       messageAttributes = Map.empty,
       created = freezedDateTime,
       orderIndex = 100,

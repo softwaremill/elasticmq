@@ -1,4 +1,0 @@
-New features:
-
-* journalling (makes mostly sense for the in-memory storage), providing data persistence across server restarts. Combined with replication provides a system with very high message durability, both when the whole cluster is restarted and when an individual cluster node crashes.
-* stand-alone server distribution. Download archives: [.zip](https://github.com/downloads/adamw/elasticmq/elasticmq-0.5.zip) or [.tar.gz](https://github.com/downloads/adamw/elasticmq/elasticmq-0.5.tar.gz). Typesafe configuration using Ostrich.

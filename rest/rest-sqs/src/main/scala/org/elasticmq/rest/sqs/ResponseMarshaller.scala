@@ -25,7 +25,7 @@ trait ResponseMarshaller { this: RespondDirectives =>
   ): Marshaller[T, RequestEntity] =
     marshallerDependencies.protocol match {
       case AWSProtocol.`AWSJsonProtocol1.0` => sprayJsonMarshaller[T]
-      case _ =>
+      case _                                =>
         namespace { ns =>
           Marshaller.withFixedContentType[T, RequestEntity](`text/xml(UTF-8)`) { t =>
             val xml = xmlSerializer.toXml(t) % ns

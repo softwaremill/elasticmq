@@ -27,7 +27,7 @@ trait DeleteMessageBatchDirectives {
           val result = queueActor ? DeleteMessage(DeliveryReceipt(receiptHandle))
 
           result.flatMap {
-            case Right(_) => Future.successful(BatchDeleteMessageResponseEntry(id))
+            case Right(_)            => Future.successful(BatchDeleteMessageResponseEntry(id))
             case Left(invalidHandle) =>
               Future.failed(invalidHandle.toSQSException)
           }

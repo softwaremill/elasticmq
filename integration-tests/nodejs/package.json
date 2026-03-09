@@ -1,0 +1,26 @@
+{
+  "name": "elasticmq-integration-tests-nodejs",
+  "version": "1.0.0",
+  "description": "ElasticMQ integration tests using Node.js AWS SDK",
+  "license": "Apache-2.0",
+  "author": "",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
+    "test:local": "USE_LOCAL_SERVER=true node --experimental-vm-modules node_modules/jest/bin/jest.js",
+    "test:native": "ELASTICMQ_IMAGE=softwaremill/elasticmq-native:latest node --experimental-vm-modules node_modules/jest/bin/jest.js",
+    "test:watch": "node --experimental-vm-modules node_modules/jest/bin/jest.js --watch",
+    "test:coverage": "node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage",
+    "test:verbose": "DEBUG=testcontainers* node --experimental-vm-modules node_modules/jest/bin/jest.js --verbose --runInBand",
+    "test:local:verbose": "USE_LOCAL_SERVER=true node --experimental-vm-modules node_modules/jest/bin/jest.js --verbose --runInBand",
+    "test:native:verbose": "ELASTICMQ_IMAGE=softwaremill/elasticmq-native:latest DEBUG=testcontainers* node --experimental-vm-modules node_modules/jest/bin/jest.js --verbose --runInBand"
+  },
+  "dependencies": {
+    "@aws-sdk/client-sqs": "^3.990.0"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "testcontainers": "^10.13.0"
+  }
+}

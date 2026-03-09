@@ -35,7 +35,7 @@ case object StrictSQSLimits extends Limits {
     RangeLimit(-BigDecimal.valueOf(10).pow(128), BigDecimal.valueOf(10).pow(126))
   )
   override val messageWaitTimeLimit: Limit[RangeLimit[Long]] = LimitedValue(RangeLimit(0L, 20L))
-  override val maxMessageLength: Limit[Int] = LimitedValue(262144)
+  override val maxMessageLength: Limit[Int] = LimitedValue(1024 * 1024)
 }
 case object RelaxedSQSLimits extends Limits {
   override val queueNameLengthLimit: Limit[Int] = NoLimit

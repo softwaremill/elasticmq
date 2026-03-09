@@ -450,7 +450,7 @@ In case of problems with file mounting on Windows place the `application.ini` an
 Another option is to use custom `Dockerfile`:
 
 ```
-FROM openjdk:8-jre-alpine
+FROM eclipse-temurin:11-jdk-noble
 
 ARG ELASTICMQ_VERSION
 ENV ELASTICMQ_VERSION ${ELASTICMQ_VERSION}
@@ -546,7 +546,7 @@ Publishing Docker image for two different platforms: `amd64` and `arm64` is poss
 Docker Buildx is included in Docker Desktop and Docker Linux packages when installed using the DEB or RPM packages. `build.sbt` has following setup:
 
 * `dockerBuildxSettings` creates Docker Buildx instance
-* Docker base image is `openjdk:11-jdk-stretch` which supports multi-arch images
+* Docker base image is `eclipse-temurin:11-jdk-noble` which supports multi-arch images
 * `dockerBuildCommand` is extended with operator `buildx`
 * `dockerBuildOptions` has two additional parameters: `--platform=linux/arm64,linux/amd64` and `--push`
 

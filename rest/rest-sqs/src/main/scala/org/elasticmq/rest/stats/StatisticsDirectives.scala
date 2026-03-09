@@ -81,7 +81,7 @@ trait StatisticsDirectives extends StatisticsJsonFormat {
     queueActorAndDataFromQueueName(queueName) { (queueActor, queueData) =>
       onComplete(getQueryResponseWithAttributesFuture(queueName, queueActor, queueData)) {
         case Success(value) => complete(value)
-        case Failure(ex) =>
+        case Failure(ex)    =>
           logger.error(s"Error while loading statistics for queue ${queueName}", ex)
           complete(NotFound, s"Can't load data for queue ${queueName}")
       }

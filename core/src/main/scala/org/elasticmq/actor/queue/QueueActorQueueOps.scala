@@ -10,7 +10,7 @@ trait QueueActorQueueOps extends Logging {
 
   def receiveAndReplyQueueMsg[T](msg: QueueQueueMsg[T]): ReplyAction[T] =
     msg match {
-      case GetQueueData() => queueData
+      case GetQueueData()                                                   => queueData
       case UpdateQueueDefaultVisibilityTimeout(newDefaultVisibilityTimeout) =>
         logger.info(s"${queueData.name}: Updating default visibility timeout to $newDefaultVisibilityTimeout")
         queueData = queueData.copy(defaultVisibilityTimeout = newDefaultVisibilityTimeout)
@@ -40,7 +40,7 @@ trait QueueActorQueueOps extends Logging {
         messageQueue.clear()
         fifoMessagesHistory = FifoDeduplicationIdsHistory.newHistory()
       case GetQueueStatistics(deliveryTime) => getQueueStatistics(deliveryTime)
-      case UpdateQueueTags(newQueueTags) =>
+      case UpdateQueueTags(newQueueTags)    =>
         logger.info(s"${queueData.name} Adding and Updating tags ${newQueueTags}")
         queueData = queueData.copy(tags = queueData.tags ++ newQueueTags)
       case RemoveQueueTags(tagsToRemove) =>
