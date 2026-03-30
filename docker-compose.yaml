@@ -1,18 +1,14 @@
 services:
   elasticmq:
-    image: softwaremill/elasticmq:latest
-    # Alternatively, use the native (GraalVM) image:
-    # image: softwaremill/elasticmq-native:latest
+    image: softwaremill/elasticmq-native:1.7.0-rc1
     ports:
       - "9324:9324"
     volumes:
+      - ./examples/elasticmq.conf:/opt/elasticmq.conf
       - elasticmq-data:/data
-    # Mount a custom config file (optional):
-    # volumes:
-    #   - ./elasticmq.conf:/opt/elasticmq.conf
 
   elasticmq-ui:
-    image: softwaremill/elasticmq-ui:latest
+    image: softwaremill/elasticmq-ui:1.7.0-rc1
     ports:
       - "3000:3000"
     environment:
