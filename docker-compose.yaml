@@ -1,0 +1,20 @@
+services:
+  elasticmq:
+    image: softwaremill/elasticmq-native:1.7.0-rc1
+    ports:
+      - "9324:9324"
+    volumes:
+      - ./examples/elasticmq.conf:/opt/elasticmq.conf
+      - elasticmq-data:/data
+
+  elasticmq-ui:
+    image: softwaremill/elasticmq-ui:1.7.0-rc1
+    ports:
+      - "3000:3000"
+    environment:
+      SQS_ENDPOINT: http://elasticmq:9324
+    depends_on:
+      - elasticmq
+
+volumes:
+  elasticmq-data:

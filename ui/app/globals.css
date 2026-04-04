@@ -1,0 +1,109 @@
+@import "tailwindcss";
+
+/* ── Light theme ─────────────────────────────────────── */
+:root {
+  --background: #edf2fb;
+  --foreground: #0b1829;
+  --card-bg: #ffffff;
+  --card-border: #bfcfe8;
+  --card-hover: #f3f7ff;
+  --accent: #0284c7;
+  --accent-dim: rgba(2, 132, 199, 0.08);
+  --accent-bright: #0ea5e9;
+  --error: #e02046;
+  --muted: #5a7898;
+  --orange: #d96010;
+  --green: #06a87a;
+}
+
+/* ── Tailwind token bridge ───────────────────────────── */
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card-bg: var(--card-bg);
+  --color-card-border: var(--card-border);
+  --color-accent: var(--accent);
+  --color-error: var(--error);
+  --color-muted: var(--muted);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --font-display: var(--font-outfit);
+}
+
+/* ── Dark theme via system preference ───────────────── */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --background: #06101f;
+    --foreground: #d4e5f7;
+    --card-bg: #0c1a2e;
+    --card-border: #172d4d;
+    --card-hover: #101f38;
+    --accent: #00c8e0;
+    --accent-dim: rgba(0, 200, 224, 0.10);
+    --accent-bright: #22d9ef;
+    --error: #fb4b6e;
+    --muted: #4d7090;
+    --orange: #f97316;
+    --green: #10d9a0;
+  }
+}
+
+/* ── Dark theme via manual selection ────────────────── */
+:root[data-theme="dark"] {
+  --background: #06101f;
+  --foreground: #d4e5f7;
+  --card-bg: #0c1a2e;
+  --card-border: #172d4d;
+  --card-hover: #101f38;
+  --accent: #00c8e0;
+  --accent-dim: rgba(0, 200, 224, 0.10);
+  --accent-bright: #22d9ef;
+  --error: #fb4b6e;
+  --muted: #4d7090;
+  --orange: #f97316;
+  --green: #10d9a0;
+}
+
+/* ── Base ────────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+}
+
+/* Dot-grid texture for dark mode — manual selection */
+:root[data-theme="dark"] body {
+  background-image: radial-gradient(rgba(0, 200, 224, 0.055) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+
+/* Dot-grid texture for dark mode — system preference */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) body {
+    background-image: radial-gradient(rgba(0, 200, 224, 0.055) 1px, transparent 1px);
+    background-size: 28px 28px;
+  }
+}
+
+/* ── Scrollbar ───────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--card-border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+
+/* ── Animations ─────────────────────────────────────── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.3; }
+}
