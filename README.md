@@ -35,36 +35,31 @@ As ElasticMQ implements a subset of the [SQS](http://aws.amazon.com/sqs/) query 
 alternative both for testing purposes (ElasticMQ is easily embeddable) and for creating systems which work both within
 and outside of the Amazon infrastructure.
 
-A simple UI is available for viewing real-time queue statistics.
-
 # Community
 
 * [Issues](https://github.com/adamw/elasticmq/issues)
 * [Discussions & help](https://softwaremill.community/c/elasticmq/7)
 
-# Installation: stand-alone
+# Running locally
 
-You can download the stand-alone distribution here:
+The easiest way to run ElasticMQ locally is with Docker Compose. Clone the repository and run:
+
 ```bash
-wget https://s3-eu-west-1.amazonaws.com/softwaremill-public/elasticmq-server-$VERSION.jar
+docker compose up
 ```
 
-Java 8 or above is required for running the server.
+This starts two services as defined in [`docker-compose.yaml`](docker-compose.yaml):
 
-Simply run the jar and you should get a working server, which binds to `localhost:9324`:
-    
-```
-java -jar elasticmq-server-$VERSION.jar
-```
+| Service | Port | Description |
+|---------|------|-------------|
+| `elasticmq` | `9324` | SQS-compatible REST API (`softwaremill/elasticmq-native`) |
+| `elasticmq-ui` | `3000` | Web UI for monitoring and managing queues (`softwaremill/elasticmq-ui`) |
 
-ElasticMQ uses [Typesafe Config](https://github.com/typesafehub/config) for configuration. To specify custom
-configuration values, create a file (e.g. `custom.conf`), fill it in with the desired values, and pass it to the server:
+Once running, open **http://localhost:3000** in your browser to explore the UI — you can view queues, send messages, and monitor queue statistics in real time.
 
-```
-java -Dconfig.file=custom.conf -jar elasticmq-server-$VERSION.jar
-```
+The compose file mounts `examples/elasticmq.conf` as the server configuration and persists queue data in a named Docker volume (`elasticmq-data`). To use a different configuration, edit `examples/elasticmq.conf` or point the volume mount at your own config file.
 
-The config file may contain any configuration for Akka and ElasticMQ. Current ElasticMQ configuration values are:
+ElasticMQ uses [Typesafe Config](https://github.com/typesafehub/config) for configuration. Current ElasticMQ configuration values are:
 
 ```
 include classpath("application.conf")
@@ -86,12 +81,6 @@ rest-sqs {
   sqs-limits = strict
 }
 
-rest-stats {
-  enabled = true
-  bind-port = 9325
-  bind-hostname = "0.0.0.0"
-}
-
 # Should the node-address be generated from the bind port/hostname
 # Set this to true e.g. when assigning port automatically by using port 0.
 generate-node-address = false
@@ -109,14 +98,6 @@ aws {
   region = us-west-2
   accountId = 000000000000
 }
-```
-
-You can also provide an alternative [Logback](http://logback.qos.ch/) configuration file (the
-[default](server/src/main/resources/logback.xml) is configured to
-log INFO logs and above to the console):
-
-```
-java -Dlogback.configurationFile=my_logback.xml -jar elasticmq-server-$VERSION.jar
 ```
 
 # How are queue URLs created
@@ -303,7 +284,7 @@ server.stopAndWait()
 If you need to bind to a different host/port, there are configuration methods on the builder:
 
 ```scala
-val server = SQSRestServerBuilder.withPort(9325).withInterface("localhost").start()
+val server = SQSRestServerBuilder.withPort(9321).withInterface("localhost").start()
 // ... use ...
 server.stopAndWait()
 ```
@@ -369,106 +350,6 @@ client = boto3.resource('sqs',
                         use_ssl=False)
 queue = client.get_queue_by_name(QueueName='queue1')
 ```
-
-# ElasticMQ via Docker
-
-A Docker image built using GraalVM's [native-image](https://blog.softwaremill.com/small-fast-docker-images-using-graalvms-native-image-99c0bc92e70b),
-is available as [`softwaremill/elasticmq-native`](https://hub.docker.com/r/softwaremill/elasticmq-native/). 
-
-To start, run (9324 is the default REST-SQS API port; 9325 is the default UI port, exposing it is fully optional):
-
-```
-docker run -p 9324:9324 -p 9325:9325 softwaremill/elasticmq-native
-```
-
-The `elasticmq-native` image is much smaller (30MB vs 240MB) and starts up much faster (milliseconds instead of seconds),
-comparing to the full JVM version (see below).  Custom configuration can be provided by creating a custom
-configuration file (see above) and using it when running the container:
-
-```
-docker run -p 9324:9324 -p 9325:9325 -v `pwd`/custom.conf:/opt/elasticmq.conf softwaremill/elasticmq-native
-```
-
-If messages storage is enabled, the directory containing database files can also be mapped:
-
-```
-docker run -p 9324:9324 -p 9325:9325 -v `pwd`/custom.conf:/opt/elasticmq.conf -v `pwd`/data:/data softwaremill/elasticmq-native
-```
-
-It is possible to specify custom `logback.xml` config as well to enable additional debug logging for example.
-Some logback features, like console coloring, will not work due to missing classes in the native image. This can only be solved by building a custom image.
-
-```
-docker run -p 9324:9324 -p 9325:9325 -v `pwd`/custom.conf:/opt/elasticmq.conf -v `pwd`/logback.xml:/opt/logback.xml softwaremill/elasticmq-native
-```
-
-As for now to run `elasticmq-native` docker image on ARM based CPU one have to install `Qemu` docker for `amd64`.
-
-```
-docker run --privileged --rm tonistiigi/binfmt --install amd64
-```
-
-# ElasticMQ via Docker (full JVM)
-
-A Docker image is built on each release an pushed as [`softwaremill/elasticmq`](https://hub.docker.com/r/softwaremill/elasticmq/). 
-Run using:
-
-```
-docker run -p 9324:9324 -p 9325:9325 softwaremill/elasticmq
-```
-
-The image uses default configuration. Custom configuration can be provided (e.g. to change the port, or create queues on startup) by creating a custom configuration file (see above) and using it when running the container:
-
-```
-docker run -p 9324:9324 -p 9325:9325 -v `pwd`/custom.conf:/opt/elasticmq.conf softwaremill/elasticmq
-```
-
-If messages storage is enabled, the directory containing database files can also be mapped:
-
-```
-docker run -p 9324:9324 -p 9325:9325 -v `pwd`/custom.conf:/opt/elasticmq.conf -v `pwd`/data:/data softwaremill/elasticmq
-```
-
-To pass additional java system properties (`-D`) you need to prepare an `application.ini` file. For instance, to set custom `logback.xml` configuration, `application.ini` should look as follows:
-
-```
-application.ini:
--Dconfig.file=/opt/elasticmq.conf
--Dlogback.configurationFile=/opt/docker/conf/logback.xml
-```
-
-To run container with customized `application.ini` file (and custom `logback.xml` in this particular case) the following command should be used:
-```
-docker run -v `pwd`/application.ini:/opt/docker/conf/application.ini -v `pwd`/logback.xml:/opt/docker/conf/logback.xml -p 9324:9324 -p 9325:9325 softwaremill/elasticmq
-```
-
-In case of problems with file mounting on Windows place the `application.ini` and the configuration file `elasticmq.conf` in the same directory then mount this directory to /opt/docker/conf:
-```
---mount type=bind,source="$(pwd)"/somefolder,target=/opt/docker/conf.
-```
-
-Another option is to use custom `Dockerfile`:
-
-```
-FROM eclipse-temurin:11-jdk-noble
-
-ARG ELASTICMQ_VERSION
-ENV ELASTICMQ_VERSION ${ELASTICMQ_VERSION}
-
-RUN apk add --no-cache curl ca-certificates
-RUN mkdir -p /opt/elasticmq/log /opt/elasticmq/lib /opt/elasticmq/conf
-RUN curl -sfLo /opt/elasticmq/lib/elasticmq.jar https://s3-eu-west-1.amazonaws.com/softwaremill-public/elasticmq-server-${ELASTICMQ_VERSION}.jar
-
-COPY ${PWD}/elasticmq.conf /opt/elasticmq/conf/elasticmq.conf
-
-WORKDIR /opt/elasticmq
-
-EXPOSE 9324
-
-ENTRYPOINT [ "/usr/bin/java", "-Dconfig.file=/opt/elasticmq/conf/elasticmq.conf", "-jar", "/opt/elasticmq/lib/elasticmq.jar" ]
-```
-
-and override the entrypoint passing the required properties.
 
 # Performance
 
@@ -604,19 +485,26 @@ The aggregate report can be found at target/scala-2.12/scoverage-report/index.ht
 
 # UI
 
-![ElasticMQ-UI](ui.png)
+ElasticMQ ships with a web UI for monitoring and managing queues. The UI provides real-time queue statistics, message sending, and queue details.
 
-UI provides real-time information about the state of messages and attributes of queue.
+**Via Docker Compose** (see [Running locally](#running-locally)): the UI starts automatically and is available at **http://localhost:3000**.
 
-### Using UI in docker image
+**Via npm** (for development):
 
-UI is bundled with both standard and native images. It is exposed on the address that is defined in rest-stats configuration (by default 0.0.0.0:9325).
+```bash
+cd ui
+npm install
+npm run dev
+```
 
-In order to turn it off, you have to switch it off via rest-stats.enabled flag.
+The dev server starts at **http://localhost:3000** and expects ElasticMQ running at `http://localhost:9324`. Configure the endpoint in `ui/.env.local` if needed:
 
-### Using UI locally
-
-You can start UI via `yarn start` command in the `ui` directory, which will run on localhost:3000 address.
+```bash
+SQS_ENDPOINT=http://localhost:9324
+AWS_REGION=elasticmq
+AWS_ACCESS_KEY_ID=x
+AWS_SECRET_ACCESS_KEY=x
+```
 
 # MBeans
 

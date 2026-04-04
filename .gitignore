@@ -12,6 +12,7 @@ project/boot
 .bsp
 .db
 .env
+.data
 
 .metals
 .bloop
