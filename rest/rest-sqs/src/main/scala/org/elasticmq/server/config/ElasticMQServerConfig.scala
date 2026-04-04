@@ -43,15 +43,6 @@ class ElasticMQServerConfig(config: Config) extends Logging {
 
   val restSqs = new RestSqsConfiguration
 
-  class RestStatisticsConfiguration {
-    private val subConfig = config.getConfig("rest-stats")
-    val enabled = subConfig.getBoolean("enabled")
-    val bindPort = subConfig.getInt("bind-port")
-    val bindHostname = subConfig.getString("bind-hostname")
-  }
-
-  val restStatisticsConfiguration = new RestStatisticsConfiguration
-
   private val queuesStorage = config.getConfig("queues-storage")
   val queuesStoragePath: String = queuesStorage.getString("path")
   val queuesStorageEnabled: Boolean = queuesStorage.getBoolean("enabled")

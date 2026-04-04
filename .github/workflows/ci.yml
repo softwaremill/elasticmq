@@ -32,10 +32,6 @@ jobs:
           distribution: 'temurin'
           java-version: '8'
 
-      - uses: actions/setup-node@v3
-        with:
-          node-version: 16
-
       - name: Cache SBT
         id: cache-sbt
         uses: actions/cache@v4
@@ -73,10 +69,6 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '8'
-
-      - uses: actions/setup-node@v3
-        with:
-          node-version: 16
 
       - name: Cache SBT
         id: cache-sbt
@@ -116,10 +108,6 @@ jobs:
           distribution: 'temurin'
           java-version: '8'
 
-      - uses: actions/setup-node@v3
-        with:
-          node-version: 16
-
       - name: Cache SBT
         id: cache-sbt
         uses: actions/cache@v4
@@ -133,6 +121,40 @@ jobs:
       - name: Run tests
         id: run-tests
         run: SCALA_MAJOR_VERSION=${{ env.scala }} sbt root/test
+
+  ci-ui:
+    # run on 1) push, 2) external PRs, 3) softwaremill-ci PRs
+    # do not run on internal, non-steward PRs since those will be run by push to branch
+    if: |
+      github.event_name == 'push' ||
+      github.event.pull_request.head.repo.full_name != github.repository ||
+      github.event.pull_request.user.login == 'softwaremill-ci'
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check-out repository
+        uses: actions/checkout@v2
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 24
+
+      - name: Cache node modules
+        uses: actions/cache@v4
+        with:
+          path: ui/node_modules
+          key: ${{ runner.os }}-node-${{ hashFiles('ui/package-lock.json') }}
+
+      - name: Install dependencies
+        working-directory: ui
+        run: npm ci
+
+      - name: Lint
+        working-directory: ui
+        run: npm run lint
+
+      - name: Build (type-check)
+        working-directory: ui
+        run: npm run build
 
   ci-native-image-agent-config-verification:
     # run on 1) push, 2) external PRs, 3) softwaremill-ci PRs
@@ -157,10 +179,6 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '11'
-
-      - uses: actions/setup-node@v3
-        with:
-          node-version: 16
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -227,10 +245,6 @@ jobs:
           distribution: 'temurin'
           java-version: '11'
 
-      - uses: actions/setup-node@v3
-        with:
-          node-version: 16
-
       - name: Cache SBT
         id: cache-sbt
         uses: actions/cache@v4
@@ -241,17 +255,28 @@ jobs:
             ~/.coursier
           key: ${{ runner.os }}-sbt-${{ env.scala }}-${{ hashFiles('**/build.sbt') }}
 
-      - name: Compile
-        run: sbt compile
+      - name: Build server assembly JAR
+        run: sbt "project server; assembly"
 
-      - name: Build jvm docker image
-        run: sbt "project server; assembly; Docker / publishLocal"
+      - name: Build native-server package JAR
+        run: sbt "project nativeServer; package"
+
+      - name: Normalize JAR filenames
+        run: |
+          cp server/target/scala-2.13/elasticmq-server-assembly-*.jar server/target/elasticmq-server.jar
+          cp native-server/target/scala-2.13/elasticmq-native-server_2.13-*.jar native-server/target/elasticmq-native-server.jar
+
+      - name: Build JVM docker image
+        run: docker build -f server/Dockerfile -t softwaremill/elasticmq:local .
 
       - name: Build native docker image
-        run: sbt "project nativeServer; Docker / publishLocal"
+        run: docker build -f native-server/Dockerfile -t softwaremill/elasticmq-native:local .
+
+      - name: Build UI docker image
+        run: docker build -f ui/Dockerfile -t softwaremill/elasticmq-ui:local ui/
 
   publish-jar:
-    needs: [ci-2-12, ci-2-13, ci-3, ci-docker, ci-native-image-agent-config-verification]
+    needs: [ci-2-12, ci-2-13, ci-3, ci-ui, ci-docker, ci-native-image-agent-config-verification]
     if: github.event_name != 'pull_request' && (startsWith(github.ref, 'refs/tags/v'))
     runs-on: ubuntu-24.04
     steps:
@@ -266,10 +291,6 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '8'
-
-      - uses: actions/setup-node@v3
-        with:
-          node-version: 16
 
       - name: Cache sbt
         uses: actions/cache@v4
@@ -323,10 +344,12 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  publish-docker:
-    needs: [ci-2-12, ci-2-13, ci-3, ci-docker, ci-native-image-agent-config-verification]
+  publish-docker-build-jars:
+    needs: [ci-2-12, ci-2-13, ci-3, ci-ui, ci-docker, ci-native-image-agent-config-verification]
     if: github.event_name != 'pull_request' && (startsWith(github.ref, 'refs/tags/v'))
     runs-on: ubuntu-24.04
+    env:
+      scala: 2.13
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -340,10 +363,6 @@ jobs:
           distribution: 'temurin'
           java-version: '11'
 
-      - uses: actions/setup-node@v3
-        with:
-          node-version: 16
-
       - name: Cache sbt
         uses: actions/cache@v4
         with:
@@ -353,17 +372,148 @@ jobs:
             ~/.coursier
           key: ${{ runner.os }}-sbt-release-${{ hashFiles('**/build.sbt') }}
 
+      - name: Build server assembly JAR
+        run: sbt "project server; assembly"
+
+      - name: Build native-server package JAR
+        run: sbt "project nativeServer; package"
+
+      - name: Prepare artifacts
+        run: |
+          mkdir dist
+          cp server/target/scala-2.13/elasticmq-server-assembly-*.jar dist/elasticmq-server.jar
+          cp native-server/target/scala-2.13/elasticmq-native-server_2.13-*.jar dist/elasticmq-native-server.jar
+
+      - name: Upload JARs
+        uses: actions/upload-artifact@v4
+        with:
+          name: docker-jars
+          path: dist/
+
+  publish-docker-amd64:
+    needs: publish-docker-build-jars
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Download JARs
+        uses: actions/download-artifact@v4
+        with:
+          name: docker-jars
+          path: dist/
+
+      - name: Restore JAR paths
+        run: |
+          mkdir -p server/target native-server/target
+          cp dist/elasticmq-server.jar server/target/
+          cp dist/elasticmq-native-server.jar native-server/target/
+
+      - name: Extract version from tag
+        run: |
+          VERSION=${GITHUB_REF/refs\/tags\/v/}
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+
       - name: Login to DockerHub
         uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3, specifically v3.6.0
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Publish JVM docker image
-        run: sbt "project server; assembly; Docker / publish"
+      - name: Build and push JVM image (amd64)
+        run: |
+          docker build -t softwaremill/elasticmq:${{ env.VERSION }}-amd64 -f server/Dockerfile .
+          docker push softwaremill/elasticmq:${{ env.VERSION }}-amd64
 
-      - name: Publish JVM native docker image
-        run: sbt "project nativeServer; assembly; Docker / publish"
+      - name: Build and push native image (amd64)
+        run: |
+          docker build -t softwaremill/elasticmq-native:${{ env.VERSION }}-amd64 -f native-server/Dockerfile .
+          docker push softwaremill/elasticmq-native:${{ env.VERSION }}-amd64
+
+      - name: Build and push UI image (amd64)
+        run: |
+          docker build -t softwaremill/elasticmq-ui:${{ env.VERSION }}-amd64 -f ui/Dockerfile ui/
+          docker push softwaremill/elasticmq-ui:${{ env.VERSION }}-amd64
+
+  publish-docker-arm64:
+    needs: publish-docker-build-jars
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Download JARs
+        uses: actions/download-artifact@v4
+        with:
+          name: docker-jars
+          path: dist/
+
+      - name: Restore JAR paths
+        run: |
+          mkdir -p server/target native-server/target
+          cp dist/elasticmq-server.jar server/target/
+          cp dist/elasticmq-native-server.jar native-server/target/
+
+      - name: Extract version from tag
+        run: |
+          VERSION=${GITHUB_REF/refs\/tags\/v/}
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+
+      - name: Login to DockerHub
+        uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3, specifically v3.6.0
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push JVM image (arm64)
+        run: |
+          docker build -t softwaremill/elasticmq:${{ env.VERSION }}-arm64 -f server/Dockerfile .
+          docker push softwaremill/elasticmq:${{ env.VERSION }}-arm64
+
+      - name: Build and push native image (arm64)
+        run: |
+          docker build -t softwaremill/elasticmq-native:${{ env.VERSION }}-arm64 -f native-server/Dockerfile .
+          docker push softwaremill/elasticmq-native:${{ env.VERSION }}-arm64
+
+      - name: Build and push UI image (arm64)
+        run: |
+          docker build -t softwaremill/elasticmq-ui:${{ env.VERSION }}-arm64 -f ui/Dockerfile ui/
+          docker push softwaremill/elasticmq-ui:${{ env.VERSION }}-arm64
+
+  publish-docker-manifest:
+    needs: [publish-docker-amd64, publish-docker-arm64]
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Login to DockerHub
+        uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3, specifically v3.6.0
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Extract version from tag
+        run: |
+          VERSION=${GITHUB_REF/refs\/tags\/v/}
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          if [[ "${VERSION,,}" != *rc* ]]; then
+            echo "TAG_LATEST=true" >> $GITHUB_ENV
+          else
+            echo "TAG_LATEST=false" >> $GITHUB_ENV
+          fi
+
+      - name: Create and push multi-arch manifests
+        run: |
+          for IMAGE in softwaremill/elasticmq softwaremill/elasticmq-native softwaremill/elasticmq-ui; do
+            docker buildx imagetools create \
+              -t ${IMAGE}:${{ env.VERSION }} \
+              ${IMAGE}:${{ env.VERSION }}-amd64 \
+              ${IMAGE}:${{ env.VERSION }}-arm64
+            if [[ "${{ env.TAG_LATEST }}" == "true" ]]; then
+              docker buildx imagetools create \
+                -t ${IMAGE}:latest \
+                ${IMAGE}:${{ env.VERSION }}-amd64 \
+                ${IMAGE}:${{ env.VERSION }}-arm64
+            fi
+          done
 
   label:
     # only for PRs by softwaremill-ci
@@ -374,6 +524,6 @@ jobs:
   auto-merge:
     # only for PRs by softwaremill-ci
     if: github.event.pull_request.user.login == 'softwaremill-ci'
-    needs: [ci-2-12, ci-2-13, ci-3, ci-docker, ci-native-image-agent-config-verification, label]
+    needs: [ci-2-12, ci-2-13, ci-3, ci-ui, ci-docker, ci-native-image-agent-config-verification, label]
     uses: softwaremill/github-actions-workflows/.github/workflows/auto-merge.yml@main
     secrets: inherit          
