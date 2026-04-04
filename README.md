@@ -500,7 +500,7 @@ npm run dev
 The dev server starts at **http://localhost:3000** and expects ElasticMQ running at `http://localhost:9324`. Configure the endpoint in `ui/.env.local` if needed:
 
 ```bash
-NEXT_PUBLIC_SQS_ENDPOINT=http://localhost:9324
+SQS_ENDPOINT=http://localhost:9324
 AWS_REGION=elasticmq
 AWS_ACCESS_KEY_ID=x
 AWS_SECRET_ACCESS_KEY=x

@@ -47,7 +47,7 @@ export function GenerateMessagesModal({ queueName, queueUrl, onClose }: Generate
   const [mounted, setMounted] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [progress, setProgress] = useState<Progress | null>(null);
-  const [done, setDone] = useState<{ sent: number; failed: number } | null>(null);
+  const [done, setDone] = useState<{ sent: number; failed: number; aborted: boolean } | null>(null);
 
   const fifo = isFifo(queueName);
   const repeatNum = Math.max(1, parseInt(repeat) || 1);
@@ -112,7 +112,7 @@ export function GenerateMessagesModal({ queueName, queueUrl, onClose }: Generate
     }
 
     setProgress(null);
-    setDone({ sent: totalSent, failed: totalFailed });
+    setDone({ sent: totalSent, failed: totalFailed, aborted: abortRef.current });
   };
 
   const handleReset = () => {
@@ -181,9 +181,9 @@ export function GenerateMessagesModal({ queueName, queueUrl, onClose }: Generate
             {done ? (
               /* ── Done state ── */
               <div style={{ padding: 32, textAlign: 'center' }}>
-                <div style={{ fontSize: 40, marginBottom: 12 }}>{done.failed === 0 ? '✓' : '⚠'}</div>
+                <div style={{ fontSize: 40, marginBottom: 12 }}>{done.aborted ? '◼' : done.failed === 0 ? '✓' : '⚠'}</div>
                 <p style={{ fontSize: 16, fontWeight: 700, color: 'var(--foreground)', marginBottom: 6 }}>
-                  Generation Complete
+                  {done.aborted ? 'Stopped' : 'Generation Complete'}
                 </p>
                 <div style={{ display: 'inline-flex', gap: 24, margin: '16px 0 24px', padding: '14px 24px', borderRadius: 10, background: 'var(--card-bg)', border: '1px solid var(--card-border)' }}>
                   <div>
@@ -372,7 +372,11 @@ export function GenerateMessagesModal({ queueName, queueUrl, onClose }: Generate
                 {repeatNum} message{repeatNum !== 1 ? 's' : ''} · {Math.ceil(repeatNum / 10)} batch{Math.ceil(repeatNum / 10) !== 1 ? 'es' : ''}
               </span>
               <div style={{ display: 'flex', gap: 10 }}>
-                <Btn variant="secondary" onClick={onClose} disabled={isSending}>Cancel</Btn>
+                {isSending ? (
+                  <Btn variant="secondary" onClick={() => { abortRef.current = true; }}>Stop</Btn>
+                ) : (
+                  <Btn variant="secondary" onClick={onClose}>Cancel</Btn>
+                )}
                 <Btn variant="primary" onClick={handleGenerate} disabled={isSending || !body.trim() || (fifo && !groupId.trim())}>
                   {isSending ? `Sending ${progress!.batch}/${progress!.totalBatches}…` : `Generate ${repeatNum}`}
                 </Btn>

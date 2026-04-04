@@ -167,7 +167,7 @@ npm run lint
 **File:** `ui/.env.local` (gitignored)
 
 ```bash
-NEXT_PUBLIC_SQS_ENDPOINT=http://localhost:9324
+SQS_ENDPOINT=http://localhost:9324
 AWS_REGION=elasticmq
 AWS_ACCESS_KEY_ID=x
 AWS_SECRET_ACCESS_KEY=x
