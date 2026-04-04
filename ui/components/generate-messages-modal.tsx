@@ -68,7 +68,6 @@ export function GenerateMessagesModal({ queueName, queueUrl, onClose }: Generate
     setAttrs(prev => prev.map((a, idx) => idx === i ? { ...a, [field]: value } : a));
 
   const handleGenerate = async () => {
-    if (!body.trim()) { setError('Message body is required.'); return; }
     setError(null);
     setDone(null);
     abortRef.current = false;
@@ -264,6 +263,13 @@ export function GenerateMessagesModal({ queueName, queueUrl, onClose }: Generate
                   </Field>
                 </div>
 
+                {/* Message Group ID (FIFO only, above body) */}
+                {fifo && (
+                  <Field label="Message Group ID" hint="Required for FIFO" htmlFor={`${uid}-group`} required>
+                    <input id={`${uid}-group`} value={groupId} onChange={e => setGroupId(e.target.value)} disabled={isSending} placeholder="e.g. order-processing" style={{ ...inputStyle, fontFamily: 'monospace', fontSize: 13 }} />
+                  </Field>
+                )}
+
                 {/* Message body */}
                 <Field
                   label="Message Body"
@@ -347,10 +353,7 @@ export function GenerateMessagesModal({ queueName, queueUrl, onClose }: Generate
                       FIFO Options
                     </button>
                     {showFifo && (
-                      <div style={{ marginTop: 14, display: 'flex', flexDirection: 'column', gap: 14 }}>
-                        <Field label="Message Group ID" hint="Required for FIFO" htmlFor={`${uid}-group`} required>
-                          <input id={`${uid}-group`} value={groupId} onChange={e => setGroupId(e.target.value)} disabled={isSending} placeholder="e.g. order-processing" style={{ ...inputStyle, fontFamily: 'monospace', fontSize: 13 }} />
-                        </Field>
+                      <div style={{ marginTop: 14 }}>
                         <Field label="Deduplication ID Prefix" hint="Each message gets prefix_i — leave blank if ContentBasedDeduplication is enabled" htmlFor={`${uid}-dedup`}>
                           <input id={`${uid}-dedup`} value={dedupId} onChange={e => setDedupId(e.target.value)} disabled={isSending} placeholder="e.g. run-001 → run-001_1, run-001_2, …" style={{ ...inputStyle, fontFamily: 'monospace', fontSize: 13 }} />
                         </Field>
@@ -370,7 +373,7 @@ export function GenerateMessagesModal({ queueName, queueUrl, onClose }: Generate
               </span>
               <div style={{ display: 'flex', gap: 10 }}>
                 <Btn variant="secondary" onClick={onClose} disabled={isSending}>Cancel</Btn>
-                <Btn variant="primary" onClick={handleGenerate} disabled={isSending}>
+                <Btn variant="primary" onClick={handleGenerate} disabled={isSending || !body.trim() || (fifo && !groupId.trim())}>
                   {isSending ? `Sending ${progress!.batch}/${progress!.totalBatches}…` : `Generate ${repeatNum}`}
                 </Btn>
               </div>

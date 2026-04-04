@@ -78,10 +78,6 @@ export function SendMessageModal({ queueName, queueUrl, onClose }: SendMessageMo
     setAttrs(prev => prev.map((a, idx) => idx === i ? { ...a, [field]: value } : a));
 
   const handleSend = async () => {
-    if (!body.trim()) {
-      setError('Message body is required.');
-      return;
-    }
     setError(null);
     setSending(true);
     try {
@@ -223,6 +219,24 @@ export function SendMessageModal({ queueName, queueUrl, onClose }: SendMessageMo
                   <div style={{ padding: '10px 14px', borderRadius: 8, background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)', color: 'var(--error)', fontSize: 14 }}>
                     {error}
                   </div>
+                )}
+
+                {/* ── Message Group ID (FIFO only, above body) ── */}
+                {fifo && (
+                  <Field
+                    label="Message Group ID"
+                    hint="Required for FIFO — messages in the same group are processed in order"
+                    htmlFor={`${uid}-group`}
+                    required
+                  >
+                    <input
+                      id={`${uid}-group`}
+                      value={groupId}
+                      onChange={e => setGroupId(e.target.value)}
+                      placeholder="e.g. order-processing"
+                      style={{ ...inputStyle, fontFamily: 'monospace', fontSize: 13 }}
+                    />
+                  </Field>
                 )}
 
                 {/* ── Message Body ── */}
@@ -368,21 +382,7 @@ export function SendMessageModal({ queueName, queueUrl, onClose }: SendMessageMo
                     </button>
 
                     {showFifo && (
-                      <div style={{ marginTop: 14, display: 'flex', flexDirection: 'column', gap: 14 }}>
-                        <Field
-                          label="Message Group ID"
-                          hint="Required for FIFO — messages in the same group are processed in order"
-                          htmlFor={`${uid}-group`}
-                          required
-                        >
-                          <input
-                            id={`${uid}-group`}
-                            value={groupId}
-                            onChange={e => setGroupId(e.target.value)}
-                            placeholder="e.g. order-processing"
-                            style={{ ...inputStyle, fontFamily: 'monospace', fontSize: 13 }}
-                          />
-                        </Field>
+                      <div style={{ marginTop: 14 }}>
                         <Field
                           label="Message Deduplication ID"
                           hint="Prevents duplicate messages within a 5-minute window (required if ContentBasedDeduplication is disabled)"
@@ -413,7 +413,7 @@ export function SendMessageModal({ queueName, queueUrl, onClose }: SendMessageMo
               flexShrink: 0,
             }}>
               <Btn variant="secondary" onClick={onClose}>Cancel</Btn>
-              <Btn variant="primary" onClick={handleSend} disabled={sending}>
+              <Btn variant="primary" onClick={handleSend} disabled={sending || !body.trim() || (fifo && !groupId.trim())}>
                 {sending ? 'Sending…' : 'Send Message'}
               </Btn>
             </div>
