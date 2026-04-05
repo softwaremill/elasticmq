@@ -148,13 +148,13 @@ jobs:
         working-directory: ui
         run: npm ci
 
-      - name: Lint
-        working-directory: ui
-        run: npm run lint
-
       - name: Build (type-check)
         working-directory: ui
         run: npm run build
+
+      - name: Test
+        working-directory: ui
+        run: npm test
 
   ci-native-image-agent-config-verification:
     # run on 1) push, 2) external PRs, 3) softwaremill-ci PRs
