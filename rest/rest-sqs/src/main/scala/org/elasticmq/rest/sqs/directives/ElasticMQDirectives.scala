@@ -1,7 +1,7 @@
 package org.elasticmq.rest.sqs.directives
 
 import org.apache.pekko.http.scaladsl.server.{Directives, Route}
-import org.elasticmq.rest.sqs.{ActorSystemModule, ContextPathModule, QueueManagerActorModule}
+import org.elasticmq.rest.sqs.{ActorSystemModule, AutoCreateQueuesModule, ContextPathModule, QueueManagerActorModule}
 import org.elasticmq.util.Logging
 
 trait ElasticMQDirectives
@@ -14,6 +14,7 @@ trait ElasticMQDirectives
     with QueueManagerActorModule
     with ContextPathModule
     with ActorSystemModule
+    with AutoCreateQueuesModule
     with RejectionDirectives
     with Logging {
 
