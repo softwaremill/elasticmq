@@ -1,3 +1,5 @@
+import { TriangleAlert } from 'lucide-react';
+
 interface ErrorDisplayProps {
   message: string;
   onRetry?: () => void;
@@ -17,9 +19,9 @@ export function ErrorDisplay({ message, onRetry }: ErrorDisplayProps) {
           width: 32, height: 32, borderRadius: 8, flexShrink: 0,
           background: 'rgba(251,75,110,0.1)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: 15, color: 'var(--error)',
+          color: 'var(--error)',
         }}>
-          ⚠
+          <TriangleAlert size={16} />
         </div>
         <div style={{ flex: 1 }}>
           <p style={{ fontWeight: 600, color: 'var(--error)', marginBottom: 4, fontSize: 14 }}>

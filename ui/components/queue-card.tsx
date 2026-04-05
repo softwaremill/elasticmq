@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { Trash2, ArrowRight, ArrowUp, Zap } from 'lucide-react';
 import { QueueData } from '@/lib/types';
 import { deleteQueue } from '@/lib/actions';
 import { SendMessageModal } from './send-message-modal';
@@ -69,17 +70,15 @@ export function QueueCard({ queue, index = 0 }: QueueCardProps) {
                 {queue.name}
               </code>
             </div>
-            <svg
-              width="14" height="14" viewBox="0 0 14 14" fill="none"
+            <ArrowRight
+              size={14}
               style={{
                 flexShrink: 0, marginLeft: 12, marginTop: 2,
                 color: hovered ? 'var(--accent)' : 'var(--muted)',
                 transition: 'color 200ms, transform 200ms',
                 transform: hovered ? 'translateX(2px)' : 'translateX(0)',
               }}
-            >
-              <path d="M3 7h8M7.5 3.5L11 7l-3.5 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
+            />
           </div>
 
           {/* Stats row */}
@@ -112,12 +111,12 @@ export function QueueCard({ queue, index = 0 }: QueueCardProps) {
                 danger
               />
             ) : (
-              <CardBtn label="🗑" onClick={() => setConfirmDelete(true)} muted />
+              <CardBtn icon={<Trash2 size={12} />} onClick={() => setConfirmDelete(true)} muted />
             )}
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
-            <CardBtn label="Generate" onClick={() => setShowGenerate(true)} muted />
-            <CardBtn label="Send →" onClick={() => setShowModal(true)} />
+            <CardBtn label="Generate" icon={<Zap size={12} />} onClick={() => setShowGenerate(true)} muted />
+            <CardBtn label="Send" icon={<ArrowUp size={12} />} iconPosition="right" onClick={() => setShowModal(true)} />
           </div>
         </div>
       </div>
@@ -132,7 +131,10 @@ export function QueueCard({ queue, index = 0 }: QueueCardProps) {
   );
 }
 
-function CardBtn({ label, onClick, muted, danger }: { label: string; onClick: () => void; muted?: boolean; danger?: boolean }) {
+function CardBtn({ label, icon, iconPosition = 'left', onClick, muted, danger }: {
+  label?: string; icon?: React.ReactNode; iconPosition?: 'left' | 'right';
+  onClick: () => void; muted?: boolean; danger?: boolean;
+}) {
   const border = danger ? '1px solid var(--red, #e53e3e)' : muted ? '1px solid var(--card-border)' : '1px solid var(--accent)';
   const bg = danger ? 'rgba(229,62,62,0.1)' : muted ? 'transparent' : 'var(--accent-dim)';
   const color = danger ? 'var(--red, #e53e3e)' : muted ? 'var(--muted)' : 'var(--accent)';
@@ -140,9 +142,10 @@ function CardBtn({ label, onClick, muted, danger }: { label: string; onClick: ()
     <button
       onClick={e => { e.preventDefault(); onClick(); }}
       style={{
-        padding: '4px 12px', borderRadius: 6, fontSize: 12, fontWeight: 600, cursor: 'pointer',
+        height: 28, padding: '0 12px', borderRadius: 6, fontSize: 12, fontWeight: 600, cursor: 'pointer',
         letterSpacing: '0.02em', transition: 'background 150ms, color 150ms',
         border, background: bg, color,
+        display: 'flex', alignItems: 'center', gap: label && icon ? 4 : 0,
       }}
       onMouseEnter={e => {
         const el = e.currentTarget as HTMLButtonElement;
@@ -156,7 +159,9 @@ function CardBtn({ label, onClick, muted, danger }: { label: string; onClick: ()
         el.style.color = color;
       }}
     >
+      {icon && iconPosition === 'left' && icon}
       {label}
+      {icon && iconPosition === 'right' && icon}
     </button>
   );
 }

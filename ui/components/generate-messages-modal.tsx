@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef, useId } from 'react';
+import { X, Check, TriangleAlert, Square, ChevronRight } from 'lucide-react';
 import { sendMessageBatch } from '@/lib/actions';
 import { MessageAttributeEntry } from '@/lib/types';
 
@@ -172,7 +173,7 @@ export function GenerateMessagesModal({ queueName, queueUrl, onClose }: Generate
                 {fifo && <span style={{ marginLeft: 8, fontSize: 11, padding: '2px 7px', borderRadius: 4, background: 'rgba(139,92,246,0.12)', color: '#8b5cf6', fontFamily: 'sans-serif', fontWeight: 600, verticalAlign: 'middle', letterSpacing: '0.06em' }}>FIFO</span>}
               </h2>
             </div>
-            <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', padding: 4, lineHeight: 1, fontSize: 20 }} aria-label="Close">✕</button>
+            <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', padding: 4, lineHeight: 1, display: 'flex' }} aria-label="Close"><X size={18} /></button>
           </div>
 
           {/* Scrollable body */}
@@ -181,7 +182,9 @@ export function GenerateMessagesModal({ queueName, queueUrl, onClose }: Generate
             {done ? (
               /* ── Done state ── */
               <div style={{ padding: 32, textAlign: 'center' }}>
-                <div style={{ fontSize: 40, marginBottom: 12 }}>{done.aborted ? '◼' : done.failed === 0 ? '✓' : '⚠'}</div>
+                <div style={{ fontSize: 40, marginBottom: 12, display: 'flex', justifyContent: 'center', color: done.aborted ? 'var(--muted)' : done.failed === 0 ? 'var(--accent)' : 'var(--error)' }}>
+                  {done.aborted ? <Square size={40} /> : done.failed === 0 ? <Check size={40} /> : <TriangleAlert size={40} />}
+                </div>
                 <p style={{ fontSize: 16, fontWeight: 700, color: 'var(--foreground)', marginBottom: 6 }}>
                   {done.aborted ? 'Stopped' : 'Generation Complete'}
                 </p>
@@ -424,7 +427,7 @@ function Field({ label, hint, required, htmlFor, children }: { label: string; hi
 }
 
 function Arrow({ open, color = 'var(--muted)' }: { open: boolean; color?: string }) {
-  return <span style={{ display: 'inline-block', transform: open ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 160ms ease', color, fontSize: 10 }}>▶</span>;
+  return <span style={{ display: 'inline-flex', transform: open ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 160ms ease', color }}><ChevronRight size={12} /></span>;
 }
 
 function Btn({ variant, onClick, disabled, children }: { variant: 'primary' | 'secondary'; onClick: () => void; disabled?: boolean; children: React.ReactNode }) {

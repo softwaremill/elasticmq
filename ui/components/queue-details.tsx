@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { QueueData } from '@/lib/types';
+import { ArrowLeft, RefreshCw, ArrowDown, Zap, ArrowUp, Trash2 } from 'lucide-react';
 import { getQueueDetails, deleteQueue } from '@/lib/actions';
 import { LoadingSkeleton } from './loading-skeleton';
 import { ErrorDisplay } from './error-display';
@@ -73,7 +74,7 @@ export function QueueDetails({ queueName }: QueueDetailsProps) {
           (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--card-border)';
         }}
       >
-        ← Queues
+        <ArrowLeft size={13} />Queues
       </button>
       <ThemeSwitcher />
     </div>
@@ -127,16 +128,16 @@ export function QueueDetails({ queueName }: QueueDetailsProps) {
 
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           <ActionBtn onClick={() => fetchQueueDetails(true)} disabled={isRefreshing} variant="ghost">
-            {isRefreshing ? 'Refreshing…' : '↻ Refresh'}
+            {isRefreshing ? 'Refreshing…' : <><RefreshCw size={13} />Refresh</>}
           </ActionBtn>
           <ActionBtn onClick={() => setShowReceive(true)} variant="ghost">
-            ↓ Receive
+            <ArrowDown size={13} />Receive
           </ActionBtn>
           <ActionBtn onClick={() => setShowGenerate(true)} variant="ghost">
-            ⚡ Generate
+            <Zap size={13} />Generate
           </ActionBtn>
           <ActionBtn onClick={() => setShowModal(true)} variant="primary">
-            ↑ Send Message
+            <ArrowUp size={13} />Send Message
           </ActionBtn>
           {confirmDelete ? (
             <ActionBtn
@@ -158,7 +159,7 @@ export function QueueDetails({ queueName }: QueueDetailsProps) {
             </ActionBtn>
           ) : (
             <ActionBtn onClick={() => setConfirmDelete(true)} variant="danger">
-              Delete
+              <Trash2 size={13} />Delete
             </ActionBtn>
           )}
         </div>
@@ -290,6 +291,7 @@ function ActionBtn({ children, onClick, disabled, variant }: {
       onClick={onClick}
       disabled={disabled}
       style={{
+        display: 'inline-flex', alignItems: 'center', gap: 5,
         padding: '7px 16px',
         borderRadius: 7,
         fontSize: 13,

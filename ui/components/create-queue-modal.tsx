@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef, useId } from 'react';
+import { X, ChevronRight } from 'lucide-react';
 import { createQueue } from '@/lib/actions';
 
 interface CreateQueueModalProps {
@@ -128,10 +129,10 @@ export function CreateQueueModal({ onClose, onCreated }: CreateQueueModalProps) 
             </div>
             <button
               onClick={onClose}
-              style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', padding: 4, lineHeight: 1, fontSize: 20 }}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', padding: 4, lineHeight: 1, display: 'flex' }}
               aria-label="Close"
             >
-              ✕
+              <X size={18} />
             </button>
           </div>
 
@@ -315,8 +316,8 @@ function Toggle({ id, label, hint, checked, onChange, indent }: {
 
 function Arrow({ open }: { open: boolean }) {
   return (
-    <span style={{ display: 'inline-block', transform: open ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 160ms ease', fontSize: 10 }}>
-      ▶
+    <span style={{ display: 'inline-flex', transform: open ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 160ms ease' }}>
+      <ChevronRight size={12} />
     </span>
   );
 }

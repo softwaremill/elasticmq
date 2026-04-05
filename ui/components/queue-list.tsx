@@ -7,6 +7,7 @@ import { QueueCard } from './queue-card';
 import { LoadingSkeleton } from './loading-skeleton';
 import { ErrorDisplay } from './error-display';
 import { CreateQueueModal } from './create-queue-modal';
+import { Hexagon, RefreshCw, ListPlus } from 'lucide-react';
 
 export function QueueList() {
   const [queues, setQueues] = useState<QueueData[]>([]);
@@ -50,7 +51,7 @@ export function QueueList() {
           textAlign: 'center',
           animation: 'fadeUp 300ms ease both',
         }}>
-          <div style={{ fontSize: 32, marginBottom: 12, opacity: 0.4 }}>⬡</div>
+          <div style={{ marginBottom: 12, opacity: 0.4, display: 'flex', justifyContent: 'center' }}><Hexagon size={32} /></div>
           <p style={{ fontWeight: 600, color: 'var(--foreground)', marginBottom: 6, fontSize: 15 }}>No queues found</p>
           <p style={{ color: 'var(--muted)', fontSize: 13, marginBottom: 20 }}>
             Create a queue to get started.
@@ -58,6 +59,7 @@ export function QueueList() {
           <button
             onClick={() => setShowCreate(true)}
             style={{
+              display: 'inline-flex', alignItems: 'center', gap: 6,
               padding: '8px 20px', borderRadius: 7, fontSize: 13, fontWeight: 600, cursor: 'pointer',
               border: '1px solid var(--accent)',
               background: 'var(--accent-dim)',
@@ -67,7 +69,7 @@ export function QueueList() {
             onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'var(--accent)'; (e.currentTarget as HTMLButtonElement).style.color = '#fff'; }}
             onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'var(--accent-dim)'; (e.currentTarget as HTMLButtonElement).style.color = 'var(--accent)'; }}
           >
-            + Create Queue
+            <ListPlus size={15} />Create Queue
           </button>
         </div>
         {showCreate && (
@@ -104,6 +106,7 @@ export function QueueList() {
               onClick={() => fetchQueues(true)}
               disabled={isRefreshing}
               style={{
+                display: 'inline-flex', alignItems: 'center', gap: 5,
                 padding: '5px 14px',
                 borderRadius: 6,
                 border: '1px solid var(--card-border)',
@@ -126,11 +129,12 @@ export function QueueList() {
                 (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--card-border)';
               }}
             >
-              {isRefreshing ? 'Refreshing…' : '↻ Refresh'}
+              {isRefreshing ? 'Refreshing…' : <><RefreshCw size={11} />Refresh</>}
             </button>
             <button
               onClick={() => setShowCreate(true)}
               style={{
+                display: 'inline-flex', alignItems: 'center', gap: 5,
                 padding: '5px 14px',
                 borderRadius: 6,
                 border: '1px solid var(--accent)',
@@ -144,7 +148,7 @@ export function QueueList() {
               onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'var(--accent)'; (e.currentTarget as HTMLButtonElement).style.color = '#fff'; }}
               onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'var(--accent-dim)'; (e.currentTarget as HTMLButtonElement).style.color = 'var(--accent)'; }}
             >
-              + Create Queue
+              <ListPlus size={13} />Create Queue
             </button>
           </div>
         </div>

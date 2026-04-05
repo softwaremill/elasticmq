@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react';
+import { ChevronRight, X } from 'lucide-react';
 import { receiveMessages, deleteMessage } from '@/lib/actions';
 import { ReceivedMessage } from '@/lib/types';
 
@@ -103,8 +104,8 @@ function MessageCard({
             display: 'inline-block',
             transform: expanded ? 'rotate(90deg)' : 'rotate(0deg)',
             transition: 'transform 160ms ease',
-            color: 'var(--muted)', fontSize: 10, flexShrink: 0,
-          }}>▶</span>
+            color: 'var(--muted)', flexShrink: 0,
+          }}><ChevronRight size={12} /></span>
           <code style={{
             fontSize: 12, color: 'var(--muted)',
             overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
@@ -310,10 +311,10 @@ export function ReceiveMessagesPanel({ queueName, queueUrl, onClose }: ReceiveMe
             </div>
             <button
               onClick={onClose}
-              style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', fontSize: 20, lineHeight: 1, padding: 4 }}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', lineHeight: 1, padding: 4, display: 'flex' }}
               aria-label="Close"
             >
-              ✕
+              <X size={18} />
             </button>
           </div>
 

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef, useId } from 'react';
+import { X, Check, ChevronRight } from 'lucide-react';
 import { sendMessage } from '@/lib/actions';
 import { MessageAttributeEntry, SendMessageResult } from '@/lib/types';
 
@@ -178,8 +179,8 @@ export function SendMessageModal({ queueName, queueUrl, onClose }: SendMessageMo
                 )}
               </h2>
             </div>
-            <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', padding: 4, lineHeight: 1, fontSize: 20 }} aria-label="Close">
-              ✕
+            <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', padding: 4, lineHeight: 1, display: 'flex' }} aria-label="Close">
+              <X size={18} />
             </button>
           </div>
 
@@ -189,7 +190,7 @@ export function SendMessageModal({ queueName, queueUrl, onClose }: SendMessageMo
             {result ? (
               /* ─── Success State ─── */
               <div style={{ padding: 32, textAlign: 'center' }}>
-                <div style={{ fontSize: 40, marginBottom: 16 }}>✓</div>
+                <div style={{ fontSize: 40, marginBottom: 16, display: 'flex', justifyContent: 'center', color: 'var(--accent)' }}><Check size={40} /></div>
                 <p style={{ fontSize: 16, fontWeight: 600, color: 'var(--foreground)', marginBottom: 8 }}>Message Sent</p>
                 <div style={{ margin: '20px 0', padding: 16, borderRadius: 8, background: 'var(--card-bg)', border: '1px solid var(--card-border)', textAlign: 'left' }}>
                   <Row label="Message ID">
@@ -335,9 +336,9 @@ export function SendMessageModal({ queueName, queueUrl, onClose }: SendMessageMo
                           <button
                             onClick={() => removeAttr(i)}
                             aria-label="Remove attribute"
-                            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', fontSize: 16, lineHeight: 1, padding: '0 2px' }}
+                            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', lineHeight: 1, padding: '0 2px', display: 'flex' }}
                           >
-                            ×
+                            <X size={14} />
                           </button>
                         </div>
                       );
@@ -473,8 +474,8 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
 
 function Arrow({ open, color = 'var(--muted)' }: { open: boolean; color?: string }) {
   return (
-    <span style={{ display: 'inline-block', transform: open ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 160ms ease', color, fontSize: 10 }}>
-      ▶
+    <span style={{ display: 'inline-flex', transform: open ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 160ms ease', color }}>
+      <ChevronRight size={12} />
     </span>
   );
 }

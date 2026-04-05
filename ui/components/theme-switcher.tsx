@@ -1,6 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react';
+import React from 'react';
+import { Sun, Moon, Hexagon } from 'lucide-react';
 import { useTheme } from '@/lib/theme-provider';
 
 export function ThemeSwitcher() {
@@ -8,11 +10,11 @@ export function ThemeSwitcher() {
   const [mounted, setMounted] = useState(false);
   useEffect(() => { const raf = requestAnimationFrame(() => setMounted(true)); return () => cancelAnimationFrame(raf); }, []);
 
-  const options = [
-    { value: 'light', label: '☀', title: 'Light' },
-    { value: 'dark',  label: '☾', title: 'Dark'  },
-    { value: 'auto',  label: '⬡', title: 'Auto'  },
-  ] as const;
+  const options: { value: 'light' | 'dark' | 'auto'; label: React.ReactNode; title: string }[] = [
+    { value: 'light', label: <Sun size={13} />,     title: 'Light' },
+    { value: 'dark',  label: <Moon size={13} />,    title: 'Dark'  },
+    { value: 'auto',  label: <Hexagon size={13} />, title: 'Auto'  },
+  ];
 
   return (
     <div
@@ -37,8 +39,7 @@ export function ThemeSwitcher() {
               borderRadius: 5,
               border: 'none',
               cursor: 'pointer',
-              fontSize: 13,
-              fontWeight: active ? 700 : 400,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
               background: active ? 'var(--accent-dim)' : 'transparent',
               color: active ? 'var(--accent)' : 'var(--muted)',
               transition: 'all 150ms ease',
