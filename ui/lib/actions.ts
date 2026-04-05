@@ -7,6 +7,7 @@ import {
   SendMessageBatchCommand,
   ReceiveMessageCommand,
   DeleteMessageCommand,
+  DeleteQueueCommand,
   MessageAttributeValue,
 } from '@aws-sdk/client-sqs';
 import { sqsClient, extractQueueName } from './sqs-client';
@@ -53,7 +54,8 @@ export async function getQueues(): Promise<QueueData[]> {
       };
     });
 
-    return await Promise.all(queueDataPromises);
+    const queues = await Promise.all(queueDataPromises);
+    return queues.sort((a, b) => a.name.localeCompare(b.name));
   } catch (error) {
     console.error('Error fetching queues:', error);
     throw new Error('Failed to fetch queues. Make sure ElasticMQ is running on localhost:9324');
@@ -225,6 +227,18 @@ export async function sendMessageBatch(params: SendBatchParams): Promise<SendBat
   } catch (error) {
     console.error('Error sending message batch:', error);
     throw new Error(error instanceof Error ? error.message : 'Failed to send batch');
+  }
+}
+
+export async function deleteQueue(queueUrl: string): Promise<void> {
+  try {
+    const command = new DeleteQueueCommand({ QueueUrl: queueUrl });
+    await sqsClient.send(command);
+  } catch (error) {
+    console.error('Error deleting queue:', error);
+    throw new Error(
+      error instanceof Error ? error.message : 'Failed to delete queue'
+    );
   }
 }
 

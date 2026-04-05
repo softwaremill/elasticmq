@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { QueueData } from '@/lib/types';
+import { deleteQueue } from '@/lib/actions';
 import { SendMessageModal } from './send-message-modal';
 import { GenerateMessagesModal } from './generate-messages-modal';
 
@@ -15,6 +16,8 @@ export function QueueCard({ queue, index = 0 }: QueueCardProps) {
   const [showModal, setShowModal] = useState(false);
   const [showGenerate, setShowGenerate] = useState(false);
   const [hovered, setHovered] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const hasMessages = queue.stats.approximateNumberOfMessages > 0;
 
   return (
@@ -91,12 +94,31 @@ export function QueueCard({ queue, index = 0 }: QueueCardProps) {
         <div style={{
           padding: '8px 20px 10px 22px',
           display: 'flex',
-          justifyContent: 'flex-end',
+          justifyContent: 'space-between',
           gap: 8,
           borderTop: '1px solid var(--card-border)',
         }}>
-          <CardBtn label="Generate" onClick={() => setShowGenerate(true)} muted />
-          <CardBtn label="Send →" onClick={() => setShowModal(true)} />
+          <div>
+            {confirmDelete ? (
+              <CardBtn
+                label={isDeleting ? 'Deleting…' : 'Confirm delete?'}
+                onClick={async () => {
+                  if (isDeleting) return;
+                  setIsDeleting(true);
+                  try { await deleteQueue(queue.url); } catch { /* list will update */ }
+                  setIsDeleting(false);
+                  setConfirmDelete(false);
+                }}
+                danger
+              />
+            ) : (
+              <CardBtn label="🗑" onClick={() => setConfirmDelete(true)} muted />
+            )}
+          </div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <CardBtn label="Generate" onClick={() => setShowGenerate(true)} muted />
+            <CardBtn label="Send →" onClick={() => setShowModal(true)} />
+          </div>
         </div>
       </div>
 
@@ -110,26 +132,28 @@ export function QueueCard({ queue, index = 0 }: QueueCardProps) {
   );
 }
 
-function CardBtn({ label, onClick, muted }: { label: string; onClick: () => void; muted?: boolean }) {
+function CardBtn({ label, onClick, muted, danger }: { label: string; onClick: () => void; muted?: boolean; danger?: boolean }) {
+  const border = danger ? '1px solid var(--red, #e53e3e)' : muted ? '1px solid var(--card-border)' : '1px solid var(--accent)';
+  const bg = danger ? 'rgba(229,62,62,0.1)' : muted ? 'transparent' : 'var(--accent-dim)';
+  const color = danger ? 'var(--red, #e53e3e)' : muted ? 'var(--muted)' : 'var(--accent)';
   return (
     <button
       onClick={e => { e.preventDefault(); onClick(); }}
       style={{
         padding: '4px 12px', borderRadius: 6, fontSize: 12, fontWeight: 600, cursor: 'pointer',
         letterSpacing: '0.02em', transition: 'background 150ms, color 150ms',
-        border: muted ? '1px solid var(--card-border)' : '1px solid var(--accent)',
-        background: muted ? 'transparent' : 'var(--accent-dim)',
-        color: muted ? 'var(--muted)' : 'var(--accent)',
+        border, background: bg, color,
       }}
       onMouseEnter={e => {
         const el = e.currentTarget as HTMLButtonElement;
-        el.style.background = muted ? 'var(--card-bg)' : 'var(--accent)';
-        el.style.color = muted ? 'var(--foreground)' : '#fff';
+        if (danger) { el.style.background = 'var(--red, #e53e3e)'; el.style.color = '#fff'; }
+        else if (muted) { el.style.background = 'var(--card-bg)'; el.style.color = 'var(--foreground)'; }
+        else { el.style.background = 'var(--accent)'; el.style.color = '#fff'; }
       }}
       onMouseLeave={e => {
         const el = e.currentTarget as HTMLButtonElement;
-        el.style.background = muted ? 'transparent' : 'var(--accent-dim)';
-        el.style.color = muted ? 'var(--muted)' : 'var(--accent)';
+        el.style.background = bg;
+        el.style.color = color;
       }}
     >
       {label}
