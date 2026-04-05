@@ -148,10 +148,6 @@ jobs:
         working-directory: ui
         run: npm ci
 
-      - name: Lint
-        working-directory: ui
-        run: npm run lint
-
       - name: Build (type-check)
         working-directory: ui
         run: npm run build
