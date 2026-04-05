@@ -164,6 +164,50 @@ queues {
 ```
 If not then suffix will be added automatically during queue creation.
 
+# Auto-creating queues on demand
+
+ElasticMQ can automatically create a queue the first time any request targets it, instead of returning a
+`NonExistentQueue` error. This is useful during development and testing — it removes the need to maintain a static list
+of queue names in the configuration.
+
+To enable, add the following to your configuration file:
+
+```
+auto-create-queues {
+  enabled = true
+}
+```
+
+Optionally, provide a `template` section to set default attributes for every auto-created queue:
+
+```
+auto-create-queues {
+  enabled = true
+  template {
+    defaultVisibilityTimeout = 30 seconds
+    delay = 0 seconds
+    receiveMessageWait = 0 seconds
+    deadLettersQueue {
+      name = "my-dlq"
+      maxReceiveCount = 3
+    }
+    fifo = false
+    contentBasedDeduplication = false
+    copyTo = "audit-queue-name"
+    moveTo = "redirect-queue-name"
+    tags {
+      env = "dev"
+    }
+  }
+}
+```
+
+All `template` attributes are optional. If `template` is omitted, system defaults are used (30 s visibility timeout,
+0 s delay, no DLQ, standard queue).
+
+If the queue name ends with `.fifo`, the queue is always created as a FIFO queue regardless of the `fifo` template
+setting.
+
 # Persisting queues configuration
 
 Queues configuration can be persisted in an external config file in the [HOCON](https://en.wikipedia.org/wiki/HOCON) 

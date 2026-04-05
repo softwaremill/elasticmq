@@ -50,7 +50,8 @@ object SQSRestServerBuilder
       StrictSQSLimits,
       "elasticmq",
       "000000000000",
-      None
+      None,
+      AutoCreateQueuesConfig.disabled
     )
 
 case class TheSQSRestServerBuilder(
@@ -63,7 +64,8 @@ case class TheSQSRestServerBuilder(
     sqsLimits: Limits,
     _awsRegion: String,
     _awsAccountId: String,
-    queueEventListener: Option[ActorRef]
+    queueEventListener: Option[ActorRef],
+    autoCreateQueuesConfig: AutoCreateQueuesConfig = AutoCreateQueuesConfig.disabled
 ) extends Logging {
 
   /** @param _actorSystem
@@ -126,6 +128,12 @@ case class TheSQSRestServerBuilder(
   def withQueueEventListener(_queueEventListener: ActorRef) =
     this.copy(queueEventListener = Some(_queueEventListener))
 
+  /** @param _autoCreateQueues
+    *   Configuration for auto-creating queues on demand when a message is sent to a non-existing queue.
+    */
+  def withAutoCreateQueues(_autoCreateQueues: AutoCreateQueuesConfig) =
+    this.copy(autoCreateQueuesConfig = _autoCreateQueues)
+
   def start(): SQSRestServer = {
     val (theActorSystem, stopActorSystem) = getOrCreateActorSystem
     val theQueueManagerActor = getOrCreateQueueManagerActor(theActorSystem)
@@ -134,6 +142,7 @@ case class TheSQSRestServerBuilder(
         NodeAddress(host = if (interface.isEmpty) "localhost" else interface, port = port)
       else serverAddress
     val theLimits = sqsLimits
+    val theAutoCreateQueues = autoCreateQueuesConfig
 
     implicit val implicitActorSystem: ActorSystem = theActorSystem
     implicit val implicitMaterializer: Materializer = Materializer(theActorSystem)
@@ -173,7 +182,8 @@ case class TheSQSRestServerBuilder(
       with ListDeadLetterSourceQueuesDirectives
       with StartMessageMoveTaskDirectives
       with CancelMessageMoveTaskDirectives
-      with ListMessageMoveTasksDirectives {
+      with ListMessageMoveTasksDirectives
+      with AutoCreateQueuesModule {
 
       def serverAddress = currentServerAddress.get()
 
@@ -186,6 +196,7 @@ case class TheSQSRestServerBuilder(
 
       lazy val awsRegion: String = _awsRegion
       lazy val awsAccountId: String = _awsAccountId
+      lazy val autoCreateQueues: AutoCreateQueuesConfig = theAutoCreateQueues
 
     }
 

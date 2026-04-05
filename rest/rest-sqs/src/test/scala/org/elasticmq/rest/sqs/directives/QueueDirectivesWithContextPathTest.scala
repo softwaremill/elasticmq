@@ -7,7 +7,7 @@ import org.apache.pekko.util.Timeout
 import org.elasticmq.actor.QueueManagerActor
 import org.elasticmq.actor.reply._
 import org.elasticmq.msg.CreateQueue
-import org.elasticmq.rest.sqs.{ActorSystemModule, ContextPathModule, QueueManagerActorModule}
+import org.elasticmq.rest.sqs.{ActorSystemModule, AutoCreateQueuesConfig, AutoCreateQueuesModule, ContextPathModule, QueueManagerActorModule}
 import org.elasticmq.util.NowProvider
 import org.elasticmq.{CreateQueueData, MillisVisibilityTimeout, QueueData, StrictSQSLimits}
 import org.scalatest.flatspec.AnyFlatSpec
@@ -29,7 +29,8 @@ class QueueDirectivesWithContextPathTest
     with ActorSystemModule
     with ExceptionDirectives
     with RespondDirectives
-    with AWSProtocolDirectives {
+    with AWSProtocolDirectives
+    with AutoCreateQueuesModule {
 
   private val maxDuration = 1.minute
   implicit val timeout: Timeout = maxDuration
@@ -38,6 +39,7 @@ class QueueDirectivesWithContextPathTest
   lazy val queueManagerActor: ActorRef =
     actorSystem.actorOf(Props(new QueueManagerActor(new NowProvider(), StrictSQSLimits, None)))
   lazy val contextPath = "/test-context"
+  lazy val autoCreateQueues: AutoCreateQueuesConfig = AutoCreateQueuesConfig.disabled
 
   "queueActorAndNameFromUrl" should "return correct queue name based on QueueName" in {
     val future = queueManagerActor ? CreateQueue(
