@@ -3,7 +3,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { QueueData } from '@/lib/types';
-import { getQueueDetails } from '@/lib/actions';
+import { ArrowLeft, RefreshCw, ArrowDown, Zap, ArrowUp, Trash2 } from 'lucide-react';
+import { getQueueDetails, deleteQueue } from '@/lib/actions';
 import { LoadingSkeleton } from './loading-skeleton';
 import { ErrorDisplay } from './error-display';
 import { formatAttributeValue, HIDDEN_ATTRIBUTES } from '@/lib/utils';
@@ -26,6 +27,8 @@ export function QueueDetails({ queueName }: QueueDetailsProps) {
   const [showModal, setShowModal] = useState(false);
   const [showReceive, setShowReceive] = useState(false);
   const [showGenerate, setShowGenerate] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const fetchQueueDetails = useCallback(async (showLoading = false) => {
     try {
@@ -71,7 +74,7 @@ export function QueueDetails({ queueName }: QueueDetailsProps) {
           (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--card-border)';
         }}
       >
-        ← Queues
+        <ArrowLeft size={13} />Queues
       </button>
       <ThemeSwitcher />
     </div>
@@ -125,17 +128,40 @@ export function QueueDetails({ queueName }: QueueDetailsProps) {
 
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           <ActionBtn onClick={() => fetchQueueDetails(true)} disabled={isRefreshing} variant="ghost">
-            {isRefreshing ? 'Refreshing…' : '↻ Refresh'}
+            {isRefreshing ? 'Refreshing…' : <><RefreshCw size={13} />Refresh</>}
           </ActionBtn>
           <ActionBtn onClick={() => setShowReceive(true)} variant="ghost">
-            ↓ Receive
+            <ArrowDown size={13} />Receive
           </ActionBtn>
           <ActionBtn onClick={() => setShowGenerate(true)} variant="ghost">
-            ⚡ Generate
+            <Zap size={13} />Generate
           </ActionBtn>
           <ActionBtn onClick={() => setShowModal(true)} variant="primary">
-            ↑ Send Message
+            <ArrowUp size={13} />Send Message
           </ActionBtn>
+          {confirmDelete ? (
+            <ActionBtn
+              onClick={async () => {
+                if (isDeleting || !queue) return;
+                setIsDeleting(true);
+                try {
+                  await deleteQueue(queue.url);
+                  router.push('/');
+                } catch {
+                  setIsDeleting(false);
+                  setConfirmDelete(false);
+                }
+              }}
+              disabled={isDeleting}
+              variant="danger"
+            >
+              {isDeleting ? 'Deleting…' : 'Confirm delete?'}
+            </ActionBtn>
+          ) : (
+            <ActionBtn onClick={() => setConfirmDelete(true)} variant="danger">
+              <Trash2 size={13} />Delete
+            </ActionBtn>
+          )}
         </div>
       </div>
 
@@ -255,13 +281,17 @@ function ActionBtn({ children, onClick, disabled, variant }: {
   children: React.ReactNode;
   onClick: () => void;
   disabled?: boolean;
-  variant: 'primary' | 'ghost';
+  variant: 'primary' | 'ghost' | 'danger';
 }) {
+  const borderVar = variant === 'primary' ? 'var(--accent)' : variant === 'danger' ? 'var(--red, #e53e3e)' : 'var(--card-border)';
+  const bgVar = variant === 'primary' ? 'var(--accent-dim)' : variant === 'danger' ? 'rgba(229,62,62,0.1)' : 'var(--card-bg)';
+  const colorVar = variant === 'primary' ? 'var(--accent)' : variant === 'danger' ? 'var(--red, #e53e3e)' : 'var(--muted)';
   return (
     <button
       onClick={onClick}
       disabled={disabled}
       style={{
+        display: 'inline-flex', alignItems: 'center', gap: 5,
         padding: '7px 16px',
         borderRadius: 7,
         fontSize: 13,
@@ -269,15 +299,18 @@ function ActionBtn({ children, onClick, disabled, variant }: {
         cursor: disabled ? 'not-allowed' : 'pointer',
         opacity: disabled ? 0.5 : 1,
         transition: 'all 150ms ease',
-        border: variant === 'primary' ? '1px solid var(--accent)' : '1px solid var(--card-border)',
-        background: variant === 'primary' ? 'var(--accent-dim)' : 'var(--card-bg)',
-        color: variant === 'primary' ? 'var(--accent)' : 'var(--muted)',
+        border: `1px solid ${borderVar}`,
+        background: bgVar,
+        color: colorVar,
       }}
       onMouseEnter={e => {
         if (disabled) return;
         const el = e.currentTarget as HTMLButtonElement;
         if (variant === 'primary') {
           el.style.background = 'var(--accent)';
+          el.style.color = '#fff';
+        } else if (variant === 'danger') {
+          el.style.background = 'var(--red, #e53e3e)';
           el.style.color = '#fff';
         } else {
           el.style.color = 'var(--foreground)';
@@ -290,6 +323,9 @@ function ActionBtn({ children, onClick, disabled, variant }: {
         if (variant === 'primary') {
           el.style.background = 'var(--accent-dim)';
           el.style.color = 'var(--accent)';
+        } else if (variant === 'danger') {
+          el.style.background = bgVar;
+          el.style.color = colorVar;
         } else {
           el.style.color = 'var(--muted)';
           el.style.borderColor = 'var(--card-border)';
