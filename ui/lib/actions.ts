@@ -3,6 +3,7 @@
 import {
   ListQueuesCommand,
   GetQueueAttributesCommand,
+  CreateQueueCommand,
   SendMessageCommand,
   SendMessageBatchCommand,
   ReceiveMessageCommand,
@@ -227,6 +228,45 @@ export async function sendMessageBatch(params: SendBatchParams): Promise<SendBat
   } catch (error) {
     console.error('Error sending message batch:', error);
     throw new Error(error instanceof Error ? error.message : 'Failed to send batch');
+  }
+}
+
+export interface CreateQueueParams {
+  name: string;
+  fifo?: boolean;
+  contentBasedDeduplication?: boolean;
+  visibilityTimeout?: number;
+  messageRetentionPeriod?: number;
+  delaySeconds?: number;
+  receiveMessageWaitTimeSeconds?: number;
+}
+
+export async function createQueue(params: CreateQueueParams): Promise<string> {
+  try {
+    const queueName = params.fifo && !params.name.endsWith('.fifo')
+      ? `${params.name}.fifo`
+      : params.name;
+
+    const attributes: Record<string, string> = {};
+    if (params.fifo) attributes['FifoQueue'] = 'true';
+    if (params.contentBasedDeduplication) attributes['ContentBasedDeduplication'] = 'true';
+    if (params.visibilityTimeout !== undefined) attributes['VisibilityTimeout'] = String(params.visibilityTimeout);
+    if (params.messageRetentionPeriod !== undefined) attributes['MessageRetentionPeriod'] = String(params.messageRetentionPeriod);
+    if (params.delaySeconds !== undefined) attributes['DelaySeconds'] = String(params.delaySeconds);
+    if (params.receiveMessageWaitTimeSeconds !== undefined) attributes['ReceiveMessageWaitTimeSeconds'] = String(params.receiveMessageWaitTimeSeconds);
+
+    const command = new CreateQueueCommand({
+      QueueName: queueName,
+      ...(Object.keys(attributes).length > 0 && { Attributes: attributes }),
+    });
+
+    const result = await sqsClient.send(command);
+    return result.QueueUrl ?? '';
+  } catch (error) {
+    console.error('Error creating queue:', error);
+    throw new Error(
+      error instanceof Error ? error.message : 'Failed to create queue'
+    );
   }
 }
 
