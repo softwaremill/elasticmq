@@ -156,6 +156,10 @@ jobs:
         working-directory: ui
         run: npm run build
 
+      - name: Test
+        working-directory: ui
+        run: npm test
+
   ci-native-image-agent-config-verification:
     # run on 1) push, 2) external PRs, 3) softwaremill-ci PRs
     # do not run on internal, non-steward PRs since those will be run by push to branch
