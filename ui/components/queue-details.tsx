@@ -1,6 +1,8 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react';
+
+const autoRefreshDisabled = process.env.NEXT_PUBLIC_AUTO_REFRESH_DISABLED === 'true';
 import { useRouter } from 'next/navigation';
 import { QueueData } from '@/lib/types';
 import { ArrowLeft, RefreshCw, ArrowDown, Zap, ArrowUp, Trash2 } from 'lucide-react';
@@ -48,6 +50,7 @@ export function QueueDetails({ queueName }: QueueDetailsProps) {
 
   useEffect(() => {
     fetchQueueDetails();
+    if (autoRefreshDisabled) return;
     const interval = setInterval(() => fetchQueueDetails(), 1000);
     return () => clearInterval(interval);
   }, [fetchQueueDetails]);
@@ -116,12 +119,12 @@ export function QueueDetails({ queueName }: QueueDetailsProps) {
             <p style={{ fontSize: 11, color: 'var(--muted)', marginLeft: 12, letterSpacing: '0.02em' }}>
               <span style={{
                 display: 'inline-block', width: 6, height: 6, borderRadius: '50%',
-                background: 'var(--green)',
+                background: autoRefreshDisabled ? 'var(--muted)' : 'var(--green)',
                 marginRight: 5, verticalAlign: 'middle',
-                boxShadow: '0 0 4px var(--green)',
-                animation: 'pulse-dot 2s ease-in-out infinite',
+                boxShadow: autoRefreshDisabled ? 'none' : '0 0 4px var(--green)',
+                animation: autoRefreshDisabled ? 'none' : 'pulse-dot 2s ease-in-out infinite',
               }} />
-              Live · {lastUpdate.toLocaleTimeString()}
+              {autoRefreshDisabled ? `Manual · ${lastUpdate.toLocaleTimeString()}` : `Live · ${lastUpdate.toLocaleTimeString()}`}
             </p>
           )}
         </div>
