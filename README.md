@@ -541,14 +541,25 @@ npm install
 npm run dev
 ```
 
-The dev server starts at **http://localhost:3000** and expects ElasticMQ running at `http://localhost:9324`. Configure the endpoint in `ui/.env.local` if needed:
+The dev server starts at **http://localhost:3000** and expects ElasticMQ running at `http://localhost:9324`. Configure the endpoint in `ui/.env.local` (copy from `ui/.env.local.example`) if needed.
+
+**Pointing the UI at a real AWS account** is also supported — the UI uses the standard AWS SDK and works with any SQS-compatible endpoint. Set your credentials and region in `ui/.env.local` and leave `SQS_ENDPOINT` unset so the SDK defaults to the real AWS endpoint:
 
 ```bash
-SQS_ENDPOINT=http://localhost:9324
-AWS_REGION=elasticmq
-AWS_ACCESS_KEY_ID=x
-AWS_SECRET_ACCESS_KEY=x
+# ui/.env.local — real AWS example
+AWS_REGION=us-east-1
+AWS_ACCESS_KEY_ID=AKIA...
+AWS_SECRET_ACCESS_KEY=...
+NEXT_PUBLIC_AUTO_REFRESH_DISABLED=true
 ```
+
+The credentials need at minimum `sqs:ListQueues` and `sqs:GetQueueAttributes` for read-only access, plus `sqs:SendMessage`, `sqs:ReceiveMessage`, `sqs:DeleteMessage`, `sqs:CreateQueue`, and `sqs:DeleteQueue` for full functionality.
+
+**Feature flags** (set in `ui/.env.local`):
+
+| Variable | Description |
+|----------|-------------|
+| `NEXT_PUBLIC_AUTO_REFRESH_DISABLED=true` | Disables the automatic 1-second state refresh. Recommended when pointing at real AWS to avoid unnecessary API calls and costs. The UI switches from a pulsing live indicator to a static "Manual" label; the Refresh button continues to work. |
 
 # MBeans
 

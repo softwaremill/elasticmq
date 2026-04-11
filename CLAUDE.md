@@ -164,14 +164,33 @@ npm run lint
 
 ### Environment Variables
 
-**File:** `ui/.env.local` (gitignored)
+**File:** `ui/.env.local` (gitignored) — copy from `ui/.env.local.example`.
 
+**Local ElasticMQ (default):**
 ```bash
 SQS_ENDPOINT=http://localhost:9324
 AWS_REGION=elasticmq
 AWS_ACCESS_KEY_ID=x
 AWS_SECRET_ACCESS_KEY=x
 ```
+
+**Real AWS account:**
+```bash
+# SQS_ENDPOINT is omitted — SDK defaults to the real AWS endpoint
+AWS_REGION=us-east-1
+AWS_ACCESS_KEY_ID=AKIA...
+AWS_SECRET_ACCESS_KEY=...
+# Disable auto-refresh to avoid unnecessary API calls and costs:
+NEXT_PUBLIC_AUTO_REFRESH_DISABLED=true
+```
+
+The IAM credentials need `sqs:ListQueues`, `sqs:GetQueueAttributes`, and `sqs:GetQueueUrl` permissions to browse queues, plus write permissions (`sqs:SendMessage`, `sqs:ReceiveMessage`, `sqs:DeleteMessage`, `sqs:CreateQueue`, `sqs:DeleteQueue`) for the full feature set.
+
+**Feature flags:**
+
+| Variable | Values | Default | Description |
+|----------|--------|---------|-------------|
+| `NEXT_PUBLIC_AUTO_REFRESH_DISABLED` | `true` / unset | disabled (auto-refresh on) | Disables the 1-second polling. Recommended when pointing at real AWS to avoid API costs. The UI switches from a pulsing live indicator to a static "Manual" label. |
 
 ### Architecture Patterns
 
@@ -183,7 +202,7 @@ AWS_SECRET_ACCESS_KEY=x
 - `getQueues()` — list all queues with attributes
 - `getQueueDetails(queueName)` — single queue details
 
-**Polling:** Client components poll server actions every 1 second.
+**Polling:** Client components poll server actions every 1 second (disabled when `NEXT_PUBLIC_AUTO_REFRESH_DISABLED=true`).
 
 **SQS Client Config:**
 ```typescript
