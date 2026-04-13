@@ -61,26 +61,29 @@ trait MessageAttributesTests extends IntegrationTestsBase {
     val queueUrl = testClient.createQueue("testQueue1").toOption.get
 
     // when
-    val result = testClient.sendMessageBatch(
-      queueUrl,
-      List(
-        SendMessageBatchEntry(
-          "1",
-          "Message 1",
-          messageAttributes = Map("attribute1" -> StringMessageAttribute("value1"))
-        ),
-        SendMessageBatchEntry(
-          "2",
-          "Message 2",
-          messageAttributes = Map("attribute1" -> StringMessageAttribute("", Some("String")))
-        ),
-        SendMessageBatchEntry(
-          "3",
-          "Message 3",
-          messageAttributes = Map("attribute1" -> StringMessageAttribute("value1"))
+    val result = testClient
+      .sendMessageBatch(
+        queueUrl,
+        List(
+          SendMessageBatchEntry(
+            "1",
+            "Message 1",
+            messageAttributes = Map("attribute1" -> StringMessageAttribute("value1"))
+          ),
+          SendMessageBatchEntry(
+            "2",
+            "Message 2",
+            messageAttributes = Map("attribute1" -> StringMessageAttribute("", Some("String")))
+          ),
+          SendMessageBatchEntry(
+            "3",
+            "Message 3",
+            messageAttributes = Map("attribute1" -> StringMessageAttribute("value1"))
+          )
         )
       )
-    ).toOption.get
+      .toOption
+      .get
 
     // then
     result.successful should have size 2

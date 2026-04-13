@@ -155,13 +155,16 @@ trait MessageMoveTaskTests extends IntegrationTestsBase {
     val dlq = testClient.createQueue("testQueue-dlq").toOption.get
     val redrivePolicy = RedrivePolicy("testQueue-dlq", awsRegion, awsAccountId, 1).toJson.compactPrint
     val queue =
-      testClient.createQueue(
-        "testQueue",
-        attributes = Map(
-          RedrivePolicyAttributeName -> redrivePolicy,
-          VisibilityTimeoutAttributeName -> "1"
+      testClient
+        .createQueue(
+          "testQueue",
+          attributes = Map(
+            RedrivePolicyAttributeName -> redrivePolicy,
+            VisibilityTimeoutAttributeName -> "1"
+          )
         )
-      ).toOption.get
+        .toOption
+        .get
 
     // when: send messages
     for (i <- 0 until NumMessages) {

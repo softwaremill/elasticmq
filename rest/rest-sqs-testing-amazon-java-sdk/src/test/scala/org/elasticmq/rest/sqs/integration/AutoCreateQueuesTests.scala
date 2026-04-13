@@ -52,7 +52,8 @@ class AutoCreateQueuesTests extends AnyFunSuite with Matchers {
       val queueUrl = s"http://localhost:$autoCreatePort/$awsAccountId/new-queue"
 
       val sendResult = client.sendMessage(
-        software.amazon.awssdk.services.sqs.model.SendMessageRequest.builder()
+        software.amazon.awssdk.services.sqs.model.SendMessageRequest
+          .builder()
           .queueUrl(queueUrl)
           .messageBody("hello")
           .build()
@@ -71,7 +72,8 @@ class AutoCreateQueuesTests extends AnyFunSuite with Matchers {
       val queueUrl = s"http://localhost:$autoCreatePort/$awsAccountId/new-fifo.fifo"
 
       val sendResult = client.sendMessage(
-        software.amazon.awssdk.services.sqs.model.SendMessageRequest.builder()
+        software.amazon.awssdk.services.sqs.model.SendMessageRequest
+          .builder()
           .queueUrl(queueUrl)
           .messageBody("hello fifo")
           .messageGroupId("group1")
@@ -81,7 +83,8 @@ class AutoCreateQueuesTests extends AnyFunSuite with Matchers {
       sendResult.messageId() should not be empty
 
       val attrResult = client.getQueueAttributes(
-        software.amazon.awssdk.services.sqs.model.GetQueueAttributesRequest.builder()
+        software.amazon.awssdk.services.sqs.model.GetQueueAttributesRequest
+          .builder()
           .queueUrl(queueUrl)
           .attributeNamesWithStrings("FifoQueue")
           .build()
@@ -95,14 +98,16 @@ class AutoCreateQueuesTests extends AnyFunSuite with Matchers {
     withAutoCreateServer(template = templateWithDelay, port = 9336) { client =>
       val queueUrl = s"http://localhost:9336/$awsAccountId/templated-queue"
       client.sendMessage(
-        software.amazon.awssdk.services.sqs.model.SendMessageRequest.builder()
+        software.amazon.awssdk.services.sqs.model.SendMessageRequest
+          .builder()
           .queueUrl(queueUrl)
           .messageBody("hello")
           .build()
       )
 
       val attrResult = client.getQueueAttributes(
-        software.amazon.awssdk.services.sqs.model.GetQueueAttributesRequest.builder()
+        software.amazon.awssdk.services.sqs.model.GetQueueAttributesRequest
+          .builder()
           .queueUrl(queueUrl)
           .attributeNamesWithStrings("DelaySeconds")
           .build()

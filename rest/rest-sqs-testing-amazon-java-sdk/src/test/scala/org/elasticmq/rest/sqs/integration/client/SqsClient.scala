@@ -5,7 +5,10 @@ import org.elasticmq.rest.sqs.integration.client.client.{ApproximateNumberOfMess
 
 trait SqsClient {
 
-  def createQueue(queueName: String, attributes: Map[QueueAttributeName, String] = Map.empty): Either[SqsClientError, QueueUrl]
+  def createQueue(
+      queueName: String,
+      attributes: Map[QueueAttributeName, String] = Map.empty
+  ): Either[SqsClientError, QueueUrl]
   def getQueueUrl(queueName: String): Either[SqsClientError, QueueUrl]
   def deleteQueue(queueUrl: QueueUrl): Either[SqsClientError, Unit]
   def purgeQueue(queueUrl: QueueUrl): Either[SqsClientError, Unit]

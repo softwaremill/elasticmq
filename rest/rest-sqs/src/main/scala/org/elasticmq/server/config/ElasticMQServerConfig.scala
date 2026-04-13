@@ -100,12 +100,15 @@ class ElasticMQServerConfig(config: Config) extends Logging {
       defaultVisibilityTimeoutSeconds = getOptionalDuration("defaultVisibilityTimeout"),
       delaySeconds = getOptionalDuration("delay"),
       receiveMessageWaitSeconds = getOptionalDuration("receiveMessageWait"),
-      deadLettersQueue = if (c.hasPath(deadLettersQueueKey))
-        Some(DeadLettersQueue(
-          c.getString(deadLettersQueueKey + ".name"),
-          c.getInt(deadLettersQueueKey + ".maxReceiveCount")
-        ))
-      else None,
+      deadLettersQueue =
+        if (c.hasPath(deadLettersQueueKey))
+          Some(
+            DeadLettersQueue(
+              c.getString(deadLettersQueueKey + ".name"),
+              c.getInt(deadLettersQueueKey + ".maxReceiveCount")
+            )
+          )
+        else None,
       isFifo = isFifo,
       hasContentBasedDeduplication = getOptionalBoolean("contentBasedDeduplication").getOrElse(false),
       copyMessagesTo = getOptionalString("copyTo"),
