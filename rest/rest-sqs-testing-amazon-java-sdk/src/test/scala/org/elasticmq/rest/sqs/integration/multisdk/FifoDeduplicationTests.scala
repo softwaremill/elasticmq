@@ -150,7 +150,8 @@ trait FifoDeduplicationTests extends IntegrationTestsBase {
     testClient.receiveMessage(queueUrl, maxNumberOfMessages = Some(1))
     testClient.receiveMessage(queueUrl, maxNumberOfMessages = Some(1))
 
-    val dlqMessage = testClient.receiveMessage(dlqUrl, maxNumberOfMessages = Some(1), systemAttributes = List("All")).head
+    val dlqMessage =
+      testClient.receiveMessage(dlqUrl, maxNumberOfMessages = Some(1), systemAttributes = List("All")).head
     dlqMessage.body shouldBe "Message 1"
     dlqMessage.messageId shouldBe firstSendMessageResponse.messageId
     dlqMessage.attributes(MessageDeduplicationId) shouldBe firstSendMessageResponse.messageId

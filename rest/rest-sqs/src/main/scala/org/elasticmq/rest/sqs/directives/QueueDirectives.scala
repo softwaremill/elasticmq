@@ -74,9 +74,9 @@ trait QueueDirectives {
   private def queueActor(queueName: String, body: ActorRef => Route): Route = {
     val ec = actorSystem.dispatcher
     (queueManagerActor ? LookupQueue(queueName)).flatMap {
-      case Some(a) => Future.successful(body(a))
+      case Some(a)                          => Future.successful(body(a))
       case None if autoCreateQueues.enabled => autoCreateQueue(queueName).map(body)(ec)
-      case None => Future.failed(SQSException.nonExistentQueue)
+      case None                             => Future.failed(SQSException.nonExistentQueue)
     }(ec)
   }
 
@@ -85,7 +85,7 @@ trait QueueDirectives {
     val isFifo = queueName.endsWith(".fifo") || autoCreateQueues.template.isFifo
     val queueData = autoCreateQueues.template.copy(name = queueName, isFifo = isFifo).toCreateQueueData
     (queueManagerActor ? CreateQueueMsg(queueData)).flatMap {
-      case Right(ref) => Future.successful(ref.asInstanceOf[ActorRef])
+      case Right(ref)                  => Future.successful(ref.asInstanceOf[ActorRef])
       case Left(_: QueueAlreadyExists) =>
         // Race condition: queue was created by a concurrent request; fall back to lookup
         (queueManagerActor ? LookupQueue(queueName)).map {

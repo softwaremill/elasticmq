@@ -90,13 +90,15 @@ trait FifoQueueTests extends IntegrationTestsBase {
     result.failed.head.code shouldBe "InvalidParameterValue"
 
     // Sanity check that a 0 delay seconds value is accepted
-    testClient.sendMessage(
-      queueUrl,
-      "body",
-      delaySeconds = Some(0),
-      messageDeduplicationId = Some("2"),
-      messageGroupId = Some("1")
-    ).isRight shouldBe true
+    testClient
+      .sendMessage(
+        queueUrl,
+        "body",
+        delaySeconds = Some(0),
+        messageDeduplicationId = Some("2"),
+        messageGroupId = Some("1")
+      )
+      .isRight shouldBe true
   }
 
   test(

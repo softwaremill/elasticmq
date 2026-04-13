@@ -34,7 +34,8 @@ trait SQSRestServerWithSdkV2Client extends AnyFunSuite with BeforeAndAfter with 
   def relaxedServerPort: Int = 9322
   def relaxedServerContextPath: String = ""
 
-  def serviceEndpoint = s"http://localhost:$serverPort${if (serverContextPath.nonEmpty) "/" + serverContextPath else ""}"
+  def serviceEndpoint =
+    s"http://localhost:$serverPort${if (serverContextPath.nonEmpty) "/" + serverContextPath else ""}"
 
   def shouldStartServerAutomatically: Boolean = true
 
@@ -70,7 +71,12 @@ trait SQSRestServerWithSdkV2Client extends AnyFunSuite with BeforeAndAfter with 
       .builder()
       .credentialsProvider(StaticCredentialsProvider.create(AwsBasicCredentials.create("x", "x")))
       .region(Region.EU_CENTRAL_1)
-      .endpointOverride(new URI(s"http://localhost:$relaxedServerPort${if (relaxedServerContextPath.nonEmpty) "/" + relaxedServerContextPath else ""}"))
+      .endpointOverride(
+        new URI(
+          s"http://localhost:$relaxedServerPort${if (relaxedServerContextPath.nonEmpty) "/" + relaxedServerContextPath
+            else ""}"
+        )
+      )
       .build()
   }
 

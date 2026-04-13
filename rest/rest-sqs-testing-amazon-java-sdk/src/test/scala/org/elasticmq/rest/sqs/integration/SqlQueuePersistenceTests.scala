@@ -6,7 +6,11 @@ import org.elasticmq.actor.QueueManagerActor
 import org.elasticmq.actor.queue.QueueEvent
 import org.elasticmq.actor.reply._
 import org.elasticmq.persistence.sql.{GetAllMessages, SqlQueuePersistenceActor, SqlQueuePersistenceConfig}
-import org.elasticmq.rest.sqs.integration.client.{ApproximateNumberOfMessagesAttributeName, RedrivePolicyAttributeName, VisibilityTimeoutAttributeName}
+import org.elasticmq.rest.sqs.integration.client.{
+  ApproximateNumberOfMessagesAttributeName,
+  RedrivePolicyAttributeName,
+  VisibilityTimeoutAttributeName
+}
 import org.elasticmq.rest.sqs.model.RedrivePolicy
 import org.elasticmq.rest.sqs.model.RedrivePolicyJson.format
 import org.elasticmq.rest.sqs.SQSRestServerBuilder
@@ -19,10 +23,7 @@ import spray.json.enrichAny
 
 import scala.concurrent.duration._
 
-class SqlQueuePersistenceTests
-    extends IntegrationTestsBase
-    with SQSRestServerWithSdkV2Client
-    with ScalaFutures {
+class SqlQueuePersistenceTests extends IntegrationTestsBase with SQSRestServerWithSdkV2Client with ScalaFutures {
 
   override val awsAccountId = "123456789012"
   override val awsRegion = "elasticmq"

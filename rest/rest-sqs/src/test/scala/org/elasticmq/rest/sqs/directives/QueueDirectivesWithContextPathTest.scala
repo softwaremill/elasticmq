@@ -7,7 +7,13 @@ import org.apache.pekko.util.Timeout
 import org.elasticmq.actor.QueueManagerActor
 import org.elasticmq.actor.reply._
 import org.elasticmq.msg.CreateQueue
-import org.elasticmq.rest.sqs.{ActorSystemModule, AutoCreateQueuesConfig, AutoCreateQueuesModule, ContextPathModule, QueueManagerActorModule}
+import org.elasticmq.rest.sqs.{
+  ActorSystemModule,
+  AutoCreateQueuesConfig,
+  AutoCreateQueuesModule,
+  ContextPathModule,
+  QueueManagerActorModule
+}
 import org.elasticmq.util.NowProvider
 import org.elasticmq.{CreateQueueData, MillisVisibilityTimeout, QueueData, StrictSQSLimits}
 import org.scalatest.flatspec.AnyFlatSpec
