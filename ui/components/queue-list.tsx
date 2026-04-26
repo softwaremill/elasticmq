@@ -1,6 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react';
+
+const autoRefreshDisabled = process.env.NEXT_PUBLIC_AUTO_REFRESH_DISABLED === 'true';
 import { QueueData } from '@/lib/types';
 import { getQueues } from '@/lib/actions';
 import { QueueCard } from './queue-card';
@@ -34,6 +36,7 @@ export function QueueList() {
 
   useEffect(() => {
     fetchQueues();
+    if (autoRefreshDisabled) return;
     const interval = setInterval(() => fetchQueues(), 1000);
     return () => clearInterval(interval);
   }, []);
@@ -88,16 +91,16 @@ export function QueueList() {
         {/* Toolbar */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            {/* Live dot */}
+            {/* Live/static dot */}
             <span style={{
               display: 'inline-block', width: 7, height: 7, borderRadius: '50%',
-              background: 'var(--green)',
-              boxShadow: '0 0 6px var(--green)',
-              animation: 'pulse-dot 2s ease-in-out infinite',
+              background: autoRefreshDisabled ? 'var(--muted)' : 'var(--green)',
+              boxShadow: autoRefreshDisabled ? 'none' : '0 0 6px var(--green)',
+              animation: autoRefreshDisabled ? 'none' : 'pulse-dot 2s ease-in-out infinite',
             }} />
             <span style={{ fontSize: 12, color: 'var(--muted)', fontVariantNumeric: 'tabular-nums' }}>
               {queues.length} queue{queues.length !== 1 ? 's' : ''}
-              {lastUpdate && ` · ${lastUpdate.toLocaleTimeString()}`}
+              {lastUpdate && ` · ${autoRefreshDisabled ? 'manual' : lastUpdate.toLocaleTimeString()}`}
             </span>
           </div>
 
