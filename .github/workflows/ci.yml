@@ -213,9 +213,14 @@ jobs:
 
       - name: Verify native image agent config files not modified
         run: |
-          git --no-pager diff native-server/src/main/resources/META-INF/native-image/
-          if [[ -z $(git status native-server/src/main/resources/META-INF/native-image/ --porcelain) ]]; then
-            echo "Git status is clean. No changes."
+          NATIVE_IMAGE_DIR=native-server/src/main/resources/META-INF/native-image/
+          git --no-pager diff "$NATIVE_IMAGE_DIR"
+          if git status "$NATIVE_IMAGE_DIR" --porcelain | grep -q '^??'; then
+            echo "Native image agent config files have been modified. You need to manually commit the changes to the PR"
+            exit 1
+          fi
+          if git diff --quiet -w --ignore-blank-lines HEAD -- "$NATIVE_IMAGE_DIR"; then
+            echo "Git status is clean (ignoring whitespace-only changes). No changes."
           else
             echo "Native image agent config files have been modified. You need to manually commit the changes to the PR"
             exit 1
