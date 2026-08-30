@@ -443,10 +443,12 @@ class AwsSdkV1SqsClient(client: AmazonSQS) extends SqsClient {
         Left(SqsClientError(ResourceNotFound, e.getErrorMessage))
       case e: QueueDoesNotExistException =>
         Left(SqsClientError(QueueDoesNotExist, e.getErrorMessage))
-      case e: com.amazonaws.services.sqs.model.AmazonSQSException
+      // AWS SDK v1 (JSON protocol) has no modeled InvalidParameterValue exception; on Java 17 it
+      // surfaces as AmazonServiceException with the SQS error code still populated.
+      case e: com.amazonaws.AmazonServiceException
           if e.getErrorCode == "InvalidParameterValue" || e.getErrorCode == "InvalidAttributeValue" || e.getErrorCode == "InvalidAttributeName" =>
         Left(SqsClientError(InvalidParameterValue, e.getErrorMessage))
-      case e: com.amazonaws.services.sqs.model.AmazonSQSException if e.getErrorCode == "MissingParameter" =>
+      case e: com.amazonaws.AmazonServiceException if e.getErrorCode == "MissingParameter" =>
         Left(SqsClientError(MissingParameter, e.getErrorMessage))
       case e: com.amazonaws.AmazonClientException if e.getMessage.contains("MD5 returned by SQS does not match") =>
         Left(SqsClientError(InvalidParameterValue, e.getMessage))

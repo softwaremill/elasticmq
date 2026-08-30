@@ -8,44 +8,6 @@ permissions:
   contents: write        # release-drafter, auto-merge requirement
   pull-requests: write   # labeler, auto-merge requirement
 jobs:
-  ci-2-12:
-    # run on 1) push, 2) external PRs, 3) softwaremill-ci PRs
-    # do not run on internal, non-steward PRs since those will be run by push to branch
-    if: |
-      github.event_name == 'push' ||
-      github.event.pull_request.head.repo.full_name != github.repository ||
-      github.event.pull_request.user.login == 'softwaremill-ci'
-    runs-on: ubuntu-24.04
-    env:
-      scala: 2.12
-    steps:
-      - name: Check-out repository
-        id: repo-checkout
-        uses: actions/checkout@v2
-
-      - name: Set up SBT
-        uses: sbt/setup-sbt@3e125ece5c3e5248e18da9ed8d2cce3d335ec8dd # v1, specifically v1.1.14
-
-      - name: Set up JDK
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: '8'
-
-      - name: Cache SBT
-        id: cache-sbt
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.sbt
-            ~/.ivy2/cache
-            ~/.coursier
-          key: ${{ runner.os }}-sbt-${{ env.scala }}-${{ hashFiles('**/build.sbt') }}
-
-      - name: Run tests
-        id: run-tests
-        run: SCALA_MAJOR_VERSION=${{ env.scala }} sbt "root/testOnly * -- -l org.elasticmq.rest.sqs.Only213"
-
   ci-2-13:
     # run on 1) push, 2) external PRs, 3) softwaremill-ci PRs
     # do not run on internal, non-steward PRs since those will be run by push to branch
@@ -68,7 +30,7 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: '8'
+          java-version: '17'
 
       - name: Cache SBT
         id: cache-sbt
@@ -106,7 +68,7 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: '8'
+          java-version: '17'
 
       - name: Cache SBT
         id: cache-sbt
@@ -178,7 +140,7 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: '11'
+          java-version: '17'
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -248,7 +210,7 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: '11'
+          java-version: '17'
 
       - name: Cache SBT
         id: cache-sbt
@@ -281,7 +243,7 @@ jobs:
         run: docker build -f ui/Dockerfile -t softwaremill/elasticmq-ui:local ui/
 
   publish-jar:
-    needs: [ci-2-12, ci-2-13, ci-3, ci-ui, ci-docker, ci-native-image-agent-config-verification]
+    needs: [ci-2-13, ci-3, ci-ui, ci-docker, ci-native-image-agent-config-verification]
     if: github.event_name != 'pull_request' && (startsWith(github.ref, 'refs/tags/v'))
     runs-on: ubuntu-24.04
     steps:
@@ -295,7 +257,7 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: '8'
+          java-version: '17'
 
       - name: Cache sbt
         uses: actions/cache@v4
@@ -350,7 +312,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   publish-docker-build-jars:
-    needs: [ci-2-12, ci-2-13, ci-3, ci-ui, ci-docker, ci-native-image-agent-config-verification]
+    needs: [ci-2-13, ci-3, ci-ui, ci-docker, ci-native-image-agent-config-verification]
     if: github.event_name != 'pull_request' && (startsWith(github.ref, 'refs/tags/v'))
     runs-on: ubuntu-24.04
     env:
@@ -366,7 +328,7 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: '11'
+          java-version: '17'
 
       - name: Cache sbt
         uses: actions/cache@v4
@@ -529,6 +491,6 @@ jobs:
   auto-merge:
     # only for PRs by softwaremill-ci
     if: github.event.pull_request.user.login == 'softwaremill-ci'
-    needs: [ci-2-12, ci-2-13, ci-3, ci-ui, ci-docker, ci-native-image-agent-config-verification, label]
+    needs: [ci-2-13, ci-3, ci-ui, ci-docker, ci-native-image-agent-config-verification, label]
     uses: softwaremill/github-actions-workflows/.github/workflows/auto-merge.yml@main
     secrets: inherit          

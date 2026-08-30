@@ -1,10 +1,8 @@
-FROM ghcr.io/graalvm/graalvm-ce:ol8-java11-22.1.0
+FROM ghcr.io/graalvm/jdk-community:17
 
 RUN microdnf update -y \
     && microdnf install -y procps-ng \
     && microdnf clean all
-
-RUN gu install native-image
 
 RUN mkdir /elasticmq
 WORKDIR /elasticmq

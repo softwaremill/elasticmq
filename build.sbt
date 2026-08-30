@@ -7,13 +7,11 @@ import scoverage.ScoverageKeys.*
 
 import scala.sys.process.Process
 
-val v2_12 = "2.12.20"
 val v2_13 = "2.13.18"
 val v3 = "3.3.7"
 
 lazy val resolvedScalaVersion =
   sys.env.get("SCALA_MAJOR_VERSION") match {
-    case Some("2.12")      => v2_12
     case Some("2.13")      => v2_13
     case Some("3")         => v3
     case Some(unsupported) => throw new IllegalArgumentException(s"Unsupported SCALA_MAJOR_VERSION: $unsupported")
@@ -66,13 +64,14 @@ val buildSettings = commonSmlBuildSettings ++ ossPublishSettings ++ Seq(
     ScmInfo(url("https://github.com/softwaremill/elasticmq"), "scm:git@github.com:softwaremill/elasticmq.git")
   ),
   scalaVersion := resolvedScalaVersion,
-  crossScalaVersions := List(v2_12, v2_13, v3),
+  crossScalaVersions := List(v2_13, v3),
   scalacOptions ++= {
     CrossVersion.partialVersion(scalaVersion.value) match {
-      case Some((3, _)) => Seq("-Xtarget:8")
-      case _            => Seq("-Xasync", "-target:jvm-1.8")
+      case Some((3, _)) => Seq("-Xtarget:17")
+      case _            => Seq("-Xasync", "-release:17")
     }
   },
+  javacOptions ++= Seq("--release", "17"),
   libraryDependencies += scalaXml,
   dependencyOverrides := pekko100verrides,
   parallelExecution := false,
@@ -93,8 +92,7 @@ lazy val root: Project = (project in file("."))
   .enablePlugins(GitVersioning)
   .settings(buildSettings)
   .settings(name := "elasticmq-root", publish / skip := true)
-  // we want to build the main jar using java 8, but native-server requires java 11, so it's built separately
-  // native-server project is only used for building the native Docker image with GraalVM
+  // native-server is only used for building the native Docker image with GraalVM (Java 17)
   .aggregate(commonTest, core, rest, persistence, server)
 
 lazy val commonTest: Project = (project in file("common-test"))
@@ -244,7 +242,7 @@ lazy val server: Project = (project in file("server"))
   )
   .dependsOn(core, restSqs)
 
-val graalVmVersion = "22.1.0"
+val graalVmVersion = "23.0.9"
 
 lazy val nativeServer: Project = (project in file("native-server"))
   .settings(buildSettings)

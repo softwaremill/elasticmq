@@ -22,7 +22,7 @@ elasticmq/
 │   └── rest-sqs-testing-amazon-java-sdk/  # Integration tests with AWS SDKs
 ├── server/                        # Stand-alone server entry point
 │   └── docker/                    # Docker config files
-├── native-server/                 # GraalVM native image build (Java 11+)
+├── native-server/                 # GraalVM native image build (Java 17)
 ├── integration-tests/
 ├── performance-tests/
 ├── examples/
@@ -34,7 +34,7 @@ elasticmq/
 
 ### Tech Stack
 
-- **Language:** Scala (cross-compiled: 2.12, 2.13, 3.x; default 2.13)
+- **Language:** Scala (cross-compiled: 2.13, 3.x; default 2.13)
 - **Actor system:** Apache Pekko
 - **HTTP:** Pekko HTTP + spray-json
 - **Persistence:** PureConfig (file), ScalikeJDBC + H2 (SQL)
@@ -97,8 +97,7 @@ java -Dconfig.file=/path/to/elasticmq.conf -jar elasticmq-server.jar
 
 Set Scala version via environment variable before running sbt:
 ```bash
-SCALA_MAJOR_VERSION=2.12 sbt test
-SCALA_MAJOR_VERSION=3    sbt test
+SCALA_MAJOR_VERSION=3 sbt test
 ```
 
 ## UI (Next.js)
@@ -266,4 +265,4 @@ aws --endpoint-url=http://localhost:9324 sqs list-queues
 
 **npm issues:** `nvm use lts && rm -rf node_modules && npm install`
 
-**sbt compile errors:** Check `SCALA_MAJOR_VERSION` env var and Java version (8+ for main, 11+ for native).
+**sbt compile errors:** Check `SCALA_MAJOR_VERSION` env var and Java version (17+).
