@@ -2,7 +2,7 @@
 
 [![Ideas, suggestions, problems, questions](https://img.shields.io/badge/Discourse-ask%20question-blue)](https://softwaremill.community/c/elasticmq)
 [![ CI ](https://github.com/softwaremill/elasticmq/workflows/ElasticMQ%20tests/badge.svg)](https://github.com/softwaremill/elasticmq/actions?query=workflow%3A%22ElasticMQ+tests%22)
-[![Maven Central](https://maven-badges.herokuapp.com/maven-central/org.elasticmq/elasticmq-rest-sqs_2.13/badge.svg)](https://maven-badges.herokuapp.com/maven-central/org.elasticmq/elasticmq-rest-sqs_2.13/)
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/org.elasticmq/elasticmq-rest-sqs_3/badge.svg)](https://maven-badges.herokuapp.com/maven-central/org.elasticmq/elasticmq-rest-sqs_3/)
 
 # tl;dr
 
@@ -289,7 +289,7 @@ Dependencies:
 ```xml
 <dependency>
     <groupId>org.elasticmq</groupId>
-    <artifactId>elasticmq-rest-sqs_2.13</artifactId>
+    <artifactId>elasticmq-rest-sqs_3</artifactId>
     <version>${version}</version>
 </dependency>
 ```
@@ -519,12 +519,12 @@ To check the coverage reports:
 Although it's mostly only the core project that is relevant for coverage testing, each project's report can be found
 in their target directory:
 
- * core/target/scala-2.13/scoverage-report/index.html
- * common-test/target/scala-2.13/scoverage-report/index.html
- * rest/rest-sqs/target/scala-2.13/scoverage-report/index.html
- * server/target/scala-2.13/scoverage-report/index.html
+ * core/target/scala-3/scoverage-report/index.html
+ * common-test/target/scala-3/scoverage-report/index.html
+ * rest/rest-sqs/target/scala-3/scoverage-report/index.html
+ * server/target/scala-3/scoverage-report/index.html
 
-The aggregate report can be found at target/scala-2.13/scoverage-report/index.html
+The aggregate report can be found at target/scala-3/scoverage-report/index.html
 
 # UI
 

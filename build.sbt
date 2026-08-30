@@ -15,7 +15,7 @@ lazy val resolvedScalaVersion =
     case Some("2.13")      => v2_13
     case Some("3")         => v3
     case Some(unsupported) => throw new IllegalArgumentException(s"Unsupported SCALA_MAJOR_VERSION: $unsupported")
-    case _                 => v2_13
+    case _                 => v3
   }
 
 val config = "com.typesafe" % "config" % "1.4.9"
@@ -64,7 +64,7 @@ val buildSettings = commonSmlBuildSettings ++ ossPublishSettings ++ Seq(
     ScmInfo(url("https://github.com/softwaremill/elasticmq"), "scm:git@github.com:softwaremill/elasticmq.git")
   ),
   scalaVersion := resolvedScalaVersion,
-  crossScalaVersions := List(v2_13, v3),
+  crossScalaVersions := List(v3, v2_13),
   scalacOptions ++= {
     CrossVersion.partialVersion(scalaVersion.value) match {
       case Some((3, _)) => Seq("-Xtarget:17")
