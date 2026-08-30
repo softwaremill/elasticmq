@@ -519,12 +519,12 @@ To check the coverage reports:
 Although it's mostly only the core project that is relevant for coverage testing, each project's report can be found
 in their target directory:
 
- * core/target/scala-3/scoverage-report/index.html
- * common-test/target/scala-3/scoverage-report/index.html
- * rest/rest-sqs/target/scala-3/scoverage-report/index.html
- * server/target/scala-3/scoverage-report/index.html
+ * core/target/scala-3.3.7/scoverage-report/index.html
+ * common-test/target/scala-3.3.7/scoverage-report/index.html
+ * rest/rest-sqs/target/scala-3.3.7/scoverage-report/index.html
+ * server/target/scala-3.3.7/scoverage-report/index.html
 
-The aggregate report can be found at target/scala-3/scoverage-report/index.html
+The aggregate report can be found at target/scala-3.3.7/scoverage-report/index.html
 
 # UI
 

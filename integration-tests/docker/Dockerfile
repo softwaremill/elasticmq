@@ -7,7 +7,7 @@ RUN microdnf update -y \
 RUN mkdir /elasticmq
 WORKDIR /elasticmq
 
-ADD server/target/scala-3/elasticmq-server-assembly-*.jar .
+ADD server/target/scala-*/elasticmq-server-assembly-*.jar .
 
 RUN ln -s elasticmq-server-assembly-*.jar elasticmq-server.jar
 RUN mkdir /elasticmq/data

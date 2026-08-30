@@ -230,8 +230,8 @@ jobs:
 
       - name: Normalize JAR filenames
         run: |
-          cp server/target/scala-3/elasticmq-server-assembly-*.jar server/target/elasticmq-server.jar
-          cp native-server/target/scala-3/elasticmq-native-server_3-*.jar native-server/target/elasticmq-native-server.jar
+          cp server/target/scala-*/elasticmq-server-assembly-*.jar server/target/elasticmq-server.jar
+          cp native-server/target/scala-*/elasticmq-native-server_*.jar native-server/target/elasticmq-native-server.jar
 
       - name: Build JVM docker image
         run: docker build -f server/Dockerfile -t softwaremill/elasticmq:local .
@@ -301,11 +301,15 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Normalize assembly path
+        run: |
+          cp server/target/scala-*/elasticmq-server-assembly-*.jar "server/target/elasticmq-server-assembly-${{ env.VERSION }}.jar"
+
       - name: Publish assembly jar
         uses: actions/upload-release-asset@v1
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: "server/target/scala-3/elasticmq-server-assembly-${{ env.VERSION }}.jar"
+          asset_path: "server/target/elasticmq-server-assembly-${{ env.VERSION }}.jar"
           asset_name: "elasticmq-server-all-${{ env.VERSION }}.jar"
           asset_content_type: application/java-archive
         env:
@@ -348,8 +352,8 @@ jobs:
       - name: Prepare artifacts
         run: |
           mkdir dist
-          cp server/target/scala-3/elasticmq-server-assembly-*.jar dist/elasticmq-server.jar
-          cp native-server/target/scala-3/elasticmq-native-server_3-*.jar dist/elasticmq-native-server.jar
+          cp server/target/scala-*/elasticmq-server-assembly-*.jar dist/elasticmq-server.jar
+          cp native-server/target/scala-*/elasticmq-native-server_*.jar dist/elasticmq-native-server.jar
 
       - name: Upload JARs
         uses: actions/upload-artifact@v4
