@@ -1,45 +1,38 @@
 {
   "resources":{
-  "includes":[
-    {
-      "pattern":"\\QMETA-INF/MANIFEST.MF\\E"
-    }, 
-    {
-      "pattern":"\\QMETA-INF/services/ch.qos.logback.classic.spi.Configurator\\E"
-    }, 
-    {
-      "pattern":"\\QMETA-INF/services/java.sql.Driver\\E"
-    }, 
-    {
-      "pattern":"\\QMETA-INF/services/org.slf4j.spi.SLF4JServiceProvider\\E"
-    }, 
-    {
-      "pattern":"\\Qapplication.conf\\E"
-    }, 
-    {
-      "pattern":"\\Qlogback.xml\\E"
-    }, 
-    {
-      "pattern":"\\Qorg/h2/util/data.zip\\E"
-    }, 
-    {
-      "pattern":"\\Qorg/slf4j/impl/StaticLoggerBinder.class\\E"
-    }, 
-    {
-      "pattern":"\\Qpekko-http-version.conf\\E"
-    }, 
-    {
-      "pattern":"\\Qreference.conf\\E"
-    }, 
-    {
-      "pattern":"\\Qversion.conf\\E"
-    }, 
-    {
-      "pattern":"\\Qversion\\E"
-    }
-  ]},
+  "includes":[{
+    "pattern":"\\QMETA-INF/MANIFEST.MF\\E"
+  }, {
+    "pattern":"\\QMETA-INF/services/ch.qos.logback.classic.spi.Configurator\\E"
+  }, {
+    "pattern":"\\QMETA-INF/services/java.sql.Driver\\E"
+  }, {
+    "pattern":"\\QMETA-INF/services/org.slf4j.spi.SLF4JServiceProvider\\E"
+  }, {
+    "pattern":"\\Qapplication.conf\\E"
+  }, {
+    "pattern":"\\Qch/qos/logback/classic/logback-classic-version.properties\\E"
+  }, {
+    "pattern":"\\Qch/qos/logback/core/logback-core-version.properties\\E"
+  }, {
+    "pattern":"\\Qlogback.xml\\E"
+  }, {
+    "pattern":"\\Qorg/h2/util/data.zip\\E"
+  }, {
+    "pattern":"\\Qorg/slf4j/impl/StaticLoggerBinder.class\\E"
+  }, {
+    "pattern":"\\Qpekko-http-version.conf\\E"
+  }, {
+    "pattern":"\\Qreference.conf\\E"
+  }, {
+    "pattern":"\\Qversion.conf\\E"
+  }, {
+    "pattern":"\\Qversion\\E"
+  }, {
+    "pattern":"java.base:\\Qsun/net/www/content-types.properties\\E"
+  }]},
   "bundles":[{
-      "name":"org.apache.commons.dbcp2.LocalStrings",
-      "locales":["und"]
-    }]
+    "name":"org.apache.commons.dbcp2.LocalStrings",
+    "locales":["und"]
+  }]
 }
