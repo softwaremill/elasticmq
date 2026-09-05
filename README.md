@@ -269,7 +269,7 @@ in the main configuration file (as described in the previous section) in the `qu
 # ElasticMQ dependencies in SBT
 
 ```scala
-// Scala 2.13 and 3
+// Scala 2.13 and 3 (published _3 artifacts are built with 3.9 LTS)
 val elasticmqSqs        = "org.elasticmq" %% "elasticmq-rest-sqs" % Version
 ```
 
@@ -519,12 +519,12 @@ To check the coverage reports:
 Although it's mostly only the core project that is relevant for coverage testing, each project's report can be found
 in their target directory:
 
- * core/target/scala-3.3.7/scoverage-report/index.html
- * common-test/target/scala-3.3.7/scoverage-report/index.html
- * rest/rest-sqs/target/scala-3.3.7/scoverage-report/index.html
- * server/target/scala-3.3.7/scoverage-report/index.html
+ * core/target/scala-3.9.0/scoverage-report/index.html
+ * common-test/target/scala-3.9.0/scoverage-report/index.html
+ * rest/rest-sqs/target/scala-3.9.0/scoverage-report/index.html
+ * server/target/scala-3.9.0/scoverage-report/index.html
 
-The aggregate report can be found at target/scala-3.3.7/scoverage-report/index.html
+The aggregate report can be found at target/scala-3.9.0/scoverage-report/index.html
 
 # UI
 

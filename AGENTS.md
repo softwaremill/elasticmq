@@ -34,7 +34,7 @@ elasticmq/
 
 ### Tech Stack
 
-- **Language:** Scala (cross-compiled: 3.x, 2.13; default 3.x)
+- **Language:** Scala (cross-compiled: 3.9 LTS, 3.3 LTS, 2.13; default 3.9)
 - **Actor system:** Apache Pekko
 - **HTTP:** Pekko HTTP + spray-json
 - **Persistence:** PureConfig (file), ScalikeJDBC + H2 (SQL)
@@ -67,7 +67,7 @@ sbt "server/assembly"
 sbt "server/docker:publishLocal"
 
 # Run server locally
-java -jar server/target/scala-3.3.7/elasticmq-server-*.jar
+java -jar server/target/scala-3.9.0/elasticmq-server-*.jar
 ```
 
 ### Running ElasticMQ
@@ -95,8 +95,9 @@ java -Dconfig.file=/path/to/elasticmq.conf -jar elasticmq-server.jar
 
 ### Scala Cross-Compilation
 
-Set Scala version via environment variable before running sbt:
+Set Scala version via environment variable before running sbt (`3.9` is the default):
 ```bash
+SCALA_MAJOR_VERSION=3.3 sbt test
 SCALA_MAJOR_VERSION=2.13 sbt test
 ```
 

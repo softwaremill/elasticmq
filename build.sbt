@@ -8,14 +8,17 @@ import scoverage.ScoverageKeys.*
 import scala.sys.process.Process
 
 val v2_13 = "2.13.18"
-val v3 = "3.3.7"
+val v3_3 = "3.3.8"
+val v3_9 = "3.9.0"
 
 lazy val resolvedScalaVersion =
   sys.env.get("SCALA_MAJOR_VERSION") match {
     case Some("2.13")      => v2_13
-    case Some("3")         => v3
+    case Some("3.3")       => v3_3
+    case Some("3.9")       => v3_9
+    case Some("3")         => v3_9
     case Some(unsupported) => throw new IllegalArgumentException(s"Unsupported SCALA_MAJOR_VERSION: $unsupported")
-    case _                 => v3
+    case _                 => v3_9
   }
 
 val config = "com.typesafe" % "config" % "1.4.9"
@@ -64,7 +67,9 @@ val buildSettings = commonSmlBuildSettings ++ ossPublishSettings ++ Seq(
     ScmInfo(url("https://github.com/softwaremill/elasticmq"), "scm:git@github.com:softwaremill/elasticmq.git")
   ),
   scalaVersion := resolvedScalaVersion,
-  crossScalaVersions := List(v3, v2_13),
+  crossScalaVersions := List(v3_9, v3_3, v2_13),
+  // Scala 3.3 and 3.9 share the _3 Maven suffix; publish only the current LTS.
+  publish / skip := scalaVersion.value.startsWith("3.3."),
   scalacOptions ++= {
     CrossVersion.partialVersion(scalaVersion.value) match {
       case Some((3, _)) => Seq("-Xtarget:17")
