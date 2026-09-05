@@ -1317,10 +1317,18 @@
   "name":"scala.Boolean"
 },
 {
+  "name":"scala.Enumeration",
+  "fields":[{"name":"ValueOrdering$lzy1"}, {"name":"ValueSet$lzy1"}]
+},
+{
   "name":"scala.Int"
 },
 {
   "name":"scala.Long"
+},
+{
+  "name":"scala.StringContext",
+  "fields":[{"name":"s$lzy1"}]
 },
 {
   "name":"scala.Symbol",
@@ -1330,8 +1338,48 @@
   "name":"scala.Tuple2[]"
 },
 {
+  "name":"scala.collection.immutable.ArraySeq$",
+  "fields":[{"name":"emptyImpl$lzy1"}]
+},
+{
+  "name":"scala.collection.immutable.NumericRange",
+  "fields":[{"name":"hashCode$lzy1"}, {"name":"isEmpty$lzy1"}, {"name":"length$lzy1"}]
+},
+{
+  "name":"scala.concurrent.ExecutionContext$",
+  "fields":[{"name":"global$lzy1"}, {"name":"opportunistic$lzy1"}]
+},
+{
+  "name":"scala.io.BufferedSource",
+  "fields":[{"name":"charReader$lzy1"}]
+},
+{
+  "name":"scala.io.Codec$",
+  "fields":[{"name":"fallbackSystemCodec$lzy1"}]
+},
+{
+  "name":"scala.io.Source",
+  "fields":[{"name":"NoPositioner$lzy1"}, {"name":"RelaxedPosition$lzy1"}, {"name":"RelaxedPositioner$lzy1"}]
+},
+{
+  "name":"scala.language$",
+  "fields":[{"name":"dynamics$lzy1"}, {"name":"existentials$lzy1"}, {"name":"higherKinds$lzy1"}, {"name":"implicitConversions$lzy1"}, {"name":"postfixOps$lzy1"}, {"name":"reflectiveCalls$lzy1"}]
+},
+{
+  "name":"scala.math.BigDecimal$",
+  "fields":[{"name":"cache$lzy1"}]
+},
+{
   "name":"scala.reflect.ScalaSignature",
   "allPublicMethods":true
+},
+{
+  "name":"scala.util.matching.Regex$Match",
+  "fields":[{"name":"ends$lzy1"}, {"name":"scala$util$matching$Regex$MatchData$$nameToIndex$lzy1"}, {"name":"starts$lzy1"}]
+},
+{
+  "name":"scala.util.matching.Regex$MatchIterator",
+  "fields":[{"name":"scala$util$matching$Regex$MatchData$$nameToIndex$lzy2"}]
 },
 {
   "name":"scalikejdbc.ActiveSession",
