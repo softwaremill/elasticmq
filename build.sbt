@@ -50,7 +50,7 @@ val scala3Async =
   "com.github.rssh" %% "shim-scala-async-dotty-cps-async" % "0.9.23" // allows cross compilation w/o changes in source code
 
 val scalikeJdbc = "org.scalikejdbc" %% "scalikejdbc" % "4.3.5"
-val h2 = "com.h2database" % "h2" % "2.2.224"
+val h2 = "com.h2database" % "h2" % "2.5.250"
 
 val common = Seq(scalalogging)
 
