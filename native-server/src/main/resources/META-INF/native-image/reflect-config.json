@@ -873,6 +873,16 @@
   "queryAllPublicMethods":true
 },
 {
+  "name":"org.elasticmq.rest.sqs.ListMessageMoveTasksRequest",
+  "allDeclaredFields":true,
+  "queryAllPublicMethods":true
+},
+{
+  "name":"org.elasticmq.rest.sqs.ListMessageMoveTasksResponse",
+  "allDeclaredFields":true,
+  "queryAllPublicMethods":true
+},
+{
   "name":"org.elasticmq.rest.sqs.ListQueueTagsActionRequest",
   "allDeclaredFields":true,
   "queryAllPublicMethods":true
@@ -889,6 +899,11 @@
 },
 {
   "name":"org.elasticmq.rest.sqs.ListQueuesResponse",
+  "allDeclaredFields":true,
+  "queryAllPublicMethods":true
+},
+{
+  "name":"org.elasticmq.rest.sqs.MessageMoveTaskResponse",
   "allDeclaredFields":true,
   "queryAllPublicMethods":true
 },
