@@ -67,7 +67,7 @@ sbt "server/assembly"
 sbt "server/docker:publishLocal"
 
 # Run server locally
-java -jar server/target/scala-2.13/elasticmq-server-*.jar
+java -jar target/out/jvm/scala-2.13.*/elasticmq-server/elasticmq-server-assembly-*.jar
 ```
 
 ### Running ElasticMQ
@@ -266,4 +266,4 @@ aws --endpoint-url=http://localhost:9324 sqs list-queues
 
 **npm issues:** `nvm use lts && rm -rf node_modules && npm install`
 
-**sbt compile errors:** Check `SCALA_MAJOR_VERSION` env var and Java version (8+ for main, 11+ for native).
+**sbt compile errors:** Check `SCALA_MAJOR_VERSION` env var and Java version (17+ is required by sbt 2; the main jar targets Java 8).
