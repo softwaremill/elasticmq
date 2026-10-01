@@ -90,7 +90,7 @@ assembly / assemblyMergeStrategy := {
 // see https://github.com/scala/scala-dist/pull/181/files
 val s3Upload = TaskKey[PutObjectResult]("s3-upload", "Uploads files to an S3 bucket.")
 
-lazy val root: Project = (project in file("."))
+lazy val root: Project = rootProject
   .enablePlugins(GitVersioning)
   .settings(name := "elasticmq-root", publish / skip := true)
   // we want to build the main jar using java 8, but native-server requires java 11, so it's built separately
