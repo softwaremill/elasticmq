@@ -191,6 +191,8 @@ lazy val restSqsTestingAmazonJavaSdk: Project =
           amazonJavaV2SdkSqs,
           jclOverSlf4j
         ) ++ common,
+        // AWS SDK v1 needs reflective access to Throwable - it unmarshalls error responses into exceptions via Jackson
+        Test / javaOptions += "--add-opens=java.base/java.lang=ALL-UNNAMED",
         publish / skip := true
       )
     )
