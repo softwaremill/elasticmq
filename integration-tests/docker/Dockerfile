@@ -9,7 +9,7 @@ RUN gu install native-image
 RUN mkdir /elasticmq
 WORKDIR /elasticmq
 
-ADD server/target/scala-2.13/elasticmq-server-assembly-*.jar .
+ADD target/out/jvm/scala-2.13.*/elasticmq-server/elasticmq-server-assembly-*.jar .
 
 RUN ln -s elasticmq-server-assembly-*.jar elasticmq-server.jar
 RUN mkdir /elasticmq/data
