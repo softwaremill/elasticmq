@@ -27,12 +27,12 @@ val scalaXml = "org.scala-lang.modules" %% "scala-xml" % "2.4.0"
 
 val scalalogging = "com.typesafe.scala-logging" %% "scala-logging" % "3.9.6"
 val logback = "ch.qos.logback" % "logback-classic" % "1.6.3"
-val jclOverSlf4j = "org.slf4j" % "jcl-over-slf4j" % "2.0.18" // needed form amazon java sdk
+val jclOverSlf4j = "org.slf4j" % "jcl-over-slf4j" % "2.0.20" // needed form amazon java sdk
 
 val scalatest = "org.scalatest" %% "scalatest" % "3.2.20"
 val awaitility = "org.awaitility" % "awaitility-scala" % "4.3.0"
 
-val amazonJavaSdkSqs = "com.amazonaws" % "aws-java-sdk-sqs" % "1.12.699" exclude ("commons-logging", "commons-logging")
+val amazonJavaSdkSqs = ("com.amazonaws" % "aws-java-sdk-sqs" % "1.12.699").exclude("commons-logging", "commons-logging")
 val amazonJavaV2SdkSqs = "software.amazon.awssdk" % "sqs" % "2.25.60"
 
 val pekkoVersion = "1.7.0"
@@ -61,52 +61,50 @@ val pekko100verrides =
     "org.apache.pekko" %% "pekko-stream-testkit" % pekkoVersion
   )
 
-val buildSettings = commonSmlBuildSettings ++ ossPublishSettings ++ Seq(
-  organization := "org.elasticmq",
-  scmInfo := Some(
-    ScmInfo(url("https://github.com/softwaremill/elasticmq"), "scm:git@github.com:softwaremill/elasticmq.git")
-  ),
-  scalaVersion := resolvedScalaVersion,
-  crossScalaVersions := List(v3_9, v3_3, v2_13),
-  // Scala 3.3 and 3.9 share the _3 Maven suffix; publish only the current LTS.
-  publish / skip := scalaVersion.value.startsWith("3.3."),
-  scalacOptions ++= {
-    CrossVersion.partialVersion(scalaVersion.value) match {
-      case Some((3, _)) => Seq("-Xtarget:17")
-      case _            => Seq("-Xasync", "-release:17")
-    }
-  },
-  javacOptions ++= Seq("--release", "17"),
-  libraryDependencies += scalaXml,
-  dependencyOverrides := pekko100verrides,
-  parallelExecution := false,
-  // workaround for: https://github.com/sbt/sbt/issues/692
-  Test / fork := true,
-  assembly / assemblyMergeStrategy := {
-    case PathList(ps @ _*) if ps.last == "module-info.class"    => MergeStrategy.first
-    case PathList(ps @ _*) if ps.last == "reflect-config.json"  => MergeStrategy.first
-    case PathList(ps @ _*) if ps.last == "resource-config.json" => MergeStrategy.first
-    case x                                                      => (assembly / assemblyMergeStrategy).value(x)
-  }
+commonSmlBuildSettings
+ossPublishSettings
+
+organization := "org.elasticmq"
+scmInfo := Some(
+  ScmInfo(url("https://github.com/softwaremill/elasticmq"), "scm:git@github.com:softwaremill/elasticmq.git")
 )
+scalaVersion := resolvedScalaVersion
+crossScalaVersions := List(v3_9, v3_3, v2_13)
+// Scala 3.3 and 3.9 share the _3 Maven suffix; publish only the current LTS.
+publish / skip := scalaVersion.value.startsWith("3.3.")
+scalacOptions ++= {
+  CrossVersion.partialVersion(scalaVersion.value) match {
+    case Some((3, _)) => Seq("-Xtarget:17")
+    case _            => Seq("-Xasync", "-release:17")
+  }
+}
+javacOptions ++= Seq("--release", "17")
+libraryDependencies += scalaXml
+dependencyOverrides := pekko100verrides
+parallelExecution := false
+// workaround for: https://github.com/sbt/sbt/issues/692
+Test / fork := true
+assembly / assemblyMergeStrategy := {
+  case PathList(ps*) if ps.last == "module-info.class"    => MergeStrategy.first
+  case PathList(ps*) if ps.last == "reflect-config.json"  => MergeStrategy.first
+  case PathList(ps*) if ps.last == "resource-config.json" => MergeStrategy.first
+  case x                                                  => (assembly / assemblyMergeStrategy).value(x)
+}
 
 // see https://github.com/scala/scala-dist/pull/181/files
 val s3Upload = TaskKey[PutObjectResult]("s3-upload", "Uploads files to an S3 bucket.")
 
-lazy val root: Project = (project in file("."))
+lazy val root: Project = rootProject
   .enablePlugins(GitVersioning)
-  .settings(buildSettings)
   .settings(name := "elasticmq-root", publish / skip := true)
   // native-server is only used for building the native Docker image with GraalVM (Java 17)
   .aggregate(commonTest, core, rest, persistence, server)
 
 lazy val commonTest: Project = (project in file("common-test"))
-  .settings(buildSettings)
   .settings(name := "elasticmq-common-test")
   .settings(Seq(libraryDependencies ++= Seq(scalatest, awaitility, logback), publish / skip := true))
 
 lazy val core: Project = (project in file("core"))
-  .settings(buildSettings)
   .settings(
     Seq(
       name := "elasticmq-core",
@@ -117,12 +115,10 @@ lazy val core: Project = (project in file("core"))
   .dependsOn(commonTest % "test")
 
 lazy val persistence: Project = (project in file("persistence"))
-  .settings(buildSettings)
   .settings(name := "elasticmq-persistence", publishArtifact := false)
   .aggregate(persistenceCore, persistenceFile, persistenceSql)
 
 lazy val persistenceCore: Project = (project in file("persistence/persistence-core"))
-  .settings(buildSettings)
   .settings(
     Seq(
       name := "elasticmq-persistence-core",
@@ -141,7 +137,6 @@ lazy val persistenceCore: Project = (project in file("persistence/persistence-co
   .dependsOn(core % "compile->compile;test->test", commonTest % "test")
 
 lazy val persistenceFile: Project = (project in file("persistence/persistence-file"))
-  .settings(buildSettings)
   .settings(
     Seq(
       name := "elasticmq-persistence-file",
@@ -151,7 +146,6 @@ lazy val persistenceFile: Project = (project in file("persistence/persistence-fi
   .dependsOn(persistenceCore, commonTest % "test")
 
 lazy val persistenceSql: Project = (project in file("persistence/persistence-sql"))
-  .settings(buildSettings)
   .settings(
     Seq(
       name := "elasticmq-persistence-sql",
@@ -165,12 +159,10 @@ lazy val persistenceSql: Project = (project in file("persistence/persistence-sql
   .dependsOn(persistenceCore, commonTest % "test")
 
 lazy val rest: Project = (project in file("rest"))
-  .settings(buildSettings)
   .settings(name := "elasticmq-rest")
   .aggregate(restSqs, restSqsTestingAmazonJavaSdk)
 
 lazy val restSqs: Project = (project in file("rest/rest-sqs"))
-  .settings(buildSettings)
   .settings(
     Seq(
       name := "elasticmq-rest-sqs",
@@ -194,7 +186,6 @@ lazy val restSqs: Project = (project in file("rest/rest-sqs"))
 
 lazy val restSqsTestingAmazonJavaSdk: Project =
   (project in file("rest/rest-sqs-testing-amazon-java-sdk"))
-    .settings(buildSettings)
     .settings(
       Seq(
         name := "elasticmq-rest-sqs-testing-amazon-java-sdk",
@@ -203,13 +194,14 @@ lazy val restSqsTestingAmazonJavaSdk: Project =
           amazonJavaV2SdkSqs,
           jclOverSlf4j
         ) ++ common,
+        // AWS SDK v1 needs reflective access to Throwable - it unmarshalls error responses into exceptions via Jackson
+        Test / javaOptions += "--add-opens=java.base/java.lang=ALL-UNNAMED",
         publish / skip := true
       )
     )
     .dependsOn(restSqs % "test->test", persistenceFile % "test", persistenceSql % "test")
 
 lazy val server: Project = (project in file("server"))
-  .settings(buildSettings)
   .settings(generateVersionFileSettings)
   .settings(
     Seq(
@@ -218,7 +210,7 @@ lazy val server: Project = (project in file("server"))
       assembly / mainClass := Some("org.elasticmq.server.Main"),
       coverageMinimumStmtTotal := 52,
       // s3 upload
-      s3Upload := {
+      s3Upload := Def.uncached {
         import com.amazonaws.auth.{AWSStaticCredentialsProvider, BasicAWSCredentials}
         import com.amazonaws.services.s3.AmazonS3ClientBuilder
         import com.amazonaws.services.s3.model.{CannedAccessControlList, PutObjectRequest}
@@ -250,7 +242,6 @@ lazy val server: Project = (project in file("server"))
 val graalVmVersion = "23.0.9"
 
 lazy val nativeServer: Project = (project in file("native-server"))
-  .settings(buildSettings)
   .settings(
     Seq(
       name := "elasticmq-native-server",
@@ -264,7 +255,6 @@ lazy val nativeServer: Project = (project in file("native-server"))
   .dependsOn(server)
 
 lazy val performanceTests: Project = (project in file("performance-tests"))
-  .settings(buildSettings)
   .settings(
     Seq(
       name := "elasticmq-performance-tests",

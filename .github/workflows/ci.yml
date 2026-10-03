@@ -24,7 +24,7 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Set up SBT
-        uses: sbt/setup-sbt@3e125ece5c3e5248e18da9ed8d2cce3d335ec8dd # v1, specifically v1.1.14
+        uses: sbt/setup-sbt@ce95da69b39609ea153bad087708da5f37366897 # v1, specifically v1.5.10
 
       - name: Set up JDK
         uses: actions/setup-java@v4
@@ -44,7 +44,7 @@ jobs:
 
       - name: Run tests
         id: run-tests
-        run: SCALA_MAJOR_VERSION=${{ env.scala }} sbt root/test
+        run: SCALA_MAJOR_VERSION=${{ env.scala }} sbt root/testFull
 
   ci-3-3:
     # run on 1) push, 2) external PRs, 3) softwaremill-ci PRs
@@ -62,7 +62,7 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Set up SBT
-        uses: sbt/setup-sbt@3e125ece5c3e5248e18da9ed8d2cce3d335ec8dd # v1, specifically v1.1.14
+        uses: sbt/setup-sbt@ce95da69b39609ea153bad087708da5f37366897 # v1, specifically v1.5.10
 
       - name: Set up JDK
         uses: actions/setup-java@v4
@@ -82,7 +82,7 @@ jobs:
 
       - name: Run tests
         id: run-tests
-        run: SCALA_MAJOR_VERSION=${{ env.scala }} sbt root/test
+        run: SCALA_MAJOR_VERSION=${{ env.scala }} sbt root/testFull
 
   ci-3-9:
     # run on 1) push, 2) external PRs, 3) softwaremill-ci PRs
@@ -100,7 +100,7 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Set up SBT
-        uses: sbt/setup-sbt@3e125ece5c3e5248e18da9ed8d2cce3d335ec8dd # v1, specifically v1.1.14
+        uses: sbt/setup-sbt@ce95da69b39609ea153bad087708da5f37366897 # v1, specifically v1.5.10
 
       - name: Set up JDK
         uses: actions/setup-java@v4
@@ -120,7 +120,7 @@ jobs:
 
       - name: Run tests
         id: run-tests
-        run: SCALA_MAJOR_VERSION=${{ env.scala }} sbt root/test
+        run: SCALA_MAJOR_VERSION=${{ env.scala }} sbt root/testFull
 
   ci-ui:
     # run on 1) push, 2) external PRs, 3) softwaremill-ci PRs
@@ -172,7 +172,7 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Set up SBT
-        uses: sbt/setup-sbt@3e125ece5c3e5248e18da9ed8d2cce3d335ec8dd # v1, specifically v1.1.14
+        uses: sbt/setup-sbt@ce95da69b39609ea153bad087708da5f37366897 # v1, specifically v1.5.10
 
       - name: Set up JDK
         uses: actions/setup-java@v4
@@ -242,7 +242,7 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Set up SBT
-        uses: sbt/setup-sbt@3e125ece5c3e5248e18da9ed8d2cce3d335ec8dd # v1, specifically v1.1.14
+        uses: sbt/setup-sbt@ce95da69b39609ea153bad087708da5f37366897 # v1, specifically v1.5.10
 
       - name: Set up JDK
         uses: actions/setup-java@v4
@@ -268,8 +268,9 @@ jobs:
 
       - name: Normalize JAR filenames
         run: |
-          cp server/target/scala-*/elasticmq-server-assembly-*.jar server/target/elasticmq-server.jar
-          cp native-server/target/scala-*/elasticmq-native-server_*.jar native-server/target/elasticmq-native-server.jar
+          mkdir -p server/target native-server/target
+          cp target/out/jvm/scala-*/elasticmq-server/elasticmq-server-assembly-*.jar server/target/elasticmq-server.jar
+          cp target/out/jvm/scala-*/elasticmq-native-server/elasticmq-native-server_*.jar native-server/target/elasticmq-native-server.jar
 
       - name: Build JVM docker image
         run: docker build -f server/Dockerfile -t softwaremill/elasticmq:local .
@@ -289,7 +290,7 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Set up SBT
-        uses: sbt/setup-sbt@3e125ece5c3e5248e18da9ed8d2cce3d335ec8dd # v1, specifically v1.1.14
+        uses: sbt/setup-sbt@ce95da69b39609ea153bad087708da5f37366897 # v1, specifically v1.5.10
 
       - name: Set up JDK
         uses: actions/setup-java@v4
@@ -314,6 +315,10 @@ jobs:
           SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
           SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
 
+      # the sbt server started by ci-release doesn't see the S3 credentials
+      - name: Shutdown sbt server
+        run: sbt shutdown
+
       - name: Upload to S3
         run: sbt "project server; assembly; s3Upload"
         env:
@@ -327,6 +332,9 @@ jobs:
         env:
           COMMIT_MSG: ${{ github.event.head_commit.message }}
 
+      - name: Normalize assembly JAR path
+        run: cp target/out/jvm/scala-*/elasticmq-server/elasticmq-server-assembly-${{ env.VERSION }}.jar target/elasticmq-server-assembly.jar
+
       - name: Publish release notes
         id: create_release
         uses: release-drafter/release-drafter@b1476f6e6eb133afa41ed8589daba6dc69b4d3f5 # v6, specifically v6.1.0
@@ -339,15 +347,11 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Normalize assembly path
-        run: |
-          cp server/target/scala-*/elasticmq-server-assembly-*.jar "server/target/elasticmq-server-assembly-${{ env.VERSION }}.jar"
-
       - name: Publish assembly jar
         uses: actions/upload-release-asset@v1
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: "server/target/elasticmq-server-assembly-${{ env.VERSION }}.jar"
+          asset_path: "target/elasticmq-server-assembly.jar"
           asset_name: "elasticmq-server-all-${{ env.VERSION }}.jar"
           asset_content_type: application/java-archive
         env:
@@ -364,7 +368,7 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Set up SBT
-        uses: sbt/setup-sbt@3e125ece5c3e5248e18da9ed8d2cce3d335ec8dd # v1, specifically v1.1.14
+        uses: sbt/setup-sbt@ce95da69b39609ea153bad087708da5f37366897 # v1, specifically v1.5.10
 
       - name: Set up JDK
         uses: actions/setup-java@v4
@@ -390,8 +394,8 @@ jobs:
       - name: Prepare artifacts
         run: |
           mkdir dist
-          cp server/target/scala-*/elasticmq-server-assembly-*.jar dist/elasticmq-server.jar
-          cp native-server/target/scala-*/elasticmq-native-server_*.jar dist/elasticmq-native-server.jar
+          cp target/out/jvm/scala-*/elasticmq-server/elasticmq-server-assembly-*.jar dist/elasticmq-server.jar
+          cp target/out/jvm/scala-*/elasticmq-native-server/elasticmq-native-server_*.jar dist/elasticmq-native-server.jar
 
       - name: Upload JARs
         uses: actions/upload-artifact@v4

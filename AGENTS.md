@@ -67,7 +67,7 @@ sbt "server/assembly"
 sbt "server/docker:publishLocal"
 
 # Run server locally
-java -jar server/target/scala-3.9.0/elasticmq-server-*.jar
+java -jar target/out/jvm/scala-*/elasticmq-server/elasticmq-server-assembly-*.jar
 ```
 
 ### Running ElasticMQ
