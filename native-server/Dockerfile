@@ -1,16 +1,13 @@
-# Stage 1: Compile native binary using GraalVM
-FROM ghcr.io/graalvm/graalvm-ce:ol8-java11-22.1.0 AS builder
+# Stage 1: Compile native binary using GraalVM for JDK 17 (multi-arch)
+FROM ghcr.io/graalvm/native-image-community:17 AS builder
 
 WORKDIR /build
-
-RUN gu install native-image && \
-    ln -s /opt/graalvm-ce-*/bin/native-image /usr/local/bin/native-image
 
 COPY server/target/elasticmq-server.jar elasticmq.jar
 COPY native-server/target/elasticmq-native-server.jar elasticmq-native.jar
 
 RUN PAGE_SIZE_ARG=$(uname -m | grep -Eiq 'arm|aarch64' && echo '-H:PageSize=64K' || echo '') && \
-    /usr/local/bin/native-image \
+    native-image \
     -cp elasticmq.jar:elasticmq-native.jar \
     '-H:IncludeResources=.*conf' \
     '-H:IncludeResources=version' \
@@ -22,19 +19,18 @@ RUN PAGE_SIZE_ARG=$(uname -m | grep -Eiq 'arm|aarch64' && echo '-H:PageSize=64K'
     --enable-http \
     --enable-https \
     --enable-url-protocols=https,http \
-    --report-unsupported-elements-at-runtime \
     '--initialize-at-build-time=scala.Symbol$' \
-    --allow-incomplete-classpath \
     --install-exit-handlers \
     --no-fallback \
     --verbose \
-    --static \
     org.elasticmq.server.Main
 
-# Stage 2: Minimal Alpine runtime
-FROM alpine:3.22
+# Stage 2: glibc runtime (native-image-community:17 is not musl)
+FROM debian:bookworm-slim
 
-RUN apk add --no-cache tini
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends tini && \
+    rm -rf /var/lib/apt/lists/*
 
 WORKDIR /opt/elasticmq
 
@@ -45,6 +41,6 @@ COPY server/src/main/resources/logback.xml /opt/logback.xml
 EXPOSE 9324
 VOLUME /data
 
-ENTRYPOINT ["/sbin/tini", "--", "/opt/elasticmq/bin/elasticmq-native-server", \
+ENTRYPOINT ["/usr/bin/tini", "--", "/opt/elasticmq/bin/elasticmq-native-server", \
     "-Dconfig.file=/opt/elasticmq.conf", \
     "-Dlogback.configurationFile=/opt/logback.xml"]

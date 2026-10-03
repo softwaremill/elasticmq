@@ -21,6 +21,9 @@
   "name":"[Ljava.lang.Class;"
 },
 {
+  "name":"[Ljava.lang.Object;"
+},
+{
   "name":"[Ljava.lang.String;"
 },
 {
@@ -100,6 +103,10 @@
   "methods":[{"name":"setEncoder","parameterTypes":["ch.qos.logback.core.encoder.Encoder"] }]
 },
 {
+  "name":"ch.qos.logback.core.encoder.Encoder",
+  "methods":[{"name":"valueOf","parameterTypes":["java.lang.String"] }]
+},
+{
   "name":"ch.qos.logback.core.encoder.LayoutWrappingEncoder",
   "methods":[{"name":"setParent","parameterTypes":["ch.qos.logback.core.spi.ContextAware"] }]
 },
@@ -108,7 +115,14 @@
   "methods":[{"name":"setPattern","parameterTypes":["java.lang.String"] }]
 },
 {
+  "name":"ch.qos.logback.core.spi.ContextAware",
+  "methods":[{"name":"valueOf","parameterTypes":["java.lang.String"] }]
+},
+{
   "name":"char[]"
+},
+{
+  "name":"com.ibm.icu.text.Collator"
 },
 {
   "name":"com.sun.crypto.provider.AESCipher$General",
@@ -260,7 +274,7 @@
 },
 {
   "name":"java.lang.String",
-  "fields":[{"name":"value"}]
+  "fields":[{"name":"TYPE"}, {"name":"value"}]
 },
 {
   "name":"java.lang.String[]"
@@ -375,11 +389,27 @@
   "name":"java.security.SecurityPermission"
 },
 {
+  "name":"java.sql.SQLException",
+  "fields":[{"name":"next"}]
+},
+{
   "name":"java.util.Date"
 },
 {
   "name":"java.util.PropertyPermission",
   "methods":[{"name":"<init>","parameterTypes":["java.lang.String","java.lang.String"] }]
+},
+{
+  "name":"java.util.concurrent.ForkJoinTask",
+  "fields":[{"name":"aux"}, {"name":"status"}]
+},
+{
+  "name":"java.util.concurrent.atomic.AtomicBoolean",
+  "fields":[{"name":"value"}]
+},
+{
+  "name":"java.util.concurrent.atomic.AtomicReference",
+  "fields":[{"name":"value"}]
 },
 {
   "name":"java.util.logging.LogManager",
@@ -399,6 +429,10 @@
 },
 {
   "name":"javax.management.ObjectName"
+},
+{
+  "name":"javax.management.StandardEmitterMBean",
+  "methods":[{"name":"cacheMBeanInfo","parameterTypes":["javax.management.MBeanInfo"] }, {"name":"getCachedMBeanInfo","parameterTypes":[] }, {"name":"getMBeanInfo","parameterTypes":[] }]
 },
 {
   "name":"javax.management.openmbean.CompositeData"
@@ -434,7 +468,8 @@
 },
 {
   "name":"jdk.management.jfr.FlightRecorderMXBeanImpl",
-  "allPublicConstructors":true
+  "allPublicConstructors":true,
+  "methods":[{"name":"cacheMBeanInfo","parameterTypes":["javax.management.MBeanInfo"] }, {"name":"getCachedMBeanInfo","parameterTypes":[] }, {"name":"getMBeanInfo","parameterTypes":[] }, {"name":"getNotificationInfo","parameterTypes":[] }]
 },
 {
   "name":"jdk.management.jfr.RecordingInfo",
@@ -493,17 +528,31 @@
   "allPublicMethods":true
 },
 {
+  "name":"org.apache.logging.slf4j.SLF4JProvider"
+},
+{
   "name":"org.apache.pekko.actor.ActorCell",
-  "fields":[
-    {"name":"org$apache$pekko$actor$dungeon$Children$$_childrenRefsDoNotCallMeDirectly"},
-    {"name":"org$apache$pekko$actor$dungeon$Children$$_functionRefsDoNotCallMeDirectly"},
-    {"name":"org$apache$pekko$actor$dungeon$Children$$_nextNameDoNotCallMeDirectly"},
-    {"name":"org$apache$pekko$actor$dungeon$Dispatch$$_mailboxDoNotCallMeDirectly"},
-    {"name":"pekko$actor$dungeon$Children$$_childrenRefsDoNotCallMeDirectly"},
-    {"name":"pekko$actor$dungeon$Children$$_functionRefsDoNotCallMeDirectly"},
-    {"name":"pekko$actor$dungeon$Children$$_nextNameDoNotCallMeDirectly"},
-    {"name":"pekko$actor$dungeon$Dispatch$$_mailboxDoNotCallMeDirectly"}
-  ]
+  "fields":[{"name":"org$apache$pekko$actor$dungeon$Children$$_childrenRefsDoNotCallMeDirectly"}, {"name":"org$apache$pekko$actor$dungeon$Children$$_functionRefsDoNotCallMeDirectly"}, {"name":"org$apache$pekko$actor$dungeon$Children$$_nextNameDoNotCallMeDirectly"}, {"name":"org$apache$pekko$actor$dungeon$Dispatch$$_mailboxDoNotCallMeDirectly"}, {"name":"pekko$actor$dungeon$Children$$_childrenRefsDoNotCallMeDirectly"}, {"name":"pekko$actor$dungeon$Children$$_functionRefsDoNotCallMeDirectly"}, {"name":"pekko$actor$dungeon$Children$$_nextNameDoNotCallMeDirectly"}, {"name":"pekko$actor$dungeon$Dispatch$$_mailboxDoNotCallMeDirectly"}]
+},
+{
+  "name":"org.apache.pekko.actor.ActorSystemImpl",
+  "fields":[{"name":"_start$lzy1"}]
+},
+{
+  "name":"org.apache.pekko.actor.Address",
+  "fields":[{"name":"hashCode$lzy1"}, {"name":"toString$lzy1"}]
+},
+{
+  "name":"org.apache.pekko.actor.CoordinatedShutdown",
+  "fields":[{"name":"tasks$lzy1"}, {"name":"terminationWatcher$lzy1"}]
+},
+{
+  "name":"org.apache.pekko.actor.CoordinatedShutdown$$anon$1",
+  "fields":[{"name":"Cancelled$lzy1"}, {"name":"Pending$lzy1"}]
+},
+{
+  "name":"org.apache.pekko.actor.CoordinatedShutdown$tasks$",
+  "fields":[{"name":"StrictPhaseDefinition$lzy1"}, {"name":"TaskDefinition$lzy1"}]
 },
 {
   "name":"org.apache.pekko.actor.DefaultSupervisorStrategy",
@@ -522,15 +571,18 @@
 },
 {
   "name":"org.apache.pekko.actor.LocalActorRefProvider",
+  "fields":[{"name":"defaultMailbox$lzy1"}, {"name":"guardian$lzy1"}, {"name":"rootGuardian$lzy1"}, {"name":"systemGuardian$lzy1"}, {"name":"tempContainer$lzy1"}],
   "methods":[{"name":"<init>","parameterTypes":["java.lang.String","org.apache.pekko.actor.ActorSystem$Settings","org.apache.pekko.event.EventStream","org.apache.pekko.actor.DynamicAccess"] }]
 },
 {
   "name":"org.apache.pekko.actor.LocalActorRefProvider$Guardian",
-  "allDeclaredConstructors":true
+  "allDeclaredConstructors":true,
+  "methods":[{"name":"<init>","parameterTypes":["org.apache.pekko.actor.SupervisorStrategy"] }]
 },
 {
   "name":"org.apache.pekko.actor.LocalActorRefProvider$SystemGuardian",
-  "allDeclaredConstructors":true
+  "allDeclaredConstructors":true,
+  "methods":[{"name":"<init>","parameterTypes":["org.apache.pekko.actor.SupervisorStrategy","org.apache.pekko.actor.ActorRef"] }]
 },
 {
   "name":"org.apache.pekko.actor.Props$EmptyActor",
@@ -538,10 +590,7 @@
 },
 {
   "name":"org.apache.pekko.actor.RepointableActorRef",
-  "fields":[
-    {"name":"_cellDoNotCallMeDirectly"},
-    {"name":"_lookupDoNotCallMeDirectly"}
-  ]
+  "fields":[{"name":"_cellDoNotCallMeDirectly"}, {"name":"_lookupDoNotCallMeDirectly"}]
 },
 {
   "name":"org.apache.pekko.dispatch.AbstractNodeQueue",
@@ -567,28 +616,35 @@
   "name":"org.apache.pekko.dispatch.DequeBasedMessageQueueSemantics"
 },
 {
+  "name":"org.apache.pekko.dispatch.Dispatcher",
+  "fields":[{"name":"executorServiceDelegate"}]
+},
+{
+  "name":"org.apache.pekko.dispatch.Dispatcher$LazyExecutorServiceDelegate",
+  "fields":[{"name":"executor$lzy1"}]
+},
+{
+  "name":"org.apache.pekko.dispatch.ForkJoinExecutorConfigurator$ForkJoinExecutorServiceFactory",
+  "fields":[{"name":"pekkoJdk9ForkJoinPoolHandleOpt$lzy1"}]
+},
+{
   "name":"org.apache.pekko.dispatch.Mailbox",
-  "fields":[
-    {"name":"_statusDoNotCallMeDirectly"},
-    {"name":"_systemQueueDoNotCallMeDirectly"}
-  ]
+  "fields":[{"name":"_statusDoNotCallMeDirectly"}, {"name":"_systemQueueDoNotCallMeDirectly"}]
 },
 {
   "name":"org.apache.pekko.dispatch.MessageDispatcher",
-  "fields":[
-    {"name":"_inhabitantsDoNotCallMeDirectly"},
-    {"name":"_shutdownScheduleDoNotCallMeDirectly"}
-  ]
+  "fields":[{"name":"_inhabitantsDoNotCallMeDirectly"}, {"name":"_shutdownScheduleDoNotCallMeDirectly"}]
+},
+{
+  "name":"org.apache.pekko.dispatch.MessageDispatcher$",
+  "fields":[{"name":"actors$lzy1"}]
 },
 {
   "name":"org.apache.pekko.dispatch.MultipleConsumerSemantics"
 },
 {
   "name":"org.apache.pekko.dispatch.PekkoJdk9ForkJoinPool",
-  "methods":[
-    {"name":"<init>","parameterTypes":["int","java.util.concurrent.ForkJoinPool$ForkJoinWorkerThreadFactory","int","java.lang.Thread$UncaughtExceptionHandler","boolean"] },
-    {"name":"<init>","parameterTypes":["int","java.util.concurrent.ForkJoinPool$ForkJoinWorkerThreadFactory","int","java.lang.Thread$UncaughtExceptionHandler","boolean","int"] }
-  ]
+  "methods":[{"name":"<init>","parameterTypes":["int","java.util.concurrent.ForkJoinPool$ForkJoinWorkerThreadFactory","int","java.lang.Thread$UncaughtExceptionHandler","boolean"] }, {"name":"<init>","parameterTypes":["int","java.util.concurrent.ForkJoinPool$ForkJoinWorkerThreadFactory","int","java.lang.Thread$UncaughtExceptionHandler","boolean","int"] }]
 },
 {
   "name":"org.apache.pekko.dispatch.SingleConsumerOnlyUnboundedMailbox",
@@ -617,8 +673,13 @@
   "allPublicConstructors":true
 },
 {
+  "name":"org.apache.pekko.event.EventStream",
+  "fields":[{"name":"org$apache$pekko$event$SubchannelClassification$$subscriptions$lzy1"}]
+},
+{
   "name":"org.apache.pekko.event.EventStreamUnsubscriber",
-  "allDeclaredConstructors":true
+  "allDeclaredConstructors":true,
+  "methods":[{"name":"<init>","parameterTypes":["org.apache.pekko.event.EventStream","boolean"] }]
 },
 {
   "name":"org.apache.pekko.event.LoggerMailboxType",
@@ -639,6 +700,7 @@
 },
 {
   "name":"org.apache.pekko.event.slf4j.Slf4jLogger",
+  "fields":[{"name":"log$lzy1"}],
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
 {
@@ -654,27 +716,60 @@
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
 {
+  "name":"org.apache.pekko.http.impl.engine.parsing.HttpHeaderParser",
+  "fields":[{"name":"byteBuffer$lzy1"}, {"name":"charBuffer$lzy1"}, {"name":"decoder$lzy1"}]
+},
+{
+  "name":"org.apache.pekko.http.impl.engine.rendering.HttpResponseRendererFactory",
+  "fields":[{"name":"CloseConnection$lzy1"}, {"name":"DontClose$lzy1"}, {"name":"HttpResponseRenderer$lzy1"}]
+},
+{
+  "name":"org.apache.pekko.http.impl.engine.server.GracefulTerminatorStage$$anon$2",
+  "fields":[{"name":"failureCallback$lzy1"}]
+},
+{
+  "name":"org.apache.pekko.http.impl.engine.server.HttpServerBluePrint$ControllerStage$$anon$10",
+  "fields":[{"name":"OneHundredContinueStage$lzy1"}]
+},
+{
+  "name":"org.apache.pekko.http.impl.util.SettingsCompanionImpl$",
+  "fields":[{"name":"configAdditions$lzy1"}]
+},
+{
+  "name":"org.apache.pekko.http.scaladsl.server.Directives$",
+  "fields":[{"name":"HexIntNumber$lzy1"}, {"name":"HexLongNumber$lzy1"}, {"name":"IntNumber$lzy1"}, {"name":"LongNumber$lzy1"}, {"name":"PathEnd$lzy1"}, {"name":"Remaining$lzy1"}, {"name":"RemainingPath$lzy1"}, {"name":"Segment$lzy1"}, {"name":"Slash$lzy1"}]
+},
+{
+  "name":"org.apache.pekko.http.scaladsl.server.PathMatchers$",
+  "fields":[{"name":"HexIntNumber$lzy1"}, {"name":"HexLongNumber$lzy1"}, {"name":"IntNumber$lzy1"}, {"name":"LongNumber$lzy1"}, {"name":"PathEnd$lzy1"}, {"name":"Remaining$lzy1"}, {"name":"RemainingPath$lzy1"}, {"name":"Segment$lzy1"}, {"name":"Slash$lzy1"}]
+},
+{
+  "name":"org.apache.pekko.http.scaladsl.server.directives.PathDirectives$",
+  "fields":[{"name":"HexIntNumber$lzy1"}, {"name":"HexLongNumber$lzy1"}, {"name":"IntNumber$lzy1"}, {"name":"LongNumber$lzy1"}, {"name":"PathEnd$lzy1"}, {"name":"Remaining$lzy1"}, {"name":"RemainingPath$lzy1"}, {"name":"Segment$lzy1"}, {"name":"Slash$lzy1"}]
+},
+{
   "name":"org.apache.pekko.io.SelectionHandler",
-  "allDeclaredConstructors":true
+  "allDeclaredConstructors":true,
+  "methods":[{"name":"<init>","parameterTypes":["org.apache.pekko.io.SelectionHandlerSettings"] }]
 },
 {
   "name":"org.apache.pekko.io.TcpIncomingConnection",
-  "allDeclaredConstructors":true
+  "allDeclaredConstructors":true,
+  "methods":[{"name":"<init>","parameterTypes":["org.apache.pekko.io.TcpExt","java.nio.channels.SocketChannel","org.apache.pekko.io.ChannelRegistry","org.apache.pekko.actor.ActorRef","scala.collection.immutable.Iterable","boolean"] }]
 },
 {
   "name":"org.apache.pekko.io.TcpListener",
-  "allDeclaredConstructors":true
+  "allDeclaredConstructors":true,
+  "methods":[{"name":"<init>","parameterTypes":["org.apache.pekko.actor.ActorRef","org.apache.pekko.io.TcpExt","org.apache.pekko.io.ChannelRegistry","org.apache.pekko.actor.ActorRef","org.apache.pekko.io.Tcp$Bind"] }]
 },
 {
   "name":"org.apache.pekko.io.TcpManager",
-  "allDeclaredConstructors":true
+  "allDeclaredConstructors":true,
+  "methods":[{"name":"<init>","parameterTypes":["org.apache.pekko.io.TcpExt"] }]
 },
 {
   "name":"org.apache.pekko.pattern.PromiseActorRef",
-  "fields":[
-    {"name":"_stateDoNotCallMeDirectly"},
-    {"name":"_watchedByDoNotCallMeDirectly"}
-  ]
+  "fields":[{"name":"_stateDoNotCallMeDirectly"}, {"name":"_watchedByDoNotCallMeDirectly"}]
 },
 {
   "name":"org.apache.pekko.routing.ConsistentHashingPool",
@@ -686,7 +781,8 @@
 },
 {
   "name":"org.apache.pekko.routing.RoutedActorCell$RouterActorCreator",
-  "allDeclaredConstructors":true
+  "allDeclaredConstructors":true,
+  "methods":[{"name":"<init>","parameterTypes":["org.apache.pekko.routing.RouterConfig"] }]
 },
 {
   "name":"org.apache.pekko.serialization.BooleanSerializer",
@@ -721,6 +817,10 @@
   "methods":[{"name":"<init>","parameterTypes":["org.apache.pekko.actor.ExtendedActorSystem"] }]
 },
 {
+  "name":"org.apache.pekko.stream.Attributes$SourceLocation",
+  "fields":[{"name":"locationName$lzy1"}]
+},
+{
   "name":"org.apache.pekko.stream.SinkRef"
 },
 {
@@ -731,10 +831,27 @@
   "fields":[{"name":"MODULE$"}]
 },
 {
+  "name":"org.apache.pekko.stream.impl.PhasedFusingActorMaterializer",
+  "fields":[{"name":"executionContext$lzy1"}]
+},
+{
+  "name":"org.apache.pekko.stream.impl.fusing.Collect$$anon$5",
+  "fields":[{"name":"decider$lzy2"}]
+},
+{
+  "name":"org.apache.pekko.stream.impl.fusing.GraphInterpreterShell",
+  "fields":[{"name":"interpreter$lzy1"}, {"name":"log$lzy1"}]
+},
+{
+  "name":"org.apache.pekko.stream.impl.fusing.MapAsyncUnordered$$anon$29",
+  "fields":[{"name":"decider$lzy9"}]
+},
+{
   "name":"org.apache.pekko.stream.impl.streamref.StreamRefsProtocol"
 },
 {
   "name":"org.apache.pekko.stream.serialization.StreamRefSerializer",
+  "fields":[{"name":"serialization$lzy1"}],
   "methods":[{"name":"<init>","parameterTypes":["org.apache.pekko.actor.ExtendedActorSystem"] }]
 },
 {
@@ -748,6 +865,26 @@
 },
 {
   "name":"org.apache.pekko.util.ByteString$ByteStrings"
+},
+{
+  "name":"org.apache.pekko.util.Collections$PartialImmutableValuesIterable",
+  "fields":[{"name":"size$lzy1"}]
+},
+{
+  "name":"org.elasticmq.FifoDeduplicationIdsHistory",
+  "fields":[{"name":"logger$lzy1"}]
+},
+{
+  "name":"org.elasticmq.actor.QueueManagerActor",
+  "fields":[{"name":"ActorWithQueueData$lzy1"}, {"name":"ec$lzy1"}, {"name":"logger$lzy1"}, {"name":"timeout$lzy1"}]
+},
+{
+  "name":"org.elasticmq.actor.queue.QueueActor",
+  "fields":[{"name":"AwaitingData$lzy1"}, {"name":"MessageToDelete$lzy1"}, {"name":"MessageToReturn$lzy1"}, {"name":"ReplyIfTimeout$lzy1"}, {"name":"ResultWithEvents$lzy1"}, {"name":"TryReply$lzy1"}, {"name":"ec$lzy1"}, {"name":"logger$lzy1"}, {"name":"timeout$lzy1"}]
+},
+{
+  "name":"org.elasticmq.actor.queue.QueueActorStorage$ResultWithEvents",
+  "fields":[{"name":"logger$lzy1"}]
 },
 {
   "name":"org.elasticmq.metrics.QueuesMetrics",
@@ -768,14 +905,54 @@
   "allPublicMethods":true
 },
 {
+  "name":"org.elasticmq.persistence.QueueSorter$",
+  "fields":[{"name":"logger$lzy1"}]
+},
+{
+  "name":"org.elasticmq.persistence.file.ConfigBasedQueuePersistenceActor",
+  "fields":[{"name":"logger$lzy1"}]
+},
+{
+  "name":"org.elasticmq.persistence.file.QueueConfigUtil$",
+  "fields":[{"name":"logger$lzy1"}]
+},
+{
+  "name":"org.elasticmq.persistence.sql.CreateQueueProtocol$",
+  "fields":[{"name":"BigDecimalJsonFormat$lzy3"}, {"name":"BigIntJsonFormat$lzy3"}, {"name":"BooleanJsonFormat$lzy3"}, {"name":"ByteJsonFormat$lzy3"}, {"name":"CharJsonFormat$lzy3"}, {"name":"DoubleJsonFormat$lzy3"}, {"name":"FloatJsonFormat$lzy3"}, {"name":"IntJsonFormat$lzy3"}, {"name":"JsValueFormat$lzy3"}, {"name":"LongJsonFormat$lzy3"}, {"name":"RootJsArrayFormat$lzy3"}, {"name":"RootJsObjectFormat$lzy3"}, {"name":"ShortJsonFormat$lzy3"}, {"name":"StringJsonFormat$lzy3"}, {"name":"SymbolJsonFormat$lzy3"}, {"name":"UnitJsonFormat$lzy3"}]
+},
+{
+  "name":"org.elasticmq.persistence.sql.DeadLettersQueueProtocol$",
+  "fields":[{"name":"BigDecimalJsonFormat$lzy2"}, {"name":"BigIntJsonFormat$lzy2"}, {"name":"BooleanJsonFormat$lzy2"}, {"name":"ByteJsonFormat$lzy2"}, {"name":"CharJsonFormat$lzy2"}, {"name":"DoubleJsonFormat$lzy2"}, {"name":"FloatJsonFormat$lzy2"}, {"name":"IntJsonFormat$lzy2"}, {"name":"JsValueFormat$lzy2"}, {"name":"LongJsonFormat$lzy2"}, {"name":"RootJsArrayFormat$lzy2"}, {"name":"RootJsObjectFormat$lzy2"}, {"name":"ShortJsonFormat$lzy2"}, {"name":"StringJsonFormat$lzy2"}, {"name":"SymbolJsonFormat$lzy2"}, {"name":"UnitJsonFormat$lzy2"}]
+},
+{
+  "name":"org.elasticmq.persistence.sql.MessageRepository",
+  "fields":[{"name":"logger$lzy1"}]
+},
+{
+  "name":"org.elasticmq.persistence.sql.QueueRepository",
+  "fields":[{"name":"logger$lzy1"}]
+},
+{
   "name":"org.elasticmq.persistence.sql.SerializableAttribute",
   "allDeclaredFields":true,
   "queryAllPublicMethods":true
 },
 {
+  "name":"org.elasticmq.persistence.sql.SerializableAttributeProtocol$",
+  "fields":[{"name":"BigDecimalJsonFormat$lzy1"}, {"name":"BigIntJsonFormat$lzy1"}, {"name":"BooleanJsonFormat$lzy1"}, {"name":"ByteJsonFormat$lzy1"}, {"name":"CharJsonFormat$lzy1"}, {"name":"DoubleJsonFormat$lzy1"}, {"name":"FloatJsonFormat$lzy1"}, {"name":"IntJsonFormat$lzy1"}, {"name":"JsValueFormat$lzy1"}, {"name":"LongJsonFormat$lzy1"}, {"name":"RootJsArrayFormat$lzy1"}, {"name":"RootJsObjectFormat$lzy1"}, {"name":"ShortJsonFormat$lzy1"}, {"name":"StringJsonFormat$lzy1"}, {"name":"SymbolJsonFormat$lzy1"}, {"name":"UnitJsonFormat$lzy1"}]
+},
+{
+  "name":"org.elasticmq.persistence.sql.SqlQueuePersistenceActor",
+  "fields":[{"name":"logger$lzy1"}]
+},
+{
   "name":"org.elasticmq.persistence.sql.package$SerializableAttribute",
   "allDeclaredFields":true,
   "allPublicMethods":true
+},
+{
+  "name":"org.elasticmq.rest.sqs.AttributesModule$",
+  "fields":[{"name":"AttributeValuesCalculator$lzy1"}]
 },
 {
   "name":"org.elasticmq.rest.sqs.BatchChangeMessageVisibilityResponseEntry",
@@ -836,6 +1013,10 @@
   "name":"org.elasticmq.rest.sqs.DeleteQueueActionRequest",
   "allDeclaredFields":true,
   "queryAllPublicMethods":true
+},
+{
+  "name":"org.elasticmq.rest.sqs.ElasticMQConfig",
+  "fields":[{"name":"debug$lzy1"}, {"name":"elasticMQConfig$lzy1"}, {"name":"rootConfig$lzy1"}]
 },
 {
   "name":"org.elasticmq.rest.sqs.Failed",
@@ -958,6 +1139,14 @@
   "queryAllPublicMethods":true
 },
 {
+  "name":"org.elasticmq.rest.sqs.TheSQSRestServerBuilder",
+  "fields":[{"name":"logger$lzy2"}]
+},
+{
+  "name":"org.elasticmq.rest.sqs.TheSQSRestServerBuilder$$anon$1",
+  "fields":[{"name":"AttributeValuesCalculator$lzy1"}, {"name":"ChangeMessageVisibilityActionRequest$lzy1"}, {"name":"DeleteMessageActionRequest$lzy1"}, {"name":"ErrorResponse$lzy1"}, {"name":"HexIntNumber$lzy1"}, {"name":"HexLongNumber$lzy1"}, {"name":"IntNumber$lzy1"}, {"name":"LongNumber$lzy1"}, {"name":"MessageReadeableAttributeNames$lzy1"}, {"name":"MessageSendOutcome$lzy1"}, {"name":"PathEnd$lzy1"}, {"name":"PurgeQueueActionRequest$lzy1"}, {"name":"ReceiveMessageActionRequest$lzy1"}, {"name":"Remaining$lzy1"}, {"name":"RemainingPath$lzy1"}, {"name":"Segment$lzy1"}, {"name":"SendMessageActionRequest$lzy1"}, {"name":"SendMessageBatchActionRequest$lzy1"}, {"name":"Slash$lzy1"}, {"name":"X$minusAmzn$minusQuery$minusError$lzy1"}, {"name":"actorSystem$lzy1"}, {"name":"autoCreateQueues$lzy1"}, {"name":"awsAccountId$lzy1"}, {"name":"awsRegion$lzy1"}, {"name":"contextPath$lzy1"}, {"name":"logger$lzy1"}, {"name":"materializer$lzy1"}, {"name":"queueManagerActor$lzy1"}, {"name":"sqsLimits$lzy1"}, {"name":"timeout$lzy1"}]
+},
+{
   "name":"org.elasticmq.rest.sqs.UntagQueueActionRequest",
   "allDeclaredFields":true,
   "queryAllPublicMethods":true
@@ -968,11 +1157,31 @@
   "queryAllPublicMethods":true
 },
 {
+  "name":"org.elasticmq.server.ElasticMQServer",
+  "fields":[{"name":"logger$lzy1"}]
+},
+{
+  "name":"org.elasticmq.server.Main$",
+  "fields":[{"name":"logger$lzy1"}]
+},
+{
+  "name":"org.elasticmq.server.config.ElasticMQServerConfig",
+  "fields":[{"name":"logger$lzy1"}]
+},
+{
   "name":"org.h2.Driver"
 },
 {
   "name":"org.h2.engine.Engine",
   "methods":[{"name":"getInstance","parameterTypes":[] }]
+},
+{
+  "name":"org.h2.mvstore.MVStore$TxCounter",
+  "fields":[{"name":"counter"}]
+},
+{
+  "name":"org.h2.mvstore.Page",
+  "fields":[{"name":"pos"}]
 },
 {
   "name":"org.h2.mvstore.db.LobStorageMap$BlobMeta$Type",
@@ -993,10 +1202,12 @@
 },
 {
   "name":"org.h2.mvstore.db.RowDataType$Factory",
+  "fields":[{"name":"INSTANCE"}],
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
 {
   "name":"org.h2.mvstore.tx.VersionedValueType$Factory",
+  "fields":[{"name":"INSTANCE"}],
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
 {
@@ -1092,13 +1303,32 @@
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
 {
+  "name":"org.locationtech.jts.geom.Geometry"
+},
+{
+  "name":"org.parboiled2.ParseError",
+  "fields":[{"name":"effectiveTraces$lzy1"}]
+},
+{
+  "name":"org.parboiled2.support.AlternativeUnpacks",
+  "fields":[{"name":"DontUnpack$lzy1"}]
+},
+{
   "name":"scala.Boolean"
+},
+{
+  "name":"scala.Enumeration",
+  "fields":[{"name":"ValueOrdering$lzy1"}, {"name":"ValueSet$lzy1"}]
 },
 {
   "name":"scala.Int"
 },
 {
   "name":"scala.Long"
+},
+{
+  "name":"scala.StringContext",
+  "fields":[{"name":"s$lzy1"}]
 },
 {
   "name":"scala.Symbol",
@@ -1108,15 +1338,108 @@
   "name":"scala.Tuple2[]"
 },
 {
+  "name":"scala.collection.immutable.ArraySeq$",
+  "fields":[{"name":"emptyImpl$lzy1"}]
+},
+{
+  "name":"scala.collection.immutable.NumericRange",
+  "fields":[{"name":"hashCode$lzy1"}, {"name":"isEmpty$lzy1"}, {"name":"length$lzy1"}]
+},
+{
+  "name":"scala.concurrent.ExecutionContext$",
+  "fields":[{"name":"global$lzy1"}, {"name":"opportunistic$lzy1"}]
+},
+{
+  "name":"scala.io.BufferedSource",
+  "fields":[{"name":"charReader$lzy1"}]
+},
+{
+  "name":"scala.io.Codec$",
+  "fields":[{"name":"fallbackSystemCodec$lzy1"}]
+},
+{
+  "name":"scala.io.Source",
+  "fields":[{"name":"NoPositioner$lzy1"}, {"name":"RelaxedPosition$lzy1"}, {"name":"RelaxedPositioner$lzy1"}]
+},
+{
+  "name":"scala.language$",
+  "fields":[{"name":"dynamics$lzy1"}, {"name":"existentials$lzy1"}, {"name":"higherKinds$lzy1"}, {"name":"implicitConversions$lzy1"}, {"name":"postfixOps$lzy1"}, {"name":"reflectiveCalls$lzy1"}]
+},
+{
+  "name":"scala.math.BigDecimal$",
+  "fields":[{"name":"cache$lzy1"}]
+},
+{
   "name":"scala.reflect.ScalaSignature",
   "allPublicMethods":true
 },
 {
+  "name":"scala.util.matching.Regex$Match",
+  "fields":[{"name":"ends$lzy1"}, {"name":"scala$util$matching$Regex$MatchData$$nameToIndex$lzy1"}, {"name":"starts$lzy1"}]
+},
+{
+  "name":"scala.util.matching.Regex$MatchIterator",
+  "fields":[{"name":"scala$util$matching$Regex$MatchData$$nameToIndex$lzy2"}]
+},
+{
+  "name":"scalikejdbc.ActiveSession",
+  "fields":[{"name":"connection$lzy1"}]
+},
+{
+  "name":"scalikejdbc.AutoSession",
+  "fields":[{"name":"connection$lzy1"}, {"name":"connectionAttributes$lzy1"}]
+},
+{
+  "name":"scalikejdbc.ConnectionPool$",
+  "fields":[{"name":"DEFAULT_EXECUTION_CONTEXT$lzy1"}]
+},
+{
+  "name":"scalikejdbc.DB",
+  "fields":[{"name":"scalikejdbc$DBConnection$$jtaDataSourceCompatible$lzy1"}]
+},
+{
+  "name":"scalikejdbc.DBSessionWrapper",
+  "fields":[{"name":"connection$lzy1"}]
+},
+{
+  "name":"scalikejdbc.QueryDSLFeature$QueryDSL$",
+  "fields":[{"name":"delete$lzy1"}, {"name":"deleteFrom$lzy1"}, {"name":"insert$lzy1"}, {"name":"insertInto$lzy1"}, {"name":"select$lzy1"}, {"name":"selectFrom$lzy1"}, {"name":"update$lzy1"}]
+},
+{
+  "name":"scalikejdbc.ReadOnlyAutoSession$",
+  "fields":[{"name":"connection$lzy1"}, {"name":"connectionAttributes$lzy1"}]
+},
+{
+  "name":"scalikejdbc.SQL",
+  "fields":[{"name":"parameters$lzy1"}]
+},
+{
+  "name":"scalikejdbc.SQLFormatterSettings",
+  "fields":[{"name":"formatter$lzy1"}]
+},
+{
+  "name":"scalikejdbc.SQLTemplateParser$",
+  "fields":[{"name":"$tilde$lzy1"}, {"name":"Error$lzy1"}, {"name":"Failure$lzy1"}, {"name":"NoSuccess$lzy1"}, {"name":"Success$lzy1"}]
+},
+{
   "name":"scalikejdbc.StatementExecutor",
+  "fields":[{"name":"batchParamsList$lzy1"}, {"name":"sqlString$lzy1"}],
   "methods":[{"name":"close","parameterTypes":[] }]
 },
 {
+  "name":"scalikejdbc.interpolation.SQLSyntax",
+  "fields":[{"name":"parameters$lzy1"}]
+},
+{
+  "name":"scalikejdbc.package$",
+  "fields":[{"name":"BasicResultNameSQLSyntaxProvider$lzy1"}, {"name":"BatchParamsBuilder$lzy1"}, {"name":"ColumnSQLSyntaxProvider$lzy1"}, {"name":"ConditionSQLBuilder$lzy1"}, {"name":"DeleteSQLBuilder$lzy1"}, {"name":"GroupBySQLBuilder$lzy1"}, {"name":"InsertSQLBuilder$lzy1"}, {"name":"PagingSQLBuilder$lzy1"}, {"name":"PartialResultSQLSyntaxProvider$lzy1"}, {"name":"PartialSubQueryResultNameSQLSyntaxProvider$lzy1"}, {"name":"PartialSubQueryResultSQLSyntaxProvider$lzy1"}, {"name":"PartialSubQuerySQLSyntaxProvider$lzy1"}, {"name":"QueryDSL$lzy1"}, {"name":"QuerySQLSyntaxProvider$lzy1"}, {"name":"ResultSQLSyntaxProvider$lzy1"}, {"name":"SQLSyntaxProvider$lzy1"}, {"name":"SQLSyntaxSupport$lzy1"}, {"name":"SelectSQLBuilder$lzy1"}, {"name":"SubQuery$lzy1"}, {"name":"SubQueryResultNameSQLSyntaxProvider$lzy1"}, {"name":"SubQueryResultSQLSyntaxProvider$lzy1"}, {"name":"SubQuerySQLSyntaxProvider$lzy1"}, {"name":"TableAsAliasSQLSyntax$lzy1"}, {"name":"TableDefSQLSyntax$lzy1"}, {"name":"UpdateSQLBuilder$lzy1"}, {"name":"applyExecute$lzy1"}, {"name":"applyUpdate$lzy1"}, {"name":"applyUpdateAndReturnGeneratedKey$lzy1"}, {"name":"withSQL$lzy1"}]
+},
+{
   "name":"short[]"
+},
+{
+  "name":"spray.json.DefaultJsonProtocol$",
+  "fields":[{"name":"0bitmap$1"}]
 },
 {
   "name":"sun.management.ClassLoadingImpl",
@@ -1183,7 +1506,7 @@
 },
 {
   "name":"sun.security.provider.NativePRNG",
-  "methods":[{"name":"<init>","parameterTypes":[] }]
+  "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"<init>","parameterTypes":["java.security.SecureRandomParameters"] }]
 },
 {
   "name":"sun.security.provider.SHA",
