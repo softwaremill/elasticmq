@@ -520,12 +520,12 @@ To check the coverage reports:
 Although it's mostly only the core project that is relevant for coverage testing, each project's report can be found
 in their target directory:
 
- * core/target/scala-2.12/scoverage-report/index.html
- * common-test/target/scala-2.12/scoverage-report/index.html
- * rest/rest-sqs/target/scala-2.12/scoverage-report/index.html
- * server/target/scala-2.12/scoverage-report/index.html
+ * target/out/jvm/scala-<version>/elasticmq-core/scoverage-report/index.html
+ * target/out/jvm/scala-<version>/elasticmq-common-test/scoverage-report/index.html
+ * target/out/jvm/scala-<version>/elasticmq-rest-sqs/scoverage-report/index.html
+ * target/out/jvm/scala-<version>/elasticmq-server/scoverage-report/index.html
 
-The aggregate report can be found at target/scala-2.12/scoverage-report/index.html
+The aggregate report can be found at target/out/jvm/scala-<version>/elasticmq-root/scoverage-report/index.html
 
 # UI
 
