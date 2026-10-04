@@ -1,4 +1,4 @@
-FROM eclipse-temurin:11-jre-noble
+FROM eclipse-temurin:17-jre-noble
 
 RUN groupadd --system elasticmq && useradd --system --gid elasticmq elasticmq
 

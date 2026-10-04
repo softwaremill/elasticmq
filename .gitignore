@@ -8,6 +8,7 @@ target
 out
 project/boot
 /bin/
+__pycache__/
 
 .bsp
 *.db

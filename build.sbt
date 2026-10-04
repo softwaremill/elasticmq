@@ -7,17 +7,15 @@ import scoverage.ScoverageKeys.*
 
 import scala.sys.process.Process
 
-val v2_12 = "2.12.20"
 val v2_13 = "2.13.18"
-val v3 = "3.3.7"
+val v3 = "3.3.8"
 
 lazy val resolvedScalaVersion =
   sys.env.get("SCALA_MAJOR_VERSION") match {
-    case Some("2.12")      => v2_12
     case Some("2.13")      => v2_13
     case Some("3")         => v3
     case Some(unsupported) => throw new IllegalArgumentException(s"Unsupported SCALA_MAJOR_VERSION: $unsupported")
-    case _                 => v2_13
+    case _                 => v3
   }
 
 val config = "com.typesafe" % "config" % "1.4.9"
@@ -25,7 +23,7 @@ val pureConfig = "com.github.pureconfig" %% "pureconfig-core" % "0.17.8"
 val scalaXml = "org.scala-lang.modules" %% "scala-xml" % "2.4.0"
 
 val scalalogging = "com.typesafe.scala-logging" %% "scala-logging" % "3.9.6"
-val logback = "ch.qos.logback" % "logback-classic" % "1.3.16"
+val logback = "ch.qos.logback" % "logback-classic" % "1.6.3"
 val jclOverSlf4j = "org.slf4j" % "jcl-over-slf4j" % "2.0.20" // needed form amazon java sdk
 
 val scalatest = "org.scalatest" %% "scalatest" % "3.2.20"
@@ -68,13 +66,14 @@ scmInfo := Some(
   ScmInfo(url("https://github.com/softwaremill/elasticmq"), "scm:git@github.com:softwaremill/elasticmq.git")
 )
 scalaVersion := resolvedScalaVersion
-crossScalaVersions := List(v2_12, v2_13, v3)
+crossScalaVersions := List(v3, v2_13)
 scalacOptions ++= {
   CrossVersion.partialVersion(scalaVersion.value) match {
-    case Some((3, _)) => Seq("-Xtarget:8")
-    case _            => Seq("-Xasync", "-target:jvm-1.8")
+    case Some((3, _)) => Seq("-Xtarget:17")
+    case _            => Seq("-Xasync", "-release:17")
   }
 }
+javacOptions ++= Seq("--release", "17")
 libraryDependencies += scalaXml
 dependencyOverrides := pekko100verrides
 parallelExecution := false
@@ -93,8 +92,7 @@ val s3Upload = TaskKey[PutObjectResult]("s3-upload", "Uploads files to an S3 buc
 lazy val root: Project = rootProject
   .enablePlugins(GitVersioning)
   .settings(name := "elasticmq-root", publish / skip := true)
-  // we want to build the main jar using java 8, but native-server requires java 11, so it's built separately
-  // native-server project is only used for building the native Docker image with GraalVM
+  // native-server is only used for building the native Docker image with GraalVM (Java 17)
   .aggregate(commonTest, core, rest, persistence, server)
 
 lazy val commonTest: Project = (project in file("common-test"))
@@ -236,7 +234,7 @@ lazy val server: Project = (project in file("server"))
   )
   .dependsOn(core, restSqs)
 
-val graalVmVersion = "22.1.0"
+val graalVmVersion = "23.0.9"
 
 lazy val nativeServer: Project = (project in file("native-server"))
   .settings(
