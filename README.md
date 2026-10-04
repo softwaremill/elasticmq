@@ -457,9 +457,10 @@ docker build -f server/Dockerfile -t softwaremill/elasticmq:local .
 docker build -f native-server/Dockerfile -t softwaremill/elasticmq-native:local .
 ```
 
-The native image is compiled inside the `native-server/Dockerfile` build (GraalVM for JDK 17) and runs on
-`debian:bookworm-slim`. Do not forget to adjust the CPU and memory settings for the Docker process. It was checked with
-6CPUs, 8GB of memory and 2GB of swap.
+The native image is compiled inside the `native-server/Dockerfile` build (GraalVM for JDK 17) as a statically linked
+binary and runs on Alpine. Because it is statically linked against glibc, it cannot resolve hostnames through DNS (only
+`/etc/hosts` entries such as `localhost` work), so bind to an IP address (the default is `0.0.0.0`). Do not forget to
+adjust the CPU and memory settings for the Docker process. It was checked with 6CPUs, 8GB of memory and 2GB of swap.
 
 Multi-architecture images are published by CI: the `amd64` and `arm64` images are built on separate runners and then
 combined into a single manifest with `docker buildx imagetools create`.

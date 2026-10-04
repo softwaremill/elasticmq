@@ -1,5 +1,6 @@
-# Stage 1: Compile native binary using GraalVM for JDK 17 (multi-arch)
-FROM ghcr.io/graalvm/native-image-community:17.0.9 AS builder
+# Stage 1: Compile a static native binary using GraalVM for JDK 17 (multi-arch).
+# OL8 (glibc 2.28) is required: GraalVM's static JDK libs reference symbols removed in newer glibc (e.g. __xmknod).
+FROM ghcr.io/graalvm/native-image-community:17.0.9-ol8 AS builder
 
 WORKDIR /build
 
@@ -23,14 +24,13 @@ RUN PAGE_SIZE_ARG=$(uname -m | grep -Eiq 'arm|aarch64' && echo '-H:PageSize=64K'
     --install-exit-handlers \
     --no-fallback \
     --verbose \
+    --static \
     org.elasticmq.server.Main
 
-# Stage 2: glibc runtime (native-image-community is not musl)
-FROM debian:bookworm-slim
+# Stage 2: Minimal Alpine runtime (the binary is statically linked, so it doesn't need glibc)
+FROM alpine:3.22
 
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends tini && \
-    rm -rf /var/lib/apt/lists/*
+RUN apk add --no-cache tini
 
 WORKDIR /opt/elasticmq
 
@@ -41,6 +41,6 @@ COPY server/src/main/resources/logback.xml /opt/logback.xml
 EXPOSE 9324
 VOLUME /data
 
-ENTRYPOINT ["/usr/bin/tini", "--", "/opt/elasticmq/bin/elasticmq-native-server", \
+ENTRYPOINT ["/sbin/tini", "--", "/opt/elasticmq/bin/elasticmq-native-server", \
     "-Dconfig.file=/opt/elasticmq.conf", \
     "-Dlogback.configurationFile=/opt/logback.xml"]
