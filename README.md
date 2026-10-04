@@ -269,7 +269,7 @@ in the main configuration file (as described in the previous section) in the `qu
 # ElasticMQ dependencies in SBT
 
 ```scala
-// Scala 2.13 and 3 (published _3 artifacts are built with 3.9 LTS)
+// Scala 2.13 and 3
 val elasticmqSqs        = "org.elasticmq" %% "elasticmq-rest-sqs" % Version
 ```
 
