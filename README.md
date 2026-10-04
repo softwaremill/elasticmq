@@ -443,13 +443,28 @@ To build a jar-with-dependencies:
 > assembly
 ```
 
-## Building the native image
+## Building the Docker images
 
-Do not forget to adjust the CPU and memory settings for the Docker process. It was checked with 6CPUs, 8GB of memory and 2GB of swap. Also, make sure that you are running sbt with the graalvm java, as the way the jars are composed seem to differ from other java implementations, and affect the native-image process that is run later! To rebuild the native image, run:
+The Docker images are built from plain Dockerfiles, using jars produced by sbt (this is what CI does):
 
 ```
-sbt "project nativeServer; clean; assembly; docker:publishLocal"
+sbt "project server; assembly" "project nativeServer; package"
+mkdir -p server/target native-server/target
+cp target/out/jvm/scala-*/elasticmq-server/elasticmq-server-assembly-*.jar server/target/elasticmq-server.jar
+cp target/out/jvm/scala-*/elasticmq-native-server/elasticmq-native-server_*.jar native-server/target/elasticmq-native-server.jar
+
+docker build -f server/Dockerfile -t softwaremill/elasticmq:local .
+docker build -f native-server/Dockerfile -t softwaremill/elasticmq-native:local .
 ```
+
+The native image is compiled inside the `native-server/Dockerfile` build (GraalVM for JDK 17) and runs on
+`debian:bookworm-slim`. Do not forget to adjust the CPU and memory settings for the Docker process. It was checked with
+6CPUs, 8GB of memory and 2GB of swap.
+
+Multi-architecture images are published by CI: the `amd64` and `arm64` images are built on separate runners and then
+combined into a single manifest with `docker buildx imagetools create`.
+
+## Generating GraalVM config files
 
 Generating GraalVM config files is a manual process currently. You need to run the fat-jar using GraalVM for JDK 17 (with the native-image agent), and then run the following commands to generate the configs:
 
@@ -461,44 +476,11 @@ These files should be placed in `native-server/src/main/resources/META-INF/nativ
 In case of issues with running GraalVM with `native-image-agent` it's possible to execute above commands inside a Docker container:
 
 ```
-docker run -it -v `pwd`:/opt/graalvm --entrypoint /bin/bash --rm ghcr.io/graalvm/jdk-community:17
+docker run -it -v `pwd`:/opt/graalvm --entrypoint /bin/bash --rm ghcr.io/graalvm/jdk-community:17.0.9
 ```
 
-## Building multi-architecture image
-
-Publishing Docker image for two different platforms: `amd64` and `arm64` is possible with Docker Buildx plugin.
-Docker Buildx is included in Docker Desktop and Docker Linux packages when installed using the DEB or RPM packages. `build.sbt` has following setup:
-
-* `dockerBuildxSettings` creates Docker Buildx instance
-* Docker base image is `eclipse-temurin:17-jre-noble` which supports multi-arch images
-* `dockerBuildCommand` is extended with operator `buildx`
-* `dockerBuildOptions` has two additional parameters: `--platform=linux/arm64,linux/amd64` and `--push`
-
-For the native server configuration is the same apart from Docker base image.
-
-Parameter `--push` is very crucial. Since `docker buildx build` subcommand is not storing the resulting image in the local `docker image` list, we need that flag to determine where the final image will be stored.
-Flag `--load` makes output destination of type docker. However, this currently works only for single architecture images. Therefore, both sbt commands - `docker:publishLocal` and `docker:publish` are pushing images to a Docker registry.
-
-To change this - switch parameters for `dockerBuildOptions`:
-
-* from `--push` to `--load` and
-* from `--platform=linux/arm64,linux/amd64` to `--platform=linux/amd64`
-
-To build images locally:
-
-* switch sbt to module server - `sbt project server` (or `sbt project nativeServer` for module native-server)
-* make sure Docker Buildx is running `docker buildx version`
-* create Docker Buildx instance `docker buildx create --use --name multi-arch-builder`
-* generate the Dockerfile executing `sbt docker:stage` - it will be generated in `server/target/docker/stage`
-* generate multi-arch image and push it to Docker Hub:
-```
-docker buildx build --platform=linux/arm64,linux/amd64 --push -t softwaremill/elasticmq .
-```
-* or generate single-arch image and load it to docker images locally:
-```
-docker buildx build --platform=linux/amd64 --load -t softwaremill/elasticmq .
-```
-
+The `ci-native-image-agent-config-verification` CI job runs the integration tests with the agent enabled and fails if
+the committed config files are out of date.
 
 # Tests and coverage
 

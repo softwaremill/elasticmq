@@ -1,5 +1,5 @@
 # Stage 1: Compile native binary using GraalVM for JDK 17 (multi-arch)
-FROM ghcr.io/graalvm/native-image-community:17 AS builder
+FROM ghcr.io/graalvm/native-image-community:17.0.9 AS builder
 
 WORKDIR /build
 
@@ -25,7 +25,7 @@ RUN PAGE_SIZE_ARG=$(uname -m | grep -Eiq 'arm|aarch64' && echo '-H:PageSize=64K'
     --verbose \
     org.elasticmq.server.Main
 
-# Stage 2: glibc runtime (native-image-community:17 is not musl)
+# Stage 2: glibc runtime (native-image-community is not musl)
 FROM debian:bookworm-slim
 
 RUN apt-get update && \

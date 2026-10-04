@@ -240,6 +240,21 @@ jobs:
       - name: Build native docker image
         run: docker build -f native-server/Dockerfile -t softwaremill/elasticmq-native:local .
 
+      - name: Smoke test JVM and native docker images
+        run: |
+          set -euo pipefail
+          trap 'docker logs smoke || true' ERR
+          endpoint=http://localhost:9324
+          for image in softwaremill/elasticmq:local softwaremill/elasticmq-native:local; do
+            echo "Smoke testing $image"
+            docker run -d --name smoke -p 9324:9324 "$image"
+            for i in $(seq 1 30); do curl -sf -o /dev/null "$endpoint/?Action=ListQueues" && break; sleep 1; done
+            curl -sf "$endpoint/?Action=CreateQueue&QueueName=smoke" | grep -q "<QueueUrl>"
+            curl -sf "$endpoint/000000000000/smoke?Action=SendMessage&MessageBody=hello" | grep -q "<MessageId>"
+            curl -sf "$endpoint/000000000000/smoke?Action=ReceiveMessage" | grep -q "<Body>hello</Body>"
+            docker rm -f smoke
+          done
+
       - name: Build UI docker image
         run: docker build -f ui/Dockerfile -t softwaremill/elasticmq-ui:local ui/
 

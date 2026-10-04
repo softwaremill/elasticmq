@@ -63,8 +63,8 @@ sbt "restSqs/test"
 # Build stand-alone JAR
 sbt "server/assembly"
 
-# Build Docker image
-sbt "server/docker:publishLocal"
+# Build Docker image (copy the assembly jar to server/target/elasticmq-server.jar first, see README)
+docker build -f server/Dockerfile -t softwaremill/elasticmq:local .
 
 # Run server locally
 java -jar target/out/jvm/scala-*/elasticmq-server/elasticmq-server-assembly-*.jar
