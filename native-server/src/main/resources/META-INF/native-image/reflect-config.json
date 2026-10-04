@@ -803,6 +803,16 @@
   "queryAllPublicMethods":true
 },
 {
+  "name":"org.elasticmq.rest.sqs.CancelMessageMoveTaskRequest",
+  "allDeclaredFields":true,
+  "queryAllPublicMethods":true
+},
+{
+  "name":"org.elasticmq.rest.sqs.CancelMessageMoveTaskResponse",
+  "allDeclaredFields":true,
+  "queryAllPublicMethods":true
+},
+{
   "name":"org.elasticmq.rest.sqs.ChangeMessageVisibilityBatchEntry",
   "allDeclaredFields":true,
   "queryAllPublicMethods":true
@@ -873,6 +883,16 @@
   "queryAllPublicMethods":true
 },
 {
+  "name":"org.elasticmq.rest.sqs.ListMessageMoveTasksRequest",
+  "allDeclaredFields":true,
+  "queryAllPublicMethods":true
+},
+{
+  "name":"org.elasticmq.rest.sqs.ListMessageMoveTasksResponse",
+  "allDeclaredFields":true,
+  "queryAllPublicMethods":true
+},
+{
   "name":"org.elasticmq.rest.sqs.ListQueueTagsActionRequest",
   "allDeclaredFields":true,
   "queryAllPublicMethods":true
@@ -889,6 +909,11 @@
 },
 {
   "name":"org.elasticmq.rest.sqs.ListQueuesResponse",
+  "allDeclaredFields":true,
+  "queryAllPublicMethods":true
+},
+{
+  "name":"org.elasticmq.rest.sqs.MessageMoveTaskResponse",
   "allDeclaredFields":true,
   "queryAllPublicMethods":true
 },

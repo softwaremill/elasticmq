@@ -1,7 +1,7 @@
 // required for sbt-github-release resolution
 resolvers += "Era7 maven releases" at "https://s3-eu-west-1.amazonaws.com/releases.era7.com"
 
-val sbtSoftwaremillVersion = "2.1.2"
+val sbtSoftwaremillVersion = "3.0.1"
 addSbtPlugin("com.softwaremill.sbt-softwaremill" % "sbt-softwaremill-common" % sbtSoftwaremillVersion)
 addSbtPlugin("com.softwaremill.sbt-softwaremill" % "sbt-softwaremill-publish" % sbtSoftwaremillVersion)
 addSbtPlugin("com.github.sbt" % "sbt-git" % "2.2.0")
@@ -10,4 +10,4 @@ addSbtPlugin("org.scoverage" % "sbt-scoverage" % "2.4.4")
 
 libraryDependencies += "com.amazonaws" % "aws-java-sdk-s3" % "1.11.601"
 
-scalacOptions in ThisBuild ++= Seq("-unchecked", "-deprecation")
+ThisBuild / scalacOptions ++= Seq("-unchecked", "-deprecation")

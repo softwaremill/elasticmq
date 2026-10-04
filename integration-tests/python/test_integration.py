@@ -164,9 +164,17 @@ def test_message_move_task(queue_storage_container):
 
     # start the message move task
     client = queue_storage_container.create_sqs_client()
-    client.start_message_move_task(SourceArn=dlq.attributes['QueueArn'])
+    source_arn = dlq.attributes['QueueArn']
+    assert client.list_message_move_tasks(SourceArn=source_arn, MaxResults=10)['Results'] == []
+    task = client.start_message_move_task(SourceArn=source_arn)
     time.sleep(1)
 
     # receive again
     messages5 = queue.receive_messages(MaxNumberOfMessages=10)
     assert len(messages5) == 3
+
+    tasks = client.list_message_move_tasks(SourceArn=source_arn, MaxResults=10)['Results']
+    assert len(tasks) == 1
+    assert tasks[0]['TaskHandle'] == task['TaskHandle']
+    assert tasks[0]['SourceArn'] == source_arn
+    assert tasks[0]['ApproximateNumberOfMessagesMoved'] == 3
