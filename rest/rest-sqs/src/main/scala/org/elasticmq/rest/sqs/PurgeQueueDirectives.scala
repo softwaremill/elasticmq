@@ -9,7 +9,7 @@ import org.elasticmq.rest.sqs.model.RequestPayload
 import spray.json.DefaultJsonProtocol.{StringJsonFormat, jsonFormat1}
 import spray.json.RootJsonFormat
 
-trait PurgeQueueDirectives { this: ElasticMQDirectives with QueueURLModule with ResponseMarshaller =>
+trait PurgeQueueDirectives { this: ElasticMQDirectives & QueueURLModule & ResponseMarshaller =>
   def purgeQueue(p: RequestPayload)(implicit marshallerDependencies: MarshallerDependencies) = {
     p.action(PurgeQueue) {
       val requestParams = p.as[PurgeQueueActionRequest]

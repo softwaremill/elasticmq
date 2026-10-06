@@ -3,7 +3,7 @@ package org.elasticmq.rest.sqs
 import com.typesafe.config.ConfigFactory
 import org.apache.pekko.actor.{ActorRef, ActorSystem, Props}
 import org.apache.pekko.http.scaladsl.Http
-import org.apache.pekko.http.scaladsl.server.Directive1
+import org.apache.pekko.http.scaladsl.server.{Directive1, Route}
 import org.apache.pekko.stream.Materializer
 import org.apache.pekko.util.Timeout
 import org.elasticmq._
@@ -247,12 +247,12 @@ case class TheSQSRestServerBuilder(
           handleServerExceptions(protocol) {
             handleRejectionsWithSQSError(protocol) {
               anyParamsMap(protocol) { p =>
-                val marshallerDependencies = MarshallerDependencies(protocol, version)
+                implicit val marshallerDependencies: MarshallerDependencies = MarshallerDependencies(protocol, version)
                 if (config.debug) {
                   logRequestResult("") {
-                    rawRoutes(p)(marshallerDependencies)
+                    rawRoutes(p)
                   }
-                } else rawRoutes(p)(marshallerDependencies)
+                } else rawRoutes(p)
               }
             }
           }
@@ -261,11 +261,7 @@ case class TheSQSRestServerBuilder(
 
     val routes = concat(healthCheckRoute, sqsRoute)
 
-    val appStartFuture = {
-      // Scala 3 fix: implicit resolution conflict
-      implicit val _implicitActorSystem: ActorSystem = implicitActorSystem
-      Http()(_implicitActorSystem).newServerAt(interface, port).bindFlow(routes)
-    }
+    val appStartFuture = HttpServer.bind(implicitActorSystem, interface, port, routes)
 
     appStartFuture.foreach { (sb: Http.ServerBinding) =>
       if (generateServerAddress && port != sb.localAddress.getPort) {
@@ -325,6 +321,13 @@ case class TheSQSRestServerBuilder(
     providedQueueManagerActor.getOrElse(
       actorSystem.actorOf(Props(new QueueManagerActor(new NowProvider(), sqsLimits, queueEventListener)))
     )
+  }
+}
+
+private object HttpServer {
+  def bind(actorSystem: ActorSystem, interface: String, port: Int, routes: Route): Future[Http.ServerBinding] = {
+    implicit val system: ActorSystem = actorSystem
+    Http().newServerAt(interface, port).bindFlow(routes)
   }
 }
 
@@ -416,7 +419,7 @@ object MD5Util {
 
     val byteStream = new ByteArrayOutputStream
 
-    TreeMap(attributes.toSeq: _*).foreach { case (k, v) =>
+    TreeMap(attributes.toSeq *).foreach { case (k, v) =>
       // TreeMap is for sorting, a requirement of algorithm
       addEncodedString(byteStream, k)
       addEncodedString(byteStream, v.getDataType())

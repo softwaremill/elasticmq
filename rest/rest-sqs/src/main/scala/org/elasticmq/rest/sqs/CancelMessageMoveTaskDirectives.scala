@@ -14,7 +14,7 @@ import spray.json.RootJsonFormat
 
 import scala.async.Async._
 
-trait CancelMessageMoveTaskDirectives { this: ElasticMQDirectives with QueueURLModule with ResponseMarshaller =>
+trait CancelMessageMoveTaskDirectives { this: ElasticMQDirectives & QueueURLModule & ResponseMarshaller =>
 
   def cancelMessageMoveTask(p: RequestPayload)(implicit marshallerDependencies: MarshallerDependencies): Route = {
     p.action(CancelMessageMoveTaskAction) {

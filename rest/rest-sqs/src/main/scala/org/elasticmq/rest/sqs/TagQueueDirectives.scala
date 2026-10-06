@@ -14,7 +14,7 @@ import scala.concurrent.Future
 import scala.xml.Elem
 
 trait TagQueueDirectives {
-  this: ElasticMQDirectives with TagsModule with ResponseMarshaller =>
+  this: ElasticMQDirectives & TagsModule & ResponseMarshaller =>
 
   def listQueueTags(p: RequestPayload)(implicit marshallerDependencies: MarshallerDependencies) = {
     p.action(ListQueueTags) {

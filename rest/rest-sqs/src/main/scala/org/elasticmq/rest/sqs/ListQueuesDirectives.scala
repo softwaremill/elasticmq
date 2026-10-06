@@ -11,7 +11,7 @@ import org.elasticmq.rest.sqs.model.RequestPayload
 
 import scala.xml.Elem
 
-trait ListQueuesDirectives { this: ElasticMQDirectives with QueueURLModule with ResponseMarshaller =>
+trait ListQueuesDirectives { this: ElasticMQDirectives & QueueURLModule & ResponseMarshaller =>
   def listQueues(p: RequestPayload)(implicit marshallerDependencies: MarshallerDependencies) = {
     p.action(ListQueuesAction) {
       rootPath {

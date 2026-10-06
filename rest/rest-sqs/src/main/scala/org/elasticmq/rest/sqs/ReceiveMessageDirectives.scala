@@ -16,7 +16,7 @@ import java.time.Duration
 import scala.xml.Elem
 
 trait ReceiveMessageDirectives {
-  this: ElasticMQDirectives with AttributesModule with SQSLimitsModule with ResponseMarshaller with AwsConfiguration =>
+  this: ElasticMQDirectives & AttributesModule & SQSLimitsModule & ResponseMarshaller & AwsConfiguration =>
   object MessageReadeableAttributeNames {
     val SentTimestampAttribute = "SentTimestamp"
     val ApproximateReceiveCountAttribute = "ApproximateReceiveCount"

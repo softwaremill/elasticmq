@@ -8,7 +8,7 @@ import spray.json.DefaultJsonProtocol._
 import spray.json.RootJsonFormat
 import org.elasticmq.rest.sqs.model.RequestPayload
 
-trait GetQueueUrlDirectives { this: ElasticMQDirectives with QueueURLModule with ResponseMarshaller =>
+trait GetQueueUrlDirectives { this: ElasticMQDirectives & QueueURLModule & ResponseMarshaller =>
   def getQueueUrl(p: RequestPayload)(implicit marshallerDependencies: MarshallerDependencies) = {
     p.action(GetQueueUrl) {
       rootPath {

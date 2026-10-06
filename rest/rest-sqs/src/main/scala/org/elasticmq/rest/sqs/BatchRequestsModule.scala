@@ -10,7 +10,7 @@ import scala.concurrent.Future
 import scala.xml.Elem
 
 trait BatchRequestsModule {
-  this: SQSLimitsModule with ActorSystemModule =>
+  this: SQSLimitsModule & ActorSystemModule =>
 
   def batchRequest[M <: BatchEntry, R](messagesData: List[M])(
       single: (M, String, Int) => Future[R]

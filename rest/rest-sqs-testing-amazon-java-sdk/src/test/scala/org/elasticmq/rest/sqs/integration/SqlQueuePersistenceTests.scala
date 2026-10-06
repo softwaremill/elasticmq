@@ -32,7 +32,7 @@ class SqlQueuePersistenceTests extends IntegrationTestsBase with SQSRestServerWi
 
   private val actorSystem: ActorSystem = ActorSystem("elasticmq-test-v2")
 
-  var store: ActorRef = _
+  var store: ActorRef = null
 
   implicit val timeout: Timeout = {
     import scala.concurrent.duration._

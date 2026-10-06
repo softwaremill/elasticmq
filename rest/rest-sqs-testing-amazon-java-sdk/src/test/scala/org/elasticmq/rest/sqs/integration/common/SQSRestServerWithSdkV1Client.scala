@@ -17,16 +17,16 @@ import scala.util.Try
 
 trait SQSRestServerWithSdkV1Client extends AnyFunSuite with BeforeAndAfter with Logging {
 
-  var testClient: SqsClient = _
+  var testClient: SqsClient = null
 
-  var client: AmazonSQS = _ // strict server
-  var relaxedClient: AmazonSQS = _
-  var httpClient: CloseableHttpClient = _
+  var client: AmazonSQS = null // strict server
+  var relaxedClient: AmazonSQS = null
+  var httpClient: CloseableHttpClient = null
 
-  var currentTestName: String = _
+  var currentTestName: String = null
 
-  var strictServer: SQSRestServer = _
-  var relaxedServer: SQSRestServer = _
+  var strictServer: SQSRestServer = null
+  var relaxedServer: SQSRestServer = null
   val awsAccountId = "123456789012"
   val awsRegion = "elasticmq"
 

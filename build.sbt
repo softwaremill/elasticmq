@@ -73,16 +73,9 @@ scalacOptions ++= {
   CrossVersion.partialVersion(scalaVersion.value) match {
     case Some((3, _)) =>
       Seq(
-        "-java-output-version:17",
-        // TODO(scala-3.9): the replacements for the syntax below (`&`, `= uninitialized`, `xs*`, `?`, `using`)
-        // are not available in Scala 2.12, and the sources are shared with the Scala 2 builds
-        "-Wconf:msg=with as a type operator has been deprecated:s",
-        "-Wconf:msg=has been deprecated; use .= uninitialized. instead:s",
-        "-Wconf:msg=is no longer supported for vararg splices:s",
-        "-Wconf:msg=is deprecated for wildcard arguments of types:s",
-        "-Wconf:msg=Implicit parameters should be provided with a .using. clause:s"
+        "-java-output-version:17"
       )
-    case _            => Seq("-Xasync", "-target:jvm-1.8")
+    case _            => Seq("-Xasync", "-target:jvm-1.8", "-Xsource:3")
   }
 }
 libraryDependencies += scalaXml
