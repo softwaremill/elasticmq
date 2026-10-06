@@ -9,7 +9,7 @@ import scala.sys.process.Process
 
 val v2_12 = "2.12.20"
 val v2_13 = "2.13.18"
-val v3 = "3.3.7"
+val v3 = "3.9.0"
 
 lazy val resolvedScalaVersion =
   sys.env.get("SCALA_MAJOR_VERSION") match {
@@ -71,7 +71,17 @@ scalaVersion := resolvedScalaVersion
 crossScalaVersions := List(v2_12, v2_13, v3)
 scalacOptions ++= {
   CrossVersion.partialVersion(scalaVersion.value) match {
-    case Some((3, _)) => Seq("-Xtarget:8")
+    case Some((3, _)) =>
+      Seq(
+        "-java-output-version:17",
+        // TODO(scala-3.9): the replacements for the syntax below (`&`, `= uninitialized`, `xs*`, `?`, `using`)
+        // are not available in Scala 2.12, and the sources are shared with the Scala 2 builds
+        "-Wconf:msg=with as a type operator has been deprecated:s",
+        "-Wconf:msg=has been deprecated; use .= uninitialized. instead:s",
+        "-Wconf:msg=is no longer supported for vararg splices:s",
+        "-Wconf:msg=is deprecated for wildcard arguments of types:s",
+        "-Wconf:msg=Implicit parameters should be provided with a .using. clause:s"
+      )
     case _            => Seq("-Xasync", "-target:jvm-1.8")
   }
 }
