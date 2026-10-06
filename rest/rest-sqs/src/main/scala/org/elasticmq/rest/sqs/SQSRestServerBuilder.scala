@@ -317,7 +317,7 @@ case class TheSQSRestServerBuilder(
       .map((_, () => Future.successful(())))
       .getOrElse {
         val actorSystem = ActorSystem("elasticmq")
-        (actorSystem, actorSystem.terminate _)
+        (actorSystem, () => actorSystem.terminate())
       }
   }
 

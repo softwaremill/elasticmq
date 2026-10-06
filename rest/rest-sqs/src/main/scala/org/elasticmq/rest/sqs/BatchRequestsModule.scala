@@ -47,7 +47,7 @@ trait BatchRequestsModule {
           case ((failures, successes), Right(success)) => (failures, successes :+ success)
         }
       )
-      .map((BatchResponse.apply[R] _).tupled)
+      .map { case (failed, successful) => BatchResponse[R](failed, successful) }
   }
 }
 
