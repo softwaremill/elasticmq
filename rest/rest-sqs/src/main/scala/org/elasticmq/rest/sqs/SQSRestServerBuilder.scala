@@ -419,7 +419,7 @@ object MD5Util {
 
     val byteStream = new ByteArrayOutputStream
 
-    TreeMap(attributes.toSeq *).foreach { case (k, v) =>
+    TreeMap(attributes.toSeq*).foreach { case (k, v) =>
       // TreeMap is for sorting, a requirement of algorithm
       addEncodedString(byteStream, k)
       addEncodedString(byteStream, v.getDataType())
