@@ -4,7 +4,7 @@ import org.apache.pekko.http.scaladsl.server.{Directive0, Directives, Rejection,
 import org.elasticmq.rest.sqs.{AWSProtocol, SQSException}
 
 trait RejectionDirectives {
-  this: Directives with ExceptionDirectives =>
+  this: Directives & ExceptionDirectives =>
 
   def rejectionHandler(protocol: AWSProtocol): RejectionHandler = RejectionHandler
     .newBuilder()

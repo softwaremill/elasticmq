@@ -103,7 +103,7 @@ trait QueueAttributesOps extends AttributesModule with AwsConfiguration {
       } else {
         attributeNames
       }
-      attributeValuesCalculator.calculate(attributeNamesToReturn, rules: _*)
+      attributeValuesCalculator.calculate(attributeNamesToReturn, rules*)
     }
 
     Future.sequence(calculateAttributeValues(attributeNames).map(p => p._2.map((p._1, _))))

@@ -15,7 +15,7 @@ import scala.concurrent.Future
 import scala.xml.Elem
 
 trait DeleteMessageBatchDirectives {
-  this: ElasticMQDirectives with BatchRequestsModule with ResponseMarshaller =>
+  this: ElasticMQDirectives & BatchRequestsModule & ResponseMarshaller =>
   def deleteMessageBatch(p: RequestPayload)(implicit marshallerDependencies: MarshallerDependencies) = {
     p.action(DeleteMessageBatch) {
 

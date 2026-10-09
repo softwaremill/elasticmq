@@ -9,7 +9,7 @@ import org.apache.pekko.http.scaladsl.server.Directives._
 import scala.util.{Failure, Success}
 
 trait FutureDirectives {
-  this: ExceptionDirectives with ActorSystemModule with AWSProtocolDirectives =>
+  this: ExceptionDirectives & ActorSystemModule & AWSProtocolDirectives =>
 
   implicit def futureRouteToRoute(futureRoute: Future[Route]): Route = {
     extractProtocol { protocol =>

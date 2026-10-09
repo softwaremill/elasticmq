@@ -11,7 +11,7 @@ import org.elasticmq.rest.sqs.model.RequestPayload
 import spray.json.DefaultJsonProtocol._
 import spray.json.RootJsonFormat
 
-trait ChangeMessageVisibilityDirectives { this: ElasticMQDirectives with ResponseMarshaller =>
+trait ChangeMessageVisibilityDirectives { this: ElasticMQDirectives & ResponseMarshaller =>
   def changeMessageVisibility(p: RequestPayload)(implicit marshallerDependencies: MarshallerDependencies) = {
     p.action(ChangeMessageVisibility) {
       val requestParams = p.as[ChangeMessageVisibilityActionRequest]

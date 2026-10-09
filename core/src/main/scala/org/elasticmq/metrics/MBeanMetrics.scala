@@ -68,7 +68,7 @@ object QueuesMetrics {
     "ApproximateNumberOfMessagesDelayed"
   )
 
-  val queueDataAttributeTypes: Array[OpenType[_]] = Array(
+  val queueDataAttributeTypes: Array[OpenType[?]] = Array(
     SimpleType.STRING,
     SimpleType.LONG,
     SimpleType.LONG,

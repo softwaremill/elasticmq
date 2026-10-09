@@ -15,7 +15,7 @@ import scala.concurrent.Future
 import scala.xml.Elem
 
 trait ChangeMessageVisibilityBatchDirectives {
-  this: ElasticMQDirectives with BatchRequestsModule with ResponseMarshaller =>
+  this: ElasticMQDirectives & BatchRequestsModule & ResponseMarshaller =>
   def changeMessageVisibilityBatch(p: RequestPayload)(implicit marshallerDependencies: MarshallerDependencies) = {
     p.action(ChangeMessageVisibilityBatch) {
       val batch = p.as[BatchRequest[ChangeMessageVisibilityBatchEntry]]

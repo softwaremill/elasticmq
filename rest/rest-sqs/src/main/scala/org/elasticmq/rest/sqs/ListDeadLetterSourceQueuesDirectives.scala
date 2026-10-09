@@ -11,7 +11,7 @@ import spray.json.RootJsonFormat
 
 import scala.xml.Elem
 
-trait ListDeadLetterSourceQueuesDirectives { this: ElasticMQDirectives with QueueURLModule with ResponseMarshaller =>
+trait ListDeadLetterSourceQueuesDirectives { this: ElasticMQDirectives & QueueURLModule & ResponseMarshaller =>
   def listDeadLetterSourceQueues(p: RequestPayload)(implicit marshallerDependencies: MarshallerDependencies) = {
     p.action(ListDeadLetterSourceQueuesAction) {
       val payload = p.as[ListDeadLetterSourceQueuesActionRequest]

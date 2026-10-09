@@ -9,7 +9,7 @@ import org.elasticmq.rest.sqs.directives.QueueDirectives.AccountIdRegex
 import org.elasticmq.rest.sqs.model.{JsonData, RequestPayload}
 
 trait AnyParamDirectives {
-  this: Directives with ContextPathModule with QueueURLModule =>
+  this: Directives & ContextPathModule & QueueURLModule =>
 
   private def formDataOrEmpty =
     entity(as[FormData]).recoverPF {

@@ -26,12 +26,13 @@ trait ResponseMarshaller { this: RespondDirectives =>
     marshallerDependencies.protocol match {
       case AWSProtocol.`AWSJsonProtocol1.0` => sprayJsonMarshaller[T]
       case _                                =>
+        implicit val version: XmlNsVersion = marshallerDependencies.xmlNsVersion
         namespace { ns =>
           Marshaller.withFixedContentType[T, RequestEntity](`text/xml(UTF-8)`) { t =>
             val xml = xmlSerializer.toXml(t) % ns
             HttpEntity(`text/xml(UTF-8)`, ByteString(xml.toString()))
           }
-        }(marshallerDependencies.xmlNsVersion)
+        }
     }
 }
 

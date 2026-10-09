@@ -9,7 +9,7 @@ import scala.sys.process.Process
 
 val v2_12 = "2.12.20"
 val v2_13 = "2.13.18"
-val v3 = "3.3.7"
+val v3 = "3.9.0"
 
 lazy val resolvedScalaVersion =
   sys.env.get("SCALA_MAJOR_VERSION") match {
@@ -71,8 +71,11 @@ scalaVersion := resolvedScalaVersion
 crossScalaVersions := List(v2_12, v2_13, v3)
 scalacOptions ++= {
   CrossVersion.partialVersion(scalaVersion.value) match {
-    case Some((3, _)) => Seq("-Xtarget:8")
-    case _            => Seq("-Xasync", "-target:jvm-1.8")
+    case Some((3, _)) =>
+      Seq(
+        "-java-output-version:17"
+      )
+    case _            => Seq("-Xasync", "-target:jvm-1.8", "-Xsource:3")
   }
 }
 libraryDependencies += scalaXml

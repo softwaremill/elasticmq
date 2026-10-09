@@ -13,7 +13,7 @@ import scala.concurrent.Future
 import scala.xml.Elem
 
 trait QueueAttributesDirectives {
-  this: ElasticMQDirectives with QueueAttributesOps with ResponseMarshaller =>
+  this: ElasticMQDirectives & QueueAttributesOps & ResponseMarshaller =>
 
   def getQueueAttributes(p: RequestPayload)(implicit marshallerDependencies: MarshallerDependencies): Route = {
     p.action(GetQueueAttributes) {
