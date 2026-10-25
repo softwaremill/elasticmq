@@ -94,6 +94,31 @@ trait MessageAttributesTests extends IntegrationTestsBase {
     messages.map(_.body).toSet should be(Set("Message 1", "Message 3"))
   }
 
+  test("Receiving message attributes by exact name or by prefix should return only the matching attributes") {
+    // given
+    val queueUrl = testClient.createQueue("testQueue1").toOption.get
+    testClient.sendMessage(
+      queueUrl,
+      "Message 1",
+      messageAttributes = Map(
+        "foo" -> StringMessageAttribute("1"),
+        "foo.bar" -> StringMessageAttribute("2"),
+        "foo.baz" -> StringMessageAttribute("3"),
+        "fo" -> StringMessageAttribute("4"),
+        "o" -> StringMessageAttribute("5")
+      )
+    )
+
+    // when
+    val byName = testClient.receiveMessage(queueUrl, messageAttributes = List("foo"))
+    testClient.changeMessageVisibility(queueUrl, byName.head.receiptHandle, 0)
+    val byPrefix = testClient.receiveMessage(queueUrl, messageAttributes = List("foo.*"))
+
+    // then
+    byName.head.messageAttributes.keySet shouldBe Set("foo")
+    byPrefix.head.messageAttributes.keySet shouldBe Set("foo.bar", "foo.baz")
+  }
+
   test("For normal queues, MessageDeduplicationId and MessageGroupId should not be sent with ReceiveMessage response") {
     // given
     val queueUrl = testClient.createQueue("testQueue1").toOption.get

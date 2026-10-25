@@ -126,8 +126,11 @@ trait ReceiveMessageDirectives {
           if (messageAttributeNames.exists(s => s == "All" || s == ".*")) {
             msg.messageAttributes
           } else {
+            // A requested name is either an exact name or a prefix such as "bar.*"
             msg.messageAttributes
-              .filterKeys(k => messageAttributeNames.exists(s => s == k || k.r.findFirstIn(s).isDefined))
+              .filterKeys(k =>
+                messageAttributeNames.exists(s => s == k || (s.endsWith(".*") && k.startsWith(s.dropRight(1))))
+              )
               .toMap
           }
         }
