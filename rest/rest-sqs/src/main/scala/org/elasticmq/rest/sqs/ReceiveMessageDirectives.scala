@@ -129,7 +129,7 @@ trait ReceiveMessageDirectives {
             // A requested name is either an exact name or a prefix such as "bar.*"
             msg.messageAttributes
               .filterKeys(k =>
-                messageAttributeNames.exists(s => s == k || (s.endsWith(".*") && k.startsWith(s.dropRight(1))))
+                messageAttributeNames.exists(s => s == k || (s.endsWith(".*") && k.startsWith(s.stripSuffix("*"))))
               )
               .toMap
           }

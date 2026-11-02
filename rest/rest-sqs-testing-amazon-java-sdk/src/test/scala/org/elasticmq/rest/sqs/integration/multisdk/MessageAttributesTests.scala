@@ -111,10 +111,12 @@ trait MessageAttributesTests extends IntegrationTestsBase {
 
     // when
     val byName = testClient.receiveMessage(queueUrl, messageAttributes = List("foo"))
+    byName should have size 1
     testClient.changeMessageVisibility(queueUrl, byName.head.receiptHandle, 0)
     val byPrefix = testClient.receiveMessage(queueUrl, messageAttributes = List("foo.*"))
 
     // then
+    byPrefix should have size 1
     byName.head.messageAttributes.keySet shouldBe Set("foo")
     byPrefix.head.messageAttributes.keySet shouldBe Set("foo.bar", "foo.baz")
   }
