@@ -8,7 +8,7 @@ import scoverage.ScoverageKeys.*
 import scala.sys.process.Process
 
 val v2_13 = "2.13.18"
-val v3 = "3.3.8"
+val v3 = "3.9.0"
 
 lazy val resolvedScalaVersion =
   sys.env.get("SCALA_MAJOR_VERSION") match {
@@ -20,7 +20,7 @@ lazy val resolvedScalaVersion =
 
 val config = "com.typesafe" % "config" % "1.4.9"
 val pureConfig = "com.github.pureconfig" %% "pureconfig-core" % "0.17.8"
-val scalaXml = "org.scala-lang.modules" %% "scala-xml" % "2.4.0"
+val scalaXml = "org.scala-lang.modules" %% "scala-xml" % "2.5.0"
 
 val scalalogging = "com.typesafe.scala-logging" %% "scala-logging" % "3.9.6"
 val logback = "ch.qos.logback" % "logback-classic" % "1.6.3"
@@ -32,8 +32,8 @@ val awaitility = "org.awaitility" % "awaitility-scala" % "4.3.0"
 val amazonJavaSdkSqs = ("com.amazonaws" % "aws-java-sdk-sqs" % "1.12.699").exclude("commons-logging", "commons-logging")
 val amazonJavaV2SdkSqs = "software.amazon.awssdk" % "sqs" % "2.25.60"
 
-val pekkoVersion = "1.7.0"
-val pekkoHttpVersion = "1.4.0"
+val pekkoVersion = "1.7.1"
+val pekkoHttpVersion = "1.4.2"
 val pekkoActor = "org.apache.pekko" %% "pekko-actor" % pekkoVersion
 val pekkoSlf4j = "org.apache.pekko" %% "pekko-slf4j" % pekkoVersion
 val pekkoStreams = "org.apache.pekko" %% "pekko-stream" % pekkoVersion
@@ -48,7 +48,7 @@ val scala3Async =
   "com.github.rssh" %% "shim-scala-async-dotty-cps-async" % "0.9.23" // allows cross compilation w/o changes in source code
 
 val scalikeJdbc = "org.scalikejdbc" %% "scalikejdbc" % "4.3.5"
-val h2 = "com.h2database" % "h2" % "2.2.224"
+val h2 = "com.h2database" % "h2" % "2.5.252"
 
 val common = Seq(scalalogging)
 
@@ -69,8 +69,8 @@ scalaVersion := resolvedScalaVersion
 crossScalaVersions := List(v3, v2_13)
 scalacOptions ++= {
   CrossVersion.partialVersion(scalaVersion.value) match {
-    case Some((3, _)) => Seq("-Xtarget:17")
-    case _            => Seq("-Xasync", "-release:17")
+    case Some((3, _)) => Seq("-java-output-version:17")
+    case _            => Seq("-Xasync", "-release:17", "-Xsource:3")
   }
 }
 javacOptions ++= Seq("--release", "17")

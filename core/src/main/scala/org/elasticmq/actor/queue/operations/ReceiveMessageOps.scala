@@ -7,7 +7,7 @@ import org.elasticmq.msg.MoveMessage
 import org.elasticmq.util.{Logging, NowProvider}
 
 trait ReceiveMessageOps extends Logging {
-  this: QueueActorStorage with DeleteMessageOps =>
+  this: QueueActorStorage & DeleteMessageOps =>
 
   trait MessageWithDestination
   case class MessageToReturn(internalMessage: InternalMessage) extends MessageWithDestination

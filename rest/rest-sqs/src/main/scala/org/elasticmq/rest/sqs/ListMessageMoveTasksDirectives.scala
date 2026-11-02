@@ -11,7 +11,7 @@ import spray.json.DefaultJsonProtocol._
 import spray.json.RootJsonFormat
 
 trait ListMessageMoveTasksDirectives extends ArnSupport {
-  this: ElasticMQDirectives with QueueURLModule with ResponseMarshaller =>
+  this: ElasticMQDirectives & QueueURLModule & ResponseMarshaller =>
 
   def listMessageMoveTasks(p: RequestPayload)(implicit marshallerDependencies: MarshallerDependencies): Route = {
     p.action(ListMessageMoveTasksAction) {

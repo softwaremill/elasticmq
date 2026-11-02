@@ -11,7 +11,7 @@ import spray.json.RootJsonFormat
 
 import scala.async.Async._
 
-trait DeleteQueueDirectives { this: ElasticMQDirectives with QueueURLModule with ResponseMarshaller =>
+trait DeleteQueueDirectives { this: ElasticMQDirectives & QueueURLModule & ResponseMarshaller =>
   def deleteQueue(p: RequestPayload)(implicit marshallerDependencies: MarshallerDependencies) = {
     p.action(DeleteQueueAction) {
       queueActorAndNameFromUrl(p.as[DeleteQueueActionRequest].QueueUrl) {

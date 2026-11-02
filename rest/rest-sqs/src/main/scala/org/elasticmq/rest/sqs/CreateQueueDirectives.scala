@@ -20,7 +20,7 @@ import scala.concurrent.Future
 import scala.xml.Elem
 
 trait CreateQueueDirectives {
-  this: ElasticMQDirectives with QueueURLModule with SQSLimitsModule with ResponseMarshaller =>
+  this: ElasticMQDirectives & QueueURLModule & SQSLimitsModule & ResponseMarshaller =>
 
   def createQueue(p: RequestPayload)(implicit marshallerDependencies: MarshallerDependencies) = {
     p.action(CreateQueue) {

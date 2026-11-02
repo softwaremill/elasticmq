@@ -18,7 +18,7 @@ import scala.concurrent.Future
 import scala.xml.Elem
 
 trait SendMessageDirectives {
-  this: ElasticMQDirectives with SQSLimitsModule with ResponseMarshaller =>
+  this: ElasticMQDirectives & SQSLimitsModule & ResponseMarshaller =>
 
   private val SomeString = """String\.?(.*)""".r
   private val SomeNumber = """Number\.?(.*)""".r

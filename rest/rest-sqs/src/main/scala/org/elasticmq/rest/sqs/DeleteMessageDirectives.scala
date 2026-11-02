@@ -11,7 +11,7 @@ import org.elasticmq.rest.sqs.model.RequestPayload
 import spray.json.DefaultJsonProtocol._
 import spray.json.RootJsonFormat
 
-trait DeleteMessageDirectives { this: ElasticMQDirectives with ResponseMarshaller =>
+trait DeleteMessageDirectives { this: ElasticMQDirectives & ResponseMarshaller =>
   def deleteMessage(p: RequestPayload)(implicit marshallerDependencies: MarshallerDependencies) = {
     p.action(DeleteMessageAction) {
       val requestParams = p.as[DeleteMessageActionRequest]

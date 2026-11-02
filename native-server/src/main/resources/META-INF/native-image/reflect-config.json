@@ -1209,6 +1209,10 @@
   "fields":[{"name":"pos"}]
 },
 {
+  "name":"org.h2.mvstore.Page$PageReference",
+  "fields":[{"name":"page"}]
+},
+{
   "name":"org.h2.mvstore.db.LobStorageMap$BlobMeta$Type",
   "fields":[{"name":"INSTANCE"}]
 },

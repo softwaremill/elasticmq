@@ -17,12 +17,12 @@ import scala.concurrent.Future
 import scala.util.matching.Regex
 
 trait QueueDirectives {
-  this: Directives
-    with QueueManagerActorModule
-    with ContextPathModule
-    with ActorSystemModule
-    with FutureDirectives
-    with AutoCreateQueuesModule =>
+  this: Directives &
+    QueueManagerActorModule &
+    ContextPathModule &
+    ActorSystemModule &
+    FutureDirectives &
+    AutoCreateQueuesModule =>
 
   def queueActorFromUrl(queueUrl: String)(body: ActorRef => Route): Route =
     getQueueNameFromQueueUrl(queueUrl)(queueName => queueActor(queueName, body))
@@ -72,16 +72,14 @@ trait QueueDirectives {
   }
 
   private def queueActor(queueName: String, body: ActorRef => Route): Route = {
-    val ec = actorSystem.dispatcher
     (queueManagerActor ? LookupQueue(queueName)).flatMap {
       case Some(a)                          => Future.successful(body(a))
-      case None if autoCreateQueues.enabled => autoCreateQueue(queueName).map(body)(ec)
+      case None if autoCreateQueues.enabled => autoCreateQueue(queueName).map(body)
       case None                             => Future.failed(SQSException.nonExistentQueue)
-    }(ec)
+    }
   }
 
   private def autoCreateQueue(queueName: String): Future[ActorRef] = {
-    val ec = actorSystem.dispatcher
     val isFifo = queueName.endsWith(".fifo") || autoCreateQueues.template.isFifo
     val queueData = autoCreateQueues.template.copy(name = queueName, isFifo = isFifo).toCreateQueueData
     (queueManagerActor ? CreateQueueMsg(queueData)).flatMap {
@@ -91,9 +89,9 @@ trait QueueDirectives {
         (queueManagerActor ? LookupQueue(queueName)).map {
           case Some(a) => a
           case None    => throw SQSException.nonExistentQueue
-        }(ec)
+        }
       case Left(e) => Future.failed(e.toSQSException)
-    }(ec)
+    }
   }
 
   private def queueData(queueActor: ActorRef, body: QueueData => Route): Route = {

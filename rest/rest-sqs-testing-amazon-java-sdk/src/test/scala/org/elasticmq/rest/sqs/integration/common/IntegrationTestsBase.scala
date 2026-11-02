@@ -9,7 +9,7 @@ import org.scalatest.matchers.should.Matchers
 trait IntegrationTestsBase extends AnyFunSuite with SqsTestClient with AwsConfig with Matchers with Eventually {
 
   protected def assertError(
-      result: Either[SqsClientError, _],
+      result: Either[SqsClientError, ?],
       expectedType: SqsClientErrorType,
       messageSubstring: String
   ): Unit = {

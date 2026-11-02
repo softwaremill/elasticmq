@@ -13,7 +13,7 @@ import spray.json.RootJsonFormat
 import scala.util.{Success, Try}
 
 trait ExceptionDirectives extends Logging {
-  this: Directives with RespondDirectives =>
+  this: Directives & RespondDirectives =>
 
   private def handleSQSException(e: SQSException, protocol: AWSProtocol): Route = {
     protocol match {

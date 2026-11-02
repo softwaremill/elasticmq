@@ -6,7 +6,7 @@ import org.elasticmq.rest.sqs.model.RequestPayload
 import org.elasticmq.util.Logging
 
 trait UnmatchedActionRoutes {
-  this: Logging with Directives =>
+  this: Logging & Directives =>
 
   def unmatchedAction(p: RequestPayload): Route = {
     extractRequestContext { _ =>

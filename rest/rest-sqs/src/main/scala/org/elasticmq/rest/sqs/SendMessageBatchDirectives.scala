@@ -13,11 +13,11 @@ import spray.json.RootJsonFormat
 import scala.xml.Elem
 
 trait SendMessageBatchDirectives {
-  this: ElasticMQDirectives
-    with SendMessageDirectives
-    with BatchRequestsModule
-    with SQSLimitsModule
-    with ResponseMarshaller =>
+  this: ElasticMQDirectives &
+    SendMessageDirectives &
+    BatchRequestsModule &
+    SQSLimitsModule &
+    ResponseMarshaller =>
 
   def sendMessageBatch(p: RequestPayload)(implicit marshallerDependencies: MarshallerDependencies): Route = {
     p.action(SendMessageBatch) {
