@@ -20,7 +20,13 @@
     "@aws-sdk/client-sqs": "^3.990.0"
   },
   "devDependencies": {
-    "jest": "^29.7.0",
-    "testcontainers": "^10.13.0"
+    "jest": "^30.5.2",
+    "testcontainers": "^12.2.1"
+  },
+  "overrides": {
+    "glob": "^14.0.4",
+    "test-exclude": {
+      "minimatch": "^11.0.5"
+    }
   }
 }
