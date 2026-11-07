@@ -479,7 +479,7 @@ process. The easiest way to update it is to run the integration tests, which sta
 ```
 sbt "project server; assembly"
 docker build -t elasticmq-int -f integration-tests/docker/Dockerfile .
-cd integration-tests/python && pip install -r requirements.txt && pytest
+cd integration-tests/python && uv run pytest
 ```
 
 The agent can also be run manually, e.g. inside a GraalVM container:

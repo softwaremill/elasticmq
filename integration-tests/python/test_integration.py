@@ -6,7 +6,7 @@ import signal
 import time
 import shutil
 from testcontainers.core.container import DockerContainer
-from testcontainers.core.waiting_utils import wait_for_logs
+from testcontainers.core.wait_strategies import LogMessageWaitStrategy
 
 class ElasticMqContainer(DockerContainer):
     def __init__(self, conf_base_name, image="elasticmq-int:latest", **kwargs):
@@ -22,13 +22,13 @@ class ElasticMqContainer(DockerContainer):
         self.with_volume_mapping(os.path.join(os.getcwd(), ".data"), "/elasticmq/data", mode="rw")
         self.with_volume_mapping(os.path.join(os.getcwd(), f"../conf/{conf_base_name}.conf"), "/elasticmq/conf/elasticmq.conf")
         self.with_exposed_ports(9321)
+        self.waiting_for(LogMessageWaitStrategy("=== ElasticMQ server").with_startup_timeout(10))
 
     def start(self):
         lock_file = os.path.join(os.getcwd(), "../..", "native-server/src/main/resources/META-INF/native-image/.lock")
         if os.path.exists(lock_file):
             os.remove(lock_file)
         super().start()
-        wait_for_logs(self, "=== ElasticMQ server", timeout=10)
 
     def stop(self):
         logging.getLogger().info("Stopping ElasticMQ container")
