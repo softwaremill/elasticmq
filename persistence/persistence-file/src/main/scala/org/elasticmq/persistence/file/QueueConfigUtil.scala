@@ -7,10 +7,39 @@ import org.elasticmq.util.Logging
 import java.io.File
 import java.time.OffsetDateTime
 import java.util.concurrent.TimeUnit
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.util.{Failure, Success, Try}
 
 object QueueConfigUtil extends Logging {
+
+  /** Queue attribute keys, as written since 2.0. */
+  object Keys {
+    val DefaultVisibilityTimeout = "default-visibility-timeout"
+    val Delay = "delay"
+    val ReceiveMessageWait = "receive-message-wait"
+    val DeadLettersQueue = "dead-letters-queue"
+    val DeadLettersQueueName = "name"
+    val DeadLettersQueueMaxReceiveCount = "max-receive-count"
+    val Fifo = "fifo"
+    val ContentBasedDeduplication = "content-based-deduplication"
+    val CopyTo = "copy-to"
+    val MoveTo = "move-to"
+    val Tags = "tags"
+    val Created = "created"
+    val LastModified = "last-modified"
+  }
+
+  /** Queue attribute keys used by 1.x, still read with a deprecation warning. */
+  private val DeprecatedKeys = Map(
+    Keys.DefaultVisibilityTimeout -> "defaultVisibilityTimeout",
+    Keys.ReceiveMessageWait -> "receiveMessageWait",
+    Keys.DeadLettersQueue -> "deadLettersQueue",
+    Keys.DeadLettersQueueMaxReceiveCount -> "maxReceiveCount",
+    Keys.ContentBasedDeduplication -> "contentBasedDeduplication",
+    Keys.CopyTo -> "copyTo",
+    Keys.MoveTo -> "moveTo",
+    Keys.LastModified -> "lastModified"
+  )
 
   def readPersistedQueuesFromPath(queuesStoragePath: String): List[CreateQueueMetadata] =
     Try(ConfigFactory.parseFile(new File(queuesStoragePath)))
@@ -32,6 +61,14 @@ object QueueConfigUtil extends Logging {
     }
   }
 
+  /** Reads queue attributes (e.g. the `auto-create-queues.template` section) into a [[CreateQueueMetadata]] with an
+    * empty name.
+    */
+  def readQueueAttributes(c: Config): CreateQueueMetadata = {
+    val now = OffsetDateTime.now().toInstant.toEpochMilli
+    readQueue("", c, now)
+  }
+
   private def getQueuesFromConfig(queuesConfig: Map[String, ConfigValue]): List[CreateQueueMetadata] = {
     Try(getQueuesFromConfigUnsafe(queuesConfig)) match {
       case Success(value) => value
@@ -43,49 +80,58 @@ object QueueConfigUtil extends Logging {
   }
 
   private def getQueuesFromConfigUnsafe(queuesConfig: Map[String, ConfigValue]): List[CreateQueueMetadata] = {
-    def getOptionalBoolean(c: Config, k: String) = if (c.hasPath(k)) Some(c.getBoolean(k)) else None
-
-    def getOptionalLong(c: Config, k: String) = if (c.hasPath(k)) Some(c.getLong(k)) else None
-
-    def getOptionalDuration(c: Config, k: String) = if (c.hasPath(k)) Some(c.getDuration(k, TimeUnit.SECONDS)) else None
-
-    def getOptionalString(c: Config, k: String) = if (c.hasPath(k)) Some(c.getString(k)).filter(_.nonEmpty) else None
-
-    def getOptionalTags(c: Config, k: String): Map[String, String] =
-      if (c.hasPath(k)) c.getObject(k).asScala.map { case (key, _) => key -> c.getString(k + '.' + key) }.toMap
-      else Map[String, String]()
-
-    val deadLettersQueueKey = "deadLettersQueue"
-
     val now = OffsetDateTime.now().toInstant.toEpochMilli
 
     val unsortedQueues = queuesConfig.map { case (n, v) =>
-      val c = v.asInstanceOf[ConfigObject].toConfig
-      val isFifo = getOptionalBoolean(c, "fifo").getOrElse(false)
-      CreateQueueMetadata(
-        name = addSuffixWhenFifoQueue(n, isFifo),
-        defaultVisibilityTimeoutSeconds = getOptionalDuration(c, "defaultVisibilityTimeout"),
-        delaySeconds = getOptionalDuration(c, "delay"),
-        receiveMessageWaitSeconds = getOptionalDuration(c, "receiveMessageWait"),
-        created = getOptionalLong(c, "created").getOrElse(now),
-        lastModified = getOptionalLong(c, "lastModified").getOrElse(now),
-        deadLettersQueue = if (c.hasPath(deadLettersQueueKey)) {
-          Some(
-            DeadLettersQueue(
-              c.getString(deadLettersQueueKey + ".name"),
-              c.getInt(deadLettersQueueKey + ".maxReceiveCount")
-            )
-          )
-        } else None,
-        isFifo = isFifo,
-        hasContentBasedDeduplication = getOptionalBoolean(c, "contentBasedDeduplication").getOrElse(false),
-        copyMessagesTo = getOptionalString(c, "copyTo"),
-        moveMessagesTo = getOptionalString(c, "moveTo"),
-        tags = getOptionalTags(c, "tags")
-      )
+      val queue = readQueue(n, v.asInstanceOf[ConfigObject].toConfig, now)
+      queue.copy(name = addSuffixWhenFifoQueue(n, queue.isFifo))
     }.toList
     QueueSorter.sortCreateQueues(unsortedQueues)
   }
+
+  private def readQueue(name: String, c: Config, now: Long): CreateQueueMetadata = {
+    def path(c: Config, k: String): Option[String] =
+      DeprecatedKeys.get(k) match {
+        case Some(deprecatedKey) => DeprecatedConfigKeys.resolve(c, k, deprecatedKey)
+        case None                => Some(k).filter(c.hasPath)
+      }
+
+    def getOptionalBoolean(k: String) = path(c, k).map(c.getBoolean)
+    def getOptionalLong(k: String) = path(c, k).map(c.getLong)
+    def getOptionalDuration(k: String) = path(c, k).map(c.getDuration(_, TimeUnit.SECONDS))
+    def getOptionalString(k: String) = path(c, k).map(c.getString).filter(_.nonEmpty)
+    def getOptionalTags(k: String): Map[String, String] =
+      path(c, k)
+        .map(p => c.getObject(p).asScala.map { case (key, _) => key -> c.getConfig(p).getString(quote(key)) }.toMap)
+        .getOrElse(Map.empty)
+
+    val deadLettersQueue = path(c, Keys.DeadLettersQueue).map { p =>
+      val dlq = c.getConfig(p)
+      DeadLettersQueue(
+        dlq.getString(Keys.DeadLettersQueueName),
+        path(dlq, Keys.DeadLettersQueueMaxReceiveCount)
+          .map(dlq.getInt)
+          .getOrElse(throw new IllegalArgumentException(s"$p.${Keys.DeadLettersQueueMaxReceiveCount} is required"))
+      )
+    }
+
+    CreateQueueMetadata(
+      name = name,
+      defaultVisibilityTimeoutSeconds = getOptionalDuration(Keys.DefaultVisibilityTimeout),
+      delaySeconds = getOptionalDuration(Keys.Delay),
+      receiveMessageWaitSeconds = getOptionalDuration(Keys.ReceiveMessageWait),
+      created = getOptionalLong(Keys.Created).getOrElse(now),
+      lastModified = getOptionalLong(Keys.LastModified).getOrElse(now),
+      deadLettersQueue = deadLettersQueue,
+      isFifo = getOptionalBoolean(Keys.Fifo).getOrElse(false),
+      hasContentBasedDeduplication = getOptionalBoolean(Keys.ContentBasedDeduplication).getOrElse(false),
+      copyMessagesTo = getOptionalString(Keys.CopyTo),
+      moveMessagesTo = getOptionalString(Keys.MoveTo),
+      tags = getOptionalTags(Keys.Tags)
+    )
+  }
+
+  private def quote(key: String): String = "\"" + key.replace("\\", "\\\\").replace("\"", "\\\"") + "\""
 
   private def addSuffixWhenFifoQueue(queueName: String, isFifo: Boolean): String = {
     if (isFifo && !queueName.endsWith(".fifo")) queueName + ".fifo"

@@ -3,6 +3,7 @@ package org.elasticmq.rest.sqs
 import com.typesafe.config.ConfigFactory
 import org.apache.pekko.actor.{ActorRef, ActorSystem, Props}
 import org.apache.pekko.http.scaladsl.Http
+import org.apache.pekko.http.scaladsl.model.Uri
 import org.apache.pekko.http.scaladsl.server.{Directive1, Route}
 import org.apache.pekko.stream.Materializer
 import org.apache.pekko.util.Timeout
@@ -40,8 +41,8 @@ import scala.xml._
   *
   * Defaults:
   *   - binds to `localhost:9324`,
-  *   - returned queue URLs use `http://localhost:9324` as the base address (with the actual port, if a dynamic port is
-  *     used),
+  *   - returned queue URLs use the protocol, host and port of the incoming request (see [[withServerAddress]] and
+  *     [[withServerAddressFromBinding]] for alternatives),
   *   - strict SQS limits ([[StrictSQSLimits]]),
   *   - region `elasticmq`, account id `000000000000`,
   *   - a new, server-owned actor system,
@@ -53,8 +54,8 @@ object SQSRestServerBuilder
       providedQueueManagerActor = None,
       interface = "",
       port = 9324,
-      serverAddress = NodeAddress(),
-      generateServerAddress = true,
+      serverAddress = NodeAddress(host = "*"),
+      generateServerAddress = false,
       sqsLimits = StrictSQSLimits,
       awsRegion = "elasticmq",
       awsAccountId = "000000000000",
@@ -133,10 +134,19 @@ sealed class TheSQSRestServerBuilder private[sqs] (
   def withDynamicPort(): TheSQSRestServerBuilder = withPort(0)
 
   /** @param serverAddress
-    *   Address which will be returned as the queue address. Requests to this address should be routed to this server.
+    *   Address which will be used as the base of returned queue URLs. Requests to this address should be routed to this
+    *   server. If its host is `"*"`, the protocol, host and port of the incoming request are used instead (with the
+    *   given context path); this is the default.
     */
   def withServerAddress(serverAddress: NodeAddress): TheSQSRestServerBuilder =
     copy(serverAddress = serverAddress, generateServerAddress = false)
+
+  /** Use the bind address as the base of returned queue URLs: `http://<interface>:<port>`, or `http://localhost:<port>`
+    * if no interface is set. With a dynamic port, the actual port is used once the server is bound. This was the
+    * default in 1.x.
+    */
+  def withServerAddressFromBinding(): TheSQSRestServerBuilder =
+    copy(serverAddress = NodeAddress(), generateServerAddress = true)
 
   /** @param sqsLimits
     *   Should "real" SQS limits be used (strict), or should they be relaxed where possible (regarding e.g. message
@@ -321,7 +331,7 @@ sealed class TheSQSRestServerBuilder private[sqs] (
             interface,
             sb.localAddress.getPort,
             if (env.serverAddress.isWildcard)
-              "* (depends on incoming request path) "
+              "* (built from the incoming request)"
             else env.serverAddress.fullAddress
           )
       )
@@ -564,17 +574,10 @@ trait QueueURLModule {
     val postfix = if (awsAccountId.nonEmpty) awsAccountId else QueueUrlContext
 
     val baseAddress = if (serverAddress.isWildcard) {
-      extractRequest.map { req =>
-        val incomingAddress =
-          req.uri.copy(rawQueryString = None, fragment = None).toString
-
-        val incomingAddressNoSlash = if (incomingAddress.endsWith("/")) {
-          incomingAddress.substring(0, incomingAddress.length - 1)
-        } else incomingAddress
-
-        if (incomingAddressNoSlash.endsWith(postfix)) {
-          incomingAddressNoSlash.substring(0, incomingAddressNoSlash.length - postfix.length - 1)
-        } else incomingAddressNoSlash
+      // The request's scheme, host and port (from the Host header), followed by the configured context path. The
+      // request path is ignored: requests may target the root or a queue URL.
+      extractUri.map { uri =>
+        uri.copy(path = Uri.Path.Empty, rawQueryString = None, fragment = None).toString + serverAddress.suffix
       }
     } else {
       provide(serverAddress.fullAddress)

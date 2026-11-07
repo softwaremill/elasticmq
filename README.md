@@ -66,9 +66,10 @@ include classpath("application.conf")
 
 # What is the outside visible address of this ElasticMQ node
 # Used to create the queue URL (may be different from bind address!)
+# "*" means: use the protocol, host and port of the incoming request
 node-address {
   protocol = http
-  host = localhost
+  host = "*"
   port = 9324
   context-path = ""
 }
@@ -93,20 +94,21 @@ queues-storage {
   # See next sections
 }
 
-# Region and accountId which will be included in resource ids
+# Region and account id which will be included in resource ids
 aws {
   region = us-west-2
-  accountId = 000000000000
+  account-id = 000000000000
 }
 ```
 
 # How are queue URLs created
 
-Some of the responses include a queue URL. By default, the URLs will use `http://localhost:9324` as the base URL.
-To customize, you should properly set the protocol/host/port/context in the `node-address` setting (see above).
+Some of the responses include a queue URL. By default (`node-address.host = "*"`), queue URLs use the protocol, host
+and port of the incoming request, followed by `node-address.context-path`. A client that reaches ElasticMQ as
+`http://elasticmq:9324` (e.g. a Docker Compose service name) gets queue URLs starting with `http://elasticmq:9324`.
 
-You can also set `node-address.host` to a special value, `"*"`, which will cause any queue URLs created during a request
-to use the path of the incoming request. This might be useful e.g. in containerized (Docker) deployments.
+To always return the same base URL, set `node-address.host` to a host name, together with the protocol, port and
+context path.
 
 Note that changing the `bind-port` and `bind-hostname` settings do not affect the queue URLs in any way unless
 `generate-node-address` is `true`. In that case, the bind host/port are used to create the node address. This is
@@ -125,17 +127,17 @@ include classpath("application.conf")
 
 queues {
   queue1 {
-    defaultVisibilityTimeout = 10 seconds
+    default-visibility-timeout = 10 seconds
     delay = 5 seconds
-    receiveMessageWait = 0 seconds
-    deadLettersQueue {
+    receive-message-wait = 0 seconds
+    dead-letters-queue {
       name = "queue1-dead-letters"
-      maxReceiveCount = 3 // from 1 to 1000
+      max-receive-count = 3 // from 1 to 1000
     }
     fifo = false
-    contentBasedDeduplication = false
-    copyTo = "audit-queue-name"
-    moveTo = "redirect-queue-name"
+    content-based-deduplication = false
+    copy-to = "audit-queue-name"
+    move-to = "redirect-queue-name"
     tags {
       tag1 = "tagged1"
       tag2 = "tagged2"
@@ -147,9 +149,13 @@ queues {
 }
 ````
 
-All attributes are optional (except `name` and `maxReceiveCount` when a `deadLettersQueue` is defined).
-`copyTo` and `moveTo` attributes allow to achieve behavior that might be useful primarily for integration testing scenarios -
-all messages could be either duplicated (using `copyTo` attribute) or redirected (using `moveTo` attribute) to another queue.
+All attributes are optional (except `name` and `max-receive-count` when a `dead-letters-queue` is defined).
+`copy-to` and `move-to` attributes allow to achieve behavior that might be useful primarily for integration testing scenarios -
+all messages could be either duplicated (using `copy-to` attribute) or redirected (using `move-to` attribute) to another queue.
+
+Up to 1.x, these keys were camelCase (`defaultVisibilityTimeout`, `receiveMessageWait`, `deadLettersQueue`,
+`maxReceiveCount`, `contentBasedDeduplication`, `copyTo`, `moveTo`), as was `aws.accountId`. The old keys are still
+read, with a deprecation warning, and take precedence over the new ones if both are set.
 
 ### FIFO queue creation
 To create FIFO queue set value of `fifo` config parameter to `true`.
@@ -158,7 +164,7 @@ You can add `.fifo` suffix to queue name yourself (a name containing `.` has to 
 queues {
   "testQueue.fifo" {
     fifo = true
-    contentBasedDeduplication = true
+    content-based-deduplication = true
   }
 }
 ```
@@ -184,17 +190,17 @@ Optionally, provide a `template` section to set default attributes for every aut
 auto-create-queues {
   enabled = true
   template {
-    defaultVisibilityTimeout = 30 seconds
+    default-visibility-timeout = 30 seconds
     delay = 0 seconds
-    receiveMessageWait = 0 seconds
-    deadLettersQueue {
+    receive-message-wait = 0 seconds
+    dead-letters-queue {
       name = "my-dlq"
-      maxReceiveCount = 3
+      max-receive-count = 3
     }
     fifo = false
-    contentBasedDeduplication = false
-    copyTo = "audit-queue-name"
-    moveTo = "redirect-queue-name"
+    content-based-deduplication = false
+    copy-to = "audit-queue-name"
+    move-to = "redirect-queue-name"
     tags {
       env = "dev"
     }
@@ -226,7 +232,9 @@ queues-storage {
 }
 ````
 
-Any time a queue is created, deleted, or its metadata change, the given file will be updated. 
+Any time a queue is created, deleted, or its metadata change, the given file will be updated. The file is written with
+the same keys as queue definitions in the `queues` section. Files written by 1.x (with camelCase keys) are still read,
+and are rewritten with the new keys on the next change.
 
 On startup, any queues defined in the given file will be created. Note that the persisted queues configuration takes 
 precedence over queues defined in the main configuration file (as described in the previous section) in the `queues`

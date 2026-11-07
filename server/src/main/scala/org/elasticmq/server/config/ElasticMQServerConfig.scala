@@ -1,15 +1,12 @@
 package org.elasticmq.server.config
 
 import com.typesafe.config.Config
-import org.elasticmq.persistence.{CreateQueueMetadata, DeadLettersQueue}
-import org.elasticmq.persistence.file.QueueConfigUtil
+import org.elasticmq.persistence.CreateQueueMetadata
+import org.elasticmq.persistence.file.{DeprecatedConfigKeys, QueueConfigUtil}
 import org.elasticmq.persistence.sql.SqlQueuePersistenceConfig
 import org.elasticmq.rest.sqs.AutoCreateQueuesConfig
 import org.elasticmq.util.Logging
 import org.elasticmq.{NodeAddress, RelaxedSQSLimits, StrictSQSLimits}
-
-import java.util.concurrent.TimeUnit
-import scala.jdk.CollectionConverters._
 
 class ElasticMQServerConfig(config: Config) extends Logging {
   // What is the outside visible address of this ElasticMQ node (used by rest-sqs)
@@ -53,7 +50,8 @@ class ElasticMQServerConfig(config: Config) extends Logging {
 
   private val awsConfig = config.getConfig("aws")
   val awsRegion: String = awsConfig.getString("region")
-  val awsAccountId: String = awsConfig.getString("accountId")
+  val awsAccountId: String =
+    awsConfig.getString(DeprecatedConfigKeys.resolve(awsConfig, "account-id", "accountId").getOrElse("account-id"))
 
   private def getSqlQueuePersistenceConfig = {
     val subConfig = config.getConfig("messages-storage")
@@ -79,41 +77,8 @@ class ElasticMQServerConfig(config: Config) extends Logging {
     val enabled = if (subConfig.hasPath("enabled")) subConfig.getBoolean("enabled") else false
     if (!enabled) return AutoCreateQueuesConfig.disabled
     val template =
-      if (subConfig.hasPath("template")) parseQueueTemplate(subConfig.getConfig("template"))
+      if (subConfig.hasPath("template")) QueueConfigUtil.readQueueAttributes(subConfig.getConfig("template"))
       else CreateQueueMetadata(name = "")
     AutoCreateQueuesConfig(enabled = true, template = template)
-  }
-
-  private def parseQueueTemplate(c: Config): CreateQueueMetadata = {
-    def getOptionalBoolean(k: String) = if (c.hasPath(k)) Some(c.getBoolean(k)) else None
-    def getOptionalDuration(k: String) = if (c.hasPath(k)) Some(c.getDuration(k, TimeUnit.SECONDS)) else None
-    def getOptionalString(k: String) = if (c.hasPath(k)) Some(c.getString(k)).filter(_.nonEmpty) else None
-    def getOptionalTags(k: String): Map[String, String] =
-      if (c.hasPath(k)) c.getObject(k).asScala.map { case (key, _) => key -> c.getString(k + '.' + key) }.toMap
-      else Map.empty
-
-    val isFifo = getOptionalBoolean("fifo").getOrElse(false)
-    val deadLettersQueueKey = "deadLettersQueue"
-
-    CreateQueueMetadata(
-      name = "",
-      defaultVisibilityTimeoutSeconds = getOptionalDuration("defaultVisibilityTimeout"),
-      delaySeconds = getOptionalDuration("delay"),
-      receiveMessageWaitSeconds = getOptionalDuration("receiveMessageWait"),
-      deadLettersQueue =
-        if (c.hasPath(deadLettersQueueKey))
-          Some(
-            DeadLettersQueue(
-              c.getString(deadLettersQueueKey + ".name"),
-              c.getInt(deadLettersQueueKey + ".maxReceiveCount")
-            )
-          )
-        else None,
-      isFifo = isFifo,
-      hasContentBasedDeduplication = getOptionalBoolean("contentBasedDeduplication").getOrElse(false),
-      copyMessagesTo = getOptionalString("copyTo"),
-      moveMessagesTo = getOptionalString("moveTo"),
-      tags = getOptionalTags("tags")
-    )
   }
 }

@@ -1,6 +1,7 @@
 package org.elasticmq.persistence.file
 
 import com.typesafe.config.ConfigRenderOptions
+import org.elasticmq.persistence.file.QueueConfigUtil.Keys
 import org.elasticmq.{DeadLettersQueueData, QueueData}
 import pureconfig.ConfigWriter
 
@@ -9,22 +10,23 @@ import java.io.PrintWriter
 object QueuePersister {
 
   private implicit val deadLettersWriter: ConfigWriter[DeadLettersQueueData] =
-    ConfigWriter.forProduct2[DeadLettersQueueData, String, Int]("name", "maxReceiveCount")(deadLetterQueueData =>
-      (deadLetterQueueData.name, deadLetterQueueData.maxReceiveCount)
-    )
+    ConfigWriter.forProduct2[DeadLettersQueueData, String, Int](
+      Keys.DeadLettersQueueName,
+      Keys.DeadLettersQueueMaxReceiveCount
+    )(deadLetterQueueData => (deadLetterQueueData.name, deadLetterQueueData.maxReceiveCount))
   private implicit val queueMetadataWriter: ConfigWriter[QueueMetadata] =
     ConfigWriter.forProduct9[QueueMetadata, Long, Long, Long, Option[
       DeadLettersQueueData
     ], Boolean, Boolean, String, String, Map[String, String]](
-      "defaultVisibilityTimeout",
-      "delay",
-      "receiveMessageWait",
-      "deadLettersQueue",
-      "fifo",
-      "contentBasedDeduplication",
-      "copyTo",
-      "moveTo",
-      "tags"
+      Keys.DefaultVisibilityTimeout,
+      Keys.Delay,
+      Keys.ReceiveMessageWait,
+      Keys.DeadLettersQueue,
+      Keys.Fifo,
+      Keys.ContentBasedDeduplication,
+      Keys.CopyTo,
+      Keys.MoveTo,
+      Keys.Tags
     )(qm =>
       (
         qm.defaultVisibilityTimeout,
