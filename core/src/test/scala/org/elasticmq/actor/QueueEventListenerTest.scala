@@ -59,7 +59,36 @@ class QueueEventListenerTest extends ActorTest with QueueManagerWithListenerForE
     } yield {
       queueEventListener.expectMsgType[QueueEvent.QueueCreated].queue.name shouldBe "q1"
       queueEventListener.expectMsgType[QueueEvent.MessageAdded].message.id shouldBe "abc"
-      queueEventListener.expectMsgType[QueueEvent.MessageUpdated].message.nextDelivery shouldBe 2100
+      queueEventListener.expectMsgType[QueueEvent.MessageUpdated].message.nextDelivery shouldBe 101 // receive
+      queueEventListener.expectMsgType[QueueEvent.MessageUpdated].message.nextDelivery shouldBe 2100 // visibility
+    }
+  }
+
+  test("QueueMessageUpdated event should carry a snapshot of the message, unaffected by later receives") {
+    for {
+      case Right(queue) <- queueManagerActor ? CreateQueue(createQueueData("q1", MillisVisibilityTimeout(1L)))
+      _ <- queue ? SendMessage(createNewMessageData("abc", "xyz", Map.empty, MillisNextDelivery(1)))
+      List(msg1) <- queue ? ReceiveMessages(MillisVisibilityTimeout(10000), 1, None, None)
+      _ <- queue ? UpdateVisibilityTimeout(msg1.deliveryReceipt.get, MillisVisibilityTimeout(0))
+      List(_) <- queue ? ReceiveMessages(MillisVisibilityTimeout(10000), 1, None, None)
+    } yield {
+      queueEventListener.expectMsgType[QueueEvent.QueueCreated]
+      queueEventListener.expectMsgType[QueueEvent.MessageAdded]
+
+      val afterFirstReceive = queueEventListener.expectMsgType[QueueEvent.MessageUpdated].message
+      val afterVisibilityChange = queueEventListener.expectMsgType[QueueEvent.MessageUpdated].message
+      val afterSecondReceive = queueEventListener.expectMsgType[QueueEvent.MessageUpdated].message
+
+      afterFirstReceive.deliveryReceipts.size shouldBe 1
+      afterFirstReceive.receiveCount shouldBe 1
+      afterFirstReceive.nextDelivery shouldBe 10100
+
+      afterVisibilityChange.deliveryReceipts.size shouldBe 1
+      afterVisibilityChange.receiveCount shouldBe 1
+      afterVisibilityChange.nextDelivery shouldBe 100
+
+      afterSecondReceive.deliveryReceipts.size shouldBe 2
+      afterSecondReceive.receiveCount shouldBe 2
     }
   }
 

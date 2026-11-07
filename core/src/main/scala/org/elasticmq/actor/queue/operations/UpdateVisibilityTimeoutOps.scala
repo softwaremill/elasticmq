@@ -41,7 +41,7 @@ trait UpdateVisibilityTimeoutOps extends Logging {
 
         ResultWithEvents.valueWithEvents(
           Right(()),
-          List(QueueEvent.MessageUpdated(queueData.name, msg))
+          List(QueueEvent.MessageUpdated(queueData.name, msg.snapshot))
         )
       case _ =>
         ResultWithEvents.onlyValue(Left(new InvalidReceiptHandle(queueData.name, deliveryReceipt.receipt)))
