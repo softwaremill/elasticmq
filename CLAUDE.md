@@ -22,7 +22,7 @@ elasticmq/
 │   └── rest-sqs-testing-amazon-java-sdk/  # Integration tests with AWS SDKs
 ├── server/                        # Stand-alone server entry point
 │   └── docker/                    # Docker config files
-├── native-server/                 # GraalVM native image build (Java 17)
+├── native-server/                 # GraalVM native image build (JDK 25)
 ├── integration-tests/
 ├── performance-tests/
 ├── examples/

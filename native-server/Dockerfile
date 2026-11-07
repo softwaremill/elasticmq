@@ -1,6 +1,7 @@
-# Stage 1: Compile a static native binary using GraalVM for JDK 17 (multi-arch).
-# OL8 (glibc 2.28) is required: GraalVM's static JDK libs reference symbols removed in newer glibc (e.g. __xmknod).
-FROM ghcr.io/graalvm/native-image-community:17.0.9-ol8 AS builder
+# Stage 1: Compile a mostly static native binary using GraalVM Community for JDK 25 (multi-arch: amd64, arm64).
+# The binary links everything statically except glibc (--static-nolibc), so it resolves hostnames via DNS and
+# runs on any image with glibc >= the builder's (Oracle Linux 9: glibc 2.34).
+FROM ghcr.io/graalvm/native-image-community:25i5-25.0.5.0.3-ol9 AS builder
 
 WORKDIR /build
 
@@ -10,27 +11,20 @@ COPY native-server/target/elasticmq-native-server.jar elasticmq-native.jar
 RUN PAGE_SIZE_ARG=$(uname -m | grep -Eiq 'arm|aarch64' && echo '-H:PageSize=64K' || echo '') && \
     native-image \
     -cp elasticmq.jar:elasticmq-native.jar \
+    -H:+UnlockExperimentalVMOptions \
     '-H:IncludeResources=.*conf' \
     '-H:IncludeResources=version' \
     '-H:IncludeResources=.*\.properties' \
-    -H:+ReportExceptionStackTraces \
-    -H:-ThrowUnsafeOffsetErrors \
     ${PAGE_SIZE_ARG} \
-    -H:Name=elasticmq-native-server \
-    --enable-http \
-    --enable-https \
-    --enable-url-protocols=https,http \
+    -H:-UnlockExperimentalVMOptions \
+    -H:+ReportExceptionStackTraces \
+    -o elasticmq-native-server \
     '--initialize-at-build-time=scala.Symbol$' \
-    --install-exit-handlers \
-    --no-fallback \
-    --verbose \
-    --static \
+    --static-nolibc \
     org.elasticmq.server.Main
 
-# Stage 2: Minimal Alpine runtime (the binary is statically linked, so it doesn't need glibc)
-FROM alpine:3.22
-
-RUN apk add --no-cache tini
+# Stage 2: Minimal distroless runtime providing glibc only (Java's TLS doesn't need OpenSSL)
+FROM gcr.io/distroless/base-nossl-debian13
 
 WORKDIR /opt/elasticmq
 
@@ -41,6 +35,8 @@ COPY server/src/main/resources/logback.xml /opt/logback.xml
 EXPOSE 9324
 VOLUME /data
 
-ENTRYPOINT ["/sbin/tini", "--", "/opt/elasticmq/bin/elasticmq-native-server", \
+# No init process (distroless has no shell or tini): native executables install signal handlers by default, so
+# SIGTERM/SIGINT trigger a graceful shutdown. Use `docker run --init` if an init process is needed to reap zombies.
+ENTRYPOINT ["/opt/elasticmq/bin/elasticmq-native-server", \
     "-Dconfig.file=/opt/elasticmq.conf", \
     "-Dlogback.configurationFile=/opt/logback.xml"]
