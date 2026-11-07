@@ -93,7 +93,7 @@ case class InternalMessage(
 
   def deliverable(deliveryTime: Long): Boolean = nextDelivery <= deliveryTime
 
-  lazy val createdMillis: Long = created.toInstant.toEpochMilli
+  val createdMillis: Long = created.toInstant.toEpochMilli
 }
 
 object InternalMessage {
