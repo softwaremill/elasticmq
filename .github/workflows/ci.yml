@@ -142,10 +142,8 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.9'
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v10
 
       - name: Cache SBT
         id: cache-sbt
@@ -165,13 +163,11 @@ jobs:
 
       - name: Install dependencies
         working-directory: ./integration-tests/python
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
+        run: uv sync --locked
 
       - name: Run integration tests
         working-directory: ./integration-tests/python
-        run: pytest --log-cli-level=info
+        run: uv run pytest --log-cli-level=info
 
       - name: Verify native image agent config files not modified
         run: |
