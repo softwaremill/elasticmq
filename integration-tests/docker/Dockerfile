@@ -1,4 +1,4 @@
-FROM ghcr.io/graalvm/jdk-community:17.0.9
+FROM ghcr.io/graalvm/jdk-community:25i5-25.0.5.0.3
 
 RUN microdnf update -y \
     && microdnf install -y procps-ng \

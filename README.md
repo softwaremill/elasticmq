@@ -457,27 +457,36 @@ docker build -f server/Dockerfile -t softwaremill/elasticmq:local .
 docker build -f native-server/Dockerfile -t softwaremill/elasticmq-native:local .
 ```
 
-The native image is compiled inside the `native-server/Dockerfile` build (GraalVM for JDK 17) as a statically linked
-binary and runs on Alpine. Because it is statically linked against glibc, it cannot resolve hostnames through DNS (only
-`/etc/hosts` entries such as `localhost` work), so bind to an IP address (the default is `0.0.0.0`). Do not forget to
-adjust the CPU and memory settings for the Docker process. It was checked with 6CPUs, 8GB of memory and 2GB of swap.
+The native image is compiled inside the `native-server/Dockerfile` build with GraalVM Community for JDK 25. The binary
+is *mostly static* (`--static-nolibc`): everything except glibc is linked in, so it resolves hostnames through DNS (e.g.
+`rest-sqs.bind-hostname` can be a Docker network alias). It runs on the distroless
+[`gcr.io/distroless/base-nossl-debian13`](https://github.com/GoogleContainerTools/distroless) image, which contains
+glibc and CA certificates, but no shell or package manager. To extend the image with extra tools, copy the binary
+(`/opt/elasticmq/bin/elasticmq-native-server`) into a glibc-based image (e.g. `debian:trixie-slim`). The binary handles
+`SIGTERM`/`SIGINT` itself; use `docker run --init` if you need an init process to reap zombie processes. Do not forget
+to adjust the CPU and memory settings for the Docker process. It was checked with 6CPUs, 8GB of memory and 2GB of swap.
 
 Multi-architecture images are published by CI: the `amd64` and `arm64` images are built on separate runners and then
 combined into a single manifest with `docker buildx imagetools create`.
 
 ## Generating GraalVM config files
 
-Generating GraalVM config files is a manual process currently. You need to run the fat-jar using GraalVM for JDK 17 (with the native-image agent), and then run the following commands to generate the configs:
-
-* `java -agentlib:native-image-agent=config-output-dir=... -jar elasticmq-server-assembly.jar`
-* `java -agentlib:native-image-agent=config-merge-dir=... -Dconfig.file=test.conf -jar elasticmq-server-assembly.jar` (to additionally generate config needed to load custom elasticmq config)
-
-These files should be placed in `native-server/src/main/resources/META-INF/native-image` and are automatically used by the native-image process.
-
-In case of issues with running GraalVM with `native-image-agent` it's possible to execute above commands inside a Docker container:
+The GraalVM reachability metadata (`native-server/src/main/resources/META-INF/native-image/reachability-metadata.json`)
+is generated with the native-image tracing agent of GraalVM for JDK 25 and is automatically used by the native-image
+process. The easiest way to update it is to run the integration tests, which start the fat-jar with the agent in
+`config-merge-dir` mode and write the result straight into that directory:
 
 ```
-docker run -it -v `pwd`:/opt/graalvm --entrypoint /bin/bash --rm ghcr.io/graalvm/jdk-community:17.0.9
+sbt "project server; assembly"
+docker build -t elasticmq-int -f integration-tests/docker/Dockerfile .
+cd integration-tests/python && pip install -r requirements.txt && pytest
+```
+
+The agent can also be run manually, e.g. inside a GraalVM container:
+
+```
+docker run -it -v `pwd`:/opt/graalvm --entrypoint /bin/bash --rm ghcr.io/graalvm/jdk-community:25i5-25.0.5.0.3
+java -agentlib:native-image-agent=config-merge-dir=native-server/src/main/resources/META-INF/native-image -Dconfig.file=test.conf -jar elasticmq-server-assembly.jar
 ```
 
 The `ci-native-image-agent-config-verification` CI job runs the integration tests with the agent enabled and fails if

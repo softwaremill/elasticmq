@@ -92,7 +92,7 @@ val s3Upload = TaskKey[PutObjectResult]("s3-upload", "Uploads files to an S3 buc
 lazy val root: Project = rootProject
   .enablePlugins(GitVersioning)
   .settings(name := "elasticmq-root", publish / skip := true)
-  // native-server is only used for building the native Docker image with GraalVM (Java 17)
+  // native-server is only used for building the native Docker image with GraalVM (JDK 25)
   .aggregate(commonTest, core, rest, persistence, server)
 
 lazy val commonTest: Project = (project in file("common-test"))
@@ -234,15 +234,13 @@ lazy val server: Project = (project in file("server"))
   )
   .dependsOn(core, restSqs)
 
-val graalVmVersion = "23.0.9"
-
+// Packages the GraalVM reachability metadata (META-INF/native-image) and native-specific config used by
+// native-server/Dockerfile. The native image is built from the Scala 3 artifacts, whose standard library
+// no longer needs GraalVM substitutions (scala.runtime.Statics.releaseFence calls VarHandle directly).
 lazy val nativeServer: Project = (project in file("native-server"))
   .settings(
     Seq(
       name := "elasticmq-native-server",
-      libraryDependencies ++= Seq(
-        "org.graalvm.nativeimage" % "svm" % graalVmVersion % "compile-internal"
-      ),
       publish / skip := true,
       Compile / mainClass := Some("org.elasticmq.server.Main")
     )
