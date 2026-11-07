@@ -1848,6 +1848,14 @@
       ]
     },
     {
+      "type": "org.elasticmq.persistence.file.DeprecatedConfigKeys$",
+      "fields": [
+        {
+          "name": "logger$lzy1"
+        }
+      ]
+    },
+    {
       "type": "org.elasticmq.persistence.file.QueueConfigUtil$",
       "fields": [
         {
