@@ -109,7 +109,7 @@ SCALA_MAJOR_VERSION=2.13 sbt test
 - **Styling:** Tailwind CSS v4
 - **AWS Integration:** @aws-sdk/client-sqs
 - **Package Manager:** npm
-- **Runtime:** Node.js LTS (via nvm)
+- **Runtime:** Node.js 26 LTS (pinned in `.nvmrc`, via nvm)
 
 ### Structure
 
@@ -142,8 +142,8 @@ ui/
 ```bash
 cd ui
 
-# Use Node LTS
-nvm use lts
+# Use Node LTS from .nvmrc
+nvm use
 
 # Install dependencies
 npm install
@@ -263,6 +263,6 @@ aws --endpoint-url=http://localhost:9324 sqs list-queues
 
 **TypeScript errors:** Run `npm run build` from `ui/` to see all type errors.
 
-**npm issues:** `nvm use lts && rm -rf node_modules && npm install`
+**npm issues:** `nvm use && rm -rf node_modules && npm install`
 
 **sbt compile errors:** Check `SCALA_MAJOR_VERSION` env var and Java version (17+).

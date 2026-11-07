@@ -98,7 +98,7 @@ jobs:
 
       - uses: actions/setup-node@v3
         with:
-          node-version: 24
+          node-version-file: .nvmrc
 
       - name: Cache node modules
         uses: actions/cache@v4

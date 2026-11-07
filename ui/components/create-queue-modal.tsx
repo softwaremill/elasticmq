@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef, useId } from 'react';
+import { useState, useEffect, useRef, useId, useEffectEvent } from 'react';
 import { X, ChevronRight } from 'lucide-react';
 import { createQueue } from '@/lib/actions';
 
@@ -12,8 +12,7 @@ interface CreateQueueModalProps {
 export function CreateQueueModal({ onClose, onCreated }: CreateQueueModalProps) {
   const uid = useId();
   const nameRef = useRef<HTMLInputElement>(null);
-  const onCloseRef = useRef(onClose);
-  onCloseRef.current = onClose;
+  const handleEscape = useEffectEvent(() => onClose());
 
   const [name, setName] = useState('');
   const [fifo, setFifo] = useState(false);
@@ -29,15 +28,16 @@ export function CreateQueueModal({ onClose, onCreated }: CreateQueueModalProps) 
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
+    const frame = requestAnimationFrame(() => setMounted(true));
     nameRef.current?.focus();
 
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onCloseRef.current();
+      if (e.key === 'Escape') handleEscape();
     };
     document.addEventListener('keydown', onKey);
     document.body.style.overflow = 'hidden';
     return () => {
+      cancelAnimationFrame(frame);
       document.removeEventListener('keydown', onKey);
       document.body.style.overflow = '';
     };
