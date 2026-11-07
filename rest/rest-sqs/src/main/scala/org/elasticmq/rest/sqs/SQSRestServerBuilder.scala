@@ -22,6 +22,7 @@ import org.elasticmq.util.{Logging, NowProvider}
 
 import java.io.ByteArrayOutputStream
 import java.lang.management.ManagementFactory
+import java.net.InetSocketAddress
 import java.nio.ByteBuffer
 import java.security.MessageDigest
 import java.util.concurrent.TimeUnit
@@ -30,31 +31,42 @@ import javax.management.ObjectName
 import scala.collection.immutable.TreeMap
 import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
+import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.util.control.NonFatal
 import scala.util.{Failure, Success, Try}
 import scala.xml._
 
-/** By default: <li> <ul>for `socketAddress`: when started, the server will bind to `localhost:9324` </ul> <ul>for
-  * `serverAddress`: returned queue addresses will use `http://localhost:9324` as the base address.</ul> <ul>for
-  * `sqsLimits`: relaxed </li>
+/** Entry point for starting an embedded SQS REST server: configure it with the `withX` methods, then call `start()`.
+  *
+  * Defaults:
+  *   - binds to `localhost:9324`,
+  *   - returned queue URLs use `http://localhost:9324` as the base address (with the actual port, if a dynamic port is
+  *     used),
+  *   - strict SQS limits ([[StrictSQSLimits]]),
+  *   - region `elasticmq`, account id `000000000000`,
+  *   - a new, server-owned actor system,
+  *   - no queue event listener, queue auto-creation disabled.
   */
 object SQSRestServerBuilder
     extends TheSQSRestServerBuilder(
-      None,
-      None,
-      "",
-      9324,
-      NodeAddress(),
-      true,
-      StrictSQSLimits,
-      "elasticmq",
-      "000000000000",
-      None,
-      AutoCreateQueuesConfig.disabled
+      providedActorSystem = None,
+      providedQueueManagerActor = None,
+      interface = "",
+      port = 9324,
+      serverAddress = NodeAddress(),
+      generateServerAddress = true,
+      sqsLimits = StrictSQSLimits,
+      awsRegion = "elasticmq",
+      awsAccountId = "000000000000",
+      queueEventListener = None,
+      queueEventListenerActor = None,
+      autoCreateQueuesConfig = AutoCreateQueuesConfig.disabled
     )
 
-case class TheSQSRestServerBuilder(
+/** An immutable SQS REST server configuration. Obtain one from [[SQSRestServerBuilder]]; every `withX` method returns a
+  * new instance.
+  */
+sealed class TheSQSRestServerBuilder private[sqs] (
     providedActorSystem: Option[ActorSystem],
     providedQueueManagerActor: Option[ActorRef],
     interface: String,
@@ -62,77 +74,110 @@ case class TheSQSRestServerBuilder(
     serverAddress: NodeAddress,
     generateServerAddress: Boolean,
     sqsLimits: Limits,
-    _awsRegion: String,
-    _awsAccountId: String,
-    queueEventListener: Option[ActorRef],
-    autoCreateQueuesConfig: AutoCreateQueuesConfig = AutoCreateQueuesConfig.disabled
+    awsRegion: String,
+    awsAccountId: String,
+    queueEventListener: Option[QueueEventListener],
+    queueEventListenerActor: Option[ActorRef],
+    autoCreateQueuesConfig: AutoCreateQueuesConfig
 ) extends Logging {
 
-  /** @param _actorSystem
-    *   Optional actor system. If one is provided, it will be used to create ElasticMQ and Spray actors, but its
-    *   lifecycle (shutdown) will be not managed by the server. If one is not provided, an actor system will be created,
-    *   and its lifecycle will be bound to the server's lifecycle.
-    */
-  def withActorSystem(_actorSystem: ActorSystem) =
-    this.copy(providedActorSystem = Some(_actorSystem))
+  private def copy(
+      providedActorSystem: Option[ActorSystem] = providedActorSystem,
+      providedQueueManagerActor: Option[ActorRef] = providedQueueManagerActor,
+      interface: String = interface,
+      port: Int = port,
+      serverAddress: NodeAddress = serverAddress,
+      generateServerAddress: Boolean = generateServerAddress,
+      sqsLimits: Limits = sqsLimits,
+      awsRegion: String = awsRegion,
+      awsAccountId: String = awsAccountId,
+      queueEventListener: Option[QueueEventListener] = queueEventListener,
+      queueEventListenerActor: Option[ActorRef] = queueEventListenerActor,
+      autoCreateQueuesConfig: AutoCreateQueuesConfig = autoCreateQueuesConfig
+  ): TheSQSRestServerBuilder =
+    new TheSQSRestServerBuilder(
+      providedActorSystem,
+      providedQueueManagerActor,
+      interface,
+      port,
+      serverAddress,
+      generateServerAddress,
+      sqsLimits,
+      awsRegion,
+      awsAccountId,
+      queueEventListener,
+      queueEventListenerActor,
+      autoCreateQueuesConfig
+    )
 
-  /** @param _queueManagerActor
-    *   Optional "main" ElasticMQ actor.
+  /** @param actorSystem
+    *   Actor system in which the server's actors and HTTP layer run. Its lifecycle stays with the caller: stopping the
+    *   server does not terminate it. If none is provided, the server creates its own and terminates it on stop.
     */
-  def withQueueManagerActor(_queueManagerActor: ActorRef) =
-    this.copy(providedQueueManagerActor = Some(_queueManagerActor))
+  def withActorSystem(actorSystem: ActorSystem): TheSQSRestServerBuilder =
+    copy(providedActorSystem = Some(actorSystem))
 
-  /** @param _interface
+  /** @param interface
     *   Hostname to which the server will bind.
     */
-  def withInterface(_interface: String) = this.copy(interface = _interface)
+  def withInterface(interface: String): TheSQSRestServerBuilder = copy(interface = interface)
 
-  /** @param _port
+  /** @param port
     *   Port to which the server will bind.
     */
-  def withPort(_port: Int) = this.copy(port = _port)
+  def withPort(port: Int): TheSQSRestServerBuilder = copy(port = port)
 
   /** Will assign port automatically (uses port 0). The port to which the socket binds will be logged on successful
-    * startup.
+    * startup, and is available from [[SQSRestServer.waitUntilStarted]].
     */
-  def withDynamicPort() = withPort(0)
+  def withDynamicPort(): TheSQSRestServerBuilder = withPort(0)
 
-  /** @param _serverAddress
+  /** @param serverAddress
     *   Address which will be returned as the queue address. Requests to this address should be routed to this server.
     */
-  def withServerAddress(_serverAddress: NodeAddress) =
-    this.copy(serverAddress = _serverAddress, generateServerAddress = false)
+  def withServerAddress(serverAddress: NodeAddress): TheSQSRestServerBuilder =
+    copy(serverAddress = serverAddress, generateServerAddress = false)
 
-  /** @param _sqsLimits
+  /** @param sqsLimits
     *   Should "real" SQS limits be used (strict), or should they be relaxed where possible (regarding e.g. message
     *   size).
     */
-  def withSQSLimits(_sqsLimits: Limits) =
-    this.copy(sqsLimits = _sqsLimits)
+  def withSQSLimits(sqsLimits: Limits): TheSQSRestServerBuilder = copy(sqsLimits = sqsLimits)
 
   /** @param region
-    *   Region which will be included in ARM resource ids.
+    *   Region which will be included in ARN resource ids.
     */
-  def withAWSRegion(region: String) =
-    this.copy(_awsRegion = region)
+  def withAWSRegion(region: String): TheSQSRestServerBuilder = copy(awsRegion = region)
 
   /** @param accountId
-    *   AccountId which will be included in ARM resource ids.
+    *   AccountId which will be included in ARN resource ids.
     */
-  def withAWSAccountId(accountId: String) =
-    this.copy(_awsAccountId = accountId)
+  def withAWSAccountId(accountId: String): TheSQSRestServerBuilder = copy(awsAccountId = accountId)
 
-  /** @param _queueEventListener
-    *   Optional listener of changes in queues and messages
+  /** @param listener
+    *   Listener notified of changes in queues and messages. See [[QueueEventListener]] for the threading and blocking
+    *   semantics.
     */
-  def withQueueEventListener(_queueEventListener: ActorRef) =
-    this.copy(queueEventListener = Some(_queueEventListener))
+  def withQueueEventListener(listener: QueueEventListener): TheSQSRestServerBuilder =
+    copy(queueEventListener = Some(listener))
 
-  /** @param _autoCreateQueues
+  /** @param autoCreateQueues
     *   Configuration for auto-creating queues on demand when a message is sent to a non-existing queue.
     */
-  def withAutoCreateQueues(_autoCreateQueues: AutoCreateQueuesConfig) =
-    this.copy(autoCreateQueuesConfig = _autoCreateQueues)
+  def withAutoCreateQueues(autoCreateQueues: AutoCreateQueuesConfig): TheSQSRestServerBuilder =
+    copy(autoCreateQueuesConfig = autoCreateQueues)
+
+  /** Internal: serve queues of an existing `QueueManagerActor` (e.g. one wired to a persistence actor) instead of
+    * creating a new one. Not part of the public API.
+    */
+  private[elasticmq] def withQueueManagerActor(queueManagerActor: ActorRef): TheSQSRestServerBuilder =
+    copy(providedQueueManagerActor = Some(queueManagerActor))
+
+  /** Internal: an actor speaking the `QueueEvent` protocol (e.g. a persistence actor), passed to the queue manager the
+    * server creates. Not part of the public API; embedders use [[withQueueEventListener]].
+    */
+  private[elasticmq] def withQueueEventListenerActor(listenerActor: ActorRef): TheSQSRestServerBuilder =
+    copy(queueEventListenerActor = Some(listenerActor))
 
   def start(): SQSRestServer = {
     val (theActorSystem, stopActorSystem) = getOrCreateActorSystem
@@ -143,6 +188,8 @@ case class TheSQSRestServerBuilder(
       else serverAddress
     val theLimits = sqsLimits
     val theAutoCreateQueues = autoCreateQueuesConfig
+    val theAwsRegion = awsRegion
+    val theAwsAccountId = awsAccountId
 
     implicit val implicitActorSystem: ActorSystem = theActorSystem
     implicit val implicitMaterializer: Materializer = Materializer(theActorSystem)
@@ -194,8 +241,8 @@ case class TheSQSRestServerBuilder(
       lazy val timeout = Timeout(21, TimeUnit.SECONDS) // see application.conf
       lazy val contextPath = serverAddress.contextPathStripped
 
-      lazy val awsRegion: String = _awsRegion
-      lazy val awsAccountId: String = _awsAccountId
+      lazy val awsRegion: String = theAwsRegion
+      lazy val awsAccountId: String = theAwsAccountId
       lazy val autoCreateQueues: AutoCreateQueuesConfig = theAutoCreateQueues
 
     }
@@ -302,7 +349,7 @@ case class TheSQSRestServerBuilder(
       }
     }
 
-    SQSRestServer(
+    new SQSRestServer(
       appStartFuture,
       () => appStartFuture.flatMap(_.terminate(1.minute)).flatMap(_ => stopActorSystem())
     )
@@ -317,10 +364,24 @@ case class TheSQSRestServerBuilder(
       }
   }
 
-  private def getOrCreateQueueManagerActor(actorSystem: ActorSystem) = {
-    providedQueueManagerActor.getOrElse(
-      actorSystem.actorOf(Props(new QueueManagerActor(new NowProvider(), sqsLimits, queueEventListener)))
+  private def getOrCreateQueueManagerActor(actorSystem: ActorSystem): ActorRef = {
+    require(
+      queueEventListener.isEmpty || queueEventListenerActor.isEmpty,
+      "Only one queue event listener can be configured"
     )
+    providedQueueManagerActor match {
+      case Some(queueManagerActor) =>
+        require(
+          queueEventListener.isEmpty && queueEventListenerActor.isEmpty,
+          "A queue event listener cannot be combined with a provided queue manager actor"
+        )
+        queueManagerActor
+      case None =>
+        val listenerActor = queueEventListenerActor.orElse(
+          queueEventListener.map(listener => actorSystem.actorOf(Props(new QueueEventListenerActor(listener))))
+        )
+        actorSystem.actorOf(Props(new QueueManagerActor(new NowProvider(), sqsLimits, listenerActor)))
+    }
   }
 }
 
@@ -331,15 +392,30 @@ private object HttpServer {
   }
 }
 
-case class SQSRestServer(startFuture: Future[Http.ServerBinding], stopAndGetFuture: () => Future[Any]) {
-  def waitUntilStarted() = {
-    Await.result(startFuture, 1.minute)
-  }
+/** A running (or starting) SQS REST server, returned by [[TheSQSRestServerBuilder.start]]. */
+final class SQSRestServer private[sqs] (
+    startFuture: Future[Http.ServerBinding],
+    stop: () => Future[Any]
+) {
 
-  def stopAndWait() = {
-    val stopFuture = stopAndGetFuture()
-    Await.result(stopFuture, 1.minute)
-  }
+  /** Blocks (up to one minute) until the server is bound, and returns the address it is bound to. Useful with
+    * [[TheSQSRestServerBuilder.withDynamicPort]] to find out the assigned port.
+    */
+  def waitUntilStarted(): SQSRestServerBinding =
+    new SQSRestServerBinding(Await.result(startFuture, 1.minute).localAddress)
+
+  /** Stops the server (and the actor system, if the server created it), and returns a future completed once done. */
+  def stopAndGetFuture(): Future[Unit] = stop().map(_ => ())(ExecutionContext.parasitic)
+
+  /** Stops the server (and the actor system, if the server created it), blocking up to one minute. */
+  def stopAndWait(): Unit = Await.result(stopAndGetFuture(), 1.minute)
+}
+
+/** @param localAddress
+  *   The address the server's socket is bound to.
+  */
+final class SQSRestServerBinding private[sqs] (val localAddress: InetSocketAddress) {
+  override def toString: String = s"SQSRestServerBinding($localAddress)"
 }
 
 object Constants {

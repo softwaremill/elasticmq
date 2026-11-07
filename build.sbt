@@ -177,7 +177,7 @@ lazy val restSqs: Project = (project in file("rest/rest-sqs"))
       ) ++ common
     )
   )
-  .dependsOn(core % "compile->compile;test->test", persistenceFile, persistenceSql, commonTest % "test")
+  .dependsOn(core % "compile->compile;test->test", persistenceCore, commonTest % "test")
 
 lazy val restSqsTestingAmazonJavaSdk: Project =
   (project in file("rest/rest-sqs-testing-amazon-java-sdk"))
@@ -232,7 +232,7 @@ lazy val server: Project = (project in file("server"))
       }
     )
   )
-  .dependsOn(core, restSqs)
+  .dependsOn(core, restSqs, persistenceFile, persistenceSql, commonTest % "test")
 
 // Packages the GraalVM reachability metadata (META-INF/native-image) and native-specific config used by
 // native-server/Dockerfile. The native image is built from the Scala 3 artifacts, whose standard library

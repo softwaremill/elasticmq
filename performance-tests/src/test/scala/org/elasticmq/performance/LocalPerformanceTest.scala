@@ -97,7 +97,7 @@ object LocalPerformanceTest extends App {
   trait MQWithQueueManagerActor extends MQ {
     private var currentQueue: ActorRef = _
 
-    implicit val timeout = Timeout(10000L, TimeUnit.MILLISECONDS)
+    implicit val timeout: Timeout = Timeout(10000L, TimeUnit.MILLISECONDS)
 
     override def start(sqsLimits: Limits) = {
       val queueManagerActor = super.start(sqsLimits)
@@ -170,7 +170,7 @@ object LocalPerformanceTest extends App {
 
       currentRestServer = SQSRestServerBuilder
         .withActorSystem(actorSystem)
-        .withQueueManagerActor(queueManagerActor)
+        .withSQSLimits(sqsLimits)
         .start()
 
       currentSQSClient = AmazonSQSClientBuilder
@@ -186,7 +186,7 @@ object LocalPerformanceTest extends App {
     }
 
     override def stop(): Unit = {
-      currentRestServer.stopAndGetFuture
+      currentRestServer.stopAndWait()
       currentSQSClient.shutdown()
       super.stop()
     }

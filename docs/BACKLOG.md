@@ -10,9 +10,9 @@ These need a major version. Ship them together in 2.0.
 
 ### Embedding API (`elasticmq-rest-sqs`)
 
-- [ ] **Make `TheSQSRestServerBuilder`'s constructor private.** It is a public case class with an 11-argument positional constructor, so every new option breaks binary compatibility. Keep only the `withX` methods and the `SQSRestServerBuilder` entry point.
-- [ ] **Hide Pekko types behind a small facade.** `withActorSystem(ActorSystem)`, `withQueueManagerActor(ActorRef)` and `withQueueEventListener(ActorRef)` expose Pekko classic types. A typed facade (e.g. a `QueueEventListener` trait) would let 2.x upgrade Pekko without breaking embedders.
-- [ ] **Move `ElasticMQServer` and `ElasticMQServerConfig` into the `server` module** (or a new `elasticmq-server-core` artifact). They are in package `org.elasticmq.server` but live in `rest-sqs`.
+- [x] **Make `TheSQSRestServerBuilder`'s constructor private.** It is a public case class with an 11-argument positional constructor, so every new option breaks binary compatibility. Keep only the `withX` methods and the `SQSRestServerBuilder` entry point.
+- [x] **Hide Pekko types behind a small facade.** `withActorSystem(ActorSystem)`, `withQueueManagerActor(ActorRef)` and `withQueueEventListener(ActorRef)` expose Pekko classic types. A typed facade (e.g. a `QueueEventListener` trait) would let 2.x upgrade Pekko without breaking embedders.
+- [x] **Move `ElasticMQServer` and `ElasticMQServerConfig` into the `server` module** (or a new `elasticmq-server-core` artifact). They are in package `org.elasticmq.server` but live in `rest-sqs`.
 
 ### Configuration
 
@@ -50,7 +50,7 @@ Additive or internal; can land in 2.0 or any 2.x minor.
 ### Configuration & docs
 
 - [ ] Move the Pekko settings from `rest-sqs/src/main/resources/application.conf` into `reference.conf`, so custom config files no longer need `include classpath("application.conf")` (existing includes keep working).
-- [ ] Fix the `SQSRestServerBuilder` Scaladoc: it says the default `sqsLimits` is relaxed, but the code uses `StrictSQSLimits`.
+- [x] Fix the `SQSRestServerBuilder` Scaladoc: it says the default `sqsLimits` is relaxed, but the code uses `StrictSQSLimits`.
 - [ ] Fix the "Amazon SQS allows 256KB message payloads" comment in `application.conf`; strict limits already allow 1 MiB. Check `max-uri-length` accordingly.
 - [ ] Restate the Docker image contract in the README: entrypoint, config path (`/opt/elasticmq.conf`), data volume (`/data`).
 - [ ] Update the README version automatically in the release flow (#1026).

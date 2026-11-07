@@ -1,7 +1,6 @@
 package org.elasticmq.server
 
 import org.apache.pekko.actor.{ActorRef, ActorSystem, Props, Terminated}
-import org.apache.pekko.http.scaladsl.Http
 import org.apache.pekko.util.Timeout
 import org.elasticmq.ElasticMQError
 import org.elasticmq.actor.QueueManagerActor
@@ -9,7 +8,7 @@ import org.elasticmq.actor.queue.QueueEvent
 import org.elasticmq.actor.reply._
 import org.elasticmq.persistence.file.ConfigBasedQueuePersistenceActor
 import org.elasticmq.persistence.sql.SqlQueuePersistenceActor
-import org.elasticmq.rest.sqs.{SQSRestServer, TheSQSRestServerBuilder}
+import org.elasticmq.rest.sqs.{SQSRestServer, SQSRestServerBuilder}
 import org.elasticmq.server.config.ElasticMQServerConfig
 import org.elasticmq.util.{Logging, NowProvider}
 
@@ -26,7 +25,7 @@ class ElasticMQServer(config: ElasticMQServerConfig) extends Logging {
   def start(): () => Terminated = {
     val queueConfigStore: Option[ActorRef] = createQueueEventListener
     val queueManagerActor = createBase(queueConfigStore)
-    val restServerOpt = optionallyStartRestSqs(queueManagerActor, queueConfigStore)
+    val restServerOpt = optionallyStartRestSqs(queueManagerActor)
 
     val shutdown = () => {
       val futureTerminationRestSQS = restServerOpt.map(_.stopAndGetFuture()).getOrElse(Future.unit)
@@ -72,27 +71,22 @@ class ElasticMQServer(config: ElasticMQServerConfig) extends Logging {
   private def createBase(queueConfigStore: Option[ActorRef]): ActorRef =
     actorSystem.actorOf(Props(new QueueManagerActor(new NowProvider(), config.restSqs.sqsLimits, queueConfigStore)))
 
-  private def optionallyStartRestSqs(
-      queueManagerActor: ActorRef,
-      queueConfigStore: Option[ActorRef]
-  ): Option[SQSRestServer] = {
+  private def optionallyStartRestSqs(queueManagerActor: ActorRef): Option[SQSRestServer] = {
     if (config.restSqs.enabled) {
 
-      val server = TheSQSRestServerBuilder(
-        Some(actorSystem),
-        Some(queueManagerActor),
-        config.restSqs.bindHostname,
-        config.restSqs.bindPort,
-        config.nodeAddress,
-        config.generateNodeAddress,
-        config.restSqs.sqsLimits,
-        config.awsRegion,
-        config.awsAccountId,
-        queueConfigStore,
-        config.autoCreateQueues
-      ).start()
+      val builder = SQSRestServerBuilder
+        .withActorSystem(actorSystem)
+        .withQueueManagerActor(queueManagerActor)
+        .withInterface(config.restSqs.bindHostname)
+        .withPort(config.restSqs.bindPort)
+        .withSQSLimits(config.restSqs.sqsLimits)
+        .withAWSRegion(config.awsRegion)
+        .withAWSAccountId(config.awsAccountId)
+        .withAutoCreateQueues(config.autoCreateQueues)
 
-      val _: Http.ServerBinding = server.waitUntilStarted()
+      val server = (if (config.generateNodeAddress) builder else builder.withServerAddress(config.nodeAddress)).start()
+
+      val _ = server.waitUntilStarted()
 
       Some(server)
     } else {
