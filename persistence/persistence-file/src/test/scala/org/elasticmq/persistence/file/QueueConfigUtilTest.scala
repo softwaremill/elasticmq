@@ -137,6 +137,8 @@ class QueueConfigUtilTest extends AnyFunSuite with Matchers with OptionValues {
       |    copy-to = audit
       |    move-to = redirect
       |    tags { tag1 = value1 }
+      |    message-retention-period = 2 hours
+      |    maximum-message-size = 256K
       |  }
       |}""".stripMargin)
 
@@ -153,7 +155,9 @@ class QueueConfigUtilTest extends AnyFunSuite with Matchers with OptionValues {
         hasContentBasedDeduplication = true,
         Some("audit"),
         Some("redirect"),
-        Map("tag1" -> "value1")
+        Map("tag1" -> "value1"),
+        messageRetentionPeriodSeconds = Some(7200L),
+        maximumMessageSize = Some(262144)
       )
     )
   }
@@ -183,5 +187,17 @@ class QueueConfigUtilTest extends AnyFunSuite with Matchers with OptionValues {
     template.defaultVisibilityTimeoutSeconds shouldBe Some(30L)
     template.isFifo shouldBe true
     template.tags shouldBe Map("type" -> "dynamic")
+  }
+
+  test("Queues without a retention period or maximum message size leave them unset") {
+    val queue = QueueConfigUtil.readQueueAttributes(ConfigFactory.parseString("delay = 1 second"))
+    queue.messageRetentionPeriodSeconds shouldBe None
+    queue.maximumMessageSize shouldBe None
+  }
+
+  test("A non-positive maximum message size is rejected") {
+    an[IllegalArgumentException] should be thrownBy QueueConfigUtil.readQueueAttributes(
+      ConfigFactory.parseString("maximum-message-size = 0")
+    )
   }
 }

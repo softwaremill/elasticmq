@@ -17,7 +17,9 @@ case class CreateQueueMetadata(
     hasContentBasedDeduplication: Boolean = false,
     copyMessagesTo: Option[String] = None,
     moveMessagesTo: Option[String] = None,
-    tags: Map[String, String] = Map[String, String]()
+    tags: Map[String, String] = Map[String, String](),
+    messageRetentionPeriodSeconds: Option[Long] = None,
+    maximumMessageSize: Option[Int] = None
 ) {
 
   def toCreateQueueData: CreateQueueData = {
@@ -33,7 +35,9 @@ case class CreateQueueMetadata(
       hasContentBasedDeduplication = hasContentBasedDeduplication,
       copyMessagesTo = copyMessagesTo,
       moveMessagesTo = moveMessagesTo,
-      tags = tags
+      tags = tags,
+      messageRetentionPeriod = messageRetentionPeriodSeconds.map(sec => Duration.ofSeconds(sec)),
+      maximumMessageSize = maximumMessageSize
     )
   }
 }
@@ -53,7 +57,9 @@ object CreateQueueMetadata {
       queueData.hasContentBasedDeduplication,
       queueData.copyMessagesTo,
       queueData.moveMessagesTo,
-      queueData.tags
+      queueData.tags,
+      queueData.messageRetentionPeriod.map(_.getSeconds),
+      queueData.maximumMessageSize
     )
   }
 

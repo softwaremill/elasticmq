@@ -7,7 +7,7 @@ import org.elasticmq.msg.MoveMessage
 import org.elasticmq.util.{Logging, NowProvider}
 
 trait ReceiveMessageOps extends Logging {
-  this: QueueActorStorage & DeleteMessageOps =>
+  this: QueueActorStorage & DeleteMessageOps & ExpireMessagesOps =>
 
   trait MessageWithDestination
   case class MessageToReturn(internalMessage: InternalMessage) extends MessageWithDestination
@@ -19,6 +19,8 @@ trait ReceiveMessageOps extends Logging {
       receiveRequestAttemptId: Option[String]
   ): ResultWithEvents[List[MessageData]] = {
     implicit val np: NowProvider = nowProvider
+
+    val expireEvents = expireMessages()
 
     val messagesWithDestinations = receiveRequestAttemptId
       .flatMap({ attemptId => getCachedMessages(attemptId) })
@@ -51,7 +53,7 @@ trait ReceiveMessageOps extends Logging {
 
     ResultWithEvents.valueWithEvents(
       messagesToReturn.map(_.toMessageData),
-      updateEvents ++ deleteEvents
+      expireEvents ++ updateEvents ++ deleteEvents
     )
   }
 

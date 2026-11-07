@@ -2,7 +2,7 @@ package org.elasticmq.rest.sqs
 
 import Constants._
 import org.apache.pekko.http.scaladsl.server.Route
-import org.elasticmq.MessageAttribute
+import org.elasticmq.{Limits, MessageAttribute}
 import org.elasticmq.rest.sqs.Action.SendMessageBatch
 import org.elasticmq.rest.sqs.ParametersUtil.ParametersParser
 import org.elasticmq.rest.sqs.directives.ElasticMQDirectives
@@ -49,8 +49,10 @@ trait SendMessageBatchDirectives {
   }
 
   private def verifyMessagesNotTooLong(requests: List[SendMessageBatchActionRequest]): Unit = {
-    val messageLengths = requests.map(_.MessageBody.length)
-    verifyMessageNotTooLong(messageLengths.sum)
+    val totalSize = requests.map(r => Limits.messageSize(r.MessageBody, r.MessageAttributes.getOrElse(Map.empty))).sum
+    Limits
+      .verifyMessageSize(totalSize, sqsLimits.maxMessageSize)
+      .fold(_ => throw SQSException.batchRequestTooLong, identity)
   }
 
   case class SendMessageBatchActionRequest(

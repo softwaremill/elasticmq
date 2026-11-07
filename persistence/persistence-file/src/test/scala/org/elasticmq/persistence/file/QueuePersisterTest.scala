@@ -60,7 +60,9 @@ class QueuePersisterTest extends AnyFunSuite with Matchers {
         deadLettersQueue = Some(DeadLettersQueueData("dlq", 5)),
         copyMessagesTo = Some("audit"),
         moveMessagesTo = Some("redirect"),
-        tags = Map("team" -> "a", "with.dot" -> "b")
+        tags = Map("team" -> "a", "with.dot" -> "b"),
+        messageRetentionPeriod = Some(Duration.ofHours(2)),
+        maximumMessageSize = Some(2048)
       ),
       QueueData(
         name = "queue4.fifo",
@@ -76,6 +78,8 @@ class QueuePersisterTest extends AnyFunSuite with Matchers {
 
     val config = QueuePersister.prepareQueuesConfig(queues)
     config should include("dead-letters-queue{max-receive-count=5,name=dlq}")
+    config should include("message-retention-period=7200000")
+    config should include("maximum-message-size=2048")
 
     val read = QueueConfigUtil.readPersistedQueuesFromConfig(ConfigFactory.parseString(config))
     read.map(_.copy(created = 0L, lastModified = 0L)) should contain theSameElementsAs List(
@@ -87,7 +91,9 @@ class QueuePersisterTest extends AnyFunSuite with Matchers {
         deadLettersQueue = Some(DeadLettersQueue("dlq", 5)),
         copyMessagesTo = Some("audit"),
         moveMessagesTo = Some("redirect"),
-        tags = Map("team" -> "a", "with.dot" -> "b")
+        tags = Map("team" -> "a", "with.dot" -> "b"),
+        messageRetentionPeriodSeconds = Some(7200L),
+        maximumMessageSize = Some(2048)
       ),
       CreateQueueMetadata(
         "queue4.fifo",

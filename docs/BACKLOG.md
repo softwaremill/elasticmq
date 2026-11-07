@@ -21,8 +21,8 @@ These need a major version. Ship them together in 2.0.
 
 ### SQS behaviour
 
-- [ ] **Enforce `MessageRetentionPeriod`.** Currently ignored, so messages never expire. SQS defaults to 4 days. Decide whether retention is on by default (SQS-faithful) or opt-in (1.x behaviour).
-- [ ] **Enforce per-queue `MaximumMessageSize`.** Currently ignored; strict limits always allow 1 MiB.
+- [x] **Enforce `MessageRetentionPeriod`.** Currently ignored, so messages never expire. SQS defaults to 4 days. Decided: the default follows `sqs-limits` (strict: 4 days, relaxed: never expire); an explicit value is always enforced.
+- [x] **Enforce per-queue `MaximumMessageSize`.** Currently ignored; strict limits always allow 1 MiB. Now counts body and attributes in bytes, as SQS does.
 
 ### Persistence
 

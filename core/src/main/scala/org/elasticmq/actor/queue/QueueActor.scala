@@ -1,7 +1,7 @@
 package org.elasticmq.actor.queue
 
 import org.apache.pekko.actor.{ActorLogging, ActorRef}
-import org.elasticmq.QueueData
+import org.elasticmq.{Limits, QueueData}
 import org.elasticmq.actor.reply.{ReplyAction, ReplyingActor}
 import org.elasticmq.msg._
 import org.elasticmq.util.{Logging, NowProvider}
@@ -14,7 +14,8 @@ class QueueActor(
     var deadLettersActorRef: Option[ActorRef] = None,
     val copyMessagesToActorRef: Option[ActorRef] = None,
     val moveMessagesToActorRef: Option[ActorRef] = None,
-    val queueEventListener: Option[ActorRef] = None
+    val queueEventListener: Option[ActorRef] = None,
+    val limits: Limits
 ) extends QueueActorStorage
     with QueueActorQueueOps
     with QueueActorWaitForMessagesOps

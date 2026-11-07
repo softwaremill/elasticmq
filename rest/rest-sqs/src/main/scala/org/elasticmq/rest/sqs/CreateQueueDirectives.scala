@@ -62,6 +62,12 @@ trait CreateQueueDirectives {
           val secondsReceiveMessageWaitTimeOpt = attributes.parseOptionalLong(ReceiveMessageWaitTimeSecondsAttribute)
           val isFifo = attributes.get("FifoQueue").contains("true")
           val hasContentBasedDeduplication = attributes.get("ContentBasedDeduplication").contains("true")
+          val messageRetentionPeriodOpt = attributes
+            .get(QueueWriteableAttributeNames.MessageRetentionPeriodAttribute)
+            .map(QueueAttributesOps.parseMessageRetentionPeriod(_, sqsLimits))
+          val maximumMessageSizeOpt = attributes
+            .get(QueueWriteableAttributeNames.MaximumMessageSizeAttribute)
+            .map(QueueAttributesOps.parseMaximumMessageSize(_, sqsLimits))
 
           val newQueueData = CreateQueueData(
             requestParams.QueueName,
@@ -73,7 +79,9 @@ trait CreateQueueDirectives {
             redrivePolicy.map(rd => DeadLettersQueueData(rd.queueName, rd.maxReceiveCount)),
             isFifo,
             hasContentBasedDeduplication,
-            tags = requestParams.tags.getOrElse(Map.empty)
+            tags = requestParams.tags.getOrElse(Map.empty),
+            messageRetentionPeriod = messageRetentionPeriodOpt.map(sec => Duration.ofSeconds(sec)),
+            maximumMessageSize = maximumMessageSizeOpt
           )
 
           secondsReceiveMessageWaitTimeOpt.foreach(messageWaitTime =>

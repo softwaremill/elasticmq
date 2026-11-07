@@ -14,7 +14,9 @@ case class CreateQueueData(
     hasContentBasedDeduplication: Boolean = false,
     copyMessagesTo: Option[String] = None,
     moveMessagesTo: Option[String] = None,
-    tags: Map[String, String] = Map[String, String]()
+    tags: Map[String, String] = Map[String, String](),
+    messageRetentionPeriod: Option[Duration] = None,
+    maximumMessageSize: Option[Int] = None
 ) {
   def toQueueData: QueueData = {
     val now = OffsetDateTime.now()
@@ -32,7 +34,9 @@ case class CreateQueueData(
       hasContentBasedDeduplication,
       copyMessagesTo,
       moveMessagesTo,
-      tags
+      tags,
+      messageRetentionPeriod,
+      maximumMessageSize
     )
   }
 }
@@ -51,6 +55,8 @@ object CreateQueueData {
       queueData.hasContentBasedDeduplication,
       queueData.copyMessagesTo,
       queueData.moveMessagesTo,
-      queueData.tags
+      queueData.tags,
+      queueData.messageRetentionPeriod,
+      queueData.maximumMessageSize
     )
 }
