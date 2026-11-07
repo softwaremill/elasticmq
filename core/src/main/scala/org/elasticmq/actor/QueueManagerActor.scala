@@ -107,7 +107,8 @@ class QueueManagerActor(nowProvider: NowProvider, limits: Limits, queueEventList
           deadLetterQueueActor,
           copyMessagesToQueueActor,
           moveMessagesToQueueActor,
-          queueEventListener
+          queueEventListener,
+          limits
         )
       ),
       s"queue-${queueData.name}-$actorNamePostfix"
@@ -119,6 +120,8 @@ class QueueManagerActor(nowProvider: NowProvider, limits: Limits, queueEventList
       (requested.defaultVisibilityTimeout.isDefined && requested.defaultVisibilityTimeout.get != existing.defaultVisibilityTimeout) ||
         (requested.delay.isDefined && requested.delay.get != existing.delay) ||
         (requested.receiveMessageWait.isDefined && requested.receiveMessageWait.get != existing.receiveMessageWait) ||
+        (requested.messageRetentionPeriod.isDefined && requested.messageRetentionPeriod != existing.messageRetentionPeriod) ||
+        (requested.maximumMessageSize.isDefined && requested.maximumMessageSize != existing.maximumMessageSize) ||
         (requested.deadLettersQueue.isDefined && requested.deadLettersQueue != existing.deadLettersQueue) ||
         existing.isFifo != requested.isFifo ||
         existing.hasContentBasedDeduplication != requested.hasContentBasedDeduplication ||

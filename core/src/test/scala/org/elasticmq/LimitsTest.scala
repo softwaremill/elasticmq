@@ -205,28 +205,88 @@ class LimitsTest extends AnyWordSpec with Matchers with EitherValues {
     }
   }
 
-  "Validation of message length in strict mode" should {
-    "pass if the length is equal or smaller than the limit (1024 * 1024)" in {
-      Limits.verifyMessageLength(-5, StrictSQSLimits) shouldBe Right(())
-      Limits.verifyMessageLength(0, StrictSQSLimits) shouldBe Right(())
-      Limits.verifyMessageLength(100, StrictSQSLimits) shouldBe Right(())
-      Limits.verifyMessageLength(1024 * 1024, StrictSQSLimits) shouldBe Right(())
-    }
-
-    "fail if the length is bigger than the limit" in {
-      val error = Limits.verifyMessageLength(1024 * 1024 + 1, StrictSQSLimits).left.value
-      error shouldBe "MessageTooLong"
+  "Message size" should {
+    "count the body and the attribute names, data types and values in UTF-8 bytes" in {
+      Limits.messageSize("abc", Map.empty) shouldBe 3
+      Limits.messageSize("\u00e9", Map.empty) shouldBe 2
+      Limits.messageSize(
+        "abc",
+        Map(
+          "s" -> StringMessageAttribute("\u00e9"),
+          "n" -> NumberMessageAttribute("12", Some("int")),
+          "b" -> BinaryMessageAttribute(Array[Byte](1, 2, 3).toSeq)
+        )
+      ) shouldBe 3 + (1 + 6 + 2) + (1 + 10 + 2) + (1 + 6 + 3)
     }
   }
 
-  "Validation of message length in relaxed mode" should {
-    "always pass" in {
-      Limits.verifyMessageLength(-5, RelaxedSQSLimits) shouldBe Right(())
-      Limits.verifyMessageLength(0, RelaxedSQSLimits) shouldBe Right(())
-      Limits.verifyMessageLength(100, RelaxedSQSLimits) shouldBe Right(())
-      Limits.verifyMessageLength(262143, RelaxedSQSLimits) shouldBe Right(())
-      Limits.verifyMessageLength(262144, RelaxedSQSLimits) shouldBe Right(())
-      Limits.verifyMessageLength(300000, RelaxedSQSLimits) shouldBe Right(())
+  "Validation of message size" should {
+    "pass if the size is equal or smaller than the limit" in {
+      Limits.verifyMessageSize(0, StrictSQSLimits.maxMessageSize) shouldBe Right(())
+      Limits.verifyMessageSize(1024 * 1024, StrictSQSLimits.maxMessageSize) shouldBe Right(())
+    }
+
+    "fail if the size is bigger than the limit" in {
+      Limits.verifyMessageSize(1024 * 1024 + 1, StrictSQSLimits.maxMessageSize).left.value shouldBe
+        "One or more parameters are invalid. Reason: Message must be shorter than 1048576 bytes."
+    }
+
+    "always pass in relaxed mode" in {
+      Limits.verifyMessageSize(10L * 1024 * 1024, RelaxedSQSLimits.maxMessageSize) shouldBe Right(())
+    }
+
+    "use the queue's maximum message size if set, in both modes" in {
+      val queue = CreateQueueData("q", maximumMessageSize = Some(1024)).toQueueData
+      Limits.maxMessageSize(queue, StrictSQSLimits) shouldBe LimitedValue(1024)
+      Limits.maxMessageSize(queue, RelaxedSQSLimits) shouldBe LimitedValue(1024)
+      Limits.maxMessageSize(queue.copy(maximumMessageSize = None), StrictSQSLimits) shouldBe LimitedValue(1024 * 1024)
+      Limits.maxMessageSize(queue.copy(maximumMessageSize = None), RelaxedSQSLimits) shouldBe NoLimit
+    }
+  }
+
+  "Validation of the maximum message size attribute" should {
+    "accept 1 KiB to 1 MiB in strict mode" in {
+      Limits.verifyMaximumMessageSize(1024, StrictSQSLimits) shouldBe Right(())
+      Limits.verifyMaximumMessageSize(1024 * 1024, StrictSQSLimits) shouldBe Right(())
+      Limits.verifyMaximumMessageSize(1023, StrictSQSLimits).isLeft shouldBe true
+      Limits.verifyMaximumMessageSize(1024 * 1024 + 1, StrictSQSLimits).isLeft shouldBe true
+    }
+
+    "accept any positive value in relaxed mode" in {
+      Limits.verifyMaximumMessageSize(1, RelaxedSQSLimits) shouldBe Right(())
+      Limits.verifyMaximumMessageSize(10 * 1024 * 1024, RelaxedSQSLimits) shouldBe Right(())
+      Limits.verifyMaximumMessageSize(0, RelaxedSQSLimits).isLeft shouldBe true
+      Limits.verifyMaximumMessageSize(Int.MaxValue.toLong + 1, RelaxedSQSLimits).isLeft shouldBe true
+    }
+  }
+
+  "Validation of the message retention period attribute" should {
+    "accept 60 seconds to 14 days in strict mode" in {
+      Limits.verifyMessageRetentionPeriod(60, StrictSQSLimits) shouldBe Right(())
+      Limits.verifyMessageRetentionPeriod(1209600, StrictSQSLimits) shouldBe Right(())
+      Limits.verifyMessageRetentionPeriod(59, StrictSQSLimits).left.value shouldBe
+        "Invalid value for the parameter MessageRetentionPeriod: 59."
+      Limits.verifyMessageRetentionPeriod(1209601, StrictSQSLimits).isLeft shouldBe true
+    }
+
+    "accept any positive value in relaxed mode" in {
+      Limits.verifyMessageRetentionPeriod(1, RelaxedSQSLimits) shouldBe Right(())
+      Limits.verifyMessageRetentionPeriod(10000000, RelaxedSQSLimits) shouldBe Right(())
+      Limits.verifyMessageRetentionPeriod(0, RelaxedSQSLimits).isLeft shouldBe true
+    }
+  }
+
+  "Message retention period" should {
+    "default to 4 days in strict mode and to no expiry in relaxed mode" in {
+      val queue = CreateQueueData("q").toQueueData
+      Limits.messageRetentionPeriod(queue, StrictSQSLimits) shouldBe Some(java.time.Duration.ofDays(4))
+      Limits.messageRetentionPeriod(queue, RelaxedSQSLimits) shouldBe None
+    }
+
+    "use the queue's retention period if set, in both modes" in {
+      val queue = CreateQueueData("q", messageRetentionPeriod = Some(java.time.Duration.ofSeconds(90))).toQueueData
+      Limits.messageRetentionPeriod(queue, StrictSQSLimits) shouldBe Some(java.time.Duration.ofSeconds(90))
+      Limits.messageRetentionPeriod(queue, RelaxedSQSLimits) shouldBe Some(java.time.Duration.ofSeconds(90))
     }
   }
 

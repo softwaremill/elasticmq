@@ -32,6 +32,12 @@ case class UpdateQueueDeadLettersQueue(
 ) extends QueueQueueMsg[Unit] {
   override val updatesQueueMetadata: Boolean = true
 }
+case class UpdateQueueMessageRetentionPeriod(newMessageRetentionPeriod: Duration) extends QueueQueueMsg[Unit] {
+  override val updatesQueueMetadata: Boolean = true
+}
+case class UpdateQueueMaximumMessageSize(newMaximumMessageSize: Int) extends QueueQueueMsg[Unit] {
+  override val updatesQueueMetadata: Boolean = true
+}
 case class UpdateQueueTags(newQueueTags: Map[String, String]) extends QueueQueueMsg[Unit] {
   override val updatesQueueMetadata: Boolean = true
 }
@@ -55,6 +61,7 @@ case class ReceiveMessages(
 case class DeleteMessage(deliveryReceipt: DeliveryReceipt) extends QueueMessageMsg[Either[InvalidReceiptHandle, Unit]]
 case class LookupMessage(messageId: MessageId) extends QueueMessageMsg[Option[MessageData]]
 case object DeduplicationIdsCleanup extends QueueMessageMsg[Unit]
+case object RemoveExpiredMessages extends QueueMessageMsg[Unit]
 case class RestoreMessages(messages: List[InternalMessage]) extends QueueMessageMsg[Unit]
 case class StartMovingMessages(
     destinationQueue: ActorRef,

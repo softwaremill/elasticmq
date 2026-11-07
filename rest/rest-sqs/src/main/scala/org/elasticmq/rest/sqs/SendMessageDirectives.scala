@@ -87,6 +87,10 @@ trait SendMessageDirectives {
       .verifyMessageBody(body, sqsLimits)
       .fold(error => throw SQSException.invalidAttributeValue("MessageBody", Some(error)), identity)
 
+    Limits
+      .verifyMessageSize(Limits.messageSize(body, messageAttributes), Limits.maxMessageSize(queueData, sqsLimits))
+      .fold(error => throw SQSException.invalidParameter(error), identity)
+
     val messageGroupId = parameters.MessageGroupId match {
       // MessageGroupId is required for FIFO queues
       case None if queueData.isFifo => throw SQSException.missingParameter(MessageGroupIdParameter)
@@ -186,11 +190,6 @@ trait SendMessageDirectives {
       message <- queueActor ? SendMessage(message)
     } yield MessageSendOutcome(message, digest, messageAttributeDigest, systemMessageAttributeDigest = None)
   }
-
-  def verifyMessageNotTooLong(messageLength: Int): Unit =
-    Limits
-      .verifyMessageLength(messageLength, sqsLimits)
-      .fold(error => throw SQSException.invalidAttributeValue("MessageBody", Some(error)), identity)
 
   def validateMessageAttributes(messageAttributes: Map[String, MessageAttribute]): Unit = {
 

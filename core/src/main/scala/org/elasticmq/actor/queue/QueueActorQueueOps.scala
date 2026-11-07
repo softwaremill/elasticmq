@@ -1,6 +1,6 @@
 package org.elasticmq.actor.queue
 
-import org.elasticmq.{FifoDeduplicationIdsHistory, QueueStatistics}
+import org.elasticmq.{FifoDeduplicationIdsHistory, Limits, QueueStatistics}
 import org.elasticmq.actor.reply.{valueToReplyWith, ReplyAction}
 import org.elasticmq.msg._
 import org.elasticmq.util.Logging
@@ -20,6 +20,12 @@ trait QueueActorQueueOps extends Logging {
       case UpdateQueueReceiveMessageWait(newReceiveMessageWait) =>
         logger.info(s"${queueData.name}: Updating receive message wait to $newReceiveMessageWait")
         queueData = queueData.copy(receiveMessageWait = newReceiveMessageWait)
+      case UpdateQueueMessageRetentionPeriod(newMessageRetentionPeriod) =>
+        logger.info(s"${queueData.name}: Updating message retention period to $newMessageRetentionPeriod")
+        queueData = queueData.copy(messageRetentionPeriod = Some(newMessageRetentionPeriod))
+      case UpdateQueueMaximumMessageSize(newMaximumMessageSize) =>
+        logger.info(s"${queueData.name}: Updating maximum message size to $newMaximumMessageSize")
+        queueData = queueData.copy(maximumMessageSize = Some(newMaximumMessageSize))
       case UpdateQueueDeadLettersQueue(newDeadLettersQueue, newDeadLettersQueueActor) =>
         if (newDeadLettersQueue.isDefined && newDeadLettersQueueActor.isDefined) {
           logger.info(
@@ -56,8 +62,13 @@ trait QueueActorQueueOps extends Logging {
     var visible = 0L
     var invisible = 0L
     var delayed = 0L
+    // Expired messages not yet removed by the periodic expiry aren't counted
+    val expiredAtOrBefore = Limits
+      .messageRetentionPeriod(queueData, limits)
+      .map(nowProvider.nowMillis - _.toMillis)
+      .getOrElse(Long.MinValue)
 
-    messageQueue.all.foreach { internalMessage =>
+    messageQueue.all.filter(_.createdMillis > expiredAtOrBefore).foreach { internalMessage =>
       if (internalMessage.nextDelivery < deliveryTime) {
         visible += 1
       } else if (internalMessage.deliveryReceipts.nonEmpty) {

@@ -130,6 +130,12 @@ object SQSException {
     errorMessage = Some("BatchEntryIdsNotDistinct")
   )
 
+  def batchRequestTooLong: SQSException = new SQSException(
+    "AWS.SimpleQueueService.BatchRequestTooLong",
+    errorType = "com.amazonaws.sqs#BatchRequestTooLong",
+    errorMessage = Some("Batch requests cannot be longer than the maximum allowed message size.")
+  )
+
   def tooManyEntriesInBatchRequest: SQSException = new SQSException(
     "AWS.SimpleQueueService.TooManyEntriesInBatchRequest",
     errorType = "com.amazonaws.sqs#TooManyEntriesInBatchRequest",

@@ -59,6 +59,15 @@ sealed trait MessageQueue {
     */
   def filterNot(p: InternalMessage => Boolean): MessageQueue
 
+  /** Remove all messages created at or before the given timestamp
+    *
+    * @param createdMillis
+    *   The timestamp (millis since epoch)
+    * @return
+    *   The removed messages
+    */
+  def removeCreatedAtOrBefore(createdMillis: Long): List[InternalMessage]
+
   /** Dequeues `count` messages from the queue
     *
     * @param count
@@ -139,10 +148,28 @@ object MessageQueue {
     protected val messagesById: mutable.HashMap[String, InternalMessage] = mutable.HashMap.empty
     protected val messageQueue: mutable.PriorityQueue[InternalMessage] = mutable.PriorityQueue.empty
 
+    /** No message on the queue was created before this timestamp, so most calls to [[removeCreatedAtOrBefore]] don't
+      * need to scan the queue.
+      */
+    private var oldestCreatedLowerBound: Long = Long.MaxValue
+
+    protected def trackCreated(message: InternalMessage): Unit =
+      oldestCreatedLowerBound = math.min(oldestCreatedLowerBound, message.createdMillis)
+
     override def +=(message: InternalMessage): Unit = {
       messagesById += message.id -> message
       messageQueue += message
+      trackCreated(message)
     }
+
+    override def removeCreatedAtOrBefore(createdMillis: Long): List[InternalMessage] =
+      if (oldestCreatedLowerBound > createdMillis) Nil
+      else {
+        val (removed, remaining) = messagesById.values.toList.partition(_.createdMillis <= createdMillis)
+        removed.foreach(message => remove(message.id))
+        oldestCreatedLowerBound = remaining.iterator.map(_.createdMillis).minOption.getOrElse(Long.MaxValue)
+        removed
+      }
 
     override def getById(id: String): Option[InternalMessage] = messagesById.get(id)
 
@@ -163,6 +190,7 @@ object MessageQueue {
     override def clear(): Unit = {
       messagesById.clear()
       messageQueue.clear()
+      oldestCreatedLowerBound = Long.MaxValue
     }
 
     override def remove(messageId: String): Unit = {
@@ -204,6 +232,7 @@ object MessageQueue {
       val messageGroupId = getMessageGroupIdUnsafe(message)
       val groupMessages = messagesbyMessageGroupId.getOrElseUpdate(messageGroupId, mutable.PriorityQueue.empty)
       val _ = messagesbyMessageGroupId.put(messageGroupId, groupMessages += message)
+      trackCreated(message)
     }
 
     override def clear(): Unit = {

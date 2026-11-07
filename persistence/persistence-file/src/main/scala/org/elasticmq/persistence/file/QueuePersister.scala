@@ -15,9 +15,9 @@ object QueuePersister {
       Keys.DeadLettersQueueMaxReceiveCount
     )(deadLetterQueueData => (deadLetterQueueData.name, deadLetterQueueData.maxReceiveCount))
   private implicit val queueMetadataWriter: ConfigWriter[QueueMetadata] =
-    ConfigWriter.forProduct9[QueueMetadata, Long, Long, Long, Option[
+    ConfigWriter.forProduct11[QueueMetadata, Long, Long, Long, Option[
       DeadLettersQueueData
-    ], Boolean, Boolean, String, String, Map[String, String]](
+    ], Boolean, Boolean, String, String, Map[String, String], Option[Long], Option[Int]](
       Keys.DefaultVisibilityTimeout,
       Keys.Delay,
       Keys.ReceiveMessageWait,
@@ -26,7 +26,9 @@ object QueuePersister {
       Keys.ContentBasedDeduplication,
       Keys.CopyTo,
       Keys.MoveTo,
-      Keys.Tags
+      Keys.Tags,
+      Keys.MessageRetentionPeriod,
+      Keys.MaximumMessageSize
     )(qm =>
       (
         qm.defaultVisibilityTimeout,
@@ -37,7 +39,9 @@ object QueuePersister {
         qm.contentBasedDeduplication,
         qm.copyTo,
         qm.moveTo,
-        qm.tags
+        qm.tags,
+        qm.messageRetentionPeriod,
+        qm.maximumMessageSize
       )
     )
 
@@ -75,7 +79,9 @@ object QueuePersister {
       queue.hasContentBasedDeduplication,
       queue.copyMessagesTo.getOrElse(""),
       queue.moveMessagesTo.getOrElse(""),
-      queue.tags
+      queue.tags,
+      queue.messageRetentionPeriod.map(_.toMillis),
+      queue.maximumMessageSize
     )
 
 }
@@ -89,5 +95,7 @@ private case class QueueMetadata(
     contentBasedDeduplication: Boolean,
     copyTo: String,
     moveTo: String,
-    tags: Map[String, String]
+    tags: Map[String, String],
+    messageRetentionPeriod: Option[Long],
+    maximumMessageSize: Option[Int]
 )

@@ -16,12 +16,14 @@ trait QueueActorMessageOps
     with ReceiveMessageOps
     with MoveMessageOps
     with MoveMessagesAsyncOps
+    with ExpireMessagesOps
     with Timers {
   this: QueueActorStorage =>
 
   def nowProvider: NowProvider
 
   timers.startTimerWithFixedDelay(s"Timer: ${queueData.name}", DeduplicationIdsCleanup, 1.second)
+  timers.startTimerWithFixedDelay(s"Expire messages: ${queueData.name}", RemoveExpiredMessages, 1.second)
 
   def receiveAndReplyMessageMsg[T](msg: QueueMessageMsg[T]): ReplyAction[T] = {
     msg match {
@@ -39,6 +41,8 @@ trait QueueActorMessageOps
       case DeduplicationIdsCleanup =>
         fifoMessagesHistory = fifoMessagesHistory.cleanOutdatedMessages(nowProvider)
         DoNotReply()
+      case RemoveExpiredMessages =>
+        ResultWithEvents.onlyEvents[Unit](expireMessages()).send()
       case RestoreMessages(messages) => restoreMessages(messages)
       case StartMovingMessages(
             destinationQueue,

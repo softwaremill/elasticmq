@@ -101,6 +101,18 @@ aws {
 }
 ```
 
+# SQS limits
+
+`rest-sqs.sqs-limits` (or `withSQSLimits` when embedding) selects how closely ElasticMQ follows SQS's limits:
+
+- `strict` (the default) validates requests like SQS: queue name length, batch size, message attributes, allowed
+  characters, wait time, and the ranges of queue attributes. A queue that doesn't set them gets the SQS defaults:
+  messages are deleted 4 days after being sent (`MessageRetentionPeriod` = 345600 seconds, allowed 60 seconds to
+  14 days), and a message, counting its body and attributes in bytes, can be at most 1 MiB (`MaximumMessageSize` =
+  1048576, allowed 1024 to 1048576).
+- `relaxed` turns these checks off. Messages never expire and have no size limit, unless the queue sets
+  `MessageRetentionPeriod` or `MaximumMessageSize` (any positive value is accepted).
+
 # How are queue URLs created
 
 Some of the responses include a queue URL. By default (`node-address.host = "*"`), queue URLs use the protocol, host
@@ -138,6 +150,8 @@ queues {
     content-based-deduplication = false
     copy-to = "audit-queue-name"
     move-to = "redirect-queue-name"
+    message-retention-period = 4 days
+    maximum-message-size = 256K // bytes; 256K = 262144
     tags {
       tag1 = "tagged1"
       tag2 = "tagged2"
@@ -150,6 +164,8 @@ queues {
 ````
 
 All attributes are optional (except `name` and `max-receive-count` when a `dead-letters-queue` is defined).
+`message-retention-period` and `maximum-message-size` default to the values described in
+[SQS limits](#sqs-limits).
 `copy-to` and `move-to` attributes allow to achieve behavior that might be useful primarily for integration testing scenarios -
 all messages could be either duplicated (using `copy-to` attribute) or redirected (using `move-to` attribute) to another queue.
 
@@ -201,6 +217,8 @@ auto-create-queues {
     content-based-deduplication = false
     copy-to = "audit-queue-name"
     move-to = "redirect-queue-name"
+    message-retention-period = 1 day
+    maximum-message-size = 1M
     tags {
       env = "dev"
     }
@@ -270,7 +288,8 @@ messages-storage {
 }
 ````
 
-On startup, any queues and their messages persisted in the database will be recreated.
+On startup, any queues and their messages persisted in the database will be recreated. Messages older than their
+queue's retention period (4 days by default with `strict` [SQS limits](#sqs-limits)) are deleted shortly after.
 Note that the persisted queues take precedence over the queues defined
 in the main configuration file (as described in the previous section) in the `queues` section.
 

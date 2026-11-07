@@ -21,7 +21,33 @@ trait MessageOperationsTests extends IntegrationTestsBase {
     val queueUrl = testClient.createQueue("testQueue1").toOption.get
 
     // expect
-    assertError(testClient.sendMessage(queueUrl, "x" * (1024 * 1024 + 1)), InvalidParameterValue, "MessageTooLong")
+    assertError(
+      testClient.sendMessage(queueUrl, "x" * (1024 * 1024 + 1)),
+      InvalidParameterValue,
+      "Message must be shorter than 1048576 bytes"
+    )
+  }
+
+  test("should enforce the queue's maximum message size, counting the body and attributes in bytes") {
+    // given
+    val queueUrl = testClient.createQueue("testQueue1", Map(MaximumMessageSizeAttributeName -> "1024")).toOption.get
+    val attributes = Map("a" -> StringMessageAttribute("x" * 10)) // 1 + 6 + 10 bytes
+
+    // expect
+    testClient.sendMessage(queueUrl, "x" * 1024).isRight shouldBe true
+    testClient.sendMessage(queueUrl, "\u00e9" * 512).isRight shouldBe true
+    testClient.sendMessage(queueUrl, "x" * (1024 - 17), messageAttributes = attributes).isRight shouldBe true
+    assertError(
+      testClient.sendMessage(queueUrl, "x" * 1025),
+      InvalidParameterValue,
+      "Message must be shorter than 1024 bytes"
+    )
+    assertError(testClient.sendMessage(queueUrl, "\u00e9" * 513), InvalidParameterValue, "1024 bytes")
+    assertError(
+      testClient.sendMessage(queueUrl, "x" * (1024 - 16), messageAttributes = attributes),
+      InvalidParameterValue,
+      "1024 bytes"
+    )
   }
 
   test("should send and receive a simple message") {

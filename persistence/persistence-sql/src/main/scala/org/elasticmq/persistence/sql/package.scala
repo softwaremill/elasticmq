@@ -20,5 +20,5 @@ object DeadLettersQueueProtocol extends DefaultJsonProtocol {
 import org.elasticmq.persistence.sql.DeadLettersQueueProtocol._
 
 object CreateQueueProtocol extends DefaultJsonProtocol {
-  implicit val CreateQueueFormat: JsonFormat[CreateQueueMetadata] = jsonFormat12(CreateQueueMetadata.apply)
+  implicit val CreateQueueFormat: JsonFormat[CreateQueueMetadata] = jsonFormat14(CreateQueueMetadata.apply)
 }

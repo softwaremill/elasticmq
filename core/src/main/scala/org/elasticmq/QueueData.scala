@@ -14,7 +14,9 @@ case class QueueData(
     hasContentBasedDeduplication: Boolean = false,
     copyMessagesTo: Option[String] = None,
     moveMessagesTo: Option[String] = None,
-    tags: Map[String, String] = Map[String, String]()
+    tags: Map[String, String] = Map[String, String](),
+    messageRetentionPeriod: Option[Duration] = None,
+    maximumMessageSize: Option[Int] = None
 )
 
 case class DeadLettersQueueData(name: String, maxReceiveCount: Int)

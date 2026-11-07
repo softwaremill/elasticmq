@@ -9,16 +9,22 @@ import org.elasticmq.rest.sqs.model.RedrivePolicy
 import org.elasticmq.rest.sqs.model.RedrivePolicy.BackwardCompatibleRedrivePolicy
 import org.elasticmq.rest.sqs.model.RedrivePolicyJson._
 import org.elasticmq.util.Logging
-import org.elasticmq.{DeadLettersQueueData, MillisVisibilityTimeout, QueueData}
+import org.elasticmq.{DeadLettersQueueData, LimitedValue, Limits, MillisVisibilityTimeout, NoLimit, QueueData}
 import spray.json.JsonParser.ParsingException
 import spray.json._
+
+import org.elasticmq.rest.sqs.QueueAttributesOps.{parseMaximumMessageSize, parseMessageRetentionPeriod}
+import org.elasticmq.rest.sqs.QueueWriteableAttributeNames.{
+  MaximumMessageSizeAttribute,
+  MessageRetentionPeriodAttribute
+}
 
 import java.time.Duration
 import scala.async.Async.{async, await}
 import scala.concurrent.{ExecutionContext, Future}
 
 trait QueueAttributesOps extends AttributesModule with AwsConfiguration {
-  this: Logging =>
+  this: Logging & SQSLimitsModule =>
 
   val attributeValuesCalculator = new AttributeValuesCalculator
 
@@ -76,6 +82,18 @@ trait QueueAttributesOps extends AttributesModule with AwsConfiguration {
       )
 
       val optionalRules = Seq(
+        Limits
+          .messageRetentionPeriod(queueData, sqsLimits)
+          .map(period =>
+            AttributeValuesCalculator
+              .Rule(MessageRetentionPeriodAttribute, () => Future.successful(period.getSeconds.toString))
+          ),
+        (Limits.maxMessageSize(queueData, sqsLimits) match {
+          case LimitedValue(size) => Some(size)
+          case NoLimit            => None
+        }).map(size =>
+          AttributeValuesCalculator.Rule(MaximumMessageSizeAttribute, () => Future.successful(size.toString))
+        ),
         queueData.deadLettersQueue
           .map(dlq => RedrivePolicy(dlq.name, awsRegion, awsAccountId, dlq.maxReceiveCount))
           .map(redrivePolicy =>
@@ -123,6 +141,11 @@ trait QueueAttributesOps extends AttributesModule with AwsConfiguration {
           queueActor ? UpdateQueueDelay(Duration.ofSeconds(attributeValue.toLong))
         case ReceiveMessageWaitTimeSecondsAttribute =>
           queueActor ? UpdateQueueReceiveMessageWait(Duration.ofSeconds(attributeValue.toLong))
+        case MessageRetentionPeriodAttribute =>
+          val seconds = parseMessageRetentionPeriod(attributeValue, sqsLimits)
+          queueActor ? UpdateQueueMessageRetentionPeriod(Duration.ofSeconds(seconds))
+        case MaximumMessageSizeAttribute =>
+          queueActor ? UpdateQueueMaximumMessageSize(parseMaximumMessageSize(attributeValue, sqsLimits))
 
         case RedrivePolicyParameter =>
           val redrivePolicy =
@@ -164,19 +187,44 @@ trait QueueAttributesOps extends AttributesModule with AwsConfiguration {
 
 }
 
+object QueueAttributesOps {
+
+  /** @return the `MessageRetentionPeriod` attribute value in seconds, if valid under the given limits */
+  def parseMessageRetentionPeriod(value: String, limits: Limits): Long = {
+    val seconds = value.toLongOption.getOrElse(throw invalidValue(MessageRetentionPeriodAttribute, value))
+    Limits
+      .verifyMessageRetentionPeriod(seconds, limits)
+      .fold(error => throw SQSException.invalidAttributeValue(MessageRetentionPeriodAttribute, Some(error)), identity)
+    seconds
+  }
+
+  /** @return the `MaximumMessageSize` attribute value in bytes, if valid under the given limits */
+  def parseMaximumMessageSize(value: String, limits: Limits): Int = {
+    val bytes = value.toLongOption.getOrElse(throw invalidValue(MaximumMessageSizeAttribute, value))
+    Limits
+      .verifyMaximumMessageSize(bytes, limits)
+      .fold(error => throw SQSException.invalidAttributeValue(MaximumMessageSizeAttribute, Some(error)), identity)
+    bytes.toInt
+  }
+
+  private def invalidValue(name: String, value: String) =
+    SQSException.invalidAttributeValue(name, Some(s"Invalid value for the parameter $name: $value."))
+}
+
 object QueueWriteableAttributeNames {
+  val MaximumMessageSizeAttribute = "MaximumMessageSize"
+  val MessageRetentionPeriodAttribute = "MessageRetentionPeriod"
+
   val AllWriteableAttributeNames: List[String] = VisibilityTimeoutParameter :: DelaySecondsAttribute ::
-    ReceiveMessageWaitTimeSecondsAttribute :: RedrivePolicyParameter :: Nil
+    ReceiveMessageWaitTimeSecondsAttribute :: RedrivePolicyParameter :: MaximumMessageSizeAttribute ::
+    MessageRetentionPeriodAttribute :: Nil
 }
 
 object UnsupportedAttributeNames {
   val PolicyAttribute = "Policy"
-  val MaximumMessageSizeAttribute = "MaximumMessageSize"
-  val MessageRetentionPeriodAttribute = "MessageRetentionPeriod"
   val FifoQueueAttribute = "FifoQueue"
 
-  val AllUnsupportedAttributeNames: List[String] = PolicyAttribute :: MaximumMessageSizeAttribute ::
-    MessageRetentionPeriodAttribute :: FifoQueueAttribute :: Nil
+  val AllUnsupportedAttributeNames: List[String] = PolicyAttribute :: FifoQueueAttribute :: Nil
 }
 
 object FifoAttributeNames {

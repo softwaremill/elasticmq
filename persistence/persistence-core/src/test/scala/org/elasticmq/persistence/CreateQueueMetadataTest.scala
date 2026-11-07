@@ -18,7 +18,9 @@ class CreateQueueMetadataTest extends AnyFunSuite with Matchers with OptionValue
       hasContentBasedDeduplication = true,
       copyMessagesTo = Some("xyz_copy"),
       moveMessagesTo = Some("xyz_move"),
-      tags = Map("abc" -> "123")
+      tags = Map("abc" -> "123"),
+      messageRetentionPeriodSeconds = Some(120),
+      maximumMessageSize = Some(2048)
     )
 
     CreateQueueMetadata.from(createQueue.toCreateQueueData.toQueueData) shouldBe createQueue

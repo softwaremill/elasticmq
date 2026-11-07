@@ -95,4 +95,68 @@ trait QueueAttributesTests extends IntegrationTestsBase {
     // expect
     assertError(testClient.createQueue("queue with spaces"), InvalidAttributeName, "Can only include")
   }
+
+  test("should return the default message retention period and maximum message size") {
+    // given
+    val queueUrl = testClient.createQueue("testQueue1").toOption.get
+
+    // when
+    val attributes = testClient.getQueueAttributes(queueUrl, AllAttributeNames)
+
+    // then
+    attributes(MessageRetentionPeriodAttributeName.value) shouldBe "345600"
+    attributes(MaximumMessageSizeAttributeName.value) shouldBe "1048576"
+  }
+
+  test("should create a queue with the specified message retention period and maximum message size") {
+    // given
+    val queueUrl = testClient
+      .createQueue(
+        "testQueue1",
+        Map(MessageRetentionPeriodAttributeName -> "120", MaximumMessageSizeAttributeName -> "2048")
+      )
+      .toOption
+      .get
+
+    // when
+    val attributes =
+      testClient.getQueueAttributes(queueUrl, MessageRetentionPeriodAttributeName, MaximumMessageSizeAttributeName)
+
+    // then
+    attributes(MessageRetentionPeriodAttributeName.value) shouldBe "120"
+    attributes(MaximumMessageSizeAttributeName.value) shouldBe "2048"
+  }
+
+  test("should set queue message retention period and maximum message size") {
+    // given
+    val queueUrl = testClient.createQueue("testQueue1").toOption.get
+
+    // when
+    testClient.setQueueAttributes(
+      queueUrl,
+      Map(MessageRetentionPeriodAttributeName -> "1209600", MaximumMessageSizeAttributeName -> "1024")
+    )
+
+    // then
+    val attributes =
+      testClient.getQueueAttributes(queueUrl, MessageRetentionPeriodAttributeName, MaximumMessageSizeAttributeName)
+    attributes(MessageRetentionPeriodAttributeName.value) shouldBe "1209600"
+    attributes(MaximumMessageSizeAttributeName.value) shouldBe "1024"
+  }
+
+  test("should reject a message retention period outside of the SQS range") {
+    assertError(
+      testClient.createQueue("testQueue1", Map(MessageRetentionPeriodAttributeName -> "59")),
+      InvalidParameterValue,
+      "MessageRetentionPeriod"
+    )
+  }
+
+  test("should reject a maximum message size outside of the SQS range") {
+    assertError(
+      testClient.createQueue("testQueue1", Map(MaximumMessageSizeAttributeName -> "1048577")),
+      InvalidParameterValue,
+      "MaximumMessageSize"
+    )
+  }
 }

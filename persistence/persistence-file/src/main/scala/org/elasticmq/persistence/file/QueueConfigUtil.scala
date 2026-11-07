@@ -25,6 +25,8 @@ object QueueConfigUtil extends Logging {
     val CopyTo = "copy-to"
     val MoveTo = "move-to"
     val Tags = "tags"
+    val MessageRetentionPeriod = "message-retention-period"
+    val MaximumMessageSize = "maximum-message-size"
     val Created = "created"
     val LastModified = "last-modified"
   }
@@ -99,6 +101,7 @@ object QueueConfigUtil extends Logging {
     def getOptionalBoolean(k: String) = path(c, k).map(c.getBoolean)
     def getOptionalLong(k: String) = path(c, k).map(c.getLong)
     def getOptionalDuration(k: String) = path(c, k).map(c.getDuration(_, TimeUnit.SECONDS))
+    def getOptionalBytes(k: String) = path(c, k).map(c.getBytes(_).longValue)
     def getOptionalString(k: String) = path(c, k).map(c.getString).filter(_.nonEmpty)
     def getOptionalTags(k: String): Map[String, String] =
       path(c, k)
@@ -127,7 +130,13 @@ object QueueConfigUtil extends Logging {
       hasContentBasedDeduplication = getOptionalBoolean(Keys.ContentBasedDeduplication).getOrElse(false),
       copyMessagesTo = getOptionalString(Keys.CopyTo),
       moveMessagesTo = getOptionalString(Keys.MoveTo),
-      tags = getOptionalTags(Keys.Tags)
+      tags = getOptionalTags(Keys.Tags),
+      messageRetentionPeriodSeconds = getOptionalDuration(Keys.MessageRetentionPeriod),
+      maximumMessageSize = getOptionalBytes(Keys.MaximumMessageSize).map { size =>
+        if (size <= 0 || size > Int.MaxValue)
+          throw new IllegalArgumentException(s"Invalid ${Keys.MaximumMessageSize}: $size")
+        size.toInt
+      }
     )
   }
 
