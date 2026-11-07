@@ -81,7 +81,10 @@ trait QueueDirectives {
 
   private def autoCreateQueue(queueName: String): Future[ActorRef] = {
     val isFifo = queueName.endsWith(".fifo") || autoCreateQueues.template.isFifo
-    val queueData = autoCreateQueues.template.copy(name = queueName, isFifo = isFifo).toCreateQueueData
+    val queueData = autoCreateQueues.template
+      .copy(name = queueName, isFifo = isFifo)
+      .toCreateQueueData
+      .copy(created = None, lastModified = None) // the template's timestamps are not the new queue's
     (queueManagerActor ? CreateQueueMsg(queueData)).flatMap {
       case Right(ref)                  => Future.successful(ref.asInstanceOf[ActorRef])
       case Left(_: QueueAlreadyExists) =>

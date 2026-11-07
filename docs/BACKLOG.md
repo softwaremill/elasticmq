@@ -16,8 +16,8 @@ These need a major version. Ship them together in 2.0.
 
 ### Configuration
 
-- [ ] **Normalise config key style.** Top-level keys are kebab-case (`bind-port`, `node-address`) but `aws.accountId` and queue definitions (`defaultVisibilityTimeout`, `deadLettersQueue`, `copyTo`, `moveTo`) are camelCase. Pick one style; read the old keys with a deprecation warning for one release. The file-persistence writer (`queues-storage`) must write the new keys and still read the old format.
-- [ ] **Build queue URLs from the incoming request by default.** The wildcard host (`node-address.host = "*"`) already does this. Making it the default fixes the common Docker/CI case where clients reach the server under a service alias (see #1212). Changes returned queue URLs for users relying on the `localhost` default.
+- [x] **Normalise config key style.** Top-level keys are kebab-case (`bind-port`, `node-address`) but `aws.accountId` and queue definitions (`defaultVisibilityTimeout`, `deadLettersQueue`, `copyTo`, `moveTo`) are camelCase. Pick one style; read the old keys with a deprecation warning for one release. The file-persistence writer (`queues-storage`) must write the new keys and still read the old format.
+- [x] **Build queue URLs from the incoming request by default.** The wildcard host (`node-address.host = "*"`) already does this. Making it the default fixes the common Docker/CI case where clients reach the server under a service alias (see #1212). Changes returned queue URLs for users relying on the `localhost` default.
 
 ### SQS behaviour
 

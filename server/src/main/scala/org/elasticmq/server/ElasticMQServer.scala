@@ -84,7 +84,8 @@ class ElasticMQServer(config: ElasticMQServerConfig) extends Logging {
         .withAWSAccountId(config.awsAccountId)
         .withAutoCreateQueues(config.autoCreateQueues)
 
-      val server = (if (config.generateNodeAddress) builder else builder.withServerAddress(config.nodeAddress)).start()
+      val server = (if (config.generateNodeAddress) builder.withServerAddressFromBinding()
+                    else builder.withServerAddress(config.nodeAddress)).start()
 
       val _ = server.waitUntilStarted()
 

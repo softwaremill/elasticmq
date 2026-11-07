@@ -121,4 +121,67 @@ class QueueConfigUtilTest extends AnyFunSuite with Matchers with OptionValues {
     loadedQueuesMap("test-2") shouldBe expectedQueue2
     loadedQueuesMap("test-3") shouldBe expectedQueue3
   }
+
+  test("Should read queue attributes written with kebab-case keys") {
+    val conf = ConfigFactory.parseString("""
+      |queues {
+      |  q {
+      |    default-visibility-timeout = 3 seconds
+      |    delay = 1 second
+      |    receive-message-wait = 2 seconds
+      |    created = 100
+      |    last-modified = 200
+      |    dead-letters-queue { name = dead, max-receive-count = 4 }
+      |    content-based-deduplication = true
+      |    fifo = true
+      |    copy-to = audit
+      |    move-to = redirect
+      |    tags { tag1 = value1 }
+      |  }
+      |}""".stripMargin)
+
+    QueueConfigUtil.readPersistedQueuesFromConfig(conf) shouldBe List(
+      CreateQueueMetadata(
+        "q.fifo",
+        Some(3L),
+        Some(1L),
+        Some(2L),
+        100L,
+        200L,
+        Some(DeadLettersQueue("dead", 4)),
+        isFifo = true,
+        hasContentBasedDeduplication = true,
+        Some("audit"),
+        Some("redirect"),
+        Map("tag1" -> "value1")
+      )
+    )
+  }
+
+  test("Deprecated camelCase keys take precedence over kebab-case keys, and can be mixed with them") {
+    val conf = ConfigFactory.parseString("""
+      |queues {
+      |  q {
+      |    defaultVisibilityTimeout = 3 seconds
+      |    default-visibility-timeout = 5 seconds
+      |    deadLettersQueue { name = dead, max-receive-count = 4 }
+      |    copy-to = audit
+      |  }
+      |}""".stripMargin)
+
+    val queue = QueueConfigUtil.readPersistedQueuesFromConfig(conf).head
+    queue.defaultVisibilityTimeoutSeconds shouldBe Some(3L)
+    queue.deadLettersQueue shouldBe Some(DeadLettersQueue("dead", 4))
+    queue.copyMessagesTo shouldBe Some("audit")
+  }
+
+  test("Should read queue attributes for a template") {
+    val template = QueueConfigUtil.readQueueAttributes(
+      ConfigFactory.parseString("default-visibility-timeout = 30 seconds, fifo = true, tags { type = dynamic }")
+    )
+    template.name shouldBe ""
+    template.defaultVisibilityTimeoutSeconds shouldBe Some(30L)
+    template.isFifo shouldBe true
+    template.tags shouldBe Map("type" -> "dynamic")
+  }
 }
