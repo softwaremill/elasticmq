@@ -43,6 +43,6 @@ trait MoveMessageOps extends Logging {
     messageQueue += internalMessage
     fifoMessagesHistory = fifoMessagesHistory.addNew(internalMessage)
 
-    ResultWithEvents.onlyEvents(List(QueueEvent.MessageAdded(queueData.name, internalMessage)))
+    ResultWithEvents.onlyEvents(List(QueueEvent.MessageAdded(queueData.name, internalMessage.snapshot)))
   }
 }

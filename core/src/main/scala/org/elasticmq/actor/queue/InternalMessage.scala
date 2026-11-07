@@ -55,6 +55,12 @@ case class InternalMessage(
     }
   }
 
+  /** An independent copy of this message, safe to hand over to other actors (e.g. in [[QueueEvent]]s). The original
+    * instance is mutated by the queue actor (delivery receipts, next delivery, receive count), so passing it directly
+    * would expose those changes concurrently to the receiver.
+    */
+  def snapshot: InternalMessage = copy(deliveryReceipts = deliveryReceipts.clone())
+
   def toMessageData =
     MessageData(
       MessageId(id),

@@ -53,7 +53,7 @@ trait SendMessageOp extends Logging {
 
     ResultWithEvents.valueWithEvents(
       internalMessage.toMessageData,
-      List(QueueEvent.MessageAdded(queueData.name, internalMessage))
+      List(QueueEvent.MessageAdded(queueData.name, internalMessage.snapshot))
     )
   }
 

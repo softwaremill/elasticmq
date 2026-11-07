@@ -38,7 +38,7 @@ trait ReceiveMessageOps extends Logging {
     }
 
     val updateEvents =
-      messagesToReturn.map(internalMessage => QueueEvent.MessageUpdated(queueData.name, internalMessage))
+      messagesToReturn.map(internalMessage => QueueEvent.MessageUpdated(queueData.name, internalMessage.snapshot))
 
     val deleteEvents = messagesWithDestinations.flatMap {
       case MessageToDelete(internalMessage) => Some(internalMessage)
