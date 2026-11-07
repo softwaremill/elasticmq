@@ -62,7 +62,6 @@ describe('QueueCard', () => {
     render(<QueueCard queue={mockQueue} />);
     // First button in the action bar is the delete icon
     const buttons = screen.getAllByRole('button');
-    const trashBtn = buttons.find(b => !b.textContent?.trim() || b.textContent?.trim() === '');
     // Click the leftmost (delete) button which has only an icon
     const deleteBtn = buttons[0]; // trash button is first in left group
     await userEvent.click(deleteBtn);

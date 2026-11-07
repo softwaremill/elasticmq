@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef, useId } from 'react';
+import { useState, useEffect, useRef, useId, useEffectEvent } from 'react';
 import { X, Check, ChevronRight } from 'lucide-react';
 import { sendMessage } from '@/lib/actions';
 import { MessageAttributeEntry, SendMessageResult } from '@/lib/types';
@@ -32,8 +32,7 @@ function isFifo(name: string) {
 export function SendMessageModal({ queueName, queueUrl, onClose }: SendMessageModalProps) {
   const uid = useId();
   const bodyRef = useRef<HTMLTextAreaElement>(null);
-  const onCloseRef = useRef(onClose);
-  onCloseRef.current = onClose;
+  const handleEscape = useEffectEvent(() => onClose());
 
   // Form state
   const [body, setBody] = useState('');
@@ -54,15 +53,16 @@ export function SendMessageModal({ queueName, queueUrl, onClose }: SendMessageMo
   const fifo = isFifo(queueName);
 
   useEffect(() => {
-    setMounted(true);
+    const frame = requestAnimationFrame(() => setMounted(true));
     bodyRef.current?.focus();
 
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onCloseRef.current();
+      if (e.key === 'Escape') handleEscape();
     };
     document.addEventListener('keydown', onKey);
     document.body.style.overflow = 'hidden';
     return () => {
+      cancelAnimationFrame(frame);
       document.removeEventListener('keydown', onKey);
       document.body.style.overflow = '';
     };

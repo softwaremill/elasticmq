@@ -32,21 +32,23 @@ export function QueueDetails({ queueName }: QueueDetailsProps) {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const fetchQueueDetails = useCallback(async (showLoading = false) => {
-    try {
-      if (showLoading) setIsRefreshing(true);
-      const data = await getQueueDetails(queueName);
-      if (!data) { setError('Queue not found'); return; }
-      setQueue(data);
-      setError(null);
-      setLastUpdate(new Date());
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
-    } finally {
-      setIsLoading(false);
-      if (showLoading) setIsRefreshing(false);
-    }
-  }, [queueName]);
+  const fetchQueueDetails = useCallback(() =>
+    getQueueDetails(queueName)
+      .then(data => {
+        if (!data) { setError('Queue not found'); return; }
+        setQueue(data);
+        setError(null);
+        setLastUpdate(new Date());
+      })
+      .catch((err: unknown) => setError(err instanceof Error ? err.message : 'An error occurred'))
+      .finally(() => setIsLoading(false)),
+  [queueName]);
+
+  const refresh = async () => {
+    setIsRefreshing(true);
+    await fetchQueueDetails();
+    setIsRefreshing(false);
+  };
 
   useEffect(() => {
     fetchQueueDetails();
@@ -84,7 +86,7 @@ export function QueueDetails({ queueName }: QueueDetailsProps) {
   );
 
   if (isLoading) return <div>{navBar}<LoadingSkeleton /></div>;
-  if (error || !queue) return <div>{navBar}<ErrorDisplay message={error || 'Queue not found'} onRetry={() => fetchQueueDetails(true)} /></div>;
+  if (error || !queue) return <div>{navBar}<ErrorDisplay message={error || 'Queue not found'} onRetry={() => refresh()} /></div>;
 
   const visibleAttributes = Object.entries(queue.attributes).filter(
     ([key]) => !HIDDEN_ATTRIBUTES.includes(key)
@@ -130,7 +132,7 @@ export function QueueDetails({ queueName }: QueueDetailsProps) {
         </div>
 
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          <ActionBtn onClick={() => fetchQueueDetails(true)} disabled={isRefreshing} variant="ghost">
+          <ActionBtn onClick={() => refresh()} disabled={isRefreshing} variant="ghost">
             {isRefreshing ? 'Refreshing…' : <><RefreshCw size={13} />Refresh</>}
           </ActionBtn>
           <ActionBtn onClick={() => setShowReceive(true)} variant="ghost">

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 const autoRefreshDisabled = process.env.NEXT_PUBLIC_AUTO_REFRESH_DISABLED === 'true';
 import { QueueData } from '@/lib/types';
@@ -19,19 +19,21 @@ export function QueueList() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
 
-  const fetchQueues = async (showLoading = false) => {
-    try {
-      if (showLoading) setIsRefreshing(true);
-      const data = await getQueues();
-      setQueues(data);
-      setError(null);
-      setLastUpdate(new Date());
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
-    } finally {
-      setIsLoading(false);
-      if (showLoading) setIsRefreshing(false);
-    }
+  const fetchQueues = useCallback(() =>
+    getQueues()
+      .then(data => {
+        setQueues(data);
+        setError(null);
+        setLastUpdate(new Date());
+      })
+      .catch((err: unknown) => setError(err instanceof Error ? err.message : 'An error occurred'))
+      .finally(() => setIsLoading(false)),
+  []);
+
+  const refresh = async () => {
+    setIsRefreshing(true);
+    await fetchQueues();
+    setIsRefreshing(false);
   };
 
   useEffect(() => {
@@ -39,10 +41,10 @@ export function QueueList() {
     if (autoRefreshDisabled) return;
     const interval = setInterval(() => fetchQueues(), 1000);
     return () => clearInterval(interval);
-  }, []);
+  }, [fetchQueues]);
 
   if (isLoading) return <LoadingSkeleton />;
-  if (error) return <ErrorDisplay message={error} onRetry={() => fetchQueues(true)} />;
+  if (error) return <ErrorDisplay message={error} onRetry={() => refresh()} />;
 
   if (queues.length === 0) {
     return (
@@ -106,7 +108,7 @@ export function QueueList() {
 
           <div style={{ display: 'flex', gap: 8 }}>
             <button
-              onClick={() => fetchQueues(true)}
+              onClick={() => refresh()}
               disabled={isRefreshing}
               style={{
                 display: 'inline-flex', alignItems: 'center', gap: 5,

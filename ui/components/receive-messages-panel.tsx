@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useEffectEvent } from 'react';
 import { ChevronRight, X } from 'lucide-react';
 import { receiveMessages, deleteMessage } from '@/lib/actions';
 import { ReceivedMessage } from '@/lib/types';
@@ -227,15 +227,15 @@ export function ReceiveMessagesPanel({ queueName, queueUrl, onClose }: ReceiveMe
   const [received, setReceived] = useState(false);
   const [mounted, setMounted] = useState(false);
 
-  const onCloseRef = useRef(onClose);
-  onCloseRef.current = onClose;
+  const handleEscape = useEffectEvent(() => onClose());
 
   useEffect(() => {
-    setMounted(true);
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onCloseRef.current(); };
+    const frame = requestAnimationFrame(() => setMounted(true));
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') handleEscape(); };
     document.addEventListener('keydown', onKey);
     document.body.style.overflow = 'hidden';
     return () => {
+      cancelAnimationFrame(frame);
       document.removeEventListener('keydown', onKey);
       document.body.style.overflow = '';
     };
