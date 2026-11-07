@@ -4,7 +4,7 @@ This directory contains integration tests for ElasticMQ using the AWS SDK for Ja
 
 ## Prerequisites
 
-- Node.js 18+ (for ES modules support)
+- Node.js 26 (current LTS; see `.nvmrc` — run `nvm use`)
 - Docker (for testcontainers)
 - ElasticMQ Docker image built with tag `elasticmq-int:latest`
 

@@ -22,7 +22,7 @@
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.1",
-    "@types/node": "^20",
+    "@types/node": "^26",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@vitejs/plugin-react": "^6.0.1",
@@ -37,5 +37,8 @@
     "@typescript-eslint/typescript-estree": {
       "minimatch": "^11.0.5"
     }
+  },
+  "engines": {
+    "node": ">=26"
   }
 }
