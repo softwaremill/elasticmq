@@ -309,15 +309,7 @@ Add ElasticMQ Rest SQS module to `build.sbt` dependencies
 libraryDependencies += "org.elasticmq" %% "elasticmq-rest-sqs" % Version
 ```
 
-Simply start the server using custom configuration (see examples above):
-
-```scala
-val config = ConfigFactory.load("elasticmq.conf")
-val server = new ElasticMQServer(new ElasticMQServerConfig(config))
-server.start()
-```
-
-Alternatively, custom rest server can be built using `SQSRestServerBuilder` provided in `elasticmq-rest-sqs` package:
+Then build and start a server with `SQSRestServerBuilder`:
 
 ```scala
 val server = SQSRestServerBuilder.start()
@@ -333,18 +325,44 @@ val server = SQSRestServerBuilder.withPort(9321).withInterface("localhost").star
 server.stopAndWait()
 ```
 
-You can also set a dynamic port with a port value of `0` or by using the method `withDynamicPort`. To retrieve the port (and other configuration) when using a dynamic port value you can access the server via `waitUntilStarted` for example:
+You can also set a dynamic port with a port value of `0` or by using the method `withDynamicPort`. To find out the
+assigned port, wait for the server to start; `waitUntilStarted` returns the bound address:
 
 ```scala
 val server = SQSRestServerBuilder.withDynamicPort().start()
-server.waitUntilStarted().localAddress().getPort()
+val port = server.waitUntilStarted().localAddress.getPort
 ```
 
-You can also provide a custom `ActorSystem`; for details see the javadocs.
+To be notified about changes in queues and messages, register a `QueueEventListener`. All its methods have empty
+defaults, so override only the ones you need:
 
-Embedded ElasticMQ can be used from any JVM-based language (Java, Scala, etc.).
+```scala
+val server = SQSRestServerBuilder
+  .withQueueEventListener(new QueueEventListener {
+    override def messageAdded(queueName: String, message: MessageData): Unit =
+      println(s"New message in $queueName: ${message.content.value}")
+  })
+  .start()
+```
 
-(Note that the embedded server created with `SQSRestServerBuilder` does not load any configuration files, so you cannot automatically create queues on startup as described above. You can of course create queues programmatically.)
+Callbacks run one at a time. The message callbacks run before the SQS response is sent, so keep them fast.
+
+By default the server creates its own Pekko `ActorSystem` and terminates it on `stopAndWait()`. If your application
+already runs one, pass it with `withActorSystem(actorSystem)`; the server then uses it but leaves its lifecycle to you.
+
+Embedded ElasticMQ can be used from any JVM-based language (Java, Scala, etc.):
+
+```java
+SQSRestServer server = SQSRestServerBuilder.withDynamicPort().start();
+int port = server.waitUntilStarted().localAddress().getPort();
+// ... use ...
+server.stopAndWait();
+```
+
+(Note that the embedded server created with `SQSRestServerBuilder` does not load any configuration files, so you cannot
+automatically create queues on startup as described above. You can of course create queues programmatically. To run a
+server driven by a configuration file, including queue persistence, use the `elasticmq-server` artifact:
+`new ElasticMQServer(new ElasticMQServerConfig(ConfigFactory.load("elasticmq.conf"))).start()`.)
 
 # Using the Amazon Java SDK to access an ElasticMQ Server
 
