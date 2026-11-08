@@ -19,7 +19,7 @@ lazy val resolvedScalaVersion =
   }
 
 val config = "com.typesafe" % "config" % "1.4.9"
-val pureConfig = "com.github.pureconfig" %% "pureconfig-core" % "0.17.8"
+val pureConfig = "com.github.pureconfig" %% "pureconfig-core" % "0.17.11"
 val scalaXml = "org.scala-lang.modules" %% "scala-xml" % "2.5.0"
 
 val scalalogging = "com.typesafe.scala-logging" %% "scala-logging" % "3.9.6"
