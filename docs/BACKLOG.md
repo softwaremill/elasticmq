@@ -24,14 +24,6 @@ These need a major version. Ship them together in 2.0.
 - [x] **Enforce `MessageRetentionPeriod`.** Currently ignored, so messages never expire. SQS defaults to 4 days. Decided: the default follows `sqs-limits` (strict: 4 days, relaxed: never expire); an explicit value is always enforced.
 - [x] **Enforce per-queue `MaximumMessageSize`.** Currently ignored; strict limits always allow 1 MiB. Now counts body and attributes in bytes, as SQS does.
 
-### Persistence
-
-- [ ] **Version the SQL schema.** Tables are created with `create table if not exists` and no version record, so adding a column (e.g. a retention timestamp) breaks existing H2 files. Add a schema-version table and forward migrations; give the serialized queue `data` blob a format version. Document whether 1.x data files are migrated on first start.
-
-### Under consideration
-
-- [ ] **Replace the Pekko HTTP layer** (#727: Netty, http4s, tapir…). Largest possible item and not required by anything else here. If done, it must keep both the JSON and query/XML protocols.
-
 ## Minor changes
 
 Additive or internal; can land in 2.0 or any 2.x minor.
