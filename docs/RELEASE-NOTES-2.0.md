@@ -198,6 +198,11 @@ network alias.
 
 ## Bug fixes
 
+- With `messages-storage` on H2, messages whose send was acknowledged were lost when the process was killed, because
+  H2 writes commits to the database file later, in the background. ElasticMQ now adds `WRITE_DELAY=0` to H2 URIs that
+  don't set a write delay, so each commit is written to the file before the request is answered. This makes durable
+  operations slower; set `WRITE_DELAY` in the URI to keep the previous behaviour.
+
 - `ReceiveMessage` matches requested message attribute names exactly or by prefix (`prefix.*`), as SQS does
   (#1268).
 - With `node-address.host = "*"`, a request sent to a queue URL (as SDK v1 does for `ListDeadLetterSourceQueues`)

@@ -288,7 +288,13 @@ messages-storage {
 }
 ````
 
-On startup, any queues and their messages persisted in the database will be recreated. Messages older than their
+On startup, any queues and their messages persisted in the database will be recreated.
+
+ElasticMQ answers a request after its changes are committed to the database. With H2, it adds `WRITE_DELAY=0` to the
+URI, so that each commit is written to the database file first: by default H2 writes commits to the file later, in the
+background, and a killed process (`kill -9`, an OOM kill, `docker kill`) would lose messages whose send was already
+acknowledged. This makes durable sends and receives slower. The file isn't forced to disk, so an operating system
+crash or power loss can still lose the most recent changes. To use another write delay, set `WRITE_DELAY` in the URI. Messages older than their
 queue's retention period (4 days by default with `strict` [SQS limits](#sqs-limits)) are deleted shortly after.
 Note that the persisted queues take precedence over the queues defined
 in the main configuration file (as described in the previous section) in the `queues` section.
